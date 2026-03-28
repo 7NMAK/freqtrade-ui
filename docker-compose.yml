@@ -32,6 +32,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    networks:
+      - ft_network
 
   redis:
     image: redis:7-alpine
@@ -46,6 +48,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    networks:
+      - ft_network
 
   orchestrator:
     build:
@@ -79,11 +83,16 @@ services:
   #   - Its own port (8080, 8081, 8082, ...)
   #   - Its own config.json pointing to one strategy
   #   - Connected to ft_network so orchestrator can reach it
+  #
+  # SETUP: Connect existing FT bot to ft_network:
+  #   docker network create ft_network  (if not exists)
+  #   docker network connect ft_network freqtrade
+  # Then the orchestrator can reach it at http://freqtrade:8080
 
 networks:
   ft_network:
     name: ft_network
-    driver: bridge
+    external: true
 
 volumes:
   postgres_data:

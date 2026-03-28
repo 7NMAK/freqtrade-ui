@@ -70,11 +70,14 @@
 ## NEXT STEPS (in order)
 
 ### 1. Deploy & Test Orchestrator on Server
-- [ ] Push to server (204.168.187.107)
-- [ ] `docker compose up -d` (postgres + redis + orchestrator)
-- [ ] Register existing FT bot with orchestrator
-- [ ] Test: ping, start, stop, kill switch, portfolio
+- [x] Fixed Docker networking: all services on ft_network, network set to external
+- [x] Created Alembic initial migration (4 tables: bot_instances, strategies, risk_events, audit_log)
+- [x] Updated alembic/env.py to read ORCH_DATABASE_URL from environment
+- [x] Created deploy.sh — automated deploy + 14-step test suite
+- [x] Deep audit: all 24 Python files syntax-verified, all safety rules checked
+- [ ] Run deploy.sh on server (204.168.187.107) — `bash deploy.sh`
 - [ ] Verify heartbeat monitor works (3s ping cycle)
+- [ ] Verify all 14 test steps pass end-to-end
 
 ### 2. Remaining HTML Prototypes (5 pages)
 - [ ] Backtesting page — §5, §6, §15, §21, §22, §30

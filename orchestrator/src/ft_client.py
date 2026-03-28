@@ -70,10 +70,13 @@ class FTClient:
 
     async def _login(self) -> str:
         """POST /api/v1/token/login — get JWT token."""
-        resp = await self._client.post(
-            f"{self.api_url}/api/v1/token/login",
-            auth=(self.username, self.password),
-        )
+        try:
+            resp = await self._client.post(
+                f"{self.api_url}/api/v1/token/login",
+                auth=(self.username, self.password),
+            )
+        except httpx.HTTPError as e:
+            raise FTClientError(f"Login connection failed: {self.api_url} — {e}")
         if resp.status_code != 200:
             raise FTClientError(f"Login failed: {resp.status_code} {resp.text}")
         data = resp.json()
@@ -88,26 +91,36 @@ class FTClient:
 
     async def _request(self, method: str, path: str, **kwargs) -> dict:
         """Make authenticated request to FT API."""
-        token = await self._get_token()
+        try:
+            token = await self._get_token()
+        except httpx.HTTPError as e:
+            raise FTClientError(f"FT connection failed (login): {self.api_url} — {e}")
+
         headers = {"Authorization": f"Bearer {token}"}
 
-        resp = await self._client.request(
-            method,
-            f"{self.api_url}{path}",
-            headers=headers,
-            **kwargs,
-        )
-
-        # Token expired — re-login once
-        if resp.status_code == 401:
-            await self._login()
-            headers = {"Authorization": f"Bearer {self._token}"}
+        try:
             resp = await self._client.request(
                 method,
                 f"{self.api_url}{path}",
                 headers=headers,
                 **kwargs,
             )
+        except httpx.HTTPError as e:
+            raise FTClientError(f"FT connection failed: {method} {path} — {e}")
+
+        # Token expired — re-login once
+        if resp.status_code == 401:
+            try:
+                await self._login()
+                headers = {"Authorization": f"Bearer {self._token}"}
+                resp = await self._client.request(
+                    method,
+                    f"{self.api_url}{path}",
+                    headers=headers,
+                    **kwargs,
+                )
+            except httpx.HTTPError as e:
+                raise FTClientError(f"FT connection failed (retry): {method} {path} — {e}")
 
         if resp.status_code >= 400:
             raise FTClientError(f"FT API error: {method} {path} → {resp.status_code} {resp.text}")

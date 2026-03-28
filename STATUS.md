@@ -86,14 +86,14 @@
 - [x] Tested: manual recovery after kill → OK (bot returns to running/healthy)
 - [x] Tested: strategy lifecycle → OK (draft→backtest, invalid transitions blocked)
 
-### 2. Remaining HTML Prototypes (5 pages)
-- [ ] Backtesting page — §5, §6, §15, §21, §22, §30
-- [ ] Settings page — §1, §7, §9, §11, §13, §17, §28
-- [ ] FreqAI page — §24, §25, §26
-- [ ] Analytics page — §19, §20, §29
-- [ ] Data Management page — §12, §18, §27
-- [ ] Risk page — §7 protections + kill switch
-- [ ] Login page
+### 2. HTML Prototypes — ALL COMPLETE ✓
+- [x] Backtesting page — §5, §6, §15, §21, §22, §30
+- [x] Settings page — §1, §7, §9, §11, §13, §17, §28
+- [x] FreqAI page — §24, §25, §26
+- [x] Analytics page — §19, §20, §29
+- [x] Data Management page — §12, §18, §27
+- [x] Risk page — §7 protections + kill switch
+- [x] Login page
 
 ### 3. Next.js 14 Frontend (Phase 3)
 - [ ] Project setup + auth + layout

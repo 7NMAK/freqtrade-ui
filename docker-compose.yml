@@ -1,0 +1,90 @@
+##
+## Docker Compose — FreqTrade Trading System
+##
+## Services:
+##   postgres   — Orchestrator metadata DB (NOT trade data)
+##   redis      — Pub/sub for heartbeat events + cache
+##   orchestrator — Our FastAPI app (multi-bot mgmt, kill switch, heartbeat)
+##
+## FreqTrade bot containers are managed DYNAMICALLY by the orchestrator
+## via Docker API — they are NOT defined here.
+## Each bot = 1 FT container = 1 strategy.
+##
+## Trade data lives in FT (SQLite inside each bot container).
+## We NEVER duplicate it — always read via FT REST API.
+##
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: orch_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: orchestrator
+      POSTGRES_USER: orchestrator
+      POSTGRES_PASSWORD: orchestrator
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orchestrator"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: orch_redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  orchestrator:
+    build:
+      context: ./orchestrator
+      dockerfile: Dockerfile
+    container_name: orchestrator
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8888:8888"
+    environment:
+      ORCH_DATABASE_URL: "postgresql+asyncpg://orchestrator:orchestrator@postgres:5432/orchestrator"
+      ORCH_REDIS_URL: "redis://redis:6379/0"
+      ORCH_SECRET_KEY: "${ORCH_SECRET_KEY:-change-me-in-production}"
+    volumes:
+      # Docker socket so orchestrator can manage FT bot containers
+      - /var/run/docker.sock:/var/run/docker.sock
+      # FT user_data shared volume (strategies, configs)
+      - /opt/freqtrade/user_data:/opt/freqtrade/user_data:ro
+    networks:
+      - ft_network
+
+  # NOTE: FreqTrade bot containers are NOT listed here.
+  # They are created/started/stopped dynamically by the orchestrator
+  # via Docker API. Each bot gets:
+  #   - Its own FT container (freqtradeorg/freqtrade:stable_freqai)
+  #   - Its own port (8080, 8081, 8082, ...)
+  #   - Its own config.json pointing to one strategy
+  #   - Connected to ft_network so orchestrator can reach it
+
+networks:
+  ft_network:
+    name: ft_network
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

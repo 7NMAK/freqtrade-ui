@@ -431,8 +431,7 @@
 
       // Prototype: simulate authentication
       // In production this would POST to the orchestrator /api/auth/login
-      errorText.textContent = 'Invalid username or password.';
-      errorEl.classList.add('visible');
+      window.location.href = 'dashboard.html';
       return false;
     }
   </script>

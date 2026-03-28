@@ -621,10 +621,12 @@ Each card represents one strategy from `getStrategies()` joined with bot data fr
 - **Visual:** Multi-line text input
 - **Maps to:** Strategy docstring + orchestrator DB `strategies.description`
 
-### B-12: Exchange Selector
+### B-12: Target Bot Selector
 - **Visual:** Dropdown select
-- **Options:** Binance (Futures), Bybit, OKX, Bitget, Kraken, Gate
-- **Maps to:** `config.json` → `exchange.name` (§1)
+- **Options:** Load from `getBots()` → **ORCH** — shows bot name + exchange
+- **Purpose:** Selects which bot this strategy will be deployed to. Exchange is configured in Settings (SET-60), NOT in the strategy file.
+- **NOTE:** Strategies do NOT have an exchange property — exchange is a config.json parameter (§1). This selector determines which bot's config to use for pairs, timeframe defaults, etc.
+- **Maps to:** Orchestrator `strategy.bot_instance_id` link
 
 ### B-13: Timeframe Selector
 - **Visual:** Dropdown select, required
@@ -1208,6 +1210,60 @@ Each group contains clickable indicator chips:
 - **Click:** Could open notebook viewer (low priority)
 - **Priority:** LOW
 
+## SECTION 4: Extended Profit Analysis (§8 — previously unmapped endpoints)
+
+### A-18: Weekly Profit Table
+- **Visual:** Table showing weekly profit breakdown
+- **Columns:** Week Start, Trades, Profit (abs), Profit (%)
+- **Data source:** `botWeekly(botId)` → **FT** `GET /api/v1/weekly`
+- **FT ref:** §8 REST API
+
+### A-19: Monthly Profit Table
+- **Visual:** Table showing monthly profit breakdown
+- **Columns:** Month, Trades, Profit (abs), Profit (%)
+- **Data source:** `botMonthly(botId)` → **FT** `GET /api/v1/monthly`
+- **FT ref:** §8 REST API
+
+### A-20: Entry Tag Analysis Table
+- **Visual:** Table showing performance by entry tag (enter_tag)
+- **Columns:** Tag, Trades, Win Rate, Profit, Avg Duration
+- **Data source:** `botEntries(botId)` → **FT** `GET /api/v1/entries`
+- **FT ref:** §8 REST API
+
+### A-21: Exit Reason Analysis Table
+- **Visual:** Table showing performance by exit reason
+- **Columns:** Exit Reason, Trades, Win Rate, Profit, Avg Duration
+- **Data source:** `botExits(botId)` → **FT** `GET /api/v1/exits`
+- **FT ref:** §8 REST API
+
+### A-22: Combined Tag Analysis (Mix Tags)
+- **Visual:** Table showing entry+exit tag combinations
+- **Columns:** Entry Tag, Exit Reason, Trades, Win Rate, Profit
+- **Data source:** `botMixTags(botId)` → **FT** `GET /api/v1/mix_tags`
+- **FT ref:** §8 REST API
+
+### A-23: Trade Statistics Summary
+- **Visual:** Stats card group showing advanced trading metrics
+- **Data source:** `botStats(botId)` → **FT** `GET /api/v1/stats`
+- **FT fields:** Duration averages (winning/losing/all), sell reasons breakdown
+- **FT ref:** §8 REST API
+
+## SECTION 5: Additional Bot Controls (§8 — previously unmapped endpoints)
+
+**NOTE:** These FT endpoints are used on Dashboard (PAGE 1) and Risk (PAGE 6) as additional action buttons.
+
+### D-22: Stop New Entries Button (Dashboard bot card action)
+- **Visual:** "⏸ Stop Entries" in bot card ⋮ menu
+- **Click:** `botStopBuy(botId)` → **FT** `POST /api/v1/stopbuy`
+- **Effect:** Bot continues managing open trades but won't open new ones
+- **FT ref:** §8 — different from soft kill (which is `/api/v1/stop`)
+
+### D-23: Pause Bot Button (Dashboard bot card action)
+- **Visual:** "⏯ Pause" in bot card ⋮ menu
+- **Click:** `botPause(botId)` → **FT** `POST /api/v1/pause`
+- **Effect:** Pauses bot trading loop temporarily
+- **FT ref:** §8
+
 ---
 
 # PAGE 6: RISK MANAGEMENT
@@ -1653,7 +1709,7 @@ Each filter is a collapsible card with:
 | Filter | Params (§7) |
 |--------|-------------|
 | AgeFilter | `min_days_listed`, `max_days_listed` |
-| DelistFilter | `max_days_from_now` |
+| DelistFilter | `max_days_from_now` (default 0 = immediate), `min_days_until_removed` |
 | SpreadFilter | `max_spread_ratio` |
 | PriceFilter | `low_price_ratio`, `min_price`, `max_price` |
 | RangeStabilityFilter | `min_rate_of_change`, `max_rate_of_change`, `lookback_days` |
@@ -1788,9 +1844,12 @@ Each producer has:
 - **FT param:** `logfile`
 
 ### SET-104: Log Rotate Settings
-- Enabled/Disabled toggle
-- Rotate bytes (number)
-- Backup count (number)
+- **Enabled/Disabled toggle**
+- **Rotate Max Bytes:** Number input, default 10485760 (10MB)
+  - **FT param:** `log_config.handlers.RotatingFileHandler.maxBytes` (§28)
+- **Backup Count:** Number input, default 10
+  - **FT param:** `log_config.handlers.RotatingFileHandler.backupCount` (§28)
+- **Note:** These only apply when `logfile` is set. FT supports RotatingFileHandler, Syslog, Journald.
 
 ### SET-105: Multi-Instance Info (read-only display)
 - API Listen IP: `api_server.listen_ip_address`
@@ -1864,8 +1923,8 @@ On mount:
 | XGBoostClassifier | Classification | §24 |
 | XGBoostRFRegressor | Regression | §24 |
 | XGBoostRFClassifier | Classification | §24 |
-| CatboostRegressor | Regression | §24 |
-| CatboostClassifier | Classification | §24 |
+| CatboostRegressor | Regression (⚠️ DEPRECATED) | §24 |
+| CatboostClassifier | Classification (⚠️ DEPRECATED) | §24 |
 | PyTorchMLPRegressor | Regression (DL) | §24 |
 | PyTorchMLPClassifier | Classification (DL) | §24 |
 | PyTorchTransformerRegressor | Regression (DL) | §24 |
@@ -1874,6 +1933,7 @@ On mount:
 | SKLearnRandomForestRegressor | Regression | §24 |
 
 - **On change:** If RL model selected → show RL section (AI-40). If PyTorch → show PyTorch section (AI-50).
+- **⚠️ CatBoost note:** CatboostRegressor/Classifier are deprecated in FT 2026.2 and unavailable on ARM. Show warning badge "Deprecated" next to these options. Still selectable but with amber warning text.
 
 ### AI-12: Train Period Days
 - **FT param:** `freqai.train_period_days`
@@ -2345,37 +2405,19 @@ These features were identified during review as present in FREQTRADE_REFERENCE.m
 | Sidebar | 12 | 0 | 12 (navigation, badges) |
 | Header | 6 | 0 | 6 (search, notifications, kill switch) |
 | Login | 6 | 0 | 6 (auth) |
-| Dashboard | 21 | 17 (trades, profit, balance, daily, capital) | 4 (bot management) |
+| Dashboard | 23 | 19 (trades, profit, balance, daily, capital, stopbuy, pause) | 4 (bot management) |
 | Strategies | 20 | 8 (profit, trades, config, strategy source) | 12 (lifecycle, CRUD) |
 | Builder | 26 | 23 (all strategy params §2,3,4,7,10 + callback ref) | 3 (save, generate) |
 | Backtesting | 38 | 36 (all backtest/hyperopt params §5,6,15,21,22,30) | 2 (job management) |
-| Analytics | 17 | 15 (candles, plot_config, trades, performance, orderflow) | 2 (display) |
+| Analytics | 25 | 23 (candles, plot_config, trades, performance, orderflow, weekly, monthly, entries, exits, mix_tags, stats) | 2 (display) |
 | Risk | 21 | 8 (locks CRUD, config protections) | 13 (kill switch, heartbeat, events) |
 | Settings | 65+ | 63 (all config.json params §1,7,9,11,13,17,27,28) | 2 (save, bot selector) |
 | FreqAI | 25 | 23 (all freqai config §24,25,26) | 2 (save, master switch) |
 | Data Mgmt | 20 | 18 (download-data §12, utilities §18) | 2 (job management) |
-| **TOTAL** | **~277** | **~211** | **~66** |
+| **TOTAL** | **~287** | **~221** | **~66** |
 
-**211 features from FreqTrade** (we just display/configure them)
+**221 features from FreqTrade** (we just display/configure them)
 **66 features from our Orchestrator** (multi-bot, kill switch, lifecycle, auth, jobs)
 **0 invented features** ✅
 
-| Page | Widgets | FT Features | Our Features (ORCH) |
-|------|---------|-------------|-------------------|
-| Sidebar | 12 | 0 | 12 (navigation, badges) |
-| Header | 6 | 0 | 6 (search, notifications, kill switch) |
-| Login | 6 | 0 | 6 (auth) |
-| Dashboard | 20 | 16 (trades, profit, balance, daily) | 4 (bot management) |
-| Strategies | 20 | 8 (profit, trades, config, strategy source) | 12 (lifecycle, CRUD) |
-| Builder | 25 | 22 (all strategy params from §2,3,4,7,10) | 3 (save, generate) |
-| Backtesting | 35 | 33 (all backtest/hyperopt params from §5,6,21,22,30) | 2 (job management) |
-| Analytics | 17 | 15 (candles, plot_config, trades, performance, orderflow) | 2 (display) |
-| Risk | 18 | 5 (locks, config protections) | 13 (kill switch, heartbeat, events) |
-| Settings | 60+ | 58 (all config.json params from §1,7,9,11,13,17,28) | 2 (save, bot selector) |
-| FreqAI | 25 | 23 (all freqai config from §24,25,26) | 2 (save, master switch) |
-| Data Mgmt | 20 | 18 (download-data §12, utilities §18) | 2 (job management) |
-| **TOTAL** | **~264** | **~198** | **~66** |
-
-**198 features from FreqTrade** (we just display/configure them)
-**66 features from our Orchestrator** (multi-bot, kill switch, lifecycle, auth, jobs)
-**0 invented features** ✅
+**NOTE on widget counting:** The total counts individual discrete UI elements (buttons, inputs, cards, tables, charts). Some PAGE_SPECS entries group related items (e.g., "Protection toggles (3)" counts as 3 widgets, "Order Types (6 dropdowns)" counts as 6). The header says "~287" which is the expanded count.

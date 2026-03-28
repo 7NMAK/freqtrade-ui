@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreqTrade Platform — FreqAI</title>
+<style>
+/* ─── RESET & BASE ─── */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-0:#06060b;--bg-1:#0c0c14;--bg-2:#12121c;--bg-3:#1a1a28;
+  --border:#1e1e30;--border-hover:#2e2e48;
+  --text-0:#f0f0f5;--text-1:#c0c0d0;--text-2:#808098;--text-3:#55556a;
+  --accent:#6366f1;--accent-dim:#4f46e5;--accent-glow:rgba(99,102,241,.12);
+  --green:#22c55e;--green-dim:#166534;--green-bg:rgba(34,197,94,.08);
+  --red:#ef4444;--red-dim:#991b1b;--red-bg:rgba(239,68,68,.08);
+  --amber:#f59e0b;--amber-dim:#92400e;--amber-bg:rgba(245,158,11,.08);
+  --cyan:#06b6d4;--purple:#a855f7;
+  --sidebar-w:240px;--header-h:56px;
+  --radius:10px;--radius-sm:6px;
+}
+html{font-size:13px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;background:var(--bg-0);color:var(--text-1);display:flex;height:100vh;overflow:hidden}
+
+/* ─── SIDEBAR ─── */
+.sidebar{width:var(--sidebar-w);background:var(--bg-1);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sidebar-logo{padding:18px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.sidebar-logo .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),#a855f7);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff}
+.sidebar-logo .logo-text{font-size:14px;font-weight:700;color:var(--text-0);letter-spacing:-.3px}
+.sidebar-logo .logo-sub{font-size:10px;color:var(--text-3);font-weight:500}
+.sidebar-nav{padding:12px 10px;flex:1}
+.nav-section{margin-bottom:16px}
+.nav-section-label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;padding:6px 12px;margin-bottom:2px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;color:var(--text-2);font-size:12.5px;font-weight:500;text-decoration:none}
+.nav-item:hover{background:var(--bg-3);color:var(--text-1)}
+.nav-item.active{background:var(--accent-glow);color:var(--accent)}
+.nav-item .nav-icon{width:18px;text-align:center;font-size:14px;flex-shrink:0}
+.nav-item .nav-badge{margin-left:auto;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;background:var(--bg-3);color:var(--text-2)}
+.nav-item .nav-dot{width:6px;height:6px;border-radius:50%;margin-left:auto;flex-shrink:0}
+.nav-dot.live{background:var(--green);box-shadow:0 0 6px var(--green)}
+.sidebar-footer{padding:14px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--text-3)}
+.sidebar-footer .ft-status{display:flex;align-items:center;gap:6px}
+.sidebar-footer .ft-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+
+/* ─── MAIN ─── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* ─── HEADER ─── */
+.header{height:var(--header-h);background:var(--bg-1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0}
+.header-title{font-size:16px;font-weight:700;color:var(--text-0);margin-right:auto;display:flex;align-items:center;gap:10px}
+.header-actions{display:flex;align-items:center;gap:6px}
+.hdr-btn{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;cursor:pointer;transition:all .15s;color:var(--text-2);font-size:14px;display:flex;align-items:center;gap:4px;position:relative}
+.hdr-btn:hover{border-color:var(--border-hover);color:var(--text-1);background:var(--bg-3)}
+.hdr-btn .notif-dot{position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--red)}
+.kill-btn{background:var(--red-bg);border-color:rgba(239,68,68,.25);color:var(--red);font-size:11px;font-weight:600;padding:6px 14px;gap:6px;letter-spacing:.3px}
+.kill-btn:hover{background:rgba(239,68,68,.18);border-color:var(--red)}
+.user-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#a855f7);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;cursor:pointer;margin-left:4px}
+
+/* ─── CONTENT ─── */
+.content{flex:1;overflow-y:auto;padding:20px 24px 40px;background:var(--bg-0)}
+
+/* ─── SECTION (collapsible) ─── */
+.section{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden}
+.section-header{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;transition:background .15s}
+.section-header:hover{background:var(--bg-3)}
+.section-title{font-size:13px;font-weight:600;color:var(--text-0);display:flex;align-items:center;gap:8px}
+.section-title .sec-icon{font-size:14px}
+.section-tag{font-size:9px;font-weight:600;padding:2px 7px;border-radius:10px;background:var(--accent-glow);color:var(--accent);letter-spacing:.3px}
+.section-chevron{font-size:12px;color:var(--text-3);transition:transform .2s}
+.section.collapsed .section-chevron{transform:rotate(-90deg)}
+.section-body{padding:18px;border-top:1px solid var(--border)}
+.section.collapsed .section-body{display:none}
+
+/* ─── FORM ELEMENTS ─── */
+.form-group{margin-bottom:18px}
+.form-group:last-child{margin-bottom:0}
+.form-label{font-size:11px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.form-label .hint{font-weight:400;color:var(--text-3);text-transform:none;letter-spacing:0;font-size:10px}
+.form-label .ft-param{font-weight:400;color:var(--purple);text-transform:none;letter-spacing:0;font-size:10px;font-family:'SF Mono','Fira Code',monospace}
+.form-input{width:100%;padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-2);color:var(--text-0);font-size:13px;font-family:inherit;outline:none;transition:border-color .2s}
+.form-input:focus{border-color:var(--accent)}
+.form-input::placeholder{color:var(--text-3)}
+select.form-input{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23808098' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.form-row-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}
+
+/* Toggle */
+.toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.toggle-row:last-child{margin-bottom:0}
+.toggle{width:36px;height:20px;border-radius:10px;background:var(--bg-3);border:1px solid var(--border);cursor:pointer;position:relative;transition:all .2s;flex-shrink:0}
+.toggle.on{background:var(--green-bg);border-color:var(--green)}
+.toggle::after{content:"";position:absolute;width:14px;height:14px;border-radius:50%;background:var(--text-3);top:2px;left:2px;transition:all .2s}
+.toggle.on::after{background:var(--green);left:18px}
+.toggle-label{font-size:12px;color:var(--text-1)}
+.toggle-sub{font-size:10px;color:var(--text-3);margin-top:1px}
+
+/* Slider */
+.slider-row{display:flex;align-items:center;gap:12px}
+.slider{flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;background:var(--bg-3);outline:none}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg-0)}
+.slider-val{font-size:12px;font-weight:600;color:var(--text-0);min-width:36px;text-align:right;font-family:'SF Mono','Fira Code',monospace}
+
+/* Multi-select chips */
+.chip-grid{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg-2);font-size:11px;color:var(--text-2);cursor:pointer;transition:all .15s;font-weight:500}
+.chip:hover{border-color:var(--border-hover);color:var(--text-1);background:var(--bg-3)}
+.chip.selected{border-color:var(--accent);background:var(--accent-glow);color:var(--accent)}
+
+/* Key-value editor */
+.kv-editor{display:flex;flex-direction:column;gap:6px}
+.kv-row{display:flex;gap:8px;align-items:center}
+.kv-key{flex:1;padding:8px 10px;border-radius:4px;border:1px solid var(--border);background:var(--bg-3);color:var(--text-0);font-size:12px;font-family:'SF Mono','Fira Code',monospace;outline:none}
+.kv-val{flex:1;padding:8px 10px;border-radius:4px;border:1px solid var(--border);background:var(--bg-3);color:var(--text-0);font-size:12px;font-family:'SF Mono','Fira Code',monospace;outline:none}
+.kv-key:focus,.kv-val:focus{border-color:var(--accent)}
+.kv-remove{width:28px;height:28px;border-radius:4px;border:1px solid var(--border);background:var(--bg-3);color:var(--text-3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s;flex-shrink:0}
+.kv-remove:hover{border-color:var(--red);color:var(--red);background:var(--red-bg)}
+.kv-add{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;border:1px dashed var(--border);color:var(--text-3);font-size:11px;cursor:pointer;transition:all .15s;width:fit-content;margin-top:4px}
+.kv-add:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Info block */
+.info-block{padding:12px 14px;border-radius:var(--radius-sm);background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.15);font-size:11px;color:var(--text-2);line-height:1.6}
+.info-block code{font-family:'SF Mono','Fira Code',monospace;font-size:11px;color:var(--purple);background:var(--bg-3);padding:1px 5px;border-radius:3px}
+
+/* Master switch */
+.master-switch{display:flex;align-items:center;gap:14px;padding:16px 18px;background:linear-gradient(135deg,rgba(99,102,241,.06),rgba(168,85,247,.04));border:1px solid rgba(99,102,241,.2);border-radius:var(--radius);margin-bottom:16px}
+.master-switch .ms-icon{font-size:24px}
+.master-switch .ms-text{flex:1}
+.master-switch .ms-title{font-size:14px;font-weight:700;color:var(--text-0);margin-bottom:2px}
+.master-switch .ms-sub{font-size:11px;color:var(--text-3)}
+.master-toggle{width:48px;height:26px;border-radius:13px;background:var(--bg-3);border:1px solid var(--border);cursor:pointer;position:relative;transition:all .2s;flex-shrink:0}
+.master-toggle.on{background:var(--green-bg);border-color:var(--green)}
+.master-toggle::after{content:"";position:absolute;width:20px;height:20px;border-radius:50%;background:var(--text-3);top:2px;left:2px;transition:all .2s}
+.master-toggle.on::after{background:var(--green);left:24px}
+
+/* Array input */
+.array-input{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-2);min-height:40px;align-items:center;cursor:text}
+.array-input:focus-within{border-color:var(--accent)}
+.array-tag{padding:3px 8px;border-radius:4px;background:var(--bg-3);color:var(--text-0);font-size:11px;font-family:'SF Mono','Fira Code',monospace;display:flex;align-items:center;gap:4px}
+.array-tag .tag-remove{cursor:pointer;color:var(--text-3);font-size:12px;transition:color .15s}
+.array-tag .tag-remove:hover{color:var(--red)}
+.array-input input{border:none;background:transparent;color:var(--text-0);font-size:12px;outline:none;flex:1;min-width:60px;font-family:inherit}
+.array-input input::placeholder{color:var(--text-3)}
+
+/* Buttons */
+.btn-primary{padding:10px 22px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:8px}
+.btn-primary:hover{background:var(--accent-dim);transform:translateY(-1px)}
+.btn-secondary{padding:8px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-2);color:var(--text-1);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
+.btn-secondary:hover{border-color:var(--border-hover);background:var(--bg-3)}
+
+.save-bar{display:flex;align-items:center;gap:12px;margin-top:8px}
+.save-status{font-size:11px;color:var(--text-3)}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg-3);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--border-hover)}
+</style>
+</head>
+<body>
+
+<!-- ════════════ SIDEBAR ════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo"><div class="logo-icon">FT</div><div><div class="logo-text">FreqTrade</div><div class="logo-sub">Trading Platform</div></div></div>
+  <div class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item" href="dashboard.html"><span class="nav-icon">📈</span> Dashboard <div class="nav-dot live"></div></a>
+      <a class="nav-item" href="strategies.html"><span class="nav-icon">🎯</span> Strategies <span class="nav-badge">3 live</span></a>
+      <a class="nav-item" href="builder.html"><span class="nav-icon">✏️</span> Strategy Builder</a>
+      <a class="nav-item" href="#"><span class="nav-icon">🧪</span> Backtesting <span class="nav-badge">2 runs</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Monitor</div>
+      <a class="nav-item" href="#"><span class="nav-icon">📊</span> Analytics</a>
+      <a class="nav-item" href="#"><span class="nav-icon">🛡️</span> Risk <div class="nav-dot live"></div></a>
+      <a class="nav-item" href="#"><span class="nav-icon">📒</span> Journal <span class="nav-badge">847</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">AI / ML</div>
+      <a class="nav-item active" href="freqai.html"><span class="nav-icon">🧠</span> FreqAI</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">System</div>
+      <a class="nav-item" href="#"><span class="nav-icon">💾</span> Data</a>
+      <a class="nav-item" href="#"><span class="nav-icon">⚙️</span> Settings</a>
+    </div>
+  </div>
+  <div class="sidebar-footer"><div class="ft-status"><div class="ft-dot"></div><span>FreqTrade 2026.2 — 5 bots</span></div></div>
+</nav>
+
+<!-- ════════════ MAIN ════════════ -->
+<div class="main">
+  <header class="header">
+    <div class="header-title">
+      🧠 FreqAI Configuration
+      <span style="font-size:11px;color:var(--text-3);font-weight:400">Machine Learning</span>
+    </div>
+    <div class="header-actions">
+      <div class="hdr-btn" title="Notifications">🔔<div class="notif-dot"></div></div>
+      <div class="hdr-btn kill-btn"><span>🚨</span> KILL SWITCH</div>
+      <div class="user-avatar">N</div>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- ═══ MASTER SWITCH ═══ -->
+    <div class="master-switch">
+      <div class="ms-icon">🧠</div>
+      <div class="ms-text">
+        <div class="ms-title">FreqAI Engine</div>
+        <div class="ms-sub">freqai.enabled &mdash; Enable machine learning predictions for all configured bots</div>
+      </div>
+      <div class="master-toggle on" onclick="this.classList.toggle('on')"></div>
+    </div>
+
+    <!-- ═══ SECTION: Core Configuration (§24) ═══ -->
+    <div class="section" id="sec-core">
+      <div class="section-header" onclick="toggleSection('sec-core')">
+        <div class="section-title"><span class="sec-icon">⚙️</span> Core Configuration <span class="section-tag">§24</span></div>
+        <div class="section-chevron">▼</div>
+      </div>
+      <div class="section-body">
+
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">Identifier <span class="ft-param">freqai.identifier</span></div>
+            <input class="form-input" type="text" value="unique-freqai-model-1" placeholder="unique-freqai-model-1">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Model <span class="ft-param">freqai.model_training_parameters</span></div>
+            <select class="form-input" id="model-select">
+              <option selected>LightGBMRegressor</option>
+              <option>LightGBMClassifier</option>
+              <option>XGBoostRegressor</option>
+              <option>XGBoostClassifier</option>
+              <option>PyTorchRegressor</option>
+              <option>PyTorchClassifier</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row-4">
+          <div class="form-group">
+            <div class="form-label">Train Period <span class="ft-param">train_period_days</span></div>
+            <input class="form-input" type="number" value="30" min="1">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Backtest Period <span class="ft-param">backtest_period_days</span></div>
+            <input class="form-input" type="number" value="7" min="1">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Live Retrain Hours <span class="ft-param">live_retrain_hours</span></div>
+            <input class="form-input" type="number" value="8" min="1">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Expired Hours <span class="ft-param">expired_hours</span></div>
+            <input class="form-input" type="number" value="48" min="1">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">Purge Old Models <span class="ft-param">purge_old_models</span></div>
+            <input class="form-input" type="number" value="2" min="0">
+          </div>
+          <div class="form-group" style="display:flex;flex-direction:column;justify-content:flex-end">
+            <div class="toggle-row">
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+              <div>
+                <div class="toggle-label">Continual Learning</div>
+                <div class="toggle-sub">freqai.continual_learning</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="toggle-row">
+          <div class="toggle" onclick="this.classList.toggle('on')"></div>
+          <div>
+            <div class="toggle-label">Activate TensorBoard</div>
+            <div class="toggle-sub">freqai.activate_tensorboard</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ SECTION: Feature Parameters ═══ -->
+    <div class="section" id="sec-features">
+      <div class="section-header" onclick="toggleSection('sec-features')">
+        <div class="section-title"><span class="sec-icon">📐</span> Feature Parameters <span class="section-tag">§24</span></div>
+        <div class="section-chevron">▼</div>
+      </div>
+      <div class="section-body">
+
+        <div class="form-group">
+          <div class="form-label">Include Timeframes <span class="ft-param">include_timeframes</span></div>
+          <div class="chip-grid" id="tf-chips">
+            <div class="chip" onclick="toggleChip(this)">1m</div>
+            <div class="chip selected" onclick="toggleChip(this)">5m</div>
+            <div class="chip selected" onclick="toggleChip(this)">15m</div>
+            <div class="chip" onclick="toggleChip(this)">30m</div>
+            <div class="chip selected" onclick="toggleChip(this)">1h</div>
+            <div class="chip" onclick="toggleChip(this)">4h</div>
+            <div class="chip" onclick="toggleChip(this)">1d</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label">Include Corr Pairlist <span class="ft-param">include_corr_pairlist</span></div>
+          <div class="chip-grid" id="corr-chips">
+            <div class="chip selected" onclick="toggleChip(this)">BTC/USDT:USDT</div>
+            <div class="chip selected" onclick="toggleChip(this)">ETH/USDT:USDT</div>
+            <div class="chip" onclick="toggleChip(this)">SOL/USDT:USDT</div>
+            <div class="chip" onclick="toggleChip(this)">BNB/USDT:USDT</div>
+            <div class="chip" onclick="toggleChip(this)">XRP/USDT:USDT</div>
+            <div class="chip" onclick="toggleChip(this)">DOGE/USDT:USDT</div>
+          </div>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <div class="form-label">Include Shifted Candles <span class="ft-param">include_shifted_candles</span></div>
+            <input class="form-input" type="number" value="2" min="0">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Label Period Candles <span class="ft-param">label_period_candles</span></div>
+            <input class="form-input" type="number" value="24" min="1">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Fit Live Predictions <span class="ft-param">fit_live_predictions_candles</span></div>
+            <input class="form-input" type="number" value="100" min="0">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label">Indicator Periods (Candles) <span class="ft-param">indicator_periods_candles</span></div>
+          <div class="array-input" id="periods-array">
+            <div class="array-tag">10 <span class="tag-remove" onclick="this.parentElement.remove()">x</span></div>
+            <div class="array-tag">20 <span class="tag-remove" onclick="this.parentElement.remove()">x</span></div>
+            <div class="array-tag">50 <span class="tag-remove" onclick="this.parentElement.remove()">x</span></div>
+            <input type="text" placeholder="Add period, press Enter" onkeydown="addArrayTag(event, this)">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label">Test Size <span class="ft-param">data_split_parameters.test_size</span></div>
+          <div class="slider-row">
+            <input type="range" class="slider" min="0" max="100" value="25" oninput="this.nextElementSibling.textContent=this.value/100">
+            <span class="slider-val">0.25</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ SECTION: Feature Engineering Methods ═══ -->
+    <div class="section" id="sec-engineering">
+      <div class="section-header" onclick="toggleSection('sec-engineering')">
+        <div class="section-title"><span class="sec-icon">🔧</span> Feature Engineering Methods <span class="section-tag">§24</span></div>
+        <div class="section-chevron">▼</div>
+      </div>
+      <div class="section-body">
+
+        <div class="form-group">
+          <div class="form-label">Method Selector</div>
+          <div class="chip-grid">
+            <div class="chip selected" onclick="selectMethod(this)">expand_all</div>
+            <div class="chip" onclick="selectMethod(this)">expand_basic</div>
+            <div class="chip" onclick="selectMethod(this)">standard</div>
+          </div>
+        </div>
+
+        <div class="info-block" style="margin-top:4px">
+          <strong style="color:var(--text-0)">Feature Expansion</strong><br>
+          Features are expanded as: <code>Periods</code> x <code>Timeframes</code> x <code>Shifted Candles</code> x <code>Corr Pairs</code><br><br>
+          <strong style="color:var(--text-0)">Column Naming Convention</strong><br>
+          <code>%</code> prefix = feature column (used for training)<br>
+          <code>%%</code> prefix = plot-only column (not used in training)<br>
+          <code>&amp;</code> prefix = target / label column<br>
+          <code>do_predict</code> = outlier detection flag (1 = normal, 0 = outlier)
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ SECTION: Reinforcement Learning (§25) ═══ -->
+    <div class="section" id="sec-rl">
+      <div class="section-header" onclick="toggleSection('sec-rl')">
+        <div class="section-title"><span class="sec-icon">🎮</span> Reinforcement Learning <span class="section-tag">§25</span></div>
+        <div class="section-chevron">▼</div>
+      </div>
+      <div class="section-body">
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <div class="form-label">Model Type <span class="ft-param">rl_config.model_type</span></div>
+            <select class="form-input">
+              <option selected>PPO</option>
+              <option>A2C</option>
+              <option>DQN</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Policy Type <span class="ft-param">rl_config.policy_type</span></div>
+            <select class="form-input">
+              <option selected>MlpPolicy</option>
+              <option>CnnPolicy</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Environment <span class="hint">RL env class</span></div>
+            <select class="form-input">
+              <option>Base3ActionRLEnv</option>
+              <option selected>Base4ActionRLEnv</option>
+              <option>Base5ActionRLEnv</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <div class="form-label">Train Cycles <span class="ft-param">rl_config.train_cycles</span></div>
+            <input class="form-input" type="number" value="25" min="1">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Max Trade Duration <span class="ft-param">max_trade_duration_candles</span></div>
+            <input class="form-input" type="number" value="300" min="1">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Max Training Drawdown <span class="ft-param">max_training_drawdown_pct</span></div>
+            <input class="form-input" type="number" value="0.8" step="0.01" min="0" max="1">
+          </div>
+        </div>
+
+        <div class="toggle-row">
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          <div>
+            <div class="toggle-label">Add State Info</div>
+            <div class="toggle-sub">rl_config.add_state_info</div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:14px">
+          <div class="form-label">Model Reward Parameters <span class="ft-param">model_reward_parameters</span></div>
+          <div class="kv-editor" id="reward-params">
+            <div class="kv-row">
+              <input class="kv-key" value="rr" placeholder="key">
+              <input class="kv-val" value="1" placeholder="value">
+              <div class="kv-remove" onclick="this.parentElement.remove()">x</div>
+            </div>
+            <div class="kv-row">
+              <input class="kv-key" value="profit_aim" placeholder="key">
+              <input class="kv-val" value="0.025" placeholder="value">
+              <div class="kv-remove" onclick="this.parentElement.remove()">x</div>
+            </div>
+            <div class="kv-row">
+              <input class="kv-key" value="win_reward_factor" placeholder="key">
+              <input class="kv-val" value="10" placeholder="value">
+              <div class="kv-remove" onclick="this.parentElement.remove()">x</div>
+            </div>
+          </div>
+          <div class="kv-add" onclick="addKvRow('reward-params')">+ Add Parameter</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ SECTION: Data Processing & Outlier Detection (§26) ═══ -->
+    <div class="section" id="sec-outlier">
+      <div class="section-header" onclick="toggleSection('sec-outlier')">
+        <div class="section-title"><span class="sec-icon">🔬</span> Data Processing &amp; Outlier Detection <span class="section-tag">§26</span></div>
+        <div class="section-chevron">▼</div>
+      </div>
+      <div class="section-body">
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <div class="form-label">Data Kitchen Thread Count <span class="ft-param">data_kitchen_thread_count</span></div>
+            <input class="form-input" type="number" value="4" min="1">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Buffer Train Data Candles <span class="ft-param">buffer_train_data_candles</span></div>
+            <input class="form-input" type="number" value="0" min="0">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Noise Std Deviation <span class="ft-param">noise_standard_deviation</span></div>
+            <input class="form-input" type="number" value="0.05" step="0.01" min="0">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label">Weight Factor <span class="ft-param">weight_factor</span></div>
+          <div class="slider-row">
+            <input type="range" class="slider" min="0" max="100" value="0" oninput="this.nextElementSibling.textContent=(this.value/10).toFixed(1)">
+            <span class="slider-val">0.0</span>
+          </div>
+        </div>
+
+        <!-- Toggles grid -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;margin-bottom:14px">
+          <div class="toggle-row">
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            <div>
+              <div class="toggle-label">Save Backtest Models</div>
+              <div class="toggle-sub">save_backtest_models</div>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            <div>
+              <div class="toggle-label">Write Metrics to Disk</div>
+              <div class="toggle-sub">write_metrics_to_disk</div>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle" onclick="this.classList.toggle('on')"></div>
+            <div>
+              <div class="toggle-label">Reduce DF Footprint</div>
+              <div class="toggle-sub">reduce_df_footprint</div>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle" onclick="this.classList.toggle('on')"></div>
+            <div>
+              <div class="toggle-label">Shuffle After Split</div>
+              <div class="toggle-sub">shuffle_after_split</div>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle" onclick="this.classList.toggle('on')"></div>
+            <div>
+              <div class="toggle-label">Reverse Train/Test Order</div>
+              <div class="toggle-sub">reverse_train_test_order</div>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle" onclick="this.classList.toggle('on')"></div>
+            <div>
+              <div class="toggle-label">Principal Component Analysis</div>
+              <div class="toggle-sub">principal_component_analysis</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+          <div class="form-label" style="margin-bottom:12px;font-size:12px;color:var(--text-0)">Outlier Detection Methods</div>
+
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <!-- SVM -->
+            <div style="padding:12px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-3)">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <div class="toggle-row" style="margin-bottom:0">
+                  <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+                  <div>
+                    <div class="toggle-label">SVM Outlier Removal</div>
+                    <div class="toggle-sub">use_SVM_to_remove_outliers</div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-row" style="max-width:300px">
+                <div class="form-group" style="margin-bottom:0">
+                  <div class="form-label">SVM Nu <span class="ft-param">svm_params.nu</span></div>
+                  <input class="form-input" type="number" value="0.1" step="0.01" min="0" max="1">
+                </div>
+              </div>
+            </div>
+
+            <!-- DBSCAN -->
+            <div style="padding:12px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-3)">
+              <div class="toggle-row" style="margin-bottom:0">
+                <div class="toggle" onclick="this.classList.toggle('on')"></div>
+                <div>
+                  <div class="toggle-label">DBSCAN Outlier Removal</div>
+                  <div class="toggle-sub">use_DBSCAN_to_remove_outliers</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- DI Threshold -->
+            <div style="padding:12px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-3)">
+              <div class="form-row" style="max-width:500px">
+                <div class="form-group" style="margin-bottom:0">
+                  <div class="form-label">DI Threshold <span class="ft-param">DI_threshold</span></div>
+                  <input class="form-input" type="number" value="1" step="0.1" min="0">
+                </div>
+                <div class="form-group" style="margin-bottom:0">
+                  <div class="form-label">Outlier Protection % <span class="ft-param">outlier_protection_percentage</span></div>
+                  <input class="form-input" type="number" value="30" min="0" max="100">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ SECTION: PyTorch Configuration ═══ -->
+    <div class="section" id="sec-pytorch">
+      <div class="section-header" onclick="toggleSection('sec-pytorch')">
+        <div class="section-title"><span class="sec-icon">🔥</span> PyTorch Configuration <span class="section-tag">§24</span></div>
+        <div class="section-chevron">▼</div>
+      </div>
+      <div class="section-body">
+
+        <div class="info-block" style="margin-bottom:16px">
+          These parameters apply when using <code>PyTorchRegressor</code> or <code>PyTorchClassifier</code> as the model type.
+        </div>
+
+        <div class="form-row-4">
+          <div class="form-group">
+            <div class="form-label">Learning Rate <span class="ft-param">learning_rate</span></div>
+            <input class="form-input" type="text" value="0.001" placeholder="e.g. 0.001">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Epochs <span class="ft-param">trainer_kwargs.n_epochs</span></div>
+            <input class="form-input" type="number" value="10" min="1">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Batch Size <span class="ft-param">trainer_kwargs.batch_size</span></div>
+            <input class="form-input" type="number" value="64" min="1">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Conv Width <span class="ft-param">conv_width</span></div>
+            <input class="form-input" type="number" value="2" min="1">
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ SAVE BAR ═══ -->
+    <div class="save-bar">
+      <button class="btn-primary" onclick="saveConfig()">💾 Save FreqAI Config</button>
+      <button class="btn-secondary">↩ Reset to Defaults</button>
+      <span class="save-status" id="save-status"></span>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+/* ── Section collapse ── */
+function toggleSection(id) {
+  document.getElementById(id).classList.toggle('collapsed');
+}
+
+/* ── Chip multi-select ── */
+function toggleChip(el) {
+  el.classList.toggle('selected');
+}
+
+/* ── Method single-select ── */
+function selectMethod(el) {
+  el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+/* ── Array tag input ── */
+function addArrayTag(e, input) {
+  if (e.key === 'Enter' && input.value.trim()) {
+    e.preventDefault();
+    const tag = document.createElement('div');
+    tag.className = 'array-tag';
+    tag.innerHTML = input.value.trim() + ' <span class="tag-remove" onclick="this.parentElement.remove()">x</span>';
+    input.parentElement.insertBefore(tag, input);
+    input.value = '';
+  }
+}
+
+/* ── Key-value row add ── */
+function addKvRow(containerId) {
+  const container = document.getElementById(containerId);
+  const row = document.createElement('div');
+  row.className = 'kv-row';
+  row.innerHTML = '<input class="kv-key" placeholder="key"><input class="kv-val" placeholder="value"><div class="kv-remove" onclick="this.parentElement.remove()">x</div>';
+  container.appendChild(row);
+}
+
+/* ── Save mock ── */
+function saveConfig() {
+  const status = document.getElementById('save-status');
+  status.textContent = 'Saving...';
+  status.style.color = 'var(--amber)';
+  setTimeout(() => {
+    status.textContent = 'FreqAI config saved successfully';
+    status.style.color = 'var(--green)';
+    setTimeout(() => { status.textContent = ''; }, 3000);
+  }, 600);
+}
+</script>
+</body>
+</html>

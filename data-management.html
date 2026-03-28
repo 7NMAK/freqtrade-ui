@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreqTrade Platform — Data Management</title>
+<style>
+/* ─── RESET & BASE ─── */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-0:#06060b;--bg-1:#0c0c14;--bg-2:#12121c;--bg-3:#1a1a28;
+  --border:#1e1e30;--border-hover:#2e2e48;
+  --text-0:#f0f0f5;--text-1:#c0c0d0;--text-2:#808098;--text-3:#55556a;
+  --accent:#6366f1;--accent-dim:#4f46e5;--accent-glow:rgba(99,102,241,.12);
+  --green:#22c55e;--green-dim:#166534;--green-bg:rgba(34,197,94,.08);
+  --red:#ef4444;--red-dim:#991b1b;--red-bg:rgba(239,68,68,.08);
+  --amber:#f59e0b;--amber-dim:#92400e;--amber-bg:rgba(245,158,11,.08);
+  --cyan:#06b6d4;--purple:#a855f7;
+  --sidebar-w:240px;--header-h:56px;
+  --radius:10px;--radius-sm:6px;
+}
+html{font-size:13px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;background:var(--bg-0);color:var(--text-1);display:flex;height:100vh;overflow:hidden}
+
+/* ─── SIDEBAR ─── */
+.sidebar{width:var(--sidebar-w);background:var(--bg-1);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sidebar-logo{padding:18px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.sidebar-logo .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),#a855f7);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff}
+.sidebar-logo .logo-text{font-size:14px;font-weight:700;color:var(--text-0);letter-spacing:-.3px}
+.sidebar-logo .logo-sub{font-size:10px;color:var(--text-3);font-weight:500}
+.sidebar-nav{padding:12px 10px;flex:1}
+.nav-section{margin-bottom:16px}
+.nav-section-label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;padding:6px 12px;margin-bottom:2px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;color:var(--text-2);font-size:12.5px;font-weight:500;position:relative;text-decoration:none}
+.nav-item:hover{background:var(--bg-3);color:var(--text-1)}
+.nav-item.active{background:var(--accent-glow);color:var(--accent)}
+.nav-item .nav-icon{width:18px;text-align:center;font-size:14px;flex-shrink:0}
+.nav-item .nav-badge{margin-left:auto;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;background:var(--bg-3);color:var(--text-2)}
+.nav-item.active .nav-badge{background:var(--accent-glow);color:var(--accent)}
+.nav-item .nav-dot{width:6px;height:6px;border-radius:50%;margin-left:auto;flex-shrink:0}
+.nav-dot.live{background:var(--green);box-shadow:0 0 6px var(--green)}
+.sidebar-footer{padding:14px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--text-3)}
+.sidebar-footer .ft-status{display:flex;align-items:center;gap:6px}
+.sidebar-footer .ft-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+
+/* ─── MAIN AREA ─── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* ─── HEADER ─── */
+.header{height:var(--header-h);background:var(--bg-1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0}
+.header-title{font-size:16px;font-weight:700;color:var(--text-0);margin-right:auto}
+.header-search{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 12px 6px 32px;font-size:12px;color:var(--text-1);width:220px;outline:none;transition:border-color .2s}
+.header-search:focus{border-color:var(--accent)}
+.search-wrap{position:relative}
+.search-wrap::before{content:"\2315";position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:14px;z-index:1}
+.header-actions{display:flex;align-items:center;gap:6px}
+.hdr-btn{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;cursor:pointer;transition:all .15s;color:var(--text-2);font-size:14px;display:flex;align-items:center;gap:4px;position:relative}
+.hdr-btn:hover{border-color:var(--border-hover);color:var(--text-1);background:var(--bg-3)}
+.hdr-btn .notif-dot{position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--red)}
+.kill-btn{background:var(--red-bg);border-color:rgba(239,68,68,.25);color:var(--red);font-size:11px;font-weight:600;padding:6px 14px;gap:6px;letter-spacing:.3px}
+.kill-btn:hover{background:rgba(239,68,68,.18);border-color:var(--red)}
+.kill-btn .kill-icon{font-size:13px}
+.user-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#a855f7);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;cursor:pointer;margin-left:4px}
+
+/* ─── CONTENT ─── */
+.content{flex:1;overflow-y:auto;padding:20px 24px 32px;background:var(--bg-0)}
+
+/* ─── SECTION TITLE ─── */
+.section-title{font-size:14px;font-weight:700;color:var(--text-0);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.section-title .sec-icon{font-size:15px}
+.section-ref{font-size:10px;color:var(--text-3);font-weight:500;margin-bottom:16px}
+
+/* ─── CARD ─── */
+.card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
+.card-header{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.card-title{font-size:12.5px;font-weight:600;color:var(--text-0);display:flex;align-items:center;gap:8px}
+.card-title .card-icon{font-size:14px}
+.card-body{padding:14px 18px}
+.card-body.no-pad{padding:0}
+
+/* ─── FORM ELEMENTS ─── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px}
+.form-row.three{grid-template-columns:1fr 1fr 1fr}
+.form-row.four{grid-template-columns:1fr 1fr 1fr 1fr}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:11px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.4px}
+.form-label .label-hint{font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-3);font-size:10px}
+.form-input,.form-select{background:var(--bg-1);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:12px;color:var(--text-1);outline:none;transition:border-color .2s;font-family:inherit}
+.form-input:focus,.form-select:focus{border-color:var(--accent)}
+.form-select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23808098'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+.form-select option{background:var(--bg-1);color:var(--text-1)}
+select[multiple]{height:auto;min-height:100px;padding:4px}
+select[multiple] option{padding:4px 8px;border-radius:3px;margin-bottom:1px}
+select[multiple] option:checked{background:var(--accent-glow);color:var(--accent)}
+
+/* ─── CHECKBOXES GRID ─── */
+.checkbox-grid{display:flex;flex-wrap:wrap;gap:6px}
+.cb-item{display:flex;align-items:center;gap:5px;padding:5px 10px;background:var(--bg-1);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;font-size:11px;color:var(--text-2);user-select:none}
+.cb-item:hover{border-color:var(--border-hover);color:var(--text-1)}
+.cb-item.checked{border-color:var(--accent);background:var(--accent-glow);color:var(--accent)}
+.cb-item input{display:none}
+
+/* ─── TOGGLE ─── */
+.toggle-row{display:flex;align-items:center;gap:12px;padding:8px 0}
+.toggle{width:36px;height:20px;background:var(--bg-3);border-radius:10px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--accent)}
+.toggle::after{content:'';position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:2px;left:2px;transition:transform .2s}
+.toggle.on::after{transform:translateX(16px)}
+.toggle.danger.on{background:var(--red)}
+.toggle-label{font-size:12px;color:var(--text-1)}
+.toggle-warn{font-size:10px;color:var(--red);margin-left:4px;font-weight:500}
+
+/* ─── BUTTONS ─── */
+.btn{padding:8px 18px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;border:1px solid transparent;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent-dim);box-shadow:0 0 20px rgba(99,102,241,.2)}
+.btn-secondary{background:var(--bg-3);color:var(--text-1);border-color:var(--border)}
+.btn-secondary:hover{border-color:var(--border-hover);background:var(--bg-1)}
+.btn-sm{padding:5px 12px;font-size:11px}
+
+/* ─── PROGRESS BAR ─── */
+.progress-wrap{margin-top:12px;display:none}
+.progress-wrap.active{display:block}
+.progress-bar-bg{height:4px;background:var(--bg-3);border-radius:2px;overflow:hidden}
+.progress-bar{height:100%;background:var(--accent);border-radius:2px;width:0;transition:width .5s}
+.progress-text{font-size:11px;color:var(--text-2);margin-top:6px;display:flex;justify-content:space-between}
+
+/* ─── LOG AREA ─── */
+.log-area{background:var(--bg-0);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-family:'SF Mono','Fira Code','Cascadia Code',monospace;font-size:11px;line-height:1.7;color:var(--text-2);max-height:160px;overflow-y:auto;margin-top:12px;white-space:pre-wrap}
+.log-area .log-ok{color:var(--green)}
+.log-area .log-warn{color:var(--amber)}
+.log-area .log-err{color:var(--red)}
+.log-area .log-info{color:var(--cyan)}
+
+/* ─── UTILITY CARDS GRID ─── */
+.util-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+.util-card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color .2s}
+.util-card:hover{border-color:var(--border-hover)}
+.util-card-header{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.util-card-title{font-size:12px;font-weight:600;color:var(--text-0);display:flex;align-items:center;gap:7px}
+.util-card-title .uc-icon{font-size:13px}
+.util-cmd{font-size:10px;color:var(--text-3);font-family:'SF Mono','Fira Code',monospace}
+.util-card-body{padding:12px 16px;max-height:280px;overflow-y:auto}
+
+/* ─── TABLES ─── */
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{text-align:left;padding:6px 10px;font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap}
+.data-table td{padding:6px 10px;font-size:11px;border-bottom:1px solid rgba(30,30,48,.4);white-space:nowrap;color:var(--text-1)}
+.data-table tbody tr:hover{background:var(--bg-3)}
+.data-table tbody tr:last-child td{border-bottom:none}
+.data-table .mono{font-family:'SF Mono','Fira Code',monospace;font-size:10px;color:var(--text-2)}
+.data-table .highlight{color:var(--accent);font-weight:600}
+.data-table .green{color:var(--green)}.data-table .red{color:var(--red)}.data-table .amber{color:var(--amber)}
+
+/* ─── PAIR TAGS ─── */
+.pair-tag{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600;background:var(--bg-3);color:var(--text-1);margin:2px}
+.pair-tag.active{background:var(--accent-glow);color:var(--accent);border:1px solid rgba(99,102,241,.2)}
+
+/* ─── STATUS BADGE ─── */
+.status-badge{font-size:9px;font-weight:600;padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.3px}
+.status-badge.ok{background:var(--green-bg);color:var(--green)}
+.status-badge.warn{background:var(--amber-bg);color:var(--amber)}
+
+/* ─── FILTER ROW ─── */
+.filter-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+.filter-input{background:var(--bg-1);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 10px;font-size:11px;color:var(--text-1);outline:none;width:160px;font-family:inherit}
+.filter-input:focus{border-color:var(--accent)}
+.filter-select{background:var(--bg-1);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 10px;font-size:11px;color:var(--text-1);cursor:pointer;font-family:inherit;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23808098'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:22px}
+.filter-select option{background:var(--bg-1);color:var(--text-1)}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bg-3);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--border-hover)}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:1200px){.form-row{grid-template-columns:1fr}.util-grid{grid-template-columns:1fr}}
+@media(max-width:768px){.sidebar{display:none}}
+</style>
+</head>
+<body>
+
+<!-- ════════════ SIDEBAR ════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">FT</div>
+    <div>
+      <div class="logo-text">FreqTrade</div>
+      <div class="logo-sub">Trading Platform</div>
+    </div>
+  </div>
+
+  <div class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item" href="dashboard.html">
+        <span class="nav-icon">&#x1F4C8;</span> Dashboard
+        <div class="nav-dot live"></div>
+      </a>
+      <a class="nav-item" href="strategies.html">
+        <span class="nav-icon">&#x1F3AF;</span> Strategies
+        <span class="nav-badge">3 live</span>
+      </a>
+      <a class="nav-item" href="builder.html">
+        <span class="nav-icon">&#x270F;&#xFE0F;</span> Strategy Builder
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#x1F9EA;</span> Backtesting
+        <span class="nav-badge">2 runs</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Monitor</div>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#x1F4CA;</span> Analytics
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#x1F6E1;&#xFE0F;</span> Risk
+        <div class="nav-dot live"></div>
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#x1F4D2;</span> Journal
+        <span class="nav-badge">847</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">System</div>
+      <a class="nav-item active" href="data-management.html">
+        <span class="nav-icon">&#x1F4BE;</span> Data
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#x2699;&#xFE0F;</span> Settings
+      </a>
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="ft-status">
+      <div class="ft-dot"></div>
+      <span>FreqTrade 2026.2 &mdash; 5 bots</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ════════════ MAIN ════════════ -->
+<div class="main">
+
+  <!-- ──── HEADER ──── -->
+  <header class="header">
+    <div class="header-title">Data Management</div>
+    <div class="search-wrap">
+      <input class="header-search" type="text" placeholder="Search pairs, commands...">
+    </div>
+    <div class="header-actions">
+      <div class="hdr-btn" title="Notifications">
+        &#x1F514; <div class="notif-dot"></div>
+      </div>
+      <div class="hdr-btn kill-btn" title="Kill Switch &mdash; Click: Soft Kill | Hold 3s: Hard Kill ALL" onclick="alert('Kill Switch activated: Soft Kill sent to all bots (POST /api/v1/stop)')">
+        <span class="kill-icon">&#x1F6A8;</span> KILL SWITCH
+      </div>
+      <div class="user-avatar">N</div>
+    </div>
+  </header>
+
+  <!-- ──── SCROLLABLE CONTENT ──── -->
+  <div class="content">
+
+    <!-- ═══════════════════════════════════════════
+         SECTION 1: DATA DOWNLOAD (§12)
+         CLI: freqtrade download-data
+         ═══════════════════════════════════════════ -->
+    <div class="section-title"><span class="sec-icon">&#x1F4E5;</span> Data Download</div>
+    <div class="section-ref">&sect;12 &mdash; freqtrade download-data &mdash; Download OHLCV & ticker data from exchanges</div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="card-icon">&#x2699;&#xFE0F;</span> Download Configuration</div>
+        <span style="font-size:10px;color:var(--text-3)">CLI: freqtrade download-data [args]</span>
+      </div>
+      <div class="card-body">
+        <!-- Row 1: Pairs + Exchange -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">--pairs <span class="label-hint">(multi-select)</span></label>
+            <select class="form-select" multiple id="pairSelect" style="min-height:110px">
+              <option selected>BTC/USDT:USDT</option>
+              <option selected>ETH/USDT:USDT</option>
+              <option>BNB/USDT:USDT</option>
+              <option>SOL/USDT:USDT</option>
+              <option>XRP/USDT:USDT</option>
+              <option>ADA/USDT:USDT</option>
+              <option>DOGE/USDT:USDT</option>
+              <option>AVAX/USDT:USDT</option>
+              <option>DOT/USDT:USDT</option>
+              <option>LINK/USDT:USDT</option>
+              <option>MATIC/USDT:USDT</option>
+              <option>UNI/USDT:USDT</option>
+              <option>ATOM/USDT:USDT</option>
+              <option>LTC/USDT:USDT</option>
+              <option>FIL/USDT:USDT</option>
+              <option>APT/USDT:USDT</option>
+              <option>ARB/USDT:USDT</option>
+              <option>OP/USDT:USDT</option>
+              <option>NEAR/USDT:USDT</option>
+              <option>AAVE/USDT:USDT</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">--exchange</label>
+            <select class="form-select" id="exchangeSelect">
+              <option selected>binance</option>
+              <option>bybit</option>
+              <option>okx</option>
+              <option>gate</option>
+              <option>kraken</option>
+              <option>bitget</option>
+              <option>htx</option>
+              <option>kucoin</option>
+            </select>
+            <div style="margin-top:12px">
+              <label class="form-label">--trading-mode</label>
+              <select class="form-select" id="tradingMode" style="margin-top:5px">
+                <option selected>futures</option>
+                <option>spot</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Timeframes -->
+        <div class="form-group" style="margin-bottom:14px">
+          <label class="form-label">--timeframes <span class="label-hint">(select one or more)</span></label>
+          <div class="checkbox-grid" id="tfGrid">
+            <label class="cb-item" onclick="this.classList.toggle('checked')"><input type="checkbox"> 1m</label>
+            <label class="cb-item" onclick="this.classList.toggle('checked')"><input type="checkbox"> 5m</label>
+            <label class="cb-item" onclick="this.classList.toggle('checked')"><input type="checkbox"> 15m</label>
+            <label class="cb-item" onclick="this.classList.toggle('checked')"><input type="checkbox"> 30m</label>
+            <label class="cb-item checked" onclick="this.classList.toggle('checked')"><input type="checkbox" checked> 1h</label>
+            <label class="cb-item" onclick="this.classList.toggle('checked')"><input type="checkbox"> 4h</label>
+            <label class="cb-item checked" onclick="this.classList.toggle('checked')"><input type="checkbox" checked> 1d</label>
+            <label class="cb-item" onclick="this.classList.toggle('checked')"><input type="checkbox"> 1w</label>
+          </div>
+        </div>
+
+        <!-- Row 3: Date range -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">--timerange <span class="label-hint">start (YYYYMMDD)</span></label>
+            <input class="form-input" type="date" id="dateStart" value="2022-01-01">
+          </div>
+          <div class="form-group">
+            <label class="form-label">--timerange <span class="label-hint">end (YYYYMMDD)</span></label>
+            <input class="form-input" type="date" id="dateEnd" value="2026-03-28">
+          </div>
+        </div>
+
+        <!-- Row 4: Toggles -->
+        <div style="display:flex;gap:32px;flex-wrap:wrap">
+          <div class="toggle-row">
+            <div class="toggle" id="toggleErase" onclick="this.classList.toggle('on')"></div>
+            <span class="toggle-label">--erase <span class="toggle-warn">Delete existing data first (destructive)</span></span>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle on" id="togglePrepend" onclick="this.classList.toggle('on')"></div>
+            <span class="toggle-label">--prepend <span class="label-hint" style="color:var(--text-3)">Add older data before existing</span></span>
+          </div>
+        </div>
+
+        <!-- Erase warning -->
+        <div id="eraseWarning" style="display:none;margin-top:8px;padding:8px 12px;background:var(--red-bg);border:1px solid rgba(239,68,68,.2);border-radius:var(--radius-sm);font-size:11px;color:var(--red)">
+          &#x26A0; WARNING: --erase will permanently delete all existing data for the selected pairs and timeframes before downloading. This cannot be undone.
+        </div>
+
+        <!-- Action row -->
+        <div style="display:flex;align-items:center;gap:12px;margin-top:16px">
+          <button class="btn btn-primary" onclick="startDownload()">
+            &#x1F4E5; Download Data
+          </button>
+          <button class="btn btn-secondary" onclick="buildCommand()">
+            &#x1F4CB; Show CLI Command
+          </button>
+          <span id="dlStatus" style="font-size:11px;color:var(--text-3)"></span>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-wrap" id="progressWrap">
+          <div class="progress-bar-bg">
+            <div class="progress-bar" id="progressBar"></div>
+          </div>
+          <div class="progress-text">
+            <span id="progressLabel">Downloading...</span>
+            <span id="progressPct">0%</span>
+          </div>
+        </div>
+
+        <!-- Log -->
+        <div class="log-area" id="downloadLog"><span class="log-info">[ready]</span> Configure download parameters and click "Download Data"
+<span class="log-info">[info]</span> Current data on disk: BTC/USDT:USDT (1h, 1d) from 2022-01-01
+<span class="log-info">[info]</span> Exchange: binance | Trading mode: futures</div>
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════
+         SECTION 2: UTILITY COMMANDS (§18)
+         ═══════════════════════════════════════════ -->
+    <div class="section-title" style="margin-top:28px"><span class="sec-icon">&#x1F527;</span> Utility Commands</div>
+    <div class="section-ref">&sect;18 &mdash; FreqTrade utility sub-commands &mdash; list-strategies, list-exchanges, list-pairs, list-data, convert-data, etc.</div>
+
+    <div class="util-grid">
+
+      <!-- ──── LIST STRATEGIES ──── -->
+      <div class="util-card">
+        <div class="util-card-header">
+          <div class="util-card-title"><span class="uc-icon">&#x1F3AF;</span> List Strategies</div>
+          <button class="btn btn-sm btn-secondary" onclick="toggleOutput('strat-out')">&#x25B6; Run</button>
+        </div>
+        <div class="util-cmd" style="padding:6px 16px;border-bottom:1px solid var(--border)">freqtrade list-strategies --userdir user_data</div>
+        <div class="util-card-body" id="strat-out">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>Strategy Name</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">1</td><td class="highlight">SampleStrategy</td><td><span class="status-badge ok">active</span></td></tr>
+              <tr><td class="mono">2</td><td>BollingerRSI</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">3</td><td>EMACrossover</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">4</td><td>MACDTrend</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">5</td><td>ScalpVWAP</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">6</td><td>MomentumBreaker</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">7</td><td>RSIDivergence</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">8</td><td>IchimokuCloud</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">9</td><td>SupertrendFollow</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">10</td><td>ADXMomentum</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">11</td><td>BBandsBreakout</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">12</td><td>StochRSICombo</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">13</td><td>KeltnerChannel</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">14</td><td>VolumeProfile</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">15</td><td>HeikinAshiTrend</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">16</td><td>DCAGridBot</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">17</td><td>MeanReversion</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">18</td><td>OrderFlowImbalance</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">19</td><td>FreqAI_LightGBM</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">20</td><td>FreqAI_XGBoost</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">21</td><td>FreqAI_ReinforcementLearner</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">22</td><td>MultiTimeframeRSI</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">23</td><td>PatternRecognition</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">24</td><td>ArbitrageSpread</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">25</td><td>TrendFollowATR</td><td><span class="status-badge ok">ok</span></td></tr>
+              <tr><td class="mono">26</td><td>BreakoutVolume</td><td><span class="status-badge ok">ok</span></td></tr>
+            </tbody>
+          </table>
+          <div style="font-size:10px;color:var(--text-3);padding-top:8px">26 strategies found in user_data/strategies/</div>
+        </div>
+      </div>
+
+      <!-- ──── LIST EXCHANGES ──── -->
+      <div class="util-card">
+        <div class="util-card-header">
+          <div class="util-card-title"><span class="uc-icon">&#x1F310;</span> List Exchanges</div>
+          <button class="btn btn-sm btn-secondary" onclick="toggleOutput('exch-out')">&#x25B6; Run</button>
+        </div>
+        <div class="util-cmd" style="padding:6px 16px;border-bottom:1px solid var(--border)">freqtrade list-exchanges</div>
+        <div class="util-card-body" id="exch-out">
+          <table class="data-table">
+            <thead><tr><th>Exchange</th><th>Spot</th><th>Margin</th><th>Futures</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td class="highlight">binance</td><td class="green">Yes</td><td class="green">Yes</td><td class="green">Yes</td><td><span class="status-badge ok">supported</span></td></tr>
+              <tr><td>bybit</td><td class="green">Yes</td><td>No</td><td class="green">Yes</td><td><span class="status-badge ok">supported</span></td></tr>
+              <tr><td>okx</td><td class="green">Yes</td><td>No</td><td class="green">Yes</td><td><span class="status-badge ok">supported</span></td></tr>
+              <tr><td>gate</td><td class="green">Yes</td><td>No</td><td class="green">Yes</td><td><span class="status-badge ok">supported</span></td></tr>
+              <tr><td>kraken</td><td class="green">Yes</td><td class="green">Yes</td><td class="green">Yes</td><td><span class="status-badge ok">supported</span></td></tr>
+              <tr><td>bitget</td><td class="green">Yes</td><td>No</td><td class="green">Yes</td><td><span class="status-badge ok">supported</span></td></tr>
+              <tr><td>htx</td><td class="green">Yes</td><td>No</td><td class="green">Yes</td><td><span class="status-badge ok">supported</span></td></tr>
+              <tr><td>kucoin</td><td class="green">Yes</td><td>No</td><td class="green">Yes</td><td><span class="status-badge ok">supported</span></td></tr>
+              <tr><td>bitvavo</td><td class="green">Yes</td><td>No</td><td>No</td><td><span class="status-badge warn">spot only</span></td></tr>
+              <tr><td>bingx</td><td class="green">Yes</td><td>No</td><td class="green">Yes</td><td><span class="status-badge ok">supported</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ──── LIST TIMEFRAMES ──── -->
+      <div class="util-card">
+        <div class="util-card-header">
+          <div class="util-card-title"><span class="uc-icon">&#x23F1;&#xFE0F;</span> List Timeframes</div>
+          <button class="btn btn-sm btn-secondary" onclick="toggleOutput('tf-out')">&#x25B6; Run</button>
+        </div>
+        <div class="util-cmd" style="padding:6px 16px;border-bottom:1px solid var(--border)">freqtrade list-timeframes --exchange binance</div>
+        <div class="util-card-body" id="tf-out">
+          <table class="data-table">
+            <thead><tr><th>Exchange</th><th>Available Timeframes</th></tr></thead>
+            <tbody>
+              <tr><td class="highlight">binance</td><td>1s, 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M</td></tr>
+              <tr><td>bybit</td><td>1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d, 1w, 1M</td></tr>
+              <tr><td>okx</td><td>1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d, 1w, 1M</td></tr>
+              <tr><td>kraken</td><td>1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w</td></tr>
+              <tr><td>gate</td><td>10s, 1m, 5m, 15m, 30m, 1h, 4h, 8h, 1d, 7d, 30d</td></tr>
+              <tr><td>bitget</td><td>1m, 5m, 15m, 30m, 1h, 4h, 6h, 12h, 1d, 1w</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ──── LIST PAIRS ──── -->
+      <div class="util-card">
+        <div class="util-card-header">
+          <div class="util-card-title"><span class="uc-icon">&#x1F4B1;</span> List Pairs</div>
+          <button class="btn btn-sm btn-secondary" onclick="toggleOutput('pairs-out')">&#x25B6; Run</button>
+        </div>
+        <div class="util-cmd" style="padding:6px 16px;border-bottom:1px solid var(--border)">freqtrade list-pairs --exchange binance --trading-mode futures</div>
+        <div class="util-card-body" id="pairs-out">
+          <div class="filter-row">
+            <input class="filter-input" placeholder="Filter pairs..." oninput="filterPairs(this.value)">
+            <select class="filter-select">
+              <option>Quote: USDT</option>
+              <option>Quote: BUSD</option>
+              <option>Quote: All</option>
+            </select>
+            <select class="filter-select">
+              <option>Mode: futures</option>
+              <option>Mode: spot</option>
+            </select>
+            <span style="font-size:10px;color:var(--text-3);margin-left:auto" id="pairCount">Showing 20 of 387 pairs</span>
+          </div>
+          <div id="pairTagArea" style="line-height:2">
+            <span class="pair-tag active">BTC/USDT:USDT</span>
+            <span class="pair-tag active">ETH/USDT:USDT</span>
+            <span class="pair-tag">BNB/USDT:USDT</span>
+            <span class="pair-tag">SOL/USDT:USDT</span>
+            <span class="pair-tag">XRP/USDT:USDT</span>
+            <span class="pair-tag">ADA/USDT:USDT</span>
+            <span class="pair-tag">DOGE/USDT:USDT</span>
+            <span class="pair-tag">AVAX/USDT:USDT</span>
+            <span class="pair-tag">DOT/USDT:USDT</span>
+            <span class="pair-tag">LINK/USDT:USDT</span>
+            <span class="pair-tag">MATIC/USDT:USDT</span>
+            <span class="pair-tag">UNI/USDT:USDT</span>
+            <span class="pair-tag">ATOM/USDT:USDT</span>
+            <span class="pair-tag">LTC/USDT:USDT</span>
+            <span class="pair-tag">FIL/USDT:USDT</span>
+            <span class="pair-tag">APT/USDT:USDT</span>
+            <span class="pair-tag">ARB/USDT:USDT</span>
+            <span class="pair-tag">OP/USDT:USDT</span>
+            <span class="pair-tag">NEAR/USDT:USDT</span>
+            <span class="pair-tag">AAVE/USDT:USDT</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ──── LIST DATA ──── -->
+      <div class="util-card" style="grid-column:span 2">
+        <div class="util-card-header">
+          <div class="util-card-title"><span class="uc-icon">&#x1F4C2;</span> List Data</div>
+          <button class="btn btn-sm btn-secondary" onclick="toggleOutput('data-out')">&#x25B6; Run</button>
+        </div>
+        <div class="util-cmd" style="padding:6px 16px;border-bottom:1px solid var(--border)">freqtrade list-data --userdir user_data</div>
+        <div class="util-card-body" id="data-out">
+          <table class="data-table">
+            <thead><tr><th>Pair</th><th>Timeframe</th><th>Date Range</th><th>Candles</th><th>Format</th><th>File Size</th></tr></thead>
+            <tbody>
+              <tr><td class="highlight">BTC/USDT:USDT</td><td>1h</td><td>2022-01-01 &rarr; 2026-03-28</td><td class="mono">37,248</td><td class="mono">feather</td><td class="mono">4.2 MB</td></tr>
+              <tr><td class="highlight">BTC/USDT:USDT</td><td>1d</td><td>2022-01-01 &rarr; 2026-03-28</td><td class="mono">1,552</td><td class="mono">feather</td><td class="mono">186 KB</td></tr>
+              <tr><td class="highlight">ETH/USDT:USDT</td><td>1h</td><td>2022-01-01 &rarr; 2026-03-28</td><td class="mono">37,248</td><td class="mono">feather</td><td class="mono">4.1 MB</td></tr>
+              <tr><td class="highlight">ETH/USDT:USDT</td><td>1d</td><td>2022-01-01 &rarr; 2026-03-28</td><td class="mono">1,552</td><td class="mono">feather</td><td class="mono">178 KB</td></tr>
+              <tr><td>SOL/USDT:USDT</td><td>1h</td><td>2022-06-15 &rarr; 2026-03-28</td><td class="mono">33,120</td><td class="mono">feather</td><td class="mono">3.7 MB</td></tr>
+              <tr><td>SOL/USDT:USDT</td><td>1d</td><td>2022-06-15 &rarr; 2026-03-28</td><td class="mono">1,382</td><td class="mono">feather</td><td class="mono">162 KB</td></tr>
+              <tr><td>BNB/USDT:USDT</td><td>1h</td><td>2023-01-01 &rarr; 2026-03-28</td><td class="mono">28,416</td><td class="mono">feather</td><td class="mono">3.2 MB</td></tr>
+              <tr><td>XRP/USDT:USDT</td><td>1h</td><td>2023-01-01 &rarr; 2026-03-28</td><td class="mono">28,416</td><td class="mono">feather</td><td class="mono">3.1 MB</td></tr>
+              <tr><td>ADA/USDT:USDT</td><td>4h</td><td>2023-06-01 &rarr; 2026-03-28</td><td class="mono">6,072</td><td class="mono">json</td><td class="mono">1.8 MB</td></tr>
+              <tr><td>DOGE/USDT:USDT</td><td>1h</td><td>2024-01-01 &rarr; 2026-03-28</td><td class="mono">19,680</td><td class="mono">feather</td><td class="mono">2.2 MB</td></tr>
+              <tr><td>LINK/USDT:USDT</td><td>15m</td><td>2024-06-01 &rarr; 2026-03-28</td><td class="mono">63,360</td><td class="mono">feather</td><td class="mono">7.1 MB</td></tr>
+            </tbody>
+          </table>
+          <div style="font-size:10px;color:var(--text-3);padding-top:8px">Total: 11 datasets &middot; 29.9 MB on disk &middot; user_data/data/binance/futures/</div>
+        </div>
+      </div>
+
+      <!-- ──── CONVERT DATA ──── -->
+      <div class="util-card">
+        <div class="util-card-header">
+          <div class="util-card-title"><span class="uc-icon">&#x1F504;</span> Convert Data</div>
+          <button class="btn btn-sm btn-secondary" onclick="runConvert()">&#x25B6; Convert</button>
+        </div>
+        <div class="util-cmd" style="padding:6px 16px;border-bottom:1px solid var(--border)">freqtrade convert-data --format-from json --format-to feather</div>
+        <div class="util-card-body" id="convert-out">
+          <div class="form-row" style="margin-bottom:10px">
+            <div class="form-group">
+              <label class="form-label">--format-from</label>
+              <select class="form-select" id="convertFrom">
+                <option>json</option>
+                <option selected>feather</option>
+                <option>parquet</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">--format-to</label>
+              <select class="form-select" id="convertTo">
+                <option>json</option>
+                <option>feather</option>
+                <option selected>parquet</option>
+              </select>
+            </div>
+          </div>
+          <div class="log-area" style="max-height:80px;margin-top:0"><span class="log-info">[ready]</span> Select source and target format, then click Convert</div>
+        </div>
+      </div>
+
+      <!-- ──── TEST PAIRLIST ──── -->
+      <div class="util-card">
+        <div class="util-card-header">
+          <div class="util-card-title"><span class="uc-icon">&#x1F9EA;</span> Test Pairlist</div>
+          <button class="btn btn-sm btn-secondary" onclick="toggleOutput('pairlist-out')">&#x25B6; Run</button>
+        </div>
+        <div class="util-cmd" style="padding:6px 16px;border-bottom:1px solid var(--border)">freqtrade test-pairlist --config user_data/config.json</div>
+        <div class="util-card-body" id="pairlist-out">
+          <div style="font-size:11px;color:var(--text-2);margin-bottom:8px">Pairlist result from config.json pairlist handlers:</div>
+          <div style="line-height:2">
+            <span class="pair-tag active">BTC/USDT:USDT</span>
+            <span class="pair-tag active">ETH/USDT:USDT</span>
+            <span class="pair-tag active">BNB/USDT:USDT</span>
+            <span class="pair-tag active">SOL/USDT:USDT</span>
+            <span class="pair-tag active">XRP/USDT:USDT</span>
+            <span class="pair-tag active">ADA/USDT:USDT</span>
+            <span class="pair-tag active">DOGE/USDT:USDT</span>
+            <span class="pair-tag active">AVAX/USDT:USDT</span>
+            <span class="pair-tag active">DOT/USDT:USDT</span>
+            <span class="pair-tag active">LINK/USDT:USDT</span>
+          </div>
+          <div style="font-size:10px;color:var(--text-3);padding-top:8px">VolumePairList (10) &rarr; PriceFilter &rarr; SpreadFilter &rarr; 10 pairs passed</div>
+        </div>
+      </div>
+
+      <!-- ──── SHOW TRADES ──── -->
+      <div class="util-card" style="grid-column:span 2">
+        <div class="util-card-header">
+          <div class="util-card-title"><span class="uc-icon">&#x1F4C4;</span> Show Trades</div>
+          <button class="btn btn-sm btn-secondary" onclick="toggleOutput('trades-out')">&#x25B6; Run</button>
+        </div>
+        <div class="util-cmd" style="padding:6px 16px;border-bottom:1px solid var(--border)">freqtrade show-trades --db-url sqlite:///user_data/tradesv3.sqlite --print-json</div>
+        <div class="util-card-body" id="trades-out">
+          <table class="data-table">
+            <thead><tr><th>trade_id</th><th>Pair</th><th>is_short</th><th>open_rate</th><th>close_rate</th><th>close_profit_abs</th><th>stake_amount</th><th>open_date</th><th>close_date</th><th>exit_reason</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">1</td><td class="highlight">BTC/USDT:USDT</td><td>false</td><td class="mono">42,150.20</td><td class="mono">43,280.50</td><td class="green">+26.82</td><td class="mono">1,000.00</td><td class="mono">2026-03-15 08:30</td><td class="mono">2026-03-16 14:15</td><td>roi</td></tr>
+              <tr><td class="mono">2</td><td class="highlight">ETH/USDT:USDT</td><td>true</td><td class="mono">3,420.80</td><td class="mono">3,380.10</td><td class="green">+11.89</td><td class="mono">500.00</td><td class="mono">2026-03-17 10:00</td><td class="mono">2026-03-17 18:45</td><td>roi</td></tr>
+              <tr><td class="mono">3</td><td>SOL/USDT:USDT</td><td>false</td><td class="mono">186.45</td><td class="mono">182.30</td><td class="red">-22.26</td><td class="mono">1,000.00</td><td class="mono">2026-03-18 06:15</td><td class="mono">2026-03-18 22:00</td><td>stoploss</td></tr>
+              <tr><td class="mono">4</td><td>BNB/USDT:USDT</td><td>false</td><td class="mono">612.30</td><td class="mono">618.90</td><td class="green">+10.77</td><td class="mono">750.00</td><td class="mono">2026-03-20 12:00</td><td class="mono">2026-03-21 04:30</td><td>roi</td></tr>
+              <tr><td class="mono">5</td><td class="highlight">BTC/USDT:USDT</td><td>true</td><td class="mono">43,800.00</td><td class="mono">43,950.50</td><td class="red">-3.44</td><td class="mono">1,000.00</td><td class="mono">2026-03-22 16:45</td><td class="mono">2026-03-22 20:00</td><td>stoploss</td></tr>
+              <tr><td class="mono">6</td><td>XRP/USDT:USDT</td><td>false</td><td class="mono">0.6240</td><td class="mono">0.6410</td><td class="green">+13.62</td><td class="mono">500.00</td><td class="mono">2026-03-24 09:30</td><td class="mono">2026-03-25 11:15</td><td>trailing_stop_loss</td></tr>
+              <tr><td class="mono">7</td><td class="highlight">ETH/USDT:USDT</td><td>false</td><td class="mono">3,510.20</td><td class="mono">3,545.80</td><td class="green">+5.07</td><td class="mono">500.00</td><td class="mono">2026-03-26 14:00</td><td class="mono">2026-03-27 02:30</td><td>exit_signal</td></tr>
+            </tbody>
+          </table>
+          <div style="font-size:10px;color:var(--text-3);padding-top:8px">7 trades from tradesv3.sqlite &middot; 5 wins / 2 losses &middot; Total: +42.47 USDT</div>
+        </div>
+      </div>
+
+      <!-- ──── LIST HYPEROPT LOSS ──── -->
+      <div class="util-card">
+        <div class="util-card-header">
+          <div class="util-card-title"><span class="uc-icon">&#x1F4C9;</span> List Hyperopt Loss</div>
+          <button class="btn btn-sm btn-secondary" onclick="toggleOutput('hyp-out')">&#x25B6; Run</button>
+        </div>
+        <div class="util-cmd" style="padding:6px 16px;border-bottom:1px solid var(--border)">freqtrade list-hyperoptloss</div>
+        <div class="util-card-body" id="hyp-out">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>Loss Function</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">1</td><td>ShortTradeDurHyperOptLoss</td></tr>
+              <tr><td class="mono">2</td><td>OnlyProfitHyperOptLoss</td></tr>
+              <tr><td class="mono">3</td><td>SharpeHyperOptLoss</td></tr>
+              <tr><td class="mono">4</td><td>SharpeHyperOptLossDaily</td></tr>
+              <tr><td class="mono">5</td><td>SortinoHyperOptLoss</td></tr>
+              <tr><td class="mono">6</td><td>SortinoHyperOptLossDaily</td></tr>
+              <tr><td class="mono">7</td><td>MaxDrawDownHyperOptLoss</td></tr>
+              <tr><td class="mono">8</td><td>MaxDrawDownRelativeHyperOptLoss</td></tr>
+              <tr><td class="mono">9</td><td>CalmarHyperOptLoss</td></tr>
+              <tr><td class="mono">10</td><td>ProfitDrawDownHyperOptLoss</td></tr>
+              <tr><td class="mono">11</td><td>MultiMetricHyperOptLoss</td></tr>
+              <tr><td class="mono">12</td><td>WinRatioHyperOptLoss</td></tr>
+            </tbody>
+          </table>
+          <div style="font-size:10px;color:var(--text-3);padding-top:8px">12 loss functions available</div>
+        </div>
+      </div>
+
+      <!-- ──── LIST FREQAI MODELS ──── -->
+      <div class="util-card">
+        <div class="util-card-header">
+          <div class="util-card-title"><span class="uc-icon">&#x1F916;</span> List FreqAI Models</div>
+          <button class="btn btn-sm btn-secondary" onclick="toggleOutput('fai-out')">&#x25B6; Run</button>
+        </div>
+        <div class="util-cmd" style="padding:6px 16px;border-bottom:1px solid var(--border)">freqtrade list-freqaimodels</div>
+        <div class="util-card-body" id="fai-out">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>Model</th><th>Type</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">1</td><td>LightGBMRegressor</td><td>Regression</td></tr>
+              <tr><td class="mono">2</td><td>LightGBMClassifier</td><td>Classification</td></tr>
+              <tr><td class="mono">3</td><td>XGBoostRegressor</td><td>Regression</td></tr>
+              <tr><td class="mono">4</td><td>XGBoostClassifier</td><td>Classification</td></tr>
+              <tr><td class="mono">5</td><td>XGBoostRFRegressor</td><td>Regression</td></tr>
+              <tr><td class="mono">6</td><td>XGBoostRFClassifier</td><td>Classification</td></tr>
+              <tr><td class="mono">7</td><td>CatboostRegressor</td><td>Regression</td></tr>
+              <tr><td class="mono">8</td><td>CatboostClassifier</td><td>Classification</td></tr>
+              <tr><td class="mono">9</td><td>PyTorchMLPRegressor</td><td>Regression (DL)</td></tr>
+              <tr><td class="mono">10</td><td>PyTorchMLPClassifier</td><td>Classification (DL)</td></tr>
+              <tr><td class="mono">11</td><td>PyTorchTransformerRegressor</td><td>Regression (DL)</td></tr>
+              <tr><td class="mono">12</td><td>ReinforcementLearner</td><td>RL (PPO)</td></tr>
+              <tr><td class="mono">13</td><td>ReinforcementLearner_multiproc</td><td>RL (PPO multi)</td></tr>
+              <tr><td class="mono">14</td><td>SKLearnRandomForestRegressor</td><td>Regression</td></tr>
+            </tbody>
+          </table>
+          <div style="font-size:10px;color:var(--text-3);padding-top:8px">14 FreqAI models available &middot; Installed: LightGBM 4.6.0, XGBoost 3.2.0, scikit-learn 1.8.0</div>
+        </div>
+      </div>
+
+    </div><!-- /util-grid -->
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+/* ─── Toggle erase warning ─── */
+document.getElementById('toggleErase').addEventListener('click', function(){
+  const warn = document.getElementById('eraseWarning');
+  warn.style.display = this.classList.contains('on') ? 'block' : 'none';
+  if(this.classList.contains('on')) this.classList.add('danger');
+  else this.classList.remove('danger');
+});
+
+/* ─── Toggle card output visibility ─── */
+function toggleOutput(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+
+/* ─── Build CLI command preview ─── */
+function buildCommand(){
+  const pairs = Array.from(document.getElementById('pairSelect').selectedOptions).map(o=>o.value);
+  const exchange = document.getElementById('exchangeSelect').value;
+  const mode = document.getElementById('tradingMode').value;
+  const tfs = Array.from(document.querySelectorAll('#tfGrid .cb-item.checked')).map(l=>l.textContent.trim());
+  const ds = document.getElementById('dateStart').value.replace(/-/g,'');
+  const de = document.getElementById('dateEnd').value.replace(/-/g,'');
+  const erase = document.getElementById('toggleErase').classList.contains('on');
+  const prepend = document.getElementById('togglePrepend').classList.contains('on');
+
+  let cmd = 'freqtrade download-data';
+  cmd += ' --exchange ' + exchange;
+  cmd += ' --pairs ' + pairs.join(' ');
+  cmd += ' --timeframes ' + tfs.join(' ');
+  cmd += ' --timerange ' + ds + '-' + de;
+  cmd += ' --trading-mode ' + mode;
+  if(erase) cmd += ' --erase';
+  if(prepend) cmd += ' --prepend';
+
+  const log = document.getElementById('downloadLog');
+  log.innerHTML += '\n<span class="log-info">[cmd]</span> ' + cmd;
+  log.scrollTop = log.scrollHeight;
+}
+
+/* ─── Simulate download ─── */
+function startDownload(){
+  buildCommand();
+  const wrap = document.getElementById('progressWrap');
+  const bar = document.getElementById('progressBar');
+  const label = document.getElementById('progressLabel');
+  const pct = document.getElementById('progressPct');
+  const log = document.getElementById('downloadLog');
+  const status = document.getElementById('dlStatus');
+
+  wrap.classList.add('active');
+  bar.style.width = '0%';
+  status.textContent = 'Downloading...';
+  status.style.color = 'var(--amber)';
+
+  const pairs = Array.from(document.getElementById('pairSelect').selectedOptions).map(o=>o.value);
+  const tfs = Array.from(document.querySelectorAll('#tfGrid .cb-item.checked')).map(l=>l.textContent.trim());
+  const total = pairs.length * tfs.length;
+  let done = 0;
+
+  function next(){
+    if(done >= total){
+      bar.style.width = '100%';
+      pct.textContent = '100%';
+      label.textContent = 'Complete';
+      status.textContent = 'Download complete';
+      status.style.color = 'var(--green)';
+      log.innerHTML += '\n<span class="log-ok">[done]</span> Downloaded ' + total + ' datasets successfully';
+      log.scrollTop = log.scrollHeight;
+      return;
+    }
+    const pi = Math.floor(done / tfs.length);
+    const ti = done % tfs.length;
+    const pair = pairs[pi] || pairs[pairs.length-1];
+    const tf = tfs[ti] || tfs[tfs.length-1];
+    done++;
+    const p = Math.round((done/total)*100);
+    bar.style.width = p + '%';
+    pct.textContent = p + '%';
+    label.textContent = 'Downloading ' + pair + ' ' + tf + '...';
+    log.innerHTML += '\n<span class="log-ok">[' + p + '%]</span> ' + pair + ' ' + tf + ' \u2014 OK';
+    log.scrollTop = log.scrollHeight;
+    setTimeout(next, 300 + Math.random()*400);
+  }
+
+  log.innerHTML += '\n<span class="log-warn">[start]</span> Starting download for ' + total + ' datasets...';
+  log.scrollTop = log.scrollHeight;
+  setTimeout(next, 500);
+}
+
+/* ─── Convert simulation ─── */
+function runConvert(){
+  const from = document.getElementById('convertFrom').value;
+  const to = document.getElementById('convertTo').value;
+  const log = document.querySelector('#convert-out .log-area');
+  if(from === to){
+    log.innerHTML = '<span class="log-err">[error]</span> Source and target format are the same';
+    return;
+  }
+  log.innerHTML = '<span class="log-warn">[start]</span> Converting all data from ' + from + ' to ' + to + '...';
+  setTimeout(()=>{
+    log.innerHTML += '\n<span class="log-ok">[done]</span> Converted 11 files from ' + from + ' to ' + to;
+  }, 1200);
+}
+
+/* ─── Filter pairs ─── */
+function filterPairs(val){
+  const tags = document.querySelectorAll('#pairTagArea .pair-tag');
+  let shown = 0;
+  tags.forEach(t=>{
+    const match = t.textContent.toLowerCase().includes(val.toLowerCase());
+    t.style.display = match ? '' : 'none';
+    if(match) shown++;
+  });
+  document.getElementById('pairCount').textContent = 'Showing ' + shown + ' of 387 pairs';
+}
+</script>
+</body>
+</html>

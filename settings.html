@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreqTrade Platform — Settings</title>
+<style>
+/* ─── RESET & BASE ─── */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-0:#06060b;--bg-1:#0c0c14;--bg-2:#12121c;--bg-3:#1a1a28;
+  --border:#1e1e30;--border-hover:#2e2e48;
+  --text-0:#f0f0f5;--text-1:#c0c0d0;--text-2:#808098;--text-3:#55556a;
+  --accent:#6366f1;--accent-dim:#4f46e5;--accent-glow:rgba(99,102,241,.12);
+  --green:#22c55e;--green-dim:#166534;--green-bg:rgba(34,197,94,.08);
+  --red:#ef4444;--red-dim:#991b1b;--red-bg:rgba(239,68,68,.08);
+  --amber:#f59e0b;--amber-dim:#92400e;--amber-bg:rgba(245,158,11,.08);
+  --cyan:#06b6d4;--purple:#a855f7;
+  --sidebar-w:240px;--header-h:56px;
+  --radius:10px;--radius-sm:6px;
+}
+html{font-size:13px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;background:var(--bg-0);color:var(--text-1);display:flex;height:100vh;overflow:hidden}
+
+/* ─── SIDEBAR ─── */
+.sidebar{width:var(--sidebar-w);background:var(--bg-1);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sidebar-logo{padding:18px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.sidebar-logo .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),#a855f7);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff}
+.sidebar-logo .logo-text{font-size:14px;font-weight:700;color:var(--text-0);letter-spacing:-.3px}
+.sidebar-logo .logo-sub{font-size:10px;color:var(--text-3);font-weight:500}
+.sidebar-nav{padding:12px 10px;flex:1}
+.nav-section{margin-bottom:16px}
+.nav-section-label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;padding:6px 12px;margin-bottom:2px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;color:var(--text-2);font-size:12.5px;font-weight:500;text-decoration:none;position:relative}
+.nav-item:hover{background:var(--bg-3);color:var(--text-1)}
+.nav-item.active{background:var(--accent-glow);color:var(--accent)}
+.nav-item .nav-icon{width:18px;text-align:center;font-size:14px;flex-shrink:0}
+.nav-item .nav-badge{margin-left:auto;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;background:var(--bg-3);color:var(--text-2)}
+.nav-item.active .nav-badge{background:var(--accent-glow);color:var(--accent)}
+.nav-item .nav-dot{width:6px;height:6px;border-radius:50%;margin-left:auto;flex-shrink:0}
+.nav-dot.live{background:var(--green);box-shadow:0 0 6px var(--green)}
+.sidebar-footer{padding:14px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--text-3)}
+.sidebar-footer .ft-status{display:flex;align-items:center;gap:6px}
+.sidebar-footer .ft-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+
+/* ─── MAIN AREA ─── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* ─── HEADER ─── */
+.header{height:var(--header-h);background:var(--bg-1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0}
+.header-title{font-size:16px;font-weight:700;color:var(--text-0);margin-right:auto}
+.header-search{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 12px 6px 32px;font-size:12px;color:var(--text-1);width:220px;outline:none;transition:border-color .2s}
+.header-search:focus{border-color:var(--accent)}
+.search-wrap{position:relative}
+.search-wrap::before{content:"\2315";position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:14px;z-index:1}
+.header-actions{display:flex;align-items:center;gap:6px}
+.hdr-btn{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;cursor:pointer;transition:all .15s;color:var(--text-2);font-size:14px;display:flex;align-items:center;gap:4px;position:relative}
+.hdr-btn:hover{border-color:var(--border-hover);color:var(--text-1);background:var(--bg-3)}
+.hdr-btn .notif-dot{position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--red)}
+.kill-btn{background:var(--red-bg);border-color:rgba(239,68,68,.25);color:var(--red);font-size:11px;font-weight:600;padding:6px 14px;gap:6px;letter-spacing:.3px}
+.kill-btn:hover{background:rgba(239,68,68,.18);border-color:var(--red)}
+.kill-btn .kill-icon{font-size:13px}
+.user-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#a855f7);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;cursor:pointer;margin-left:4px}
+
+/* ─── CONTENT ─── */
+.content{flex:1;overflow-y:auto;padding:0;background:var(--bg-0);display:flex}
+
+/* ─── SETTINGS LAYOUT ─── */
+.settings-tabs{width:200px;background:var(--bg-1);border-right:1px solid var(--border);flex-shrink:0;padding:16px 0;overflow-y:auto}
+.settings-tab{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;transition:all .15s;color:var(--text-2);font-size:12px;font-weight:500;border-left:3px solid transparent}
+.settings-tab:hover{background:var(--bg-3);color:var(--text-1)}
+.settings-tab.active{background:var(--accent-glow);color:var(--accent);border-left-color:var(--accent)}
+.settings-tab .tab-icon{font-size:14px;width:18px;text-align:center}
+.settings-tab .tab-ref{font-size:9px;color:var(--text-3);font-family:monospace;margin-left:auto}
+.settings-body{flex:1;overflow-y:auto;padding:24px 32px 48px}
+
+/* ─── FORM ELEMENTS ─── */
+.section-title{font-size:18px;font-weight:700;color:var(--text-0);margin-bottom:4px}
+.section-desc{font-size:12px;color:var(--text-2);margin-bottom:24px}
+.form-group{margin-bottom:20px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px}
+.form-label{display:block;font-size:11px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.form-label .param-ref{font-family:monospace;color:var(--cyan);font-size:10px;text-transform:none;letter-spacing:0;margin-left:6px}
+.form-input{width:100%;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:12px;color:var(--text-0);outline:none;transition:border-color .2s;font-family:inherit}
+.form-input:focus{border-color:var(--accent)}
+.form-input::placeholder{color:var(--text-3)}
+select.form-input{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23808098'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:30px}
+textarea.form-input{min-height:80px;resize:vertical;font-family:'SF Mono',Monaco,Consolas,monospace;font-size:11px;line-height:1.5}
+.form-hint{font-size:10px;color:var(--text-3);margin-top:4px}
+
+/* Toggle */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(30,30,48,.4)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-info{display:flex;flex-direction:column;gap:2px}
+.toggle-name{font-size:12px;font-weight:600;color:var(--text-0)}
+.toggle-desc{font-size:10px;color:var(--text-3)}
+.toggle{width:38px;height:20px;border-radius:10px;background:var(--bg-3);border:1px solid var(--border);cursor:pointer;position:relative;transition:all .2s;flex-shrink:0}
+.toggle.on{background:var(--accent);border-color:var(--accent)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--text-3);transition:all .2s}
+.toggle.on::after{left:20px;background:#fff}
+
+/* Card containers */
+.card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:20px}
+.card-header{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.card-title{font-size:12.5px;font-weight:600;color:var(--text-0);display:flex;align-items:center;gap:8px}
+.card-title .card-icon{font-size:14px}
+.card-action{font-size:11px;color:var(--accent);cursor:pointer;font-weight:500;transition:color .15s}
+.card-action:hover{color:#818cf8}
+.card-body{padding:14px 18px}
+.card-body.no-pad{padding:0}
+
+/* ROI Table */
+.roi-table{width:100%;border-collapse:collapse}
+.roi-table th{text-align:left;padding:8px 12px;font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.roi-table td{padding:6px 12px;font-size:12px;border-bottom:1px solid rgba(30,30,48,.4)}
+.roi-table td input{width:100%;background:var(--bg-1);border:1px solid var(--border);border-radius:4px;padding:5px 8px;font-size:12px;color:var(--text-0);outline:none}
+.roi-table td input:focus{border-color:var(--accent)}
+.roi-table .remove-btn{color:var(--red);cursor:pointer;font-size:14px;opacity:.6;transition:opacity .15s}
+.roi-table .remove-btn:hover{opacity:1}
+
+/* Mini button */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;border:1px solid var(--border)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-dim)}
+.btn-ghost{background:transparent;color:var(--text-2)}
+.btn-ghost:hover{background:var(--bg-3);color:var(--text-1)}
+.btn-danger{background:var(--red-bg);border-color:rgba(239,68,68,.25);color:var(--red)}
+.btn-danger:hover{background:rgba(239,68,68,.18)}
+.btn-sm{padding:5px 10px;font-size:10px}
+.btn-success{background:var(--green-bg);border-color:rgba(34,197,94,.25);color:var(--green)}
+.btn-success:hover{background:rgba(34,197,94,.18)}
+
+/* Save bar */
+.save-bar{position:sticky;bottom:0;background:var(--bg-1);border-top:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:10}
+.save-bar .save-status{font-size:11px;color:var(--text-3);display:flex;align-items:center;gap:6px}
+.save-bar .save-dot{width:6px;height:6px;border-radius:50%;background:var(--amber)}
+
+/* Section divider */
+.form-divider{border:none;border-top:1px solid var(--border);margin:24px 0}
+.subsection-title{font-size:13px;font-weight:600;color:var(--text-0);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.subsection-title .sub-icon{font-size:13px}
+
+/* Pairlist items */
+.pairlist-item{background:var(--bg-1);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:grab;transition:border-color .15s}
+.pairlist-item:hover{border-color:var(--border-hover)}
+.pairlist-item .drag-handle{color:var(--text-3);font-size:14px;cursor:grab}
+.pairlist-item .pl-name{font-size:12px;font-weight:600;color:var(--text-0);flex:1}
+.pairlist-item .pl-params{font-size:10px;color:var(--text-2);font-family:monospace}
+
+/* Tag editor */
+.tag-editor{display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-sm);min-height:38px;align-items:center}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:var(--bg-3);border:1px solid var(--border);border-radius:4px;font-size:11px;color:var(--text-0);font-family:monospace}
+.tag .tag-remove{color:var(--text-3);cursor:pointer;font-size:12px}
+.tag .tag-remove:hover{color:var(--red)}
+.tag-input{border:none;background:transparent;color:var(--text-0);font-size:11px;outline:none;min-width:80px;font-family:monospace}
+.tag-input::placeholder{color:var(--text-3)}
+
+/* Filter toggle card */
+.filter-card{background:var(--bg-1);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden}
+.filter-header{display:flex;align-items:center;gap:12px;padding:10px 14px;cursor:pointer}
+.filter-header:hover{background:rgba(255,255,255,.01)}
+.filter-name{font-size:12px;font-weight:600;color:var(--text-0);flex:1}
+.filter-params{padding:8px 14px 12px;border-top:1px solid rgba(30,30,48,.4);display:none}
+.filter-card.open .filter-params{display:block}
+
+/* Webhook event row */
+.webhook-event{background:var(--bg-1);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden}
+.webhook-event-header{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer}
+.webhook-event-header:hover{background:rgba(255,255,255,.01)}
+.webhook-event-name{font-size:12px;font-weight:600;color:var(--text-0);flex:1}
+.webhook-event-body{padding:8px 14px 12px;border-top:1px solid rgba(30,30,48,.4);display:none}
+.webhook-event.open .webhook-event-body{display:block}
+
+/* Producer row */
+.producer-row{background:var(--bg-1);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:8px}
+.producer-row .form-row{margin-bottom:8px}
+
+/* JSON editor */
+.json-editor{background:var(--bg-1);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-family:'SF Mono',Monaco,Consolas,monospace;font-size:11px;color:var(--cyan);line-height:1.6;min-height:120px;width:100%;resize:vertical;outline:none}
+.json-editor:focus{border-color:var(--accent)}
+
+/* Variable ref */
+.var-ref{background:var(--bg-1);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;max-height:300px;overflow-y:auto}
+.var-ref-item{display:flex;align-items:baseline;gap:8px;padding:4px 0;border-bottom:1px solid rgba(30,30,48,.3)}
+.var-ref-item:last-child{border-bottom:none}
+.var-ref-key{font-family:monospace;font-size:11px;color:var(--cyan);white-space:nowrap}
+.var-ref-desc{font-size:10px;color:var(--text-3)}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bg-3);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--border-hover)}
+
+/* Tab content visibility */
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* Responsive */
+@media(max-width:1200px){.form-row{grid-template-columns:1fr}.form-row-3{grid-template-columns:1fr 1fr}}
+@media(max-width:768px){.sidebar{display:none}.settings-tabs{width:160px}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">FT</div>
+    <div>
+      <div class="logo-text">FreqTrade</div>
+      <div class="logo-sub">Trading Platform</div>
+    </div>
+  </div>
+
+  <div class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item" href="dashboard.html">
+        <span class="nav-icon">&#x1F4C8;</span> Dashboard
+        <div class="nav-dot live"></div>
+      </a>
+      <a class="nav-item" href="strategies.html">
+        <span class="nav-icon">&#x1F3AF;</span> Strategies
+        <span class="nav-badge">3 live</span>
+      </a>
+      <a class="nav-item" href="builder.html">
+        <span class="nav-icon">&#x270F;&#xFE0F;</span> Strategy Builder
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#x1F9EA;</span> Backtesting
+        <span class="nav-badge">2 runs</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Monitor</div>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#x1F4CA;</span> Analytics
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#x1F6E1;&#xFE0F;</span> Risk
+        <div class="nav-dot live"></div>
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#x1F4D2;</span> Journal
+        <span class="nav-badge">847</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">System</div>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#x1F4BE;</span> Data
+      </a>
+      <a class="nav-item active" href="settings.html">
+        <span class="nav-icon">&#x2699;&#xFE0F;</span> Settings
+      </a>
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="ft-status">
+      <div class="ft-dot"></div>
+      <span>FreqTrade 2026.2 &mdash; 5 bots</span>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-title">Settings</div>
+    <div class="search-wrap">
+      <input class="header-search" type="text" placeholder="Search settings...">
+    </div>
+    <div class="header-actions">
+      <div class="hdr-btn" title="Notifications">
+        &#x1F514; <div class="notif-dot"></div>
+      </div>
+      <div class="hdr-btn kill-btn" title="Kill Switch">
+        <span class="kill-icon">&#x1F6A8;</span> KILL SWITCH
+      </div>
+      <div class="user-avatar">N</div>
+    </div>
+  </header>
+
+  <!-- CONTENT: Settings Tabs + Body -->
+  <div class="content">
+
+    <!-- Vertical Tab Bar -->
+    <div class="settings-tabs">
+      <div class="settings-tab active" onclick="showTab('core')">
+        <span class="tab-icon">&#x2699;&#xFE0F;</span> Core Trading
+        <span class="tab-ref">&sect;1</span>
+      </div>
+      <div class="settings-tab" onclick="showTab('pairlists')">
+        <span class="tab-icon">&#x1F4CB;</span> Pairlists
+        <span class="tab-ref">&sect;7</span>
+      </div>
+      <div class="settings-tab" onclick="showTab('exchange')">
+        <span class="tab-icon">&#x1F3E6;</span> Exchange
+        <span class="tab-ref">&sect;9</span>
+      </div>
+      <div class="settings-tab" onclick="showTab('telegram')">
+        <span class="tab-icon">&#x1F4E8;</span> Telegram
+        <span class="tab-ref">&sect;11</span>
+      </div>
+      <div class="settings-tab" onclick="showTab('webhooks')">
+        <span class="tab-icon">&#x1F517;</span> Webhooks
+        <span class="tab-ref">&sect;13</span>
+      </div>
+      <div class="settings-tab" onclick="showTab('producer')">
+        <span class="tab-icon">&#x1F4E1;</span> Producer/Consumer
+        <span class="tab-ref">&sect;17</span>
+      </div>
+      <div class="settings-tab" onclick="showTab('advanced')">
+        <span class="tab-icon">&#x1F527;</span> Advanced
+        <span class="tab-ref">&sect;28</span>
+      </div>
+    </div>
+
+    <!-- Settings Body -->
+    <div class="settings-body">
+
+      <!-- ════════════════════════════════════════════ -->
+      <!-- TAB 1: CORE TRADING CONFIG (§1) -->
+      <!-- ════════════════════════════════════════════ -->
+      <div class="tab-content active" id="tab-core">
+        <div class="section-title">Core Trading Configuration</div>
+        <div class="section-desc">Primary trading parameters from config.json &mdash; &sect;1 Configuration Parameters</div>
+
+        <!-- Bot Identity -->
+        <div class="subsection-title"><span class="sub-icon">&#x1F916;</span> Bot Identity</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Bot Name <span class="param-ref">bot_name</span></label>
+            <input class="form-input" type="text" value="freqtrade">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Initial State <span class="param-ref">initial_state</span></label>
+            <select class="form-input">
+              <option value="running">running</option>
+              <option value="stopped" selected>stopped</option>
+            </select>
+          </div>
+        </div>
+
+        <hr class="form-divider">
+
+        <!-- Core Trading -->
+        <div class="subsection-title"><span class="sub-icon">&#x1F4B0;</span> Stake &amp; Trade Limits</div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label">Max Open Trades <span class="param-ref">max_open_trades</span></label>
+            <input class="form-input" type="number" value="5">
+            <div class="form-hint">-1 for unlimited</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Stake Currency <span class="param-ref">stake_currency</span></label>
+            <input class="form-input" type="text" value="USDT">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Stake Amount <span class="param-ref">stake_amount</span></label>
+            <input class="form-input" type="text" value="100">
+            <div class="form-hint">Or "unlimited" for dynamic</div>
+          </div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label">Tradable Balance Ratio <span class="param-ref">tradable_balance_ratio</span></label>
+            <input class="form-input" type="number" value="0.99" step="0.01" min="0" max="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Available Capital <span class="param-ref">available_capital</span></label>
+            <input class="form-input" type="number" value="1000">
+            <div class="form-hint">If set, used instead of wallet balance</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fiat Display Currency <span class="param-ref">fiat_display_currency</span></label>
+            <select class="form-input">
+              <option value="USD" selected>USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+              <option value="JPY">JPY</option>
+              <option value="">None</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Timeframe <span class="param-ref">timeframe</span></label>
+            <select class="form-input">
+              <option value="1m">1m</option>
+              <option value="5m">5m</option>
+              <option value="15m">15m</option>
+              <option value="30m">30m</option>
+              <option value="1h" selected>1h</option>
+              <option value="4h">4h</option>
+              <option value="1d">1d</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Force Entry Enable <span class="param-ref">force_entry_enable</span></label>
+            <select class="form-input">
+              <option value="true">true</option>
+              <option value="false" selected>false</option>
+            </select>
+          </div>
+        </div>
+
+        <hr class="form-divider">
+
+        <!-- Dry Run -->
+        <div class="subsection-title"><span class="sub-icon">&#x1F9EA;</span> Dry Run</div>
+        <div class="card">
+          <div class="card-body">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">dry_run</div>
+                <div class="toggle-desc">Simulate trades without real orders</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">cancel_open_orders_on_exit</div>
+                <div class="toggle-desc">Cancel pending orders when bot stops</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">process_only_new_candles</div>
+                <div class="toggle-desc">Only process strategy on new candle data</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dry Run Wallet <span class="param-ref">dry_run_wallet</span></label>
+          <input class="form-input" type="number" value="1000" step="100">
+          <div class="form-hint">Simulated wallet balance in stake_currency</div>
+        </div>
+
+        <hr class="form-divider">
+
+        <!-- Minimal ROI -->
+        <div class="subsection-title"><span class="sub-icon">&#x1F4C9;</span> Minimal ROI <span class="param-ref" style="font-size:10px">minimal_roi</span></div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">ROI Table</div>
+            <div class="card-action" onclick="addRoiRow()">+ Add Row</div>
+          </div>
+          <div class="card-body no-pad">
+            <table class="roi-table" id="roi-table">
+              <thead>
+                <tr><th>Time (minutes)</th><th>ROI (%)</th><th></th></tr>
+              </thead>
+              <tbody>
+                <tr><td><input type="number" value="0"></td><td><input type="number" value="0.10" step="0.01"></td><td><span class="remove-btn">&#x2715;</span></td></tr>
+                <tr><td><input type="number" value="10"></td><td><input type="number" value="0.05" step="0.01"></td><td><span class="remove-btn">&#x2715;</span></td></tr>
+                <tr><td><input type="number" value="30"></td><td><input type="number" value="0.02" step="0.01"></td><td><span class="remove-btn">&#x2715;</span></td></tr>
+                <tr><td><input type="number" value="60"></td><td><input type="number" value="0" step="0.01"></td><td><span class="remove-btn">&#x2715;</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <hr class="form-divider">
+
+        <!-- Stoploss -->
+        <div class="subsection-title"><span class="sub-icon">&#x1F6D1;</span> Stoploss &amp; Trailing</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Stoploss <span class="param-ref">stoploss</span></label>
+            <input class="form-input" type="number" value="-0.10" step="0.01" max="0">
+            <div class="form-hint">Negative decimal (e.g. -0.10 = 10%)</div>
+          </div>
+          <div></div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">trailing_stop</div>
+                <div class="toggle-desc">Enable trailing stoploss</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label">Trailing Stop Positive <span class="param-ref">trailing_stop_positive</span></label>
+            <input class="form-input" type="number" value="0.02" step="0.01">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Trailing Stop Positive Offset <span class="param-ref">trailing_stop_positive_offset</span></label>
+            <input class="form-input" type="number" value="0.03" step="0.01">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Trailing Only Offset Is Reached <span class="param-ref">trailing_only_offset_is_reached</span></label>
+            <select class="form-input">
+              <option value="true" selected>true</option>
+              <option value="false">false</option>
+            </select>
+          </div>
+        </div>
+
+        <hr class="form-divider">
+
+        <!-- Exit Signals -->
+        <div class="subsection-title"><span class="sub-icon">&#x1F6AA;</span> Exit Signal Control</div>
+        <div class="card">
+          <div class="card-body">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">use_exit_signal</div>
+                <div class="toggle-desc">Use strategy exit signals (not just ROI/stoploss)</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">exit_profit_only</div>
+                <div class="toggle-desc">Only exit when trade is in profit</div>
+              </div>
+              <div class="toggle" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">ignore_roi_if_entry_signal</div>
+                <div class="toggle-desc">Don't exit via ROI if entry signal is still active</div>
+              </div>
+              <div class="toggle" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Exit Profit Offset <span class="param-ref">exit_profit_offset</span></label>
+          <input class="form-input" type="number" value="0.0" step="0.01" style="max-width:300px">
+          <div class="form-hint">Minimum profit before exit signal is honoured</div>
+        </div>
+
+        <hr class="form-divider">
+
+        <!-- Order Types -->
+        <div class="subsection-title"><span class="sub-icon">&#x1F4DD;</span> Order Types <span class="param-ref" style="font-size:10px">order_types</span></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Entry <span class="param-ref">entry</span></label>
+            <select class="form-input"><option selected>limit</option><option>market</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Exit <span class="param-ref">exit</span></label>
+            <select class="form-input"><option selected>limit</option><option>market</option></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Emergency Exit <span class="param-ref">emergency_exit</span></label>
+            <select class="form-input"><option>limit</option><option selected>market</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Force Exit <span class="param-ref">force_exit</span></label>
+            <select class="form-input"><option>limit</option><option selected>market</option></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Force Entry <span class="param-ref">force_entry</span></label>
+            <select class="form-input"><option>limit</option><option selected>market</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Stoploss <span class="param-ref">stoploss</span></label>
+            <select class="form-input"><option>limit</option><option selected>market</option></select>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">stoploss_on_exchange</div>
+                <div class="toggle-desc">Place stoploss order on the exchange</div>
+              </div>
+              <div class="toggle" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Stoploss on Exchange Interval <span class="param-ref">stoploss_on_exchange_interval</span></label>
+            <input class="form-input" type="number" value="60" style="max-width:200px">
+            <div class="form-hint">Seconds between stoploss order updates</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Stoploss on Exchange Limit Ratio <span class="param-ref">stoploss_on_exchange_limit_ratio</span></label>
+            <input class="form-input" type="number" value="0.99" step="0.01" style="max-width:200px">
+          </div>
+        </div>
+
+        <hr class="form-divider">
+
+        <!-- Order Time in Force -->
+        <div class="subsection-title"><span class="sub-icon">&#x23F1;&#xFE0F;</span> Order Time in Force <span class="param-ref" style="font-size:10px">order_time_in_force</span></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Entry <span class="param-ref">entry</span></label>
+            <select class="form-input"><option selected>GTC</option><option>FOK</option><option>IOC</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Exit <span class="param-ref">exit</span></label>
+            <select class="form-input"><option selected>GTC</option><option>FOK</option><option>IOC</option></select>
+          </div>
+        </div>
+
+        <hr class="form-divider">
+
+        <!-- Unfilled Timeout -->
+        <div class="subsection-title"><span class="sub-icon">&#x23F3;</span> Unfilled Timeout <span class="param-ref" style="font-size:10px">unfilledtimeout</span></div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label">Entry Timeout <span class="param-ref">entry</span></label>
+            <input class="form-input" type="number" value="10">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Exit Timeout <span class="param-ref">exit</span></label>
+            <input class="form-input" type="number" value="30">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Unit <span class="param-ref">unit</span></label>
+            <select class="form-input">
+              <option value="minutes" selected>minutes</option>
+              <option value="seconds">seconds</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Exit Timeout Count <span class="param-ref">exit_timeout_count</span></label>
+          <input class="form-input" type="number" value="0" style="max-width:200px">
+          <div class="form-hint">0 = cancel and re-enter, &gt;0 = force exit after N timeouts</div>
+        </div>
+
+        <hr class="form-divider">
+
+        <!-- Entry Pricing -->
+        <div class="subsection-title"><span class="sub-icon">&#x1F4B2;</span> Entry Pricing <span class="param-ref" style="font-size:10px">entry_pricing</span></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Price Side <span class="param-ref">price_side</span></label>
+            <select class="form-input">
+              <option value="same" selected>same</option>
+              <option value="other">other</option>
+              <option value="bid">bid</option>
+              <option value="ask">ask</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Use Order Book <span class="param-ref">use_order_book</span></label>
+            <select class="form-input">
+              <option value="true" selected>true</option>
+              <option value="false">false</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Order Book Top <span class="param-ref">order_book_top</span></label>
+            <input class="form-input" type="number" value="1" min="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Price Last Balance <span class="param-ref">price_last_balance</span></label>
+            <input class="form-input" type="number" value="0.0" step="0.1" min="0" max="1">
+          </div>
+        </div>
+
+        <!-- Exit Pricing -->
+        <div class="subsection-title"><span class="sub-icon">&#x1F4B2;</span> Exit Pricing <span class="param-ref" style="font-size:10px">exit_pricing</span></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Price Side <span class="param-ref">price_side</span></label>
+            <select class="form-input">
+              <option value="same" selected>same</option>
+              <option value="other">other</option>
+              <option value="bid">bid</option>
+              <option value="ask">ask</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Use Order Book <span class="param-ref">use_order_book</span></label>
+            <select class="form-input">
+              <option value="true" selected>true</option>
+              <option value="false">false</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Order Book Top <span class="param-ref">order_book_top</span></label>
+          <input class="form-input" type="number" value="1" min="1" style="max-width:200px">
+        </div>
+
+        <hr class="form-divider">
+
+        <!-- Position Adjustment -->
+        <div class="subsection-title"><span class="sub-icon">&#x1F504;</span> Position Adjustment</div>
+        <div class="card">
+          <div class="card-body">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">position_adjustment_enable</div>
+                <div class="toggle-desc">Allow adjusting position size via adjust_trade_position callback</div>
+              </div>
+              <div class="toggle" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Max Entry Position Adjustment <span class="param-ref">max_entry_position_adjustment</span></label>
+          <input class="form-input" type="number" value="-1" style="max-width:200px">
+          <div class="form-hint">-1 = unlimited additional entries</div>
+        </div>
+
+        <hr class="form-divider">
+
+        <!-- Trading Mode -->
+        <div class="subsection-title"><span class="sub-icon">&#x1F680;</span> Trading Mode</div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label">Trading Mode <span class="param-ref">trading_mode</span></label>
+            <select class="form-input">
+              <option value="spot">spot</option>
+              <option value="futures" selected>futures</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Margin Mode <span class="param-ref">margin_mode</span></label>
+            <select class="form-input">
+              <option value="isolated" selected>isolated</option>
+              <option value="cross">cross</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Liquidation Buffer <span class="param-ref">liquidation_buffer</span></label>
+            <input class="form-input" type="number" value="0.05" step="0.01" min="0" max="0.99">
+            <div class="form-hint">Stoploss before liquidation (0.05 = 5%)</div>
+          </div>
+        </div>
+
+      </div><!-- /tab-core -->
+
+      <!-- ════════════════════════════════════════════ -->
+      <!-- TAB 2: PAIRLISTS (§7) -->
+      <!-- ════════════════════════════════════════════ -->
+      <div class="tab-content" id="tab-pairlists">
+        <div class="section-title">Pairlist Configuration</div>
+        <div class="section-desc">Configure pairlist handlers and filters &mdash; &sect;7 Plugins &amp; Protections (pairlists section)</div>
+
+        <!-- Primary Handler -->
+        <div class="subsection-title"><span class="sub-icon">&#x1F4CB;</span> Primary Handler</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Handler <span class="param-ref">pairlists[0].method</span></label>
+            <select class="form-input" id="pairlist-handler" onchange="updateHandlerParams()">
+              <option value="StaticPairList">StaticPairList</option>
+              <option value="VolumePairList" selected>VolumePairList</option>
+              <option value="PercentChangePairList">PercentChangePairList</option>
+              <option value="ProducerPairList">ProducerPairList</option>
+              <option value="RemotePairList">RemotePairList</option>
+              <option value="MarketCapPairList">MarketCapPairList</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Number of Assets <span class="param-ref">number_assets</span></label>
+            <input class="form-input" type="number" value="20">
+          </div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label">Sort Key <span class="param-ref">sort_key</span></label>
+            <select class="form-input">
+              <option value="quoteVolume" selected>quoteVolume</option>
+              <option value="baseVolume">baseVolume</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Min Value <span class="param-ref">min_value</span></label>
+            <input class="form-input" type="number" value="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Refresh Period <span class="param-ref">refresh_period</span></label>
+            <input class="form-input" type="number" value="1800">
+            <div class="form-hint">Seconds</div>
+          </div>
+        </div>
+
+        <hr class="form-divider">
+
+        <!-- Filter Stack -->
+        <div class="subsection-title"><span class="sub-icon">&#x1F50D;</span> Filter Stack <span style="font-size:10px;color:var(--text-3);font-weight:400">Drag to reorder</span></div>
+
+        <!-- AgeFilter -->
+        <div class="filter-card open">
+          <div class="filter-header" onclick="this.parentElement.classList.toggle('open')">
+            <div class="toggle on" onclick="event.stopPropagation();this.classList.toggle('on')" style="width:32px;height:17px"></div>
+            <div class="filter-name">AgeFilter</div>
+            <span class="drag-handle">&#x2630;</span>
+          </div>
+          <div class="filter-params">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Min Days Listed <span class="param-ref">min_days_listed</span></label>
+                <input class="form-input" type="number" value="10">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Max Days Listed <span class="param-ref">max_days_listed</span></label>
+                <input class="form-input" type="number" value="">
+                <div class="form-hint">Leave empty for no max</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DelistFilter -->
+        <div class="filter-card">
+          <div class="filter-header" onclick="this.parentElement.classList.toggle('open')">
+            <div class="toggle" onclick="event.stopPropagation();this.classList.toggle('on')" style="width:32px;height:17px"></div>
+            <div class="filter-name">DelistFilter</div>
+            <span class="drag-handle">&#x2630;</span>
+          </div>
+          <div class="filter-params">
+            <div class="form-group">
+              <label class="form-label">Days Until Delist <span class="param-ref">min_days_until_removed</span></label>
+              <input class="form-input" type="number" value="30">
+            </div>
+          </div>
+        </div>
+
+        <!-- SpreadFilter -->
+        <div class="filter-card open">
+          <div class="filter-header" onclick="this.parentElement.classList.toggle('open')">
+            <div class="toggle on" onclick="event.stopPropagation();this.classList.toggle('on')" style="width:32px;height:17px"></div>
+            <div class="filter-name">SpreadFilter</div>
+            <span class="drag-handle">&#x2630;</span>
+          </div>
+          <div class="filter-params">
+            <div class="form-group">
+              <label class="form-label">Max Spread Ratio <span class="param-ref">max_spread_ratio</span></label>
+              <input class="form-input" type="number" value="0.005" step="0.001">
+              <div class="form-hint">0.005 = 0.5% max spread</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PriceFilter -->
+        <div class="filter-card open">
+          <div class="filter-header" onclick="this.parentElement.classList.toggle('open')">
+            <div class="toggle on" onclick="event.stopPropagation();this.classList.toggle('on')" style="width:32px;height:17px"></div>
+            <div class="filter-name">PriceFilter</div>
+            <span class="drag-handle">&#x2630;</span>
+          </div>
+          <div class="filter-params">
+            <div class="form-row-3">
+              <div class="form-group">
+                <label class="form-label">Low Price Ratio <span class="param-ref">low_price_ratio</span></label>
+                <input class="form-input" type="number" value="0.01" step="0.001">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Min Price <span class="param-ref">min_price</span></label>
+                <input class="form-input" type="number" value="0.00000010" step="0.00000001">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Max Price <span class="param-ref">max_price</span></label>
+                <input class="form-input" type="number" value="0">
+                <div class="form-hint">0 = disabled</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RangeStabilityFilter -->
+        <div class="filter-card">
+          <div class="filter-header" onclick="this.parentElement.classList.toggle('open')">
+            <div class="toggle" onclick="event.stopPropagation();this.classList.toggle('on')" style="width:32px;height:17px"></div>
+            <div class="filter-name">RangeStabilityFilter</div>
+            <span class="drag-handle">&#x2630;</span>
+          </div>
+          <div class="filter-params">
+            <div class="form-row-3">
+              <div class="form-group">
+                <label class="form-label">Min Rate of Change <span class="param-ref">min_rate_of_change</span></label>
+                <input class="form-input" type="number" value="0.02" step="0.01">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Max Rate of Change <span class="param-ref">max_rate_of_change</span></label>
+                <input class="form-input" type="number" value="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Lookback Days <span class="param-ref">lookback_days</span></label>
+                <input class="form-input" type="number" value="10">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VolatilityFilter -->
+        <div class="filter-card">
+          <div class="filter-header" onclick="this.parentElement.classList.toggle('open')">
+            <div class="toggle" onclick="event.stopPropagation();this.classList.toggle('on')" style="width:32px;height:17px"></div>
+            <div class="filter-name">VolatilityFilter</div>
+            <span class="drag-handle">&#x2630;</span>
+          </div>
+          <div class="filter-params">
+            <div class="form-row-3">
+              <div class="form-group">
+                <label class="form-label">Min Volatility <span class="param-ref">min_volatility</span></label>
+                <input class="form-input" type="number" value="0.02" step="0.01">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Max Volatility <span class="param-ref">max_volatility</span></label>
+                <input class="form-input" type="number" value="0.75" step="0.01">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Lookback Days <span class="param-ref">lookback_days</span></label>
+                <input class="form-input" type="number" value="14">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- OffsetFilter -->
+        <div class="filter-card">
+          <div class="filter-header" onclick="this.parentElement.classList.toggle('open')">
+            <div class="toggle" onclick="event.stopPropagation();this.classList.toggle('on')" style="width:32px;height:17px"></div>
+            <div class="filter-name">OffsetFilter</div>
+            <span class="drag-handle">&#x2630;</span>
+          </div>
+          <div class="filter-params">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Offset <span class="param-ref">offset</span></label>
+                <input class="form-input" type="number" value="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Number Assets <span class="param-ref">number_assets</span></label>
+                <input class="form-input" type="number" value="0">
+                <div class="form-hint">0 = no limit</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PerformanceFilter -->
+        <div class="filter-card">
+          <div class="filter-header" onclick="this.parentElement.classList.toggle('open')">
+            <div class="toggle" onclick="event.stopPropagation();this.classList.toggle('on')" style="width:32px;height:17px"></div>
+            <div class="filter-name">PerformanceFilter</div>
+            <span class="drag-handle">&#x2630;</span>
+          </div>
+          <div class="filter-params">
+            <div class="form-group">
+              <label class="form-label">Trade Count Weight <span class="param-ref">trade_back_seconds</span></label>
+              <input class="form-input" type="number" value="0">
+              <div class="form-hint">Seconds to look back. 0 = all trades</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FullTradesFilter -->
+        <div class="filter-card">
+          <div class="filter-header" onclick="this.parentElement.classList.toggle('open')">
+            <div class="toggle" onclick="event.stopPropagation();this.classList.toggle('on')" style="width:32px;height:17px"></div>
+            <div class="filter-name">FullTradesFilter</div>
+            <span class="drag-handle">&#x2630;</span>
+          </div>
+          <div class="filter-params">
+            <div class="form-hint" style="padding:4px 0">Removes pairs that have max_open_trades open positions. No parameters.</div>
+          </div>
+        </div>
+
+        <!-- PrecisionFilter -->
+        <div class="filter-card">
+          <div class="filter-header" onclick="this.parentElement.classList.toggle('open')">
+            <div class="toggle on" onclick="event.stopPropagation();this.classList.toggle('on')" style="width:32px;height:17px"></div>
+            <div class="filter-name">PrecisionFilter</div>
+            <span class="drag-handle">&#x2630;</span>
+          </div>
+          <div class="filter-params">
+            <div class="form-hint" style="padding:4px 0">Filters pairs where stoploss would be impossible due to price precision. No parameters.</div>
+          </div>
+        </div>
+
+        <!-- ShuffleFilter -->
+        <div class="filter-card">
+          <div class="filter-header" onclick="this.parentElement.classList.toggle('open')">
+            <div class="toggle" onclick="event.stopPropagation();this.classList.toggle('on')" style="width:32px;height:17px"></div>
+            <div class="filter-name">ShuffleFilter</div>
+            <span class="drag-handle">&#x2630;</span>
+          </div>
+          <div class="filter-params">
+            <div class="form-group">
+              <label class="form-label">Seed <span class="param-ref">seed</span></label>
+              <input class="form-input" type="number" value="">
+              <div class="form-hint">Leave empty for random, set for reproducible</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:16px">
+          <button class="btn btn-success" style="margin-right:8px">Test Pairlist</button>
+          <span style="font-size:11px;color:var(--text-3)">Runs <code style="color:var(--cyan)">freqtrade test-pairlist</code> and shows results</span>
+        </div>
+      </div><!-- /tab-pairlists -->
+
+      <!-- ════════════════════════════════════════════ -->
+      <!-- TAB 3: EXCHANGE (§9) -->
+      <!-- ════════════════════════════════════════════ -->
+      <div class="tab-content" id="tab-exchange">
+        <div class="section-title">Exchange Configuration</div>
+        <div class="section-desc">Exchange connection and credentials &mdash; &sect;9 Exchanges</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Exchange <span class="param-ref">exchange.name</span></label>
+            <select class="form-input">
+              <option value="binance" selected>Binance (Spot + Futures)</option>
+              <option value="bybit">Bybit (Spot + Futures)</option>
+              <option value="gate">Gate.io (Spot + Futures)</option>
+              <option value="hyperliquid">Hyperliquid (Futures)</option>
+              <option value="bitget">Bitget (Spot + Futures)</option>
+              <option value="okx">OKX (Spot + Futures)</option>
+              <option value="kraken">Kraken (Spot + Futures)</option>
+            </select>
+          </div>
+          <div></div>
+        </div>
+
+        <hr class="form-divider">
+
+        <div class="subsection-title"><span class="sub-icon">&#x1F511;</span> API Credentials</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">API Key <span class="param-ref">exchange.key</span></label>
+            <input class="form-input" type="password" value="aBcDeFgHiJkLmNoPqRsTuVwXyZ123456">
+          </div>
+          <div class="form-group">
+            <label class="form-label">API Secret <span class="param-ref">exchange.secret</span></label>
+            <input class="form-input" type="password" value="xYzAbCdEfGhIjKlMnOpQrStUvWxYz7890">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Password <span class="param-ref">exchange.password</span></label>
+            <input class="form-input" type="password" value="" placeholder="Exchange passphrase (if required)">
+            <div class="form-hint">Required for some exchanges (e.g., OKX)</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">UID <span class="param-ref">exchange.uid</span></label>
+            <input class="form-input" type="text" value="" placeholder="User ID (if required)">
+          </div>
+        </div>
+
+        <hr class="form-divider">
+
+        <!-- Pair Lists -->
+        <div class="subsection-title"><span class="sub-icon">&#x1F4DD;</span> Pair Whitelist <span class="param-ref" style="font-size:10px">exchange.pair_whitelist</span></div>
+        <div class="tag-editor">
+          <span class="tag">BTC/USDT:USDT <span class="tag-remove">&times;</span></span>
+          <span class="tag">ETH/USDT:USDT <span class="tag-remove">&times;</span></span>
+          <span class="tag">SOL/USDT:USDT <span class="tag-remove">&times;</span></span>
+          <span class="tag">BNB/USDT:USDT <span class="tag-remove">&times;</span></span>
+          <span class="tag">XRP/USDT:USDT <span class="tag-remove">&times;</span></span>
+          <span class="tag">ADA/USDT:USDT <span class="tag-remove">&times;</span></span>
+          <span class="tag">DOGE/USDT:USDT <span class="tag-remove">&times;</span></span>
+          <input class="tag-input" type="text" placeholder="Add pair...">
+        </div>
+        <div class="form-hint" style="margin-top:6px;margin-bottom:20px">Use exchange pair format. For futures: PAIR:SETTLE (e.g. BTC/USDT:USDT)</div>
+
+        <div class="subsection-title"><span class="sub-icon">&#x1F6AB;</span> Pair Blacklist <span class="param-ref" style="font-size:10px">exchange.pair_blacklist</span></div>
+        <div class="tag-editor">
+          <span class="tag">BNB/.*  <span class="tag-remove">&times;</span></span>
+          <span class="tag">.*DOWN/USDT:USDT <span class="tag-remove">&times;</span></span>
+          <span class="tag">.*UP/USDT:USDT <span class="tag-remove">&times;</span></span>
+          <input class="tag-input" type="text" placeholder="Add pair or regex...">
+        </div>
+        <div class="form-hint" style="margin-top:6px;margin-bottom:20px">Supports regex patterns</div>
+
+        <hr class="form-divider">
+
+        <!-- Advanced Exchange -->
+        <div class="subsection-title"><span class="sub-icon">&#x1F527;</span> Advanced Exchange Settings</div>
+        <div class="card">
+          <div class="card-body">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">enable_ws</div>
+                <div class="toggle-desc">Enable WebSocket for real-time data (exchange.enable_ws)</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Markets Refresh Interval <span class="param-ref">exchange.markets_refresh_interval</span></label>
+          <input class="form-input" type="number" value="60" style="max-width:200px">
+          <div class="form-hint">Minutes between market data refresh</div>
+        </div>
+
+        <div class="form-group" style="margin-top:20px">
+          <label class="form-label">CCXT Config (Advanced) <span class="param-ref">exchange.ccxt_config</span></label>
+          <textarea class="json-editor" spellcheck="false">{
+  "enableRateLimit": true,
+  "rateLimit": 100
+}</textarea>
+          <div class="form-hint">Raw ccxt configuration object in JSON. Applied to exchange connection.</div>
+        </div>
+
+      </div><!-- /tab-exchange -->
+
+      <!-- ════════════════════════════════════════════ -->
+      <!-- TAB 4: TELEGRAM (§11) -->
+      <!-- ════════════════════════════════════════════ -->
+      <div class="tab-content" id="tab-telegram">
+        <div class="section-title">Telegram Configuration</div>
+        <div class="section-desc">Bot notifications via Telegram &mdash; &sect;11 Telegram Commands</div>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">telegram.enabled</div>
+                <div class="toggle-desc">Enable Telegram bot notifications</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Bot Token <span class="param-ref">telegram.token</span></label>
+            <input class="form-input" type="password" value="110201543:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Chat ID <span class="param-ref">telegram.chat_id</span></label>
+            <input class="form-input" type="text" value="-1001234567890">
+          </div>
+        </div>
+
+        <hr class="form-divider">
+
+        <div class="subsection-title"><span class="sub-icon">&#x1F514;</span> Notification Settings <span class="param-ref" style="font-size:10px">telegram.notification_settings</span></div>
+        <div class="card">
+          <div class="card-body">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">entry</div>
+                <div class="toggle-desc">Notify on trade entry</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">exit</div>
+                <div class="toggle-desc">Notify on trade exit</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">entry_cancel</div>
+                <div class="toggle-desc">Notify when entry order is cancelled</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">exit_cancel</div>
+                <div class="toggle-desc">Notify when exit order is cancelled</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">entry_fill</div>
+                <div class="toggle-desc">Notify when entry order is filled</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">exit_fill</div>
+                <div class="toggle-desc">Notify when exit order is filled</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">status</div>
+                <div class="toggle-desc">Periodic status updates</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <div class="card-body">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">telegram.allow_custom_messages</div>
+                <div class="toggle-desc">Allow strategy to send custom Telegram messages</div>
+              </div>
+              <div class="toggle" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /tab-telegram -->
+
+      <!-- ════════════════════════════════════════════ -->
+      <!-- TAB 5: WEBHOOKS (§13) -->
+      <!-- ════════════════════════════════════════════ -->
+      <div class="tab-content" id="tab-webhooks">
+        <div class="section-title">Webhook Configuration</div>
+        <div class="section-desc">HTTP webhook notifications per event &mdash; &sect;13 Webhook Config</div>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">webhook.enabled</div>
+                <div class="toggle-desc">Enable webhook notifications</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Webhook URL <span class="param-ref">webhook.url</span></label>
+          <input class="form-input" type="url" value="https://hooks.example.com/freqtrade" placeholder="https://...">
+        </div>
+
+        <hr class="form-divider">
+
+        <div style="display:grid;grid-template-columns:1fr 280px;gap:24px">
+          <div>
+            <div class="subsection-title"><span class="sub-icon">&#x1F4E4;</span> Event Payloads</div>
+
+            <!-- Entry -->
+            <div class="webhook-event open">
+              <div class="webhook-event-header" onclick="this.parentElement.classList.toggle('open')">
+                <div class="toggle on" onclick="event.stopPropagation();this.classList.toggle('on')" style="width:32px;height:17px"></div>
+                <div class="webhook-event-name">webhookentry</div>
+                <span style="color:var(--text-3);font-size:12px">&#x25BC;</span>
+              </div>
+              <div class="webhook-event-body">
+                <textarea class="json-editor" spellcheck="false" style="min-height:100px">{
+  "value1": "Entering {pair}",
+  "value2": "Rate: {open_rate}",
+  "value3": "{enter_tag}"
+}</textarea>
+              </div>
+            </div>
+
+            <!-- Entry Cancel -->
+            <div class="webhook-event">
+              <div class="webhook-event-header" onclick="this.parentElement.classList.toggle('open')">
+                <div class="toggle on" onclick="event.stopPropagation();this.classList.toggle('on')" style="width:32px;height:17px"></div>
+                <div class="webhook-event-name">webhookentrycancel</div>
+                <span style="color:var(--text-3);font-size:12px">&#x25B6;</span>
+              </div>
+              <div class="webhook-event-body">
+                <textarea class="json-editor" spellcheck="false" style="min-height:80px">{
+  "value1": "Entry cancelled for {pair}",
+  "value2": "Reason: {reason}"
+}</textarea>
+              </div>
+            </div>
+
+            <!-- Entry Fill -->
+            <div class="webhook-event">
+              <div class="webhook-event-header" onclick="this.parentElement.classList.toggle('open')">
+                <div class="toggle on" onclick="event.stopPropagation();this.classList.toggle('on')" style="width:32px;height:17px"></div>
+                <div class="webhook-event-name">webhookentryfill</div>
+                <span style="color:var(--text-3);font-size:12px">&#x25B6;</span>
+              </div>
+              <div class="webhook-event-body">
+                <textarea class="json-editor" spellcheck="false" style="min-height:80px">{
+  "value1": "Entry filled for {pair}",
+  "value2": "Rate: {open_rate}",
+  "value3": "Amount: {amount}"
+}</textarea>
+              </div>
+            </div>
+
+            <!-- Exit -->
+            <div class="webhook-event open">
+              <div class="webhook-event-header" onclick="this.parentElement.classList.toggle('open')">
+                <div class="toggle on" onclick="event.stopPropagation();this.classList.toggle('on')" style="width:32px;height:17px"></div>
+                <div class="webhook-event-name">webhookexit</div>
+                <span style="color:var(--text-3);font-size:12px">&#x25BC;</span>
+              </div>
+              <div class="webhook-event-body">
+                <textarea class="json-editor" spellcheck="false" style="min-height:100px">{
+  "value1": "Exiting {pair}",
+  "value2": "Profit: {close_profit_abs:.2f} {stake_currency}",
+  "value3": "{exit_reason}"
+}</textarea>
+              </div>
+            </div>
+
+            <!-- Exit Cancel -->
+            <div class="webhook-event">
+              <div class="webhook-event-header" onclick="this.parentElement.classList.toggle('open')">
+                <div class="toggle on" onclick="event.stopPropagation();this.classList.toggle('on')" style="width:32px;height:17px"></div>
+                <div class="webhook-event-name">webhookexitcancel</div>
+                <span style="color:var(--text-3);font-size:12px">&#x25B6;</span>
+              </div>
+              <div class="webhook-event-body">
+                <textarea class="json-editor" spellcheck="false" style="min-height:80px">{
+  "value1": "Exit cancelled for {pair}",
+  "value2": "Reason: {reason}"
+}</textarea>
+              </div>
+            </div>
+
+            <!-- Exit Fill -->
+            <div class="webhook-event">
+              <div class="webhook-event-header" onclick="this.parentElement.classList.toggle('open')">
+                <div class="toggle on" onclick="event.stopPropagation();this.classList.toggle('on')" style="width:32px;height:17px"></div>
+                <div class="webhook-event-name">webhookexitfill</div>
+                <span style="color:var(--text-3);font-size:12px">&#x25B6;</span>
+              </div>
+              <div class="webhook-event-body">
+                <textarea class="json-editor" spellcheck="false" style="min-height:80px">{
+  "value1": "Exit filled for {pair}",
+  "value2": "Profit: {close_profit_abs:.2f} {stake_currency}",
+  "value3": "{exit_reason}"
+}</textarea>
+              </div>
+            </div>
+
+            <!-- Status -->
+            <div class="webhook-event">
+              <div class="webhook-event-header" onclick="this.parentElement.classList.toggle('open')">
+                <div class="toggle on" onclick="event.stopPropagation();this.classList.toggle('on')" style="width:32px;height:17px"></div>
+                <div class="webhook-event-name">webhookstatus</div>
+                <span style="color:var(--text-3);font-size:12px">&#x25B6;</span>
+              </div>
+              <div class="webhook-event-body">
+                <textarea class="json-editor" spellcheck="false" style="min-height:80px">{
+  "value1": "Status: {status}"
+}</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Variable Reference Sidebar -->
+          <div>
+            <div class="subsection-title"><span class="sub-icon">&#x1F4D6;</span> Available Variables</div>
+            <div class="var-ref">
+              <div class="var-ref-item"><span class="var-ref-key">{trade_id}</span><span class="var-ref-desc">Trade ID</span></div>
+              <div class="var-ref-item"><span class="var-ref-key">{pair}</span><span class="var-ref-desc">Trading pair</span></div>
+              <div class="var-ref-item"><span class="var-ref-key">{base_currency}</span><span class="var-ref-desc">Base currency</span></div>
+              <div class="var-ref-item"><span class="var-ref-key">{stake_currency}</span><span class="var-ref-desc">Stake currency</span></div>
+              <div class="var-ref-item"><span class="var-ref-key">{fiat_currency}</span><span class="var-ref-desc">Fiat currency</span></div>
+              <div class="var-ref-item"><span class="var-ref-key">{amount}</span><span class="var-ref-desc">Trade amount</span></div>
+              <div class="var-ref-item"><span class="var-ref-key">{open_rate}</span><span class="var-ref-desc">Entry rate</span></div>
+              <div class="var-ref-item"><span class="var-ref-key">{close_rate}</span><span class="var-ref-desc">Exit rate</span></div>
+              <div class="var-ref-item"><span class="var-ref-key">{open_date}</span><span class="var-ref-desc">Entry date</span></div>
+              <div class="var-ref-item"><span class="var-ref-key">{close_date}</span><span class="var-ref-desc">Exit date</span></div>
+              <div class="var-ref-item"><span class="var-ref-key">{close_profit_abs}</span><span class="var-ref-desc">Profit (absolute)</span></div>
+              <div class="var-ref-item"><span class="var-ref-key">{profit_ratio}</span><span class="var-ref-desc">Profit ratio</span></div>
+              <div class="var-ref-item"><span class="var-ref-key">{stake_amount}</span><span class="var-ref-desc">Stake amount</span></div>
+              <div class="var-ref-item"><span class="var-ref-key">{enter_tag}</span><span class="var-ref-desc">Entry tag</span></div>
+              <div class="var-ref-item"><span class="var-ref-key">{exit_reason}</span><span class="var-ref-desc">Exit reason</span></div>
+              <div class="var-ref-item"><span class="var-ref-key">{is_short}</span><span class="var-ref-desc">Short trade flag</span></div>
+              <div class="var-ref-item"><span class="var-ref-key">{leverage}</span><span class="var-ref-desc">Leverage used</span></div>
+              <div class="var-ref-item"><span class="var-ref-key">{status}</span><span class="var-ref-desc">Bot status msg</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /tab-webhooks -->
+
+      <!-- ════════════════════════════════════════════ -->
+      <!-- TAB 6: PRODUCER/CONSUMER (§17) -->
+      <!-- ════════════════════════════════════════════ -->
+      <div class="tab-content" id="tab-producer">
+        <div class="section-title">Producer / Consumer Mode</div>
+        <div class="section-desc">Multi-bot signal sharing via WebSocket &mdash; &sect;17 Producer/Consumer Mode</div>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">external_message_consumer.enabled</div>
+                <div class="toggle-desc">Enable this bot as a signal consumer</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">remove_entry_exit_signals</div>
+                <div class="toggle-desc">Remove local entry/exit signals and only use producer signals</div>
+              </div>
+              <div class="toggle" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Wait Timeout <span class="param-ref">external_message_consumer.wait_timeout</span></label>
+            <input class="form-input" type="number" value="300">
+            <div class="form-hint">Seconds to wait for data from producers</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ping Timeout <span class="param-ref">external_message_consumer.ping_timeout</span></label>
+            <input class="form-input" type="number" value="10">
+            <div class="form-hint">Seconds for WebSocket ping timeout</div>
+          </div>
+        </div>
+
+        <hr class="form-divider">
+
+        <div class="subsection-title"><span class="sub-icon">&#x1F4E1;</span> Producers <span class="param-ref" style="font-size:10px">external_message_consumer.producers</span></div>
+
+        <!-- Producer 1 -->
+        <div class="producer-row">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="font-size:12px;font-weight:600;color:var(--text-0)">Producer #1</span>
+            <span class="remove-btn" style="cursor:pointer;color:var(--red);font-size:13px">&times; Remove</span>
+          </div>
+          <div class="form-row" style="margin-bottom:8px">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Name <span class="param-ref">name</span></label>
+              <input class="form-input" type="text" value="default">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Host <span class="param-ref">host</span></label>
+              <input class="form-input" type="text" value="192.168.1.100">
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom:0">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Port <span class="param-ref">port</span></label>
+              <input class="form-input" type="number" value="8080">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">WS Token <span class="param-ref">ws_token</span></label>
+              <input class="form-input" type="password" value="sampleWsToken123abc">
+            </div>
+          </div>
+        </div>
+
+        <!-- Producer 2 -->
+        <div class="producer-row">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="font-size:12px;font-weight:600;color:var(--text-0)">Producer #2</span>
+            <span class="remove-btn" style="cursor:pointer;color:var(--red);font-size:13px">&times; Remove</span>
+          </div>
+          <div class="form-row" style="margin-bottom:8px">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Name <span class="param-ref">name</span></label>
+              <input class="form-input" type="text" value="scalper-bot">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Host <span class="param-ref">host</span></label>
+              <input class="form-input" type="text" value="192.168.1.101">
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom:0">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Port <span class="param-ref">port</span></label>
+              <input class="form-input" type="number" value="8081">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">WS Token <span class="param-ref">ws_token</span></label>
+              <input class="form-input" type="password" value="anotherToken456xyz">
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px">
+          <button class="btn btn-ghost">+ Add Producer</button>
+        </div>
+
+      </div><!-- /tab-producer -->
+
+      <!-- ════════════════════════════════════════════ -->
+      <!-- TAB 7: ADVANCED (§28) -->
+      <!-- ════════════════════════════════════════════ -->
+      <div class="tab-content" id="tab-advanced">
+        <div class="section-title">Advanced Settings</div>
+        <div class="section-desc">Database, logging, and multi-instance config &mdash; &sect;28 Multi-instance + Logging</div>
+
+        <!-- Database -->
+        <div class="subsection-title"><span class="sub-icon">&#x1F4BE;</span> Database</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Database Type <span class="param-ref">db_url</span></label>
+            <select class="form-input" id="db-type">
+              <option value="sqlite" selected>SQLite (default)</option>
+              <option value="postgresql">PostgreSQL</option>
+              <option value="mariadb">MariaDB</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Connection String <span class="param-ref">db_url</span></label>
+            <input class="form-input" type="text" value="sqlite:////freqtrade/user_data/tradesv3.sqlite" style="font-family:monospace;font-size:11px">
+            <div class="form-hint">SQLite: sqlite:///path, PG: postgresql://user:pass@host/db</div>
+          </div>
+        </div>
+
+        <hr class="form-divider">
+
+        <!-- Logging -->
+        <div class="subsection-title"><span class="sub-icon">&#x1F4C4;</span> Logging</div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label">Log Level <span class="param-ref">verbosity</span></label>
+            <select class="form-input">
+              <option value="0">ERROR (0)</option>
+              <option value="1" selected>INFO (1 - default)</option>
+              <option value="2">DEBUG (2)</option>
+              <option value="3">TRACE (3)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Log File <span class="param-ref">logfile</span></label>
+            <input class="form-input" type="text" value="/freqtrade/user_data/logs/freqtrade.log" style="font-family:monospace;font-size:11px">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Log Rotate <span class="param-ref">log_rotate</span></label>
+            <select class="form-input">
+              <option value="true" selected>Enabled</option>
+              <option value="false">Disabled</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Log Rotate Bytes <span class="param-ref">log_rotate_bytes</span></label>
+            <input class="form-input" type="number" value="10485760">
+            <div class="form-hint">Max log file size before rotation (bytes). Default: 10MB</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Log Rotate Backup Count <span class="param-ref">log_rotate_backup_count</span></label>
+            <input class="form-input" type="number" value="5">
+            <div class="form-hint">Number of rotated log files to keep</div>
+          </div>
+        </div>
+
+        <hr class="form-divider">
+
+        <!-- Multi-Instance -->
+        <div class="subsection-title"><span class="sub-icon">&#x1F4E6;</span> Multi-Instance Info</div>
+        <div class="card">
+          <div class="card-body">
+            <p style="font-size:12px;color:var(--text-1);line-height:1.6;margin-bottom:12px">
+              Each FreqTrade instance runs in its own Docker container with a separate config, database, and API port.
+              The orchestrator manages multiple instances via the REST API.
+            </p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div style="background:var(--bg-1);border:1px solid var(--border);border-radius:6px;padding:10px 14px">
+                <div style="font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">API Listen IP</div>
+                <div style="font-size:12px;color:var(--text-0);font-family:monospace">api_server.listen_ip_address</div>
+                <div style="font-size:11px;color:var(--text-2);margin-top:2px">Default: 127.0.0.1</div>
+              </div>
+              <div style="background:var(--bg-1);border:1px solid var(--border);border-radius:6px;padding:10px 14px">
+                <div style="font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">API Listen Port</div>
+                <div style="font-size:12px;color:var(--text-0);font-family:monospace">api_server.listen_port</div>
+                <div style="font-size:11px;color:var(--text-2);margin-top:2px">Default: 8080</div>
+              </div>
+              <div style="background:var(--bg-1);border:1px solid var(--border);border-radius:6px;padding:10px 14px">
+                <div style="font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">API Username</div>
+                <div style="font-size:12px;color:var(--text-0);font-family:monospace">api_server.username</div>
+                <div style="font-size:11px;color:var(--text-2);margin-top:2px">Required for auth</div>
+              </div>
+              <div style="background:var(--bg-1);border:1px solid var(--border);border-radius:6px;padding:10px 14px">
+                <div style="font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">API Password</div>
+                <div style="font-size:12px;color:var(--text-0);font-family:monospace">api_server.password</div>
+                <div style="font-size:11px;color:var(--text-2);margin-top:2px">Required for auth</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /tab-advanced -->
+
+      <!-- Save Bar (sticky at bottom) -->
+      <div class="save-bar">
+        <div class="save-status">
+          <div class="save-dot"></div>
+          <span>Unsaved changes</span>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost">Reset to Defaults</button>
+          <button class="btn btn-primary">Save Configuration</button>
+        </div>
+      </div>
+
+    </div><!-- /settings-body -->
+
+  </div><!-- /content -->
+
+</div><!-- /main -->
+
+<script>
+function showTab(tabId) {
+  // Hide all tab contents
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  // Deactivate all tabs
+  document.querySelectorAll('.settings-tab').forEach(el => el.classList.remove('active'));
+  // Show selected
+  document.getElementById('tab-' + tabId).classList.add('active');
+  // Activate clicked tab
+  event.currentTarget.classList.add('active');
+  // Scroll body to top
+  document.querySelector('.settings-body').scrollTop = 0;
+}
+
+function addRoiRow() {
+  var tbody = document.querySelector('#roi-table tbody');
+  var row = document.createElement('tr');
+  row.innerHTML = '<td><input type="number" value=""></td><td><input type="number" value="" step="0.01"></td><td><span class="remove-btn" onclick="this.closest(\'tr\').remove()">&#x2715;</span></td>';
+  tbody.appendChild(row);
+}
+
+// ROI table remove buttons
+document.querySelectorAll('.roi-table .remove-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    this.closest('tr').remove();
+  });
+});
+</script>
+
+</body>
+</html>

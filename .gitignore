@@ -66,3 +66,4 @@ _BACKUP/
 
 # ─── Backtest verification (dev artifact) ─────────
 backtest_verification/
+.github/workflows/

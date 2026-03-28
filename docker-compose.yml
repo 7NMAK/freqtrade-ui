@@ -84,10 +84,9 @@ services:
       ORCH_FT_BASE_PORT: "${ORCH_FT_BASE_PORT:-8080}"
       ORCH_ADMIN_USERNAME: "${ORCH_ADMIN_USERNAME:-admin}"
       ORCH_ADMIN_PASSWORD: "${ORCH_ADMIN_PASSWORD:-admin}"
-    # Run as non-root; group_add gives access to host docker socket
-    user: "1000:999"
+    # group_add gives docker socket access to the non-root user inside container
     group_add:
-      - "${DOCKER_GID:-999}"
+      - "${DOCKER_GID:-988}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /opt/freqtrade/user_data:/opt/freqtrade/user_data:ro

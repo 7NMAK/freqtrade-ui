@@ -14,10 +14,9 @@ COPY src/ ./src/
 COPY alembic/ ./alembic/
 COPY alembic.ini .
 
-# Create non-root user with docker group (GID 999 matches host docker group)
-RUN groupadd -g 999 docker && \
-    useradd -r -u 1000 -g docker -d /app orchestrator && \
-    chown -R orchestrator:docker /app
+# Create non-root user (docker socket access via group_add in compose)
+RUN useradd -r -u 1000 -d /app orchestrator && \
+    chown -R orchestrator /app
 
 USER orchestrator
 

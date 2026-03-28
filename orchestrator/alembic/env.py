@@ -3,6 +3,7 @@ Alembic migration environment.
 Uses async engine to match our FastAPI app.
 """
 import asyncio
+import os
 from logging.config import fileConfig
 
 from alembic import context
@@ -19,6 +20,11 @@ from src.models.audit_log import AuditLog
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
+
+# Override sqlalchemy.url from env var if available (Docker container uses this)
+db_url = os.environ.get("ORCH_DATABASE_URL")
+if db_url:
+    config.set_main_option("sqlalchemy.url", db_url)
 
 target_metadata = Base.metadata
 

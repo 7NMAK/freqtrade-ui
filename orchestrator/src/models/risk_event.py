@@ -40,8 +40,8 @@ class RiskEvent(Base, TimestampMixin):
     )
 
     # What happened
-    kill_type: Mapped[KillType] = mapped_column(Enum(KillType), nullable=False)
-    trigger: Mapped[KillTrigger] = mapped_column(Enum(KillTrigger), nullable=False)
+    kill_type: Mapped[KillType] = mapped_column(Enum(KillType, native_enum=False), nullable=False)
+    trigger: Mapped[KillTrigger] = mapped_column(Enum(KillTrigger, native_enum=False), nullable=False)
 
     # Details
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)

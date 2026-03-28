@@ -51,7 +51,7 @@ class BotInstance(Base, TimestampMixin):
 
     # State
     status: Mapped[BotStatus] = mapped_column(
-        Enum(BotStatus), default=BotStatus.STOPPED, nullable=False
+        Enum(BotStatus, native_enum=False), default=BotStatus.STOPPED, nullable=False
     )
     is_dry_run: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     api_port: Mapped[int] = mapped_column(Integer, nullable=False)

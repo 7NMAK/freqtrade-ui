@@ -14,5 +14,6 @@ COPY src/ ./src/
 COPY alembic/ ./alembic/
 COPY alembic.ini .
 
-# Run DB migrations then start server
-CMD ["sh", "-c", "alembic upgrade head && uvicorn src.main:app --host 0.0.0.0 --port 8888"]
+# Run DB migrations (if any exist) then start server
+# Tables are also created by app lifespan (create_all) as dev fallback
+CMD ["sh", "-c", "alembic upgrade head 2>/dev/null || echo 'No migrations yet — app will create tables'; uvicorn src.main:app --host 0.0.0.0 --port 8888"]

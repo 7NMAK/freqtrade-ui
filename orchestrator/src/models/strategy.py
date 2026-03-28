@@ -41,7 +41,7 @@ class Strategy(Base, TimestampMixin):
 
     # Lifecycle state
     lifecycle: Mapped[StrategyLifecycle] = mapped_column(
-        Enum(StrategyLifecycle), default=StrategyLifecycle.DRAFT, nullable=False
+        Enum(StrategyLifecycle, native_enum=False), default=StrategyLifecycle.DRAFT, nullable=False
     )
 
     # Which bot is running this strategy (if any)

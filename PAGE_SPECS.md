@@ -2192,7 +2192,173 @@ FT already has REST endpoints for backtesting:
 
 ---
 
-# COMPLETE ELEMENT COUNT
+# ADDENDUM: PREVIOUSLY MISSING FT FEATURES
+
+These features were identified during review as present in FREQTRADE_REFERENCE.md but not originally documented in PAGE_SPECS.
+
+## ADD-1: Advanced Hyperopt — Custom Loss Functions (§15)
+
+**Page:** Backtesting (PAGE 4), Hyperopt tab
+
+### BT-54: Custom Loss Function Info Panel
+- **Visual:** Expandable info panel below loss function selector (BT-42)
+- **Content:** Shows the interface signature for custom loss functions:
+  ```python
+  class IHyperOptLoss:
+      @staticmethod
+      def hyperopt_loss_function(results, trade_count, min_date, max_date,
+                                  config, processed, backtest_stats, **kwargs) -> float:
+  ```
+- **FT ref:** §15 Advanced Hyperopt
+- **Note:** Custom loss functions are .py files placed in `user_data/hyperopts/`. We don't build an editor — just show available ones and explain how to create custom.
+
+### BT-55: Hyperopt Path Input
+- **Visual:** Text input (optional)
+- **Maps to:** CLI arg `--hyperopt-path {path}` (§6)
+- **Default:** Empty (uses default path)
+
+### BT-56: Space Type Reference Table (read-only)
+- **Visual:** Collapsible reference showing parameter types
+- **Content:**
+  | Type | Import | Use Case |
+  |------|--------|----------|
+  | `IntParameter(low, high)` | freqtrade.strategy | Integer range |
+  | `DecimalParameter(low, high, decimals)` | freqtrade.strategy | Decimal range |
+  | `RealParameter(low, high)` | freqtrade.strategy | Float range |
+  | `CategoricalParameter(list)` | freqtrade.strategy | Category selection |
+  | `BooleanParameter()` | freqtrade.strategy | True/False |
+- **FT ref:** §6, §15
+
+## ADD-2: CLI Arguments as Settings (§27)
+
+**Page:** Settings (PAGE 7), Advanced tab
+
+### SET-106: User Data Directory
+- **Input type:** Text
+- **FT param:** `user_data_dir` (§1) / CLI `--userdir` (§27)
+- **Load from:** `config.user_data_dir`
+
+### SET-107: Data Directory
+- **Input type:** Text
+- **FT param:** CLI `--datadir` (§27)
+- **Note:** Only relevant for CLI operations, stored as orchestrator config
+
+### SET-108: Strategy Path
+- **Input type:** Text
+- **FT param:** `strategy_path` (§1) / CLI `--strategy-path` (§27)
+- **Load from:** `config.strategy_path`
+
+### SET-109: Recursive Strategy Search Toggle
+- **FT param:** `recursive_strategy_search` (§1)
+
+### SET-110b: Database URL
+- **Input type:** Text (read-only display)
+- **FT param:** `db_url` (§1) / CLI `--db-url` (§27)
+- **Note:** Already partially covered in SET-100/SET-101, this clarifies CLI mapping
+
+### SET-110c: Verbose Level Selector
+- **Dropdown:** Normal, Verbose (-v), Very Verbose (-vv), Debug (-vvv)
+- **Maps to:** CLI flags `-v`, `-vv`, `-vvv` (§27)
+- **Note:** Applied when starting bot container via orchestrator
+
+## ADD-3: Missing Strategy Callbacks (§3)
+
+**Page:** Strategy Builder (PAGE 3), Step 6 Review / Advanced section
+
+### B-63: Advanced Callbacks Reference Panel
+- **Visual:** Collapsible panel "Advanced Callbacks (Optional)" in Step 6 or as separate advanced tab
+- **Content:** Read-only reference showing all 21 callbacks with signatures:
+
+| Callback | Signature | Description | In Builder? |
+|----------|-----------|-------------|-------------|
+| `bot_start` | `(**kwargs) -> None` | Called once at bot start | No (code only) |
+| `bot_loop_start` | `(current_time, **kwargs) -> None` | Called each iteration | No (code only) |
+| `custom_stake_amount` | `(pair, current_time, ...) -> float` | Custom position size | No (code only) |
+| `custom_exit` | `(pair, trade, ...) -> str/bool/None` | Custom exit logic | No (code only) |
+| `custom_stoploss` | `(pair, trade, ...) -> float/None` | Dynamic stoploss | No (code only) |
+| `custom_roi` | `(pair, trade, ...) -> float/None` | Dynamic ROI | No (code only) |
+| `custom_entry_price` | `(pair, trade, ...) -> float` | Custom entry price | No (code only) |
+| `custom_exit_price` | `(pair, trade, ...) -> float` | Custom exit price | No (code only) |
+| `check_entry_timeout` | `(pair, trade, order, ...) -> bool` | Cancel unfilled entry | No (code only) |
+| `check_exit_timeout` | `(pair, trade, order, ...) -> bool` | Cancel unfilled exit | No (code only) |
+| `confirm_trade_entry` | `(pair, order_type, ...) -> bool` | Confirm entry | No (code only) |
+| `confirm_trade_exit` | `(pair, trade, ...) -> bool` | Confirm exit | No (code only) |
+| `adjust_trade_position` | `(trade, ...) -> float/None` | DCA adjustment | No (code only) |
+| `adjust_order_price` | `(trade, order, ...) -> float/None` | Refresh limit orders | No (code only) |
+| `adjust_entry_price` | `(trade, order, ...) -> float/None` | Refresh entry orders | No (code only) |
+| `adjust_exit_price` | `(trade, order, ...) -> float/None` | Refresh exit orders | No (code only) |
+| `leverage` | `(pair, ...) -> float` | Custom leverage | YES (B-15) |
+| `order_filled` | `(pair, trade, order, ...) -> None` | Post-fill trigger | No (code only) |
+| `plot_annotations` | `(pair, ...) -> list[AnnotationType]` | Chart annotations | No (code only) |
+
+- **FT ref:** §3 Strategy Callbacks
+- **Note:** The Builder wizard (Steps 1-5) handles basic strategy creation. These advanced callbacks require manual code editing. The panel serves as documentation for power users who export the .py and customize further.
+
+## ADD-4: Pair Locks Management (§7, §8)
+
+**Page:** Risk Management (PAGE 6) — already partially covered in R-30
+
+### R-31: Add Pair Lock Button
+- **Visual:** "+ Lock Pair" button above pair locks table (R-30)
+- **Click:** Opens modal with:
+  - Pair input (dropdown from whitelist)
+  - Lock Until (datetime input)
+  - Reason (text input)
+  - Confirm button
+- **API:** `botLockPair(botId, { pair, until, reason })` → **FT** `POST /api/v1/locks` body: `{ "pair": "...", "until": "...", "reason": "..." }`
+- **FT ref:** §8 REST API — Locks endpoints
+
+### R-32: Delete Pair Lock Button (per row)
+- **Visual:** "🗑️" icon on each active lock in R-30 table
+- **Click:** Confirm dialog → `botDeleteLock(botId, lockId)` → **FT** `DELETE /api/v1/locks/{id}`
+- **On success:** Remove row from table, show success toast
+
+### R-33: Unlock All Button
+- **Visual:** "Unlock All" text button in table header
+- **Click:** Confirm → delete all active locks
+- **API:** For each active lock: `DELETE /api/v1/locks/{id}` → **FT**
+
+## ADD-5: Capital Allocation Display (§1)
+
+**Page:** Settings (PAGE 7), Core Trading tab + Dashboard (PAGE 1)
+
+### SET-16b: Available Capital Info
+- **Visual:** Info box below SET-16 (Available Capital input)
+- **Content:** Explains multi-bot capital allocation:
+  - "When running multiple bots, set `available_capital` per bot to control how much of the wallet each bot can use."
+  - "Total allocated: $X / $Y (sum of all bots' available_capital vs actual wallet)"
+- **Data:** Sum `available_capital` from all bots' configs → `botConfig(id)` for each bot
+- **FT ref:** §1 `available_capital` parameter
+
+### D-21: Capital Allocation Bar (Dashboard)
+- **Visual:** Horizontal stacked bar in Portfolio Summary showing capital allocation per bot
+- **Data source:** For each bot: `botConfig(id)` → `available_capital` + `botBalance(id)` → actual balance
+- **Display:** Bot name segments with allocated vs used capital
+- **Priority:** LOW (nice-to-have after core dashboard works)
+
+---
+
+# COMPLETE ELEMENT COUNT (UPDATED)
+
+| Page | Widgets | FT Features | Our Features (ORCH) |
+|------|---------|-------------|-------------------|
+| Sidebar | 12 | 0 | 12 (navigation, badges) |
+| Header | 6 | 0 | 6 (search, notifications, kill switch) |
+| Login | 6 | 0 | 6 (auth) |
+| Dashboard | 21 | 17 (trades, profit, balance, daily, capital) | 4 (bot management) |
+| Strategies | 20 | 8 (profit, trades, config, strategy source) | 12 (lifecycle, CRUD) |
+| Builder | 26 | 23 (all strategy params §2,3,4,7,10 + callback ref) | 3 (save, generate) |
+| Backtesting | 38 | 36 (all backtest/hyperopt params §5,6,15,21,22,30) | 2 (job management) |
+| Analytics | 17 | 15 (candles, plot_config, trades, performance, orderflow) | 2 (display) |
+| Risk | 21 | 8 (locks CRUD, config protections) | 13 (kill switch, heartbeat, events) |
+| Settings | 65+ | 63 (all config.json params §1,7,9,11,13,17,27,28) | 2 (save, bot selector) |
+| FreqAI | 25 | 23 (all freqai config §24,25,26) | 2 (save, master switch) |
+| Data Mgmt | 20 | 18 (download-data §12, utilities §18) | 2 (job management) |
+| **TOTAL** | **~277** | **~211** | **~66** |
+
+**211 features from FreqTrade** (we just display/configure them)
+**66 features from our Orchestrator** (multi-bot, kill switch, lifecycle, auth, jobs)
+**0 invented features** ✅
 
 | Page | Widgets | FT Features | Our Features (ORCH) |
 |------|---------|-------------|-------------------|

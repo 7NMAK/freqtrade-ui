@@ -71,11 +71,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;
 .step.done .step-num{border-color:var(--green);background:var(--green-bg);color:var(--green)}
 .step-connector{width:16px;height:1px;background:var(--border);flex-shrink:0}
 
-.wizard-body{flex:1;overflow-y:auto;padding:24px}
+.wizard-body{flex:1;overflow-y:auto;padding:28px}
 .wizard-footer{padding:14px 24px;border-top:1px solid var(--border);background:var(--bg-1);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
 
 /* ─── FORM ELEMENTS ─── */
-.form-group{margin-bottom:20px}
+.form-group{margin-bottom:24px}
 .form-label{font-size:11px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .form-label .required{color:var(--red);font-size:13px}
 .form-label .hint{font-weight:400;color:var(--text-3);text-transform:none;letter-spacing:0}
@@ -98,8 +98,8 @@ select.form-input{cursor:pointer;appearance:none;background-image:url("data:imag
 .chip.selected .chip-remove{display:inline}
 
 /* Condition builder */
-.condition-row{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;flex-wrap:wrap}
-.condition-row select,.condition-row input{padding:6px 10px;border-radius:4px;border:1px solid var(--border);background:var(--bg-3);color:var(--text-0);font-size:12px;font-family:inherit;outline:none}
+.condition-row{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;flex-wrap:wrap}
+.condition-row select,.condition-row input{padding:8px 12px;border-radius:4px;border:1px solid var(--border);background:var(--bg-3);color:var(--text-0);font-size:12px;font-family:inherit;outline:none}
 .condition-row select:focus,.condition-row input:focus{border-color:var(--accent)}
 .condition-row .cond-label{font-size:11px;color:var(--text-3);min-width:30px}
 .condition-and{font-size:10px;font-weight:600;color:var(--accent);text-align:center;padding:4px 0}
@@ -107,7 +107,7 @@ select.form-input{cursor:pointer;appearance:none;background-image:url("data:imag
 .add-condition:hover{border-color:var(--accent);color:var(--accent)}
 
 /* Risk parameter cards */
-.risk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.risk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
 .risk-card{background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:16px}
 .risk-card-title{font-size:12px;font-weight:600;color:var(--text-0);margin-bottom:4px;display:flex;align-items:center;gap:6px}
 .risk-card-desc{font-size:10px;color:var(--text-3);margin-bottom:10px;line-height:1.4}
@@ -124,11 +124,11 @@ select.form-input{cursor:pointer;appearance:none;background-image:url("data:imag
 
 /* ROI table */
 .roi-table{width:100%;border-collapse:collapse}
-.roi-table th{text-align:left;padding:6px 10px;font-size:10px;color:var(--text-3);text-transform:uppercase;border-bottom:1px solid var(--border)}
-.roi-table td{padding:6px 10px}
+.roi-table th{text-align:left;padding:8px 12px;font-size:10px;color:var(--text-3);text-transform:uppercase;border-bottom:1px solid var(--border)}
+.roi-table td{padding:8px 12px}
 .roi-table input{width:100%;padding:6px 8px;border-radius:4px;border:1px solid var(--border);background:var(--bg-3);color:var(--text-0);font-size:12px;font-family:monospace;outline:none;text-align:center}
 .roi-table input:focus{border-color:var(--accent)}
-.roi-add{padding:6px 10px;font-size:11px;color:var(--accent);cursor:pointer}
+.roi-add{padding:8px 12px;font-size:11px;color:var(--accent);cursor:pointer}
 
 /* Buttons */
 .btn-primary{padding:8px 18px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
@@ -145,7 +145,7 @@ select.form-input{cursor:pointer;appearance:none;background-image:url("data:imag
 .code-actions{display:flex;gap:6px}
 .code-btn{padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-size:10px;cursor:pointer;transition:all .15s}
 .code-btn:hover{border-color:var(--border-hover);color:var(--text-1)}
-.code-body{flex:1;overflow:auto;padding:16px 18px}
+.code-body{flex:1;overflow:auto;padding:20px 24px}
 .code-body pre{font-family:'SF Mono','Fira Code',monospace;font-size:11.5px;line-height:1.7;color:var(--text-1);white-space:pre;tab-size:4}
 .code-body .kw{color:#c084fc}.code-body .fn{color:#818cf8}.code-body .st{color:#4ade80}
 .code-body .cm{color:var(--text-3);font-style:italic}.code-body .num{color:#f59e0b}

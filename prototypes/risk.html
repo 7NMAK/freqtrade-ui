@@ -59,23 +59,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;
 .user-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#a855f7);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;cursor:pointer;margin-left:4px}
 
 /* ─── CONTENT ─── */
-.content{flex:1;overflow-y:auto;padding:20px 24px 32px;background:var(--bg-0)}
+.content{flex:1;overflow-y:auto;padding:28px 32px 40px;background:var(--bg-0)}
 
 /* ─── CARD ─── */
-.card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
-.card-header{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:24px}
+.card-header{padding:16px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
 .card-title{font-size:12.5px;font-weight:600;color:var(--text-0);display:flex;align-items:center;gap:8px}
 .card-title .card-icon{font-size:14px}
 .card-action{font-size:11px;color:var(--accent);cursor:pointer;font-weight:500;transition:color .15s}
 .card-action:hover{color:#818cf8}
-.card-body{padding:14px 18px}
+.card-body{padding:20px 24px}
 .card-body.no-pad{padding:0}
 
 /* ─── KILL SWITCH PANEL ─── */
-.kill-panel{background:linear-gradient(135deg,var(--bg-2),rgba(239,68,68,.03));border:1px solid rgba(239,68,68,.15);border-radius:var(--radius);margin-bottom:16px;overflow:hidden}
+.kill-panel{background:linear-gradient(135deg,var(--bg-2),rgba(239,68,68,.03));border:1px solid rgba(239,68,68,.15);border-radius:var(--radius);margin-bottom:24px;overflow:hidden}
 .kill-panel .card-header{border-bottom:1px solid rgba(239,68,68,.1)}
-.kill-panel-body{padding:20px 18px}
-.kill-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.kill-panel-body{padding:24px 24px}
+.kill-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px}
 .kill-card{border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
 .kill-card::before{content:"";position:absolute;inset:0;opacity:0;transition:opacity .2s}
 .kill-card:hover::before{opacity:1}
@@ -93,7 +93,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;
 .kill-api{font-size:10px;color:var(--text-3);margin-top:8px;font-family:monospace;position:relative;z-index:1}
 
 .kill-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.kill-select{background:var(--bg-1);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:12px;color:var(--text-1);cursor:pointer;outline:none;min-width:200px;font-family:inherit}
+.kill-select{background:var(--bg-1);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--text-1);cursor:pointer;outline:none;min-width:200px;font-family:inherit}
 .kill-select:focus{border-color:var(--accent)}
 .kill-select option{background:var(--bg-1);color:var(--text-1)}
 .kill-all-btn{background:var(--red-bg);border:1px solid rgba(239,68,68,.3);border-radius:var(--radius-sm);padding:8px 16px;font-size:11px;font-weight:600;color:var(--red);cursor:pointer;transition:all .15s;font-family:inherit;letter-spacing:.3px}
@@ -107,7 +107,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;
 .kill-status-sub{font-size:10px;color:var(--text-3)}
 
 /* ─── HEARTBEAT CARDS ─── */
-.hb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.hb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
 .hb-card{background:var(--bg-1);border:1px solid var(--border);border-radius:8px;padding:16px;transition:border-color .2s}
 .hb-card:hover{border-color:var(--border-hover)}
 .hb-card.warn{border-color:rgba(245,158,11,.3)}
@@ -133,7 +133,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;
 .hb-info{font-size:10px;color:var(--text-3);margin-top:10px;padding-top:10px;border-top:1px solid var(--border);line-height:1.5}
 
 /* ─── PROTECTION CARDS ─── */
-.prot-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.prot-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .prot-card{background:var(--bg-1);border:1px solid var(--border);border-radius:8px;padding:16px;transition:border-color .2s}
 .prot-card:hover{border-color:var(--border-hover)}
 .prot-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
@@ -159,8 +159,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;
 
 /* ─── TABLES ─── */
 .tbl{width:100%;border-collapse:collapse}
-.tbl th{text-align:left;padding:10px 14px;font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap}
-.tbl td{padding:10px 14px;font-size:12px;border-bottom:1px solid rgba(30,30,48,.5);white-space:nowrap}
+.tbl th{text-align:left;padding:12px 16px;font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap}
+.tbl td{padding:12px 16px;font-size:12px;border-bottom:1px solid rgba(30,30,48,.5);white-space:nowrap}
 .tbl tbody tr{transition:background .15s}
 .tbl tbody tr:hover{background:var(--bg-3)}
 .tbl tbody tr:last-child td{border-bottom:none}
@@ -174,7 +174,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;
 .tag.expired-lock{background:var(--bg-3);color:var(--text-3)}
 
 /* ─── GRID LAYOUT ─── */
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
 
 /* ─── PORTFOLIO EXPOSURE ─── */
 .expo-total{display:flex;align-items:baseline;gap:8px;margin-bottom:16px}

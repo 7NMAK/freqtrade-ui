@@ -11,7 +11,6 @@ We do NOT calculate anything ourselves.
 We just SUM what FT already calculated per-bot.
 """
 import logging
-from dataclasses import dataclass, field
 
 from sqlalchemy.ext.asyncio import AsyncSession
 

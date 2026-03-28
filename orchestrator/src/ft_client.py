@@ -355,6 +355,10 @@ class FTClient:
         """GET /api/v1/backtest/history/result — specific result."""
         return await self._get("/api/v1/backtest/history/result", id=result_id)
 
+    async def backtest_history_delete(self, result_id: str) -> dict:
+        """DELETE /api/v1/backtest/history/{id} — delete backtest result."""
+        return await self._delete(f"/api/v1/backtest/history/{result_id}")
+
     # ── Cleanup ──────────────────────────────────────────────────
 
     async def close(self) -> None:

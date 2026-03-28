@@ -53,12 +53,16 @@ yarn-error.log*
 # ─── Docker ────────────────────────────────────────
 docker-compose.override.yml
 
+# ─── SSL Certificates ────────────────────────────
+nginx/ssl/
+
 # ─── Logs / Data ──────────────────────────────────
 *.log
 logs/
 *.sqlite3
 backups/
 screenshots/
+_BACKUP/
 
 # ─── Backtest verification (dev artifact) ─────────
 backtest_verification/

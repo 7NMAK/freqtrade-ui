@@ -1,0 +1,37 @@
+##
+## Prometheus — Scrape configuration
+##
+## Targets:
+##   orchestrator  — /api/metrics (custom app metrics)
+##   node-exporter — system metrics (optional, add later)
+##
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+scrape_configs:
+  # ── Orchestrator metrics ───────────────────────────────
+  - job_name: "orchestrator"
+    metrics_path: "/api/metrics"
+    static_configs:
+      - targets: ["orchestrator:8888"]
+        labels:
+          service: "orchestrator"
+
+  # ── Prometheus self-monitoring ─────────────────────────
+  - job_name: "prometheus"
+    metrics_path: "/prometheus/metrics"
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+          service: "prometheus"
+
+  # ── Nginx stub_status (optional — requires nginx module) ──
+  # Uncomment if you add stub_status to nginx config
+  # - job_name: "nginx"
+  #   static_configs:
+  #     - targets: ["nginx:8081"]
+  #       labels:
+  #         service: "nginx"

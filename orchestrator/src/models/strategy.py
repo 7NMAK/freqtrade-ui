@@ -52,5 +52,12 @@ class Strategy(Base, TimestampMixin):
     # Human-readable description
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    # Generated strategy .py code (stored so it can be deployed to FT)
+    code: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Exchange and timeframe metadata
+    exchange: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    timeframe: Mapped[str | None] = mapped_column(String(10), nullable=True)
+
     # Soft delete (never hard delete)
     is_deleted: Mapped[bool] = mapped_column(default=False, nullable=False)

@@ -10,6 +10,7 @@ It aggregates data from FT REST API across all bots:
 We do NOT calculate anything ourselves.
 We just SUM what FT already calculated per-bot.
 """
+import asyncio
 import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,15 +41,18 @@ class PortfolioAggregator:
         per_bot = {}
         total_value = 0.0
 
-        for bot in running:
+        async def fetch_balance(bot):
             try:
-                balance = await self._bot_manager.get_bot_balance(bot)
-                per_bot[bot.name] = balance
-                # FT returns "total" field in balance response
-                total_value += float(balance.get("total", 0))
+                return bot.name, await self._bot_manager.get_bot_balance(bot)
             except FTClientError as e:
                 logger.warning("Balance fetch failed for bot %s: %s", bot.name, e)
-                per_bot[bot.name] = {"error": str(e)}
+                return bot.name, {"error": str(e)}
+
+        results = await asyncio.gather(*(fetch_balance(b) for b in running))
+        for name, balance in results:
+            per_bot[name] = balance
+            if "error" not in balance:
+                total_value += float(balance.get("total", 0))
 
         return {
             "bots": per_bot,
@@ -65,7 +69,6 @@ class PortfolioAggregator:
         running = [b for b in bots if b.status == BotStatus.RUNNING]
 
         per_bot = {}
-        # FT profit fields we sum across bots
         combined = {
             "profit_all_coin": 0.0,
             "profit_all_fiat": 0.0,
@@ -75,20 +78,23 @@ class PortfolioAggregator:
             "closed_trade_count": 0,
         }
 
-        for bot in running:
+        async def fetch_profit(bot):
             try:
-                profit = await self._bot_manager.get_bot_profit(bot)
-                per_bot[bot.name] = profit
-                # Sum FT's own fields (using their exact field names)
+                return bot.name, await self._bot_manager.get_bot_profit(bot)
+            except FTClientError as e:
+                logger.warning("Profit fetch failed for bot %s: %s", bot.name, e)
+                return bot.name, {"error": str(e)}
+
+        results = await asyncio.gather(*(fetch_profit(b) for b in running))
+        for name, profit in results:
+            per_bot[name] = profit
+            if "error" not in profit:
                 combined["profit_all_coin"] += float(profit.get("profit_all_coin", 0))
                 combined["profit_all_fiat"] += float(profit.get("profit_all_fiat", 0))
                 combined["profit_closed_coin"] += float(profit.get("profit_closed_coin", 0))
                 combined["profit_closed_fiat"] += float(profit.get("profit_closed_fiat", 0))
                 combined["trade_count"] += int(profit.get("trade_count", 0))
                 combined["closed_trade_count"] += int(profit.get("closed_trade_count", 0))
-            except FTClientError as e:
-                logger.warning("Profit fetch failed for bot %s: %s", bot.name, e)
-                per_bot[bot.name] = {"error": str(e)}
 
         return {
             "bots": per_bot,
@@ -107,16 +113,20 @@ class PortfolioAggregator:
 
         all_trades = []
 
-        for bot in running:
+        async def fetch_status(bot):
             try:
                 trades = await self._bot_manager.get_bot_status(bot)
-                # Tag each trade with the bot name for the frontend
                 for trade in trades:
                     trade["_bot_name"] = bot.name
                     trade["_bot_id"] = bot.id
-                all_trades.extend(trades)
+                return trades
             except FTClientError as e:
                 logger.warning("Status fetch failed for bot %s: %s", bot.name, e)
+                return []
+
+        results = await asyncio.gather(*(fetch_status(b) for b in running))
+        for trades in results:
+            all_trades.extend(trades)
 
         return {
             "trades": all_trades,
@@ -134,13 +144,16 @@ class PortfolioAggregator:
 
         per_bot = {}
 
-        for bot in running:
+        async def fetch_daily(bot):
             try:
-                daily = await self._bot_manager.get_bot_daily(bot, days=days)
-                per_bot[bot.name] = daily
+                return bot.name, await self._bot_manager.get_bot_daily(bot, days=days)
             except FTClientError as e:
                 logger.warning("Daily fetch failed for bot %s: %s", bot.name, e)
-                per_bot[bot.name] = {"error": str(e)}
+                return bot.name, {"error": str(e)}
+
+        results = await asyncio.gather(*(fetch_daily(b) for b in running))
+        for name, daily in results:
+            per_bot[name] = daily
 
         return {
             "bots": per_bot,

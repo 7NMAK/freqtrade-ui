@@ -8,12 +8,14 @@ PAPER → LIVE = change dry_run flag in FT config. That's it.
 Strategy .py files live in FT: /opt/freqtrade/user_data/strategies/
 """
 import json
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..auth import require_auth
 from ..database import get_db
 from ..models.strategy import Strategy, StrategyLifecycle
 from ..models.audit_log import AuditLog
@@ -27,6 +29,9 @@ class StrategyCreateRequest(BaseModel):
     name: str  # Must match FT strategy class name exactly
     description: str | None = None
     bot_instance_id: int | None = None
+    code: str | None = None  # Generated .py strategy code
+    exchange: str | None = None
+    timeframe: str | None = None
 
 
 class StrategyUpdateRequest(BaseModel):
@@ -41,18 +46,20 @@ class StrategyResponse(BaseModel):
     lifecycle: str
     bot_instance_id: int | None
     description: str | None
+    code: str | None = None
+    exchange: str | None = None
+    timeframe: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ── Routes ───────────────────────────────────────────────────
 
 @router.get("/", response_model=list[StrategyResponse])
-async def list_strategies(db: AsyncSession = Depends(get_db)):
+async def list_strategies(db: AsyncSession = Depends(get_db)) -> list[StrategyResponse]:
     """List all strategies (excludes soft-deleted)."""
     result = await db.execute(
-        select(Strategy).where(Strategy.is_deleted == False)
+        select(Strategy).where(Strategy.is_deleted.is_(False))
     )
     strategies = result.scalars().all()
     return [
@@ -62,6 +69,9 @@ async def list_strategies(db: AsyncSession = Depends(get_db)):
             lifecycle=s.lifecycle.value,
             bot_instance_id=s.bot_instance_id,
             description=s.description,
+            code=s.code,
+            exchange=s.exchange,
+            timeframe=s.timeframe,
         )
         for s in strategies
     ]
@@ -71,20 +81,35 @@ async def list_strategies(db: AsyncSession = Depends(get_db)):
 async def create_strategy(
     body: StrategyCreateRequest,
     db: AsyncSession = Depends(get_db),
-):
+    auth_payload: dict[str, Any] = Depends(require_auth),
+) -> StrategyResponse:
     """Register a strategy (metadata only — FT has the actual .py file)."""
+    # M6: duplicate strategy name check
+    existing = await db.execute(
+        select(Strategy).where(
+            Strategy.name == body.name,
+            Strategy.is_deleted.is_(False),
+        )
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(409, f"Strategy with name '{body.name}' already exists")
+
     strategy = Strategy(
         name=body.name,
         description=body.description,
         bot_instance_id=body.bot_instance_id,
+        code=body.code,
+        exchange=body.exchange,
+        timeframe=body.timeframe,
         lifecycle=StrategyLifecycle.DRAFT,
     )
     db.add(strategy)
     await db.flush()
 
+    actor = auth_payload.get("sub", "user")
     db.add(AuditLog(
         action="strategy.create",
-        actor="user",
+        actor=actor,
         target_type="strategy",
         target_id=strategy.id,
         target_name=strategy.name,
@@ -96,16 +121,19 @@ async def create_strategy(
         lifecycle=strategy.lifecycle.value,
         bot_instance_id=strategy.bot_instance_id,
         description=strategy.description,
+        code=strategy.code,
+        exchange=strategy.exchange,
+        timeframe=strategy.timeframe,
     )
 
 
 @router.get("/{strategy_id}", response_model=StrategyResponse)
-async def get_strategy(strategy_id: int, db: AsyncSession = Depends(get_db)):
+async def get_strategy(strategy_id: int, db: AsyncSession = Depends(get_db)) -> StrategyResponse:
     """Get a single strategy."""
     result = await db.execute(
         select(Strategy).where(
             Strategy.id == strategy_id,
-            Strategy.is_deleted == False,
+            Strategy.is_deleted.is_(False),
         )
     )
     strategy = result.scalar_one_or_none()
@@ -117,6 +145,9 @@ async def get_strategy(strategy_id: int, db: AsyncSession = Depends(get_db)):
         lifecycle=strategy.lifecycle.value,
         bot_instance_id=strategy.bot_instance_id,
         description=strategy.description,
+        code=strategy.code,
+        exchange=strategy.exchange,
+        timeframe=strategy.timeframe,
     )
 
 
@@ -125,7 +156,8 @@ async def update_strategy(
     strategy_id: int,
     body: StrategyUpdateRequest,
     db: AsyncSession = Depends(get_db),
-):
+    auth_payload: dict[str, Any] = Depends(require_auth),
+) -> StrategyResponse:
     """
     Update strategy metadata (lifecycle, description, bot assignment).
     Lifecycle transitions are validated:
@@ -134,7 +166,7 @@ async def update_strategy(
     result = await db.execute(
         select(Strategy).where(
             Strategy.id == strategy_id,
-            Strategy.is_deleted == False,
+            Strategy.is_deleted.is_(False),
         )
     )
     strategy = result.scalar_one_or_none()
@@ -143,7 +175,7 @@ async def update_strategy(
 
     old_lifecycle = strategy.lifecycle.value
 
-    if body.lifecycle:
+    if body.lifecycle is not None:
         try:
             new_lifecycle = StrategyLifecycle(body.lifecycle)
         except ValueError:
@@ -173,9 +205,10 @@ async def update_strategy(
     if body.bot_instance_id is not None:
         strategy.bot_instance_id = body.bot_instance_id
 
+    actor = auth_payload.get("sub", "user")
     db.add(AuditLog(
         action="strategy.update",
-        actor="user",
+        actor=actor,
         target_type="strategy",
         target_id=strategy.id,
         target_name=strategy.name,
@@ -191,16 +224,23 @@ async def update_strategy(
         lifecycle=strategy.lifecycle.value,
         bot_instance_id=strategy.bot_instance_id,
         description=strategy.description,
+        code=strategy.code,
+        exchange=strategy.exchange,
+        timeframe=strategy.timeframe,
     )
 
 
 @router.delete("/{strategy_id}", response_model=StrategyResponse)
-async def delete_strategy(strategy_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_strategy(
+    strategy_id: int,
+    db: AsyncSession = Depends(get_db),
+    auth_payload: dict[str, Any] = Depends(require_auth),
+) -> StrategyResponse:
     """Soft-delete a strategy (never hard delete — safety rule #7)."""
     result = await db.execute(
         select(Strategy).where(
             Strategy.id == strategy_id,
-            Strategy.is_deleted == False,
+            Strategy.is_deleted.is_(False),
         )
     )
     strategy = result.scalar_one_or_none()
@@ -209,9 +249,10 @@ async def delete_strategy(strategy_id: int, db: AsyncSession = Depends(get_db)):
 
     strategy.is_deleted = True
 
+    actor = auth_payload.get("sub", "user")
     db.add(AuditLog(
         action="strategy.delete",
-        actor="user",
+        actor=actor,
         target_type="strategy",
         target_id=strategy.id,
         target_name=strategy.name,
@@ -223,4 +264,7 @@ async def delete_strategy(strategy_id: int, db: AsyncSession = Depends(get_db)):
         lifecycle=strategy.lifecycle.value,
         bot_instance_id=strategy.bot_instance_id,
         description=strategy.description,
+        code=strategy.code,
+        exchange=strategy.exchange,
+        timeframe=strategy.timeframe,
     )

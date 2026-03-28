@@ -47,6 +47,8 @@ Every method maps to exactly one FT API endpoint:
 - backtest_abort()  → DELETE /api/v1/backtest
 - backtest_history() → GET /api/v1/backtest/history
 """
+import asyncio
+
 import httpx
 
 
@@ -66,6 +68,7 @@ class FTClient:
         self.username = username
         self.password = password
         self._token: str | None = None
+        self._token_lock = asyncio.Lock()
         self._client = httpx.AsyncClient(timeout=10.0)
 
     async def _login(self) -> str:
@@ -81,6 +84,8 @@ class FTClient:
             raise FTClientError(f"Login failed: {resp.status_code} {resp.text}")
         data = resp.json()
         self._token = data.get("access_token")
+        if not self._token:
+            raise FTClientError("No access_token in login response")
         return self._token
 
     async def _refresh_token(self) -> str:
@@ -97,13 +102,16 @@ class FTClient:
             return await self._login()
         data = resp.json()
         self._token = data.get("access_token")
+        if not self._token:
+            raise FTClientError("No access_token in refresh response")
         return self._token
 
     async def _get_token(self) -> str:
-        """Get valid token, login if needed."""
-        if not self._token:
-            await self._login()
-        return self._token
+        """Get valid token, login if needed. Thread-safe via lock."""
+        async with self._token_lock:
+            if not self._token:
+                await self._login()
+            return self._token
 
     async def _request(self, method: str, path: str, **kwargs) -> dict:
         """Make authenticated request to FT API."""
@@ -159,8 +167,8 @@ class FTClient:
         try:
             resp = await self._client.get(f"{self.api_url}/api/v1/ping", timeout=5.0)
             return resp.json()
-        except Exception:
-            raise FTClientError(f"Ping failed for {self.api_url}")
+        except Exception as e:
+            raise FTClientError(f"Ping failed for {self.api_url}") from e
 
     async def start(self) -> dict:
         """POST /api/v1/start — start trading."""
@@ -191,11 +199,11 @@ class FTClient:
     async def forceenter(self, pair: str, side: str = "long", stake_amount: float | None = None) -> dict:
         """POST /api/v1/forceenter — force open a trade."""
         data = {"pair": pair, "side": side}
-        if stake_amount:
+        if stake_amount is not None:
             data["stakeamount"] = stake_amount
         return await self._post("/api/v1/forceenter", data)
 
-    async def status(self) -> list:
+    async def status(self) -> dict | list:
         """GET /api/v1/status — open trades (uses FT field names: open_rate, stake_amount, etc.)."""
         return await self._get("/api/v1/status")
 
@@ -241,19 +249,19 @@ class FTClient:
         """GET /api/v1/monthly — monthly profit."""
         return await self._get("/api/v1/monthly", timescale=months)
 
-    async def performance(self) -> list:
+    async def performance(self) -> dict | list:
         """GET /api/v1/performance — per-pair performance."""
         return await self._get("/api/v1/performance")
 
-    async def entries(self) -> list:
+    async def entries(self) -> dict | list:
         """GET /api/v1/entries — entry tag analysis."""
         return await self._get("/api/v1/entries")
 
-    async def exits(self) -> list:
+    async def exits(self) -> dict | list:
         """GET /api/v1/exits — exit reason analysis."""
         return await self._get("/api/v1/exits")
 
-    async def mix_tags(self) -> list:
+    async def mix_tags(self) -> dict | list:
         """GET /api/v1/mix_tags — combined tag analysis."""
         return await self._get("/api/v1/mix_tags")
 

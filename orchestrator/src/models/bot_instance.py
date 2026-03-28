@@ -12,7 +12,7 @@ Trade data is NOT here. Read from FT API:
 """
 import enum
 
-from sqlalchemy import Boolean, Enum, Integer, String, Text
+from sqlalchemy import Boolean, Enum, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base, TimestampMixin
@@ -62,6 +62,10 @@ class BotInstance(Base, TimestampMixin):
 
     # Soft delete (never hard delete — safety rule #7)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    # Config overrides managed by orchestrator (e.g. freqai section)
+    # Stored as JSON — applied to bot config.json on start/restart
+    config_overrides: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     # Notes
     description: Mapped[str | None] = mapped_column(Text, nullable=True)

@@ -11,9 +11,10 @@ This app does ONLY 5 things:
 ALL trading logic, ALL features = FreqTrade. We just manage multiple bots.
 """
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
+from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
@@ -22,6 +23,11 @@ from .models.base import Base
 from .heartbeat.monitor import HeartbeatMonitor
 from .bot_manager.manager import BotManager
 from .kill_switch.kill_switch import KillSwitch
+
+# Import AI validator models so they are registered with Base.metadata
+from .ai_validator.models import AIValidation, AIAccuracy, AIHyperoptAnalysis, AIHyperoptOutcome  # noqa: F401
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -42,9 +48,63 @@ async def lifespan(app: FastAPI):
     app.state.heartbeat.set_kill_switch(app.state.kill_switch)
     heartbeat_task = asyncio.create_task(app.state.heartbeat.run())
 
+    # Validate AI configuration at startup (enforces weight sum, API key, cost limit)
+    if settings.ai_validation_enabled or settings.ai_hyperopt_enabled:
+        from .ai_validator.config import AIValidatorConfig
+        AIValidatorConfig(
+            ai_openrouter_api_key=settings.ai_openrouter_api_key,
+            ai_validation_enabled=settings.ai_validation_enabled,
+            ai_validation_interval=settings.ai_validation_interval,
+            ai_claude_model=settings.ai_claude_model,
+            ai_claude_fallback=settings.ai_claude_fallback,
+            ai_grok_model=settings.ai_grok_model,
+            ai_grok_fallback=settings.ai_grok_fallback,
+            ai_weight_freqai=settings.ai_weight_freqai,
+            ai_weight_claude=settings.ai_weight_claude,
+            ai_weight_grok=settings.ai_weight_grok,
+            ai_max_daily_cost_usd=settings.ai_max_daily_cost_usd,
+            ai_max_validations_per_hour=settings.ai_max_validations_per_hour,
+            ai_telegram_notify_disagree=settings.ai_telegram_notify_disagree,
+            ai_hyperopt_enabled=settings.ai_hyperopt_enabled,
+            ai_hyperopt_auto_post_analyze=settings.ai_hyperopt_auto_post_analyze,
+        )
+
+    # Start AI Validation Scheduler (if enabled)
+    ai_scheduler_task: asyncio.Task | None = None
+    if settings.ai_validation_enabled:
+        from .ai_validator.llm_gateway import LLMGateway
+        from .ai_validator.scorer import ScoreCalculator
+        from .ai_validator.tracker import AccuracyTracker
+        from .ai_validator.scheduler import AIValidationScheduler
+
+        gateway = LLMGateway()
+        scorer = ScoreCalculator()
+        tracker = AccuracyTracker()
+        app.state.ai_scheduler = AIValidationScheduler(
+            gateway=gateway,
+            scorer=scorer,
+            tracker=tracker,
+            interval_seconds=settings.ai_validation_interval,
+            max_daily_cost_usd=settings.ai_max_daily_cost_usd,
+            max_validations_per_hour=settings.ai_max_validations_per_hour,
+        )
+        ai_scheduler_task = asyncio.create_task(app.state.ai_scheduler.start())
+    else:
+        app.state.ai_scheduler = None
+
     yield
 
-    # Shutdown
+    # Shutdown AI scheduler
+    if app.state.ai_scheduler is not None:
+        await app.state.ai_scheduler.stop()
+    if ai_scheduler_task is not None:
+        ai_scheduler_task.cancel()
+        try:
+            await ai_scheduler_task
+        except asyncio.CancelledError:
+            pass
+
+    # Shutdown heartbeat
     app.state.heartbeat.stop()
     heartbeat_task.cancel()
     try:
@@ -66,8 +126,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 # Register API routes
@@ -76,16 +136,75 @@ from .api.kill_switch import router as kill_switch_router
 from .api.portfolio import router as portfolio_router
 from .api.strategies import router as strategies_router
 
-app.include_router(bots_router, prefix="/api/bots", tags=["bots"])
-app.include_router(kill_switch_router, prefix="/api/kill-switch", tags=["kill-switch"])
-app.include_router(portfolio_router, prefix="/api/portfolio", tags=["portfolio"])
-app.include_router(strategies_router, prefix="/api/strategies", tags=["strategies"])
+from .auth import require_auth as _auth_dep
+
+app.include_router(bots_router, prefix="/api/bots", tags=["bots"], dependencies=[Depends(_auth_dep)])
+app.include_router(kill_switch_router, prefix="/api/kill-switch", tags=["kill-switch"], dependencies=[Depends(_auth_dep)])
+app.include_router(portfolio_router, prefix="/api/portfolio", tags=["portfolio"], dependencies=[Depends(_auth_dep)])
+app.include_router(strategies_router, prefix="/api/strategies", tags=["strategies"], dependencies=[Depends(_auth_dep)])
+
+# AI Validation Layer routes
+from .api.ai import router as ai_router
+from .api.ai_hyperopt import router as ai_hyperopt_router
+
+app.include_router(ai_router, prefix="/api/ai", tags=["ai"], dependencies=[Depends(_auth_dep)])
+app.include_router(ai_hyperopt_router, prefix="/api/ai/hyperopt", tags=["ai-hyperopt"], dependencies=[Depends(_auth_dep)])
+
+
+# ── Auth endpoints (public — no token needed) ────────────────
+from .auth import (
+    LoginRequest, TokenResponse, create_access_token,
+    ADMIN_USERNAME, ADMIN_PASSWORD_HASH, pwd_context, require_auth, verify_token,
+)
+
+
+@app.post("/api/auth/login", response_model=TokenResponse)
+async def login(body: LoginRequest):
+    """Login and get JWT token."""
+    if body.username != ADMIN_USERNAME or not pwd_context.verify(body.password, ADMIN_PASSWORD_HASH):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    token = create_access_token({"sub": body.username})
+    return TokenResponse(access_token=token)
 
 
 @app.get("/api/health")
 async def health():
-    """Orchestrator health check."""
+    """Orchestrator health check (public — no auth)."""
     return {"status": "ok"}
+
+
+# ── Prometheus metrics ───────────────────────────────────────
+from prometheus_client import Counter, Gauge, Histogram, generate_latest, CONTENT_TYPE_LATEST
+from fastapi.responses import Response
+
+BOTS_TOTAL = Gauge("orch_bots_total", "Total registered bots")
+BOTS_RUNNING = Gauge("orch_bots_running", "Bots in RUNNING state")
+KILL_EVENTS_TOTAL = Counter("orch_kill_events_total", "Kill switch activations", ["type", "trigger"])
+HEARTBEAT_FAILURES = Counter("orch_heartbeat_failures_total", "Heartbeat ping failures")
+API_REQUEST_DURATION = Histogram("orch_api_request_duration_seconds", "API request duration", ["method", "endpoint"])
+
+
+@app.get("/api/metrics")
+async def metrics():
+    """Prometheus metrics endpoint."""
+    # Update gauges from DB
+    from .database import async_session
+    from .models.bot_instance import BotInstance, BotStatus
+    from sqlalchemy import select, func
+
+    async with async_session() as db:
+        total = await db.scalar(
+            select(func.count()).select_from(BotInstance).where(BotInstance.is_deleted.is_(False))
+        )
+        running = await db.scalar(
+            select(func.count()).select_from(BotInstance).where(
+                BotInstance.is_deleted.is_(False), BotInstance.status == BotStatus.RUNNING
+            )
+        )
+        BOTS_TOTAL.set(total or 0)
+        BOTS_RUNNING.set(running or 0)
+
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 # ── WebSocket proxy (§8: /api/v1/message/ws) ─────────────────
@@ -97,9 +216,21 @@ async def websocket_proxy(websocket: WebSocket, bot_id: int):
     """
     Proxy WebSocket connection to FT bot's /api/v1/message/ws.
     Frontend connects here → we connect to FT → bidirectional relay.
+    Requires token query param for auth.
     """
-    import httpx
     import websockets
+
+    # Auth: require token as query parameter (WebSocket can't use headers)
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=4001, reason="Missing auth token")
+        return
+    try:
+        verify_token(token)
+    except Exception as auth_exc:
+        logger.warning("WS auth failed: %s", auth_exc)
+        await websocket.close(code=4001, reason="Invalid auth token")
+        return
 
     await websocket.accept()
 
@@ -110,21 +241,28 @@ async def websocket_proxy(websocket: WebSocket, bot_id: int):
     async with async_session() as db:
         from sqlalchemy import select
         result = await db.execute(
-            select(BotInstance).where(BotInstance.id == bot_id, BotInstance.is_deleted == False)
+            select(BotInstance).where(BotInstance.id == bot_id, BotInstance.is_deleted.is_(False))
         )
         bot = result.scalar_one_or_none()
 
     if not bot:
-        await websocket.close(code=4004, reason="Bot not found")
+        try:
+            await websocket.close(code=4004, reason="Bot not found")
+        except Exception as exc:
+            logger.debug("WS close failed (bot not found): %s", exc)
         return
 
     # Login to FT to get ws_token
     manager = app.state.bot_manager
-    client = manager.get_client(bot)
+    client = await manager.get_client(bot)
     try:
         token = await client._get_token()
-    except Exception:
-        await websocket.close(code=4001, reason="FT auth failed")
+    except Exception as auth_exc:
+        logger.warning("FT auth failed for bot %s: %s", bot_id, auth_exc)
+        try:
+            await websocket.close(code=4001, reason="FT auth failed")
+        except Exception as close_exc:
+            logger.debug("WS close failed after auth error: %s", close_exc)
         return
 
     # Build FT WebSocket URL
@@ -157,4 +295,8 @@ async def websocket_proxy(websocket: WebSocket, bot_id: int):
             for task in pending:
                 task.cancel()
     except Exception as e:
-        await websocket.close(code=4002, reason=f"FT WebSocket failed: {e}")
+        logger.warning("FT WebSocket relay failed for bot %s: %s", bot_id, e)
+        try:
+            await websocket.close(code=4002, reason=f"FT WebSocket failed: {e}")
+        except Exception as close_exc:
+            logger.debug("WS close failed after relay error: %s", close_exc)

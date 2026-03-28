@@ -1,10 +1,15 @@
 ##
-## Docker Compose — FreqTrade Trading System
+## Docker Compose — FreqTrade Trading System (Full Stack)
 ##
 ## Services:
-##   postgres   — Orchestrator metadata DB (NOT trade data)
-##   redis      — Pub/sub for heartbeat events + cache
-##   orchestrator — Our FastAPI app (multi-bot mgmt, kill switch, heartbeat)
+##   postgres      — Orchestrator metadata DB (NOT trade data)
+##   redis         — Pub/sub for heartbeat events + cache
+##   orchestrator  — FastAPI app (multi-bot mgmt, kill switch, heartbeat)
+##   frontend      — Next.js 14 UI
+##   nginx         — Reverse proxy (SSL termination, routing)
+##   prometheus    — Metrics collection
+##   grafana       — Monitoring dashboards
+##   pg-backup     — Automated PostgreSQL backups
 ##
 ## FreqTrade bot containers are managed DYNAMICALLY by the orchestrator
 ## via Docker API — they are NOT defined here.
@@ -15,26 +20,28 @@
 ##
 
 services:
+  # ── Database ──────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     container_name: orch_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: orchestrator
-      POSTGRES_USER: orchestrator
-      POSTGRES_PASSWORD: orchestrator
+      POSTGRES_DB: ${POSTGRES_DB:-orchestrator}
+      POSTGRES_USER: ${POSTGRES_USER:-orchestrator}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orchestrator}
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U orchestrator"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-orchestrator}"]
       interval: 5s
       timeout: 3s
       retries: 5
     networks:
       - ft_network
 
+  # ── Cache / Pub-Sub ───────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: orch_redis
@@ -43,6 +50,7 @@ services:
       - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -51,6 +59,7 @@ services:
     networks:
       - ft_network
 
+  # ── Orchestrator (FastAPI) ────────────────────────────────
   orchestrator:
     build:
       context: ./orchestrator
@@ -65,35 +74,173 @@ services:
     ports:
       - "127.0.0.1:8888:8888"
     environment:
-      ORCH_DATABASE_URL: "postgresql+asyncpg://orchestrator:orchestrator@postgres:5432/orchestrator"
+      ORCH_DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-orchestrator}:${POSTGRES_PASSWORD:-orchestrator}@postgres:5432/${POSTGRES_DB:-orchestrator}"
       ORCH_REDIS_URL: "redis://redis:6379/0"
       ORCH_SECRET_KEY: "${ORCH_SECRET_KEY:-change-me-in-production}"
+      ORCH_ACCESS_TOKEN_EXPIRE_MINUTES: "${ORCH_ACCESS_TOKEN_EXPIRE_MINUTES:-60}"
+      ORCH_HEARTBEAT_INTERVAL_SECONDS: "${ORCH_HEARTBEAT_INTERVAL_SECONDS:-3}"
+      ORCH_HEARTBEAT_MAX_FAILURES: "${ORCH_HEARTBEAT_MAX_FAILURES:-3}"
+      ORCH_FT_DOCKER_IMAGE: "${ORCH_FT_DOCKER_IMAGE:-freqtradeorg/freqtrade:stable_freqai}"
+      ORCH_FT_BASE_PORT: "${ORCH_FT_BASE_PORT:-8080}"
+      ORCH_ADMIN_USERNAME: "${ORCH_ADMIN_USERNAME:-admin}"
+      ORCH_ADMIN_PASSWORD: "${ORCH_ADMIN_PASSWORD:-admin}"
+    # Run as non-root; group_add gives access to host docker socket
+    user: "1000:999"
+    group_add:
+      - "${DOCKER_GID:-999}"
     volumes:
-      # Docker socket so orchestrator can manage FT bot containers
       - /var/run/docker.sock:/var/run/docker.sock
-      # FT user_data shared volume (strategies, configs)
       - /opt/freqtrade/user_data:/opt/freqtrade/user_data:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8888/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     networks:
       - ft_network
 
-  # NOTE: FreqTrade bot containers are NOT listed here.
-  # They are created/started/stopped dynamically by the orchestrator
-  # via Docker API. Each bot gets:
-  #   - Its own FT container (freqtradeorg/freqtrade:stable_freqai)
-  #   - Its own port (8080, 8081, 8082, ...)
-  #   - Its own config.json pointing to one strategy
-  #   - Connected to ft_network so orchestrator can reach it
-  #
-  # SETUP: Connect existing FT bot to ft_network:
-  #   docker network create ft_network  (if not exists)
-  #   docker network connect ft_network freqtrade
-  # Then the orchestrator can reach it at http://freqtrade:8080
+  # ── Frontend (Next.js) ────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ""
+    container_name: frontend
+    restart: unless-stopped
+    depends_on:
+      orchestrator:
+        condition: service_healthy
+    expose:
+      - "3000"
+    environment:
+      NODE_ENV: production
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - ft_network
+
+  # ── Nginx (Reverse Proxy + SSL) ──────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: nginx
+    restart: unless-stopped
+    depends_on:
+      frontend:
+        condition: service_healthy
+      orchestrator:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - certbot_webroot:/var/www/certbot:ro
+      - certbot_certs:/etc/letsencrypt:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - ft_network
+
+  # ── Prometheus (Metrics) ──────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: prometheus
+    restart: unless-stopped
+    expose:
+      - "9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.external-url=/prometheus/"
+      - "--web.route-prefix=/prometheus/"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9090/prometheus/-/healthy || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - ft_network
+
+  # ── Grafana (Dashboards) ──────────────────────────────────
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: grafana
+    restart: unless-stopped
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    expose:
+      - "3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: "${GF_SECURITY_ADMIN_USER:-admin}"
+      GF_SECURITY_ADMIN_PASSWORD: "${GF_SECURITY_ADMIN_PASSWORD:-admin}"
+      GF_SERVER_ROOT_URL: "${GF_SERVER_ROOT_URL:-http://localhost/grafana/}"
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - ft_network
+
+  # ── PostgreSQL Backup (cron-based) ────────────────────────
+  pg-backup:
+    image: postgres:16-alpine
+    container_name: pg_backup
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-orchestrator}
+      POSTGRES_USER: ${POSTGRES_USER:-orchestrator}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-orchestrator}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+    volumes:
+      - ./scripts/backup.sh:/scripts/backup.sh:ro
+      - pg_backups:/backups
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        cp /scripts/backup.sh /usr/local/bin/backup.sh
+        chmod +x /usr/local/bin/backup.sh
+        echo "0 2 * * * /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1" > /etc/crontabs/root
+        echo "Backup cron installed — daily at 02:00 UTC"
+        /usr/local/bin/backup.sh
+        crond -f -l 2
+    networks:
+      - ft_network
 
 networks:
   ft_network:
     name: ft_network
-    external: true
+    driver: bridge
 
 volumes:
   postgres_data:
   redis_data:
+  prometheus_data:
+  grafana_data:
+  pg_backups:
+  certbot_webroot:
+  certbot_certs:

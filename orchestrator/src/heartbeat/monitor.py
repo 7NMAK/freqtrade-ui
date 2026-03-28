@@ -18,6 +18,18 @@ from ..models.bot_instance import BotInstance, BotStatus
 
 logger = logging.getLogger(__name__)
 
+_hb_counter = None
+
+def _inc_heartbeat_failure():
+    global _hb_counter
+    if _hb_counter is None:
+        try:
+            from ..main import HEARTBEAT_FAILURES
+            _hb_counter = HEARTBEAT_FAILURES
+        except ImportError:
+            return
+    _hb_counter.inc()
+
 
 class HeartbeatMonitor:
     """
@@ -52,6 +64,13 @@ class HeartbeatMonitor:
             settings.heartbeat_max_failures,
         )
 
+        # Grace period: reset failure counters on startup to avoid
+        # false-positive kills when orchestrator restarts while FT is booting
+        await self._reset_failure_counters()
+        grace_seconds = 10
+        logger.info("Heartbeat grace period: %ds before monitoring starts", grace_seconds)
+        await asyncio.sleep(grace_seconds)
+
         while self._running:
             try:
                 await self._check_all_bots()
@@ -60,13 +79,30 @@ class HeartbeatMonitor:
 
             await asyncio.sleep(settings.heartbeat_interval_seconds)
 
+    async def _reset_failure_counters(self):
+        """Reset consecutive_failures for all RUNNING bots on startup."""
+        async with async_session() as db:
+            result = await db.execute(
+                select(BotInstance).where(
+                    BotInstance.status == BotStatus.RUNNING,
+                    BotInstance.is_deleted.is_(False),
+                )
+            )
+            bots = list(result.scalars().all())
+            for bot in bots:
+                if bot.consecutive_failures > 0:
+                    logger.info("Resetting failure counter for bot %s (was %d)", bot.name, bot.consecutive_failures)
+                    bot.consecutive_failures = 0
+                    bot.is_healthy = True
+            await db.commit()
+
     async def _check_all_bots(self):
         """Ping all RUNNING bots, handle failures."""
         async with async_session() as db:
             result = await db.execute(
                 select(BotInstance).where(
                     BotInstance.status == BotStatus.RUNNING,
-                    BotInstance.is_deleted == False,
+                    BotInstance.is_deleted.is_(False),
                 )
             )
             bots = list(result.scalars().all())
@@ -81,6 +117,7 @@ class HeartbeatMonitor:
                     bot.is_healthy = True
                 else:
                     bot.consecutive_failures += 1
+                    _inc_heartbeat_failure()
                     logger.warning(
                         "Bot %s ping failed (%d/%d)",
                         bot.name,

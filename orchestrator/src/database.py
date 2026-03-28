@@ -13,16 +13,25 @@ Trade data is NEVER stored here. Always read from FT API:
 - GET /api/v1/balance
 - GET /api/v1/status
 """
+from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from .config import settings
 
-engine = create_async_engine(settings.database_url, echo=False, pool_size=10, max_overflow=20)
+engine = create_async_engine(
+    settings.database_url,
+    echo=False,
+    pool_size=10,
+    max_overflow=20,
+    pool_pre_ping=True,
+    pool_timeout=10,
+    pool_recycle=3600,
+)
 
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
-async def get_db() -> AsyncSession:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """FastAPI dependency for DB sessions."""
     async with async_session() as session:
         try:

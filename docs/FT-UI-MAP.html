@@ -180,8 +180,8 @@
       <tr><td>3</td><td>Strategy Callbacks (16)</td><td><span class="page-badge builder">Builder</span></td><td>All 16 callbacks as toggleable code blocks with params</td><td>Strategy .py file generation</td></tr>
       <tr><td>4</td><td>Stoploss Options (6 types)</td><td><span class="page-badge builder">Builder</span></td><td>Static, Trailing, Trailing+Positive, Trailing+Offset, Custom, On Exchange</td><td>Strategy props + config.json</td></tr>
       <tr><td>5</td><td>Backtesting</td><td><span class="page-badge backtest">Backtesting</span></td><td>All CLI args as form fields, results display, comparison</td><td>POST/GET /api/v1/backtest</td></tr>
-      <tr><td>6</td><td>Hyperopt</td><td><span class="page-badge backtest">Backtesting</span></td><td>11 loss functions, 6 samplers, spaces, epochs, parameter types</td><td>CLI: freqtrade hyperopt</td></tr>
-      <tr><td>7</td><td>Plugins & Protections</td><td><span class="page-badge settings">Settings</span> + <span class="page-badge builder">Builder</span></td><td>6 pairlist handlers + 10 filters (Settings). 4 protections (Builder)</td><td>config.json pairlists[] + strategy</td></tr>
+      <tr><td>6</td><td>Hyperopt</td><td><span class="page-badge backtest">Backtesting</span></td><td>12 loss functions, 9 samplers, spaces, epochs, parameter types</td><td>CLI: freqtrade hyperopt</td></tr>
+      <tr><td>7</td><td>Plugins & Protections</td><td><span class="page-badge settings">Settings</span> + <span class="page-badge builder">Builder</span></td><td>6 pairlist handlers + 11 filters (Settings). 4 protections (Builder)</td><td>config.json pairlists[] + strategy</td></tr>
       <tr><td>8</td><td>REST API Endpoints (40+)</td><td><span class="page-badge global">All Pages</span></td><td>This is HOW we get data. Not a page — it's the plumbing.</td><td>Every API call maps to a specific UI element</td></tr>
       <tr><td>9</td><td>Exchanges</td><td><span class="page-badge settings">Settings</span></td><td>Exchange picker, API key config, exchange-specific params</td><td>config.json exchange{}</td></tr>
       <tr><td>10</td><td>Leverage & Futures</td><td><span class="page-badge builder">Builder</span></td><td>trading_mode, margin_mode, can_short, leverage() callback, pair format</td><td>Strategy props + config.json</td></tr>
@@ -216,7 +216,7 @@
     <h3 style="font-size: 14px; margin-bottom: 8px;">Summary: 30 active sections → 8 pages</h3>
     <p style="font-size: 13px; color: var(--dim);">
       <strong style="color:var(--purple)">Builder:</strong> §2, 3, 4, 7(protections), 10, 14 — Strategy creation with ALL 16 callbacks, 6 stoploss types, leverage, advanced features<br>
-      <strong style="color:var(--green)">Backtesting:</strong> §5, 6, 15, 21, 22, 30 — Run backtests, hyperopt (11 loss/6 samplers), lookahead/recursive analysis<br>
+      <strong style="color:var(--green)">Backtesting:</strong> §5, 6, 15, 21, 22, 30 — Run backtests, hyperopt (12 loss/9 samplers), lookahead/recursive analysis<br>
       <strong style="color:var(--accent)">Settings:</strong> §1, 7(pairlists), 9, 11, 13, 17, 27, 28 — Full config.json editor, exchange, telegram, webhook, producer/consumer, multi-instance<br>
       <strong style="color:var(--red)">FreqAI:</strong> §24, 25, 26 — ML model config, feature engineering, RL environments, training pipeline<br>
       <strong style="color:var(--yellow)">Dashboard:</strong> §8(API), 16(trade fields) — Live portfolio from FT API. Every column = FT trade object field<br>
@@ -262,6 +262,7 @@
         <tr><td class="ft-param">dp.orderbook(), dp.ticker(), dp.funding_rate()</td><td class="ui-element">Live data method reference</td><td class="note">Available in custom callbacks</td></tr>
         <tr><td class="ft-param">wallets.get_free/used/total()</td><td class="ui-element">Wallet methods reference</td><td class="note">Available in custom_stake_amount callback</td></tr>
         <tr><td class="ft-param">lock_pair() / unlock_pair() / is_pair_locked()</td><td class="ui-element">Pair locking methods reference</td><td class="note">Available in callbacks</td></tr>
+        <tr><td class="ft-param">version()</td><td class="ui-element">Text input "Strategy Version" (optional, metadata)</td><td class="note">Returns string shown in list-strategies output</td></tr>
       </table>
     </div>
   </div>
@@ -368,7 +369,7 @@
       <table class="feature-table">
         <tr><th>Protection</th><th>UI Element</th><th>Parameters</th></tr>
         <tr><td class="ft-param">StoplossGuard</td><td class="ui-element">Toggle + trade_limit, lookback_period, stop_duration, only_per_pair, only_per_side, required_profit</td><td class="note">Pause after N stoplosses</td></tr>
-        <tr><td class="ft-param">MaxDrawdown</td><td class="ui-element">Toggle + trade_limit, lookback_period, stop_duration, max_allowed_drawdown</td><td class="note">Pause at DD limit</td></tr>
+        <tr><td class="ft-param">MaxDrawdown</td><td class="ui-element">Toggle + trade_limit, lookback_period, stop_duration, max_allowed_drawdown, calculation_mode</td><td class="note">Pause at DD limit. calculation_mode: "ratios" (default) or "equity"</td></tr>
         <tr><td class="ft-param">LowProfitPairs</td><td class="ui-element">Toggle + trade_limit, lookback_period, stop_duration, required_profit, only_per_pair</td><td class="note">Pause losing pairs</td></tr>
         <tr><td class="ft-param">CooldownPeriod</td><td class="ui-element">Toggle + stop_duration, only_per_pair</td><td class="note">Min time between trades</td></tr>
       </table>
@@ -405,6 +406,9 @@
         <tr><td class="ft-param">--pairs</td><td class="ui-element">Pair override multi-select</td><td class="note">Optional</td></tr>
         <tr><td class="ft-param">--freqaimodel</td><td class="ui-element">FreqAI model dropdown</td><td class="note">If FreqAI enabled</td></tr>
         <tr><td class="ft-param">--cache day/week/month/none</td><td class="ui-element">Cache dropdown</td><td class="note">Result caching</td></tr>
+        <tr><td class="ft-param">--eps / --enable-position-stacking</td><td class="ui-element">Toggle "Position stacking"</td><td class="note">Allow multiple open positions per pair</td></tr>
+        <tr><td class="ft-param">--notes</td><td class="ui-element">Text input "Notes"</td><td class="note">Attach text annotation to backtest run (optional)</td></tr>
+        <tr><td class="ft-param">--enable-dynamic-pairlist</td><td class="ui-element">Toggle "Dynamic pairlist" (advanced)</td><td class="note">Refresh pair selection per candle during backtest</td></tr>
         <tr><td colspan="3"><strong>Results display:</strong> Via POST /api/v1/backtest (start) → GET /api/v1/backtest (poll status/results)</td></tr>
         <tr><td>API result fields</td><td class="ui-element">Results table: total trades, win rate, profit, max DD, Sharpe, Sortino, Calmar</td><td class="note">All from FT backtest result object</td></tr>
         <tr><td>Backtest history</td><td class="ui-element">History list from GET /api/v1/backtest/history</td><td class="note">Compare previous runs</td></tr>
@@ -423,7 +427,7 @@
         <tr><th>CLI Argument</th><th>UI Element</th><th>Notes</th></tr>
         <tr><td class="ft-param">--epochs</td><td class="ui-element">Epochs number input</td><td class="note">Required</td></tr>
         <tr><td class="ft-param">--spaces buy/sell/roi/stoploss/trailing/protection/trades/default</td><td class="ui-element">Space checkboxes (8 options)</td><td class="note">What to optimize</td></tr>
-        <tr><td class="ft-param">--loss (12 functions)</td><td class="ui-element">Loss function dropdown</td><td class="note">ShortTradeDur, OnlyProfit, Sharpe, SharpeDaily, Sortino, SortinoDaily, Calmar, MaxDD, MaxDDRelative, MaxDDPerPair, ProfitDD, MultiMetric</td></tr>
+        <tr><td class="ft-param">--loss (12 functions)</td><td class="ui-element">Loss function dropdown</td><td class="note">ShortTradeDur, OnlyProfit, Sharpe, SharpeDaily, Sortino, SortinoDaily, Calmar, MaxDD, MaxDDRelative, MaxDDPerPair, ProfitDD, MultiMetric (12 total)</td></tr>
         <tr><td class="ft-param">--min-trades / --max-trades</td><td class="ui-element">Min/max trade inputs</td><td class="note">Filter results</td></tr>
         <tr><td class="ft-param">--random-state</td><td class="ui-element">Seed input</td><td class="note">Reproducibility</td></tr>
         <tr><td class="ft-param">--jobs</td><td class="ui-element">Workers dropdown (-1/1/2/4)</td><td class="note">Parallel</td></tr>
@@ -450,7 +454,7 @@
     <div class="section-body">
       <table class="feature-table">
         <tr><th>FT Feature</th><th>UI Element</th><th>Notes</th></tr>
-        <tr><td>6 Optuna Samplers</td><td class="ui-element">Sampler dropdown: TPE (default), NSGA-II, GP, CMA-ES, Random, QMC</td><td class="note">Each has description tooltip</td></tr>
+        <tr><td>9 Optuna Samplers</td><td class="ui-element">Sampler dropdown: TPE, Random, CMA-ES, NSGA-II, QMC, MOTPE, NSGA-III (default), GP, AutoSampler (optunahub)</td><td class="note">Each has description tooltip. NSGA-III is FT default.</td></tr>
         <tr><td>Custom loss function</td><td class="ui-element">Code editor for IHyperOptLoss class</td><td class="note">Advanced users only — hyperopt_loss_function(results, trade_count, ...)</td></tr>
         <tr><td>Space overrides</td><td class="ui-element">Override stoploss/ROI/trailing search ranges</td><td class="note">Advanced config</td></tr>
       </table>
@@ -487,6 +491,7 @@
         <tr><td class="ft-param">--enter-reason-list / --exit-reason-list</td><td class="ui-element">Tag filter dropdowns</td><td class="note">Filter analysis by specific tags</td></tr>
         <tr><td class="ft-param">--indicator-list</td><td class="ui-element">Indicator value selector</td><td class="note">Show indicator values on signal candles</td></tr>
         <tr><td class="ft-param">--rejected-signals</td><td class="ui-element">Toggle "Show rejected"</td><td class="note">Signals that didn't become trades</td></tr>
+        <tr><td class="ft-param">--analysis-to-csv / --analysis-csv-path</td><td class="ui-element">"Export CSV" button + path input</td><td class="note">Export analysis results to CSV file</td></tr>
       </table>
     </div>
   </div>
@@ -576,6 +581,10 @@
         <tr><td class="ft-param">exchange.ccxt_config / ccxt_sync_config / ccxt_async_config</td><td class="ui-element">JSON editor (advanced)</td><td class="note">Raw CCXT config</td></tr>
         <tr><td class="ft-param">exchange.enable_ws</td><td class="ui-element">Toggle WebSocket</td><td class="note">Default true</td></tr>
         <tr><td class="ft-param">exchange.markets_refresh_interval</td><td class="ui-element">Number input (minutes)</td><td class="note">Default 60</td></tr>
+        <tr><td class="ft-param">exchange.skip_open_order_update</td><td class="ui-element">Toggle (advanced)</td><td class="note">Skip open order update on startup. Default false.</td></tr>
+        <tr><td class="ft-param">exchange.unknown_fee_rate</td><td class="ui-element">Number input (advanced)</td><td class="note">Override fee rate when exchange doesn't report. Default None.</td></tr>
+        <tr><td class="ft-param">exchange.log_responses</td><td class="ui-element">Toggle (debug)</td><td class="note">Log raw exchange responses. Debug only.</td></tr>
+        <tr><td class="ft-param">exchange.only_from_ccxt</td><td class="ui-element">Toggle (advanced)</td><td class="note">Disable data.binance.vision fallback, use CCXT only.</td></tr>
       </table>
     </div>
   </div>
@@ -595,11 +604,28 @@
         <tr><td class="ft-param">telegram.chat_id</td><td class="ui-element">Chat ID input</td><td class="note">From @userinfobot</td></tr>
         <tr><td class="ft-param">telegram.notification_settings</td><td class="ui-element">Per-event toggles: entry, exit, entry_cancel, exit_cancel, entry_fill, exit_fill, status</td><td class="note">Granular control</td></tr>
         <tr><td class="ft-param">telegram.allow_custom_messages</td><td class="ui-element">Toggle</td><td class="note">dp.send_msg() in strategy</td></tr>
+        <tr><td class="ft-param">telegram.balance_dust_level</td><td class="ui-element">Number input</td><td class="note">Min balance to display (dust filter)</td></tr>
+        <tr><td class="ft-param">telegram.reload</td><td class="ui-element">Toggle</td><td class="note">Allow reload buttons in Telegram</td></tr>
+        <tr><td class="ft-param">telegram.topic_id</td><td class="ui-element">Text input</td><td class="note">Specific group topic for messages</td></tr>
+        <tr><td class="ft-param">telegram.authorized_users</td><td class="ui-element">List input (user IDs)</td><td class="note">Allowed Telegram user IDs</td></tr>
+        <tr><td class="ft-param">telegram.keyboard</td><td class="ui-element">JSON editor (advanced)</td><td class="note">Custom keyboard layout</td></tr>
+        <tr><td class="ft-param">Per exit reason notifications</td><td class="ui-element">Per-event toggles: exit_roi, exit_stoploss, exit_trailing_stop_loss, etc.</td><td class="note">Extend notification_settings with per exit reason granularity</td></tr>
+        <tr><td class="ft-param">telegram.show_candle</td><td class="ui-element">Dropdown: "ohlc" / "off"</td><td class="note">Show candle data in notifications</td></tr>
+        <tr><td class="ft-param">telegram.protection_trigger / protection_trigger_global</td><td class="ui-element">Toggles</td><td class="note">Enable protection trigger notifications</td></tr>
         <tr><td colspan="3" class="group-label">WEBHOOK (§13)</td></tr>
         <tr><td class="ft-param">webhook.enabled</td><td class="ui-element">Toggle</td><td class="note">Enable/disable</td></tr>
         <tr><td class="ft-param">webhook.url</td><td class="ui-element">URL input</td><td class="note">Endpoint</td></tr>
         <tr><td class="ft-param">webhook.entry/exit/status/etc.</td><td class="ui-element">JSON payload editor per event type</td><td class="note">Uses FT variables: {trade_id}, {pair}, {open_rate}, etc.</td></tr>
         <tr><td>Payload variables</td><td class="ui-element">Variable reference sidebar (22 variables)</td><td class="note">All from §13 table</td></tr>
+        <tr><td class="ft-param">webhook.format</td><td class="ui-element">Dropdown: "form", "json", "raw"</td><td class="note">Payload format type</td></tr>
+        <tr><td class="ft-param">webhook.retries</td><td class="ui-element">Number input</td><td class="note">Retry count on failure (default 0)</td></tr>
+        <tr><td class="ft-param">webhook.retry_delay</td><td class="ui-element">Number input (seconds)</td><td class="note">Delay between retries</td></tr>
+        <tr><td class="ft-param">webhook.timeout</td><td class="ui-element">Number input (seconds)</td><td class="note">Request timeout</td></tr>
+        <tr><td class="ft-param">webhook.strategy_msg</td><td class="ui-element">JSON payload editor</td><td class="note">Template for strategy custom messages</td></tr>
+        <tr><td colspan="3" class="group-label">DISCORD (§13)</td></tr>
+        <tr><td class="ft-param">discord.enabled</td><td class="ui-element">Toggle</td><td class="note">Enable Discord notifications</td></tr>
+        <tr><td class="ft-param">discord.webhook_url</td><td class="ui-element">URL input</td><td class="note">Discord webhook endpoint</td></tr>
+        <tr><td class="ft-param">discord.entry/exit/status</td><td class="ui-element">Per-event payload editors</td><td class="note">Discord-specific message templates</td></tr>
       </table>
     </div>
   </div>
@@ -614,7 +640,7 @@
       <table class="feature-table">
         <tr><th>FT Parameter</th><th>UI Element</th><th>Notes</th></tr>
         <tr><td class="ft-param">external_message_consumer.enabled</td><td class="ui-element">Toggle</td><td class="note">Enable consumer mode</td></tr>
-        <tr><td class="ft-param">producers[].name / host / port / ws_token</td><td class="ui-element">Producer list: add/remove rows with 4 fields each</td><td class="note">Connect to N producer bots</td></tr>
+        <tr><td class="ft-param">producers[].name / host / port / ws_token / secure</td><td class="ui-element">Producer list: add/remove rows with 5 fields each (secure = SSL toggle)</td><td class="note">Connect to N producer bots. secure enables SSL/TLS.</td></tr>
         <tr><td class="ft-param">wait_timeout / ping_timeout</td><td class="ui-element">Number inputs</td><td class="note">WS timeouts</td></tr>
         <tr><td class="ft-param">remove_entry_exit_signals</td><td class="ui-element">Toggle</td><td class="note">Strip signals from producer</td></tr>
         <tr><td class="ft-param">initial_candle_limit / message_size_limit</td><td class="ui-element">Number inputs</td><td class="note">Candle/message limits</td></tr>
@@ -686,6 +712,9 @@
         <tr><td>Reload config</td><td class="api-source">POST /api/v1/reload_config</td><td class="note">Apply config changes</td></tr>
         <tr><td>Delete trade</td><td class="api-source">DELETE /api/v1/trades/{id}</td><td class="note">Remove trade</td></tr>
         <tr><td>Reload trade</td><td class="api-source">POST /api/v1/trades/{id}/reload</td><td class="note">Sync from exchange</td></tr>
+        <tr><td>Cancel open order</td><td class="api-source">DELETE /api/v1/trades/{id}/open-order</td><td class="note">Cancel pending/stuck orders per trade — button in Open Positions table</td></tr>
+        <tr><td>Create pair lock</td><td class="api-source">POST /api/v1/locks</td><td class="note">"Lock Pair" button on Risk page: pair + duration + reason</td></tr>
+        <tr><td>Delete pair lock</td><td class="api-source">DELETE /api/v1/locks/{id}</td><td class="note">"Unlock" button per lock row on Risk page</td></tr>
       </table>
     </div>
   </div>
@@ -714,6 +743,8 @@
         <tr><td class="ft-param">freqai.expired_hours</td><td class="ui-element">Number input (hours)</td><td class="note">Max model age</td></tr>
         <tr><td class="ft-param">freqai.continual_learning</td><td class="ui-element">Toggle</td><td class="note">Incremental learning</td></tr>
         <tr><td class="ft-param">freqai.activate_tensorboard</td><td class="ui-element">Toggle</td><td class="note">TensorBoard logging</td></tr>
+        <tr><td class="ft-param">freqai.wait_for_training_iteration_on_reload</td><td class="ui-element">Toggle (advanced)</td><td class="note">Wait for training to complete on config reload/shutdown</td></tr>
+        <tr><td class="ft-param">freqai.override_exchange_check</td><td class="ui-element">Toggle (advanced/danger)</td><td class="note">Force FreqAI on limited-support exchanges</td></tr>
         <tr><td colspan="3" class="group-label">MODEL SELECTION</td></tr>
         <tr><td>--freqaimodel</td><td class="ui-element">Model dropdown: LightGBMRegressor, LightGBMClassifier, XGBoostRegressor, XGBoostClassifier, PyTorchRegressor, PyTorchClassifier</td><td class="note">GET /api/v1/freqaimodels for available</td></tr>
         <tr><td colspan="3" class="group-label">FEATURE PARAMETERS</td></tr>
@@ -754,6 +785,11 @@
         <tr><td class="ft-param">rl_config.model_type</td><td class="ui-element">Dropdown: PPO, A2C, DQN, etc.</td><td class="note">RL algorithm</td></tr>
         <tr><td class="ft-param">rl_config.policy_type</td><td class="ui-element">Dropdown: MlpPolicy, CnnPolicy</td><td class="note">Network architecture</td></tr>
         <tr><td class="ft-param">rl_config.model_reward_parameters</td><td class="ui-element">Key-value editor</td><td class="note">Reward scaling</td></tr>
+        <tr><td class="ft-param">rl_config.cpu_count</td><td class="ui-element">Number input</td><td class="note">CPU threads for RL training</td></tr>
+        <tr><td class="ft-param">rl_config.net_arch</td><td class="ui-element">Array input (e.g. [128, 128])</td><td class="note">Neural network architecture layers</td></tr>
+        <tr><td class="ft-param">rl_config.randomize_starting_position</td><td class="ui-element">Toggle</td><td class="note">Randomize episode start position</td></tr>
+        <tr><td class="ft-param">rl_config.drop_ohlc_from_features</td><td class="ui-element">Toggle</td><td class="note">Exclude normalized OHLC from features</td></tr>
+        <tr><td class="ft-param">rl_config.progress_bar</td><td class="ui-element">Toggle</td><td class="note">Show training progress bar</td></tr>
         <tr><td>RL Environments</td><td class="ui-element">Dropdown: Base3Action (Hold/Long/Short), Base4Action (+Exit), Base5Action (+Exit Long/Short)</td><td class="note">Action space selection</td></tr>
       </table>
     </div>
@@ -785,6 +821,8 @@
         <tr><td class="ft-param">use_DBSCAN_to_remove_outliers</td><td class="ui-element">Toggle DBSCAN</td><td class="note">Density-based</td></tr>
         <tr><td class="ft-param">DI_threshold</td><td class="ui-element">Number input</td><td class="note">Dissimilarity Index</td></tr>
         <tr><td class="ft-param">outlier_protection_percentage</td><td class="ui-element">Number input (0-100)</td><td class="note">Max % flagged as outliers</td></tr>
+        <tr><td class="ft-param">svm_params</td><td class="ui-element">JSON editor (advanced)</td><td class="note">Custom SVM parameters dict (kernel, degree, etc.)</td></tr>
+        <tr><td class="ft-param">plot_feature_importances</td><td class="ui-element">Number input</td><td class="note">Number of top features to plot (0 = disabled)</td></tr>
         <tr><td colspan="3" class="group-label">PYTORCH / DEEP LEARNING</td></tr>
         <tr><td class="ft-param">learning_rate</td><td class="ui-element">Number input (e.g. 3e-4)</td><td class="note">Optimizer LR</td></tr>
         <tr><td class="ft-param">trainer_kwargs.n_epochs</td><td class="ui-element">Number input</td><td class="note">Training passes</td></tr>
@@ -834,6 +872,7 @@
         <tr><td>Imbalances</td><td class="ui-element">Highlighted levels on chart</td><td class="note">dataframe["imbalances"]</td></tr>
         <tr><td>Stacked imbalances</td><td class="ui-element">Marked levels on chart</td><td class="note">dataframe["stacked_imbalances_bid/ask"]</td></tr>
         <tr><td class="ft-param">scale, imbalance_volume, imbalance_ratio, stacked_imbalance_range</td><td class="ui-element">Config inputs for orderflow params</td><td class="note">4 parameters</td></tr>
+        <tr><td class="ft-param">cache_size, max_candles</td><td class="ui-element">Number inputs (advanced)</td><td class="note">Orderflow cache size and max candles to process</td></tr>
       </table>
     </div>
   </div>
@@ -860,6 +899,14 @@
         <tr><td class="ft-param">--trading-mode</td><td class="ui-element">Mode selector (spot/futures)</td><td class="note">Affects pair format</td></tr>
         <tr><td class="ft-param">--erase</td><td class="ui-element">Toggle "Delete existing first"</td><td class="note">Warning: destructive</td></tr>
         <tr><td class="ft-param">--prepend</td><td class="ui-element">Toggle "Prepend to existing"</td><td class="note">Add older data</td></tr>
+        <tr><td class="ft-param">--days</td><td class="ui-element">Number input "Days"</td><td class="note">Download N days (alternative to --timerange, mutually exclusive)</td></tr>
+        <tr><td class="ft-param">--new-pairs-days</td><td class="ui-element">Number input "New pair days"</td><td class="note">Different day count for newly added pairs</td></tr>
+        <tr><td class="ft-param">--include-inactive-pairs</td><td class="ui-element">Toggle "Include delisted pairs"</td><td class="note">Download data for inactive/delisted pairs too</td></tr>
+        <tr><td class="ft-param">--dl-trades</td><td class="ui-element">Toggle "Download trades data"</td><td class="note">Download raw trades instead of OHLCV candles</td></tr>
+        <tr><td class="ft-param">--convert</td><td class="ui-element">Toggle "Convert after download"</td><td class="note">Auto-convert downloaded data to target format</td></tr>
+        <tr><td class="ft-param">--candle-types</td><td class="ui-element">Multi-select: spot, futures, mark, index, premiumIndex, funding_rate</td><td class="note">Which candle types to download</td></tr>
+        <tr><td class="ft-param">--data-format-ohlcv</td><td class="ui-element">Dropdown: json, jsongz, feather, parquet</td><td class="note">Storage format for OHLCV data</td></tr>
+        <tr><td class="ft-param">--no-parallel-download</td><td class="ui-element">Toggle "Disable parallel download" (advanced)</td><td class="note">Sequential download for rate-limited exchanges</td></tr>
       </table>
     </div>
   </div>
@@ -883,6 +930,10 @@
         <tr><td class="ft-param">freqtrade show-trades</td><td class="ui-element">DB trade viewer</td><td class="note">Direct DB access</td></tr>
         <tr><td class="ft-param">freqtrade list-hyperoptloss</td><td class="ui-element">Loss function reference</td><td class="note">Available functions</td></tr>
         <tr><td class="ft-param">freqtrade list-freqaimodels</td><td class="ui-element">FreqAI model reference</td><td class="note">Available models</td></tr>
+        <tr><td class="ft-param">freqtrade convert-trade-data</td><td class="ui-element">Trade data format converter</td><td class="note">Convert between trade data formats (json↔feather↔parquet)</td></tr>
+        <tr><td class="ft-param">freqtrade trades-to-ohlcv</td><td class="ui-element">"Generate OHLCV" button</td><td class="note">Generate OHLCV candles from downloaded trade data</td></tr>
+        <tr><td class="ft-param">freqtrade hyperopt-list</td><td class="ui-element">Hyperopt results browser</td><td class="note">Browse/filter hyperopt epochs — linked from Backtesting page</td></tr>
+        <tr><td class="ft-param">freqtrade hyperopt-show</td><td class="ui-element">Hyperopt epoch detail view</td><td class="note">Show specific epoch parameters + results</td></tr>
       </table>
     </div>
   </div>
@@ -904,7 +955,7 @@
       <table class="feature-table">
         <tr><th>FT Feature</th><th>UI Element</th><th>Data Source</th></tr>
         <tr><td>Active protections per bot</td><td class="ui-element">Protection status cards</td><td class="api-source">GET /api/v1/show_config → protections[]</td></tr>
-        <tr><td>Pair locks</td><td class="ui-element">Locked pairs table</td><td class="api-source">GET /api/v1/locks</td></tr>
+        <tr><td>Pair locks</td><td class="ui-element">Locked pairs table + "Lock Pair" button + "Unlock" per row</td><td class="api-source">GET /api/v1/locks, POST /api/v1/locks, DELETE /api/v1/locks/{id}</td></tr>
         <tr><td>Stoploss events</td><td class="ui-element">Recent SL hits timeline</td><td class="api-source">GET /api/v1/trades (filter exit_reason=stoploss)</td></tr>
         <tr><td>Max drawdown status</td><td class="ui-element">Current DD vs MaxDrawdown protection limit</td><td class="api-source">GET /api/v1/profit (profit_all_percent)</td></tr>
         <tr><td colspan="3" class="group-label">ORCHESTRATOR ADDITIONS (our code, not FT)</td></tr>

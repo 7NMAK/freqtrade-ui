@@ -7,11 +7,14 @@ Hard Kill = POST /api/v1/forceexit(all) + stop → closes all + stops
 Recovery is MANUAL ONLY (safety rule #6).
 Every activation logged to risk_events (immutable).
 """
-from fastapi import APIRouter, Depends, HTTPException, Request
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..auth import require_auth
 from ..database import get_db
 from ..models.risk_event import RiskEvent
 
@@ -30,12 +33,14 @@ async def soft_kill_bot(
     body: KillRequest,
     request: Request,
     db: AsyncSession = Depends(get_db),
-):
+    auth_payload: dict[str, Any] = Depends(require_auth),
+) -> dict[str, Any]:
     """Soft Kill one bot — stop trading, positions stay open."""
+    actor = auth_payload.get("sub", "user")
     ks = request.app.state.kill_switch
     try:
         result = await ks.soft_kill_bot(
-            db=db, bot_id=bot_id, trigger="manual", reason=body.reason, actor="user",
+            db=db, bot_id=bot_id, trigger="manual", reason=body.reason, actor=actor,
         )
         return {"status": "soft_killed", "result": result}
     except ValueError as e:
@@ -48,12 +53,14 @@ async def hard_kill_bot(
     body: KillRequest,
     request: Request,
     db: AsyncSession = Depends(get_db),
-):
+    auth_payload: dict[str, Any] = Depends(require_auth),
+) -> dict[str, Any]:
     """Hard Kill one bot — close all positions + stop."""
+    actor = auth_payload.get("sub", "user")
     ks = request.app.state.kill_switch
     try:
         result = await ks.hard_kill_bot(
-            db=db, bot_id=bot_id, trigger="manual", reason=body.reason, actor="user",
+            db=db, bot_id=bot_id, trigger="manual", reason=body.reason, actor=actor,
         )
         return {"status": "hard_killed", "result": result}
     except ValueError as e:
@@ -67,11 +74,13 @@ async def soft_kill_all(
     body: KillRequest,
     request: Request,
     db: AsyncSession = Depends(get_db),
-):
+    auth_payload: dict[str, Any] = Depends(require_auth),
+) -> dict[str, Any]:
     """Soft Kill ALL running bots."""
+    actor = auth_payload.get("sub", "user")
     ks = request.app.state.kill_switch
     result = await ks.soft_kill_all(
-        db=db, trigger="manual", reason=body.reason, actor="user",
+        db=db, trigger="manual", reason=body.reason, actor=actor,
     )
     return {"status": "soft_killed_all", "results": result}
 
@@ -81,11 +90,13 @@ async def hard_kill_all(
     body: KillRequest,
     request: Request,
     db: AsyncSession = Depends(get_db),
-):
+    auth_payload: dict[str, Any] = Depends(require_auth),
+) -> dict[str, Any]:
     """Hard Kill ALL running bots — nuclear option."""
+    actor = auth_payload.get("sub", "user")
     ks = request.app.state.kill_switch
     result = await ks.hard_kill_all(
-        db=db, trigger="manual", reason=body.reason, actor="user",
+        db=db, trigger="manual", reason=body.reason, actor=actor,
     )
     return {"status": "hard_killed_all", "results": result}
 
@@ -95,8 +106,8 @@ async def hard_kill_all(
 @router.get("/events")
 async def list_risk_events(
     db: AsyncSession = Depends(get_db),
-    limit: int = 50,
-):
+    limit: int = Query(default=50, ge=1, le=1000),
+) -> list[dict[str, Any]]:
     """List risk events (kill switch activations). Immutable audit trail."""
     result = await db.execute(
         select(RiskEvent).order_by(RiskEvent.created_at.desc()).limit(limit)

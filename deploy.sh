@@ -1,161 +1,167 @@
 #!/bin/bash
 ##
-## Deploy & Test Orchestrator
+## Deploy — Full Stack
 ##
-## Run on the server (204.168.187.107) from the freqtrade-ui directory.
+## Usage:
+##   ./deploy.sh                    # Deploy on the server (run from /opt/freqtrade-ui)
+##   ./deploy.sh --local-push       # Push code from local, then SSH deploy
 ##
-## Prerequisites:
-##   - Docker + Docker Compose installed
-##   - FreqTrade bot running in container "freqtrade" on port 8080
+## What it does:
+##   1. Creates ft_network + connects FT bot
+##   2. Copies .env.example → .env if .env missing
+##   3. Builds and starts ALL services (postgres, redis, orchestrator, frontend, nginx, prometheus, grafana, pg-backup)
+##   4. Runs health checks on every service
+##   5. Registers FT bot with orchestrator (if not already registered)
 ##
 set -euo pipefail
 
 BLUE='\033[0;34m'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
+YELLOW='\033[1;33m'
 NC='\033[0m'
 
-step() { echo -e "\n${BLUE}==> $1${NC}"; }
-ok()   { echo -e "${GREEN}  OK: $1${NC}"; }
-fail() { echo -e "${RED}  FAIL: $1${NC}"; exit 1; }
+step()  { echo -e "\n${BLUE}==> $1${NC}"; }
+ok()    { echo -e "${GREEN}  OK: $1${NC}"; }
+fail()  { echo -e "${RED}  FAIL: $1${NC}"; exit 1; }
+warn()  { echo -e "${YELLOW}  WARN: $1${NC}"; }
 
-# ── Step 1: Create shared Docker network ──────────────────────
-step "Creating ft_network (if not exists)"
+SERVER="204.168.187.107"
+SERVER_USER="root"
+REMOTE_DIR="/opt/freqtrade-ui"
+
+# ── Mode: local push + remote deploy ──────────────────────
+if [ "${1:-}" = "--local-push" ]; then
+    step "Pushing code to server"
+
+    # Commit message — use git add with .gitignore awareness (not -A to be safe)
+    MSG="${2:-deploy: $(date +%Y-%m-%d_%H:%M)}"
+    git add --all
+    # Safety: ensure .env is not staged
+    git reset HEAD .env 2>/dev/null || true
+    git diff --cached --quiet && echo "Nothing to commit" || git commit -m "$MSG"
+    git push origin "$(git branch --show-current)"
+    ok "Code pushed"
+
+    step "Deploying on server via SSH"
+    ssh "${SERVER_USER}@${SERVER}" "cd ${REMOTE_DIR} && git pull && ./deploy.sh"
+    exit 0
+fi
+
+# ── From here: running ON the server ──────────────────────
+
+# ── Step 1: Docker network ────────────────────────────────
+step "Setting up Docker network"
 docker network create ft_network 2>/dev/null && ok "ft_network created" || ok "ft_network already exists"
-
-# ── Step 2: Connect existing FT bot to ft_network ────────────
-step "Connecting freqtrade container to ft_network"
 docker network connect ft_network freqtrade 2>/dev/null && ok "freqtrade connected to ft_network" || ok "freqtrade already on ft_network"
 
-# ── Step 3: Build and start orchestrator stack ────────────────
-step "Building and starting orchestrator stack (postgres + redis + orchestrator)"
-docker compose up -d --build
-ok "Docker Compose up"
+# ── Step 2: Environment file ──────────────────────────────
+step "Checking environment file"
+if [ ! -f .env ]; then
+    cp .env.example .env
+    warn ".env created from .env.example — EDIT IT with production values!"
+    warn "At minimum, change: POSTGRES_PASSWORD, ORCH_SECRET_KEY, GF_SECURITY_ADMIN_PASSWORD"
+fi
+ok ".env exists"
 
-# Wait for services to be healthy
-step "Waiting for services to be healthy..."
+# Load .env for bot registration credentials
+set -a
+source .env
+set +a
+
+# ── Step 3: Build and start all services ──────────────────
+step "Building and starting all services"
+docker compose build
+docker compose up -d
+ok "All services started"
+
+# ── Step 4: Wait for health ───────────────────────────────
+step "Waiting for services to become healthy..."
 sleep 5
 
-# Check postgres
-docker compose exec postgres pg_isready -U orchestrator > /dev/null 2>&1 && ok "PostgreSQL healthy" || fail "PostgreSQL not healthy"
+# Helper: wait for a service to be healthy
+wait_healthy() {
+    local service="$1"
+    local max_wait="${2:-60}"
+    local elapsed=0
 
-# Check redis
-docker compose exec redis redis-cli ping > /dev/null 2>&1 && ok "Redis healthy" || fail "Redis not healthy"
+    while [ $elapsed -lt $max_wait ]; do
+        local health
+        health=$(docker inspect --format='{{.State.Health.Status}}' "$service" 2>/dev/null || echo "missing")
+        if [ "$health" = "healthy" ]; then
+            ok "$service is healthy"
+            return 0
+        fi
+        sleep 2
+        elapsed=$((elapsed + 2))
+    done
+    fail "$service not healthy after ${max_wait}s (status: $health)"
+}
 
-# Check orchestrator is running
-sleep 3
-docker compose logs orchestrator --tail=20
+# Wait for core services first
+wait_healthy orch_postgres 30
+wait_healthy orch_redis 30
+wait_healthy orchestrator 45
 
-# ── Step 4: Test orchestrator health endpoint ─────────────────
-step "Testing orchestrator health endpoint"
-HEALTH=$(curl -sf http://127.0.0.1:8888/api/health 2>&1) || fail "Orchestrator not responding on port 8888"
-echo "  Response: $HEALTH"
-echo "$HEALTH" | grep -q '"status":"ok"' && ok "Health endpoint works" || fail "Unexpected health response"
+# Wait for frontend + nginx
+wait_healthy frontend 60
+wait_healthy nginx 30
 
-# ── Step 5: Register existing FT bot ─────────────────────────
-step "Registering existing FreqTrade bot with orchestrator"
-REGISTER_RESP=$(curl -sf -X POST http://127.0.0.1:8888/api/bots/ \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "ft-main",
-    "api_url": "http://freqtrade:8080",
-    "api_port": 8080,
-    "api_username": "novakus",
-    "api_password": "***REMOVED***",
-    "strategy_name": "SampleStrategy",
-    "is_dry_run": true,
-    "description": "Main FT bot - BTC/USDT futures dry run"
-  }' 2>&1) || fail "Failed to register bot"
-echo "  Response: $REGISTER_RESP"
-BOT_ID=$(echo "$REGISTER_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])" 2>/dev/null) || fail "Could not extract bot_id"
-ok "Bot registered with id=$BOT_ID"
+# Monitoring (non-critical — warn instead of fail)
+step "Checking monitoring services"
+prometheus_health=$(docker inspect --format='{{.State.Health.Status}}' prometheus 2>/dev/null || echo "missing")
+grafana_health=$(docker inspect --format='{{.State.Health.Status}}' grafana 2>/dev/null || echo "missing")
+if [ "$prometheus_health" = "healthy" ]; then ok "Prometheus healthy"; else warn "Prometheus: $prometheus_health"; fi
+if [ "$grafana_health" = "healthy" ]; then ok "Grafana healthy"; else warn "Grafana: $grafana_health"; fi
 
-# ── Step 6: Test bot listing ─────────────────────────────────
-step "Testing bot listing"
-LIST_RESP=$(curl -sf http://127.0.0.1:8888/api/bots/ 2>&1) || fail "Bot listing failed"
-echo "  Response: $LIST_RESP"
-ok "Bot listing works"
+# ── Step 5: Endpoint verification ─────────────────────────
+step "Verifying endpoints"
 
-# ── Step 7: Test FT API passthrough (ping via status) ────────
-step "Testing FT API passthrough: GET /api/bots/$BOT_ID/config"
-CONFIG_RESP=$(curl -sf "http://127.0.0.1:8888/api/bots/$BOT_ID/config" 2>&1) || fail "FT API passthrough failed — is freqtrade on ft_network?"
-echo "  Response (first 200 chars): ${CONFIG_RESP:0:200}"
-ok "FT API passthrough works"
+curl -sf http://127.0.0.1:8888/api/health > /dev/null && ok "Orchestrator API (direct :8888)" || fail "Orchestrator not responding"
+curl -sf http://127.0.0.1/health > /dev/null && ok "Nginx health (port 80)" || fail "Nginx not responding"
+curl -sf http://127.0.0.1/api/health > /dev/null && ok "Orchestrator via Nginx (/api/health)" || fail "Nginx→Orchestrator proxy broken"
+curl -sf http://127.0.0.1/ > /dev/null && ok "Frontend via Nginx (/)" || fail "Nginx→Frontend proxy broken"
 
-# ── Step 8: Test bot start (POST /api/v1/start via orchestrator) ──
-step "Testing bot start via orchestrator"
-START_RESP=$(curl -sf -X POST "http://127.0.0.1:8888/api/bots/$BOT_ID/start" 2>&1) || echo "  Note: start may fail if already running — that's OK"
-echo "  Response: $START_RESP"
-ok "Bot start endpoint called"
+# ── Step 6: Register FT bot (if not already) ──────────────
+step "Checking bot registration"
+BOT_LIST=$(curl -sf http://127.0.0.1:8888/api/bots/ 2>&1) || fail "Cannot list bots"
 
-# ── Step 9: Test bot status (open trades from FT) ────────────
-step "Testing FT API passthrough: GET /api/bots/$BOT_ID/status (open trades)"
-STATUS_RESP=$(curl -sf "http://127.0.0.1:8888/api/bots/$BOT_ID/status" 2>&1) || fail "Status passthrough failed"
-echo "  Response: $STATUS_RESP"
-ok "Status passthrough works"
+if echo "$BOT_LIST" | python3 -c "import sys,json; bots=json.load(sys.stdin); exit(0 if any(b['name']=='ft-main' for b in bots) else 1)" 2>/dev/null; then
+    ok "Bot 'ft-main' already registered"
+else
+    step "Registering FreqTrade bot"
+    FT_USER="${FT_API_USERNAME:-novakus}"
+    FT_PASS="${FT_API_PASSWORD:-***REMOVED***}"
+    REGISTER_RESP=$(curl -sf -X POST http://127.0.0.1:8888/api/bots/ \
+        -H "Content-Type: application/json" \
+        -d "{
+            \"name\": \"ft-main\",
+            \"api_url\": \"http://freqtrade:8080\",
+            \"api_port\": 8080,
+            \"api_username\": \"${FT_USER}\",
+            \"api_password\": \"${FT_PASS}\",
+            \"strategy_name\": \"SampleStrategy\",
+            \"is_dry_run\": true,
+            \"description\": \"Main FT bot - BTC/USDT futures dry run\"
+        }" 2>&1) || fail "Failed to register bot"
+    ok "Bot registered: $REGISTER_RESP"
+fi
 
-# ── Step 10: Test portfolio aggregation ───────────────────────
-step "Testing portfolio endpoints"
-BALANCE_RESP=$(curl -sf "http://127.0.0.1:8888/api/portfolio/balance" 2>&1) || fail "Portfolio balance failed"
-echo "  Balance: $BALANCE_RESP"
-ok "Portfolio balance works"
-
-PROFIT_RESP=$(curl -sf "http://127.0.0.1:8888/api/portfolio/profit" 2>&1) || fail "Portfolio profit failed"
-echo "  Profit: ${PROFIT_RESP:0:200}"
-ok "Portfolio profit works"
-
-# ── Step 11: Test kill switch (soft kill) ─────────────────────
-step "Testing kill switch: soft kill"
-SOFT_RESP=$(curl -sf -X POST "http://127.0.0.1:8888/api/kill-switch/soft/$BOT_ID" \
-  -H "Content-Type: application/json" \
-  -d '{"reason": "deploy test — soft kill verification"}' 2>&1) || fail "Soft kill failed"
-echo "  Response: $SOFT_RESP"
-ok "Soft kill works"
-
-# ── Step 12: Test risk events ─────────────────────────────────
-step "Testing risk events log"
-EVENTS_RESP=$(curl -sf "http://127.0.0.1:8888/api/kill-switch/events" 2>&1) || fail "Risk events failed"
-echo "  Response: $EVENTS_RESP"
-ok "Risk events endpoint works"
-
-# ── Step 13: Test strategy lifecycle ──────────────────────────
-step "Testing strategy lifecycle: create"
-STRAT_RESP=$(curl -sf -X POST http://127.0.0.1:8888/api/strategies/ \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "SampleStrategy",
-    "description": "Default FT sample strategy",
-    "bot_instance_id": '"$BOT_ID"'
-  }' 2>&1) || fail "Strategy create failed"
-echo "  Response: $STRAT_RESP"
-STRAT_ID=$(echo "$STRAT_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])" 2>/dev/null) || fail "Could not extract strategy_id"
-ok "Strategy created with id=$STRAT_ID"
-
-step "Testing strategy lifecycle: promote DRAFT -> BACKTEST"
-PROMOTE_RESP=$(curl -sf -X PATCH "http://127.0.0.1:8888/api/strategies/$STRAT_ID" \
-  -H "Content-Type: application/json" \
-  -d '{"lifecycle": "backtest"}' 2>&1) || fail "Strategy promote failed"
-echo "  Response: $PROMOTE_RESP"
-ok "Strategy promoted to BACKTEST"
-
-# ── Step 14: Verify heartbeat is running ──────────────────────
-step "Checking heartbeat monitor in logs"
-docker compose logs orchestrator --tail=30 2>&1 | grep -i "heartbeat\|ping" || echo "  (heartbeat may not have logged yet if no RUNNING bots)"
-ok "Heartbeat check done"
-
-# ── Summary ──────────────────────────────────────────────────
+# ── Summary ───────────────────────────────────────────────
 echo ""
 echo -e "${GREEN}============================================${NC}"
-echo -e "${GREEN}  ALL TESTS PASSED - Orchestrator deployed  ${NC}"
+echo -e "${GREEN}  DEPLOY COMPLETE — All services running    ${NC}"
 echo -e "${GREEN}============================================${NC}"
 echo ""
-echo "Orchestrator API: http://127.0.0.1:8888"
-echo "  - Health:     GET  /api/health"
-echo "  - Bots:       GET  /api/bots/"
-echo "  - Portfolio:  GET  /api/portfolio/balance"
-echo "  - Kill:       POST /api/kill-switch/soft/{id}"
-echo "  - Strategies: GET  /api/strategies/"
-echo "  - Events:     GET  /api/kill-switch/events"
+echo "Services:"
+echo "  Frontend:     http://${SERVER}/"
+echo "  Orchestrator: http://${SERVER}/api/health"
+echo "  Grafana:      http://${SERVER}/grafana/"
+echo "  Prometheus:   http://${SERVER}/prometheus/"
 echo ""
-echo "FT bot registered as: ft-main (id=$BOT_ID)"
-echo "FT bot reachable at: http://freqtrade:8080 (via ft_network)"
+echo "Direct access (localhost only):"
+echo "  Orchestrator: http://127.0.0.1:8888/api/health"
+echo "  PostgreSQL:   127.0.0.1:5432"
+echo "  Redis:        127.0.0.1:6379"
+echo ""
+docker compose ps

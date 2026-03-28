@@ -239,6 +239,7 @@
 ### Optional Methods
 | Method | Signature | Description |
 |--------|-----------|-------------|
+| `version` | `() -> int` | Strategy version for migration tracking |
 | `informative_pairs` | `() -> list[tuple]` | Additional pairs for analysis |
 
 ### Strategy Properties
@@ -356,7 +357,7 @@
 | `--export-filename` | Custom export path |
 | `--breakdown` | Breakdown by day/week/month |
 | `--cache` | Cache results (day/week/month/none) |
-| `--eps` / `--no-eps` | Enable/disable ExitProfitOnly |
+| `--eps` / `--enable-position-stacking` | Allow multiple positions per pair (bool) |
 | `--enable-protections` | Enable protections in backtest |
 | `--dry-run-wallet` | Override starting balance |
 | `--stake-amount` | Override stake amount |
@@ -365,9 +366,8 @@
 | `--pairs` | Override pair whitelist |
 | `--freqaimodel` | FreqAI model name |
 | `--freqaibacktest-live-models` | Use live FreqAI models |
-| `--enable-dynamic-pairlist` | Refresh pairlist per candle |
-| `--eps` / `--enable-position-stacking` | Allow buying same pair multiple times |
-| `--notes` | Add metadata text to results |
+| `--enable-dynamic-pairlist` | Refresh pairlist per candle during backtest |
+| `--notes` | Text annotation for backtest run |
 | `--backtest-directory` | Custom results directory |
 
 ### Config Settings
@@ -512,6 +512,8 @@
 | DELETE | `/api/v1/trades/{id}` | Delete trade |
 | DELETE | `/api/v1/trades/{id}/open-order` | Cancel open order for trade |
 | POST | `/api/v1/trades/{id}/reload` | Reload trade from exchange |
+| POST | `/api/v1/locks` | Create pair lock |
+| DELETE | `/api/v1/locks/{id}` | Delete pair lock |
 
 ### Performance & Analysis
 | Method | Endpoint | Description |
@@ -594,6 +596,14 @@
 | Parameter | Description |
 |-----------|-------------|
 | `exchange.password` | API passphrase (required) |
+
+### Exchange Advanced Parameters
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `exchange.skip_open_order_update` | bool | false | Skip checking open orders on each tick |
+| `exchange.unknown_fee_rate` | float | None | Fee rate for unknown pairs |
+| `exchange.log_responses` | bool | false | Log all exchange API responses |
+| `exchange.only_from_ccxt` | bool | false | Use CCXT data exclusively (skip custom fixes) |
 
 ---
 
@@ -680,6 +690,14 @@ def leverage(self, pair, current_time, current_rate, proposed_leverage, max_leve
 | `--erase` | Delete existing data first |
 | `--trading-mode` | spot/futures |
 | `--prepend` | Prepend to existing data |
+| `--days` | Download N recent days of data |
+| `--new-pairs-days` | Download N days for new pairs only |
+| `--include-inactive-pairs` | Include delisted/inactive pairs |
+| `--dl-trades` | Download trades data (not just OHLCV) |
+| `--convert` | Convert downloaded data to format |
+| `--candle-types` | Candle types (spot/futures/mark/index) |
+| `--data-format-ohlcv` | Output format (json/feather/parquet) |
+| `--no-parallel-download` | Disable parallel downloads |
 
 ### CLI: convert-data
 | Argument | Description |
@@ -699,6 +717,22 @@ def leverage(self, pair, current_time, current_rate, proposed_leverage, max_leve
 
 ## 13. WEBHOOK CONFIG
 **Docs:** https://www.freqtrade.io/en/stable/webhook-config/
+
+### Webhook Configuration
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `webhook.enabled` | bool | false | Enable webhook notifications |
+| `webhook.url` | str | Required | Webhook URL endpoint |
+| `webhook.format` | str | "form" | Payload format (form/json/raw) |
+| `webhook.retries` | int | 0 | Retry failed requests |
+| `webhook.retry_delay` | float | 0.1 | Delay between retries (seconds) |
+| `webhook.timeout` | float | 10 | Request timeout (seconds) |
+| `webhook.strategy_msg` | bool | true | Include strategy name in messages |
+| `discord.enabled` | bool | false | Enable Discord webhook |
+| `discord.webhook_url` | str | — | Discord webhook URL |
+| `discord.entry` | bool | true | Notify on entry |
+| `discord.exit` | bool | true | Notify on exit |
+| `discord.status` | bool | true | Notify on status changes |
 
 ### Available Payload Variables
 | Variable | Description |
@@ -774,15 +808,18 @@ class IHyperOptLoss:
 | `SKDecimal` | `from freqtrade.optimize.space` | Decimal ranges (precision control) |
 | `Real` | `from skopt.space` | Float ranges |
 
-### Optuna Samplers
+### Optuna Samplers (9 total)
 | Sampler | Description |
 |---------|-------------|
-| `TPESampler` | Tree-structured Parzen Estimator (default) |
-| `NSGAIISampler` | Multi-objective optimization |
+| `TPESampler` | Tree-structured Parzen Estimator |
+| `MOTPESampler` | Multi-objective TPE optimization |
+| `NSGAIISampler` | NSGA-II multi-objective (legacy) |
+| `NSGA3Sampler` | NSGA-III multi-objective (FT default, preferred) |
 | `GPSampler` | Gaussian Process |
 | `CmaEsSampler` | Covariance Matrix Adaptation |
 | `RandomSampler` | Random search |
 | `QMCSampler` | Quasi-Monte Carlo |
+| `AutoSampler` | Auto-select via OptunaHub |
 
 ### Nested Space Overrides
 - Override stoploss, ROI, trailing, max_open_trades search spaces
@@ -878,6 +915,7 @@ class IHyperOptLoss:
 | `external_message_consumer.producers[].name` | str | Required | Producer name |
 | `external_message_consumer.producers[].host` | str | Required | Producer host |
 | `external_message_consumer.producers[].port` | int | Required | Producer port |
+| `external_message_consumer.producers[].secure` | bool | false | Use SSL/TLS connection |
 | `external_message_consumer.producers[].ws_token` | str | Required | WS auth token |
 | `external_message_consumer.wait_timeout` | int | 300 | WS wait timeout (seconds) |
 | `external_message_consumer.ping_timeout` | int | 10 | WS ping timeout |
@@ -931,6 +969,12 @@ class IHyperOptLoss:
 | `freqtrade backtesting-analysis [--analysis-groups {0-5}]` | Detailed backtest analysis |
 | `freqtrade hyperopt-list [--best] [--profitable]` | List hyperopt results |
 | `freqtrade hyperopt-show [-n INT] [--best]` | Show hyperopt detail |
+
+### Data Conversion
+| Command | Description |
+|---------|-------------|
+| `freqtrade convert-trade-data [--format-from {json,feather,parquet}] [--format-to {json,feather,parquet}]` | Convert trade data formats |
+| `freqtrade trades-to-ohlcv [-t TIMEFRAME] [--data-format-ohlcv FORMAT]` | Convert trade data to OHLCV |
 
 ### Data & Database
 | Command | Description |
@@ -1140,6 +1184,8 @@ DELETE FROM trades WHERE id = <tradeid>;
 | `freqai.expired_hours` | int | None | Max model age for predictions |
 | `freqai.continual_learning` | bool | false | Incremental learning |
 | `freqai.activate_tensorboard` | bool | true | TensorBoard logging |
+| `freqai.wait_for_training_iteration_on_reload` | bool | true | Wait for training iteration on reload |
+| `freqai.override_exchange_check` | bool | false | Force FreqAI on exchanges without historic data |
 
 ### Feature Parameters
 | Parameter | Type | Description |
@@ -1205,8 +1251,12 @@ Optional: SVM Outlier Removal, PCA, DBSCAN Clustering, Dissimilarity Index
 | `rl_config.max_trade_duration_candles` | int | Required | Max candles per trade |
 | `rl_config.max_training_drawdown_pct` | float | Required | Max DD tolerance (e.g. 0.05=5%) |
 | `rl_config.cpu_count` | int | Auto | CPU cores for training |
+| `rl_config.net_arch` | list | None | Custom network architecture |
 | `rl_config.model_type` | str | "PPO" | RL algorithm |
 | `rl_config.policy_type` | str | "MlpPolicy" | Network architecture |
+| `rl_config.randomize_starting_position` | bool | false | Random start position per episode |
+| `rl_config.drop_ohlc_from_features` | bool | false | Exclude OHLC features |
+| `rl_config.progress_bar` | bool | false | Show training progress bar |
 | `rl_config.model_reward_parameters` | dict | Required | Reward scaling factors |
 
 ### RL Environments
@@ -1263,8 +1313,10 @@ Optional: SVM Outlier Removal, PCA, DBSCAN Clustering, Dissimilarity Index
 | `feature_parameters.DI_threshold` | float | — | Dissimilarity Index threshold |
 | `feature_parameters.use_SVM_to_remove_outliers` | bool | false | SVM outlier removal |
 | `feature_parameters.use_DBSCAN_to_remove_outliers` | bool | false | DBSCAN outlier removal |
+| `feature_parameters.svm_params` | dict | {} | SVM parameters (shuffle, nu, kernel, gamma) |
 | `feature_parameters.svm_params.shuffle` | bool | false | Shuffle during SVM fit |
 | `feature_parameters.svm_params.nu` | float | 0.1 | Expected outlier fraction |
+| `plot_feature_importances` | int | 0 | Plot top N feature importances (0=disabled) |
 
 ### PyTorch/Deep Learning Parameters
 | Parameter | Type | Default | Description |
@@ -1401,14 +1453,14 @@ Supports: RotatingFileHandler, Syslog (UDP/Unix socket), Journald (`pip install 
 ```
 
 ### Parameters
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `cache_size` | int | Previous orderflow candles cached |
-| `max_candles` | int | Historical trade data scope limit |
-| `scale` | float | Price bin sizing for footprint charts |
-| `stacked_imbalance_range` | int | Min consecutive imbalanced levels |
-| `imbalance_volume` | float | Volume threshold filter |
-| `imbalance_ratio` | float | Ratio threshold filter |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `cache_size` | int | 100 | Previous orderflow candles cached |
+| `max_candles` | int | 1000 | Historical trade data scope limit |
+| `scale` | float | 1.0 | Price bin sizing for footprint charts |
+| `stacked_imbalance_range` | int | 3 | Min consecutive imbalanced levels |
+| `imbalance_volume` | float | 0.0 | Volume threshold filter |
+| `imbalance_ratio` | float | 0.0 | Ratio threshold filter |
 
 ### Dataframe Columns
 | Column | Type | Description |
@@ -1448,8 +1500,8 @@ freqtrade backtesting-analysis -c config.json --analysis-groups 0 1 2 3 4 5
 | `--indicator-list` | str list | Indicator values on signal candles |
 | `--timerange` | str | Date range filter |
 | `--rejected-signals` | FLAG | Show rejected signals |
-| `--analysis-to-csv` | FLAG | Write to CSV |
-| `--analysis-csv-path` | PATH | CSV output directory |
+| `--analysis-to-csv` | FLAG | Export analysis to CSV files |
+| `--analysis-csv-path` | PATH | Custom CSV output directory |
 | `--entry-only` | FLAG | Indicators at entry only |
 | `--exit-only` | FLAG | Indicators at exit only |
 | `--cache` | str | `none` to prevent cached results |

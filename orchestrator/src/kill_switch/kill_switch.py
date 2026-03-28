@@ -13,6 +13,7 @@ Triggers:
 Every activation is logged to risk_events (immutable — safety rule #9).
 Recovery is MANUAL ONLY (safety rule #6).
 """
+import asyncio
 import json
 import logging
 
@@ -24,6 +25,19 @@ from ..models.risk_event import RiskEvent, KillType, KillTrigger
 from ..models.audit_log import AuditLog
 
 logger = logging.getLogger(__name__)
+
+# Lazy import to avoid circular — metrics defined in main.py
+_kill_counter = None
+
+def _inc_kill_counter(kill_type: str, trigger: str):
+    global _kill_counter
+    if _kill_counter is None:
+        try:
+            from ..main import KILL_EVENTS_TOTAL
+            _kill_counter = KILL_EVENTS_TOTAL
+        except ImportError:
+            return
+    _kill_counter.labels(type=kill_type, trigger=trigger).inc()
 
 # Map string triggers to enum
 TRIGGER_MAP = {
@@ -62,7 +76,7 @@ class KillSwitch:
         if not bot:
             raise ValueError(f"Bot {bot_id} not found")
 
-        client = self._bot_manager.get_client(bot)
+        client = await self._bot_manager.get_client(bot)
 
         try:
             result = await client.stop()
@@ -91,6 +105,7 @@ class KillSwitch:
             details=json.dumps({"trigger": trigger, "reason": reason}),
         ))
 
+        _inc_kill_counter("soft", trigger)
         logger.warning("SOFT KILL: bot=%s trigger=%s reason=%s", bot.name, trigger, reason)
         return result
 
@@ -111,16 +126,18 @@ class KillSwitch:
         if not bot:
             raise ValueError(f"Bot {bot_id} not found")
 
-        client = self._bot_manager.get_client(bot)
+        client = await self._bot_manager.get_client(bot)
+        forceexit_failed = False
 
-        # Step 1: Force exit ALL positions
+        # Step 1: Force exit ALL positions (MUST succeed — safety rule #5)
         try:
             exit_result = await client.forceexit("all")
         except FTClientError as e:
             logger.error("Force exit failed for bot %s: %s", bot.name, e)
             exit_result = {"error": str(e)}
+            forceexit_failed = True
 
-        # Step 2: Stop trading
+        # Step 2: Stop trading (always attempt, even if forceexit failed)
         try:
             stop_result = await client.stop()
         except FTClientError as e:
@@ -145,11 +162,23 @@ class KillSwitch:
             target_type="bot",
             target_id=bot.id,
             target_name=bot.name,
-            details=json.dumps({"trigger": trigger, "reason": reason}),
+            details=json.dumps({
+                "trigger": trigger,
+                "reason": reason,
+                "forceexit_failed": forceexit_failed,
+            }),
         ))
 
-        logger.critical("HARD KILL: bot=%s trigger=%s reason=%s", bot.name, trigger, reason)
-        return {"forceexit": exit_result, "stop": stop_result}
+        _inc_kill_counter("hard", trigger)
+        logger.critical("HARD KILL: bot=%s trigger=%s reason=%s forceexit_failed=%s",
+                        bot.name, trigger, reason, forceexit_failed)
+
+        result = {"forceexit": exit_result, "stop": stop_result, "success": not forceexit_failed}
+
+        if forceexit_failed:
+            logger.critical("POSITIONS MAY STILL BE OPEN for bot %s — forceexit failed", bot.name)
+
+        return result
 
     async def hard_kill_all(
         self,
@@ -165,8 +194,8 @@ class KillSwitch:
         bots = await self._bot_manager.get_all_bots(db)
         running_bots = [b for b in bots if b.status == BotStatus.RUNNING]
 
-        results = {}
-        for bot in running_bots:
+        # L6: concurrent kill via asyncio.gather
+        async def _kill_one(bot: BotInstance) -> tuple[str, dict]:
             try:
                 result = await self.hard_kill_bot(
                     db=db,
@@ -175,10 +204,13 @@ class KillSwitch:
                     reason=reason,
                     actor=actor,
                 )
-                results[bot.name] = result
+                return (bot.name, result)
             except Exception as e:
                 logger.error("Hard kill all — failed for bot %s: %s", bot.name, e)
-                results[bot.name] = {"error": str(e)}
+                return (bot.name, {"error": str(e)})
+
+        kill_results = await asyncio.gather(*[_kill_one(b) for b in running_bots])
+        results = dict(kill_results)
 
         # Additional audit for the "all" action
         db.add(AuditLog(
@@ -215,8 +247,8 @@ class KillSwitch:
         bots = await self._bot_manager.get_all_bots(db)
         running_bots = [b for b in bots if b.status == BotStatus.RUNNING]
 
-        results = {}
-        for bot in running_bots:
+        # L6: concurrent kill via asyncio.gather
+        async def _kill_one(bot: BotInstance) -> tuple[str, dict]:
             try:
                 result = await self.soft_kill_bot(
                     db=db,
@@ -225,10 +257,13 @@ class KillSwitch:
                     reason=reason,
                     actor=actor,
                 )
-                results[bot.name] = result
+                return (bot.name, result)
             except Exception as e:
                 logger.error("Soft kill all — failed for bot %s: %s", bot.name, e)
-                results[bot.name] = {"error": str(e)}
+                return (bot.name, {"error": str(e)})
+
+        kill_results = await asyncio.gather(*[_kill_one(b) for b in running_bots])
+        results = dict(kill_results)
 
         db.add(AuditLog(
             action="kill_switch.soft_all",

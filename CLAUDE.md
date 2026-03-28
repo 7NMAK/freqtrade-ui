@@ -26,9 +26,14 @@ Our job = make FreqTrade easy for a normal user to use.
 Before writing ANY code, building ANY page, making ANY decision:
 
 1. **Read `CLAUDE.md`** (this file) — rules, philosophy, what exists
-2. **Read `FT-UI-MAP.html`** — THE BLUEPRINT. Every FT feature → exact page → exact UI element. If a feature isn't in this map, it doesn't go in the UI.
-3. **Read `FREQTRADE_REFERENCE.md`** — complete FT documentation (34 sections). This is the ONLY source of truth for what features exist.
-4. **Read `STATUS.md`** — what's done, what's next
+2. **Read `docs/FT-UI-MAP.html`** — THE BLUEPRINT. Every FT feature → exact page → exact UI element. If a feature isn't in this map, it doesn't go in the UI.
+3. **Read `docs/FREQTRADE_REFERENCE.md`** — complete FT documentation (34 sections). This is the ONLY source of truth for what features exist.
+4. **Read `docs/STATUS.md`** — what's done, what's next
+5. **Read `docs/PAGE_SPECS.md`** — 287 widgets mapped to FT sections
+6. **Read `docs/ERROR_HANDLING.md`** — error handling patterns for all pages
+7. **Read `docs/TYPES.ts`** — TypeScript interfaces (exact FT field names)
+8. **Read `docs/TESTING_PLAN.md`** — test coverage plan
+9. **Read `docs/IMPLEMENTATION_PLAN.md`** — phases and current state
 
 **DO NOT read obsolete files:**
 - ~~Trading_System_Architecture.docx~~ — old
@@ -315,6 +320,11 @@ ssh root@204.168.187.107 "cd /opt/freqtrade-ui && docker compose exec orchestrat
 | File | Purpose | Read When |
 |------|---------|-----------|
 | `CLAUDE.md` | Rules, philosophy, state | Every session start |
-| `FT-UI-MAP.html` | Feature → page mapping | Before building ANY page |
-| `FREQTRADE_REFERENCE.md` | All FT features (34 sections) | When checking if feature exists |
-| `STATUS.md` | Task progress | To know what's done/next |
+| `docs/FT-UI-MAP.html` | Feature → page mapping | Before building ANY page |
+| `docs/FREQTRADE_REFERENCE.md` | All FT features (34 sections) | When checking if feature exists |
+| `docs/STATUS.md` | Task progress | To know what's done/next |
+| `docs/PAGE_SPECS.md` | 287 widgets → FT sections | Before building ANY widget |
+| `docs/ERROR_HANDLING.md` | Error handling patterns | When implementing error flows |
+| `docs/TYPES.ts` | TypeScript interfaces | When writing frontend code |
+| `docs/TESTING_PLAN.md` | Test coverage plan | When writing tests |
+| `docs/IMPLEMENTATION_PLAN.md` | Phases and current state | When planning work |

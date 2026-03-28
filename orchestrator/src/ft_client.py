@@ -83,6 +83,22 @@ class FTClient:
         self._token = data.get("access_token")
         return self._token
 
+    async def _refresh_token(self) -> str:
+        """POST /api/v1/token/refresh — refresh JWT token."""
+        try:
+            resp = await self._client.post(
+                f"{self.api_url}/api/v1/token/refresh",
+                headers={"Authorization": f"Bearer {self._token}"},
+            )
+        except httpx.HTTPError:
+            # Refresh failed — fall back to full login
+            return await self._login()
+        if resp.status_code != 200:
+            return await self._login()
+        data = resp.json()
+        self._token = data.get("access_token")
+        return self._token
+
     async def _get_token(self) -> str:
         """Get valid token, login if needed."""
         if not self._token:
@@ -108,10 +124,10 @@ class FTClient:
         except httpx.HTTPError as e:
             raise FTClientError(f"FT connection failed: {method} {path} — {e}")
 
-        # Token expired — re-login once
+        # Token expired — try refresh, then re-login
         if resp.status_code == 401:
             try:
-                await self._login()
+                await self._refresh_token()
                 headers = {"Authorization": f"Bearer {self._token}"}
                 resp = await self._client.request(
                     method,

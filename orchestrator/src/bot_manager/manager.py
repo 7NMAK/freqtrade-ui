@@ -61,6 +61,8 @@ class BotManager:
         strategy_name: str | None = None,
         is_dry_run: bool = True,
         description: str | None = None,
+        container_id: str | None = None,
+        docker_image: str = "freqtradeorg/freqtrade:stable_freqai",
     ) -> BotInstance:
         """
         Register an existing FT bot container with the orchestrator.
@@ -76,6 +78,8 @@ class BotManager:
             is_dry_run=is_dry_run,
             status=BotStatus.STOPPED,
             description=description,
+            container_id=container_id,
+            docker_image=docker_image,
         )
         db.add(bot)
         await db.flush()

@@ -13,7 +13,7 @@ ALL trading logic, ALL features = FreqTrade. We just manage multiple bots.
 import asyncio
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
@@ -86,3 +86,75 @@ app.include_router(strategies_router, prefix="/api/strategies", tags=["strategie
 async def health():
     """Orchestrator health check."""
     return {"status": "ok"}
+
+
+# ── WebSocket proxy (§8: /api/v1/message/ws) ─────────────────
+# Proxies WebSocket from frontend to a specific FT bot.
+# FT sends real-time updates (trade opens/closes, new candles, etc.)
+
+@app.websocket("/api/bots/{bot_id}/ws")
+async def websocket_proxy(websocket: WebSocket, bot_id: int):
+    """
+    Proxy WebSocket connection to FT bot's /api/v1/message/ws.
+    Frontend connects here → we connect to FT → bidirectional relay.
+    """
+    import httpx
+    import websockets
+
+    await websocket.accept()
+
+    # Get bot from DB
+    from .database import async_session
+    from .models.bot_instance import BotInstance
+
+    async with async_session() as db:
+        from sqlalchemy import select
+        result = await db.execute(
+            select(BotInstance).where(BotInstance.id == bot_id, BotInstance.is_deleted == False)
+        )
+        bot = result.scalar_one_or_none()
+
+    if not bot:
+        await websocket.close(code=4004, reason="Bot not found")
+        return
+
+    # Login to FT to get ws_token
+    manager = app.state.bot_manager
+    client = manager.get_client(bot)
+    try:
+        token = await client._get_token()
+    except Exception:
+        await websocket.close(code=4001, reason="FT auth failed")
+        return
+
+    # Build FT WebSocket URL
+    ft_ws_url = bot.api_url.replace("http://", "ws://").replace("https://", "wss://")
+    ft_ws_url = f"{ft_ws_url}/api/v1/message/ws?token={token}"
+
+    try:
+        async with websockets.connect(ft_ws_url) as ft_ws:
+            # Bidirectional relay
+            async def ft_to_client():
+                try:
+                    async for message in ft_ws:
+                        await websocket.send_text(message)
+                except (websockets.exceptions.ConnectionClosed, WebSocketDisconnect):
+                    pass
+
+            async def client_to_ft():
+                try:
+                    while True:
+                        data = await websocket.receive_text()
+                        await ft_ws.send(data)
+                except WebSocketDisconnect:
+                    pass
+
+            # Run both directions concurrently
+            done, pending = await asyncio.wait(
+                [asyncio.create_task(ft_to_client()), asyncio.create_task(client_to_ft())],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+            for task in pending:
+                task.cancel()
+    except Exception as e:
+        await websocket.close(code=4002, reason=f"FT WebSocket failed: {e}")

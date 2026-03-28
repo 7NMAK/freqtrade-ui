@@ -27,6 +27,8 @@ class BotRegisterRequest(BaseModel):
     strategy_name: str | None = None
     is_dry_run: bool = True
     description: str | None = None
+    container_id: str | None = None
+    docker_image: str = "freqtradeorg/freqtrade:stable_freqai"
 
 
 class BotUpdateRequest(BaseModel):
@@ -68,6 +70,8 @@ class BotResponse(BaseModel):
     is_dry_run: bool
     is_healthy: bool
     consecutive_failures: int
+    container_id: str | None
+    docker_image: str
     description: str | None
 
     class Config:
@@ -102,6 +106,8 @@ async def register_bot(
         strategy_name=body.strategy_name,
         is_dry_run=body.is_dry_run,
         description=body.description,
+        container_id=body.container_id,
+        docker_image=body.docker_image,
     )
     return bot
 
@@ -113,6 +119,29 @@ async def get_bot(bot_id: int, request: Request, db: AsyncSession = Depends(get_
     bot = await manager.get_bot(db, bot_id)
     if not bot:
         raise HTTPException(404, "Bot not found")
+    return bot
+
+
+@router.patch("/{bot_id}", response_model=BotResponse)
+async def update_bot(
+    bot_id: int,
+    body: BotUpdateRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Update bot metadata (name, strategy, dry_run, description)."""
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    if body.name is not None:
+        bot.name = body.name
+    if body.strategy_name is not None:
+        bot.strategy_name = body.strategy_name
+    if body.is_dry_run is not None:
+        bot.is_dry_run = body.is_dry_run
+    if body.description is not None:
+        bot.description = body.description
     return bot
 
 
@@ -649,10 +678,9 @@ async def bot_freqaimodels(bot_id: int, request: Request, db: AsyncSession = Dep
 # ── Backtesting (§5) ─────────────────────────────────────────
 
 @router.post("/{bot_id}/backtest")
-async def bot_backtest_start(bot_id: int, request: Request, db: AsyncSession = Depends(get_db)):
-    """POST /api/v1/backtest — start backtest."""
+async def bot_backtest_start(bot_id: int, body: dict, request: Request, db: AsyncSession = Depends(get_db)):
+    """POST /api/v1/backtest — start backtest. Body is FT backtest config (freeform dict)."""
     client = await _get_bot_client(bot_id, request, db)
-    body = await request.json()
     try:
         return await client.backtest_start(body)
     except FTClientError as e:

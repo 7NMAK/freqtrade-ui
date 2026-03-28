@@ -124,7 +124,8 @@ async def pre_analyze(
     if not bot:
         raise HTTPException(status_code=404, detail=f"Bot {body.bot_id} not found")
 
-    ft = FTClient(bot.api_url, bot.api_username, bot.api_password)
+    ft_url = f"{bot.api_url.rstrip('/')}:{bot.api_port}" if bot.api_port else bot.api_url
+    ft = FTClient(ft_url, bot.api_username, bot.api_password)
     gateway = LLMGateway()
     advisor = HyperoptAdvisor(gateway=gateway, ft_client=ft, db_session=db)
 
@@ -175,7 +176,8 @@ async def post_analyze(
     if not bot:
         raise HTTPException(status_code=404, detail=f"Bot {body.bot_id} not found")
 
-    ft = FTClient(bot.api_url, bot.api_username, bot.api_password)
+    ft_url = f"{bot.api_url.rstrip('/')}:{bot.api_port}" if bot.api_port else bot.api_url
+    ft = FTClient(ft_url, bot.api_username, bot.api_password)
     gateway = LLMGateway()
     advisor = HyperoptAdvisor(gateway=gateway, ft_client=ft, db_session=db)
 

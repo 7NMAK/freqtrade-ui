@@ -177,7 +177,8 @@ class AIValidationScheduler:
         # Get or create collector for this bot
         if bot.id not in self._collectors:
             from ..ft_client import FTClient
-            ft = FTClient(bot.api_url, bot.api_username, bot.api_password)
+            ft_url = f"{bot.api_url.rstrip('/')}:{bot.api_port}" if bot.api_port else bot.api_url
+            ft = FTClient(ft_url, bot.api_username, bot.api_password)
             self._collectors[bot.id] = SignalCollector(ft)
 
         collector = self._collectors[bot.id]

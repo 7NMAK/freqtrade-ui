@@ -37,8 +37,12 @@ class BotManager:
         """Get or create FTClient for a bot. Thread-safe via lock."""
         async with self._clients_lock:
             if bot.id not in self._clients:
+                # Build full URL including port
+                url = bot.api_url.rstrip("/")
+                if bot.api_port:
+                    url = f"{url}:{bot.api_port}"
                 self._clients[bot.id] = FTClient(
-                    api_url=bot.api_url,
+                    api_url=url,
                     username=bot.api_username,
                     password=bot.api_password,
                 )

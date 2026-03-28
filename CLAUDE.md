@@ -284,6 +284,33 @@ These are the ONLY custom features we build. Everything else comes from FT:
 
 ---
 
+## DEVELOPMENT WORKFLOW
+
+**Local development → Server testing.**
+
+- Code lives locally and on GitHub (`7NMAK/freqtrade-ui`)
+- Server (`204.168.187.107`) has the repo at `/opt/freqtrade-ui`
+- FreqTrade runs on the server (Docker, port 8080)
+
+**Deploy to server:**
+```bash
+./deploy.sh "commit message"
+```
+This script: `git push` → SSH pull on server → restart orchestrator.
+
+**Test on server via SSH:**
+```bash
+ssh root@204.168.187.107 "cd /opt/freqtrade-ui && docker compose up -d"
+ssh root@204.168.187.107 "curl localhost:8888/api/health"
+```
+
+**Run tests remotely:**
+```bash
+ssh root@204.168.187.107 "cd /opt/freqtrade-ui && docker compose exec orchestrator pytest"
+```
+
+---
+
 ## REFERENCE FILES
 
 | File | Purpose | Read When |

@@ -244,7 +244,6 @@ These are the ONLY custom features we build. Everything else comes from FT:
 
 ### Phase 4: Extras (ONLY after Phases 1-3)
 - T8: AI Strategy Analyst (OpenRouter)
-- T9: Polymarket Integration
 
 ---
 

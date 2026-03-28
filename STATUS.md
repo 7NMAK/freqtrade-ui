@@ -102,4 +102,3 @@
 
 ### 4. Extras (Phase 4 — ONLY after 1-3)
 - [ ] AI Strategy Analyst (OpenRouter)
-- [ ] Polymarket Integration

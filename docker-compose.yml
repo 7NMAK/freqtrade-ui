@@ -233,7 +233,7 @@ services:
 networks:
   ft_network:
     name: ft_network
-    driver: bridge
+    external: true
 
 volumes:
   postgres_data:

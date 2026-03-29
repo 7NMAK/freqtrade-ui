@@ -1600,6 +1600,8 @@ async def bot_hyperopt_start(bot_id: int, body: dict[str, Any], request: Request
         cmd += ["--timerange", body["timerange"]]
     if body.get("timeframe"):
         cmd += ["--timeframe", body["timeframe"]]
+    # Always add --ignore-missing-spaces so strategies without all spaces don't error
+    cmd += ["--ignore-missing-spaces"]
     # Note: --effort and --sampler are NOT valid FT 2026.2 CLI args — ignored
 
     job_id = str(_uuid.uuid4())[:8]

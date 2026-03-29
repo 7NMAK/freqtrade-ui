@@ -25,10 +25,7 @@ import {
   fetchAIAgreementRate,
   startBot,
   stopBot,
-  botStopBuy,
-  botPause,
   botForceEnter,
-  reloadBotConfig,
   botDeleteTrade,
   botReloadTrade,
   botCancelOpenOrder,
@@ -76,8 +73,6 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
 } from "recharts";
 
 import { fmt, fmtMoney, profitColor } from "@/lib/format";
@@ -279,22 +274,6 @@ function BotCard({
   );
 }
 
-// ── Section Loading / Error wrapper ──────────────────────────────────────
-
-function SectionLoader({ loading, error, children }: { loading: boolean; error: string | null; children: React.ReactNode }) {
-  if (loading) {
-    return (
-      <div className="py-6 text-center text-sm text-text-3 animate-pulse">Loading...</div>
-    );
-  }
-  if (error) {
-    return (
-      <div className="py-4 text-center text-xs text-red">{error}</div>
-    );
-  }
-  return <>{children}</>;
-}
-
 // ── Force Entry Dialog ───────────────────────────────────────────────────
 
 function ForceEntryDialog({
@@ -444,13 +423,14 @@ export default function DashboardPage() {
   // NO auto-selection of first bot.
   // ═════════════════════════════════════════════════════════════════
   const [selectedBotId, setSelectedBotId] = useState<number | null>(null);
-  const [controlLoading, setControlLoading] = useState<string | null>(null);
   const [forceEntryOpen, setForceEntryOpen] = useState(false);
   const [forceEntrySubmitting, setForceEntrySubmitting] = useState(false);
   const [showManagement, setShowManagement] = useState(false);
   const [botStatusFilter, setBotStatusFilter] = useState<"all" | "running" | "stopped">("all");
 
-  // Single-bot detail sections state
+  // Single-bot detail sections — data passed to BotDetailPanel, setters used in loadBotDetails.
+  // Some read-side variables appear unused here because they're consumed only inside the panel.
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   const [weeklyData, setWeeklyData] = useState<FTWeeklyResponse | null>(null);
   const [weeklyLoading, setWeeklyLoading] = useState(false);
   const [weeklyError, setWeeklyError] = useState<string | null>(null);
@@ -512,6 +492,8 @@ export default function DashboardPage() {
   // Single-bot open trades
   const [singleBotOpenTrades, setSingleBotOpenTrades] = useState<FTTrade[]>([]);
   const [singleBotOpenLoading, setSingleBotOpenLoading] = useState(false);
+
+  /* eslint-enable @typescript-eslint/no-unused-vars */
 
   // Edit/Delete modals for side panel
   const [editBot, setEditBot] = useState<Bot | null>(null);
@@ -778,7 +760,6 @@ export default function DashboardPage() {
   // ── Bot Control Handlers ──────────────────────────────────────────────
 
   async function handleBotAction(action: string, botId: number, fn: () => Promise<unknown>) {
-    setControlLoading(action);
     try {
       await fn();
       toast.success(`${action} successful.`);
@@ -786,8 +767,6 @@ export default function DashboardPage() {
       if (selectedBotId) loadBotDetails(selectedBotId);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : `${action} failed.`);
-    } finally {
-      setControlLoading(null);
     }
   }
 
@@ -809,7 +788,7 @@ export default function DashboardPage() {
     const loadId = toast.loading("Duplicating bot...");
     try {
       const newName = `${bot.name} (Copy)`;
-      const newBot = await registerBot({
+      await registerBot({
         name: newName,
         exchange_name: bot.exchange_name,
         strategy_name: bot.strategy_name,

@@ -480,7 +480,7 @@ export const botBacktestHistory = (id: number) =>
   );
 
 export const botListData = (id: number) =>
-  request<{ data: Array<{ pair: string; timeframe: string; start: string; end: string; candle_count: number; format: string }> }>(
+  request<{ data: Array<{ pair: string; timeframe: string; candle_type?: string; start: string; end: string; candle_count: number; format?: string }>; output?: string }>(
     `/api/bots/${id}/list-data`
   );
 

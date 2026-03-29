@@ -204,7 +204,8 @@ interface DataEntry {
   start: string;
   end: string;
   candle_count: number;
-  format: string;
+  candle_type?: string;
+  format?: string;
 }
 
 // ── Main page component ────────────────────────────────────
@@ -537,7 +538,7 @@ export default function DataManagementPage() {
     setDataLoading(true);
     try {
       const res = await botListData(botId);
-      setDataEntries(res.data);
+      setDataEntries(res.data ?? []);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       toast.error(`Failed to load data listing: ${msg}`);
@@ -1166,7 +1167,7 @@ export default function DataManagementPage() {
                       <td className="px-3 py-2 text-[10px] font-mono text-text-2">{d.start}</td>
                       <td className="px-3 py-2 text-[10px] font-mono text-text-2">{d.end}</td>
                       <td className="px-3 py-2 text-[10px] font-mono text-text-2">{d.candle_count.toLocaleString()}</td>
-                      <td className="px-3 py-2 text-[10px] font-mono text-text-2">{d.format}</td>
+                      <td className="px-3 py-2 text-[10px] font-mono text-text-2">{d.candle_type || d.format || "futures"}</td>
                     </tr>
                   ))}
                 </tbody>

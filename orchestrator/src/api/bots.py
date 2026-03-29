@@ -1523,7 +1523,7 @@ async def bot_convert_data(bot_id: int, body: dict[str, Any], request: Request, 
 
 @router.get("/{bot_id}/list-data")
 async def bot_list_data(bot_id: int, request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
-    """List available data files via Docker exec: freqtrade list-data."""
+    """List available data files via Docker exec: freqtrade list-data. Parses tabular output."""
     import docker
     manager = request.app.state.bot_manager
     bot = await manager.get_bot(db, bot_id)
@@ -1533,7 +1533,31 @@ async def bot_list_data(bot_id: int, request: Request, db: AsyncSession = Depend
         dk = docker.from_env()
         container = dk.containers.get(bot.container_id or bot.name)
         result = container.exec_run(["freqtrade", "list-data", "--show-timerange"], detach=False)
-        return {"exit_code": result.exit_code, "output": result.output.decode("utf-8", errors="replace")[-4000:]}
+        raw = result.output.decode("utf-8", errors="replace")
+        # Parse FT tabular output: │ pair │ timeframe │ candle_type │ start │ end │ count │
+        data: list[dict[str, Any]] = []
+        for line in raw.split("\n"):
+            line = line.strip()
+            if not line.startswith("│") or "───" in line:
+                continue
+            cols = [c.strip() for c in line.split("│") if c.strip()]
+            if len(cols) >= 6:
+                # Skip header row
+                if cols[0].lower() in ("pair", "pair "):
+                    continue
+                try:
+                    count = int(cols[5].replace(",", "").strip())
+                except (ValueError, IndexError):
+                    count = 0
+                data.append({
+                    "pair": cols[0],
+                    "timeframe": cols[1],
+                    "candle_type": cols[2] if len(cols) > 2 else "spot",
+                    "start": cols[3] if len(cols) > 3 else "",
+                    "end": cols[4] if len(cols) > 4 else "",
+                    "candle_count": count,
+                })
+        return {"exit_code": result.exit_code, "data": data, "output": raw[-2000:]}
     except Exception as e:
         raise HTTPException(502, f"List-data failed: {e}")
 

@@ -1845,8 +1845,8 @@ function BacktestingInner() {
                               <td className="px-4 py-3 text-xs font-semibold text-text-0">{r.key}</td>
                               <td className="px-4 py-3 text-xs">{r.trades}</td>
                               <td className={`px-4 py-3 text-xs font-semibold ${wr >= 50 ? "text-green" : "text-red"}`}>{wr.toFixed(2)}%</td>
-                              <td className={`px-4 py-3 text-xs font-semibold ${r.profit_total_abs >= 0 ? "text-green" : "text-red"}`}>{fmtNum(r.profit_total_abs)}</td>
-                              <td className={`px-4 py-3 text-xs font-semibold ${r.profit_total_pct >= 0 ? "text-green" : "text-red"}`}>{fmtNum(r.profit_total_pct)}%</td>
+                              <td className={`px-4 py-3 text-xs font-semibold ${(r.profit_total_abs ?? 0) >= 0 ? "text-green" : "text-red"}`}>{fmtNum(r.profit_total_abs)}</td>
+                              <td className={`px-4 py-3 text-xs font-semibold ${(r.profit_total_pct ?? 0) >= 0 ? "text-green" : "text-red"}`}>{fmtNum(r.profit_total_pct)}%</td>
                               <td className="px-4 py-3 text-xs text-green">{r.wins}</td>
                               <td className="px-4 py-3 text-xs text-red">{r.losses}</td>
                               <td className="px-4 py-3 text-xs text-text-2">{r.duration_avg}</td>
@@ -1859,8 +1859,8 @@ function BacktestingInner() {
                             <td className="px-4 py-3 text-xs text-accent">TOTAL</td>
                             <td className="px-4 py-3 text-xs text-text-0">{totalRow.trades}</td>
                             <td className={`px-4 py-3 text-xs font-semibold ${winRate >= 50 ? "text-green" : "text-red"}`}>{winRate.toFixed(2)}%</td>
-                            <td className={`px-4 py-3 text-xs font-semibold ${totalRow.profit_total_abs >= 0 ? "text-green" : "text-red"}`}>{fmtNum(totalRow.profit_total_abs)}</td>
-                            <td className={`px-4 py-3 text-xs font-semibold ${totalRow.profit_total_pct >= 0 ? "text-green" : "text-red"}`}>{fmtNum(totalRow.profit_total_pct)}%</td>
+                            <td className={`px-4 py-3 text-xs font-semibold ${(totalRow.profit_total_abs ?? 0) >= 0 ? "text-green" : "text-red"}`}>{fmtNum(totalRow.profit_total_abs)}</td>
+                            <td className={`px-4 py-3 text-xs font-semibold ${(totalRow.profit_total_pct ?? 0) >= 0 ? "text-green" : "text-red"}`}>{fmtNum(totalRow.profit_total_pct)}%</td>
                             <td className="px-4 py-3 text-xs text-green">{totalRow.wins}</td>
                             <td className="px-4 py-3 text-xs text-red">{totalRow.losses}</td>
                             <td className="px-4 py-3 text-xs text-text-2">{totalRow.duration_avg}</td>
@@ -1925,8 +1925,8 @@ function BacktestingInner() {
                                 </td>
                                 <td className="px-4 py-3 text-xs">{r.trades}</td>
                                 <td className={`px-4 py-3 text-xs font-semibold ${wr >= 50 ? "text-green" : "text-red"}`}>{wr.toFixed(2)}%</td>
-                                <td className={`px-4 py-3 text-xs font-semibold ${r.profit_total_abs >= 0 ? "text-green" : "text-red"}`}>{fmtNum(r.profit_total_abs)}</td>
-                                <td className={`px-4 py-3 text-xs font-semibold ${r.profit_mean_pct >= 0 ? "text-green" : "text-red"}`}>{fmtNum(r.profit_mean_pct)}%</td>
+                                <td className={`px-4 py-3 text-xs font-semibold ${(r.profit_total_abs ?? 0) >= 0 ? "text-green" : "text-red"}`}>{fmtNum(r.profit_total_abs)}</td>
+                                <td className={`px-4 py-3 text-xs font-semibold ${(r.profit_mean_pct ?? 0) >= 0 ? "text-green" : "text-red"}`}>{fmtNum(r.profit_mean_pct)}%</td>
                                 <td className="px-4 py-3 text-xs text-text-2">{r.duration_avg}</td>
                               </tr>
                             );
@@ -2007,7 +2007,7 @@ function BacktestingInner() {
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <div className={`text-[13px] font-bold ${sr.profit_total_abs >= 0 ? "text-green" : "text-red"}`}>
+                        <div className={`text-[13px] font-bold ${(sr.profit_total_abs ?? 0) >= 0 ? "text-green" : "text-red"}`}>
                           {fmtNum(sr.profit_total_abs)}
                         </div>
                         <div className="text-[10px] text-text-3">{sr.total_trades} trades</div>

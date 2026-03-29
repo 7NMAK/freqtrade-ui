@@ -114,12 +114,12 @@ def upgrade() -> None:
     # ── 5. Add current_version_id to strategies ───────────────
     op.add_column("strategies", sa.Column("current_version_id", sa.Integer(), sa.ForeignKey("strategy_versions.id"), nullable=True))
 
-    # ── 6. Add builder_state to strategies (for backward compat) ──
-    # May already exist from migration 003, so use batch mode to be safe
-    try:
+    # ── 6. Add builder_state to strategies (if not already present from migration 003) ──
+    conn = op.get_bind()
+    from sqlalchemy import inspect as sa_inspect
+    columns = [c["name"] for c in sa_inspect(conn).get_columns("strategies")]
+    if "builder_state" not in columns:
         op.add_column("strategies", sa.Column("builder_state", sa.JSON(), nullable=True))
-    except Exception:
-        pass  # Column already exists from migration 003
 
 
 def downgrade() -> None:

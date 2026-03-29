@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import flag_modified
 
 from ..auth import require_auth
-from ..crypto import decrypt
+from ..crypto import decrypt, encrypt
 from ..database import get_db
 from ..models.bot_instance import BotInstance, BotStatus
 from ..models.audit_log import AuditLog
@@ -278,13 +278,11 @@ async def update_bot(
 
     if body.exchange_key is not None:
         changes["exchange_key"] = {"old": "***", "new": "***"}
-        from ..crypto import encrypt
         bot.exchange_key_enc = encrypt(body.exchange_key)
         config_changed = True
 
     if body.exchange_secret is not None:
         changes["exchange_secret"] = {"old": "***", "new": "***"}
-        from ..crypto import encrypt
         bot.exchange_secret_enc = encrypt(body.exchange_secret)
         config_changed = True
 

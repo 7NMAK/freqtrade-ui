@@ -162,12 +162,12 @@ def _format_result_response(result: BacktestResult) -> dict[str, Any]:
         "total_trades": result.total_trades,
         "winning_trades": result.winning_trades,
         "losing_trades": result.losing_trades,
-        "profit_total": float(result.profit_total) if result.profit_total else None,
-        "profit_percent": float(result.profit_percent) if result.profit_percent else None,
-        "max_drawdown": float(result.max_drawdown) if result.max_drawdown else None,
-        "sharpe_ratio": float(result.sharpe_ratio) if result.sharpe_ratio else None,
-        "sortino_ratio": float(result.sortino_ratio) if result.sortino_ratio else None,
-        "sqn": float(result.sqn) if result.sqn else None,
+        "profit_total": float(result.profit_total) if result.profit_total is not None else None,
+        "profit_percent": float(result.profit_percent) if result.profit_percent is not None else None,
+        "max_drawdown": float(result.max_drawdown) if result.max_drawdown is not None else None,
+        "sharpe_ratio": float(result.sharpe_ratio) if result.sharpe_ratio is not None else None,
+        "sortino_ratio": float(result.sortino_ratio) if result.sortino_ratio is not None else None,
+        "sqn": float(result.sqn) if result.sqn is not None else None,
         "full_results": result.full_results,
         "created_at": result.created_at.isoformat() if result.created_at else None,
     }
@@ -329,7 +329,10 @@ async def compare_backtest_results(
         raise HTTPException(status_code=400, detail="At least one result ID required")
 
     # Fetch all results
-    query = select(BacktestResult).where(BacktestResult.id.in_(result_ids))
+    query = select(BacktestResult).where(
+        BacktestResult.id.in_(result_ids),
+        BacktestResult.is_deleted == False,  # noqa: E712
+    )
     result = await db.execute(query)
     backtests = result.scalars().all()
 
@@ -413,12 +416,15 @@ async def get_results_by_strategy(
     query = (
         select(BacktestResult)
         .join(StrategyVersion)
-        .where(StrategyVersion.strategy_id == strategy_id)
+        .where(
+            StrategyVersion.strategy_id == strategy_id,
+            BacktestResult.is_deleted == False,  # noqa: E712
+        )
     )
 
     # Count total
     count_result = await db.execute(
-        select(func.count(BacktestResult.id))
+        select(func.count(BacktestResult.id)).where(BacktestResult.is_deleted == False)  # noqa: E712
         .join(StrategyVersion)
         .where(StrategyVersion.strategy_id == strategy_id)
     )
@@ -453,11 +459,17 @@ async def get_results_by_version(
     # Verify version exists
     await _get_version_or_404(db, version_id)
 
-    query = select(BacktestResult).where(BacktestResult.strategy_version_id == version_id)
+    query = select(BacktestResult).where(
+        BacktestResult.strategy_version_id == version_id,
+        BacktestResult.is_deleted == False,  # noqa: E712
+    )
 
     # Count total
     count_result = await db.execute(
-        select(func.count(BacktestResult.id)).where(BacktestResult.strategy_version_id == version_id)
+        select(func.count(BacktestResult.id)).where(
+            BacktestResult.strategy_version_id == version_id,
+            BacktestResult.is_deleted == False,  # noqa: E712
+        )
     )
     total = count_result.scalar() or 0
 

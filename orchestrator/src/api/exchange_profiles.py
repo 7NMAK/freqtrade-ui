@@ -17,6 +17,7 @@ from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth import require_auth
+from ..crypto import encrypt
 from ..database import get_db
 from ..models.exchange_profile import ExchangeProfile
 from ..activity_logger import log_activity
@@ -200,9 +201,9 @@ async def create_exchange_profile(
     profile = ExchangeProfile(
         name=req.name,
         exchange_name=req.exchange_name.lower(),
-        api_key_enc=req.api_key,  # In production, encrypt this
-        api_secret_enc=req.api_secret,  # In production, encrypt this
-        api_password=req.api_password,
+        api_key_enc=encrypt(req.api_key) if req.api_key else None,
+        api_secret_enc=encrypt(req.api_secret) if req.api_secret else None,
+        api_password=encrypt(req.api_password) if req.api_password else None,
         uid=req.uid,
         subaccount=req.subaccount,
     )
@@ -268,15 +269,15 @@ async def update_exchange_profile(
         updates.append(f"exchange={req.exchange_name.lower()}")
 
     if req.api_key is not None:
-        profile.api_key_enc = req.api_key
+        profile.api_key_enc = encrypt(req.api_key)
         updates.append("api_key")
 
     if req.api_secret is not None:
-        profile.api_secret_enc = req.api_secret
+        profile.api_secret_enc = encrypt(req.api_secret)
         updates.append("api_secret")
 
     if req.api_password is not None:
-        profile.api_password = req.api_password
+        profile.api_password = encrypt(req.api_password)
         updates.append("api_password")
 
     if req.uid is not None:

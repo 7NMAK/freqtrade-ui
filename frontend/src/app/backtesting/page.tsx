@@ -57,7 +57,7 @@ function exportResultsCSV(sr: FTBacktestStrategyResult) {
     header.join(","),
     ...rows.map((r) =>
       [r.key, r.trades, sr.total_trades > 0 ? ((r.wins / r.trades) * 100).toFixed(2) + "%" : "0%",
-       r.profit_total_abs.toFixed(2), (r.profit_total_pct ?? r.profit_total * 100).toFixed(2) + "%",
+       (r.profit_total_abs ?? 0).toFixed(2), ((r.profit_total_pct ?? (r.profit_total ?? 0) * 100)).toFixed(2) + "%",
        r.duration_avg, r.wins, r.losses].join(",")
     ),
   ].join("\n");
@@ -1655,9 +1655,9 @@ function BacktestingInner() {
             }
 
             /* ── We have results ── */
-            const winRate = sr.total_trades > 0 ? (sr.wins / sr.total_trades) * 100 : 0;
-            const profitPct = sr.profit_total * 100;
-            const ddPct = sr.max_drawdown * 100;
+            const winRate = sr.total_trades > 0 ? ((sr.wins ?? 0) / sr.total_trades) * 100 : 0;
+            const profitPct = (sr.profit_total ?? 0) * 100;
+            const ddPct = (sr.max_drawdown ?? 0) * 100;
             const stakeCurrency = sr.stake_currency || "USDT";
             const pairRows = sr.results_per_pair || [];
             // Separate TOTAL row (FT includes a TOTAL row with key "TOTAL")
@@ -1724,15 +1724,15 @@ function BacktestingInner() {
                                 >
                                   <td className={`py-2 pr-3 font-medium ${isSelected ? "text-accent" : "text-text-0"}`}>{name}</td>
                                   <td className="py-2 pr-3 text-right text-text-1">{r.total_trades}</td>
-                                  <td className={`py-2 pr-3 text-right font-semibold ${r.profit_total >= 0 ? "text-green" : "text-red"}`}>
-                                    {(r.profit_total * 100).toFixed(2)}%
+                                  <td className={`py-2 pr-3 text-right font-semibold ${(r.profit_total ?? 0) >= 0 ? "text-green" : "text-red"}`}>
+                                    {((r.profit_total ?? 0) * 100).toFixed(2)}%
                                   </td>
-                                  <td className={`py-2 pr-3 text-right ${r.profit_total_abs >= 0 ? "text-green" : "text-red"}`}>
-                                    {r.profit_total_abs.toFixed(2)} {r.stake_currency}
+                                  <td className={`py-2 pr-3 text-right ${(r.profit_total_abs ?? 0) >= 0 ? "text-green" : "text-red"}`}>
+                                    {(r.profit_total_abs ?? 0).toFixed(2)} {r.stake_currency ?? ""}
                                   </td>
                                   <td className="py-2 pr-3 text-right text-text-1">{wr.toFixed(1)}%</td>
                                   <td className="py-2 pr-3 text-right text-text-1">{r.sharpe?.toFixed(2) ?? "\u2014"}</td>
-                                  <td className="py-2 pr-3 text-right text-red">{(r.max_drawdown * 100).toFixed(2)}%</td>
+                                  <td className="py-2 pr-3 text-right text-red">{((r.max_drawdown ?? 0) * 100).toFixed(2)}%</td>
                                   <td className="py-2 text-right text-text-2">{r.holding_avg ?? "\u2014"}</td>
                                 </tr>
                               );

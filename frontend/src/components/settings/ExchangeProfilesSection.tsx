@@ -67,6 +67,7 @@ export default function ExchangeProfilesSection({
   // Load profiles
   useEffect(() => {
     loadProfiles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function loadProfiles() {
@@ -288,13 +289,13 @@ export default function ExchangeProfilesSection({
                       <td className="px-4 py-3 text-text-2">
                         <Tooltip
                           content={
-                            (profile as any).has_api_key
+                            profile.has_api_key
                               ? "API key configured"
                               : "No API key"
                           }
                         >
                           <span className="font-mono text-xs">
-                            {(profile as any).has_api_key ? "••••••••" : "–"}
+                            {profile.has_api_key ? "••••••••" : "–"}
                           </span>
                         </Tooltip>
                       </td>

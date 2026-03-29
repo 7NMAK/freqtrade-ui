@@ -59,6 +59,7 @@ export default function SystemSettingsTab() {
   // Load profiles
   useEffect(() => {
     loadProfiles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function loadProfiles() {
@@ -274,7 +275,7 @@ export default function SystemSettingsTab() {
                     </td>
                     <td className="px-4 py-2.5 text-text-2">
                       <span className="font-mono text-[11px]">
-                        {(profile as any).has_api_key ? "••••••••" : "–"}
+                        {profile.has_api_key ? "••••••••" : "–"}
                       </span>
                     </td>
                     <td className="px-4 py-2.5 text-text-2 text-[11px]">

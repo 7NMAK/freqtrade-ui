@@ -1560,7 +1560,7 @@ function DetailContent({
                   <div><span className="text-text-3">Trades</span><br /><span className="text-text-0 font-semibold">{btr.total_trades}</span></div>
                   <div><span className="text-text-3">Win Rate</span><br /><span className="text-text-0 font-semibold">{fmt(btr.win_rate * 100, 1)}%</span></div>
                   <div><span className="text-text-3">Sharpe</span><br /><span className="text-text-0 font-semibold">{btr.sharpe != null ? fmt(btr.sharpe, 2) : "\u2014"}</span></div>
-                  <div><span className="text-text-3">Max DD</span><br /><span className="text-red font-semibold">{fmt(btr.max_drawdown * 100, 1)}%</span></div>
+                  <div><span className="text-text-3">Max DD</span><br /><span className="text-red font-semibold">{fmt((btr.max_drawdown_account ?? btr.max_drawdown ?? 0) * 100, 1)}%</span></div>
                   <div><span className="text-text-3">Avg Duration</span><br /><span className="text-text-0 font-semibold">{btr.holding_avg}</span></div>
                   <div><span className="text-text-3">Profit Factor</span><br /><span className="text-text-0 font-semibold">{btr.profit_factor != null ? fmt(btr.profit_factor, 2) : "\u2014"}</span></div>
                 </div>

@@ -953,8 +953,15 @@ export interface FTBacktestResult {
   running: boolean;
   step: string;
   status_msg?: string;
-  /** Strategy-keyed results. Key = strategy name, value = strategy result */
-  backtest_result?: Record<string, FTBacktestStrategyResult>;
+  trade_count?: number | null;
+  /** FT 2026.2 envelope: { metadata, strategy, strategy_comparison } */
+  backtest_result?: {
+    metadata?: Record<string, unknown>;
+    strategy?: Record<string, FTBacktestStrategyResult>;
+    strategy_comparison?: Array<Record<string, unknown>>;
+    /** Legacy fallback: older FT versions may put strategies at top level */
+    [k: string]: unknown;
+  };
 }
 
 // PORTFOLIO AGGREGATION (Orchestrator)

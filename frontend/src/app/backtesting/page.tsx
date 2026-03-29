@@ -32,15 +32,24 @@ import { fmtNum } from "@/lib/format";
 /* ─── Helper: extract the first strategy result from btResult ─── */
 function getStrategyResult(btResult: FTBacktestResult | null): FTBacktestStrategyResult | null {
   if (!btResult?.backtest_result) return null;
-  const keys = Object.keys(btResult.backtest_result);
-  if (keys.length === 0) return null;
-  return btResult.backtest_result[keys[0]];
+  // FT 2026.2: results are nested under backtest_result.strategy.{StrategyName}
+  const stratMap = btResult.backtest_result.strategy;
+  if (stratMap && typeof stratMap === "object") {
+    const keys = Object.keys(stratMap);
+    if (keys.length > 0) return stratMap[keys[0]];
+  }
+  return null;
 }
 
 /* ─── Helper: get ALL strategy results for multi-strategy comparison ─── */
 function getAllStrategyResults(btResult: FTBacktestResult | null): { name: string; result: FTBacktestStrategyResult }[] {
   if (!btResult?.backtest_result) return [];
-  return Object.entries(btResult.backtest_result).map(([name, result]) => ({ name, result }));
+  // FT 2026.2: results are nested under backtest_result.strategy.{StrategyName}
+  const stratMap = btResult.backtest_result.strategy;
+  if (stratMap && typeof stratMap === "object") {
+    return Object.entries(stratMap).map(([name, result]) => ({ name, result }));
+  }
+  return [];
 }
 
 /* ─── Helper: profit color (backtesting variant returns "green"/"red"/undefined) ─── */

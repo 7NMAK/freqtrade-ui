@@ -109,6 +109,11 @@ class HeartbeatMonitor:
             bots = list(result.scalars().all())
 
             for bot in bots:
+                # Skip utility bots (backtest workers) and webserver-mode bots (backtesting only)
+                if getattr(bot, "is_utility", False) or getattr(bot, "ft_mode", "trade") == "webserver":
+                    logger.debug("Skipping bot %s (utility=%s, mode=%s)", bot.name, getattr(bot, "is_utility", False), getattr(bot, "ft_mode", "trade"))
+                    continue
+
                 alive = await self._bot_manager.ping_bot(bot)
 
                 if alive:

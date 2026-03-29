@@ -4,9 +4,7 @@
  * Source: docs/TYPES.ts (verified against FREQTRADE_REFERENCE.md v2026.2)
  */
 
-// ============================================================================
 // ORCHESTRATOR TYPES (our DB)
-// ============================================================================
 
 export type BotStatus = "starting" | "running" | "stopped" | "error" | "killed" | "draining";
 
@@ -68,9 +66,7 @@ export interface RiskEvent {
   created_at: string;
 }
 
-// ============================================================================
 // FREQTRADE TRADE & ORDER OBJECTS (§16)
-// ============================================================================
 
 /** Order object — part of FTTrade.orders array */
 export interface FTOrder {
@@ -163,9 +159,7 @@ export interface FTTrade {
   _bot_id?: number;
 }
 
-// ============================================================================
 // FREQTRADE API RESPONSES — PROFITABILITY (§8)
-// ============================================================================
 
 /** GET /api/v1/profit */
 export interface FTProfit {
@@ -961,9 +955,7 @@ export interface FTBacktestResult {
   backtest_result?: Record<string, FTBacktestStrategyResult>;
 }
 
-// ============================================================================
 // PORTFOLIO AGGREGATION (Orchestrator)
-// ============================================================================
 
 export interface PortfolioBalance {
   bots: Record<string, FTBalance>;
@@ -994,9 +986,7 @@ export interface PortfolioTrades {
   bot_count: number;
 }
 
-// ============================================================================
 // AI VALIDATION LAYER (Orchestrator)
-// ============================================================================
 
 /** Single AI validation record — GET /api/ai/validations */
 export interface AIValidation {
@@ -1142,9 +1132,7 @@ export interface AIHyperoptComparisonStats {
   };
 }
 
-// ============================================================================
 // ACTIVITY LOG TYPES (orchestrator audit_log table)
-// ============================================================================
 
 export type LogLevel = "info" | "warning" | "error" | "critical";
 
@@ -1176,9 +1164,7 @@ export interface BotLogResponse extends ActivityLogResponse {
   bot_id: number;
 }
 
-// ============================================================================
 // ARCHITECTURE V2 TYPES (Strategy Versioning & Exchange Profiles)
-// ============================================================================
 
 /** Strategy Version — immutable snapshot of strategy at a point in time */
 export interface StrategyVersion {

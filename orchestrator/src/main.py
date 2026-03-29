@@ -151,6 +151,8 @@ from .api.kill_switch import router as kill_switch_router
 from .api.portfolio import router as portfolio_router
 from .api.strategies import router as strategies_router
 from .api.logs import router as logs_router
+from .api.exchange_profiles import router as exchange_profiles_router
+from .api.backtest_results import router as backtest_results_router
 
 from .auth import require_auth as _auth_dep
 
@@ -159,6 +161,8 @@ app.include_router(kill_switch_router, prefix="/api/kill-switch", tags=["kill-sw
 app.include_router(portfolio_router, prefix="/api/portfolio", tags=["portfolio"], dependencies=[Depends(_auth_dep)])
 app.include_router(strategies_router, prefix="/api/strategies", tags=["strategies"], dependencies=[Depends(_auth_dep)])
 app.include_router(logs_router, prefix="/api/logs", tags=["logs"], dependencies=[Depends(_auth_dep)])
+app.include_router(exchange_profiles_router, prefix="/api/exchange-profiles", tags=["exchange-profiles"], dependencies=[Depends(_auth_dep)])
+app.include_router(backtest_results_router, prefix="/api/backtest-results", tags=["backtest-results"], dependencies=[Depends(_auth_dep)])
 
 # AI Validation Layer routes
 from .api.ai import router as ai_router

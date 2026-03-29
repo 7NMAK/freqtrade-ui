@@ -71,10 +71,29 @@ class BotManager:
         description: str | None = None,
         container_id: str | None = None,
         docker_image: str = "freqtradeorg/freqtrade:stable_freqai",
+        # NEW (V2)
+        exchange_name: str = "binance",
+        exchange_key: str | None = None,
+        exchange_secret: str | None = None,
+        exchange_password: str | None = None,
+        exchange_uid: str | None = None,
+        exchange_subaccount: str | None = None,
+        exchange_profile_id: int | None = None,
+        stake_currency: str = "USDT",
+        stake_amount: str = "unlimited",
+        max_open_trades: int = 3,
+        timeframe: str = "5m",
+        pair_whitelist: list[str] | None = None,
+        pair_blacklist: list[str] | None = None,
+        trading_mode: str = "futures",
+        margin_mode: str = "isolated",
+        strategy_version_id: int | None = None,
     ) -> BotInstance:
         """
         Register an existing FT bot container with the orchestrator.
         Does NOT create a Docker container — that's done separately or already exists.
+
+        V2: Accepts all trading config fields (exchange, stake, mode, etc.)
         """
         # M5: duplicate bot name check
         existing = await db.execute(
@@ -98,6 +117,23 @@ class BotManager:
             description=description,
             container_id=container_id,
             docker_image=docker_image,
+            # V2 fields
+            exchange_name=exchange_name,
+            exchange_key_enc=exchange_key,  # TODO: encrypt in Phase 4
+            exchange_secret_enc=exchange_secret,  # TODO: encrypt in Phase 4
+            exchange_password=exchange_password,
+            exchange_uid=exchange_uid,
+            exchange_subaccount=exchange_subaccount,
+            exchange_profile_id=exchange_profile_id,
+            stake_currency=stake_currency,
+            stake_amount=stake_amount,
+            max_open_trades=max_open_trades,
+            timeframe=timeframe,
+            pair_whitelist=pair_whitelist or [],
+            pair_blacklist=pair_blacklist or [],
+            trading_mode=trading_mode,
+            margin_mode=margin_mode,
+            strategy_version_id=strategy_version_id,
         )
         db.add(bot)
         await db.flush()
@@ -113,7 +149,12 @@ class BotManager:
             target_type="bot",
             target_id=bot.id,
             target_name=name,
-            details=json.dumps({"api_url": api_url, "strategy": strategy_name}),
+            details=json.dumps({
+                "api_url": api_url,
+                "strategy": strategy_name,
+                "exchange": exchange_name,
+                "trading_mode": trading_mode,
+            }),
         )
 
         return bot

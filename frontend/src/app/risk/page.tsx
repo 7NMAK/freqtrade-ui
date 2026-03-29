@@ -51,6 +51,7 @@ const statusColor = {
   error: "text-red",
   starting: "text-amber",
   killed: "text-red",
+  draining: "text-amber",
 };
 
 const dotBg: Record<string, string> = {
@@ -471,7 +472,7 @@ export default function RiskPage() {
             {/* SOFT KILL */}
             <button
               type="button"
-              className="bg-amber-bg border-2 border-amber/25 rounded-card p-6 text-center cursor-pointer transition-all hover:border-amber hover:shadow-[0_0_24px_rgba(245,158,11,0.15)] disabled:opacity-50"
+              className="bg-amber-bg border-2 border-amber/25 rounded-card p-6 text-center cursor-pointer transition-all hover:border-amber hover:shadow-[0_0_24px_var(--color-amber)] disabled:opacity-50"
               onClick={() => setShowSoftKillConfirm(true)}
               disabled={killing}
             >
@@ -486,7 +487,7 @@ export default function RiskPage() {
             {/* HARD KILL */}
             <button
               type="button"
-              className="bg-red-bg border-2 border-red/25 rounded-card p-6 text-center cursor-pointer transition-all hover:border-red hover:shadow-[0_0_24px_rgba(239,68,68,0.2)] disabled:opacity-50"
+              className="bg-red-bg border-2 border-red/25 rounded-card p-6 text-center cursor-pointer transition-all hover:border-red hover:shadow-[0_0_24px_var(--color-red)] disabled:opacity-50"
               onClick={() => setShowHardKillConfirm(true)}
               disabled={killing}
             >

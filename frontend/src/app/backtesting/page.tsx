@@ -17,7 +17,7 @@ import {
   botLookaheadAnalysis,
   botRecursiveAnalysis,
   botFtStrategies,
-  botHealth,
+  botPing,
   submitHyperoptPreAnalyze,
   submitHyperoptPostAnalyze,
   submitHyperoptOutcome,
@@ -395,11 +395,15 @@ export default function BacktestingPage() {
   const [outcomeFeedback, setOutcomeFeedback] = useState<"helpful" | "neutral" | "wrong" | null>(null);
   const [outcomeSubmitting, setOutcomeSubmitting] = useState(false);
 
-  // Load bots on mount
+  // Load bots on mount — include utility bots, prefer backtest worker
   useEffect(() => {
-    getBots().then((list) => {
+    getBots(true).then((list) => {
       setBots(list);
-      if (list.length > 0) setSelectedBotId(String(list[0].id));
+      if (list.length > 0) {
+        // Prefer a webserver-mode bot for backtesting (dedicated backtest worker)
+        const btBot = list.find((b) => b.ft_mode === "webserver") ?? list.find((b) => b.name === "ft-backtest");
+        setSelectedBotId(String(btBot ? btBot.id : list[0].id));
+      }
     }).catch((err) => {
       toast.error(err instanceof Error ? err.message : "Failed to load bots.");
     });
@@ -473,27 +477,27 @@ export default function BacktestingPage() {
     const bot = bots.find((b) => b.id === botId);
     if (!bot) return `Bot #${botId} not found in orchestrator.`;
 
-    // 2. Check bot status in orchestrator
-    if (bot.status === "killed") return `Bot "${bot.name}" was killed. Go to Dashboard → Start Bot to recover.`;
-    if (bot.status === "stopped") return `Bot "${bot.name}" is stopped. Go to Dashboard → Start Bot first.`;
-    if (bot.status === "error") return `Bot "${bot.name}" is in ERROR state. Check Dashboard for details.`;
-    if (bot.status === "starting") return `Bot "${bot.name}" is still starting. Wait a moment and retry.`;
+    // 2. Check bot status in orchestrator (skip for webserver-mode bots — they don't need to be "running" in trade sense)
+    if (bot.ft_mode !== "webserver") {
+      if (bot.status === "killed") return `Bot "${bot.name}" was killed. Go to Dashboard → Start Bot to recover.`;
+      if (bot.status === "stopped") return `Bot "${bot.name}" is stopped. Go to Dashboard → Start Bot first.`;
+      if (bot.status === "error") return `Bot "${bot.name}" is in ERROR state. Check Dashboard for details.`;
+      if (bot.status === "starting") return `Bot "${bot.name}" is still starting. Wait a moment and retry.`;
+    }
 
-    // 3. Check FT is reachable (ping)
+    // 3. Connectivity check — ping works in both trade and webserver mode
     try {
-      await botHealth(botId);
-    } catch { /* non-blocking */
+      await botPing(botId);
+    } catch {
       return `Bot "${bot.name}" is not responding. FreqTrade may be down or unreachable.`;
     }
 
     // 4. Check if a backtest is already running
     try {
       const prev = await botBacktestResults(botId);
-      if (prev.running) {
-        return "ABORT_PREVIOUS";
-      }
-    } catch { /* non-blocking */
-      // No previous backtest — fine
+      if (prev.running) return "ABORT_PREVIOUS";
+    } catch {
+      // No previous backtest state — fine, proceed
     }
 
     return null;

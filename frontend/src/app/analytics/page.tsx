@@ -240,6 +240,11 @@ export default function AnalyticsPage() {
 
   return (
     <AppShell title="Analytics">
+      {/* No bots empty state */}
+      {bots.length === 0 && !loadingCandles && (
+        <div className="py-16 text-center text-sm text-text-3">No bots registered. Register a bot on the Dashboard to view analytics.</div>
+      )}
+
       {/* Bot selector bar */}
       {bots.length > 0 && (
         <div className="flex items-center gap-3 mb-4 p-3 px-4 bg-bg-2 border border-border rounded-card text-xs">
@@ -602,7 +607,7 @@ export default function AnalyticsPage() {
                 <div
                   className="absolute left-[40px] right-[10px] bottom-5 h-[110px]"
                   style={{
-                    background: `linear-gradient(180deg, rgba(34,197,94,.18) 0%, rgba(34,197,94,.02) 100%)`,
+                    background: `linear-gradient(180deg, color-mix(in srgb, var(--color-green) 18%, transparent) 0%, color-mix(in srgb, var(--color-green) 2%, transparent) 100%)`,
                     clipPath,
                   }}
                 />
@@ -611,7 +616,7 @@ export default function AnalyticsPage() {
                     <polyline
                       points={points}
                       fill="none"
-                      stroke="#22c55e"
+                      stroke="var(--color-green)"
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"

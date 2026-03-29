@@ -556,6 +556,29 @@ export default function FreqAIPage() {
     }
   }
 
+
+  function resetToDefaults() {
+    setFreqaiEnabled(true);
+    setIdentifier("unique-freqai-model-1");
+    setModel("LightGBMRegressor");
+    setTrainPeriodDays(30);
+    setBacktestPeriodDays(7);
+    setLiveRetrainHours(8);
+    setExpiredHours(48);
+    setPurgeOldModels(2);
+    setContinualLearning(true);
+    setActivateTensorboard(false);
+    setWaitForTrainingOnReload(false);
+    setOverrideExchangeCheck(false);
+    setIncludeShiftedCandles(2);
+    setLabelPeriodCandles(24);
+    setFitLivePredictions(100);
+    setTestSize(25);
+    setSelectedMethod("expand_all");
+    setRlModelType("PPO");
+    setRlPolicyType("MlpPolicy");
+    toast.success("Reset to defaults.");
+  }
   return (
     <AppShell title="FreqAI Configuration">
 
@@ -1059,6 +1082,7 @@ export default function FreqAIPage() {
         </button>
         <button
           type="button"
+          onClick={resetToDefaults}
           className="px-3.5 py-2 rounded-md border border-border bg-bg-2 text-text-1 text-xs font-medium cursor-pointer transition-all hover:border-border-hover hover:bg-bg-3 flex items-center gap-1.5"
         >
           ↵ Reset to Defaults

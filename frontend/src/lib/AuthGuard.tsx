@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getToken, isTokenExpiringSoon, setToken } from "./api";
+import { isAuthenticated, isTokenExpiringSoon, setToken } from "./api";
 
 /**
  * Wraps pages that require authentication.
@@ -13,8 +13,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
+    if (!isAuthenticated()) {
       router.replace("/login");
       return;
     }

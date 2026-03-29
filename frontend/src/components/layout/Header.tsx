@@ -10,14 +10,6 @@ interface HeaderProps {
   title: string;
 }
 
-const statusDotColor: Record<string, string> = {
-  running: "bg-green",
-  starting: "bg-amber",
-  stopped: "bg-text-3",
-  error: "bg-red",
-  killed: "bg-red",
-};
-
 export default function Header({ title }: HeaderProps) {
   const toast = useToast();
   const [showKillConfirm, setShowKillConfirm] = useState(false);
@@ -27,11 +19,8 @@ export default function Header({ title }: HeaderProps) {
   const [hasRecentEvents, setHasRecentEvents] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
-  // Bot selector state
+  // Aggregate bot health
   const [bots, setBots] = useState<Bot[]>([]);
-  const [selectedBotId, setSelectedBotId] = useState<string>("");
-  const [showBotDropdown, setShowBotDropdown] = useState(false);
-  const botDropdownRef = useRef<HTMLDivElement>(null);
 
   // Load bots
   useEffect(() => {
@@ -39,10 +28,6 @@ export default function Header({ title }: HeaderProps) {
       try {
         const botList = await getBots();
         setBots(botList);
-        // Auto-select first bot if none selected
-        if (!selectedBotId && botList.length > 0) {
-          setSelectedBotId(String(botList[0].id));
-        }
       } catch { /* non-blocking */
         // Non-critical
       }
@@ -50,7 +35,7 @@ export default function Header({ title }: HeaderProps) {
     loadBots();
     const interval = setInterval(loadBots, REFRESH_INTERVALS.HEADER_BOTS);
     return () => clearInterval(interval);
-  }, [selectedBotId]);
+  }, []);
 
   // H-3: Load recent risk events for notification bell
   useEffect(() => {
@@ -85,17 +70,6 @@ export default function Header({ title }: HeaderProps) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [showNotifs]);
 
-  // Close bot dropdown on outside click
-  useEffect(() => {
-    if (!showBotDropdown) return;
-    function handleClick(e: MouseEvent) {
-      if (botDropdownRef.current && e.target instanceof Node && !botDropdownRef.current.contains(e.target)) {
-        setShowBotDropdown(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [showBotDropdown]);
 
   // H-5b: HARD KILL all bots
   async function handleKillAll() {
@@ -144,15 +118,25 @@ export default function Header({ title }: HeaderProps) {
     }
   }
 
-  const selectedBot = bots.find((b) => String(b.id) === selectedBotId);
-  const heartbeatHealthy = selectedBot ? selectedBot.is_healthy : false;
-  const heartbeatStatus = selectedBot
-    ? selectedBot.consecutive_failures >= 3 || selectedBot.status === "error" || selectedBot.status === "killed"
+  // Aggregate health across all bots
+  const runningBots = bots.filter((b) => b.status === "running");
+  const unhealthyBots = bots.filter(
+    (b) => b.status === "error" || b.status === "killed" || b.consecutive_failures >= 3
+  );
+  const warnBots = bots.filter(
+    (b) =>
+      !unhealthyBots.includes(b) &&
+      (b.consecutive_failures >= 1 || !b.is_healthy) &&
+      b.status === "running"
+  );
+  const aggregateStatus: "ok" | "warn" | "fail" | "none" =
+    bots.length === 0
+      ? "none"
+      : unhealthyBots.length > 0
       ? "fail"
-      : selectedBot.consecutive_failures >= 1 || !selectedBot.is_healthy
+      : warnBots.length > 0
       ? "warn"
-      : "ok"
-    : "none";
+      : "ok";
 
   return (
     <>
@@ -160,69 +144,30 @@ export default function Header({ title }: HeaderProps) {
         {/* H-1: Page Title */}
         <h1 className="text-lg font-bold text-text-0">{title}</h1>
 
-        {/* Bot Selector Dropdown */}
-        <div className="relative ml-4" ref={botDropdownRef}>
-          <button
-            type="button"
-            onClick={() => setShowBotDropdown(!showBotDropdown)}
-            className="flex items-center gap-2 bg-bg-2 border border-border rounded-btn px-3 py-1.5 text-xs text-text-1 hover:border-border-hover transition-all cursor-pointer min-w-[180px]"
-          >
-            {selectedBot && (
-              <span
-                className={`w-2 h-2 rounded-full shrink-0 ${statusDotColor[selectedBot.status] ?? "bg-text-3"}`}
-              />
-            )}
-            <span className="flex-1 text-left truncate">
-              {selectedBot ? selectedBot.name : bots.length === 0 ? "No bots" : "Select bot..."}
-            </span>
-            <span className="text-text-3 text-[10px]">&#9662;</span>
-          </button>
-          {showBotDropdown && bots.length > 0 && (
-            <div className="absolute top-full left-0 mt-1 w-full bg-bg-2 border border-border rounded-card shadow-2xl z-50 overflow-hidden">
-              {bots.map((bot) => (
-                <button
-                  key={bot.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedBotId(String(bot.id));
-                    setShowBotDropdown(false);
-                  }}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs text-left cursor-pointer transition-colors ${
-                    String(bot.id) === selectedBotId
-                      ? "bg-accent-glow text-accent"
-                      : "text-text-1 hover:bg-bg-3"
-                  }`}
-                >
-                  <span
-                    className={`w-2 h-2 rounded-full shrink-0 ${statusDotColor[bot.status] ?? "bg-text-3"}`}
-                  />
-                  <span className="flex-1 truncate">{bot.name}</span>
-                  <span className="text-[10px] text-text-3">{bot.status}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Heartbeat Indicator */}
-        {selectedBot && (
-          <div className="flex items-center gap-1.5" title={`Heartbeat: ${heartbeatHealthy ? "healthy" : "unhealthy"} (${selectedBot.consecutive_failures} failures)`}>
+        {/* Aggregate Bot Health */}
+        {bots.length > 0 && (
+          <div className="flex items-center gap-2 ml-2">
             <div
               className={`w-2 h-2 rounded-full ${
-                heartbeatStatus === "ok"
+                aggregateStatus === "ok"
                   ? "bg-green shadow-[0_0_6px_var(--color-green)] animate-pulse"
-                  : heartbeatStatus === "warn"
+                  : aggregateStatus === "warn"
                   ? "bg-amber shadow-[0_0_6px_var(--color-amber)]"
-                  : heartbeatStatus === "fail"
+                  : aggregateStatus === "fail"
                   ? "bg-red shadow-[0_0_6px_var(--color-red)] animate-pulse"
                   : "bg-text-3"
               }`}
             />
-            <span className={`text-[10px] font-medium ${
-              heartbeatStatus === "ok" ? "text-green" : heartbeatStatus === "warn" ? "text-amber" : heartbeatStatus === "fail" ? "text-red" : "text-text-3"
-            }`}>
-              {heartbeatStatus === "ok" ? "Healthy" : heartbeatStatus === "warn" ? "Warning" : heartbeatStatus === "fail" ? "Unhealthy" : ""}
+            <span className="text-xs text-text-2">
+              <span className="text-green font-semibold">{runningBots.length}</span>
+              <span className="text-text-3 mx-0.5">/</span>
+              <span className="text-text-3">{bots.length} bots</span>
             </span>
+            {unhealthyBots.length > 0 && (
+              <span className="text-[10px] font-medium text-red">
+                {unhealthyBots.length} unhealthy
+              </span>
+            )}
           </div>
         )}
 

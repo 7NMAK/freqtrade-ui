@@ -11,7 +11,7 @@ import BotDeleteDialog from "./BotDeleteDialog";
 
 interface BotManagementTableProps {
   bots: Bot[];
-  botProfits: Record<number, FTProfit>;
+  botProfits: Record<number, Partial<FTProfit>>;
   onRefresh: () => void;
 }
 
@@ -75,7 +75,7 @@ export default function BotManagementTable({ bots, botProfits, onRefresh }: BotM
                   <tr key={bot.id} className="hover:bg-bg-3 transition-colors">
                     <td className="px-4 py-3">
                       <div className={`w-2.5 h-2.5 rounded-full ${
-                        isRunning && bot.is_healthy ? "bg-green shadow-[0_0_6px_#22c55e]"
+                        isRunning && bot.is_healthy ? "bg-green shadow-[0_0_6px_var(--color-green)]"
                           : bot.status === "error" ? "bg-red animate-pulse"
                           : isRunning ? "bg-amber" : "bg-bg-3"
                       }`} />

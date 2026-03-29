@@ -888,7 +888,7 @@ export default function DataManagementPage() {
               type="button"
               onClick={startDownload}
               disabled={downloading}
-              className="px-4 py-2 rounded-btn text-xs font-semibold bg-accent text-white border border-accent hover:bg-accent-dim hover:shadow-[0_0_20px_rgba(99,102,241,.2)] transition-all disabled:opacity-50"
+              className="px-4 py-2 rounded-btn text-xs font-semibold bg-accent text-white border border-accent hover:bg-accent-dim hover:shadow-[0_0_20px_var(--color-accent)] transition-all disabled:opacity-50"
             >
               {downloading ? "Downloading..." : "📥 Download Data"}
             </button>

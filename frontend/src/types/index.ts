@@ -8,7 +8,7 @@
 // ORCHESTRATOR TYPES (our DB)
 // ============================================================================
 
-export type BotStatus = "starting" | "running" | "stopped" | "error" | "killed";
+export type BotStatus = "starting" | "running" | "stopped" | "error" | "killed" | "draining";
 
 export interface Bot {
   id: number;
@@ -23,9 +23,23 @@ export interface Bot {
   container_id: string | null;
   docker_image: string;
   description: string | null;
+  is_utility?: boolean;
+  ft_mode?: "trade" | "webserver";
+  // Architecture V2 fields (optional, for backward compatibility)
+  exchange_name?: string;
+  exchange_profile_id?: number;
+  stake_currency?: string;
+  stake_amount?: string;
+  max_open_trades?: number;
+  timeframe?: string;
+  pair_whitelist?: string[];
+  pair_blacklist?: string[];
+  trading_mode?: string;
+  margin_mode?: string;
+  strategy_version_id?: number;
 }
 
-export type Lifecycle = "draft" | "backtest" | "paper" | "live" | "retired";
+export type Lifecycle = "draft" | "backtest" | "ai_tested" | "deployable" | "paper" | "live" | "retired";
 
 export interface Strategy {
   id: number;
@@ -958,7 +972,7 @@ export interface PortfolioBalance {
 }
 
 export interface PortfolioProfit {
-  bots: Record<string, FTProfit>;
+  bots: Record<string, Record<string, unknown>>;
   combined: {
     profit_all_coin: number;
     profit_all_fiat: number;
@@ -966,8 +980,12 @@ export interface PortfolioProfit {
     profit_closed_fiat: number;
     trade_count: number;
     closed_trade_count: number;
+    winning_trades: number;
+    losing_trades: number;
   };
   bot_count: number;
+  running_count: number;
+  stopped_count: number;
 }
 
 export interface PortfolioTrades {
@@ -1156,4 +1174,64 @@ export interface ActivityLogResponse {
 /** Per-bot log response from GET /api/logs/bot/{botId} */
 export interface BotLogResponse extends ActivityLogResponse {
   bot_id: number;
+}
+
+// ============================================================================
+// ARCHITECTURE V2 TYPES (Strategy Versioning & Exchange Profiles)
+// ============================================================================
+
+/** Strategy Version — immutable snapshot of strategy at a point in time */
+export interface StrategyVersion {
+  id: number;
+  strategy_id: number;
+  version_number: number;
+  code: string;
+  builder_state?: Record<string, unknown>;
+  risk_config?: {
+    stoploss?: number;
+    roi?: Record<string, number>;
+    trailing_stop?: boolean;
+    trailing_stop_positive?: number;
+    trailing_stop_positive_offset?: number;
+    trailing_only_offset_is_reached?: boolean;
+    use_custom_stoploss?: boolean;
+    protections?: Array<Record<string, unknown>>;
+  };
+  callbacks?: Record<string, { enabled: boolean; code?: string }>;
+  freqai_config?: Record<string, unknown>;
+  changelog?: string;
+  created_at: string;
+}
+
+/** Exchange Profile — reusable credential set for exchange connections */
+export interface ExchangeProfile {
+  id: number;
+  name: string;
+  exchange_name: string;
+  subaccount?: string;
+  created_at: string;
+  updated_at: string;
+  // Note: API keys are never returned to frontend
+}
+
+/** Backtest Result — result from a single backtest run */
+export interface BacktestResult {
+  id: number;
+  strategy_version_id: number;
+  exchange_data: string;
+  pairs: string[];
+  timeframe: string;
+  timerange_start: string;
+  timerange_end: string;
+  total_trades: number;
+  winning_trades: number;
+  losing_trades: number;
+  profit_total: number;
+  profit_percent: number;
+  max_drawdown: number;
+  sharpe_ratio: number;
+  sortino_ratio: number;
+  sqn: number;
+  full_results?: Record<string, unknown>;
+  created_at: string;
 }

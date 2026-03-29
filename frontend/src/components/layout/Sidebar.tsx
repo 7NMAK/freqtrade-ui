@@ -163,7 +163,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   {showDot && (
                     <span
                       className={clsx(
-                        "w-1.5 h-1.5 rounded-full bg-green shadow-[0_0_6px_#22c55e] flex-shrink-0",
+                        "w-1.5 h-1.5 rounded-full bg-green shadow-[0_0_6px_var(--color-green)] flex-shrink-0",
                         collapsed && "absolute top-1 right-1"
                       )}
                     />
@@ -185,7 +185,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             className={clsx(
               "w-[7px] h-[7px] rounded-full mx-auto",
               anyRunning
-                ? "bg-green shadow-[0_0_6px_#22c55e]"
+                ? "bg-green shadow-[0_0_6px_var(--color-green)]"
                 : "bg-red-dim"
             )}
             title={`${botCount} bot${botCount !== 1 ? "s" : ""}`}
@@ -196,7 +196,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
               className={clsx(
                 "w-[7px] h-[7px] rounded-full shrink-0",
                 anyRunning
-                  ? "bg-green shadow-[0_0_6px_#22c55e]"
+                  ? "bg-green shadow-[0_0_6px_var(--color-green)]"
                   : "bg-red-dim"
               )}
             />

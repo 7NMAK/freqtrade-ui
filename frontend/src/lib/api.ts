@@ -72,9 +72,10 @@ interface ApiFetchOptions extends Omit<RequestInit, 'headers'> {
 }
 
 async function request<T>(path: string, options?: ApiFetchOptions): Promise<T> {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
+  const headers: Record<string, string> = {};
+  if (options?.body) {
+    headers["Content-Type"] = "application/json";
+  }
   const token = getToken();
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
@@ -90,7 +91,7 @@ async function request<T>(path: string, options?: ApiFetchOptions): Promise<T> {
     if (typeof window !== "undefined") {
       window.location.href = "/login";
     }
-    throw new ApiError(res.status, "Authentication required");
+    return undefined as T; // suppress error — redirect handles it
   }
 
   if (!res.ok) {
@@ -111,6 +112,10 @@ async function request<T>(path: string, options?: ApiFetchOptions): Promise<T> {
     throw new ApiError(res.status, diagnosis ? `${message}\n\nDiagnosis: ${diagnosis}` : message, diagnosis);
   }
 
+  const contentType = res.headers.get("content-type");
+  if (!contentType || !contentType.includes("application/json")) {
+    return undefined as T;
+  }
   return res.json();
 }
 
@@ -188,8 +193,8 @@ export function logout() {
 
 // ── Bots ──────────────────────────────────────────────────────────────────
 
-export const getBots = () =>
-  request<import("@/types").Bot[]>("/api/bots/");
+export const getBots = (includeUtility = false) =>
+  request<import("@/types").Bot[]>(`/api/bots/${includeUtility ? "?include_utility=true" : ""}`);
 
 // UNUSED — available for future use
 // export const getBot = (id: number) =>
@@ -208,7 +213,7 @@ export const updateBot = (id: number, data: Record<string, unknown>) =>
   });
 
 export const deleteBot = (id: number) =>
-  request<import("@/types").Bot>(`/api/bots/${id}`, { method: "DELETE" });
+  request<void>(`/api/bots/${id}`, { method: "DELETE" });
 
 // ── Bot Control (FT passthrough) ──────────────────────────────────────────
 
@@ -261,7 +266,7 @@ export const botConfig = (id: number) =>
 
 export const saveBotConfig = (id: number, config: Record<string, unknown>) =>
   request(`/api/bots/${id}/config`, {
-    method: "PUT",
+    method: "PATCH",
     body: JSON.stringify(config),
   });
 
@@ -279,6 +284,9 @@ export const botLogs = (id: number, limit = 50) =>
 
 export const botHealth = (id: number) =>
   request<import("@/types").FTHealth>(`/api/bots/${id}/health`);
+
+export const botPing = (id: number) =>
+  request<{ status: string }>(`/api/bots/${id}/ping`);
 
 // ── Currently unused — available for Analytics trade analysis expansion ──
 export const botEntries = (id: number) =>
@@ -374,7 +382,7 @@ export const botBacktestStart = (id: number, params: Record<string, unknown>) =>
   });
 
 export const botBacktestResults = (id: number) =>
-  request<import("@/types").FTBacktestResult>(`/api/bots/${id}/backtest`);
+  request<import("@/types").FTBacktestResult>(`/api/bots/${id}/backtest`, { method: "GET" });
 
 export const botBacktestDelete = (id: number) =>
   request(`/api/bots/${id}/backtest`, { method: "DELETE" });

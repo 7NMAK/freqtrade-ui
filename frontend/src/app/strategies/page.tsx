@@ -53,6 +53,8 @@ function LifecycleBadge({ lifecycle }: { lifecycle: Lifecycle }) {
   const styles: Record<Lifecycle, string> = {
     draft: "bg-bg-3 text-text-3 border border-border",
     backtest: "bg-cyan/10 text-cyan border border-cyan/20",
+    ai_tested: "bg-purple-bg text-purple border border-purple/20",
+    deployable: "bg-green-bg/30 text-green border border-green/30",
     paper: "bg-amber-bg text-amber border border-amber/20",
     live: "bg-green-bg text-green border border-green/20",
     retired: "bg-red-bg text-red border border-red/15",
@@ -216,14 +218,10 @@ export default function StrategiesPage() {
     hyperoptResults: [],
     aiValidations: [],
   });
-  // TODO: Wire tradeAiDetail/tradeAiLoading into trade detail panel
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [tradeAiDetail, setTradeAiDetail] = useState<AIValidation | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [tradeAiLoading, setTradeAiLoading] = useState(false);
   const [tradeAiTradeId, setTradeAiTradeId] = useState<number | null>(null);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async function loadTradeAiValidation(ftTradeId: number) {
     if (tradeAiTradeId === ftTradeId) { setTradeAiTradeId(null); setTradeAiDetail(null); return; }
     setTradeAiTradeId(ftTradeId);
@@ -427,7 +425,7 @@ export default function StrategiesPage() {
 
   /* ─── Actions ─── */
 
-  const handleTransition = useCallback(
+  const actuallyTransition = useCallback(
     async (strategy: Strategy, newLifecycle: Lifecycle) => {
       const id = toast.loading(`Transitioning to ${newLifecycle}...`);
       try {
@@ -445,6 +443,38 @@ export default function StrategiesPage() {
       }
     },
     [toast]
+  );
+
+  const handleTransition = useCallback(
+    async (strategy: Strategy, newLifecycle: Lifecycle) => {
+      if (newLifecycle === "paper") {
+        const bot = strategy.bot_instance_id != null ? bots.find((b) => b.id === strategy.bot_instance_id) : undefined;
+        if (!bot) {
+          toast.warning("Link a bot to this strategy before promoting to Paper.");
+          return;
+        }
+        try {
+          const history = await botBacktestHistory(bot.id);
+          if (!history.results || history.results.length === 0) {
+            toast.warning("Run a backtest first before promoting to Paper.");
+            return;
+          }
+        } catch { /* non-blocking — allow promotion if check fails */  }
+        actuallyTransition(strategy, newLifecycle);
+        return;
+      }
+      if (newLifecycle === "live") {
+        toast.warning("This will switch to REAL trading. Confirm?", {
+          action: {
+            label: "CONFIRM",
+            onClick: () => actuallyTransition(strategy, newLifecycle),
+          },
+        });
+        return;
+      }
+      actuallyTransition(strategy, newLifecycle);
+    },
+    [toast, bots, actuallyTransition]
   );
 
   const handleDelete = useCallback(
@@ -472,6 +502,10 @@ export default function StrategiesPage() {
           name: `${strategy.name}_copy`,
           lifecycle: "draft",
           description: strategy.description,
+          code: strategy.code,
+          builder_state: strategy.builder_state,
+          exchange: strategy.exchange,
+          timeframe: strategy.timeframe,
         });
         toast.dismiss(id);
         toast.success(`Cloned as ${cloned.name}`);
@@ -691,7 +725,7 @@ export default function StrategiesPage() {
             <button
               type="button"
               onClick={() => router.push("/builder")}
-              className="px-4 py-1.5 rounded-md border-none bg-accent text-white text-xs font-semibold transition-all hover:bg-accent-dim hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(99,102,241,.3)] flex items-center gap-1.5 cursor-pointer"
+              className="px-4 py-1.5 rounded-md border-none bg-accent text-white text-xs font-semibold transition-all hover:bg-accent-dim hover:-translate-y-px hover:shadow-[0_4px_12px_var(--color-accent)] flex items-center gap-1.5 cursor-pointer"
             >
               {t("newStrategy")}
             </button>
@@ -740,7 +774,7 @@ export default function StrategiesPage() {
                 <div
                   key={strat.id}
                   onClick={() => openDetail(strat.id)}
-                  className={`bg-bg-2 border border-border rounded-[10px] overflow-hidden transition-all cursor-pointer hover:border-accent hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(0,0,0,.4)] ${
+                  className={`bg-bg-2 border border-border rounded-[10px] overflow-hidden transition-all cursor-pointer hover:border-accent hover:-translate-y-0.5 hover:shadow-lg ${
                     isRetired ? "opacity-60" : ""
                   }`}
                 >
@@ -858,7 +892,7 @@ export default function StrategiesPage() {
 
       {/* Overlay */}
       <div
-        className={`fixed inset-0 bg-black/50 z-[500] transition-opacity ${
+        role="dialog" aria-modal="true" className={`fixed inset-0 bg-black/50 z-[500] transition-opacity ${
           selectedId != null ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
         onClick={closeDetail}
@@ -1047,7 +1081,7 @@ export default function StrategiesPage() {
          ═══════════════════════════════════════════════════════════════════════ */}
       {showImport && (
         <div
-          className="fixed inset-0 bg-black/60 z-[600] flex items-center justify-center"
+          role="dialog" aria-modal="true" className="fixed inset-0 bg-black/60 z-[600] flex items-center justify-center"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowImport(false);
           }}
@@ -1125,7 +1159,7 @@ export default function StrategiesPage() {
          ═══════════════════════════════════════════════════════════════════════ */}
       {confirmAction && (
         <div
-          className="fixed inset-0 bg-black/60 z-[700] flex items-center justify-center"
+          role="dialog" aria-modal="true" className="fixed inset-0 bg-black/60 z-[700] flex items-center justify-center"
           onClick={(e) => {
             if (e.target === e.currentTarget) setConfirmAction(null);
           }}

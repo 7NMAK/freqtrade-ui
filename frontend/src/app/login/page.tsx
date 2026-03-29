@@ -85,7 +85,7 @@ export default function LoginPage() {
 
         {/* L-1: Logo */}
         <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-gradient-to-br from-accent to-purple rounded-2xl flex items-center justify-center text-2xl font-bold text-white mx-auto mb-5 shadow-[0_0_32px_rgba(99,102,241,0.3)]">
+          <div className="w-16 h-16 bg-gradient-to-br from-accent to-purple rounded-2xl flex items-center justify-center text-2xl font-bold text-white mx-auto mb-5 shadow-[0_0_32px_var(--color-accent)]">
             FT
           </div>
           <h1 className="text-xl font-bold text-text-0 mb-1">FreqTrade Platform</h1>

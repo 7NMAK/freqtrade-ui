@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState, useCallback, useEffect, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import AppShell from "@/components/layout/AppShell";
 import { useToast } from "@/components/ui/Toast";
@@ -352,6 +352,7 @@ export default function BuilderPageWrapper() {
 function BuilderPage() {
   const toast = useToast();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [savedStrategyId, setSavedStrategyId] = useState<number | null>(null);
   const [deployOpen, setDeployOpen] = useState(false);
@@ -1751,20 +1752,21 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 Uses the <span className="font-mono text-accent">custom_stoploss()</span> callback for dynamic stoploss logic.
                 Enable it in Step 6: Callbacks and configure the preset there.
               </div>
-              {!enabledCallbacks.custom_stoploss && (
-                <button
-                  type="button"
-                  className="mt-2 px-3 py-1.5 rounded text-[11px] border border-accent text-accent hover:bg-accent/[.08] transition-all"
-                  onClick={() => {
-                    setEnabledCallbacks((prev) => ({ ...prev, custom_stoploss: true }));
+              <div className="mt-3 flex items-center justify-between">
+                <div className="text-[10px] text-text-2">
+                  {enabledCallbacks.custom_stoploss ? (
+                    <span className="text-green font-semibold">custom_stoploss callback is enabled</span>
+                  ) : (
+                    <span>custom_stoploss callback is disabled</span>
+                  )}
+                </div>
+                <ToggleSwitch
+                  enabled={enabledCallbacks.custom_stoploss}
+                  onToggle={() => {
+                    setEnabledCallbacks((prev) => ({ ...prev, custom_stoploss: !prev.custom_stoploss }));
                   }}
-                >
-                  Enable custom_stoploss callback
-                </button>
-              )}
-              {enabledCallbacks.custom_stoploss && (
-                <div className="mt-2 text-[10px] text-green font-semibold">custom_stoploss callback is enabled</div>
-              )}
+                />
+              </div>
             </div>
           )}
 
@@ -2465,7 +2467,12 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               <button
                 type="button"
                 className="px-3.5 py-2 rounded-md border border-accent/30 bg-accent/10 text-accent text-xs font-semibold cursor-pointer hover:bg-accent/20 transition-all flex items-center gap-1.5"
-                onClick={() => setDeployOpen(true)}
+                onClick={async () => {
+                  if (!savedStrategyId) {
+                    await handleSaveStrategy();
+                  }
+                  setDeployOpen(true);
+                }}
               >
                 Deploy to Bot
               </button>
@@ -2589,7 +2596,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
           strategyCode={manualCodeEdit ? editableCode : generateStrategyCode}
           strategyId={savedStrategyId}
           onClose={() => setDeployOpen(false)}
-          onSuccess={() => {}}
+          onSuccess={() => router.push("/strategies")}
         />
       </div>
     </AppShell>

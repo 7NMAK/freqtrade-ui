@@ -45,9 +45,11 @@ import {
   botLocks,
   botTrades,
   botBalance,
+  botHealth,
 } from "@/lib/api";
 import type {
   Bot,
+  FTHealth,
   FTTrade,
   FTProfit,
   FTDailyItem,
@@ -191,7 +193,7 @@ function BotCard({
   onClick,
 }: {
   bot: Bot;
-  profit: FTProfit | null;
+  profit: Partial<FTProfit> | null;
   sparkData: number[];
   openCount: number;
   onClick: () => void;
@@ -226,8 +228,8 @@ function BotCard({
         <div>
           <div className="text-2xs text-text-3 mb-0.5">Win Rate</div>
           <div className="text-sm font-bold text-text-0">
-            {profit && (profit.winning_trades + profit.losing_trades) > 0
-              ? `${((profit.winning_trades / (profit.winning_trades + profit.losing_trades)) * 100).toFixed(1)}%`
+            {profit && ((profit.winning_trades ?? 0) + (profit.losing_trades ?? 0)) > 0
+              ? `${(((profit.winning_trades ?? 0) / ((profit.winning_trades ?? 0) + (profit.losing_trades ?? 0))) * 100).toFixed(1)}%`
               : "\u2014"}
           </div>
         </div>
@@ -368,6 +370,7 @@ export default function DashboardPage() {
   const [staleCount, setStaleCount] = useState(0);
   const staleCountRef = useRef(0);
   const mountedRef = useRef(true);
+  const detailBotIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -377,7 +380,7 @@ export default function DashboardPage() {
   const [bots, setBots] = useState<Bot[]>([]);
   const [openTrades, setOpenTrades] = useState<FTTrade[]>([]);
   const [closedTrades, setClosedTrades] = useState<FTTrade[]>([]);
-  const [botProfits, setBotProfits] = useState<Record<number, FTProfit>>({});
+  const [botProfits, setBotProfits] = useState<Record<number, Partial<FTProfit>>>({});
   const [sparklines, setSparklines] = useState<Record<number, number[]>>({});
   const [openByBot, setOpenByBot] = useState<Record<number, number>>({});
   const [dailyData, setDailyData] = useState<FTDailyItem[]>([]);
@@ -385,10 +388,7 @@ export default function DashboardPage() {
 
   // Portfolio aggregates
   const [totalEquity, setTotalEquity] = useState<number | null>(null);
-  const [totalUnrealized, setTotalUnrealized] = useState<number | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [totalPnl, setTotalPnl] = useState<number | null>(null);
   const [totalWinRate, setTotalWinRate] = useState<number | null>(null);
 
   // Expanded trade detail
@@ -413,6 +413,7 @@ export default function DashboardPage() {
   const [forceEntryOpen, setForceEntryOpen] = useState(false);
   const [forceEntrySubmitting, setForceEntrySubmitting] = useState(false);
   const [showManagement, setShowManagement] = useState(false);
+  const [botStatusFilter, setBotStatusFilter] = useState<"all" | "running" | "stopped">("all");
 
   // Single-bot detail sections state
   const [weeklyData, setWeeklyData] = useState<FTWeeklyResponse | null>(null);
@@ -467,6 +468,8 @@ export default function DashboardPage() {
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [balanceError, setBalanceError] = useState<string | null>(null);
 
+  const [healthData, setHealthData] = useState<FTHealth | null>(null);
+
   // Single-bot closed trades
   const [singleBotClosedTrades, setSingleBotClosedTrades] = useState<FTTrade[]>([]);
   const [singleBotClosedLoading, setSingleBotClosedLoading] = useState(false);
@@ -504,10 +507,20 @@ export default function DashboardPage() {
         if (m.current) setTotalEquity(pb.total_value);
       } catch { /* non-blocking */ }
 
-      // Portfolio profit
+      // Portfolio profit (ALL bots — running + stopped cached)
+      let portfolioProfitData: Record<string, Record<string, unknown>> | null = null;
       try {
         const pp = await portfolioProfit();
-        if (m.current) setTotalUnrealized(pp.combined.profit_all_coin - pp.combined.profit_closed_coin);
+        if (m.current) {
+          setTotalPnl(pp.combined.profit_all_coin);
+          // Win rate from ALL bots (running + stopped cached)
+          const totalW = pp.combined.winning_trades ?? 0;
+          const totalL = pp.combined.losing_trades ?? 0;
+          const total = totalW + totalL;
+          setTotalWinRate(total > 0 ? (totalW / total) * 100 : null);
+          // Store per-bot profit names for stopped bots
+          portfolioProfitData = pp.bots;
+        }
       } catch { /* non-blocking */ }
 
       // Open trades (all bots combined)
@@ -517,8 +530,7 @@ export default function DashboardPage() {
         const allOpen = pt.trades.filter((t) => t.is_open);
         setOpenTrades(allOpen);
 
-        const unrealized = allOpen.reduce((s, t) => s + (t.current_profit_abs ?? 0), 0);
-        setTotalUnrealized((prev) => prev ?? unrealized);
+        // totalPnl is set from portfolioProfit above
 
         const todayClosed = pt.trades.filter(
           (t) => !t.is_open && isToday(t.close_date)
@@ -527,12 +539,14 @@ export default function DashboardPage() {
       } catch { /* non-blocking */ }
 
       // Per-bot sparklines + profits
-      const profits: Record<number, FTProfit> = {};
+      const profits: Record<number, Partial<FTProfit>> = {};
       const sparks: Record<number, number[]> = {};
       const openCounts: Record<number, number> = {};
 
+      // Only fetch per-bot data for trade-mode running bots (skip webserver/utility bots)
+      const tradeBots = runningBots.filter((b) => b.ft_mode !== "webserver" && !b.is_utility);
       await Promise.allSettled(
-        runningBots.map(async (bot) => {
+        tradeBots.map(async (bot) => {
           try {
             const [p, d, s] = await Promise.allSettled([
               botProfit(bot.id),
@@ -546,6 +560,23 @@ export default function DashboardPage() {
         })
       );
 
+      // Populate stopped bots with cached profit from portfolio response
+      if (portfolioProfitData) {
+        const stoppedBots = botList.filter((b) => b.status !== "running");
+        for (const bot of stoppedBots) {
+          const cached = portfolioProfitData[bot.name];
+          if (cached && !("error" in cached)) {
+            // Convert Record<string, unknown> to Partial<FTProfit> via numeric coercion
+            const partial: Partial<FTProfit> = {};
+            for (const [k, v] of Object.entries(cached)) {
+              if (k.startsWith("_")) continue; // skip _cached, _stopped flags
+              (partial as Record<string, unknown>)[k] = v;
+            }
+            profits[bot.id] = partial;
+          }
+        }
+      }
+
       if (m.current) {
         setBotProfits(profits);
         setSparklines(sparks);
@@ -558,15 +589,6 @@ export default function DashboardPage() {
         if (m.current) setDailyData(daily.data ?? []);
       } catch { /* non-blocking */
         if (m.current) setDailyData([]);
-      }
-
-      // Win rate
-      const allProfit = Object.values(profits);
-      if (allProfit.length > 0 && m.current) {
-        const totalW = allProfit.reduce((s, p) => s + (p.winning_trades ?? 0), 0);
-        const totalL = allProfit.reduce((s, p) => s + (p.losing_trades ?? 0), 0);
-        const total = totalW + totalL;
-        setTotalWinRate(total > 0 ? (totalW / total) * 100 : null);
       }
 
       // Recent alerts
@@ -603,96 +625,109 @@ export default function DashboardPage() {
 
   const loadBotDetails = useCallback(async (botId: number) => {
     const m = mountedRef;
+    detailBotIdRef.current = botId;
+
+    // Stale-check helper: returns true if a different bot was selected since this call started
+    const stale = () => detailBotIdRef.current !== botId;
 
     // Bot open trades
     setSingleBotOpenLoading(true);
     botStatus(botId)
-      .then((d) => { if (m.current) { setSingleBotOpenTrades(d.filter((t) => t.is_open)); setSingleBotOpenLoading(false); } })
-      .catch(() => { if (m.current) setSingleBotOpenLoading(false); });
+      .then((d) => { if (m.current && !stale()) { setSingleBotOpenTrades(d.filter((t) => t.is_open)); setSingleBotOpenLoading(false); } })
+      .catch(() => { if (m.current && !stale()) setSingleBotOpenLoading(false); });
 
     // Bot closed trades
     setSingleBotClosedLoading(true);
     botTrades(botId, 50)
-      .then((d) => { if (m.current) { setSingleBotClosedTrades(d.trades.filter((t) => !t.is_open)); setSingleBotClosedLoading(false); } })
-      .catch(() => { if (m.current) setSingleBotClosedLoading(false); });
+      .then((d) => { if (m.current && !stale()) { setSingleBotClosedTrades(d.trades.filter((t) => !t.is_open)); setSingleBotClosedLoading(false); } })
+      .catch(() => { if (m.current && !stale()) setSingleBotClosedLoading(false); });
+
+    // Helper: for 503 errors (bot not in correct state), silently swallow — no error shown
+    const soft = (e: unknown): string | null =>
+      e instanceof Error && e.message.includes("503") ? null : (e instanceof Error ? e.message : "Failed");
 
     // Weekly
     setWeeklyLoading(true); setWeeklyError(null);
     botWeekly(botId, 12)
-      .then((d) => { if (m.current) { setWeeklyData(d); setWeeklyLoading(false); } })
-      .catch((e) => { if (m.current) { setWeeklyError(e instanceof Error ? e.message : "Failed"); setWeeklyLoading(false); } });
+      .then((d) => { if (m.current && !stale()) { setWeeklyData(d); setWeeklyLoading(false); } })
+      .catch((e) => { if (m.current && !stale()) { setWeeklyError(soft(e)); setWeeklyLoading(false); } });
 
     // Monthly
     setMonthlyLoading(true); setMonthlyError(null);
     botMonthly(botId, 12)
-      .then((d) => { if (m.current) { setMonthlyData(d); setMonthlyLoading(false); } })
-      .catch((e) => { if (m.current) { setMonthlyError(e instanceof Error ? e.message : "Failed"); setMonthlyLoading(false); } });
+      .then((d) => { if (m.current && !stale()) { setMonthlyData(d); setMonthlyLoading(false); } })
+      .catch((e) => { if (m.current && !stale()) { setMonthlyError(soft(e)); setMonthlyLoading(false); } });
 
     // Performance
     setPerfLoading(true); setPerfError(null);
     botPerformance(botId)
-      .then((d) => { if (m.current) { setPerfData(d); setPerfLoading(false); } })
-      .catch((e) => { if (m.current) { setPerfError(e instanceof Error ? e.message : "Failed"); setPerfLoading(false); } });
+      .then((d) => { if (m.current && !stale()) { setPerfData(d); setPerfLoading(false); } })
+      .catch((e) => { if (m.current && !stale()) { setPerfError(soft(e)); setPerfLoading(false); } });
 
     // Entries
     setEntryLoading(true); setEntryError(null);
     botEntries(botId)
-      .then((d) => { if (m.current) { setEntryData(d); setEntryLoading(false); } })
-      .catch((e) => { if (m.current) { setEntryError(e instanceof Error ? e.message : "Failed"); setEntryLoading(false); } });
+      .then((d) => { if (m.current && !stale()) { setEntryData(d); setEntryLoading(false); } })
+      .catch((e) => { if (m.current && !stale()) { setEntryError(soft(e)); setEntryLoading(false); } });
 
     // Exits
     setExitLoading(true); setExitError(null);
     botExits(botId)
-      .then((d) => { if (m.current) { setExitData(d); setExitLoading(false); } })
-      .catch((e) => { if (m.current) { setExitError(e instanceof Error ? e.message : "Failed"); setExitLoading(false); } });
+      .then((d) => { if (m.current && !stale()) { setExitData(d); setExitLoading(false); } })
+      .catch((e) => { if (m.current && !stale()) { setExitError(soft(e)); setExitLoading(false); } });
 
     // Mix Tags
     setMixTagLoading(true); setMixTagError(null);
     botMixTags(botId)
-      .then((d) => { if (m.current) { setMixTagData(d); setMixTagLoading(false); } })
-      .catch((e) => { if (m.current) { setMixTagError(e instanceof Error ? e.message : "Failed"); setMixTagLoading(false); } });
+      .then((d) => { if (m.current && !stale()) { setMixTagData(d); setMixTagLoading(false); } })
+      .catch((e) => { if (m.current && !stale()) { setMixTagError(soft(e)); setMixTagLoading(false); } });
 
     // Stats
     setStatsLoading(true); setStatsError(null);
     botStats(botId)
-      .then((d) => { if (m.current) { setStatsData(d); setStatsLoading(false); } })
-      .catch((e) => { if (m.current) { setStatsError(e instanceof Error ? e.message : "Failed"); setStatsLoading(false); } });
+      .then((d) => { if (m.current && !stale()) { setStatsData(d); setStatsLoading(false); } })
+      .catch((e) => { if (m.current && !stale()) { setStatsError(soft(e)); setStatsLoading(false); } });
 
     // Config
     setConfigLoading(true); setConfigError(null);
     botConfig(botId)
-      .then((d) => { if (m.current) { setConfigData(d); setConfigLoading(false); } })
-      .catch((e) => { if (m.current) { setConfigError(e instanceof Error ? e.message : "Failed"); setConfigLoading(false); } });
+      .then((d) => { if (m.current && !stale()) { setConfigData(d); setConfigLoading(false); } })
+      .catch((e) => { if (m.current && !stale()) { setConfigError(soft(e)); setConfigLoading(false); } });
 
     // Sysinfo
     setSysinfoLoading(true); setSysinfoError(null);
     botSysinfo(botId)
-      .then((d) => { if (m.current) { setSysinfoData(d); setSysinfoLoading(false); } })
-      .catch((e) => { if (m.current) { setSysinfoError(e instanceof Error ? e.message : "Failed"); setSysinfoLoading(false); } });
+      .then((d) => { if (m.current && !stale()) { setSysinfoData(d); setSysinfoLoading(false); } })
+      .catch((e) => { if (m.current && !stale()) { setSysinfoError(soft(e)); setSysinfoLoading(false); } });
 
     // Logs
     setLogsLoading(true); setLogsError(null);
     botLogs(botId, 100)
-      .then((d) => { if (m.current) { setLogsData(d); setLogsLoading(false); } })
-      .catch((e) => { if (m.current) { setLogsError(e instanceof Error ? e.message : "Failed"); setLogsLoading(false); } });
+      .then((d) => { if (m.current && !stale()) { setLogsData(d); setLogsLoading(false); } })
+      .catch((e) => { if (m.current && !stale()) { setLogsError(soft(e)); setLogsLoading(false); } });
 
     // Whitelist
     setWhitelistLoading(true); setWhitelistError(null);
     botWhitelist(botId)
-      .then((d) => { if (m.current) { setWhitelistData(d); setWhitelistLoading(false); } })
-      .catch((e) => { if (m.current) { setWhitelistError(e instanceof Error ? e.message : "Failed"); setWhitelistLoading(false); } });
+      .then((d) => { if (m.current && !stale()) { setWhitelistData(d); setWhitelistLoading(false); } })
+      .catch((e) => { if (m.current && !stale()) { setWhitelistError(soft(e)); setWhitelistLoading(false); } });
 
     // Locks
     setLocksLoading(true); setLocksError(null);
     botLocks(botId)
-      .then((d) => { if (m.current) { setLocksData(d); setLocksLoading(false); } })
-      .catch((e) => { if (m.current) { setLocksError(e instanceof Error ? e.message : "Failed"); setLocksLoading(false); } });
+      .then((d) => { if (m.current && !stale()) { setLocksData(d); setLocksLoading(false); } })
+      .catch((e) => { if (m.current && !stale()) { setLocksError(soft(e)); setLocksLoading(false); } });
 
     // Balance
     setBalanceLoading(true); setBalanceError(null);
     botBalance(botId)
-      .then((d) => { if (m.current) { setBalanceData(d); setBalanceLoading(false); } })
-      .catch((e) => { if (m.current) { setBalanceError(e instanceof Error ? e.message : "Failed"); setBalanceLoading(false); } });
+      .then((d) => { if (m.current && !stale()) { setBalanceData(d); setBalanceLoading(false); } })
+      .catch((e) => { if (m.current && !stale()) { setBalanceError(soft(e)); setBalanceLoading(false); } });
+
+    // Health (last process time)
+    botHealth(botId)
+      .then((d) => { if (m.current && !stale()) setHealthData(d); })
+      .catch(() => { /* non-blocking */ });
   }, []);
 
   useEffect(() => {
@@ -1009,21 +1044,21 @@ export default function DashboardPage() {
           <>
             <StatCard label="Total Balance" icon="💰"
               value={totalEquity != null ? `$${totalEquity.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : "\u2014"}
-              sub="Total allocated capital" />
+              sub={`${runningBotCards.length} running bot${runningBotCards.length !== 1 ? "s" : ""}`} />
             <StatCard label="Total P&L" icon="📊"
-              value={totalUnrealized != null ? fmtMoney(totalUnrealized) : "\u2014"}
-              valueColor={profitColor(totalUnrealized)}
-              sub="Open positions combined" />
+              value={totalPnl != null ? fmtMoney(totalPnl) : "\u2014"}
+              valueColor={profitColor(totalPnl)}
+              sub="Realized + unrealized, all bots" />
             <StatCard label="Open Trades" icon="📋"
               value={String(openTrades.length)}
-              sub={`Across ${runningBotCards.length} bots`} />
+              sub={`Across ${runningBotCards.length} running bot${runningBotCards.length !== 1 ? "s" : ""}`} />
             <StatCard label="Active Bots" icon="🤖"
-              value={`${runningBotCards.length} / ${bots.length}`}
+              value={`${runningBotCards.length}/${bots.length}`}
               sub={runningBotCards.length === bots.length ? "All bots running" : `${bots.length - runningBotCards.length} stopped`} />
             <StatCard label="Win Rate" icon="🎯"
               value={totalWinRate != null ? `${fmt(totalWinRate, 1)}%` : "\u2014"}
               valueColor={totalWinRate != null && totalWinRate >= 55 ? "text-green" : totalWinRate != null && totalWinRate < 45 ? "text-red" : "text-amber"}
-              sub="All closed trades" />
+              sub={`All ${bots.length} bots, all trades`} />
           </>
         )}
       </div>
@@ -1073,8 +1108,21 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-semibold text-text-0">Bots</h2>
                 <div className="flex items-center gap-3">
+                  {/* Status filter chips */}
+                  <div className="flex items-center gap-1">
+                    {(["all", "running", "stopped"] as const).map((f) => (
+                      <button key={f} type="button" onClick={() => setBotStatusFilter(f)}
+                        className={`px-2 py-0.5 rounded text-2xs font-medium transition-colors ${
+                          botStatusFilter === f
+                            ? "bg-accent text-bg-0"
+                            : "bg-bg-3 text-text-3 hover:text-text-1"
+                        }`}>
+                        {f === "all" ? `All (${bots.length})` : f === "running" ? `Running (${runningBotCards.length})` : `Stopped (${bots.length - runningBotCards.length})`}
+                      </button>
+                    ))}
+                  </div>
                   <span className="text-2xs text-text-3">
-                    {runningBotCards.length} of {bots.length} running &middot; Click a bot for details
+                    Click a bot for details
                   </span>
                   <button type="button" onClick={() => setShowManagement(!showManagement)}
                     className="text-2xs font-semibold text-accent hover:text-accent/80 cursor-pointer transition-colors">
@@ -1083,7 +1131,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3">
-                {bots.map((bot) => (
+                {bots.filter((bot) => botStatusFilter === "all" || (botStatusFilter === "running" ? bot.status === "running" : bot.status !== "running")).map((bot) => (
                   <BotCard
                     key={bot.id}
                     bot={bot}
@@ -1219,7 +1267,7 @@ export default function DashboardPage() {
                         className="flex items-center gap-3 px-3 py-2 bg-bg-1 border border-border rounded-lg cursor-pointer hover:border-accent transition-colors"
                         onClick={() => setSelectedBotId(bot.id)}>
                         <div className={`w-2 h-2 rounded-full shrink-0 ${
-                          bot.status === "running" && bot.is_healthy ? "bg-green shadow-[0_0_6px_#22c55e]"
+                          bot.status === "running" && bot.is_healthy ? "bg-green shadow-[0_0_6px_var(--color-green)]"
                             : bot.status === "error" || !bot.is_healthy ? "bg-red animate-pulse" : "bg-amber"
                         }`} />
                         <div className="flex-1 min-w-0">
@@ -1615,6 +1663,12 @@ export default function DashboardPage() {
                     </div>
                   </CardBody>
                 ) : <CardBody><div className="py-4 text-center text-sm text-text-3">No system info</div></CardBody>}
+                {healthData && (
+                  <div className="px-6 pb-4 pt-0">
+                    <div className="text-2xs text-text-3 uppercase tracking-wide mb-1">Last Process</div>
+                    <div className="text-xs font-mono text-text-1">{healthData.last_process} <span className="text-text-3">({healthData.last_process_loc})</span></div>
+                  </div>
+                )}
               </SectionLoader>
             </Card>
           </div>

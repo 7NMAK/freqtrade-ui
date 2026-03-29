@@ -118,7 +118,7 @@ function highlight(text: string, query: string): React.ReactNode {
   while (idx !== -1) {
     if (idx > cursor) parts.push(text.slice(cursor, idx));
     parts.push(
-      <mark key={idx} className="bg-accent/25 text-accent rounded px-0.5">
+      <mark key={`match-${idx}`} className="bg-accent/25 text-accent rounded px-0.5">
         {text.slice(idx, idx + query.length)}
       </mark>
     );

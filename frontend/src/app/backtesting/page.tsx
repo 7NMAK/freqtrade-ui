@@ -696,7 +696,7 @@ function BacktestingInner() {
         baseline_profit: sr.profit_total_abs,
         baseline_trades: sr.total_trades,
         baseline_sharpe: sr.sharpe ?? undefined,
-        baseline_max_drawdown: sr.max_drawdown_account ?? sr.max_drawdown,
+        baseline_max_drawdown: sr.max_drawdown_account ?? sr.max_drawdown ?? undefined,
       });
       setAiPostAnalysis(result);
       toast.dismiss(id);

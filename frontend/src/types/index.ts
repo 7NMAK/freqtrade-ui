@@ -13,6 +13,7 @@ export interface Bot {
   name: string;
   api_url: string;
   api_port: number;
+  api_username?: string;
   strategy_name: string | null;
   status: BotStatus;
   is_dry_run: boolean;
@@ -26,6 +27,7 @@ export interface Bot {
   // Architecture V2 fields (optional, for backward compatibility)
   exchange_name?: string;
   exchange_profile_id?: number;
+  exchange_subaccount?: string;
   stake_currency?: string;
   stake_amount?: string;
   max_open_trades?: number;

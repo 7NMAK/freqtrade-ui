@@ -46,6 +46,7 @@ import {
   botTrades,
   botBalance,
   botHealth,
+  drainBot,
 } from "@/lib/api";
 import type {
   Bot,
@@ -108,8 +109,15 @@ function isToday(dateStr: string | null | undefined): boolean {
 
 // ── Status Badge ─────────────────────────────────────────────────────────
 
-function StatusBadge({ isRunning, isDryRun }: { isRunning: boolean; isDryRun: boolean }) {
-  if (!isRunning) {
+function StatusBadge({ status, isDryRun }: { status: string; isDryRun: boolean }) {
+  if (status === "draining") {
+    return (
+      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-bg text-amber uppercase tracking-wide border border-amber/20 animate-pulse">
+        Draining
+      </span>
+    );
+  }
+  if (status !== "running") {
     return (
       <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-bg-3 text-text-3 uppercase tracking-wide border border-border">
         Stopped
@@ -191,17 +199,18 @@ function BotCard({
   sparkData,
   openCount,
   onClick,
+  onDrain,
 }: {
   bot: Bot;
   profit: Partial<FTProfit> | null;
   sparkData: number[];
   openCount: number;
   onClick: () => void;
+  onDrain?: (botId: number) => void;
 }) {
   const isRunning = bot.status === "running";
   return (
     <div
-      onClick={onClick}
       className={`bg-bg-1 border rounded-lg p-4 transition-all cursor-pointer hover:border-accent hover:translate-y-[-1px] hover:shadow-lg ${
         bot.status === "error"
           ? "border-red/30"
@@ -209,13 +218,22 @@ function BotCard({
           ? "border-border"
           : "border-border/50"
       }`}
+      onClick={onClick}
     >
-      <div className="flex items-center justify-between mb-1">
-        <div className="text-xs font-semibold text-text-0 truncate mr-2">{bot.name}</div>
-        <StatusBadge isRunning={isRunning} isDryRun={bot.is_dry_run} />
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="text-xs font-semibold text-text-0 truncate">{bot.name}</div>
+          {bot.exchange_name && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-semibold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 whitespace-nowrap">
+              {bot.exchange_name}
+            </span>
+          )}
+        </div>
+        <StatusBadge status={bot.status} isDryRun={bot.is_dry_run} />
       </div>
       <div className="text-2xs text-text-3 mb-3 truncate">
         {bot.strategy_name ?? "No strategy"}
+        {bot.strategy_version_id && <span className="text-zinc-500 ml-1">v{bot.strategy_version_id}</span>}
       </div>
 
       <div className="grid grid-cols-3 gap-2 mb-3">
@@ -240,6 +258,19 @@ function BotCard({
       </div>
 
       {sparkData.length > 0 && <Sparkline data={sparkData} />}
+
+      {isRunning && onDrain && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDrain(bot.id);
+          }}
+          className="mt-2 w-full text-[10px] font-semibold px-2 py-1.5 rounded border border-amber/30 text-amber bg-amber-bg hover:bg-amber/[0.18] transition-all"
+        >
+          Drain
+        </button>
+      )}
     </div>
   );
 }
@@ -752,6 +783,11 @@ export default function DashboardPage() {
     }
   }
 
+  async function handleDrainBot(botId: number) {
+    if (!window.confirm("Stop new entries and wait for open positions to close?")) return;
+    await handleBotAction("Drain", botId, () => drainBot(botId));
+  }
+
   async function handleForceEntrySubmit(pair: string, side: "long" | "short", stake?: number) {
     if (!selectedBotId) return;
     setForceEntrySubmitting(true);
@@ -1022,7 +1058,7 @@ export default function DashboardPage() {
           </button>
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-text-0">{selectedBot.name}</span>
-            <StatusBadge isRunning={selectedBot.status === "running"} isDryRun={selectedBot.is_dry_run} />
+            <StatusBadge status={selectedBot.status} isDryRun={selectedBot.is_dry_run} />
             <span className="text-xs text-text-3">{selectedBot.strategy_name ?? "No strategy"}</span>
           </div>
         </div>
@@ -1139,6 +1175,7 @@ export default function DashboardPage() {
                     sparkData={sparklines[bot.id] ?? []}
                     openCount={openByBot[bot.id] ?? 0}
                     onClick={() => setSelectedBotId(bot.id)}
+                    onDrain={(botId) => handleDrainBot(botId)}
                   />
                 ))}
               </div>
@@ -1278,7 +1315,7 @@ export default function DashboardPage() {
                               : bot.status}
                           </div>
                         </div>
-                        <StatusBadge isRunning={bot.status === "running"} isDryRun={bot.is_dry_run} />
+                        <StatusBadge status={bot.status} isDryRun={bot.is_dry_run} />
                       </div>
                     ))}
                     {bots.length === 0 && (

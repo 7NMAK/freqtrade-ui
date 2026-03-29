@@ -734,3 +734,118 @@ export const getErrorLogs = (params?: {
   if (params?.offset) qs.set("offset", String(params.offset));
   return request<import("@/types").ActivityLogResponse>(`/api/logs/errors?${qs}`);
 };
+
+// ── Strategy Versions (Architecture V2) ───────────────────────────────────
+
+export const createStrategyVersion = (strategyId: number, data: {
+  code: string;
+  builder_state?: Record<string, unknown>;
+  risk_config?: Record<string, unknown>;
+  callbacks?: Record<string, unknown>;
+  freqai_config?: Record<string, unknown>;
+  changelog?: string;
+}) =>
+  request<import("@/types").StrategyVersion>(`/api/strategies/${strategyId}/versions`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const getStrategyVersions = (strategyId: number) =>
+  request<import("@/types").StrategyVersion[]>(`/api/strategies/${strategyId}/versions`);
+
+export const getStrategyVersion = (strategyId: number, versionNumber: number) =>
+  request<import("@/types").StrategyVersion>(`/api/strategies/${strategyId}/versions/${versionNumber}`);
+
+export const getStrategyVersionDiff = (strategyId: number, v1: number, v2: number) =>
+  request<{
+    v1: import("@/types").StrategyVersion;
+    v2: import("@/types").StrategyVersion;
+    code_changed: boolean;
+    risk_changed: boolean;
+    callbacks_changed: boolean;
+    risk_diff: Record<string, unknown> | null;
+  }>(`/api/strategies/${strategyId}/versions-diff?v1=${v1}&v2=${v2}`);
+
+// ── Strategy Import ──────────────────────────────────────────────────────
+
+export const getAvailableStrategies = () =>
+  request<string[]>("/api/strategies/available");
+
+export const importStrategyFromSource = (data: {
+  source: string;
+  filename?: string;
+  code?: string;
+}) =>
+  request<import("@/types").Strategy>("/api/strategies/import", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+// ── Exchange Profiles ────────────────────────────────────────────────────
+
+export const getExchangeProfiles = () =>
+  request<import("@/types").ExchangeProfile[]>("/api/exchange-profiles/");
+
+export const createExchangeProfile = (data: {
+  name: string;
+  exchange_name: string;
+  api_key?: string;
+  api_secret?: string;
+  api_password?: string;
+  uid?: string;
+  subaccount?: string;
+}) =>
+  request<import("@/types").ExchangeProfile>("/api/exchange-profiles/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const updateExchangeProfile = (id: number, data: Record<string, unknown>) =>
+  request<import("@/types").ExchangeProfile>(`/api/exchange-profiles/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+
+export const deleteExchangeProfile = (id: number) =>
+  request<void>(`/api/exchange-profiles/${id}`, { method: "DELETE" });
+
+// ── Backtest Results ─────────────────────────────────────────────────────
+
+export const getBacktestResults = (strategyId?: number) =>
+  request<import("@/types").BacktestResult[]>(
+    strategyId ? `/api/backtest-results/by-strategy/${strategyId}` : "/api/backtest-results/"
+  );
+
+export const getBacktestResultsByVersion = (versionId: number) =>
+  request<import("@/types").BacktestResult[]>(`/api/backtest-results/by-version/${versionId}`);
+
+export const compareBacktestResults = (ids: number[]) =>
+  request<{
+    results: import("@/types").BacktestResult[];
+    best_profit: number;
+    best_drawdown: number;
+    best_sharpe: number;
+  }>(`/api/backtest-results/compare?ids=${ids.join(",")}`);
+
+// ── Bot V2 Extended ──────────────────────────────────────────────────────
+
+export const generateBotConfig = (botId: number) =>
+  request<Record<string, unknown>>(`/api/bots/${botId}/generate-config`, {
+    method: "POST",
+  });
+
+export const drainBot = (botId: number) =>
+  request<{ status: string; open_trades: number }>(`/api/bots/${botId}/drain`, {
+    method: "POST",
+  });
+
+export const importBot = (data: {
+  api_url: string;
+  api_port: number;
+  api_username: string;
+  api_password: string;
+}) =>
+  request<import("@/types").Bot>("/api/bots/import", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });

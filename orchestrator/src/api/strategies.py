@@ -137,11 +137,11 @@ async def parse_strategy_code(code: str) -> dict:
     roi_match = re.search(r'minimal_roi\s*=\s*(\{[^}]+\})', code, re.DOTALL)
     if roi_match:
         try:
+            import ast
             roi_str = roi_match.group(1)
-            # Quick eval of the dict (we trust this is from our own code)
-            result["minimal_roi"] = eval(roi_str)
-        except:
-            pass
+            result["minimal_roi"] = ast.literal_eval(roi_str)
+        except (ValueError, SyntaxError):
+            pass  # non-blocking — ROI parse failed, strategy still imports
 
     return result
 

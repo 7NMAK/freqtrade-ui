@@ -27,6 +27,7 @@ import {
   botFtStrategy,
   fetchAIValidations,
   fetchAIValidationByTrade,
+  getStrategyVersions,
 } from "@/lib/api";
 import { fmt, fmtMoney, profitColor } from "@/lib/format";
 import type {
@@ -43,6 +44,7 @@ import type {
   FTBacktestStrategyResult,
   FTHyperoptResult,
   AIValidation,
+  StrategyVersion,
 } from "@/types";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -51,13 +53,13 @@ import type {
 
 function LifecycleBadge({ lifecycle }: { lifecycle: Lifecycle }) {
   const styles: Record<Lifecycle, string> = {
-    draft: "bg-bg-3 text-text-3 border border-border",
-    backtest: "bg-cyan/10 text-cyan border border-cyan/20",
-    ai_tested: "bg-purple-bg text-purple border border-purple/20",
-    deployable: "bg-green-bg/30 text-green border border-green/30",
-    paper: "bg-amber-bg text-amber border border-amber/20",
-    live: "bg-green-bg text-green border border-green/20",
-    retired: "bg-red-bg text-red border border-red/15",
+    draft: "bg-zinc-700/40 text-zinc-300 border border-zinc-600",
+    backtest: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
+    ai_tested: "bg-purple/10 text-purple border border-purple/20",
+    deployable: "bg-green/10 text-green border border-green/20",
+    paper: "bg-amber/10 text-amber border border-amber/20",
+    live: "bg-emerald/10 text-emerald border border-emerald/20",
+    retired: "bg-red/10 text-red border border-red/15",
   };
   return (
     <span
@@ -160,7 +162,8 @@ type DetailTab =
   | "entry_exit"
   | "ai_suggestions"
   | "configuration"
-  | "lifecycle";
+  | "lifecycle"
+  | "versions";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Main Page
@@ -222,6 +225,10 @@ export default function StrategiesPage() {
   const [tradeAiLoading, setTradeAiLoading] = useState(false);
   const [tradeAiTradeId, setTradeAiTradeId] = useState<number | null>(null);
 
+  /* ─── Strategy versions ─── */
+  const [strategyVersions, setStrategyVersions] = useState<StrategyVersion[]>([]);
+  const [versionsLoading, setVersionsLoading] = useState(false);
+
   async function loadTradeAiValidation(ftTradeId: number) {
     if (tradeAiTradeId === ftTradeId) { setTradeAiTradeId(null); setTradeAiDetail(null); return; }
     setTradeAiTradeId(ftTradeId);
@@ -233,6 +240,19 @@ export default function StrategiesPage() {
       setTradeAiDetail(null);
     } finally {
       setTradeAiLoading(false);
+    }
+  }
+
+  async function loadStrategyVersions(strategyId: number) {
+    setVersionsLoading(true);
+    try {
+      const versions = await getStrategyVersions(strategyId);
+      setStrategyVersions(versions);
+    } catch (err) {
+      toast.error("Failed to load versions");
+      setStrategyVersions([]);
+    } finally {
+      setVersionsLoading(false);
     }
   }
 
@@ -414,6 +434,13 @@ export default function StrategiesPage() {
     if (total === 0) return "\u2014";
     return ((profit.winning_trades / total) * 100).toFixed(1) + "%";
   };
+
+  const getBotsUsingStrategy = useCallback(
+    (strat: Strategy): number => {
+      return bots.filter((b) => b.strategy_name === strat.name).length;
+    },
+    [bots]
+  );
 
   const filtered = strategies.filter(
     (s) => activeFilter === "all" || s.lifecycle === activeFilter
@@ -797,6 +824,9 @@ export default function StrategiesPage() {
                           {strat.description}
                         </div>
                       )}
+                      <div className="text-[10px] text-text-3 mb-1">
+                        {getBotsUsingStrategy(strat)} bot{getBotsUsingStrategy(strat) !== 1 ? "s" : ""} using this
+                      </div>
                       <div className="flex gap-1 flex-wrap">
                         {(botCfg?.pair_whitelist ?? []).slice(0, 2).map((pair) => (
                           <span key={pair} className="text-[9.5px] px-1.5 py-0.5 rounded-sm font-medium bg-cyan/8 text-cyan">
@@ -1005,6 +1035,7 @@ export default function StrategiesPage() {
               {(
                 [
                   { key: "overview", label: "Overview" },
+                  { key: "versions", label: "Versions" },
                   { key: "open_trades", label: "Open Trades" },
                   { key: "closed_trades", label: "Closed Trades" },
                   { key: "backtest_history", label: "Backtests" },
@@ -1049,6 +1080,9 @@ export default function StrategiesPage() {
                   tradeAiDetail={tradeAiDetail}
                   tradeAiLoading={tradeAiLoading}
                   tradeAiTradeId={tradeAiTradeId}
+                  versions={strategyVersions}
+                  versionsLoading={versionsLoading}
+                  onLoadVersions={loadStrategyVersions}
                 />
               )}
             </div>
@@ -1288,6 +1322,9 @@ function DetailContent({
   tradeAiDetail,
   tradeAiLoading,
   tradeAiTradeId,
+  versions,
+  versionsLoading,
+  onLoadVersions,
 }: {
   tab: DetailTab;
   strat: Strategy;
@@ -1311,6 +1348,9 @@ function DetailContent({
   tradeAiDetail: AIValidation | null;
   tradeAiLoading: boolean;
   tradeAiTradeId: number | null;
+  versions: StrategyVersion[];
+  versionsLoading: boolean;
+  onLoadVersions: (strategyId: number) => void;
 }) {
   const sectionTitle = "text-[11px] font-semibold text-text-3 uppercase tracking-wider mb-3";
   const row = "flex justify-between py-2 border-b border-border/40 last:border-b-0";
@@ -1381,6 +1421,45 @@ function DetailContent({
           {!bot && !profit && (
             <div className="text-center py-6 text-text-3 text-xs">
               No bot linked to this strategy. Stats will appear when a bot is assigned.
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    /* ─── Versions ─── */
+    case "versions": {
+      return (
+        <div className="space-y-3">
+          {versionsLoading ? (
+            <div className="text-center py-6 text-text-3 text-sm">Loading versions...</div>
+          ) : versions.length === 0 ? (
+            <div className="text-center py-6 text-text-3 text-sm">
+              <button
+                type="button"
+                onClick={() => onLoadVersions(strat.id)}
+                className="text-accent hover:text-accent-dim"
+              >
+                Load versions
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {versions.map((v) => (
+                <div key={v.id} className="flex items-center justify-between p-3 border-b border-border/40 last:border-b-0">
+                  <div className="flex-1">
+                    <span className="font-mono text-sm text-blue-400">v{v.version_number}</span>
+                    <span className="text-text-3 text-xs ml-2">{new Date(v.created_at).toLocaleDateString()}</span>
+                    {v.changelog && <p className="text-text-2 text-xs mt-1">{v.changelog}</p>}
+                  </div>
+                  <div className="flex gap-2 ml-3">
+                    <button className="text-xs text-blue-400 hover:text-blue-300 whitespace-nowrap">View Code</button>
+                    {v.version_number > 1 && (
+                      <button className="text-xs text-text-3 hover:text-text-2 whitespace-nowrap">Diff v{v.version_number - 1}</button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

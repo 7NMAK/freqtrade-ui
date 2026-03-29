@@ -5,10 +5,11 @@ import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import AppShell from "@/components/layout/AppShell";
 import { useToast } from "@/components/ui/Toast";
-import { createStrategy, getStrategy, updateStrategy, getBots, botWhitelist } from "@/lib/api";
+import { createStrategy, getStrategy, updateStrategy, getBots, botWhitelist, createStrategyVersion, getStrategyVersions } from "@/lib/api";
 import DeployModal from "@/components/builder/DeployModal";
 import Tooltip from "@/components/ui/Tooltip";
 import { TOOLTIPS } from "@/lib/tooltips";
+import type { StrategyVersion } from "@/types";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
@@ -355,6 +356,10 @@ function BuilderPage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [savedStrategyId, setSavedStrategyId] = useState<number | null>(null);
+  const [versions, setVersions] = useState<StrategyVersion[]>([]);
+  const [currentVersion, setCurrentVersion] = useState<number | null>(null);
+  const [showChangelogInput, setShowChangelogInput] = useState(false);
+  const [changelog, setChangelog] = useState("");
   const [deployOpen, setDeployOpen] = useState(false);
   const [editorMode, setEditorMode] = useState<"visual" | "code">("visual");
   const [manualCodeEdit, setManualCodeEdit] = useState(false);
@@ -569,6 +574,28 @@ function BuilderPage() {
       .finally(() => setLoadingStrategy(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ─── Fetch versions when strategy is loaded ────────────────
+  useEffect(() => {
+    if (!savedStrategyId) {
+      setVersions([]);
+      setCurrentVersion(null);
+      return;
+    }
+    (async () => {
+      try {
+        const versionList = await getStrategyVersions(savedStrategyId);
+        setVersions(versionList);
+        if (versionList.length > 0) {
+          // Set current version to the latest
+          const latest = versionList[versionList.length - 1];
+          setCurrentVersion(latest.version_number);
+        }
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to load versions.");
+      }
+    })();
+  }, [savedStrategyId, toast]);
 
   function toggleCallback(key: string) {
     setEnabledCallbacks((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -879,50 +906,69 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
     };
   }
 
-  // ─── Save strategy (C11 + Mi16) ───────────────────────
+  // ─── Save strategy (V2: creates versions) ────────────────
   const handleSaveStrategy = useCallback(async () => {
     if (!strategyName.trim()) { toast.warning("Strategy name is required."); return; }
     setSaving(true);
     const id = toast.loading(`Saving ${strategyName} to Orchestrator...`);
     const finalCode = manualCodeEdit ? editableCode : generateStrategyCode;
     try {
-      const saveData = {
-        name: strategyName,
-        description,
-        exchange,
-        lifecycle: "draft",
-        timeframe,
-        pairs: selectedPairs,
+      const builderState = getBuilderState();
+      const riskConfig = {
         stoploss,
-        stake_amount: stakeAmount,
-        max_open_trades: maxOpenTrades,
+        roi: Object.fromEntries(roiTable.map(r => [String(r.minutes), r.roi])),
         trailing_stop: trailingStop,
         trailing_stop_positive: trailingStopPositive,
         trailing_stop_positive_offset: trailingStopPositiveOffset,
-        roi_table: roiTable,
-        protections: {
-          stoploss_guard: stoplossGuard,
-          max_drawdown: maxDrawdown,
-          cooldown_period: cooldownPeriod,
-        },
-        indicators: Object.entries(indicators)
-          .filter(([, v]) => v)
-          .map(([k]) => k),
-        long_conditions: longConditions,
-        short_conditions: shortConditions,
-        exit_conditions: exitConditions,
-        code: finalCode,
-        builder_state: JSON.stringify(getBuilderState()),
+        trailing_only_offset_is_reached: trailingOnlyOffsetIsReached,
+        use_custom_stoploss: enabledCallbacks.custom_stoploss ?? false,
+        protections: [
+          ...(stoplossGuard ? [{ method: "StoplossGuard", lookback_period_candles: 24, trade_limit: 4, stop_duration_candles: 12 }] : []),
+          ...(cooldownPeriod ? [{ method: "CooldownPeriod", stop_duration_candles: 5 }] : []),
+          ...(maxDrawdown ? [{ method: "MaxDrawdownProtection", max_drawdown_percent: 10, lookback_period_minutes: 1440 }] : []),
+        ],
       };
 
-      if (savedStrategyId) {
-        await updateStrategy(savedStrategyId, saveData);
-      } else {
+      // If new strategy, create base strategy record first
+      if (!savedStrategyId) {
+        const saveData = {
+          name: strategyName,
+          description,
+          lifecycle: "draft",
+        };
         const created = await createStrategy(saveData);
         setSavedStrategyId(created.id);
+
+        // Now create v1
+        const versionData = {
+          code: finalCode,
+          builder_state: builderState,
+          risk_config: riskConfig,
+          callbacks: enabledCallbacks,
+          changelog: "Initial version",
+        };
+        const newVersion = await createStrategyVersion(created.id, versionData);
+        setVersions([newVersion]);
+        setCurrentVersion(newVersion.version_number);
+        toast.dismiss(id);
+        toast.success(`${strategyName} v${newVersion.version_number} saved as DRAFT.`);
+      } else {
+        // Existing strategy — create new version
+        const versionData = {
+          code: finalCode,
+          builder_state: builderState,
+          risk_config: riskConfig,
+          callbacks: enabledCallbacks,
+          changelog: changelog || "Updated strategy",
+        };
+        const newVersion = await createStrategyVersion(savedStrategyId, versionData);
+        setVersions(prev => [...prev, newVersion]);
+        setCurrentVersion(newVersion.version_number);
+        setChangelog("");
+        setShowChangelogInput(false);
+        toast.dismiss(id);
+        toast.success(`${strategyName} v${newVersion.version_number} saved. Loading for deployment...`);
       }
-      toast.dismiss(id);
-      toast.success(`${strategyName} saved as DRAFT in Orchestrator.`);
     } catch (err) {
       toast.dismiss(id);
       toast.error(
@@ -934,10 +980,10 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [strategyName, description, exchange, timeframe, selectedPairs, stoploss, stakeAmount, maxOpenTrades,
-     trailingStop, trailingStopPositive, trailingStopPositiveOffset, roiTable,
+     trailingStop, trailingStopPositive, trailingStopPositiveOffset, trailingOnlyOffsetIsReached, roiTable,
      stoplossGuard, maxDrawdown, cooldownPeriod, indicators, longConditions,
      shortConditions, exitConditions, generateStrategyCode, manualCodeEdit, editableCode,
-     savedStrategyId, toast]);
+     savedStrategyId, changelog, enabledCallbacks, toast]);
 
   function togglePair(pair: string) {
     setSelectedPairs((prev) =>
@@ -2445,7 +2491,71 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
           <div className="flex-1 overflow-y-auto p-7">{stepPanels[currentStep]()}</div>
 
           {/* Wizard footer */}
-          <div className="px-6 py-3.5 border-t border-border bg-bg-1 flex justify-between items-center flex-shrink-0">
+          <div className="px-6 py-3.5 border-t border-border bg-bg-1 flex-col flex-shrink-0">
+            {/* Version selector and changelog */}
+            {savedStrategyId && versions.length > 0 && (
+              <div className="mb-3 flex items-center gap-4 pb-3 border-b border-border">
+                <div className="flex items-center gap-2">
+                  <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">Versions:</label>
+                  <div className="flex gap-1">
+                    {versions.map(v => (
+                      <button
+                        key={v.version_number}
+                        type="button"
+                        className={`px-2.5 py-1 rounded text-[11px] font-medium transition-all ${
+                          currentVersion === v.version_number
+                            ? "bg-accent text-white"
+                            : "bg-bg-3 text-text-2 hover:bg-bg-2 border border-border"
+                        }`}
+                        onClick={() => setCurrentVersion(v.version_number)}
+                      >
+                        v{v.version_number}
+                      </button>
+                    ))}
+                  </div>
+                  {currentVersion && currentVersion < versions[versions.length - 1]?.version_number && (
+                    <span className="text-[10px] text-orange ml-2">Warning: editing old version will create new version</span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Changelog input */}
+            {savedStrategyId && !showChangelogInput && (
+              <div className="mb-3 pb-3 border-b border-border">
+                <button
+                  type="button"
+                  onClick={() => setShowChangelogInput(true)}
+                  className="text-[11px] text-text-3 hover:text-accent transition-colors"
+                >
+                  + Add changelog before save
+                </button>
+              </div>
+            )}
+
+            {showChangelogInput && (
+              <div className="mb-3 pb-3 border-b border-border">
+                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-1 block">What changed?</label>
+                <textarea
+                  className="w-full px-2.5 py-1.5 rounded border border-border bg-bg-2 text-text-0 text-[12px] outline-none focus:border-accent resize-none"
+                  placeholder="e.g., Adjusted stoploss from -10% to -5%"
+                  value={changelog}
+                  onChange={(e) => setChangelog(e.target.value)}
+                  rows={2}
+                />
+                <div className="flex gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowChangelogInput(false)}
+                    className="text-[10px] text-text-3 hover:text-text-1"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center">
             <button
               type="button"
               className={`px-3.5 py-2 rounded-md border border-border bg-bg-2 text-text-1 text-xs font-medium cursor-pointer hover:border-border-hover hover:bg-bg-3 transition-all flex items-center gap-1.5 ${
@@ -2494,6 +2604,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                   {saving ? "Saving..." : "Save & Backtest \u2192"}
                 </button>
               )}
+            </div>
             </div>
           </div>
         </div>
@@ -2591,10 +2702,10 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
 
         {/* Deploy Modal */}
         <DeployModal
-          open={deployOpen}
+          isOpen={deployOpen}
           strategyName={strategyName}
-          strategyCode={manualCodeEdit ? editableCode : generateStrategyCode}
-          strategyId={savedStrategyId}
+          strategyId={savedStrategyId ?? 0}
+          currentVersionId={currentVersion ?? undefined}
           onClose={() => setDeployOpen(false)}
           onSuccess={() => router.push("/strategies")}
         />

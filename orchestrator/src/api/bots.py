@@ -534,7 +534,7 @@ async def import_bot(
     from ..ft_client import FTClient
     try:
         client = FTClient(
-            base_url=f"{api_url}:{api_port}",
+            api_url=f"{api_url}:{api_port}",
             username=api_username,
             password=api_password,
         )

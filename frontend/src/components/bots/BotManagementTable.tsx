@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { startBot, stopBot, botPause } from "@/lib/api";
+import { startBot, stopBot, botPause, drainBot } from "@/lib/api";
 import { useToast } from "@/components/ui/Toast";
 import { profitColor, fmt } from "@/lib/format";
 import type { Bot, FTProfit } from "@/types";
@@ -58,7 +58,7 @@ export default function BotManagementTable({ bots, botProfits, onRefresh }: BotM
           <table className="w-full border-collapse">
             <thead>
               <tr>
-                {["Status", "Name", "Strategy", "Mode", "P&L (closed)", "Trades", "Actions"].map((h) => (
+                {["Status", "Name", "Exchange", "Strategy", "Version", "Mode", "P&L (closed)", "Trades", "Actions"].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-2xs font-semibold text-text-3 uppercase tracking-wider border-b border-border whitespace-nowrap">
                     {h}
                   </th>
@@ -75,7 +75,8 @@ export default function BotManagementTable({ bots, botProfits, onRefresh }: BotM
                   <tr key={bot.id} className="hover:bg-bg-3 transition-colors">
                     <td className="px-4 py-3">
                       <div className={`w-2.5 h-2.5 rounded-full ${
-                        isRunning && bot.is_healthy ? "bg-green shadow-[0_0_6px_var(--color-green)]"
+                        bot.status === "draining" ? "bg-amber animate-pulse"
+                          : isRunning && bot.is_healthy ? "bg-green shadow-[0_0_6px_var(--color-green)]"
                           : bot.status === "error" ? "bg-red animate-pulse"
                           : isRunning ? "bg-amber" : "bg-bg-3"
                       }`} />
@@ -84,7 +85,17 @@ export default function BotManagementTable({ bots, botProfits, onRefresh }: BotM
                       <div className="text-xs font-semibold text-text-0">{bot.name}</div>
                       {bot.description && <div className="text-2xs text-text-3 truncate max-w-[160px]">{bot.description}</div>}
                     </td>
+                    <td className="px-4 py-3 text-xs text-text-2">
+                      {bot.exchange_name ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-semibold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+                          {bot.exchange_name}
+                        </span>
+                      ) : "\u2014"}
+                    </td>
                     <td className="px-4 py-3 text-xs text-text-2">{bot.strategy_name ?? "\u2014"}</td>
+                    <td className="px-4 py-3 text-xs text-text-2">
+                      {bot.strategy_version_id ? `v${bot.strategy_version_id}` : "\u2014"}
+                    </td>
                     <td className="px-4 py-3">
                       <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide border ${
                         bot.is_dry_run
@@ -126,6 +137,19 @@ export default function BotManagementTable({ bots, botProfits, onRefresh }: BotM
                               onClick={() => handleAction("Pause", bot.id, () => botPause(bot.id))}
                               className="border-amber/30 text-amber bg-amber-bg hover:bg-amber/[0.18]"
                             />
+                            {bot.status !== "draining" && (
+                              <ActionBtn
+                                label="Drain"
+                                loading={actionLoading === loadingKey("Drain")}
+                                disabled={actionLoading !== null}
+                                onClick={() => {
+                                  if (window.confirm("Stop new entries and wait for open positions to close?")) {
+                                    handleAction("Drain", bot.id, () => drainBot(bot.id));
+                                  }
+                                }}
+                                className="border-amber/30 text-amber bg-amber-bg hover:bg-amber/[0.18]"
+                              />
+                            )}
                           </>
                         )}
                         <ActionBtn

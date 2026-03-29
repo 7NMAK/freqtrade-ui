@@ -11,6 +11,7 @@ import {
   botFtStrategies,
   botTrades,
   botDownloadData,
+  botDownloadDataStatus,
   botConvertData,
   botConvertTradeData,
   botTradesToOhlcv,
@@ -392,14 +393,58 @@ export default function DataManagementPage() {
       if (dlCandleTypes.length > 0) params.candle_types = dlCandleTypes;
       if (dlDataFormatOhlcv) params.data_format_ohlcv = dlDataFormatOhlcv;
       if (dlNoParallelDownload) params.no_parallel_download = true;
-      const result = await botDownloadData(botId, params);
-      setDlLog((prev) => [
-        ...prev,
-        { type: "ok", text: result.message || `Download completed for ${total} datasets` },
-      ]);
-      toast.success("Download completed");
-      // Refresh data listing
-      loadDataList();
+      const startResult = await botDownloadData(botId, params);
+      const jobId = startResult.job_id;
+      if (!jobId) {
+        // Fallback: old sync response (no job_id means it completed inline)
+        setDlLog((prev) => [...prev, { type: "ok", text: startResult.message || `Download completed for ${total} datasets` }]);
+        toast.success("Download completed");
+        loadDataList();
+        setDownloading(false);
+        return;
+      }
+      setDlLog((prev) => [...prev, { type: "info", text: `Download job started (${jobId}). Polling for completion...` }]);
+
+      // Poll for completion
+      const pollInterval = 3000;
+      const maxPolls = 600; // 30 minutes max
+      let polls = 0;
+      const poll = async (): Promise<void> => {
+        polls++;
+        try {
+          const status = await botDownloadDataStatus(botId, jobId);
+          if (status.status === "running") {
+            if (polls % 10 === 0) {
+              setDlLog((prev) => [...prev, { type: "info", text: `Still downloading... (${Math.round(polls * pollInterval / 1000)}s elapsed)` }]);
+            }
+            if (polls < maxPolls) {
+              await new Promise<void>((r) => { setTimeout(r, pollInterval); });
+              return poll();
+            }
+            setDlLog((prev) => [...prev, { type: "err", text: "Download timed out after 30 minutes." }]);
+            toast.error("Download timed out");
+            return;
+          }
+          // Completed or error
+          const outputLines = (status.output || "").split("\n").filter(Boolean).slice(-20);
+          for (const line of outputLines) {
+            const isErr = status.status === "error" || line.toLowerCase().includes("error");
+            setDlLog((prev) => [...prev, { type: isErr ? "err" : "ok", text: line }]);
+          }
+          if (status.status === "completed") {
+            setDlLog((prev) => [...prev, { type: "ok", text: `Download completed for ${total} datasets` }]);
+            toast.success("Download completed");
+            loadDataList();
+          } else {
+            setDlLog((prev) => [...prev, { type: "err", text: `Download failed (exit code: ${status.exit_code})` }]);
+            toast.error("Download failed — check log for details");
+          }
+        } catch (pollErr) {
+          setDlLog((prev) => [...prev, { type: "err", text: `Poll error: ${pollErr instanceof Error ? pollErr.message : "Unknown"}` }]);
+          toast.error("Failed to check download status");
+        }
+      };
+      await poll();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       setDlLog((prev) => [

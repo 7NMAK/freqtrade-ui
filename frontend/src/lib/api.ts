@@ -424,10 +424,13 @@ export const botDownloadData = (id: number, params: {
   erase?: boolean;
   prepend?: boolean;
 }) =>
-  request<{ status: string; message: string }>(`/api/bots/${id}/download-data`, {
+  request<{ job_id: string; status: string; message: string }>(`/api/bots/${id}/download-data`, {
     method: "POST",
     body: JSON.stringify(params),
   });
+
+export const botDownloadDataStatus = (botId: number, jobId: string) =>
+  request<{ job_id: string; status: string; exit_code: number | null; output: string }>(`/api/bots/${botId}/download-data/status/${jobId}`);
 
 export const botConvertData = (id: number, params: {
   format_from: string;

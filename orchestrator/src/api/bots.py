@@ -1429,9 +1429,16 @@ async def bot_backtest_history_delete(bot_id: int, result_id: str, request: Requ
 
 # ── Data management (CLI commands — not native FT REST API) ──────────
 
+import threading
+import uuid as _uuid
+
+# In-memory store for background download jobs
+_download_jobs: dict[str, dict[str, Any]] = {}
+
+
 @router.post("/{bot_id}/download-data")
 async def bot_download_data(bot_id: int, body: dict[str, Any], request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
-    """Trigger freqtrade download-data via Docker exec on the bot container."""
+    """Start freqtrade download-data as background job. Returns job_id for polling."""
     import docker
     manager = request.app.state.bot_manager
     bot = await manager.get_bot(db, bot_id)
@@ -1439,20 +1446,57 @@ async def bot_download_data(bot_id: int, body: dict[str, Any], request: Request,
         raise HTTPException(404, "Bot not found")
     try:
         dk = docker.from_env()
-        container = dk.containers.get(bot.container_id or bot.name)
-        cmd = ["freqtrade", "download-data"]
-        if body.get("pairs"):
-            cmd += ["--pairs"] + body["pairs"]
-        if body.get("timeframes"):
-            cmd += ["--timeframes"] + body["timeframes"]
-        if body.get("timerange"):
-            cmd += ["--timerange", body["timerange"]]
-        if body.get("exchange"):
-            cmd += ["--exchange", body["exchange"]]
-        result = container.exec_run(cmd, detach=False)
-        return {"exit_code": result.exit_code, "output": result.output.decode("utf-8", errors="replace")[-2000:]}
+        container_name = bot.container_id or bot.name
+        # Verify container exists before launching thread
+        dk.containers.get(container_name)
     except Exception as e:
         raise HTTPException(502, f"Download-data failed: {e}")
+
+    cmd = ["freqtrade", "download-data"]
+    if body.get("pairs"):
+        cmd += ["--pairs"] + body["pairs"]
+    if body.get("timeframes"):
+        cmd += ["--timeframes"] + body["timeframes"]
+    if body.get("timerange"):
+        cmd += ["--timerange", body["timerange"]]
+    if body.get("exchange"):
+        cmd += ["--exchange", body["exchange"]]
+    if body.get("trading_mode"):
+        cmd += ["--trading-mode", body["trading_mode"]]
+
+    job_id = str(_uuid.uuid4())[:8]
+    _download_jobs[job_id] = {"status": "running", "exit_code": None, "output": "", "cmd": " ".join(cmd)}
+
+    def _run_download():
+        try:
+            dk2 = docker.from_env()
+            c = dk2.containers.get(container_name)
+            result = c.exec_run(cmd, detach=False)
+            _download_jobs[job_id] = {
+                "status": "completed" if result.exit_code == 0 else "error",
+                "exit_code": result.exit_code,
+                "output": result.output.decode("utf-8", errors="replace")[-4000:],
+                "cmd": " ".join(cmd),
+            }
+        except Exception as exc:
+            _download_jobs[job_id] = {
+                "status": "error",
+                "exit_code": -1,
+                "output": str(exc),
+                "cmd": " ".join(cmd),
+            }
+
+    threading.Thread(target=_run_download, daemon=True).start()
+    return {"job_id": job_id, "status": "running", "message": "Download started in background. Poll /download-data/status/{job_id} for progress."}
+
+
+@router.get("/{bot_id}/download-data/status/{job_id}")
+async def bot_download_data_status(bot_id: int, job_id: str) -> dict[str, Any]:
+    """Poll status of a background download-data job."""
+    job = _download_jobs.get(job_id)
+    if not job:
+        raise HTTPException(404, "Job not found")
+    return {"job_id": job_id, **job}
 
 
 @router.post("/{bot_id}/convert-data")

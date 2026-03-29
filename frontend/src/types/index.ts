@@ -839,15 +839,19 @@ export interface FTBacktestTagStat {
 }
 
 /** Per-period row in backtest periodic_breakdown */
-export interface FTBacktestPeriodBreakdown {
-  [period: string]: {
-    date: string;
-    profit_abs: number;
-    wins: number;
-    draws: number;
-    losses: number;
-  };
+export interface FTBacktestPeriodEntry {
+  date: string;
+  date_ts?: number;
+  profit_abs: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  trades?: number;
+  profit_factor?: number;
 }
+
+/** Deprecated alias */
+export type FTBacktestPeriodBreakdown = Record<string, FTBacktestPeriodEntry> | FTBacktestPeriodEntry[];
 
 /** Strategy-level backtest result (nested under backtest_result.strategy_name) */
 export interface FTBacktestStrategyResult {
@@ -920,10 +924,12 @@ export interface FTBacktestStrategyResult {
   winner_holding_avg_s?: number;
   loser_holding_avg: string;
   loser_holding_avg_s?: number;
-  max_drawdown: number;
+  max_drawdown: number | null;
+  max_drawdown_account?: number;
   max_drawdown_abs: number;
   max_drawdown_low: number;
   max_drawdown_high: number;
+  max_relative_drawdown?: number;
   drawdown_start: string;
   drawdown_start_ts: number;
   drawdown_end: string;

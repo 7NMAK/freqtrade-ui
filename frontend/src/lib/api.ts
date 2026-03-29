@@ -473,7 +473,7 @@ export const botHyperoptShow = (id: number, epoch: number) =>
 
 export const botBacktestHistory = (id: number) =>
   request<{ results: Array<{ filename: string; strategy: string; run_id: string; backtest_start_time: number }> }>(
-    `/api/bots/${id}/backtest-history`
+    `/api/bots/${id}/backtest/history`
   );
 
 export const botListData = (id: number) =>

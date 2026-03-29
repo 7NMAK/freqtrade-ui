@@ -1395,7 +1395,7 @@ async def bot_backtest_abort(bot_id: int, request: Request, db: AsyncSession = D
 
 
 @router.get("/{bot_id}/backtest/history")
-async def bot_backtest_history(bot_id: int, request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
+async def bot_backtest_history(bot_id: int, request: Request, db: AsyncSession = Depends(get_db)):
     """GET /api/v1/backtest/history — backtest history."""
     client = await _get_bot_client(bot_id, request, db)
     try:
@@ -1406,7 +1406,7 @@ async def bot_backtest_history(bot_id: int, request: Request, db: AsyncSession =
 
 
 @router.get("/{bot_id}/backtest/history/result")
-async def bot_backtest_history_result(bot_id: int, request: Request, db: AsyncSession = Depends(get_db), id: str = "") -> dict[str, Any]:
+async def bot_backtest_history_result(bot_id: int, request: Request, db: AsyncSession = Depends(get_db), id: str = ""):
     """GET /api/v1/backtest/history/result — specific result."""
     client = await _get_bot_client(bot_id, request, db)
     try:

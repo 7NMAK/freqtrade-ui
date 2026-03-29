@@ -365,6 +365,7 @@ function BacktestingInner() {
   const [analysisTab, setAnalysisTab] = useState(0);
   const [breakdownTab, setBreakdownTab] = useState<"day" | "month">("day");
   const [showRejected, setShowRejected] = useState(false);
+  const [showAllBreakdown, setShowAllBreakdown] = useState(false);
 
   // API state
   const [bots, setBots] = useState<Bot[]>([]);
@@ -561,13 +562,12 @@ function BacktestingInner() {
         setRunning(false);
         return;
       }
-      if (issue === "ABORT_PREVIOUS") {
-        toast.update(id, { message: "Aborting previous backtest...", type: "loading" });
-        await botBacktestDelete(botId);
-        // Brief delay for FT to release backtest lock
-        await new Promise<void>((resolve) => { const t = globalThis.setTimeout(() => resolve(), 1000); void t; });
-      }
+      // Always clear previous backtest to avoid cached results
+      toast.update(id, { message: "Clearing previous results...", type: "loading" });
+      try { await botBacktestDelete(botId); } catch { /* no previous backtest — fine */ }
+      await new Promise<void>((resolve) => { const t = globalThis.setTimeout(() => resolve(), 500); void t; });
 
+      setShowAllBreakdown(false);
       toast.update(id, { message: "Starting backtest...", type: "loading" });
       const timerange = btTimerangeStart && btTimerangeEnd
         ? `${btTimerangeStart.replace(/-/g, "")}${btTimerangeEnd ? "-" + btTimerangeEnd.replace(/-/g, "") : ""}`
@@ -696,7 +696,7 @@ function BacktestingInner() {
         baseline_profit: sr.profit_total_abs,
         baseline_trades: sr.total_trades,
         baseline_sharpe: sr.sharpe ?? undefined,
-        baseline_max_drawdown: sr.max_drawdown,
+        baseline_max_drawdown: sr.max_drawdown_account ?? sr.max_drawdown,
       });
       setAiPostAnalysis(result);
       toast.dismiss(id);
@@ -1666,7 +1666,8 @@ function BacktestingInner() {
             /* ── We have results ── */
             const winRate = sr.total_trades > 0 ? ((sr.wins ?? 0) / sr.total_trades) * 100 : 0;
             const profitPct = (sr.profit_total ?? 0) * 100;
-            const ddPct = (sr.max_drawdown ?? 0) * 100;
+            // FT 2026.2: max_drawdown is null, use max_drawdown_account instead
+            const ddPct = (sr.max_drawdown_account ?? sr.max_drawdown ?? 0) * 100;
             const stakeCurrency = sr.stake_currency || "USDT";
             const pairRows = sr.results_per_pair || [];
             // Separate TOTAL row (FT includes a TOTAL row with key "TOTAL")
@@ -1681,10 +1682,12 @@ function BacktestingInner() {
               : analysisTab === 2 ? mixTagStats
               : enterTagStats; // default fallback
 
-            // Period breakdown from FT
+            // Period breakdown from FT — FT 2026.2 returns arrays, not dicts
             const periodicBreakdown = sr.periodic_breakdown;
-            const breakdownEntries = periodicBreakdown && periodicBreakdown[breakdownTab]
-              ? Object.entries(periodicBreakdown[breakdownTab])
+            const rawBreakdown = periodicBreakdown ? periodicBreakdown[breakdownTab] : null;
+            const breakdownEntries: Array<{ date: string; profit_abs: number; wins: number; draws: number; losses: number; trades?: number }> =
+              Array.isArray(rawBreakdown) ? rawBreakdown
+              : rawBreakdown && typeof rawBreakdown === "object" ? Object.values(rawBreakdown)
               : [];
 
             // Runtime
@@ -1741,7 +1744,7 @@ function BacktestingInner() {
                                   </td>
                                   <td className="py-2 pr-3 text-right text-text-1">{wr.toFixed(1)}%</td>
                                   <td className="py-2 pr-3 text-right text-text-1">{r.sharpe?.toFixed(2) ?? "\u2014"}</td>
-                                  <td className="py-2 pr-3 text-right text-red">{((r.max_drawdown ?? 0) * 100).toFixed(2)}%</td>
+                                  <td className="py-2 pr-3 text-right text-red">{((r.max_drawdown_account ?? r.max_drawdown ?? 0) * 100).toFixed(2)}%</td>
                                   <td className="py-2 text-right text-text-2">{r.holding_avg ?? "\u2014"}</td>
                                 </tr>
                               );
@@ -1982,17 +1985,26 @@ function BacktestingInner() {
                           </tr>
                         </thead>
                         <tbody>
-                          {breakdownEntries.map(([key, val]) => {
+                          {breakdownEntries.slice(0, showAllBreakdown ? undefined : 20).map((entry, i) => {
                             return (
-                              <tr key={key} className="hover:bg-bg-3 transition-colors">
-                                <td className="px-4 py-3 text-xs font-medium text-text-0">{val.date || key}</td>
-                                <td className={`px-4 py-3 text-xs font-semibold ${val.profit_abs >= 0 ? "text-green" : "text-red"}`}>{fmtNum(val.profit_abs)}</td>
-                                <td className="px-4 py-3 text-xs text-green">{val.wins}</td>
-                                <td className="px-4 py-3 text-xs text-red">{val.losses}</td>
-                                <td className="px-4 py-3 text-xs text-text-2">{val.draws}</td>
+                              <tr key={entry.date || i} className="hover:bg-bg-3 transition-colors">
+                                <td className="px-4 py-3 text-xs font-medium text-text-0">{entry.date}</td>
+                                <td className={`px-4 py-3 text-xs font-semibold ${(entry.profit_abs ?? 0) >= 0 ? "text-green" : "text-red"}`}>{fmtNum(entry.profit_abs)}</td>
+                                <td className="px-4 py-3 text-xs text-green">{entry.wins}</td>
+                                <td className="px-4 py-3 text-xs text-red">{entry.losses}</td>
+                                <td className="px-4 py-3 text-xs text-text-2">{entry.draws}</td>
                               </tr>
                             );
                           })}
+                          {breakdownEntries.length > 20 && !showAllBreakdown && (
+                            <tr>
+                              <td colSpan={5} className="px-4 py-3 text-center">
+                                <button type="button" onClick={() => setShowAllBreakdown(true)} className="text-accent text-[11px] font-medium hover:underline cursor-pointer">
+                                  Show all {breakdownEntries.length} rows
+                                </button>
+                              </td>
+                            </tr>
+                          )}
                         </tbody>
                       </table>
                     )}

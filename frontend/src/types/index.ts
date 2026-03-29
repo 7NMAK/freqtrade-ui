@@ -959,8 +959,6 @@ export interface FTBacktestResult {
     metadata?: Record<string, unknown>;
     strategy?: Record<string, FTBacktestStrategyResult>;
     strategy_comparison?: Array<Record<string, unknown>>;
-    /** Legacy fallback: older FT versions may put strategies at top level */
-    [k: string]: unknown;
   };
 }
 

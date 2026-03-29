@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
@@ -9,6 +10,7 @@ import { TOOLTIPS } from "@/lib/tooltips";
 import { REFRESH_INTERVALS } from "@/lib/constants";
 import {
   getBots,
+  getStrategy,
   botBacktestStart,
   botBacktestResults,
   botBacktestDelete,
@@ -326,6 +328,8 @@ function StatBox({ label, value, sub, color }: { label: string; value: string; s
 
 export default function BacktestingPage() {
   const toast = useToast();
+  const searchParams = useSearchParams();
+  const qsStrategyId = useMemo(() => searchParams.get("strategyId"), [searchParams]);
   const [mainTab, setMainTab] = useState<"backtest" | "hyperopt" | "validation">("backtest");
   const [exportMode, setExportMode] = useState("trades");
   const [breakdownChecks, setBreakdownChecks] = useState({ day: true, week: false, month: true });
@@ -419,6 +423,22 @@ export default function BacktestingPage() {
         toast.error(err instanceof Error ? err.message : "Failed to load strategies from bot.");
       });
   }, [selectedBotId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-select strategy from query param (e.g. from Strategies page "Run Backtest" button)
+  useEffect(() => {
+    if (!qsStrategyId) return;
+    const stratId = parseInt(qsStrategyId, 10);
+    if (isNaN(stratId)) return;
+    getStrategy(stratId)
+      .then((strat) => {
+        if (strat.name) {
+          setSelectedStrategy(strat.name);
+        }
+      })
+      .catch(() => {
+        // Strategy not found in orchestrator — ignore silently
+      });
+  }, [qsStrategyId]);
 
   // Poll backtest results (with cleanup on unmount + race-safe)
   const pollResults = useCallback(async (botId: number, intervalMs = REFRESH_INTERVALS.BACKTEST_POLL, maxAttempts = 60) => {

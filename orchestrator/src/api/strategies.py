@@ -156,35 +156,57 @@ async def get_strategy_version_count(strategy_id: int, db: AsyncSession) -> int:
     return result.scalar() or 0
 
 
+async def get_bots_using_strategy(strategy_id: int, db: AsyncSession) -> int:
+    """Count non-deleted bots whose strategy_version_id points to any version of this strategy."""
+    from ..models.bot_instance import BotInstance
+
+    version_ids_q = select(StrategyVersion.id).where(StrategyVersion.strategy_id == strategy_id)
+    bots_count_result = await db.execute(
+        select(func.count(BotInstance.id)).where(
+            BotInstance.strategy_version_id.in_(version_ids_q),
+            BotInstance.is_deleted == False,  # noqa: E712
+        )
+    )
+    return bots_count_result.scalar() or 0
+
+
 # ── Routes ───────────────────────────────────────────────────
 
 # ── Specific Routes (must come before parametrized routes)
 
+import os
+import time
+
+STRATEGY_DIR = "/opt/freqtrade/user_data/strategies"
+
+_strategies_cache: list[str] | None = None
+_strategies_cache_time: float = 0
+
+
 @router.get("/available", response_model=list[str])
 async def get_available_strategies() -> list[str]:
     """
-    List strategy files available on FT server.
-    Reads from /opt/freqtrade/user_data/strategies/*.py
+    List .py strategy files from the shared Docker volume mount.
+    Results are cached for 30 seconds to avoid repeated filesystem reads.
     """
-    import subprocess
-    try:
-        # List .py files in FT strategies directory
-        result = subprocess.run(
-            [
-                "ssh", "-o", "StrictHostKeyChecking=no",
-                "root@204.168.187.107",
-                "ls /opt/freqtrade/user_data/strategies/*.py 2>/dev/null | xargs basename -a"
-            ],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        if result.returncode == 0:
-            filenames = [f.strip() for f in result.stdout.strip().split('\n') if f.strip()]
-            return filenames
+    global _strategies_cache, _strategies_cache_time
+
+    if _strategies_cache is not None and time.time() - _strategies_cache_time < 30:
+        return _strategies_cache
+
+    if not os.path.isdir(STRATEGY_DIR):
+        _strategies_cache = []
+        _strategies_cache_time = time.time()
         return []
-    except Exception as e:
-        raise HTTPException(500, f"Failed to list available strategies: {str(e)}")
+
+    result = sorted([
+        f for f in os.listdir(STRATEGY_DIR)
+        if f.endswith(".py") and not f.startswith("__")
+    ])
+
+    _strategies_cache = result
+    _strategies_cache_time = time.time()
+    return result
 
 
 @router.post("/import", response_model=StrategyResponse, status_code=201)
@@ -194,12 +216,10 @@ async def import_strategy(
     auth_payload: dict[str, Any] = Depends(require_auth),
 ) -> StrategyResponse:
     """
-    Import a strategy from FT server or upload.
+    Import a strategy from FT server volume mount or upload.
     Parses code to extract: class name, timeframe, stoploss, minimal_roi.
     Auto-creates strategy in DRAFT + v1.
     """
-    import subprocess
-
     code = None
     class_name = None
 
@@ -207,24 +227,16 @@ async def import_strategy(
         if not body.filename:
             raise HTTPException(400, "filename required for server import")
 
-        # Read from FT server
+        # Read from shared Docker volume mount
+        filepath = os.path.join(STRATEGY_DIR, body.filename)
+        # Prevent path traversal
+        if not os.path.realpath(filepath).startswith(os.path.realpath(STRATEGY_DIR)):
+            raise HTTPException(400, "Invalid filename")
+        if not os.path.isfile(filepath):
+            raise HTTPException(404, f"Strategy file not found: {body.filename}")
         try:
-            result = subprocess.run(
-                [
-                    "ssh", "-o", "StrictHostKeyChecking=no",
-                    "root@204.168.187.107",
-                    f"cat /opt/freqtrade/user_data/strategies/{body.filename}"
-                ],
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-            if result.returncode != 0:
-                raise HTTPException(404, f"Strategy file not found: {body.filename}")
-            code = result.stdout
-
-        except subprocess.TimeoutExpired:
-            raise HTTPException(500, "Timeout reading strategy file")
+            with open(filepath, "r", encoding="utf-8") as f:
+                code = f.read()
         except Exception as e:
             raise HTTPException(500, f"Failed to read strategy: {str(e)}")
 
@@ -314,6 +326,7 @@ async def list_strategies(db: AsyncSession = Depends(get_db)) -> list[StrategyRe
     responses = []
     for s in strategies:
         version_count = await get_strategy_version_count(s.id, db)
+        bots_using = await get_bots_using_strategy(s.id, db)
         current_version_number = None
         if s.current_version_id:
             v_result = await db.execute(
@@ -332,7 +345,7 @@ async def list_strategies(db: AsyncSession = Depends(get_db)) -> list[StrategyRe
             current_version_id=s.current_version_id,
             current_version_number=current_version_number,
             version_count=version_count,
-            bots_using=0,  # TODO: count bots using this strategy
+            bots_using=bots_using,
             code=s.code,  # DEPRECATED
             exchange=s.exchange,  # DEPRECATED
             timeframe=s.timeframe,  # DEPRECATED
@@ -432,6 +445,7 @@ async def get_strategy(
         raise HTTPException(404, "Strategy not found")
 
     version_count = await get_strategy_version_count(strategy.id, db)
+    bots_using = await get_bots_using_strategy(strategy.id, db)
     current_version_number = None
     if strategy.current_version_id:
         v_result = await db.execute(
@@ -450,7 +464,7 @@ async def get_strategy(
         current_version_id=strategy.current_version_id,
         current_version_number=current_version_number,
         version_count=version_count,
-        bots_using=0,
+        bots_using=bots_using,
         code=strategy.code,
         exchange=strategy.exchange,
         timeframe=strategy.timeframe,
@@ -553,6 +567,7 @@ async def update_strategy(
     ))
 
     version_count = await get_strategy_version_count(strategy.id, db)
+    bots_using = await get_bots_using_strategy(strategy.id, db)
     current_version_number = None
     if strategy.current_version_id:
         v_result = await db.execute(
@@ -571,7 +586,7 @@ async def update_strategy(
         current_version_id=strategy.current_version_id,
         current_version_number=current_version_number,
         version_count=version_count,
-        bots_using=0,
+        bots_using=bots_using,
         code=strategy.code,
         exchange=strategy.exchange,
         timeframe=strategy.timeframe,
@@ -607,6 +622,7 @@ async def delete_strategy(
     ))
 
     version_count = await get_strategy_version_count(strategy.id, db)
+    bots_using = await get_bots_using_strategy(strategy.id, db)
     current_version_number = None
     if strategy.current_version_id:
         v_result = await db.execute(
@@ -625,7 +641,7 @@ async def delete_strategy(
         current_version_id=strategy.current_version_id,
         current_version_number=current_version_number,
         version_count=version_count,
-        bots_using=0,
+        bots_using=bots_using,
         code=strategy.code,
         exchange=strategy.exchange,
         timeframe=strategy.timeframe,

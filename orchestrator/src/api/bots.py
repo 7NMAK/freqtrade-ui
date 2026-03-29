@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import flag_modified
 
 from ..auth import require_auth
+from ..crypto import decrypt
 from ..database import get_db
 from ..models.bot_instance import BotInstance, BotStatus
 from ..models.audit_log import AuditLog
@@ -238,11 +239,11 @@ async def update_bot(
     request: Request,
     db: AsyncSession = Depends(get_db),
     auth_payload: dict[str, Any] = Depends(require_auth),
-) -> dict[str, Any]:
+):
     """
     Update bot metadata and configuration.
     All fields optional for partial updates.
-    
+
     Returns: BotResponse + "requires_restart" flag if config changed.
     """
     manager = request.app.state.bot_manager
@@ -277,12 +278,14 @@ async def update_bot(
 
     if body.exchange_key is not None:
         changes["exchange_key"] = {"old": "***", "new": "***"}
-        bot.exchange_key_enc = body.exchange_key  # TODO: encrypt in Phase 4
+        from ..crypto import encrypt
+        bot.exchange_key_enc = encrypt(body.exchange_key)
         config_changed = True
 
     if body.exchange_secret is not None:
         changes["exchange_secret"] = {"old": "***", "new": "***"}
-        bot.exchange_secret_enc = body.exchange_secret  # TODO: encrypt in Phase 4
+        from ..crypto import encrypt
+        bot.exchange_secret_enc = encrypt(body.exchange_secret)
         config_changed = True
 
     if body.exchange_password is not None:
@@ -407,12 +410,13 @@ async def generate_config(
         "max_open_trades": bot.max_open_trades or 3,
         "stake_currency": bot.stake_currency or "USDT",
         "stake_amount": bot.stake_amount or "unlimited",
+        "timeframe": bot.timeframe,
         "dry_run": bot.is_dry_run,
-        "dry_run_wallet": 10000,
+        "dry_run_wallet": bot.config_overrides.get("dry_run_wallet", 10000) if bot.config_overrides else 10000,
         "exchange": {
             "name": bot.exchange_name or "binance",
-            "key": bot.exchange_key_enc or "",
-            "secret": bot.exchange_secret_enc or "",
+            "key": decrypt(bot.exchange_key_enc) or "",
+            "secret": decrypt(bot.exchange_secret_enc) or "",
             "pair_whitelist": bot.pair_whitelist or [],
             "pair_blacklist": bot.pair_blacklist or [],
         },
@@ -633,6 +637,142 @@ async def stop_bot(bot_id: int, request: Request, db: AsyncSession = Depends(get
     except FTClientError as e:
         detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
         raise HTTPException(502, detail=detail)
+
+
+@router.post("/{bot_id}/force-stop")
+async def force_stop_bot(
+    bot_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    auth_payload: dict[str, Any] = Depends(require_auth),
+) -> dict[str, Any]:
+    """
+    Force-stop a bot: forceexit all open positions, then stop trading.
+
+    1. POST /api/v1/forceexit (trade_id="all") — close all open positions at market
+    2. POST /api/v1/stop — stop the trading loop
+    3. Update bot status to STOPPED
+    4. Log the action
+
+    This is equivalent to a Hard Kill on a single bot (see kill_switch).
+    """
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+
+    client = await manager.get_client(bot)
+    forceexit_failed = False
+    exit_result = None
+    stop_result = None
+
+    # Step 1: Force-exit all open positions
+    try:
+        exit_result = await client.forceexit("all")
+    except FTClientError as e:
+        forceexit_failed = True
+        exit_result = {"error": str(e)}
+
+    # Step 2: Stop trading (always attempt, even if forceexit failed)
+    try:
+        stop_result = await client.stop()
+    except FTClientError as e:
+        stop_result = {"error": str(e)}
+
+    # Step 3: Update status
+    bot.status = BotStatus.STOPPED
+
+    # Step 4: Audit log
+    actor = auth_payload.get("sub", "user")
+    db.add(AuditLog(
+        action="bot.force_stop",
+        actor=actor,
+        target_type="bot",
+        target_id=bot.id,
+        target_name=bot.name,
+        details=json.dumps({
+            "forceexit_failed": forceexit_failed,
+            "exit_result": str(exit_result),
+            "stop_result": str(stop_result),
+        }),
+    ))
+    await db.flush()
+
+    result = {
+        "forceexit": exit_result,
+        "stop": stop_result,
+        "success": not forceexit_failed,
+        "status": "stopped",
+    }
+    if forceexit_failed:
+        result["warning"] = "Force-exit failed — positions may still be open"
+
+    return result
+
+
+@router.post("/{bot_id}/restart")
+async def restart_bot(
+    bot_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    auth_payload: dict[str, Any] = Depends(require_auth),
+) -> dict[str, Any]:
+    """
+    Restart a bot: stop, wait briefly, then start.
+
+    1. POST /api/v1/stop — stop the trading loop
+    2. Wait 2 seconds for graceful shutdown
+    3. POST /api/v1/start — start the trading loop
+    4. Log the action
+    """
+    import asyncio
+
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+
+    client = await manager.get_client(bot)
+
+    # Step 1: Stop
+    stop_result = None
+    try:
+        stop_result = await client.stop()
+    except FTClientError:
+        # Bot may already be stopped — continue with start
+        stop_result = {"status": "already_stopped"}
+
+    # Step 2: Brief wait for graceful shutdown
+    await asyncio.sleep(2)
+
+    # Step 3: Start
+    try:
+        start_result = await client.start()
+    except FTClientError as e:
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
+
+    # Update status
+    bot.status = BotStatus.RUNNING
+    bot.consecutive_failures = 0
+    bot.is_healthy = True
+
+    # Step 4: Audit log
+    actor = auth_payload.get("sub", "user")
+    db.add(AuditLog(
+        action="bot.restart",
+        actor=actor,
+        target_type="bot",
+        target_id=bot.id,
+        target_name=bot.name,
+    ))
+    await db.flush()
+
+    return {
+        "stop": stop_result,
+        "start": start_result,
+        "status": "running",
+    }
 
 
 @router.post("/{bot_id}/reload-config")

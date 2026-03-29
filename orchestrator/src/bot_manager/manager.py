@@ -16,6 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import settings
+from ..crypto import encrypt
 from ..ft_client import FTClient, FTClientError
 from ..models.bot_instance import BotInstance, BotStatus
 from ..models.audit_log import AuditLog
@@ -93,6 +94,9 @@ class BotManager:
         Register an existing FT bot container with the orchestrator.
         Does NOT create a Docker container — that's done separately or already exists.
 
+        Container lifecycle (Docker create/destroy) is Phase 4.
+        Phase 1-2 only manages existing containers via FT REST API.
+
         V2: Accepts all trading config fields (exchange, stake, mode, etc.)
         """
         # M5: duplicate bot name check
@@ -119,8 +123,8 @@ class BotManager:
             docker_image=docker_image,
             # V2 fields
             exchange_name=exchange_name,
-            exchange_key_enc=exchange_key,  # TODO: encrypt in Phase 4
-            exchange_secret_enc=exchange_secret,  # TODO: encrypt in Phase 4
+            exchange_key_enc=encrypt(exchange_key) if exchange_key else None,
+            exchange_secret_enc=encrypt(exchange_secret) if exchange_secret else None,
             exchange_password=exchange_password,
             exchange_uid=exchange_uid,
             exchange_subaccount=exchange_subaccount,

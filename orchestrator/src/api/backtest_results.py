@@ -124,7 +124,10 @@ async def _get_result_or_404(
 ) -> BacktestResult:
     """Helper to fetch a backtest result by ID or raise 404."""
     result = await db.execute(
-        select(BacktestResult).where(BacktestResult.id == result_id)
+        select(BacktestResult).where(
+            BacktestResult.id == result_id,
+            BacktestResult.is_deleted == False,  # noqa: E712
+        )
     )
     backtest = result.scalar_one_or_none()
     if not backtest:
@@ -190,7 +193,7 @@ async def list_backtest_results(
     - version_id: specific version
     - exchange: specific exchange data source
     """
-    query = select(BacktestResult)
+    query = select(BacktestResult).where(BacktestResult.is_deleted == False)  # noqa: E712
 
     if version_id:
         query = query.where(BacktestResult.strategy_version_id == version_id)
@@ -199,14 +202,28 @@ async def list_backtest_results(
         query = (
             select(BacktestResult)
             .join(StrategyVersion)
-            .where(StrategyVersion.strategy_id == strategy_id)
+            .where(
+                StrategyVersion.strategy_id == strategy_id,
+                BacktestResult.is_deleted == False,  # noqa: E712
+            )
         )
 
     if exchange:
         query = query.where(BacktestResult.exchange_data == exchange)
 
-    # Count total
-    count_result = await db.execute(select(func.count(BacktestResult.id)))
+    # Count total (apply the same filters as the main query)
+    count_query = select(func.count(BacktestResult.id)).where(
+        BacktestResult.is_deleted == False,  # noqa: E712
+    )
+    if version_id:
+        count_query = count_query.where(BacktestResult.strategy_version_id == version_id)
+    elif strategy_id:
+        count_query = count_query.join(StrategyVersion).where(
+            StrategyVersion.strategy_id == strategy_id,
+        )
+    if exchange:
+        count_query = count_query.where(BacktestResult.exchange_data == exchange)
+    count_result = await db.execute(count_query)
     total = count_result.scalar() or 0
 
     # Fetch paginated results
@@ -549,10 +566,10 @@ async def delete_backtest_result(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_auth),
 ) -> None:
-    """Delete a backtest result by ID."""
+    """Soft-delete a backtest result by ID (safety rule #7: never hard delete)."""
     backtest = await _get_result_or_404(db, result_id)
 
-    db.delete(backtest)
+    backtest.is_deleted = True
 
     await log_activity(
         db,
@@ -562,7 +579,7 @@ async def delete_backtest_result(
         target_type="backtest_result",
         target_id=backtest.id,
         target_name=f"Backtest {backtest.id}",
-        details="Deleted backtest result",
+        details="Soft-deleted backtest result",
     )
 
     await db.commit()

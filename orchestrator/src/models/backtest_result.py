@@ -8,7 +8,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
-    Date, DateTime, Numeric, ForeignKey, Integer, JSON, String, func
+    Boolean, Date, DateTime, Numeric, ForeignKey, Integer, JSON, String, func
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -71,6 +71,9 @@ class BacktestResult(Base):
 
     # Complete FT backtest output (for detailed analysis)
     full_results: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+    # Soft delete (never hard delete — safety rule #7)
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # Timestamp (immutable)
     created_at: Mapped[datetime] = mapped_column(

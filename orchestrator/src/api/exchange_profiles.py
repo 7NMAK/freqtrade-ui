@@ -158,9 +158,13 @@ async def list_exchange_profiles(
     if exchange:
         query = query.where(ExchangeProfile.exchange_name == exchange.lower())
 
-    # Count total
-    count_result = await db.execute(select(ExchangeProfile).where(ExchangeProfile.is_deleted.is_(False)))
-    total = len(count_result.scalars().all())
+    # Count total (apply the same filters as the main query)
+    from sqlalchemy import func
+    count_query = select(func.count(ExchangeProfile.id)).where(ExchangeProfile.is_deleted.is_(False))
+    if exchange:
+        count_query = count_query.where(ExchangeProfile.exchange_name == exchange.lower())
+    count_result = await db.execute(count_query)
+    total = count_result.scalar() or 0
 
     # Fetch paginated results
     query = query.offset(skip).limit(limit)

@@ -190,7 +190,7 @@ class PortfolioAggregator:
     async def get_combined_daily(self, db: AsyncSession, days: int = 30) -> dict:
         """
         Daily P&L from RUNNING bots.
-        TODO: merge cached daily from stopped bots for complete picture.
+        Note: stopped bots' cached daily data is not merged yet — Phase 4 enhancement.
         """
         bots = await self._bot_manager.get_all_bots(db)
         trading = self._trading_bots(bots)

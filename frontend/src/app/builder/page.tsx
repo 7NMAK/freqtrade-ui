@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import AppShell from "@/components/layout/AppShell";
 import { useToast } from "@/components/ui/Toast";
-import { createStrategy, getStrategy, updateStrategy, getBots, botWhitelist, createStrategyVersion, getStrategyVersions } from "@/lib/api";
+import { createStrategy, getStrategy, getBots, botWhitelist, createStrategyVersion, getStrategyVersions } from "@/lib/api";
 import DeployModal from "@/components/builder/DeployModal";
 import Tooltip from "@/components/ui/Tooltip";
 import { TOOLTIPS } from "@/lib/tooltips";

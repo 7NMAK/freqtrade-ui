@@ -20,7 +20,8 @@ type ReplacementOption = "graceful" | "force" | "save-only";
 export default function DeployModal({
   isOpen,
   onClose,
-  strategyId: _strategyId,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  strategyId,
   strategyName,
   currentVersionId,
   onSuccess,

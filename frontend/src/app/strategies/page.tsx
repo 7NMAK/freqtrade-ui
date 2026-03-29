@@ -345,26 +345,62 @@ export default function StrategiesPage() {
     const strat = strategiesRef.current.find((s) => s.id === selectedId);
     if (!strat) return;
     const botId = strat.bot_instance_id;
-    if (botId == null) {
-      // No bot linked — clear detail data
-      setDetailData({
-        openTrades: [],
-        closedTrades: [],
-        performance: [],
-        entries: [],
-        exits: [],
-        config: null,
-        stats: null,
-        backtestHistory: [],
-        backtestResult: null,
-        hyperoptResults: [],
-        aiValidations: [],
-      });
-      return;
-    }
+    // Find ft-backtest bot for backtest/hyperopt data (works even without linked bot)
+    const btBotId = bots.find((b) => b.ft_mode === "webserver")?.id
+      ?? bots.find((b) => b.name === "ft-backtest")?.id
+      ?? null;
 
     setDetailLoading(true);
     const load = async () => {
+      // If no linked bot, only fetch backtest-related data from ft-backtest
+      if (botId == null) {
+        const btFetches = btBotId != null
+          ? await Promise.allSettled([
+              botBacktestHistory(btBotId),    // 0
+              botHyperoptList(btBotId),       // 1
+              botBacktestResults(btBotId),    // 2
+            ])
+          : [];
+
+        if (!mountedRef.current) return;
+
+        // Extract backtest result matching THIS strategy
+        let btStratResult: FTBacktestStrategyResult | null = null;
+        if (btFetches[2]?.status === "fulfilled") {
+          const btRes = btFetches[2].value;
+          if (btRes.backtest_result?.strategy) {
+            // Prefer result matching this strategy name
+            btStratResult = btRes.backtest_result.strategy[strat.name] ?? null;
+            if (!btStratResult) {
+              const keys = Object.keys(btRes.backtest_result.strategy);
+              if (keys.length > 0) btStratResult = btRes.backtest_result.strategy[keys[0]];
+            }
+          }
+        }
+
+        // Filter backtest history to only show runs for this strategy
+        const allHistory = btFetches[0]?.status === "fulfilled" ? btFetches[0].value.results ?? [] : [];
+        const stratHistory = allHistory.filter(
+          (h: { strategy?: string }) => h.strategy === strat.name
+        );
+
+        setDetailData({
+          openTrades: [],
+          closedTrades: [],
+          performance: [],
+          entries: [],
+          exits: [],
+          config: null,
+          stats: null,
+          backtestHistory: stratHistory,
+          backtestResult: btStratResult,
+          hyperoptResults: btFetches[1]?.status === "fulfilled" ? btFetches[1].value.results ?? [] : [],
+          aiValidations: [],
+        });
+        setDetailLoading(false);
+        return;
+      }
+
       const results = await Promise.allSettled([
         botTrades(botId, 9999),         // 0 — fetch all trades
         botPerformance(botId),          // 1
@@ -372,10 +408,10 @@ export default function StrategiesPage() {
         botExits(botId),                // 3
         botConfig(botId),               // 4
         botStats(botId),                // 5
-        botBacktestHistory(botId),      // 6
-        botHyperoptList(botId),         // 7
+        botBacktestHistory(btBotId ?? botId),      // 6 — prefer ft-backtest
+        botHyperoptList(btBotId ?? botId),         // 7 — prefer ft-backtest
         fetchAIValidations({ botId, limit: 20 }), // 8
-        botBacktestResults(botId),      // 9
+        botBacktestResults(btBotId ?? botId),      // 9 — prefer ft-backtest
       ]);
 
       if (!mountedRef.current) return;
@@ -384,15 +420,24 @@ export default function StrategiesPage() {
       const tradesRes = results[0].status === "fulfilled" ? results[0].value : fallback;
       const allTrades = tradesRes.trades ?? [];
 
-      // Extract first strategy result from backtest
+      // Extract backtest result matching this strategy name
       let btStratResult: FTBacktestStrategyResult | null = null;
       if (results[9].status === "fulfilled") {
         const btRes = results[9].value;
         if (btRes.backtest_result?.strategy) {
-          const keys = Object.keys(btRes.backtest_result.strategy);
-          if (keys.length > 0) btStratResult = btRes.backtest_result.strategy[keys[0]];
+          btStratResult = btRes.backtest_result.strategy[strat.name] ?? null;
+          if (!btStratResult) {
+            const keys = Object.keys(btRes.backtest_result.strategy);
+            if (keys.length > 0) btStratResult = btRes.backtest_result.strategy[keys[0]];
+          }
         }
       }
+
+      // Filter backtest history to this strategy
+      const allHistory = results[6].status === "fulfilled" ? results[6].value.results ?? [] : [];
+      const stratHistory = allHistory.filter(
+        (h: { strategy?: string }) => h.strategy === strat.name
+      );
 
       setDetailData({
         openTrades: allTrades.filter((t) => t.is_open),
@@ -402,10 +447,7 @@ export default function StrategiesPage() {
         exits: results[3].status === "fulfilled" ? results[3].value : [],
         config: results[4].status === "fulfilled" ? results[4].value : null,
         stats: results[5].status === "fulfilled" ? results[5].value : null,
-        backtestHistory:
-          results[6].status === "fulfilled"
-            ? results[6].value.results
-            : [],
+        backtestHistory: stratHistory,
         backtestResult: btStratResult,
         hyperoptResults:
           results[7].status === "fulfilled"
@@ -1417,10 +1459,47 @@ function DetailContent({
             </div>
           )}
 
+          {/* Backtest summary when no bot is linked but backtest exists */}
+          {!bot && !profit && data.backtestResult && (
+            <div>
+              <div className={sectionTitle}>Latest Backtest</div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-bg-2 border border-border rounded-lg p-3">
+                  <div className="text-[10px] text-text-3 mb-1">Total Profit</div>
+                  <div className={`text-sm font-bold ${profitColor(data.backtestResult.profit_total_abs ?? 0)}`}>
+                    {fmtMoney(data.backtestResult.profit_total_abs ?? 0)}
+                  </div>
+                  <div className="text-[10px] text-text-3">{fmt((data.backtestResult.profit_total ?? 0) * 100, 2)}%</div>
+                </div>
+                <div className="bg-bg-2 border border-border rounded-lg p-3">
+                  <div className="text-[10px] text-text-3 mb-1">Win Rate</div>
+                  <div className="text-sm font-bold text-text-0">{fmt(data.backtestResult.win_rate * 100, 1)}%</div>
+                  <div className="text-[10px] text-text-3">
+                    {data.backtestResult.wins}W / {data.backtestResult.losses}L
+                  </div>
+                </div>
+                <div className="bg-bg-2 border border-border rounded-lg p-3">
+                  <div className="text-[10px] text-text-3 mb-1">Trades</div>
+                  <div className="text-sm font-bold text-text-0">{data.backtestResult.total_trades}</div>
+                  <div className="text-[10px] text-text-3">{data.backtestResult.backtest_days} days</div>
+                </div>
+                <div className="bg-bg-2 border border-border rounded-lg p-3">
+                  <div className="text-[10px] text-text-3 mb-1">Max Drawdown</div>
+                  <div className="text-sm font-bold text-red">
+                    {fmt((data.backtestResult.max_drawdown_account ?? data.backtestResult.max_drawdown ?? 0) * 100, 1)}%
+                  </div>
+                  <div className="text-[10px] text-text-3">
+                    {data.backtestResult.sharpe != null ? `Sharpe: ${fmt(data.backtestResult.sharpe, 2)}` : ""}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* No bot notice */}
-          {!bot && !profit && (
+          {!bot && !profit && !data.backtestResult && (
             <div className="text-center py-6 text-text-3 text-xs">
-              No bot linked to this strategy. Stats will appear when a bot is assigned.
+              No bot linked and no backtest results yet. Run a backtest to see stats here.
             </div>
           )}
         </div>
@@ -1770,7 +1849,18 @@ function DetailContent({
     /* ─── Configuration ─── */
     case "configuration": {
       if (!data.config) {
-        return <div className="text-center py-12 text-text-3 text-sm">No configuration data (no bot linked)</div>;
+        return (
+          <div className="space-y-1">
+            <div className={sectionTitle}>Strategy Info</div>
+            <div className={row}><span className={key}>Name</span><span className={`${val} font-mono text-accent`}>{strat.name}</span></div>
+            <div className={row}><span className={key}>Lifecycle</span><span className={val}>{strat.lifecycle}</span></div>
+            <div className={row}><span className={key}>Timeframe</span><span className={val}>{strat.timeframe ?? "\u2014"}</span></div>
+            {strat.description && <div className={row}><span className={key}>Description</span><span className={`${val} max-w-[200px] text-left`}>{strat.description}</span></div>}
+            <div className="text-center py-4 text-text-3 text-[10px] mt-4 border-t border-border/40">
+              Full bot configuration will appear when a bot is assigned to this strategy.
+            </div>
+          </div>
+        );
       }
       const c = data.config;
       return (

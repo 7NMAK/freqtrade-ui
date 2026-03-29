@@ -1564,9 +1564,13 @@ async def bot_list_data(bot_id: int, request: Request, db: AsyncSession = Depend
 
 # ── Hyperopt + Analysis (CLI commands) ───────────────────────────────
 
+# In-memory store for background hyperopt jobs
+_hyperopt_jobs: dict[str, dict[str, Any]] = {}
+
+
 @router.post("/{bot_id}/hyperopt")
 async def bot_hyperopt_start(bot_id: int, body: dict[str, Any], request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
-    """Start hyperopt via Docker exec on the bot container."""
+    """Start hyperopt as background job. Returns job_id for polling."""
     import docker
     manager = request.app.state.bot_manager
     bot = await manager.get_bot(db, bot_id)
@@ -1574,21 +1578,67 @@ async def bot_hyperopt_start(bot_id: int, body: dict[str, Any], request: Request
         raise HTTPException(404, "Bot not found")
     try:
         dk = docker.from_env()
-        container = dk.containers.get(bot.container_id or bot.name)
-        cmd = ["freqtrade", "hyperopt"]
-        if body.get("strategy"):
-            cmd += ["--strategy", body["strategy"]]
-        if body.get("epochs"):
-            cmd += ["--epochs", str(body["epochs"])]
-        if body.get("spaces"):
-            for s in body["spaces"]:
-                cmd += ["--spaces", s]
-        if body.get("jobs"):
-            cmd += ["-j", str(body["jobs"])]
-        result = container.exec_run(cmd, detach=True)
-        return {"status": "started", "detail": "Hyperopt running in background."}
+        container_name = bot.container_id or bot.name
+        dk.containers.get(container_name)  # verify exists
     except Exception as e:
         raise HTTPException(502, f"Hyperopt start failed: {e}")
+
+    cmd = ["freqtrade", "hyperopt"]
+    if body.get("strategy"):
+        cmd += ["--strategy", body["strategy"]]
+    if body.get("epochs"):
+        cmd += ["--epochs", str(body["epochs"])]
+    if body.get("spaces"):
+        for s in body["spaces"]:
+            cmd += ["--spaces", s]
+    if body.get("jobs"):
+        cmd += ["-j", str(body["jobs"])]
+    if body.get("hyperopt_loss"):
+        cmd += ["--hyperopt-loss", body["hyperopt_loss"]]
+    if body.get("min_trades"):
+        cmd += ["--min-trades", str(body["min_trades"])]
+    if body.get("timerange"):
+        cmd += ["--timerange", body["timerange"]]
+    if body.get("timeframe"):
+        cmd += ["--timeframe", body["timeframe"]]
+    if body.get("effort"):
+        cmd += ["--effort", str(body["effort"])]
+    if body.get("sampler"):
+        cmd += ["--sampler", body["sampler"]]
+
+    job_id = str(_uuid.uuid4())[:8]
+    _hyperopt_jobs[job_id] = {"status": "running", "exit_code": None, "output": "", "cmd": " ".join(cmd)}
+
+    def _run_hyperopt():
+        try:
+            dk2 = docker.from_env()
+            c = dk2.containers.get(container_name)
+            result = c.exec_run(cmd, detach=False)
+            _hyperopt_jobs[job_id] = {
+                "status": "completed" if result.exit_code == 0 else "error",
+                "exit_code": result.exit_code,
+                "output": result.output.decode("utf-8", errors="replace")[-8000:],
+                "cmd": " ".join(cmd),
+            }
+        except Exception as exc:
+            _hyperopt_jobs[job_id] = {
+                "status": "error",
+                "exit_code": -1,
+                "output": str(exc),
+                "cmd": " ".join(cmd),
+            }
+
+    threading.Thread(target=_run_hyperopt, daemon=True).start()
+    return {"job_id": job_id, "status": "running", "message": "Hyperopt started in background."}
+
+
+@router.get("/{bot_id}/hyperopt/status/{job_id}")
+async def bot_hyperopt_status(bot_id: int, job_id: str) -> dict[str, Any]:
+    """Poll status of a background hyperopt job."""
+    job = _hyperopt_jobs.get(job_id)
+    if not job:
+        raise HTTPException(404, "Job not found")
+    return {"job_id": job_id, **job}
 
 
 @router.post("/{bot_id}/lookahead-analysis")

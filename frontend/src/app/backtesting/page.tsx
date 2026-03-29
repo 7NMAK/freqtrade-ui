@@ -16,6 +16,7 @@ import {
   botBacktestDelete,
   botBacktestHistory,
   botHyperoptStart,
+  botHyperoptStatus,
   botLookaheadAnalysis,
   botRecursiveAnalysis,
   botFtStrategies,
@@ -416,6 +417,9 @@ function BacktestingInner() {
   const [aiPostAnalysis, setAiPostAnalysis] = useState<AIHyperoptAnalysis | null>(null);
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
 
+  // Hyperopt output from background job
+  const [hyperoptOutput, setHyperoptOutput] = useState<string>("");
+
   // Hyperopt comparison / outcome state
   const [hyperoptComparison, setHyperoptComparison] = useState<AIHyperoptComparison | null>(null);
   const [comparisonHistory, setComparisonHistory] = useState<Array<{ id: number; strategy_name: string; pair: string; timeframe: string; recommended_result_index: number | null; claude_confidence: number | null; grok_confidence: number | null; created_at: string | null }>>([]);
@@ -622,7 +626,10 @@ function BacktestingInner() {
     const id = toast.loading("Starting hyperopt...");
     try {
       const botId = parseInt(selectedBotId, 10);
-      await botHyperoptStart(botId, {
+      const timerange = btTimerangeStart && btTimerangeEnd
+        ? `${btTimerangeStart.replace(/-/g, "")}-${btTimerangeEnd.replace(/-/g, "")}`
+        : undefined;
+      const startRes = await botHyperoptStart(botId, {
         strategy: selectedStrategy,
         epochs: parseInt(hoEpochs, 10) || 500,
         spaces: Array.from(selectedSpaces),
@@ -631,9 +638,52 @@ function BacktestingInner() {
         min_trades: parseInt(hoMinTrades, 10) || 20,
         jobs: parseInt(hoWorkers, 10) || -1,
         hyperopt_loss: selectedLoss,
+        timerange,
+        timeframe: btTimeframe,
       });
-      toast.dismiss(id);
-      toast.success("Hyperopt started. Results will appear when complete.");
+      const jobId = startRes.job_id;
+      toast.update(id, { message: `Hyperopt running — ${selectedStrategy} (${hoEpochs} epochs)...`, type: "loading" });
+
+      // Poll for completion
+      const pollInterval = 5000;
+      const maxPolls = 720; // 1 hour max
+      let polls = 0;
+      const poll = async (): Promise<void> => {
+        polls++;
+        try {
+          const status = await botHyperoptStatus(botId, jobId);
+          if (status.status === "running") {
+            const elapsed = Math.round(polls * pollInterval / 1000);
+            if (polls % 12 === 0) {
+              toast.update(id, { message: `Hyperopt running... (${elapsed}s elapsed)`, type: "loading" });
+            }
+            if (polls < maxPolls) {
+              await new Promise<void>((r) => { setTimeout(r, pollInterval); });
+              return poll();
+            }
+            toast.dismiss(id);
+            toast.error("Hyperopt timed out after 1 hour.");
+            return;
+          }
+          toast.dismiss(id);
+          if (status.status === "completed") {
+            // Show last few lines of output as summary
+            const lines = (status.output || "").split("\n").filter(Boolean);
+            const summary = lines.slice(-5).join("\n");
+            toast.success(`Hyperopt complete! Check results below.\n${summary}`, { duration: 10000 });
+            // Set output for display
+            setHyperoptOutput(status.output || "");
+          } else {
+            const errLines = (status.output || "").split("\n").filter(Boolean).slice(-3).join("\n");
+            toast.error(`Hyperopt failed (exit ${status.exit_code}):\n${errLines}`, { duration: 10000 });
+            setHyperoptOutput(status.output || "");
+          }
+        } catch (pollErr) {
+          toast.dismiss(id);
+          toast.error(`Poll error: ${pollErr instanceof Error ? pollErr.message : "Unknown"}`);
+        }
+      };
+      await poll();
     } catch (err) {
       toast.dismiss(id);
       toast.error(err instanceof Error ? err.message : "Hyperopt failed.",
@@ -837,6 +887,7 @@ function BacktestingInner() {
     setHoWorkers("-1");
     setAnalyzePerEpoch(false);
     setDisableParamExport(false);
+    setHyperoptOutput("");
   }
 
   return (
@@ -1272,6 +1323,14 @@ function BacktestingInner() {
                     Reset
                   </button>
                 </div>
+
+                {/* ── Hyperopt Output ── */}
+                {hyperoptOutput && (
+                  <div className="mt-4">
+                    <div className="text-[10px] font-semibold text-text-3 uppercase tracking-wider mb-2">Hyperopt Output</div>
+                    <pre className="bg-bg-1 border border-border rounded-lg p-3 text-[10px] font-mono text-text-1 max-h-[400px] overflow-auto whitespace-pre-wrap break-words">{hyperoptOutput}</pre>
+                  </div>
+                )}
 
                 {/* ── AI Hyperopt Advisory ── */}
                 <hr className="border-t border-border my-4" />

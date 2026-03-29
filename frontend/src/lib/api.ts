@@ -393,6 +393,9 @@ export const botHyperoptStart = (id: number, params: Record<string, unknown>) =>
     body: JSON.stringify(params),
   });
 
+export const botHyperoptStatus = (botId: number, jobId: string) =>
+  request<{ job_id: string; status: string; exit_code: number | null; output: string }>(`/api/bots/${botId}/hyperopt/status/${jobId}`);
+
 export const botLookaheadAnalysis = (id: number, params: Record<string, unknown>) =>
   request(`/api/bots/${id}/lookahead-analysis`, {
     method: "POST",

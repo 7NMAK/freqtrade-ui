@@ -83,6 +83,10 @@ import {
 import { fmt, fmtMoney, profitColor } from "@/lib/format";
 import LogViewer from "@/components/dashboard/LogViewer";
 import BotManagementTable from "@/components/bots/BotManagementTable";
+import BotDetailPanel from "@/components/dashboard/BotDetailPanel";
+import BotEditModal from "@/components/bots/BotEditModal";
+import BotDeleteDialog from "@/components/bots/BotDeleteDialog";
+import { registerBot, deleteBot as deleteBotApi } from "@/lib/api";
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -509,6 +513,10 @@ export default function DashboardPage() {
   const [singleBotOpenTrades, setSingleBotOpenTrades] = useState<FTTrade[]>([]);
   const [singleBotOpenLoading, setSingleBotOpenLoading] = useState(false);
 
+  // Edit/Delete modals for side panel
+  const [editBot, setEditBot] = useState<Bot | null>(null);
+  const [deleteBot, setDeleteBot] = useState<Bot | null>(null);
+
   // ── Portfolio Data Loading (ALL BOTS) ────────────────────────────────
 
   const loadPortfolioData = useCallback(async (showLoadingState = false) => {
@@ -788,6 +796,49 @@ export default function DashboardPage() {
     await handleBotAction("Drain", botId, () => drainBot(botId));
   }
 
+  async function handleStartBot(botId: number) {
+    await handleBotAction("Start", botId, () => startBot(botId));
+  }
+
+  async function handleStopBot(botId: number) {
+    if (!window.confirm("Stop the bot?")) return;
+    await handleBotAction("Stop", botId, () => stopBot(botId));
+  }
+
+  async function handleDuplicateBot(bot: Bot) {
+    const loadId = toast.loading("Duplicating bot...");
+    try {
+      const newName = `${bot.name} (Copy)`;
+      const newBot = await registerBot({
+        name: newName,
+        exchange_name: bot.exchange_name,
+        strategy_name: bot.strategy_name,
+        is_dry_run: bot.is_dry_run,
+      });
+      toast.dismiss(loadId);
+      toast.success(`${newName} created`);
+      await loadPortfolioData(false);
+    } catch (err) {
+      toast.dismiss(loadId);
+      toast.error(err instanceof Error ? err.message : "Failed to duplicate bot");
+    }
+  }
+
+  async function handleDeleteBotConfirm(bot: Bot) {
+    const loadId = toast.loading(`Deleting ${bot.name}...`);
+    try {
+      await deleteBotApi(bot.id);
+      toast.dismiss(loadId);
+      toast.success(`${bot.name} deleted`);
+      if (selectedBotId === bot.id) setSelectedBotId(null);
+      await loadPortfolioData(false);
+      setDeleteBot(null);
+    } catch (err) {
+      toast.dismiss(loadId);
+      toast.error(err instanceof Error ? err.message : "Failed to delete bot");
+    }
+  }
+
   async function handleForceEntrySubmit(pair: string, side: "long" | "short", stake?: number) {
     if (!selectedBotId) return;
     setForceEntrySubmitting(true);
@@ -1043,24 +1094,6 @@ export default function DashboardPage() {
           </span>
           <button type="button" onClick={() => loadPortfolioData(true)}
             className="text-xs text-amber underline cursor-pointer hover:no-underline">Retry now</button>
-        </div>
-      )}
-
-      {/* ═══════════ BACK BUTTON (single bot view only) ═══════════ */}
-      {!isAllBotsView && selectedBot && (
-        <div className="mb-4 flex items-center gap-4">
-          <button
-            type="button"
-            onClick={() => setSelectedBotId(null)}
-            className="text-sm text-accent hover:text-accent/80 font-medium cursor-pointer transition-colors flex items-center gap-1"
-          >
-            ← All Bots
-          </button>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-text-0">{selectedBot.name}</span>
-            <StatusBadge status={selectedBot.status} isDryRun={selectedBot.is_dry_run} />
-            <span className="text-xs text-text-3">{selectedBot.strategy_name ?? "No strategy"}</span>
-          </div>
         </div>
       )}
 
@@ -1375,440 +1408,61 @@ export default function DashboardPage() {
       )}
 
       {/* ═══════════════════════════════════════════════════════════════ */}
-      {/* SINGLE BOT VIEW (when user clicks a bot card)                 */}
+      {/* BOT DETAIL SIDE PANEL (slide-in from right)                   */}
       {/* ═══════════════════════════════════════════════════════════════ */}
-      {!isAllBotsView && selectedBotId && (
-        <>
-          {/* Bot Control Toolbar */}
-          <Card className="mb-6">
-            <CardHeader title="Bot Control" icon="🎮" />
-            <CardBody className="p-4">
-              <div className="flex flex-wrap gap-2">
-                <button type="button" disabled={controlLoading !== null}
-                  onClick={() => handleBotAction("Start Bot", selectedBotId, () => startBot(selectedBotId))}
-                  className="px-3 py-1.5 text-xs font-semibold rounded border border-green/30 text-green bg-green-bg hover:bg-green/[0.18] disabled:opacity-50 cursor-pointer transition-all">
-                  {controlLoading === "Start Bot" ? "..." : "Start"}</button>
-                <button type="button" disabled={controlLoading !== null}
-                  onClick={() => handleBotAction("Stop Bot", selectedBotId, () => stopBot(selectedBotId))}
-                  className="px-3 py-1.5 text-xs font-semibold rounded border border-red/30 text-red bg-red-bg hover:bg-red/[0.18] disabled:opacity-50 cursor-pointer transition-all">
-                  {controlLoading === "Stop Bot" ? "..." : "Stop"}</button>
-                <button type="button" disabled={controlLoading !== null}
-                  onClick={() => handleBotAction("Stop Buy", selectedBotId, () => botStopBuy(selectedBotId))}
-                  className="px-3 py-1.5 text-xs font-semibold rounded border border-amber/30 text-amber bg-amber-bg hover:bg-amber/[0.18] disabled:opacity-50 cursor-pointer transition-all">
-                  {controlLoading === "Stop Buy" ? "..." : "Stop New Entries"}</button>
-                <button type="button" disabled={controlLoading !== null}
-                  onClick={() => handleBotAction("Pause", selectedBotId, () => botPause(selectedBotId))}
-                  className="px-3 py-1.5 text-xs font-semibold rounded border border-amber/30 text-amber bg-amber-bg hover:bg-amber/[0.18] disabled:opacity-50 cursor-pointer transition-all">
-                  {controlLoading === "Pause" ? "..." : "Pause"}</button>
-                <button type="button" disabled={controlLoading !== null}
-                  onClick={() => setForceEntryOpen(true)}
-                  className="px-3 py-1.5 text-xs font-semibold rounded border border-accent/30 text-accent bg-accent/10 hover:bg-accent/20 disabled:opacity-50 cursor-pointer transition-all">
-                  Force Entry</button>
-                <button type="button" disabled={controlLoading !== null || singleBotOpenTrades.length === 0}
-                  onClick={async () => {
-                    if (!selectedBotId || singleBotOpenTrades.length === 0) return;
-                    setControlLoading("Force Exit All");
-                    const loadId = toast.loading(`Force exiting all ${singleBotOpenTrades.length} trades...`);
-                    try {
-                      await Promise.allSettled(
-                        singleBotOpenTrades.map((t) => botForceExit(selectedBotId, String(t.trade_id)))
-                      );
-                      toast.dismiss(loadId);
-                      toast.success(`Force exit submitted for ${singleBotOpenTrades.length} trades.`);
-                      await loadPortfolioData(false);
-                      loadBotDetails(selectedBotId);
-                    } catch (err) {
-                      toast.dismiss(loadId);
-                      toast.error(err instanceof Error ? err.message : "Force exit failed.");
-                    } finally {
-                      setControlLoading(null);
-                    }
-                  }}
-                  className="px-3 py-1.5 text-xs font-semibold rounded border border-red/30 text-red bg-red-bg hover:bg-red/[0.18] disabled:opacity-50 cursor-pointer transition-all">
-                  {controlLoading === "Force Exit All" ? "..." : `Force Exit All (${singleBotOpenTrades.length})`}</button>
-                <button type="button" disabled={controlLoading !== null}
-                  onClick={() => handleBotAction("Reload Config", selectedBotId, () => reloadBotConfig(selectedBotId))}
-                  className="px-3 py-1.5 text-xs font-semibold rounded border border-border text-text-2 bg-bg-1 hover:bg-bg-3 disabled:opacity-50 cursor-pointer transition-all">
-                  {controlLoading === "Reload Config" ? "..." : "Reload Config"}</button>
-              </div>
-            </CardBody>
-          </Card>
+      <BotDetailPanel
+        bot={selectedBot}
+        isOpen={selectedBotId !== null}
+        onClose={() => setSelectedBotId(null)}
+        profit={selectedBot ? botProfits[selectedBot.id] ?? null : null}
+        openTrades={singleBotOpenTrades}
+        closedTrades={singleBotClosedTrades}
+        weeklyData={weeklyData}
+        monthlyData={monthlyData}
+        perfData={perfData}
+        entryData={entryData}
+        exitData={exitData}
+        mixTagData={mixTagData}
+        statsData={statsData}
+        configData={configData}
+        sysinfoData={sysinfoData}
+        logsData={logsData}
+        whitelistData={whitelistData}
+        locksData={locksData}
+        balanceData={balanceData}
+        healthData={healthData}
+        loading={selectedBotId !== null && (weeklyLoading || monthlyLoading || perfLoading || entryLoading || exitLoading || mixTagLoading || statsLoading || configLoading || sysinfoLoading || logsLoading || whitelistLoading || locksLoading || balanceLoading)}
+        onStart={() => selectedBot && handleStartBot(selectedBot.id)}
+        onStop={() => selectedBot && handleStopBot(selectedBot.id)}
+        onDrain={() => selectedBot && handleDrainBot(selectedBot.id)}
+        onEdit={() => selectedBot && setEditBot(selectedBot)}
+        onDelete={() => selectedBot && setDeleteBot(selectedBot)}
+        onDuplicate={() => selectedBot && handleDuplicateBot(selectedBot)}
+      />
 
-          {/* Single bot open positions */}
-          <Card className="mb-6">
-            <CardHeader title="Open Positions" icon="📋"
-              action={<span className="text-xs text-text-3">{singleBotOpenTrades.length} open</span>} />
-            {singleBotOpenLoading ? <SkeletonTable rows={3} cols={7} /> : renderTradesTable(singleBotOpenTrades, false, "No open positions")}
-          </Card>
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/* EDIT & DELETE MODALS                                           */}
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      <BotEditModal
+        open={editBot !== null}
+        bot={editBot}
+        onClose={() => setEditBot(null)}
+        onSuccess={async () => {
+          setEditBot(null);
+          await loadPortfolioData(false);
+        }}
+      />
 
-          {/* Weekly P&L + Monthly P&L */}
-          <div className="grid grid-cols-2 gap-5 mb-6">
-            <Card>
-              <CardHeader title="Weekly P&L" icon="📅" />
-              <SectionLoader loading={weeklyLoading} error={weeklyError}>
-                <CardBody className="p-3">
-                  {weeklyData && weeklyData.data.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={140}>
-                      <BarChart data={weeklyData.data.map((w) => ({ ...w, date: w.date.slice(5) }))}>
-                        <XAxis dataKey="date" tick={{ fontSize: 9, fill: "#55556a" }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fontSize: 9, fill: "#55556a" }} axisLine={false} tickLine={false} width={40} />
-                        <Tooltip contentStyle={{ background: "#12121c", border: "1px solid #1e1e30", borderRadius: 6, fontSize: 11 }}
-                          formatter={(v: unknown) => [`${Number(v).toFixed(2)} ${weeklyData.stake_currency}`, "Profit"]} />
-                        <Bar dataKey="abs_profit" fill="#22c55e" radius={[2, 2, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : <div className="py-4 text-center text-sm text-text-3">No weekly data</div>}
-                </CardBody>
-              </SectionLoader>
-            </Card>
-            <Card>
-              <CardHeader title="Monthly P&L" icon="📆" />
-              <SectionLoader loading={monthlyLoading} error={monthlyError}>
-                <CardBody className="p-3">
-                  {monthlyData && monthlyData.data.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={140}>
-                      <BarChart data={monthlyData.data.map((mo) => ({ ...mo, date: mo.date.slice(0, 7) }))}>
-                        <XAxis dataKey="date" tick={{ fontSize: 9, fill: "#55556a" }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fontSize: 9, fill: "#55556a" }} axisLine={false} tickLine={false} width={40} />
-                        <Tooltip contentStyle={{ background: "#12121c", border: "1px solid #1e1e30", borderRadius: 6, fontSize: 11 }}
-                          formatter={(v: unknown) => [`${Number(v).toFixed(2)} ${monthlyData.stake_currency}`, "Profit"]} />
-                        <Bar dataKey="abs_profit" fill="#818cf8" radius={[2, 2, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : <div className="py-4 text-center text-sm text-text-3">No monthly data</div>}
-                </CardBody>
-              </SectionLoader>
-            </Card>
-          </div>
-
-          {/* Per-pair Performance + Trade Stats */}
-          <div className="grid grid-cols-2 gap-5 mb-6">
-            <Card>
-              <CardHeader title="Per-pair Performance" icon="📊" />
-              <SectionLoader loading={perfLoading} error={perfError}>
-                {perfData.length === 0 ? (
-                  <CardBody><div className="py-4 text-center text-sm text-text-3">No performance data</div></CardBody>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead><tr>
-                        {["Pair", "Trades", "profit_abs", "profit_ratio"].map((h) => (
-                          <th key={h} className="text-left px-4 py-2 text-2xs font-semibold text-text-3 uppercase tracking-wider border-b border-border">{h}</th>
-                        ))}
-                      </tr></thead>
-                      <tbody>
-                        {perfData.slice(0, 20).map((p) => (
-                          <tr key={p.pair} className="hover:bg-bg-3 transition-colors">
-                            <td className="px-4 py-2 text-xs font-semibold text-text-0">{p.pair}</td>
-                            <td className="px-4 py-2 text-xs text-text-2">{p.count}</td>
-                            <td className={`px-4 py-2 text-xs font-bold ${profitColor(p.profit_abs)}`}>{fmt(p.profit_abs, 2)}</td>
-                            <td className={`px-4 py-2 text-xs ${profitColor(p.profit_ratio)}`}>{(p.profit_ratio * 100).toFixed(2)}%</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </SectionLoader>
-            </Card>
-            <Card>
-              <CardHeader title="Trade Stats" icon="📈" />
-              <SectionLoader loading={statsLoading} error={statsError}>
-                {statsData ? (
-                  <CardBody>
-                    <div className="grid grid-cols-2 gap-3 text-xs">
-                      <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">profit_factor</span><span className="font-mono text-text-1 font-bold">{fmt(statsData.profit_factor, 2)}</span></div>
-                      <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">trading_volume</span><span className="font-mono text-text-1">{fmt(statsData.trading_volume, 2)}</span></div>
-                      <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">Wins / Losses / Draws</span><span className="font-mono"><span className="text-green">{statsData.wins}</span>{" / "}<span className="text-red">{statsData.losses}</span>{" / "}<span className="text-text-3">{statsData.draws}</span></span></div>
-                      <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">max_drawdown</span><span className="font-mono text-red">{statsData.max_drawdown != null ? `${(statsData.max_drawdown * 100).toFixed(2)}%` : "\u2014"}</span></div>
-                      <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">Avg Duration (wins)</span><span className="font-mono text-text-1">{statsData.durations.wins != null ? `${(statsData.durations.wins / 60).toFixed(1)}m` : "\u2014"}</span></div>
-                      <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">Avg Duration (losses)</span><span className="font-mono text-text-1">{statsData.durations.losses != null ? `${(statsData.durations.losses / 60).toFixed(1)}m` : "\u2014"}</span></div>
-                      <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">Max Consecutive Wins</span><span className="font-mono text-green">{statsData.max_consecutive_wins ?? "\u2014"}</span></div>
-                      <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">Max Consecutive Losses</span><span className="font-mono text-red">{statsData.max_consecutive_losses ?? "\u2014"}</span></div>
-                      <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">rejected_signals</span><span className="font-mono text-text-1">{statsData.rejected_signals}</span></div>
-                      <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">timedout_entry_orders</span><span className="font-mono text-text-1">{statsData.timedout_entry_orders}</span></div>
-                    </div>
-                  </CardBody>
-                ) : <CardBody><div className="py-4 text-center text-sm text-text-3">No stats data</div></CardBody>}
-              </SectionLoader>
-            </Card>
-          </div>
-
-          {/* Entry Tag + Exit Reason Analysis */}
-          <div className="grid grid-cols-2 gap-5 mb-6">
-            <Card>
-              <CardHeader title="Entry Tag Analysis" icon="🏷" />
-              <SectionLoader loading={entryLoading} error={entryError}>
-                {entryData.length === 0 ? <CardBody><div className="py-4 text-center text-sm text-text-3">No entry tag data</div></CardBody> : (
-                  <div className="overflow-x-auto"><table className="w-full border-collapse">
-                    <thead><tr>{["enter_tag", "Entries", "Wins", "Losses", "winrate", "profit_abs"].map((h) => (
-                      <th key={h} className="text-left px-4 py-2 text-2xs font-semibold text-text-3 uppercase tracking-wider border-b border-border">{h}</th>
-                    ))}</tr></thead>
-                    <tbody>{entryData.map((e) => (
-                      <tr key={e.enter_tag} className="hover:bg-bg-3 transition-colors">
-                        <td className="px-4 py-2 text-xs font-semibold text-text-0">{e.enter_tag}</td>
-                        <td className="px-4 py-2 text-xs text-text-2">{e.entries}</td>
-                        <td className="px-4 py-2 text-xs text-green">{e.wins}</td>
-                        <td className="px-4 py-2 text-xs text-red">{e.losses}</td>
-                        <td className="px-4 py-2 text-xs text-text-1">{(e.winrate * 100).toFixed(1)}%</td>
-                        <td className={`px-4 py-2 text-xs font-bold ${profitColor(e.profit_abs)}`}>{fmt(e.profit_abs, 2)}</td>
-                      </tr>
-                    ))}</tbody>
-                  </table></div>
-                )}
-              </SectionLoader>
-            </Card>
-            <Card>
-              <CardHeader title="Exit Reason Analysis" icon="🚪" />
-              <SectionLoader loading={exitLoading} error={exitError}>
-                {exitData.length === 0 ? <CardBody><div className="py-4 text-center text-sm text-text-3">No exit reason data</div></CardBody> : (
-                  <div className="overflow-x-auto"><table className="w-full border-collapse">
-                    <thead><tr>{["exit_reason", "Exits", "Wins", "Losses", "winrate", "profit_abs"].map((h) => (
-                      <th key={h} className="text-left px-4 py-2 text-2xs font-semibold text-text-3 uppercase tracking-wider border-b border-border">{h}</th>
-                    ))}</tr></thead>
-                    <tbody>{exitData.map((e) => (
-                      <tr key={e.exit_reason} className="hover:bg-bg-3 transition-colors">
-                        <td className="px-4 py-2 text-xs font-semibold text-text-0">{e.exit_reason}</td>
-                        <td className="px-4 py-2 text-xs text-text-2">{e.exits}</td>
-                        <td className="px-4 py-2 text-xs text-green">{e.wins}</td>
-                        <td className="px-4 py-2 text-xs text-red">{e.losses}</td>
-                        <td className="px-4 py-2 text-xs text-text-1">{(e.winrate * 100).toFixed(1)}%</td>
-                        <td className={`px-4 py-2 text-xs font-bold ${profitColor(e.profit_abs)}`}>{fmt(e.profit_abs, 2)}</td>
-                      </tr>
-                    ))}</tbody>
-                  </table></div>
-                )}
-              </SectionLoader>
-            </Card>
-          </div>
-
-          {/* Mix Tag Analysis */}
-          <Card className="mb-6">
-            <CardHeader title="Mix Tag Analysis" icon="🔀" />
-            <SectionLoader loading={mixTagLoading} error={mixTagError}>
-              {mixTagData.length === 0 ? <CardBody><div className="py-4 text-center text-sm text-text-3">No mix tag data</div></CardBody> : (
-                <div className="overflow-x-auto"><table className="w-full border-collapse">
-                  <thead><tr>{["enter_tag", "exit_reason", "Trades", "Wins", "Losses", "winrate", "profit_abs"].map((h) => (
-                    <th key={h} className="text-left px-4 py-2 text-2xs font-semibold text-text-3 uppercase tracking-wider border-b border-border">{h}</th>
-                  ))}</tr></thead>
-                  <tbody>{mixTagData.slice(0, 30).map((m, i) => (
-                    <tr key={`${m.enter_tag}-${m.exit_reason}-${i}`} className="hover:bg-bg-3 transition-colors">
-                      <td className="px-4 py-2 text-xs font-semibold text-text-0">{m.enter_tag}</td>
-                      <td className="px-4 py-2 text-xs text-text-2">{m.exit_reason}</td>
-                      <td className="px-4 py-2 text-xs text-text-2">{m.trades}</td>
-                      <td className="px-4 py-2 text-xs text-green">{m.wins}</td>
-                      <td className="px-4 py-2 text-xs text-red">{m.losses}</td>
-                      <td className="px-4 py-2 text-xs text-text-1">{(m.winrate * 100).toFixed(1)}%</td>
-                      <td className={`px-4 py-2 text-xs font-bold ${profitColor(m.profit_abs)}`}>{fmt(m.profit_abs, 2)}</td>
-                    </tr>
-                  ))}</tbody>
-                </table></div>
-              )}
-            </SectionLoader>
-          </Card>
-
-          {/* Bot Balance */}
-          <Card className="mb-6">
-            <CardHeader title="Wallet Balance" icon="💰" />
-            <SectionLoader loading={balanceLoading} error={balanceError}>
-              {balanceData ? (
-                <CardBody>
-                  <div className="grid grid-cols-4 gap-4 text-xs mb-4">
-                    <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">Total</span><span className="font-mono text-text-0 font-bold">{fmt(balanceData.total, 4)} {balanceData.stake}</span></div>
-                    <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">Estimated Value</span><span className="font-mono text-text-0">${fmt(balanceData.value, 2)}</span></div>
-                    <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">Stake Currency</span><span className="font-mono text-text-0">{balanceData.stake}</span></div>
-                    <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">Starting Capital</span><span className="font-mono text-text-0">{balanceData.starting_capital != null ? `${fmt(balanceData.starting_capital, 2)} ${balanceData.stake}` : "\u2014"}</span></div>
-                  </div>
-                  {balanceData.currencies.length > 0 && (
-                    <div className="overflow-x-auto">
-                      <table className="w-full border-collapse">
-                        <thead><tr>
-                          {["Currency", "Free", "Used", "Balance", "Est. Stake"].map((h) => (
-                            <th key={h} className="text-left px-3 py-2 text-2xs font-semibold text-text-3 uppercase tracking-wider border-b border-border">{h}</th>
-                          ))}
-                        </tr></thead>
-                        <tbody>
-                          {balanceData.currencies.filter((c) => c.balance > 0).map((c) => (
-                            <tr key={c.currency} className="hover:bg-bg-3 transition-colors">
-                              <td className="px-3 py-2 text-xs font-semibold text-text-0">{c.currency}</td>
-                              <td className="px-3 py-2 text-xs text-text-2 font-mono">{fmt(c.free, 4)}</td>
-                              <td className="px-3 py-2 text-xs text-text-2 font-mono">{fmt(c.used, 4)}</td>
-                              <td className="px-3 py-2 text-xs text-text-1 font-mono">{fmt(c.balance, 4)}</td>
-                              <td className="px-3 py-2 text-xs text-text-2 font-mono">{fmt(c.est_stake, 4)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </CardBody>
-              ) : <CardBody><div className="py-4 text-center text-sm text-text-3">No balance data</div></CardBody>}
-            </SectionLoader>
-          </Card>
-
-          {/* Bot Config + System Info */}
-          <div className="grid grid-cols-2 gap-5 mb-6">
-            <Card>
-              <CardHeader title="Bot Config" icon="⚙️" />
-              <SectionLoader loading={configLoading} error={configError}>
-                {configData ? (
-                  <CardBody>
-                    <div className="grid grid-cols-2 gap-3 text-xs">
-                      <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">strategy</span><span className="font-mono text-text-1 font-bold">{configData.strategy}</span></div>
-                      <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">exchange</span><span className="font-mono text-text-1">{typeof configData.exchange === "string" ? configData.exchange : configData.exchange?.name ?? "\u2014"}</span></div>
-                      <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">timeframe</span><span className="font-mono text-text-1">{configData.timeframe}</span></div>
-                      <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">trading_mode</span><span className="font-mono text-text-1">{configData.trading_mode}</span></div>
-                      <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">stake_currency</span><span className="font-mono text-text-1">{configData.stake_currency}</span></div>
-                      <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">stake_amount</span><span className="font-mono text-text-1">{configData.stake_amount}</span></div>
-                      <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">max_open_trades</span><span className="font-mono text-text-1">{configData.max_open_trades}</span></div>
-                      <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">stoploss</span><span className="font-mono text-red">{(configData.stoploss * 100).toFixed(1)}%</span></div>
-                      <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">dry_run</span><span className={`font-mono ${configData.dry_run ? "text-amber" : "text-green"}`}>{configData.dry_run ? "Yes" : "No"}</span></div>
-                      <div><span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">trailing_stop</span><span className="font-mono text-text-1">{configData.trailing_stop ? "On" : "Off"}</span></div>
-                    </div>
-                  </CardBody>
-                ) : <CardBody><div className="py-4 text-center text-sm text-text-3">No config data</div></CardBody>}
-              </SectionLoader>
-            </Card>
-            <Card>
-              <CardHeader title="System Info" icon="💻" />
-              <SectionLoader loading={sysinfoLoading} error={sysinfoError}>
-                {sysinfoData ? (
-                  <CardBody>
-                    <div className="grid grid-cols-2 gap-4 text-xs">
-                      <div>
-                        <span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">CPU Usage</span>
-                        <div className="flex gap-1 items-center">
-                          {sysinfoData.cpu_pct.map((pct, i) => (
-                            <div key={`cpu-${i}`} className="flex-1">
-                              <div className="h-2 bg-bg-3 rounded-full overflow-hidden">
-                                <div className={`h-full rounded-full ${pct > 80 ? "bg-red" : pct > 50 ? "bg-amber" : "bg-green"}`} style={{ width: `${pct}%` }} />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        <span className="font-mono text-text-1 text-2xs mt-1 block">
-                          {sysinfoData.cpu_pct.length > 0 ? `Avg: ${(sysinfoData.cpu_pct.reduce((a, b) => a + b, 0) / sysinfoData.cpu_pct.length).toFixed(1)}%` : "\u2014"}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">RAM Usage</span>
-                        <div className="h-2 bg-bg-3 rounded-full overflow-hidden mb-1">
-                          <div className={`h-full rounded-full ${sysinfoData.ram_pct > 80 ? "bg-red" : sysinfoData.ram_pct > 50 ? "bg-amber" : "bg-green"}`} style={{ width: `${sysinfoData.ram_pct}%` }} />
-                        </div>
-                        <span className="font-mono text-text-1 text-2xs">{sysinfoData.ram_pct.toFixed(1)}%</span>
-                      </div>
-                    </div>
-                  </CardBody>
-                ) : <CardBody><div className="py-4 text-center text-sm text-text-3">No system info</div></CardBody>}
-                {healthData && (
-                  <div className="px-6 pb-4 pt-0">
-                    <div className="text-2xs text-text-3 uppercase tracking-wide mb-1">Last Process</div>
-                    <div className="text-xs font-mono text-text-1">{healthData.last_process} <span className="text-text-3">({healthData.last_process_loc})</span></div>
-                  </div>
-                )}
-              </SectionLoader>
-            </Card>
-          </div>
-
-          {/* Bot Logs */}
-          <Card className="mb-6">
-            <CardHeader title="Bot Logs" icon="📜"
-              action={
-                <button type="button" onClick={() => {
-                  setLogsLoading(true);
-                  botLogs(selectedBotId, 100)
-                    .then((d) => { setLogsData(d); setLogsLoading(false); })
-                    .catch((e) => { setLogsError(e instanceof Error ? e.message : "Failed"); setLogsLoading(false); });
-                }} className="text-xs text-accent hover:text-accent cursor-pointer font-medium">↻ Refresh</button>
-              } />
-            <SectionLoader loading={logsLoading} error={logsError}>
-              <div className="max-h-64 overflow-y-auto bg-bg-1 font-mono text-2xs p-4">
-                {logsData && logsData.logs.length > 0 ? (
-                  logsData.logs.map((log, i) => {
-                    const level = log[1] ?? "";
-                    const levelColor = level === "ERROR" ? "text-red" : level === "WARNING" ? "text-amber" : "text-text-3";
-                    return (
-                      <div key={`log-${log[0] ?? i}`} className="py-0.5 border-b border-border/20 last:border-b-0">
-                        <span className="text-text-3">{log[0]}</span>{" "}
-                        <span className={`font-bold ${levelColor}`}>{level}</span>{" "}
-                        <span className="text-text-2">{log[2]}</span>{" "}
-                        <span className="text-text-1">{log[3]}</span>
-                      </div>
-                    );
-                  })
-                ) : <div className="text-center text-text-3">No logs available</div>}
-              </div>
-            </SectionLoader>
-          </Card>
-
-          {/* Whitelist + Locks */}
-          <div className="grid grid-cols-2 gap-5 mb-6">
-            <Card>
-              <CardHeader title="Whitelist" icon="📝" />
-              <SectionLoader loading={whitelistLoading} error={whitelistError}>
-                <CardBody>
-                  {whitelistData && whitelistData.whitelist.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5">
-                      {whitelistData.whitelist.map((pair) => (
-                        <span key={pair} className="text-2xs font-mono bg-bg-1 border border-border rounded px-2 py-1 text-text-1">{pair}</span>
-                      ))}
-                    </div>
-                  ) : <div className="py-4 text-center text-sm text-text-3">Empty whitelist</div>}
-                  {whitelistData && (
-                    <div className="mt-2 text-2xs text-text-3">{whitelistData.length} pair{whitelistData.length !== 1 ? "s" : ""} | Method: {whitelistData.method.join(", ")}</div>
-                  )}
-                </CardBody>
-              </SectionLoader>
-            </Card>
-            <Card>
-              <CardHeader title="Locks" icon="🔒" />
-              <SectionLoader loading={locksLoading} error={locksError}>
-                {locksData && locksData.locks.length > 0 ? (
-                  <div className="overflow-x-auto"><table className="w-full border-collapse">
-                    <thead><tr>{["Pair", "Reason", "Until", "Side"].map((h) => (
-                      <th key={h} className="text-left px-4 py-2 text-2xs font-semibold text-text-3 uppercase tracking-wider border-b border-border">{h}</th>
-                    ))}</tr></thead>
-                    <tbody>{locksData.locks.map((lock) => (
-                      <tr key={lock.id} className="hover:bg-bg-3 transition-colors">
-                        <td className="px-4 py-2 text-xs font-semibold text-text-0">{lock.pair}</td>
-                        <td className="px-4 py-2 text-xs text-text-2">{lock.reason}</td>
-                        <td className="px-4 py-2 text-xs text-text-3">{new Date(lock.lock_end_time).toLocaleString()}</td>
-                        <td className="px-4 py-2 text-xs text-text-2">{lock.side}</td>
-                      </tr>
-                    ))}</tbody>
-                  </table></div>
-                ) : <CardBody><div className="py-4 text-center text-sm text-text-3">No active locks</div></CardBody>}
-              </SectionLoader>
-            </Card>
-          </div>
-
-          {/* Single bot closed trades */}
-          <Card className="mb-6">
-            <CardHeader title="Closed Trades" icon="✅"
-              action={<span className="text-xs text-text-3">{singleBotClosedTrades.length} trades</span>} />
-            {singleBotClosedLoading ? <SkeletonTable rows={5} cols={7} /> : singleBotClosedTrades.length === 0 ? (
-              <CardBody><div className="py-8 text-center text-sm text-text-3">No closed trades</div></CardBody>
-            ) : (
-              <div className="overflow-x-auto"><table className="w-full border-collapse">
-                <thead><tr>{["Pair", "Side", "open_rate", "close_rate", "close_profit_abs", "exit_reason", "Duration"].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-2xs font-semibold text-text-3 uppercase tracking-wider border-b border-border whitespace-nowrap">{h}</th>
-                ))}</tr></thead>
-                <tbody>{singleBotClosedTrades.slice(0, 50).map((trade) => (
-                  <tr key={trade.trade_id} className="hover:bg-bg-3 transition-colors">
-                    <td className="px-4 py-3 text-xs font-semibold text-text-0">{trade.pair}</td>
-                    <td className="px-4 py-3"><span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${trade.is_short ? "bg-red-bg text-red" : "bg-green-bg text-green"}`}>{trade.is_short ? "Short" : "Long"}</span></td>
-                    <td className="px-4 py-3 text-xs text-text-2 font-mono">{fmt(trade.open_rate, 4)}</td>
-                    <td className="px-4 py-3 text-xs text-text-2 font-mono">{fmt(trade.close_rate ?? 0, 4)}</td>
-                    <td className={`px-4 py-3 text-xs font-bold ${profitColor(trade.close_profit_abs)}`}>{trade.close_profit_abs != null ? `${trade.close_profit_abs >= 0 ? "+" : ""}${fmt(trade.close_profit_abs, 2)} USDT` : "\u2014"}</td>
-                    <td className="px-4 py-3 text-xs text-text-2">{trade.exit_reason ?? "\u2014"}</td>
-                    <td className="px-4 py-3 text-xs text-text-3">{trade.close_date && trade.open_date ? (() => { const ms = new Date(trade.close_date).getTime() - new Date(trade.open_date).getTime(); const h = Math.floor(ms / 3600000); const m = Math.floor((ms % 3600000) / 60000); return h > 0 ? `${h}h ${m}m` : `${m}m`; })() : "\u2014"}</td>
-                  </tr>
-                ))}</tbody>
-              </table></div>
-            )}
-          </Card>
-        </>
-      )}
+      <BotDeleteDialog
+        open={deleteBot !== null}
+        bot={deleteBot}
+        onClose={() => setDeleteBot(null)}
+        onSuccess={async () => {
+          if (deleteBot) {
+            await handleDeleteBotConfirm(deleteBot);
+          }
+        }}
+      />
 
       {/* Activity Log Viewer (both views) */}
       <LogViewer

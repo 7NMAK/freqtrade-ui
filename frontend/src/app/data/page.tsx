@@ -3,7 +3,9 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import AppShell from "@/components/layout/AppShell";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
+import Tooltip from "@/components/ui/Tooltip";
 import { useToast } from "@/components/ui/Toast";
+import { TOOLTIPS } from "@/lib/tooltips";
 import {
   getBots,
   botFtStrategies,
@@ -139,7 +141,7 @@ function LogArea({ lines, className }: { lines: LogLine[]; className?: string })
       className={`bg-bg-0 border border-border rounded-btn p-3 font-mono text-[11px] leading-relaxed text-text-2 max-h-40 overflow-y-auto whitespace-pre-wrap ${className ?? ""}`}
     >
       {lines.map((l, i) => (
-        <div key={`log-${i}-${l.type}`}>
+        <div key={`log-${i}-${l.type}-${l.text.slice(0, 20)}`}>
           <span className={color[l.type]}>[{l.type}]</span> {l.text}
         </div>
       ))}
@@ -560,7 +562,9 @@ export default function DataManagementPage() {
 
       {/* ── Bot Selector ── */}
       <div className="mb-5 flex items-center gap-3">
-        <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">Bot</label>
+        <Tooltip content={"Select the bot instance to manage data for"} configKey="bot_id">
+          <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">Bot</label>
+        </Tooltip>
         <select
           className="bg-bg-1 border border-border rounded-btn py-2 px-3 text-xs text-text-1 outline-none focus:border-accent transition-colors appearance-none min-w-[200px]"
           value={selectedBotId}
@@ -598,9 +602,11 @@ export default function DataManagementPage() {
           {/* Row 1: Pairs + Exchange */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-                --pairs <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">(multi-select)</span>
-              </label>
+              <Tooltip content={TOOLTIPS.download_data_pairs?.description ?? "Pairs to download historical data for"} configKey="--pairs">
+                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
+                  --pairs <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">(multi-select)</span>
+                </label>
+              </Tooltip>
               <select
                 className="bg-bg-1 border border-border rounded-btn p-2.5 text-xs text-text-1 outline-none focus:border-accent transition-colors min-h-[110px]"
                 multiple
@@ -616,7 +622,9 @@ export default function DataManagementPage() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">--exchange</label>
+              <Tooltip content={TOOLTIPS.download_data_exchange?.description ?? "Exchange to download data from"} configKey="--exchange">
+                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">--exchange</label>
+              </Tooltip>
               <select
                 className="bg-bg-1 border border-border rounded-btn py-2.5 px-3.5 text-xs text-text-1 outline-none focus:border-accent transition-colors appearance-none"
                 value={exchange}
@@ -628,7 +636,9 @@ export default function DataManagementPage() {
               </select>
 
               <div className="mt-3">
-                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">--trading-mode</label>
+                <Tooltip content={TOOLTIPS.download_data_trading_mode?.description ?? "Download data for spot or futures"} configKey="--trading-mode">
+                  <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">--trading-mode</label>
+                </Tooltip>
                 <select
                   className="mt-1.5 w-full bg-bg-1 border border-border rounded-btn py-2.5 px-3.5 text-xs text-text-1 outline-none focus:border-accent transition-colors appearance-none"
                   value={tradingMode}
@@ -643,9 +653,11 @@ export default function DataManagementPage() {
 
           {/* Row 2: Timeframes */}
           <div className="mb-4">
-            <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-              --timeframes <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">(select one or more)</span>
-            </label>
+            <Tooltip content={TOOLTIPS.download_data_timeframes?.description ?? "Timeframes to download data for"} configKey="--timeframes">
+              <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
+                --timeframes <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">(select one or more)</span>
+              </label>
+            </Tooltip>
             <div className="flex flex-wrap gap-1.5 mt-1.5">
               {TIMEFRAMES.map((tf) => (
                 <button
@@ -667,9 +679,11 @@ export default function DataManagementPage() {
           {/* Row 3: Date range / Days */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-                --timerange <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">start</span>
-              </label>
+              <Tooltip content={TOOLTIPS.download_data_timerange?.description ?? "Start date for data download range"} configKey="--timerange">
+                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
+                  --timerange <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">start</span>
+                </label>
+              </Tooltip>
               <input
                 type="date"
                 className="bg-bg-1 border border-border rounded-btn py-2.5 px-3.5 text-xs text-text-1 outline-none focus:border-accent transition-colors disabled:opacity-40"
@@ -679,9 +693,11 @@ export default function DataManagementPage() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-                --timerange <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">end</span>
-              </label>
+              <Tooltip content={TOOLTIPS.download_data_timerange?.description ?? "End date for data download range"} configKey="--timerange">
+                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
+                  --timerange <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">end</span>
+                </label>
+              </Tooltip>
               <input
                 type="date"
                 className="bg-bg-1 border border-border rounded-btn py-2.5 px-3.5 text-xs text-text-1 outline-none focus:border-accent transition-colors disabled:opacity-40"
@@ -691,9 +707,11 @@ export default function DataManagementPage() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-                --days <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">(overrides timerange)</span>
-              </label>
+              <Tooltip content={"Number of days of data to download. Overrides --timerange when set."} configKey="--days">
+                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
+                  --days <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">(overrides timerange)</span>
+                </label>
+              </Tooltip>
               <input
                 type="number"
                 className="bg-bg-1 border border-border rounded-btn py-2.5 px-3.5 text-xs text-text-1 outline-none focus:border-accent transition-colors"
@@ -708,9 +726,11 @@ export default function DataManagementPage() {
           {/* Row 3b: New Pairs Days */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-                --new-pairs-days <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">Days for newly listed pairs</span>
-              </label>
+              <Tooltip content={"Number of days to download for newly listed pairs. Only applies to pairs not yet in the data directory."} configKey="--new-pairs-days">
+                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
+                  --new-pairs-days <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">Days for newly listed pairs</span>
+                </label>
+              </Tooltip>
               <input
                 type="number"
                 className="bg-bg-1 border border-border rounded-btn py-2.5 px-3.5 text-xs text-text-1 outline-none focus:border-accent transition-colors"
@@ -721,9 +741,11 @@ export default function DataManagementPage() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-                --data-format-ohlcv <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">Storage format</span>
-              </label>
+              <Tooltip content={"Storage format for OHLCV data. Options: json, jsongz, feather, parquet. Feather and parquet are faster for large datasets."} configKey="--data-format-ohlcv">
+                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
+                  --data-format-ohlcv <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">Storage format</span>
+                </label>
+              </Tooltip>
               <select
                 className="bg-bg-1 border border-border rounded-btn py-2.5 px-3.5 text-xs text-text-1 outline-none focus:border-accent transition-colors appearance-none"
                 value={dlDataFormatOhlcv}
@@ -739,9 +761,11 @@ export default function DataManagementPage() {
 
           {/* Row 3c: Candle Types multi-select */}
           <div className="mb-4">
-            <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-              --candle-types <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">(select one or more)</span>
-            </label>
+            <Tooltip content={"Types of candle data to download: spot, futures, mark price, index price, premium index, or funding rate."} configKey="--candle-types">
+              <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
+                --candle-types <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">(select one or more)</span>
+              </label>
+            </Tooltip>
             <div className="flex flex-wrap gap-1.5 mt-1.5">
               {CANDLE_TYPES.map((ct) => (
                 <button
@@ -826,9 +850,12 @@ export default function DataManagementPage() {
               >
                 <span className={`absolute w-4 h-4 bg-white rounded-full top-0.5 left-0.5 transition-transform ${dlConvert ? "translate-x-4" : ""}`} />
               </button>
-              <span className="text-xs text-text-1">
-                --convert <span className="text-text-3 text-[10px] ml-1">Auto-convert after download</span>
-              </span>
+              <Tooltip
+                content={TOOLTIPS.download_data_convert?.description || "Auto-convert after download"}
+                configKey={TOOLTIPS.download_data_convert?.configKey}
+              >
+                <span className="text-xs text-text-1">Auto-convert after download</span>
+              </Tooltip>
             </div>
 
             <div className="flex items-center gap-3 py-2">
@@ -839,9 +866,12 @@ export default function DataManagementPage() {
               >
                 <span className={`absolute w-4 h-4 bg-white rounded-full top-0.5 left-0.5 transition-transform ${dlNoParallelDownload ? "translate-x-4" : ""}`} />
               </button>
-              <span className="text-xs text-text-1">
-                --no-parallel-download <span className="text-text-3 text-[10px] ml-1">Sequential download (advanced)</span>
-              </span>
+              <Tooltip
+                content={TOOLTIPS.download_data_parallel?.description || "Sequential download (advanced)"}
+                configKey={TOOLTIPS.download_data_parallel?.configKey}
+              >
+                <span className="text-xs text-text-1">Sequential download (advanced)</span>
+              </Tooltip>
             </div>
           </div>
 
@@ -1114,7 +1144,9 @@ export default function DataManagementPage() {
         >
           <div className="grid grid-cols-2 gap-4 mb-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">--format-from</label>
+              <Tooltip content={"Source data format to convert from"} configKey="--format-from">
+                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">--format-from</label>
+              </Tooltip>
               <select
                 className="bg-bg-1 border border-border rounded-btn py-2 px-3 text-xs text-text-1 outline-none focus:border-accent appearance-none"
                 value={convertFrom}
@@ -1126,7 +1158,9 @@ export default function DataManagementPage() {
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">--format-to</label>
+              <Tooltip content={"Target data format to convert to"} configKey="--format-to">
+                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">--format-to</label>
+              </Tooltip>
               <select
                 className="bg-bg-1 border border-border rounded-btn py-2 px-3 text-xs text-text-1 outline-none focus:border-accent appearance-none"
                 value={convertTo}
@@ -1333,7 +1367,9 @@ export default function DataManagementPage() {
         >
           <div className="grid grid-cols-2 gap-4 mb-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">--format-from</label>
+              <Tooltip content={"Source trade data format to convert from"} configKey="--format-from">
+                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">--format-from</label>
+              </Tooltip>
               <select
                 className="bg-bg-1 border border-border rounded-btn py-2 px-3 text-xs text-text-1 outline-none focus:border-accent appearance-none"
                 value={convertTradeFrom}
@@ -1343,7 +1379,9 @@ export default function DataManagementPage() {
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">--format-to</label>
+              <Tooltip content={"Target trade data format to convert to"} configKey="--format-to">
+                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">--format-to</label>
+              </Tooltip>
               <select
                 className="bg-bg-1 border border-border rounded-btn py-2 px-3 text-xs text-text-1 outline-none focus:border-accent appearance-none"
                 value={convertTradeTo}
@@ -1469,7 +1507,9 @@ export default function DataManagementPage() {
           runLabel="\u25B6 Show"
         >
           <div className="mb-3">
-            <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">Epoch #</label>
+            <Tooltip content={"Hyperopt epoch number to view detailed results for"} configKey="--hyperopt-show">
+              <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">Epoch #</label>
+            </Tooltip>
             <input
               type="number"
               className="mt-1 bg-bg-1 border border-border rounded-btn py-2 px-3 text-xs text-text-1 outline-none focus:border-accent w-24"

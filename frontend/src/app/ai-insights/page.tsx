@@ -15,7 +15,7 @@
  *   AI-9  Hyperopt Analyses table
  */
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { REFRESH_INTERVALS } from "@/lib/constants";
 import AppShell from "@/components/layout/AppShell";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
@@ -31,6 +31,8 @@ import {
   updateAIConfig,
   triggerAIValidation,
   fetchHyperoptAnalyses,
+  fetchHyperoptAnalysis,
+  fetchHyperoptComparisonStats,
   getBots,
   ApiError,
 } from "@/lib/api";
@@ -42,6 +44,7 @@ import type {
   AICost,
   AIConfig,
   AIHyperoptAnalysis,
+  AIHyperoptComparisonStats,
   Bot,
 } from "@/types";
 import {
@@ -120,6 +123,10 @@ export default function AIInsightsPage() {
   const [config, setConfig] = useState<AIConfig | null>(null);
   const [hyperoptAnalyses, setHyperoptAnalyses] = useState<AIHyperoptAnalysis[]>([]);
   const [bots, setBots] = useState<Bot[]>([]);
+  const [hyperoptStats, setHyperoptStats] = useState<AIHyperoptComparisonStats | null>(null);
+  const [hyperoptStatsLoading, setHyperoptStatsLoading] = useState(false);
+  const [expandedAnalysisId, setExpandedAnalysisId] = useState<number | null>(null);
+  const [expandedAnalysis, setExpandedAnalysis] = useState<AIHyperoptAnalysis | null>(null);
 
   // UI state
   const [loading, setLoading] = useState(true);
@@ -156,12 +163,18 @@ export default function AIInsightsPage() {
         setMaxCost(String(c.max_daily_cost_usd));
       }
       if (ho.status === "fulfilled") setHyperoptAnalyses(ho.value);
+
+      setHyperoptStatsLoading(true);
+      fetchHyperoptComparisonStats()
+        .then((d) => { setHyperoptStats(d); setHyperoptStatsLoading(false); })
+        .catch(() => { setHyperoptStatsLoading(false); });
+
       if (b.status === "fulfilled") {
-        const botList = b.value as Bot[];
+        const botList = b.value;
         setBots(botList);
         if (botList.length > 0 && !triggerBotId) setTriggerBotId(String(botList[0].id));
       }
-    } catch {
+    } catch { /* non-blocking */
       toast.error("Failed to load AI Insights data");
     } finally {
       setLoading(false);
@@ -825,9 +838,15 @@ export default function AIInsightsPage() {
               </thead>
               <tbody>
                 {hyperoptAnalyses.map((a) => (
+                  <React.Fragment key={`ho-${a.id}`}>
                   <tr
-                    key={`ho-${a.id}`}
-                    className="hover:bg-bg-3 transition-colors border-b border-border/40"
+                    className="hover:bg-bg-3 transition-colors border-b border-border/40 cursor-pointer"
+                    onClick={async () => {
+                      if (expandedAnalysisId === a.id) { setExpandedAnalysisId(null); setExpandedAnalysis(null); return; }
+                      setExpandedAnalysisId(a.id);
+                      try { const detail = await fetchHyperoptAnalysis(a.id); setExpandedAnalysis(detail); }
+                      catch { /* load failed — collapse row */ setExpandedAnalysis(null); }
+                    }}
                   >
                     <td className="px-4 py-3">
                       <span
@@ -865,11 +884,64 @@ export default function AIInsightsPage() {
                       {new Date(a.created_at).toLocaleString()}
                     </td>
                   </tr>
+                  {expandedAnalysisId === a.id && expandedAnalysis && (
+                    <tr><td colSpan={9} className="bg-bg-1 border-b border-border px-4 py-3">
+                      <div className="grid grid-cols-3 gap-3 text-xs">
+                        <div><span className="text-text-3 block text-2xs uppercase mb-0.5">Suggested Loss</span><span className="font-mono text-text-0">{expandedAnalysis.suggested_loss_function ?? "\u2014"}</span></div>
+                        <div><span className="text-text-3 block text-2xs uppercase mb-0.5">Suggested Sampler</span><span className="font-mono text-text-0">{expandedAnalysis.suggested_sampler ?? "\u2014"}</span></div>
+                        <div><span className="text-text-3 block text-2xs uppercase mb-0.5">Suggested Epochs</span><span className="font-mono text-text-0">{expandedAnalysis.suggested_epochs ?? "\u2014"}</span></div>
+                      </div>
+                      {expandedAnalysis.overfitting_scores.length > 0 && (
+                        <div className="mt-2">
+                          <span className="text-text-3 text-2xs uppercase">Overfitting Risk:</span>
+                          <div className="flex gap-2 mt-1">
+                            {expandedAnalysis.overfitting_scores.map((s, i) => (
+                              <span key={`of-${i}-${s.verdict}`} className={`text-[10px] px-2 py-0.5 rounded border ${
+                                s.verdict === "SAFE" ? "border-green/30 text-green bg-green-bg" :
+                                s.verdict === "CAUTION" ? "border-amber/30 text-amber bg-amber-bg" :
+                                "border-red/30 text-red bg-red-bg"
+                              }`}>#{s.result_index ?? i}: {s.verdict} ({s.risk_score?.toFixed(2) ?? "?"})</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <div className="mt-2 text-2xs text-text-3">Baseline: profit {expandedAnalysis.baseline_profit != null ? `${(expandedAnalysis.baseline_profit * 100).toFixed(2)}%` : "\u2014"} | Sharpe {expandedAnalysis.baseline_sharpe?.toFixed(2) ?? "\u2014"} | Max DD {expandedAnalysis.baseline_max_drawdown != null ? `${(expandedAnalysis.baseline_max_drawdown * 100).toFixed(1)}%` : "\u2014"}</div>
+                    </td></tr>
+                  )}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
           </CardBody>
         )}
+      </Card>
+
+      {/* AI-10: Hyperopt AI Performance */}
+      <Card className="mb-6">
+        <CardHeader title="Hyperopt AI Performance" icon="&#128202;"
+          action={<span className="text-[10px] text-text-3">Followed vs ignored AI recommendations</span>} />
+        <CardBody>
+          {hyperoptStatsLoading ? (
+            <div className="py-6 text-center text-sm text-text-3 animate-pulse">Loading...</div>
+          ) : hyperoptStats ? (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-bg-1 border border-green/20 rounded-lg p-4">
+                <div className="text-2xs text-green uppercase tracking-wide mb-2 font-semibold">Followed AI</div>
+                <div className="text-lg font-bold text-text-0 mb-1">{hyperoptStats.followed_ai.count} times</div>
+                <div className="text-xs text-text-2">Avg paper result: <span className={`font-bold ${hyperoptStats.followed_ai.avg_paper_result != null && hyperoptStats.followed_ai.avg_paper_result >= 0 ? "text-green" : "text-red"}`}>{hyperoptStats.followed_ai.avg_paper_result != null ? `${(hyperoptStats.followed_ai.avg_paper_result * 100).toFixed(1)}%` : "\u2014"}</span></div>
+                <div className="text-xs text-text-2">Avg live result: <span className={`font-bold ${hyperoptStats.followed_ai.avg_live_result != null && hyperoptStats.followed_ai.avg_live_result >= 0 ? "text-green" : "text-red"}`}>{hyperoptStats.followed_ai.avg_live_result != null ? `${(hyperoptStats.followed_ai.avg_live_result * 100).toFixed(1)}%` : "\u2014"}</span></div>
+              </div>
+              <div className="bg-bg-1 border border-red/20 rounded-lg p-4">
+                <div className="text-2xs text-red uppercase tracking-wide mb-2 font-semibold">Ignored AI</div>
+                <div className="text-lg font-bold text-text-0 mb-1">{hyperoptStats.ignored_ai.count} times</div>
+                <div className="text-xs text-text-2">Avg paper result: <span className={`font-bold ${hyperoptStats.ignored_ai.avg_paper_result != null && hyperoptStats.ignored_ai.avg_paper_result >= 0 ? "text-green" : "text-red"}`}>{hyperoptStats.ignored_ai.avg_paper_result != null ? `${(hyperoptStats.ignored_ai.avg_paper_result * 100).toFixed(1)}%` : "\u2014"}</span></div>
+                <div className="text-xs text-text-2">Avg live result: <span className={`font-bold ${hyperoptStats.ignored_ai.avg_live_result != null && hyperoptStats.ignored_ai.avg_live_result >= 0 ? "text-green" : "text-red"}`}>{hyperoptStats.ignored_ai.avg_live_result != null ? `${(hyperoptStats.ignored_ai.avg_live_result * 100).toFixed(1)}%` : "\u2014"}</span></div>
+              </div>
+            </div>
+          ) : (
+            <div className="py-6 text-center text-sm text-text-3">No hyperopt AI performance data yet</div>
+          )}
+        </CardBody>
       </Card>
     </AppShell>
   );

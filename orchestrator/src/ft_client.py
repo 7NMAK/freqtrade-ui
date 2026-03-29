@@ -48,13 +48,124 @@ Every method maps to exactly one FT API endpoint:
 - backtest_history() → GET /api/v1/backtest/history
 """
 import asyncio
+import logging
+import socket
+from typing import Callable, Awaitable
 
 import httpx
+
+logger = logging.getLogger(__name__)
+
+# Optional async callback for DB-level activity logging.
+# Set by main.py after startup so ft_client can log to audit_log DB table.
+# Signature: (action, level, bot_id, bot_name, details, diagnosis) -> None
+_activity_log_callback: Callable[..., Awaitable[None]] | None = None
+
+
+def set_activity_log_callback(cb: Callable[..., Awaitable[None]] | None) -> None:
+    """Set the callback that ft_client uses to persist logs to the DB."""
+    global _activity_log_callback
+    _activity_log_callback = cb
+
+
+async def _log_ft_event(
+    action: str,
+    level: str = "error",
+    details: str | None = None,
+    diagnosis: str | None = None,
+) -> None:
+    """Fire-and-forget DB logging via callback. Never raises."""
+    if _activity_log_callback is None:
+        return
+    try:
+        await _activity_log_callback(
+            action=action,
+            level=level,
+            details=details,
+            diagnosis=diagnosis,
+        )
+    except Exception:
+        logger.debug("Failed to persist FT event to DB (non-fatal)")
 
 
 class FTClientError(Exception):
     """Error communicating with FreqTrade API."""
-    pass
+
+    def __init__(self, message: str, diagnosis: str | None = None):
+        self.diagnosis = diagnosis
+        super().__init__(message)
+
+
+def _diagnose_connection_error(e: Exception, url: str) -> str:
+    """Produce a precise, actionable diagnosis from a connection error."""
+    err_str = str(e).lower()
+    err_type = type(e).__name__
+
+    # Parse the URL to get host/port
+    host = url.split("://")[-1].split("/")[0].split(":")[0]
+    port = url.split("://")[-1].split("/")[0].split(":")[-1] if ":" in url.split("://")[-1].split("/")[0] else "80"
+
+    # DNS resolution failure
+    if "name or service not known" in err_str or "nodename nor servname" in err_str or "getaddrinfo failed" in err_str:
+        return (
+            f"DNS resolution failed for '{host}'. "
+            f"The hostname '{host}' cannot be resolved. "
+            f"Check: (1) Is the FreqTrade container running? `docker ps | grep freqtrade` "
+            f"(2) Is it on the same Docker network? `docker network inspect ft_network` "
+            f"(3) Is the registered api_url correct? Currently: {url}"
+        )
+
+    # Connection refused
+    if "connection refused" in err_str or "errno 111" in err_str:
+        return (
+            f"Connection refused at {host}:{port}. "
+            f"FreqTrade container exists but is not accepting connections on port {port}. "
+            f"Check: (1) Is FT actually running inside the container? `docker logs freqtrade --tail 20` "
+            f"(2) Is the API server enabled in config.json? (api_server.enabled must be true) "
+            f"(3) Is the port correct? Registered: {url}"
+        )
+
+    # Timeout
+    if "timed out" in err_str or "timeout" in err_str:
+        return (
+            f"Connection to {host}:{port} timed out after 10s. "
+            f"The host exists but is not responding. "
+            f"Check: (1) Is FT under heavy load? (backtesting in progress?) "
+            f"(2) Network issue between orchestrator and FT container "
+            f"(3) Is FreqTrade's API server frozen? `docker restart freqtrade`"
+        )
+
+    # Network unreachable
+    if "network is unreachable" in err_str or "no route to host" in err_str:
+        return (
+            f"Network unreachable to {host}. "
+            f"Check: (1) Are both containers on ft_network? `docker network inspect ft_network` "
+            f"(2) Did Docker network get recreated? `docker network connect ft_network freqtrade`"
+        )
+
+    # Connection reset
+    if "connection reset" in err_str or "broken pipe" in err_str:
+        return (
+            f"Connection to {host}:{port} was reset by the server. "
+            f"FreqTrade may have crashed or restarted. "
+            f"Check: `docker logs freqtrade --tail 30`"
+        )
+
+    # SSL errors
+    if "ssl" in err_str or "certificate" in err_str:
+        return (
+            f"SSL/TLS error connecting to {url}. "
+            f"FreqTrade API should use HTTP (not HTTPS) for internal Docker communication. "
+            f"Check that the registered api_url starts with http:// not https://"
+        )
+
+    # Generic fallback with full error details
+    return (
+        f"Connection failed to {url}. Error type: {err_type}. Detail: {e}. "
+        f"Check: (1) `docker ps` — is freqtrade running? "
+        f"(2) `docker network inspect ft_network` — are both containers on the same network? "
+        f"(3) `curl {url}/api/v1/ping` from inside orchestrator container"
+    )
 
 
 class FTClient:
@@ -73,19 +184,36 @@ class FTClient:
 
     async def _login(self) -> str:
         """POST /api/v1/token/login — get JWT token."""
+        login_url = f"{self.api_url}/api/v1/token/login"
+        logger.info("FT login attempt: %s (user=%s)", login_url, self.username)
         try:
             resp = await self._client.post(
-                f"{self.api_url}/api/v1/token/login",
+                login_url,
                 auth=(self.username, self.password),
             )
-        except httpx.HTTPError as e:
-            raise FTClientError(f"Login connection failed: {self.api_url} — {e}")
+        except (httpx.HTTPError, OSError) as e:
+            diag = _diagnose_connection_error(e, self.api_url)
+            logger.error("FT login connection failed: %s — DIAGNOSIS: %s", self.api_url, diag)
+            await _log_ft_event("ft.connection_failed", "error", f"Login to {self.api_url}", diag)
+            raise FTClientError(f"FT connection failed: {diag}", diagnosis=diag) from e
+        if resp.status_code == 401:
+            logger.error("FT login auth failed (401): wrong username/password for %s", self.api_url)
+            diag = "Authentication failed. The username or password registered for this bot is incorrect."
+            await _log_ft_event("ft.login_failed", "error", f"401 at {self.api_url}", diag)
+            raise FTClientError(
+                f"FT login failed: wrong credentials for {self.api_url}. Check api_username and api_password in bot registration.",
+                diagnosis=diag,
+            )
         if resp.status_code != 200:
-            raise FTClientError(f"Login failed: {resp.status_code} {resp.text}")
+            logger.error("FT login failed: %s %s (url=%s)", resp.status_code, resp.text[:200], self.api_url)
+            await _log_ft_event("ft.login_failed", "error", f"HTTP {resp.status_code} at {self.api_url}")
+            raise FTClientError(f"FT login failed: HTTP {resp.status_code} — {resp.text[:200]}")
         data = resp.json()
         self._token = data.get("access_token")
         if not self._token:
             raise FTClientError("No access_token in login response")
+        logger.info("FT login success: %s", self.api_url)
+        await _log_ft_event("ft.login_success", "info", f"Logged into {self.api_url}")
         return self._token
 
     async def _refresh_token(self) -> str:
@@ -115,40 +243,66 @@ class FTClient:
 
     async def _request(self, method: str, path: str, **kwargs) -> dict:
         """Make authenticated request to FT API."""
+        full_url = f"{self.api_url}{path}"
+        logger.debug("FT request: %s %s", method, full_url)
+
         try:
             token = await self._get_token()
-        except httpx.HTTPError as e:
-            raise FTClientError(f"FT connection failed (login): {self.api_url} — {e}")
+        except FTClientError:
+            raise  # Already diagnosed and logged in _login
+        except (httpx.HTTPError, OSError) as e:
+            diag = _diagnose_connection_error(e, self.api_url)
+            logger.error("FT auth failed before request: %s %s — DIAGNOSIS: %s", method, path, diag)
+            await _log_ft_event("ft.connection_failed", "error", f"Auth before {method} {path}", diag)
+            raise FTClientError(f"FT connection failed: {diag}", diagnosis=diag) from e
 
         headers = {"Authorization": f"Bearer {token}"}
 
         try:
-            resp = await self._client.request(
-                method,
-                f"{self.api_url}{path}",
-                headers=headers,
-                **kwargs,
-            )
-        except httpx.HTTPError as e:
-            raise FTClientError(f"FT connection failed: {method} {path} — {e}")
+            resp = await self._client.request(method, full_url, headers=headers, **kwargs)
+        except (httpx.HTTPError, OSError) as e:
+            diag = _diagnose_connection_error(e, self.api_url)
+            logger.error("FT request failed: %s %s — DIAGNOSIS: %s", method, full_url, diag)
+            await _log_ft_event("ft.connection_failed", "error", f"{method} {path} to {self.api_url}", diag)
+            raise FTClientError(f"FT connection failed: {diag}", diagnosis=diag) from e
 
         # Token expired — try refresh, then re-login
         if resp.status_code == 401:
+            logger.info("FT token expired, refreshing: %s %s", method, path)
             try:
                 await self._refresh_token()
                 headers = {"Authorization": f"Bearer {self._token}"}
-                resp = await self._client.request(
-                    method,
-                    f"{self.api_url}{path}",
-                    headers=headers,
-                    **kwargs,
-                )
-            except httpx.HTTPError as e:
-                raise FTClientError(f"FT connection failed (retry): {method} {path} — {e}")
+                resp = await self._client.request(method, full_url, headers=headers, **kwargs)
+            except (httpx.HTTPError, OSError) as e:
+                diag = _diagnose_connection_error(e, self.api_url)
+                logger.error("FT retry failed: %s %s — DIAGNOSIS: %s", method, full_url, diag)
+                raise FTClientError(f"FT connection failed: {diag}", diagnosis=diag) from e
 
         if resp.status_code >= 400:
-            raise FTClientError(f"FT API error: {method} {path} → {resp.status_code} {resp.text}")
+            body = resp.text[:500]
+            logger.error("FT API error: %s %s → %d %s", method, path, resp.status_code, body)
 
+            # Parse FT error detail for actionable info
+            diagnosis = None
+            if resp.status_code == 502:
+                diagnosis = f"FreqTrade returned 502 Bad Gateway on {method} {path}. The bot process may have crashed."
+            elif resp.status_code == 503:
+                diagnosis = f"FreqTrade returned 503 on {method} {path}. Bot is not in the correct state — check if it's running."
+            elif resp.status_code == 404:
+                diagnosis = f"FreqTrade has no endpoint at {path}. Check that the FT version supports this feature."
+
+            error_level = "error" if resp.status_code >= 500 else "warning"
+            await _log_ft_event(
+                "ft.api_error", error_level,
+                f"{method} {path} -> {resp.status_code} {body[:200]}",
+                diagnosis,
+            )
+            raise FTClientError(
+                f"FT API error: {method} {path} → {resp.status_code} {body}",
+                diagnosis=diagnosis,
+            )
+
+        logger.debug("FT response OK: %s %s → %d", method, path, resp.status_code)
         return resp.json()
 
     async def _get(self, path: str, **params) -> dict:
@@ -164,11 +318,15 @@ class FTClient:
 
     async def ping(self) -> dict:
         """GET /api/v1/ping — health check (no auth needed but we auth anyway)."""
+        ping_url = f"{self.api_url}/api/v1/ping"
         try:
-            resp = await self._client.get(f"{self.api_url}/api/v1/ping", timeout=5.0)
+            resp = await self._client.get(ping_url, timeout=5.0)
             return resp.json()
-        except Exception as e:
-            raise FTClientError(f"Ping failed for {self.api_url}") from e
+        except (httpx.HTTPError, OSError) as e:
+            diag = _diagnose_connection_error(e, self.api_url)
+            logger.warning("FT ping failed: %s — DIAGNOSIS: %s", ping_url, diag)
+            await _log_ft_event("ft.ping_failed", "warning", f"Ping {ping_url}", diag)
+            raise FTClientError(f"Ping failed: {diag}", diagnosis=diag) from e
 
     async def start(self) -> dict:
         """POST /api/v1/start — start trading."""

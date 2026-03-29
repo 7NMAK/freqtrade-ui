@@ -3,7 +3,9 @@
 import { useState, Fragment, useEffect, useCallback, useMemo } from "react";
 import AppShell from "@/components/layout/AppShell";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
+import Tooltip from "@/components/ui/Tooltip";
 import { useToast } from "@/components/ui/Toast";
+import { TOOLTIPS } from "@/lib/tooltips";
 import { getBots, botPairCandles, botPerformance, botDaily } from "@/lib/api";
 import type { Bot, FTPairCandlesResponse, FTPerformance, FTDailyResponse } from "@/types";
 
@@ -33,12 +35,12 @@ function parseCandlesRows(data: FTPairCandlesResponse) {
   const closeIdx = cols.indexOf("close");
   const volIdx = cols.indexOf("volume");
   return (data.data ?? []).map((row) => ({
-    date: row[dateIdx] as number,
-    open: row[openIdx] as number,
-    high: row[highIdx] as number,
-    low: row[lowIdx] as number,
-    close: row[closeIdx] as number,
-    volume: row[volIdx] as number,
+    date: Number(row[dateIdx]),
+    open: Number(row[openIdx]),
+    high: Number(row[highIdx]),
+    low: Number(row[lowIdx]),
+    close: Number(row[closeIdx]),
+    volume: Number(row[volIdx]),
   }));
 }
 
@@ -151,7 +153,7 @@ export default function AnalyticsPage() {
     try {
       const res = await botDaily(botId, 7);
       setDailyData(res);
-    } catch {
+    } catch { /* non-blocking */
       // daily data is optional for heatmap
     }
   }, []);
@@ -324,7 +326,7 @@ export default function AnalyticsPage() {
             </div>
           )}
           {/* Grid lines */}
-          <div className="absolute inset-0 pointer-events-none" style={{ background: "repeating-linear-gradient(0deg, transparent, transparent 55px, rgba(30,30,48,.3) 55px, rgba(30,30,48,.3) 56px)" }} />
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "repeating-linear-gradient(0deg, transparent, transparent 55px, var(--color-border) 55px, var(--color-border) 56px)" }} />
 
           {/* Y-axis */}
           <div className="absolute left-0 top-[30px] bottom-[24px] w-[38px] flex flex-col justify-between px-1">
@@ -389,7 +391,12 @@ export default function AnalyticsPage() {
 
         {/* Indicator overlay controls: plot_config.main_plot */}
         <div className="px-[18px] py-2.5 border-t border-border flex items-center justify-between">
-          <span className="text-[10px] text-text-3 font-semibold uppercase tracking-wider">Overlays (main_plot)</span>
+          <Tooltip
+            content={TOOLTIPS.plot_config_main_plot?.description || "Indicators displayed on the main chart"}
+            configKey={TOOLTIPS.plot_config_main_plot?.configKey}
+          >
+            <span className="text-[10px] text-text-3 font-semibold uppercase tracking-wider">Overlays</span>
+          </Tooltip>
           <div className="flex items-center gap-3.5">
             <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-text-2">
               <input type="checkbox" checked={showTema} onChange={() => setShowTema(!showTema)} className="accent-accent w-[13px] h-[13px] cursor-pointer" />
@@ -403,26 +410,34 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Subchart tabs: plot_config.subplots */}
-        <div className="flex gap-0 border-b border-border">
-          {(["RSI", "MACD", "Volume"] as const).map((tab) => (
-            <button
-              type="button"
-              key={tab}
-              onClick={() => setActiveSubchart(tab)}
-              className={`px-[18px] py-2.5 text-[11px] font-semibold cursor-pointer border-b-2 transition-all ${
-                activeSubchart === tab
-                  ? "text-accent border-accent"
-                  : "text-text-3 border-transparent hover:text-text-1"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+        <div className="flex gap-0 border-b border-border items-center">
+          <Tooltip
+            content={TOOLTIPS.plot_config_subplots?.description || "Additional subcharts below the main chart"}
+            configKey={TOOLTIPS.plot_config_subplots?.configKey}
+          >
+            <span className="px-[18px] py-2.5 text-[10px] text-text-3 font-semibold uppercase tracking-wider">Subcharts</span>
+          </Tooltip>
+          <div className="flex gap-0 flex-1">
+            {(["RSI", "MACD", "Volume"] as const).map((tab) => (
+              <button
+                type="button"
+                key={tab}
+                onClick={() => setActiveSubchart(tab)}
+                className={`px-[18px] py-2.5 text-[11px] font-semibold cursor-pointer border-b-2 transition-all ${
+                  activeSubchart === tab
+                    ? "text-accent border-accent"
+                    : "text-text-3 border-transparent hover:text-text-1"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Subchart area */}
         <div className="h-[120px] relative pl-[40px] pr-[10px] pt-3 pb-2 flex items-end gap-0.5">
-          <div className="absolute inset-0 pointer-events-none" style={{ background: "repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(30,30,48,.2) 29px, rgba(30,30,48,.2) 30px)" }} />
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "repeating-linear-gradient(0deg, transparent, transparent 29px, var(--color-border) 29px, var(--color-border) 30px)" }} />
 
           {activeSubchart === "RSI" && (
             <>
@@ -643,23 +658,32 @@ export default function AnalyticsPage() {
                 }`}
               />
             </button>
-            <span className="text-xs text-text-1 font-medium">use_public_trades</span>
-            <span className="text-[10px] text-text-3 ml-2">Fetch real-time public trade data from exchange</span>
+            <Tooltip
+              content={TOOLTIPS.use_public_trades?.description || "Fetch real-time public trade data from exchange"}
+              configKey={TOOLTIPS.use_public_trades?.configKey}
+            >
+              <span className="text-xs text-text-1 font-medium">Orderflow Data</span>
+            </Tooltip>
           </div>
 
           {/* Orderflow params */}
           <div className="text-[10px] text-text-3 font-semibold uppercase tracking-wider mb-1.5 mt-4">Orderflow Parameters</div>
           <div className="grid grid-cols-4 gap-3.5">
             {[
-              { label: "scale", value: ofScale, set: setOfScale },
-              { label: "imbalance_volume", value: ofImbalanceVol, set: setOfImbalanceVol },
-              { label: "imbalance_ratio", value: ofImbalanceRatio, set: setOfImbalanceRatio },
-              { label: "stacked_imbalance_range", value: ofStackedRange, set: setOfStackedRange },
-              { label: "cache_size", value: ofCacheSize, set: setOfCacheSize },
-              { label: "max_candles", value: ofMaxCandles, set: setOfMaxCandles },
+              { key: "orderflow_scale", label: "Scale", value: ofScale, set: setOfScale },
+              { key: "orderflow_imbalance_volume", label: "Imbalance Volume", value: ofImbalanceVol, set: setOfImbalanceVol },
+              { key: "orderflow_imbalance_ratio", label: "Imbalance Ratio", value: ofImbalanceRatio, set: setOfImbalanceRatio },
+              { key: "orderflow_stacked_imbalance_range", label: "Stacked Range", value: ofStackedRange, set: setOfStackedRange },
+              { key: "orderflow_cache_size", label: "Cache Size", value: ofCacheSize, set: setOfCacheSize },
+              { key: "orderflow_max_candles", label: "Max Candles", value: ofMaxCandles, set: setOfMaxCandles },
             ].map((p) => (
-              <div key={p.label} className="flex flex-col gap-1">
-                <label className="text-[10px] text-text-3 font-medium uppercase tracking-wider">{p.label}</label>
+              <div key={p.key} className="flex flex-col gap-1">
+                <Tooltip
+                  content={TOOLTIPS[p.key]?.description || p.label}
+                  configKey={TOOLTIPS[p.key]?.configKey}
+                >
+                  <label className="text-[10px] text-text-3 font-medium uppercase tracking-wider">{p.label}</label>
+                </Tooltip>
                 <input
                   type="number"
                   value={p.value}

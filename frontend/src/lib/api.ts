@@ -15,8 +15,10 @@ export function setToken(token: string | null) {
   if (typeof window !== "undefined") {
     if (token) {
       localStorage.setItem("orch_token", token);
+      document.cookie = `orch_token=${token}; path=/; SameSite=Strict; max-age=${60 * 60 * 24}`;
     } else {
       localStorage.removeItem("orch_token");
+      document.cookie = "orch_token=; path=/; max-age=0";
     }
   }
 }
@@ -33,21 +35,43 @@ export function isAuthenticated(): boolean {
   return !!getToken();
 }
 
+/** Check if JWT token is expired or about to expire (within 5 min) */
+export function isTokenExpiringSoon(): boolean {
+  const token = getToken();
+  if (!token) return true;
+  try {
+    const payload: { exp?: number } = JSON.parse(atob(token.split(".")[1]));
+    const exp = payload.exp;
+    if (!exp) return false;
+    const nowSec = Math.floor(Date.now() / 1000);
+    return exp - nowSec < 300; // less than 5 min remaining
+  } catch { /* non-blocking */
+    return false;
+  }
+}
+
 // ── API Error ─────────────────────────────────────────────────────────────
 
 export class ApiError extends Error {
+  public diagnosis: string | null;
   constructor(
     public status: number,
-    message: string
+    message: string,
+    diagnosis?: string | null,
   ) {
     super(message);
     this.name = "ApiError";
+    this.diagnosis = diagnosis ?? null;
   }
 }
 
 // ── Base request ──────────────────────────────────────────────────────────
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
+interface ApiFetchOptions extends Omit<RequestInit, 'headers'> {
+  headers?: Record<string, string>;
+}
+
+async function request<T>(path: string, options?: ApiFetchOptions): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
@@ -58,7 +82,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
-    headers: { ...headers, ...(options?.headers as Record<string, string>) },
+    headers: { ...headers, ...(options?.headers ?? {}) },
   });
 
   if (res.status === 401 || res.status === 403) {
@@ -72,13 +96,19 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   if (!res.ok) {
     const text = await res.text().catch(() => "Unknown error");
     let message = text;
+    let diagnosis: string | null = null;
     try {
       const parsed = JSON.parse(text);
-      message = parsed.detail ?? parsed.message ?? text;
-    } catch {
+      if (typeof parsed.detail === "object" && parsed.detail !== null) {
+        message = parsed.detail.error ?? JSON.stringify(parsed.detail);
+        diagnosis = parsed.detail.diagnosis ?? null;
+      } else {
+        message = parsed.detail ?? parsed.message ?? text;
+      }
+    } catch { /* non-blocking */
       // use raw text
     }
-    throw new ApiError(res.status, message);
+    throw new ApiError(res.status, diagnosis ? `${message}\n\nDiagnosis: ${diagnosis}` : message, diagnosis);
   }
 
   return res.json();
@@ -105,13 +135,19 @@ async function requestMultipart<T>(path: string, formData: FormData): Promise<T>
   if (!res.ok) {
     const text = await res.text().catch(() => "Unknown error");
     let message = text;
+    let diagnosis: string | null = null;
     try {
       const parsed = JSON.parse(text);
-      message = parsed.detail ?? parsed.message ?? text;
-    } catch {
+      if (typeof parsed.detail === "object" && parsed.detail !== null) {
+        message = parsed.detail.error ?? JSON.stringify(parsed.detail);
+        diagnosis = parsed.detail.diagnosis ?? null;
+      } else {
+        message = parsed.detail ?? parsed.message ?? text;
+      }
+    } catch { /* non-blocking */
       // use raw text
     }
-    throw new ApiError(res.status, message);
+    throw new ApiError(res.status, diagnosis ? `${message}\n\nDiagnosis: ${diagnosis}` : message, diagnosis);
   }
 
   return res.json();
@@ -146,16 +182,18 @@ export function logout() {
 
 // ── Health ────────────────────────────────────────────────────────────────
 
-export const health = () =>
-  request<{ status: string }>("/api/health");
+// UNUSED — available for future use
+// export const health = () =>
+//   request<{ status: string }>("/api/health");
 
 // ── Bots ──────────────────────────────────────────────────────────────────
 
 export const getBots = () =>
   request<import("@/types").Bot[]>("/api/bots/");
 
-export const getBot = (id: number) =>
-  request<import("@/types").Bot>(`/api/bots/${id}`);
+// UNUSED — available for future use
+// export const getBot = (id: number) =>
+//   request<import("@/types").Bot>(`/api/bots/${id}`);
 
 export const registerBot = (data: Record<string, unknown>) =>
   request<import("@/types").Bot>("/api/bots/", {
@@ -239,9 +277,8 @@ export const botLogs = (id: number, limit = 50) =>
 // export const botVersion = (id: number) =>
 //   request<import("@/types").FTVersion>(`/api/bots/${id}/version`);
 
-// UNUSED — available for future use
-// export const botHealth = (id: number) =>
-//   request<import("@/types").FTHealth>(`/api/bots/${id}/health`);
+export const botHealth = (id: number) =>
+  request<import("@/types").FTHealth>(`/api/bots/${id}/health`);
 
 // ── Currently unused — available for Analytics trade analysis expansion ──
 export const botEntries = (id: number) =>
@@ -339,9 +376,8 @@ export const botBacktestStart = (id: number, params: Record<string, unknown>) =>
 export const botBacktestResults = (id: number) =>
   request<import("@/types").FTBacktestResult>(`/api/bots/${id}/backtest`);
 
-// UNUSED — available for future use
-// export const botBacktestDelete = (id: number) =>
-//   request(`/api/bots/${id}/backtest`, { method: "DELETE" });
+export const botBacktestDelete = (id: number) =>
+  request(`/api/bots/${id}/backtest`, { method: "DELETE" });
 
 export const botHyperoptStart = (id: number, params: Record<string, unknown>) =>
   request<{ job_id: string }>(`/api/bots/${id}/hyperopt`, {
@@ -419,7 +455,7 @@ export const botHyperoptList = (id: number, params?: {
   min_trades?: number;
   no_details?: boolean;
 }) =>
-  request<{ results: Array<Record<string, unknown>> }>(`/api/bots/${id}/hyperopt-list`, {
+  request<{ results: Array<import("@/types").FTHyperoptResult> }>(`/api/bots/${id}/hyperopt-list`, {
     method: "POST",
     body: JSON.stringify(params ?? {}),
   });
@@ -648,3 +684,45 @@ export const fetchHyperoptComparisonHistory = (params?: {
 
 export const fetchHyperoptComparisonStats = () =>
   request<import("@/types").AIHyperoptComparisonStats>("/api/ai/hyperopt/comparison/stats");
+
+// ── Activity Logs (Orchestrator audit_log) ─────────────────────────────────
+
+export const getSystemLogs = (params?: {
+  level?: string;
+  bot_id?: number;
+  action?: string;
+  limit?: number;
+  offset?: number;
+}) => {
+  const qs = new URLSearchParams();
+  if (params?.level) qs.set("level", params.level);
+  if (params?.bot_id) qs.set("bot_id", String(params.bot_id));
+  if (params?.action) qs.set("action", params.action);
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.offset) qs.set("offset", String(params.offset));
+  return request<import("@/types").ActivityLogResponse>(`/api/logs/?${qs}`);
+};
+
+export const getBotActivityLogs = (botId: number, params?: {
+  level?: string;
+  limit?: number;
+  offset?: number;
+}) => {
+  const qs = new URLSearchParams();
+  if (params?.level) qs.set("level", params.level);
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.offset) qs.set("offset", String(params.offset));
+  return request<import("@/types").BotLogResponse>(`/api/logs/bot/${botId}?${qs}`);
+};
+
+export const getErrorLogs = (params?: {
+  bot_id?: number;
+  limit?: number;
+  offset?: number;
+}) => {
+  const qs = new URLSearchParams();
+  if (params?.bot_id) qs.set("bot_id", String(params.bot_id));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.offset) qs.set("offset", String(params.offset));
+  return request<import("@/types").ActivityLogResponse>(`/api/logs/errors?${qs}`);
+};

@@ -4,19 +4,27 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import AppShell from "@/components/layout/AppShell";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
+import Tooltip from "@/components/ui/Tooltip";
+import { TOOLTIPS } from "@/lib/tooltips";
+import { REFRESH_INTERVALS } from "@/lib/constants";
 import {
   getBots,
   botBacktestStart,
   botBacktestResults,
+  botBacktestDelete,
   botBacktestHistory,
   botHyperoptStart,
   botLookaheadAnalysis,
   botRecursiveAnalysis,
   botFtStrategies,
+  botHealth,
   submitHyperoptPreAnalyze,
   submitHyperoptPostAnalyze,
+  submitHyperoptOutcome,
+  fetchHyperoptComparison,
+  fetchHyperoptComparisonHistory,
 } from "@/lib/api";
-import type { Bot, FTBacktestResult, FTBacktestStrategyResult, AIHyperoptAnalysis } from "@/types";
+import type { Bot, FTBacktestResult, FTBacktestStrategyResult, AIHyperoptAnalysis, AIHyperoptComparison } from "@/types";
 import { fmtNum } from "@/lib/format";
 
 /* ─── Helper: extract the first strategy result from btResult ─── */
@@ -27,8 +35,14 @@ function getStrategyResult(btResult: FTBacktestResult | null): FTBacktestStrateg
   return btResult.backtest_result[keys[0]];
 }
 
+/* ─── Helper: get ALL strategy results for multi-strategy comparison ─── */
+function getAllStrategyResults(btResult: FTBacktestResult | null): { name: string; result: FTBacktestStrategyResult }[] {
+  if (!btResult?.backtest_result) return [];
+  return Object.entries(btResult.backtest_result).map(([name, result]) => ({ name, result }));
+}
+
 /* ─── Helper: profit color (backtesting variant returns "green"/"red"/undefined) ─── */
-function profitColor(n: number | undefined | null): "green" | "red" | undefined {
+function profitColorName(n: number | undefined | null): "green" | "red" | undefined {
   if (n == null) return undefined;
   return n >= 0 ? "green" : "red";
 }
@@ -121,11 +135,10 @@ const hyperoptSpaces = [
 
 /* ─── Sub-Components ─── */
 
-function FormLabel({ label, hint }: { label: string; hint?: string }) {
+function FormLabel({ label }: { label: string }) {
   return (
     <div className="text-[11px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-1.5 flex items-center gap-1.5">
       {label}
-      {hint && <span className="font-normal text-text-3 normal-case tracking-normal">{hint}</span>}
     </div>
   );
 }
@@ -150,7 +163,7 @@ function FormSelect({ children, className = "", ...props }: React.SelectHTMLAttr
   );
 }
 
-function Toggle({ on, onToggle, label, hint }: { on: boolean; onToggle: () => void; label: string; hint?: string }) {
+function Toggle({ on, onToggle, label }: { on: boolean; onToggle: () => void; label: string }) {
   return (
     <div className="flex items-center gap-2.5 mb-2.5">
       <button
@@ -168,7 +181,6 @@ function Toggle({ on, onToggle, label, hint }: { on: boolean; onToggle: () => vo
       </button>
       <span className="text-[11.5px] text-text-1">
         {label}
-        {hint && <span className="text-text-3 text-[10px] ml-1">{hint}</span>}
       </span>
     </div>
   );
@@ -347,6 +359,7 @@ export default function BacktestingPage() {
   const [btFreqaiModel, setBtFreqaiModel] = useState("None");
   const [btStrategyList, setBtStrategyList] = useState<string[]>([]);
   const [btPairOverride, setBtPairOverride] = useState<string[]>([]);
+  const [selectedCompareStrategy, setSelectedCompareStrategy] = useState<string | null>(null);
   const [valStrategy, setValStrategy] = useState("");
   const [btFeeOverride, setBtFeeOverride] = useState("");
   const [selectedLoss, setSelectedLoss] = useState("MaxDrawDownRelativeHyperOptLoss");
@@ -375,6 +388,13 @@ export default function BacktestingPage() {
   const [aiPostAnalysis, setAiPostAnalysis] = useState<AIHyperoptAnalysis | null>(null);
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
 
+  // Hyperopt comparison / outcome state
+  const [hyperoptComparison, setHyperoptComparison] = useState<AIHyperoptComparison | null>(null);
+  const [comparisonHistory, setComparisonHistory] = useState<Array<{ id: number; strategy_name: string; pair: string; timeframe: string; recommended_result_index: number | null; claude_confidence: number | null; grok_confidence: number | null; created_at: string | null }>>([]);
+  const [comparisonHistoryLoading, setComparisonHistoryLoading] = useState(false);
+  const [outcomeFeedback, setOutcomeFeedback] = useState<"helpful" | "neutral" | "wrong" | null>(null);
+  const [outcomeSubmitting, setOutcomeSubmitting] = useState(false);
+
   // Load bots on mount
   useEffect(() => {
     getBots().then((list) => {
@@ -397,7 +417,7 @@ export default function BacktestingPage() {
   }, [selectedBotId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Poll backtest results (with cleanup on unmount + race-safe)
-  const pollResults = useCallback(async (botId: number, intervalMs = 3000, maxAttempts = 60) => {
+  const pollResults = useCallback(async (botId: number, intervalMs = REFRESH_INTERVALS.BACKTEST_POLL, maxAttempts = 60) => {
     // Cancel any previous poll before starting a new one
     if (pollIntervalRef.current) {
       clearInterval(pollIntervalRef.current);
@@ -448,12 +468,60 @@ export default function BacktestingPage() {
     };
   }, []);
 
+  async function preflight(botId: number): Promise<string | null> {
+    // 1. Check bot exists and is registered
+    const bot = bots.find((b) => b.id === botId);
+    if (!bot) return `Bot #${botId} not found in orchestrator.`;
+
+    // 2. Check bot status in orchestrator
+    if (bot.status === "killed") return `Bot "${bot.name}" was killed. Go to Dashboard → Start Bot to recover.`;
+    if (bot.status === "stopped") return `Bot "${bot.name}" is stopped. Go to Dashboard → Start Bot first.`;
+    if (bot.status === "error") return `Bot "${bot.name}" is in ERROR state. Check Dashboard for details.`;
+    if (bot.status === "starting") return `Bot "${bot.name}" is still starting. Wait a moment and retry.`;
+
+    // 3. Check FT is reachable (ping)
+    try {
+      await botHealth(botId);
+    } catch { /* non-blocking */
+      return `Bot "${bot.name}" is not responding. FreqTrade may be down or unreachable.`;
+    }
+
+    // 4. Check if a backtest is already running
+    try {
+      const prev = await botBacktestResults(botId);
+      if (prev.running) {
+        return "ABORT_PREVIOUS";
+      }
+    } catch { /* non-blocking */
+      // No previous backtest — fine
+    }
+
+    return null;
+  }
+
   async function handleRunBacktest() {
     if (!selectedBotId) { toast.warning("Select a bot first."); return; }
     setRunning(true);
-    const id = toast.loading("Starting backtest...");
+    const id = toast.loading("Pre-flight checks...");
     try {
       const botId = parseInt(selectedBotId, 10);
+
+      // Pre-flight diagnostics — exact error, not guesses
+      const issue = await preflight(botId);
+      if (issue && issue !== "ABORT_PREVIOUS") {
+        toast.dismiss(id);
+        toast.error(issue);
+        setRunning(false);
+        return;
+      }
+      if (issue === "ABORT_PREVIOUS") {
+        toast.update(id, { message: "Aborting previous backtest...", type: "loading" });
+        await botBacktestDelete(botId);
+        // Brief delay for FT to release backtest lock
+        await new Promise<void>((resolve) => { const t = globalThis.setTimeout(() => resolve(), 1000); void t; });
+      }
+
+      toast.update(id, { message: "Starting backtest...", type: "loading" });
       const timerange = btTimerangeStart && btTimerangeEnd
         ? `${btTimerangeStart.replace(/-/g, "")}${btTimerangeEnd ? "-" + btTimerangeEnd.replace(/-/g, "") : ""}`
         : undefined;
@@ -477,6 +545,7 @@ export default function BacktestingPage() {
       if (btEnablePositionStacking) params.enable_position_stacking = true;
       if (btNotes) params.notes = btNotes;
       if (btEnableDynamicPairlist) params.enable_dynamic_pairlist = true;
+
       await botBacktestStart(botId, params);
       toast.update(id, { message: `Backtest running — ${selectedStrategy}...`, type: "loading" });
       const result = await pollResults(botId);
@@ -591,6 +660,43 @@ export default function BacktestingPage() {
     } finally {
       setAiAnalyzing(false);
     }
+  }
+
+  async function handleViewComparison(analysisId: number) {
+    try {
+      const comp = await fetchHyperoptComparison(analysisId);
+      setHyperoptComparison(comp);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to load comparison");
+    }
+  }
+
+  async function handleSubmitOutcome(analysisId: number) {
+    if (!outcomeFeedback) return;
+    setOutcomeSubmitting(true);
+    try {
+      await submitHyperoptOutcome({
+        analysis_id: analysisId,
+        used_ai_suggestion: outcomeFeedback === "helpful",
+        user_feedback: outcomeFeedback,
+      });
+      toast.success("Feedback submitted.");
+      setOutcomeFeedback(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to submit feedback");
+    } finally {
+      setOutcomeSubmitting(false);
+    }
+  }
+
+  async function loadComparisonHistory() {
+    if (!selectedBotId) return;
+    setComparisonHistoryLoading(true);
+    try {
+      const result = await fetchHyperoptComparisonHistory({ botId: parseInt(selectedBotId, 10), limit: 20 });
+      setComparisonHistory(result.comparisons);
+    } catch { /* non-blocking */ }
+    finally { setComparisonHistoryLoading(false); }
   }
 
   async function handleLookaheadAnalysis() {
@@ -721,10 +827,12 @@ export default function BacktestingPage() {
               <CardBody>
                 {/* Strategy */}
                 <div className="mb-3.5">
-                  <FormLabel label="Strategy" hint="--strategy" />
+                  <Tooltip content={TOOLTIPS.bt_strategy?.description ?? "Select strategy"} configKey="--strategy">
+                    <FormLabel label="Strategy" />
+                  </Tooltip>
                   <FormSelect
                     value={selectedStrategy}
-                    onChange={(e) => setSelectedStrategy((e.target as HTMLSelectElement).value)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedStrategy(e.target.value)}
                   >
                     {(ftStrategies.length > 0 ? ftStrategies : defaultStrategies).map((s) => (
                       <option key={s}>{s}</option>
@@ -734,8 +842,10 @@ export default function BacktestingPage() {
 
                 {/* Multi-strategy compare */}
                 <div className="mb-3.5">
-                  <FormLabel label="Multi-Strategy Compare" hint="--strategy-list" />
-                  <TagInput tags={[]} placeholder="Add strategy..." onChange={(tags) => setBtStrategyList(tags)} />
+                  <Tooltip content={TOOLTIPS.bt_strategy_list?.description ?? "List of strategies"} configKey="--strategy-list">
+                    <FormLabel label="Multi-Strategy Compare" />
+                  </Tooltip>
+                  <TagInput tags={btStrategyList} placeholder="Add strategy..." onChange={(tags) => setBtStrategyList(tags)} />
                 </div>
 
                 <hr className="border-t border-border my-4" />
@@ -743,10 +853,12 @@ export default function BacktestingPage() {
                 {/* Timeframe + Detail */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="mb-3.5">
-                    <FormLabel label="Timeframe" hint="--timeframe" />
+                    <Tooltip content={TOOLTIPS.bt_timeframe?.description ?? "Backtest timeframe"} configKey="--timeframe">
+                      <FormLabel label="Timeframe" />
+                    </Tooltip>
                     <FormSelect
                       value={btTimeframe}
-                      onChange={(e) => setBtTimeframe((e.target as HTMLSelectElement).value)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setBtTimeframe(e.target.value)}
                     >
                       {timeframes.map((tf) => (
                         <option key={tf} value={tf}>
@@ -756,10 +868,12 @@ export default function BacktestingPage() {
                     </FormSelect>
                   </div>
                   <div className="mb-3.5">
-                    <FormLabel label="Detail Timeframe" hint="--timeframe-detail" />
+                    <Tooltip content={TOOLTIPS.bt_timeframe_detail?.description ?? "Detail timeframe"} configKey="--timeframe-detail">
+                      <FormLabel label="Detail Timeframe" />
+                    </Tooltip>
                     <FormSelect
                       value={btTimeframeDetail}
-                      onChange={(e) => setBtTimeframeDetail((e.target as HTMLSelectElement).value)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setBtTimeframeDetail(e.target.value)}
                     >
                       {detailTimeframes.map((tf) => (
                         <option key={tf}>{tf}</option>
@@ -771,7 +885,9 @@ export default function BacktestingPage() {
                 {/* Date Range */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="mb-3.5">
-                    <FormLabel label="Start Date" hint="--timerange" />
+                    <Tooltip content={TOOLTIPS.bt_timerange?.description ?? "Date range for backtest"} configKey="--timerange">
+                      <FormLabel label="Start Date" />
+                    </Tooltip>
                     <FormInput
                       type="date"
                       value={btTimerangeStart}
@@ -779,7 +895,9 @@ export default function BacktestingPage() {
                     />
                   </div>
                   <div className="mb-3.5">
-                    <FormLabel label="End Date" />
+                    <Tooltip content={TOOLTIPS.bt_timerange?.description ?? "End date for the backtest time range"} configKey="--timerange">
+                      <FormLabel label="End Date" />
+                    </Tooltip>
                     <FormInput
                       type="date"
                       value={btTimerangeEnd}
@@ -793,7 +911,9 @@ export default function BacktestingPage() {
                 {/* Export + Breakdown */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="mb-3.5">
-                    <FormLabel label="Export Mode" hint="--export" />
+                    <Tooltip content={TOOLTIPS.bt_export?.description ?? "Export mode"} configKey="--export">
+                      <FormLabel label="Export Mode" />
+                    </Tooltip>
                     <div className="flex flex-col gap-1.5">
                       {["trades", "signals", "none"].map((mode) => (
                         <RadioChip key={mode} label={mode} active={exportMode === mode} onSelect={() => setExportMode(mode)} />
@@ -801,7 +921,9 @@ export default function BacktestingPage() {
                     </div>
                   </div>
                   <div className="mb-3.5">
-                    <FormLabel label="Breakdown" hint="--breakdown" />
+                    <Tooltip content={TOOLTIPS.bt_breakdown?.description ?? "Breakdown by time period"} configKey="--breakdown">
+                      <FormLabel label="Breakdown" />
+                    </Tooltip>
                     <div className="flex flex-col gap-1.5">
                       {(["day", "week", "month"] as const).map((key) => (
                         <CheckboxChip
@@ -818,14 +940,18 @@ export default function BacktestingPage() {
                 <hr className="border-t border-border my-4" />
 
                 {/* Protections Toggle */}
-                <Toggle on={protections} onToggle={() => setProtections(!protections)} label="Enable Protections" hint="--enable-protections" />
+                <Tooltip content={TOOLTIPS.bt_enable_protections?.description ?? "Enable protections"} configKey="--enable-protections">
+                  <Toggle on={protections} onToggle={() => setProtections(!protections)} label="Enable Protections" />
+                </Tooltip>
 
                 <hr className="border-t border-border my-4" />
 
                 {/* Starting Balance / Stake / Max Trades / Fee */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="mb-3.5">
-                    <FormLabel label="Starting Balance" hint="--dry-run-wallet" />
+                    <Tooltip content={TOOLTIPS.bt_dry_run_wallet?.description ?? "Starting wallet balance"} configKey="--dry-run-wallet">
+                      <FormLabel label="Starting Balance" />
+                    </Tooltip>
                     <FormInput
                       type="number"
                       value={btStartingBalance}
@@ -834,7 +960,9 @@ export default function BacktestingPage() {
                     />
                   </div>
                   <div className="mb-3.5">
-                    <FormLabel label="Stake Amount" hint="--stake-amount" />
+                    <Tooltip content={TOOLTIPS.stake_amount?.description ?? "Amount per trade in stake currency"} configKey="stake_amount">
+                      <FormLabel label="Stake Amount" />
+                    </Tooltip>
                     <FormInput
                       type="text"
                       value={btStakeAmount}
@@ -844,7 +972,9 @@ export default function BacktestingPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="mb-3.5">
-                    <FormLabel label="Max Open Trades" hint="--max-open-trades" />
+                    <Tooltip content={TOOLTIPS.max_open_trades?.description ?? "Maximum simultaneous open trades"} configKey="max_open_trades">
+                      <FormLabel label="Max Open Trades" />
+                    </Tooltip>
                     <FormInput
                       type="number"
                       value={btMaxOpenTrades}
@@ -854,7 +984,9 @@ export default function BacktestingPage() {
                     />
                   </div>
                   <div className="mb-3.5">
-                    <FormLabel label="Fee Override" hint="--fee" />
+                    <Tooltip content={TOOLTIPS.fee?.description ?? "Override exchange fee ratio for backtesting"} configKey="fee">
+                      <FormLabel label="Fee Override" />
+                    </Tooltip>
                     <FormInput type="number" placeholder="e.g. 0.001" step={0.0001} value={btFeeOverride} onChange={(e) => setBtFeeOverride(e.target.value)} />
                   </div>
                 </div>
@@ -863,17 +995,21 @@ export default function BacktestingPage() {
 
                 {/* Pair Override */}
                 <div className="mb-3.5">
-                  <FormLabel label="Pair Override" hint="--pairs" />
-                  <TagInput tags={[]} placeholder="Add pair..." onChange={(tags) => setBtPairOverride(tags)} />
+                  <Tooltip content={TOOLTIPS.exchange_pair_whitelist?.description ?? "Override pairs for this backtest run"} configKey="--pairs">
+                    <FormLabel label="Pair Override" />
+                  </Tooltip>
+                  <TagInput tags={btPairOverride} placeholder="Add pair..." onChange={(tags) => setBtPairOverride(tags)} />
                 </div>
 
                 {/* FreqAI Model + Cache */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="mb-3.5">
-                    <FormLabel label="FreqAI Model" hint="--freqaimodel" />
+                    <Tooltip content={"FreqAI model to use for backtesting. Select 'None' if not using FreqAI."} configKey="freqai.model">
+                      <FormLabel label="FreqAI Model" />
+                    </Tooltip>
                     <FormSelect
                       value={btFreqaiModel}
-                      onChange={(e) => setBtFreqaiModel((e.target as HTMLSelectElement).value)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setBtFreqaiModel(e.target.value)}
                     >
                       {freqaiModels.map((m) => (
                         <option key={m}>{m}</option>
@@ -881,10 +1017,12 @@ export default function BacktestingPage() {
                     </FormSelect>
                   </div>
                   <div className="mb-3.5">
-                    <FormLabel label="Cache" hint="--cache" />
+                    <Tooltip content={TOOLTIPS.bt_cache?.description ?? "Cache strategy data"} configKey="--cache">
+                      <FormLabel label="Cache" />
+                    </Tooltip>
                     <FormSelect
                       value={btCache}
-                      onChange={(e) => setBtCache((e.target as HTMLSelectElement).value)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setBtCache(e.target.value)}
                     >
                       {cacheOptions.map((c) => (
                         <option key={c}>{c}</option>
@@ -896,12 +1034,18 @@ export default function BacktestingPage() {
                 <hr className="border-t border-border my-4" />
 
                 {/* New: Position Stacking + Dynamic Pairlist */}
-                <Toggle on={btEnablePositionStacking} onToggle={() => setBtEnablePositionStacking(!btEnablePositionStacking)} label="Enable Position Stacking" hint="--eps" />
-                <Toggle on={btEnableDynamicPairlist} onToggle={() => setBtEnableDynamicPairlist(!btEnableDynamicPairlist)} label="Enable Dynamic Pairlist" hint="--enable-dynamic-pairlist" />
+                <Tooltip content={TOOLTIPS.bt_enable_position_stacking?.description ?? "Enable position stacking"} configKey="--eps">
+                  <Toggle on={btEnablePositionStacking} onToggle={() => setBtEnablePositionStacking(!btEnablePositionStacking)} label="Enable Position Stacking" />
+                </Tooltip>
+                <Tooltip content={"Enable dynamic pairlist evaluation during backtest. Uses pairlist handlers to dynamically select pairs."} configKey="--enable-dynamic-pairlist">
+                  <Toggle on={btEnableDynamicPairlist} onToggle={() => setBtEnableDynamicPairlist(!btEnableDynamicPairlist)} label="Enable Dynamic Pairlist" />
+                </Tooltip>
 
                 {/* Notes */}
                 <div className="mb-3.5 mt-2">
-                  <FormLabel label="Notes" hint="--notes" />
+                  <Tooltip content={"Optional notes to tag this backtest run for future reference"} configKey="notes">
+                    <FormLabel label="Notes" />
+                  </Tooltip>
                   <FormInput type="text" value={btNotes} onChange={(e) => setBtNotes(e.target.value)} placeholder="Optional notes for this backtest run" />
                 </div>
 
@@ -927,7 +1071,9 @@ export default function BacktestingPage() {
               <CardBody>
                 {/* Epochs */}
                 <div className="mb-3.5">
-                  <FormLabel label="Epochs" hint="--epochs" />
+                  <Tooltip content={TOOLTIPS.ho_epochs?.description ?? "Number of hyperopt epochs"} configKey="--epochs">
+                    <FormLabel label="Epochs" />
+                  </Tooltip>
                   <FormInput
                     type="number"
                     value={hoEpochs}
@@ -939,7 +1085,9 @@ export default function BacktestingPage() {
 
                 {/* Spaces */}
                 <div className="mb-3.5">
-                  <FormLabel label="Spaces" hint="--spaces" />
+                  <Tooltip content={TOOLTIPS.ho_spaces?.description ?? "Parameter spaces to optimize"} configKey="--spaces">
+                    <FormLabel label="Spaces" />
+                  </Tooltip>
                   <div className="flex flex-wrap gap-2">
                     {hyperoptSpaces.map((s) => (
                       <CheckboxChip
@@ -956,8 +1104,10 @@ export default function BacktestingPage() {
 
                 {/* Loss Function */}
                 <div className="mb-3.5">
-                  <FormLabel label="Loss Function" hint="--hyperopt-loss" />
-                  <FormSelect value={selectedLoss} onChange={(e) => setSelectedLoss((e.target as HTMLSelectElement).value)}>
+                  <Tooltip content={TOOLTIPS.ho_loss?.description ?? "Loss function to optimize"} configKey="--hyperopt-loss">
+                    <FormLabel label="Loss Function" />
+                  </Tooltip>
+                  <FormSelect value={selectedLoss} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedLoss(e.target.value)}>
                     {lossFunctions.map((lf) => (
                       <option key={lf}>{lf}</option>
                     ))}
@@ -966,7 +1116,9 @@ export default function BacktestingPage() {
 
                 {/* Sampler */}
                 <div className="mb-3.5">
-                  <FormLabel label="Sampler" hint="--hyperopt-sampler" />
+                  <Tooltip content={TOOLTIPS.ho_spaces?.description ?? "Optimization algorithm"} configKey="--hyperopt-sampler">
+                    <FormLabel label="Sampler" />
+                  </Tooltip>
                   <FormSelect value={sampler} onChange={(e) => setSampler(e.target.value)}>
                     {samplers.map((s) => (
                       <option key={s.value} value={s.value}>
@@ -984,7 +1136,9 @@ export default function BacktestingPage() {
                 {/* Min/Max Trades */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="mb-3.5">
-                    <FormLabel label="Min Trades" hint="--min-trades" />
+                    <Tooltip content={TOOLTIPS.ho_min_trades?.description ?? "Minimum trades to allow"} configKey="--min-trades">
+                      <FormLabel label="Min Trades" />
+                    </Tooltip>
                     <FormInput
                       type="number"
                       value={hoMinTrades}
@@ -993,7 +1147,9 @@ export default function BacktestingPage() {
                     />
                   </div>
                   <div className="mb-3.5">
-                    <FormLabel label="Max Trades" hint="--max-trades" />
+                    <Tooltip content={TOOLTIPS.ho_max_trades?.description ?? "Maximum trades to allow"} configKey="--max-trades">
+                      <FormLabel label="Max Trades" />
+                    </Tooltip>
                     <FormInput type="number" placeholder="No limit" />
                   </div>
                 </div>
@@ -1001,14 +1157,18 @@ export default function BacktestingPage() {
                 {/* Random State + Workers */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="mb-3.5">
-                    <FormLabel label="Random State (Seed)" hint="--random-state" />
+                    <Tooltip content={TOOLTIPS.ho_random_state?.description ?? "Random seed for reproducibility"} configKey="--random-state">
+                      <FormLabel label="Random State (Seed)" />
+                    </Tooltip>
                     <FormInput type="number" placeholder="Random" />
                   </div>
                   <div className="mb-3.5">
-                    <FormLabel label="Workers" hint="-j" />
+                    <Tooltip content={TOOLTIPS.ho_jobs?.description ?? "Number of parallel jobs"} configKey="-j">
+                      <FormLabel label="Workers" />
+                    </Tooltip>
                     <FormSelect
                       value={hoWorkers}
-                      onChange={(e) => setHoWorkers((e.target as HTMLSelectElement).value)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setHoWorkers(e.target.value)}
                     >
                       <option value="-1">-1 (All CPUs)</option>
                       <option value="1">1</option>
@@ -1020,7 +1180,9 @@ export default function BacktestingPage() {
 
                 {/* Search Effort Slider */}
                 <div className="mb-3.5">
-                  <FormLabel label="Search Effort" hint="--effort" />
+                  <Tooltip content={TOOLTIPS.ho_effort?.description ?? "Search effort level"} configKey="--effort">
+                    <FormLabel label="Search Effort" />
+                  </Tooltip>
                   <div className="flex items-center gap-3">
                     <input
                       type="range"
@@ -1038,15 +1200,21 @@ export default function BacktestingPage() {
 
                 {/* Early Stop */}
                 <div className="mb-3.5">
-                  <FormLabel label="Early Stop" hint="--early-stop" />
+                  <Tooltip content={"Stop hyperopt early if no improvement after N epochs. Saves time on stale optimization runs."} configKey="--early-stop">
+                    <FormLabel label="Early Stop" />
+                  </Tooltip>
                   <FormInput type="number" defaultValue={50} placeholder="Epochs without improvement" />
                 </div>
 
                 <hr className="border-t border-border my-4" />
 
                 {/* Toggles */}
-                <Toggle on={analyzePerEpoch} onToggle={() => setAnalyzePerEpoch(!analyzePerEpoch)} label="Analyze per epoch" hint="--analyze-per-epoch" />
-                <Toggle on={disableParamExport} onToggle={() => setDisableParamExport(!disableParamExport)} label="Disable param export" hint="--disable-param-export" />
+                <Tooltip content={"Analyze results after each epoch"} configKey="--analyze-per-epoch">
+                  <Toggle on={analyzePerEpoch} onToggle={() => setAnalyzePerEpoch(!analyzePerEpoch)} label="Analyze per epoch" />
+                </Tooltip>
+                <Tooltip content={"Skip exporting final parameters"} configKey="--disable-param-export">
+                  <Toggle on={disableParamExport} onToggle={() => setDisableParamExport(!disableParamExport)} label="Disable param export" />
+                </Tooltip>
 
                 {/* Run Hyperopt Button */}
                 <div className="flex gap-2 mt-4">
@@ -1165,11 +1333,11 @@ export default function BacktestingPage() {
                         </>
                       )}
                     </div>
-                    {Array.isArray(aiPostAnalysis.overfitting_scores) && (aiPostAnalysis.overfitting_scores as Array<{result_index?: number; risk_score?: number; verdict?: string}>).length > 0 && (
+                    {Array.isArray(aiPostAnalysis.overfitting_scores) && aiPostAnalysis.overfitting_scores.length > 0 && (
                       <div className="mt-2">
                         <span className="text-[10px] text-text-3">Overfitting Scores: </span>
                         <span className="text-[10px] font-mono text-text-0">
-                          {(aiPostAnalysis.overfitting_scores as Array<{result_index?: number; risk_score?: number; verdict?: string}>).map((s, i) => {
+                          {aiPostAnalysis.overfitting_scores.map((s, i) => {
                             const score = typeof s === "object" && s !== null ? s.risk_score : s;
                             const verdict = typeof s === "object" && s !== null ? s.verdict : "";
                             const verdictColor = verdict === "SAFE" ? "text-green" : verdict === "CAUTION" ? "text-amber" : "text-red";
@@ -1189,6 +1357,96 @@ export default function BacktestingPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Section A: AI Comparison View */}
+                {aiPostAnalysis && (
+                  <div className="mt-4 border-t border-border pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="text-xs font-semibold text-text-0">AI Comparison</div>
+                      <button type="button" onClick={() => handleViewComparison(aiPostAnalysis.id)}
+                        className="text-[10px] px-2 py-1 rounded border border-accent/30 text-accent hover:bg-accent/10 cursor-pointer transition-all">
+                        View Comparison
+                      </button>
+                    </div>
+                    {hyperoptComparison && (
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div className="bg-bg-1 border border-border rounded-lg p-3">
+                          <div className="text-2xs text-text-3 uppercase mb-1">Baseline</div>
+                          <div className="text-text-0">Profit: {hyperoptComparison.baseline.profit != null ? `${(hyperoptComparison.baseline.profit * 100).toFixed(2)}%` : "\u2014"}</div>
+                          <div className="text-text-2">Sharpe: {hyperoptComparison.baseline.sharpe?.toFixed(2) ?? "\u2014"}</div>
+                          <div className="text-text-2">Max DD: {hyperoptComparison.baseline.max_drawdown != null ? `${(hyperoptComparison.baseline.max_drawdown * 100).toFixed(1)}%` : "\u2014"}</div>
+                        </div>
+                        <div className="bg-bg-1 border border-accent/20 rounded-lg p-3">
+                          <div className="text-2xs text-accent uppercase mb-1">AI Recommended (#{hyperoptComparison.recommended_result_index ?? "?"})</div>
+                          <div className="text-text-0">Claude: {hyperoptComparison.claude_confidence != null ? `${(hyperoptComparison.claude_confidence * 100).toFixed(0)}%` : "\u2014"}</div>
+                          <div className="text-text-0">Grok: {hyperoptComparison.grok_confidence != null ? `${(hyperoptComparison.grok_confidence * 100).toFixed(0)}%` : "\u2014"}</div>
+                          <div className={hyperoptComparison.advisors_agree ? "text-green" : "text-amber"}>{hyperoptComparison.advisors_agree ? "Advisors Agree" : "Advisors Disagree"}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Section B: Outcome Feedback */}
+                {aiPostAnalysis && (
+                  <div className="mt-4 border-t border-border pt-4">
+                    <div className="text-xs font-semibold text-text-0 mb-2">Was this recommendation helpful?</div>
+                    <div className="flex gap-2 items-center">
+                      {(["helpful", "neutral", "wrong"] as const).map((fb) => (
+                        <button key={fb} type="button"
+                          onClick={() => setOutcomeFeedback(outcomeFeedback === fb ? null : fb)}
+                          className={`px-3 py-1.5 text-xs rounded border cursor-pointer transition-all ${
+                            outcomeFeedback === fb
+                              ? fb === "helpful" ? "border-green/40 bg-green-bg text-green" : fb === "wrong" ? "border-red/40 bg-red-bg text-red" : "border-amber/40 bg-amber-bg text-amber"
+                              : "border-border text-text-2 hover:bg-bg-3"
+                          }`}>
+                          {fb === "helpful" ? "Helpful" : fb === "neutral" ? "Neutral" : "Wrong"}
+                        </button>
+                      ))}
+                      <button type="button" disabled={!outcomeFeedback || outcomeSubmitting}
+                        onClick={() => handleSubmitOutcome(aiPostAnalysis.id)}
+                        className="px-3 py-1.5 text-xs font-semibold rounded bg-accent text-white hover:brightness-110 disabled:opacity-50 cursor-pointer transition-all ml-2">
+                        {outcomeSubmitting ? "Submitting..." : "Submit Feedback"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Section C: Comparison History */}
+                <Card className="mt-4">
+                  <CardHeader title="AI Comparison History" icon="history"
+                    action={<button type="button" onClick={loadComparisonHistory}
+                      className="text-xs text-accent cursor-pointer font-medium">{comparisonHistoryLoading ? "Loading..." : "Load History"}</button>} />
+                  {comparisonHistory.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead><tr className="border-b border-border text-text-3">
+                          <th className="text-left py-2 px-3 font-medium">Strategy</th>
+                          <th className="text-left py-2 px-3 font-medium">Pair</th>
+                          <th className="text-left py-2 px-3 font-medium">TF</th>
+                          <th className="text-right py-2 px-3 font-medium">Rec. #</th>
+                          <th className="text-right py-2 px-3 font-medium">Claude</th>
+                          <th className="text-right py-2 px-3 font-medium">Grok</th>
+                          <th className="text-left py-2 px-3 font-medium">Date</th>
+                        </tr></thead>
+                        <tbody>{comparisonHistory.map((c) => (
+                          <tr key={c.id} className="border-b border-border/30 hover:bg-bg-3 transition-colors cursor-pointer"
+                            onClick={() => handleViewComparison(c.id)}>
+                            <td className="py-2 px-3 text-text-0 font-medium">{c.strategy_name}</td>
+                            <td className="py-2 px-3 text-text-2">{c.pair}</td>
+                            <td className="py-2 px-3 text-text-2">{c.timeframe}</td>
+                            <td className="py-2 px-3 text-right text-text-0">#{c.recommended_result_index ?? "\u2014"}</td>
+                            <td className="py-2 px-3 text-right text-text-0">{c.claude_confidence != null ? `${(c.claude_confidence * 100).toFixed(0)}%` : "\u2014"}</td>
+                            <td className="py-2 px-3 text-right text-text-0">{c.grok_confidence != null ? `${(c.grok_confidence * 100).toFixed(0)}%` : "\u2014"}</td>
+                            <td className="py-2 px-3 text-text-3">{c.created_at ? new Date(c.created_at).toLocaleDateString() : "\u2014"}</td>
+                          </tr>
+                        ))}</tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <CardBody><div className="py-4 text-center text-sm text-text-3">Click &quot;Load History&quot; to see past AI comparisons</div></CardBody>
+                  )}
+                </Card>
               </CardBody>
             )}
 
@@ -1197,10 +1455,12 @@ export default function BacktestingPage() {
               <CardBody>
                 {/* Strategy */}
                 <div className="mb-3.5">
-                  <FormLabel label="Strategy" />
+                  <Tooltip content={TOOLTIPS.bt_strategy?.description ?? "Strategy to validate"} configKey="--strategy">
+                    <FormLabel label="Strategy" />
+                  </Tooltip>
                   <FormSelect
                     value={valStrategy}
-                    onChange={(e) => setValStrategy((e.target as HTMLSelectElement).value)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setValStrategy(e.target.value)}
                   >
                     {(ftStrategies.length > 0 ? ftStrategies : defaultStrategies).map((s) => (
                       <option key={s}>{s}</option>
@@ -1209,7 +1469,9 @@ export default function BacktestingPage() {
                 </div>
 
                 <div className="mb-3.5">
-                  <FormLabel label="Timeframe" />
+                  <Tooltip content={TOOLTIPS.bt_timeframe?.description ?? "Timeframe for validation analysis"} configKey="--timeframe">
+                    <FormLabel label="Timeframe" />
+                  </Tooltip>
                   <FormSelect defaultValue="1h">
                     <option>1h</option>
                     <option>5m</option>
@@ -1225,18 +1487,26 @@ export default function BacktestingPage() {
                 </div>
 
                 <div className="mb-3.5">
-                  <FormLabel label="Enter Reason List" hint="--enter-reason-list" />
+                  <Tooltip content={"Filter analysis by specific entry reasons (enter_tag values). Leave empty for all."} configKey="--enter-reason-list">
+                    <FormLabel label="Enter Reason List" />
+                  </Tooltip>
                   <TagInput tags={analysisEnterReasons} placeholder="Add enter reason..." onChange={(tags) => setAnalysisEnterReasons(tags)} />
                 </div>
                 <div className="mb-3.5">
-                  <FormLabel label="Exit Reason List" hint="--exit-reason-list" />
+                  <Tooltip content={"Filter analysis by specific exit reasons (exit_reason values). Leave empty for all."} configKey="--exit-reason-list">
+                    <FormLabel label="Exit Reason List" />
+                  </Tooltip>
                   <TagInput tags={analysisExitReasons} placeholder="Add exit reason..." onChange={(tags) => setAnalysisExitReasons(tags)} />
                 </div>
                 <div className="mb-3.5">
-                  <FormLabel label="Indicator List" hint="--indicator-list" />
+                  <Tooltip content={"Filter analysis by specific indicators. Shows how indicator values correlate with trade outcomes."} configKey="--indicator-list">
+                    <FormLabel label="Indicator List" />
+                  </Tooltip>
                   <TagInput tags={analysisIndicators} placeholder="Add indicator..." onChange={(tags) => setAnalysisIndicators(tags)} />
                 </div>
-                <Toggle on={analysisRejectedSignals} onToggle={() => setAnalysisRejectedSignals(!analysisRejectedSignals)} label="Rejected Signals" hint="--rejected-signals" />
+                <Tooltip content={"Show rejected signals in analysis"} configKey="--rejected-signals">
+                  <Toggle on={analysisRejectedSignals} onToggle={() => setAnalysisRejectedSignals(!analysisRejectedSignals)} label="Rejected Signals" />
+                </Tooltip>
 
                 <div className="mt-3 mb-5">
                   <button
@@ -1300,7 +1570,11 @@ export default function BacktestingPage() {
         {/* ════════ RIGHT COLUMN: RESULTS ════════ */}
         <div className="flex flex-col gap-4">
           {(() => {
-            const sr = getStrategyResult(btResult);
+            const allResults = getAllStrategyResults(btResult);
+            const isMultiStrategy = allResults.length > 1;
+            const sr = isMultiStrategy && selectedCompareStrategy
+              ? allResults.find((r) => r.name === selectedCompareStrategy)?.result ?? getStrategyResult(btResult)
+              : getStrategyResult(btResult);
 
             /* ── No results yet ── */
             if (!btResult || !sr) {
@@ -1388,6 +1662,61 @@ export default function BacktestingPage() {
                   Live result: {sr.strategy_name} &mdash; {sr.total_trades} trades &mdash; {sr.timerange}
                 </div>
 
+                {/* Multi-Strategy Comparison Table */}
+                {isMultiStrategy && (
+                  <Card>
+                    <CardHeader title="Strategy Comparison" icon="&#9878;" action={<span className="text-[10px] text-text-3">{allResults.length} strategies</span>} />
+                    <CardBody>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-[11px]">
+                          <thead>
+                            <tr className="text-left text-text-3 uppercase tracking-wider text-[10px]">
+                              <th className="pb-2 pr-3">Strategy</th>
+                              <th className="pb-2 pr-3 text-right">Trades</th>
+                              <th className="pb-2 pr-3 text-right">Profit %</th>
+                              <th className="pb-2 pr-3 text-right">Profit Abs</th>
+                              <th className="pb-2 pr-3 text-right">Win Rate</th>
+                              <th className="pb-2 pr-3 text-right">Sharpe</th>
+                              <th className="pb-2 pr-3 text-right">Max DD</th>
+                              <th className="pb-2 text-right">Avg Duration</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {allResults.map(({ name, result: r }) => {
+                              const wr = r.total_trades > 0 ? (r.wins / r.total_trades) * 100 : 0;
+                              const isSelected = selectedCompareStrategy === name;
+                              return (
+                                <tr
+                                  key={name}
+                                  onClick={() => setSelectedCompareStrategy(name)}
+                                  className={[
+                                    "cursor-pointer transition-colors border-t border-border/40",
+                                    isSelected ? "bg-accent-glow" : "hover:bg-bg-3",
+                                  ].join(" ")}
+                                >
+                                  <td className={`py-2 pr-3 font-medium ${isSelected ? "text-accent" : "text-text-0"}`}>{name}</td>
+                                  <td className="py-2 pr-3 text-right text-text-1">{r.total_trades}</td>
+                                  <td className={`py-2 pr-3 text-right font-semibold ${r.profit_total >= 0 ? "text-green" : "text-red"}`}>
+                                    {(r.profit_total * 100).toFixed(2)}%
+                                  </td>
+                                  <td className={`py-2 pr-3 text-right ${r.profit_total_abs >= 0 ? "text-green" : "text-red"}`}>
+                                    {r.profit_total_abs.toFixed(2)} {r.stake_currency}
+                                  </td>
+                                  <td className="py-2 pr-3 text-right text-text-1">{wr.toFixed(1)}%</td>
+                                  <td className="py-2 pr-3 text-right text-text-1">{r.sharpe?.toFixed(2) ?? "\u2014"}</td>
+                                  <td className="py-2 pr-3 text-right text-red">{(r.max_drawdown * 100).toFixed(2)}%</td>
+                                  <td className="py-2 text-right text-text-2">{r.holding_avg ?? "\u2014"}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                      <p className="mt-2 text-[10px] text-text-3">Click a strategy row to see its detailed results below.</p>
+                    </CardBody>
+                  </Card>
+                )}
+
                 {/* Summary Stats */}
                 <div className="grid grid-cols-4 gap-3.5">
                   <StatBox
@@ -1405,7 +1734,7 @@ export default function BacktestingPage() {
                     label="Total Profit"
                     value={`${fmtNum(sr.profit_total_abs)} ${stakeCurrency}`}
                     sub={`${fmtNum(profitPct)}% on wallet`}
-                    color={profitColor(sr.profit_total_abs)}
+                    color={profitColorName(sr.profit_total_abs)}
                   />
                   <StatBox
                     label="Max Drawdown"
@@ -1617,14 +1946,13 @@ export default function BacktestingPage() {
                         </thead>
                         <tbody>
                           {breakdownEntries.map(([key, val]) => {
-                            const v = val as { date: string; profit_abs: number; wins: number; draws: number; losses: number };
                             return (
                               <tr key={key} className="hover:bg-bg-3 transition-colors">
-                                <td className="px-4 py-3 text-xs font-medium text-text-0">{v.date || key}</td>
-                                <td className={`px-4 py-3 text-xs font-semibold ${v.profit_abs >= 0 ? "text-green" : "text-red"}`}>{fmtNum(v.profit_abs)}</td>
-                                <td className="px-4 py-3 text-xs text-green">{v.wins}</td>
-                                <td className="px-4 py-3 text-xs text-red">{v.losses}</td>
-                                <td className="px-4 py-3 text-xs text-text-2">{v.draws}</td>
+                                <td className="px-4 py-3 text-xs font-medium text-text-0">{val.date || key}</td>
+                                <td className={`px-4 py-3 text-xs font-semibold ${val.profit_abs >= 0 ? "text-green" : "text-red"}`}>{fmtNum(val.profit_abs)}</td>
+                                <td className="px-4 py-3 text-xs text-green">{val.wins}</td>
+                                <td className="px-4 py-3 text-xs text-red">{val.losses}</td>
+                                <td className="px-4 py-3 text-xs text-text-2">{val.draws}</td>
                               </tr>
                             );
                           })}
@@ -1677,7 +2005,7 @@ export default function BacktestingPage() {
                     try {
                       const r = await botBacktestHistory(parseInt(selectedBotId, 10));
                       setBtHistory(r.results);
-                    } catch {
+                    } catch { /* non-blocking */
                       setBtHistory([]);
                     } finally {
                       setBtHistoryLoading(false);

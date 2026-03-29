@@ -32,6 +32,7 @@ const NAV_STATIC = [
   { label: "SYSTEM", items: [
     { name: "Data", href: "/data", icon: "💾" },
     { name: "Settings", href: "/settings", icon: "⚙️" },
+    { name: "Docs", href: "/docs", icon: "📖" },
   ]},
 ];
 
@@ -47,21 +48,15 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     async function loadSidebarData() {
       try {
         const [bots, strategies] = await Promise.all([
-          getBots().catch((err) => {
-            toast.error(err instanceof Error ? err.message : "Failed to load bots");
-            return [];
-          }),
-          getStrategies().catch((err) => {
-            toast.error(err instanceof Error ? err.message : "Failed to load strategies");
-            return [];
-          }),
+          getBots().catch((): import("@/types").Bot[] => []),
+          getStrategies().catch((): import("@/types").Strategy[] => []),
         ]);
         const running = bots.some((b) => b.status === "running");
         setAnyRunning(running);
         setBotCount(bots.length);
         const liveCount = strategies.filter((s) => s.lifecycle === "live").length;
         setLiveFmt(`${liveCount} live`);
-      } catch {
+      } catch { /* non-blocking */
         // Non-critical — sidebar still renders with static defaults
       }
     }

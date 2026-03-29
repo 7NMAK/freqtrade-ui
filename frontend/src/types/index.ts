@@ -36,6 +36,9 @@ export interface Strategy {
   code: string | null;
   exchange: string | null;
   timeframe: string | null;
+  builder_state: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 export type KillType = "SOFT_KILL" | "HARD_KILL";
@@ -398,37 +401,243 @@ export interface FTSysinfo {
   ram_used?: number;
 }
 
-/** GET /api/v1/show_config (partial — frequently used fields) */
+// ── FT Config sub-types (§1, §9, §11, §13, §17 of FREQTRADE_REFERENCE.md) ──
+
+/** §1 — order_types section of config.json */
+export interface FTOrderTypes {
+  entry?: string;
+  exit?: string;
+  emergency_exit?: string;
+  force_exit?: string;
+  force_entry?: string;
+  stoploss?: string;
+  stoploss_on_exchange?: boolean;
+  stoploss_on_exchange_interval?: number;
+  stoploss_on_exchange_limit_ratio?: number;
+}
+
+/** §1 — order_time_in_force section */
+export interface FTOrderTimeInForce {
+  entry?: string;
+  exit?: string;
+}
+
+/** §1 — unfilledtimeout section */
+export interface FTUnfilledTimeout {
+  entry?: number;
+  exit?: number;
+  unit?: string;
+  exit_timeout_count?: number;
+}
+
+/** §1 — entry_pricing / exit_pricing section */
+export interface FTPricing {
+  price_side?: string;
+  use_order_book?: boolean;
+  order_book_top?: number;
+  price_last_balance?: number;
+}
+
+/** §9 — exchange section (full config object form) */
+export interface FTExchangeConfig {
+  name?: string;
+  key?: string;
+  secret?: string;
+  password?: string;
+  uid?: string;
+  pair_whitelist?: string[];
+  pair_blacklist?: string[];
+  enable_ws?: boolean;
+  markets_refresh_interval?: number;
+  ccxt_config?: Record<string, unknown>;
+  skip_open_order_update?: boolean;
+  unknown_fee_rate?: number;
+  log_responses?: boolean;
+  only_from_ccxt?: boolean;
+}
+
+/** §11 — telegram.notification_settings.protection_trigger */
+export interface FTTelegramProtectionTrigger {
+  lock?: string;
+  stop?: string;
+  global_stop?: string;
+}
+
+/** §11 — telegram.notification_settings */
+export interface FTTelegramNotificationSettings {
+  entry?: string;
+  exit?: string;
+  entry_cancel?: string;
+  exit_cancel?: string;
+  entry_fill?: string;
+  exit_fill?: string;
+  status?: string;
+  show_candle?: string;
+  protection_trigger?: FTTelegramProtectionTrigger;
+  exit_stoploss?: string;
+  exit_roi?: string;
+  exit_exit_signal?: string;
+  exit_force_exit?: string;
+  exit_trailing_stop_loss?: string;
+}
+
+/** §11 — telegram section */
+export interface FTTelegramConfig {
+  enabled?: boolean;
+  token?: string;
+  chat_id?: string;
+  allow_custom_messages?: boolean;
+  balance_dust_level?: number;
+  reload?: boolean;
+  topic_id?: string;
+  authorized_users?: string[];
+  keyboard?: unknown;
+  notification_settings?: FTTelegramNotificationSettings;
+}
+
+/** §13 — webhook section */
+export interface FTWebhookConfig {
+  enabled?: boolean;
+  url?: string;
+  format?: string;
+  retries?: number;
+  retry_delay?: number;
+  timeout?: number;
+  webhookstrategy_msg?: unknown;
+  // Dynamic event payloads (webhookentry, webhookexit, etc.)
+  [eventName: string]: unknown;
+}
+
+/** §13 — discord section */
+export interface FTDiscordConfig {
+  enabled?: boolean;
+  webhook_url?: string;
+  entry?: unknown;
+  exit?: unknown;
+  exit_fill?: unknown;
+  status?: unknown;
+}
+
+/** §17 — external_message_consumer.producers[] entry */
+export interface FTProducer {
+  name?: string;
+  host?: string;
+  port?: number;
+  ws_token?: string;
+  secure?: boolean;
+}
+
+/** §17 — external_message_consumer section */
+export interface FTExternalMessageConsumer {
+  enabled?: boolean;
+  remove_entry_exit_signals?: boolean;
+  wait_timeout?: number;
+  ping_timeout?: number;
+  initial_candle_limit?: number;
+  message_size_limit?: number;
+  producers?: FTProducer[];
+}
+
+/** GET /api/v1/show_config — full FreqTrade config response */
 export interface FTShowConfig {
+  // Core identification
   version: string;
   strategy: string;
   strategy_version: string | null;
   timeframe: string;
   timeframe_ms: number;
   timeframe_secs: number;
-  exchange: string;
+
+  // Exchange — show_config returns string, raw config returns object
+  exchange: string | FTExchangeConfig;
+
+  // Pairs
   pair_whitelist: string[];
+  pair_blacklist?: string[];
+
+  // Staking
   stake_currency: string;
   stake_amount: number | string;
   available_capital: number | null;
+  tradable_balance_ratio?: number;
   max_open_trades: number;
+  fiat_display_currency?: string;
+
+  // ROI & Stoploss
   minimal_roi: Record<string, number>;
   stoploss: number;
   trailing_stop: boolean;
   trailing_stop_positive: number | null;
   trailing_stop_positive_offset: number;
   trailing_only_offset_is_reached: boolean;
+
+  // Exit signals
+  use_exit_signal?: boolean;
+  exit_profit_only?: boolean;
+  ignore_roi_if_entry_signal?: boolean;
+  exit_profit_offset?: number;
+
+  // DCA
+  position_adjustment_enable?: boolean;
+  max_entry_position_adjustment?: number;
+
+  // Dry run
   dry_run: boolean;
   dry_run_wallet?: number;
+
+  // Futures
   trading_mode: "spot" | "futures" | "margin";
   margin_mode: "isolated" | "cross" | null;
   can_short: boolean;
+  liquidation_buffer?: number;
+  futures_funding_rate?: number;
+
+  // Bot behavior
   bot_name?: string;
   initial_state?: string;
   force_entry_enable?: boolean;
+  cancel_open_orders_on_exit?: boolean;
+  process_only_new_candles?: boolean;
+  process_throttle_secs?: number;
+  heartbeat_interval?: number;
+  amend_last_stake_amount?: boolean;
+  last_stake_amount_min_ratio?: number;
+  amount_reserve_percent?: number;
+  ignore_buying_expired_candle_after?: number;
+  custom_price_max_distance_ratio?: number;
+
+  // Order types & timing (§1)
+  order_types?: FTOrderTypes;
+  order_time_in_force?: FTOrderTimeInForce;
+  unfilledtimeout?: FTUnfilledTimeout;
+
+  // Pricing (§1)
+  entry_pricing?: FTPricing;
+  exit_pricing?: FTPricing;
+
+  // Protections & Pairlists (§7)
   protections?: FTProtection[];
   pairlists?: Array<{ method: string; [key: string]: unknown }>;
-  // Allow extra fields from the raw FT config
+
+  // Telegram (§11)
+  telegram?: FTTelegramConfig;
+
+  // Webhooks (§13)
+  webhook?: FTWebhookConfig;
+  discord?: FTDiscordConfig;
+
+  // Producer/Consumer (§17)
+  external_message_consumer?: FTExternalMessageConsumer;
+
+  // FreqAI (§24, §25, §26)
+  freqai?: FTFreqAIConfig;
+
+  // Advanced (§28)
+  db_url?: string;
+  verbosity?: string;
+  logfile?: string;
+
+  // Allow additional unknown fields from the raw FT config
   [key: string]: unknown;
 }
 
@@ -464,34 +673,104 @@ export type FTProtection =
       only_per_pair?: boolean;
     };
 
-/** FreqAI config (inside show_config.freqai) */
+/** FreqAI — rl_config.model_reward_parameters (§25) */
+export interface FTRLModelRewardParameters {
+  [key: string]: unknown;
+}
+
+/** FreqAI — rl_config section (§25) */
+export interface FTRLConfig {
+  model_type?: string;
+  policy_type?: string;
+  environment?: string;
+  train_cycles?: number;
+  max_trade_duration_candles?: number;
+  max_training_drawdown_pct?: number;
+  add_state_info?: boolean;
+  cpu_count?: number;
+  net_arch?: number[];
+  randomize_starting_position?: boolean;
+  drop_ohlc_from_features?: boolean;
+  progress_bar?: boolean;
+  model_reward_parameters?: FTRLModelRewardParameters;
+}
+
+/** FreqAI — model_training_parameters.trainer_kwargs (§24) */
+export interface FTTrainerKwargs {
+  n_epochs?: number;
+  batch_size?: number;
+  [key: string]: unknown;
+}
+
+/** FreqAI — model_training_parameters section (§24) */
+export interface FTModelTrainingParameters {
+  model_type?: string;
+  learning_rate?: number;
+  conv_width?: number;
+  trainer_kwargs?: FTTrainerKwargs;
+  [key: string]: unknown;
+}
+
+/** FreqAI — feature_parameters.svm_params (§26) */
+export interface FTSVMParams {
+  nu?: number;
+  [key: string]: unknown;
+}
+
+/** FreqAI — feature_parameters section (§26) */
+export interface FTFeatureParameters {
+  include_time_in_the_row?: boolean;
+  label_period_candles?: number;
+  include_shifted_candles?: number;
+  DI_threshold?: number;
+  weight_factor?: number;
+  principal_component_analysis?: boolean;
+  use_SVM_to_remove_outliers?: boolean;
+  use_DBSCAN_to_remove_outliers?: boolean;
+  svm_params?: FTSVMParams;
+  stratify_training_data?: number;
+  indicator_periods_candles?: number[];
+  include_timeframes?: string[];
+  include_corr_pairlist?: string[];
+  shuffle_after_split?: boolean;
+  buffer_train_data_candles?: number;
+}
+
+/** FreqAI — data_split_parameters section (§26) */
+export interface FTDataSplitParameters {
+  test_size?: number;
+  shuffle?: boolean;
+}
+
+/** FreqAI config (inside show_config.freqai) — §24, §25, §26 */
 export interface FTFreqAIConfig {
   enabled: boolean;
   identifier: string;
-  feature_parameters: {
-    include_time_in_the_row?: boolean;
-    label_period_candles?: number;
-    include_shifted_candles?: number;
-    DI_threshold?: number;
-    weight_factor?: number;
-    principal_component_analysis?: boolean;
-    use_SVM_to_remove_outliers?: boolean;
-    svm_params?: Record<string, unknown>;
-    stratify_training_data?: number;
-    indicator_periods_candles?: number[];
-    shuffle_after_split?: boolean;
-    buffer_train_data_candles?: number;
-  };
-  data_split_parameters: {
-    test_size?: number;
-    shuffle?: boolean;
-  };
-  model_training_parameters: Record<string, unknown>;
+  feature_parameters: FTFeatureParameters;
+  data_split_parameters: FTDataSplitParameters;
+  model_training_parameters: FTModelTrainingParameters;
+  rl_config?: FTRLConfig;
   fit_live_predictions_candles?: number;
   purge_old_models?: boolean | number;
   save_backtest_models?: boolean;
   train_period_days?: number;
   backtest_period_days?: number;
+  live_retrain_hours?: number;
+  expired_hours?: number;
+  continual_learning?: boolean;
+  activate_tensorboard?: boolean;
+  wait_for_training_iteration_on_reload?: boolean;
+  override_exchange_check?: boolean;
+  data_kitchen_thread_count?: number;
+  noise_standard_deviation?: number;
+  weight_factor?: number;
+  buffer_train_data_candles?: number;
+  outlier_protection_percentage?: number;
+  plot_feature_importances?: number;
+  write_metrics_to_disk?: boolean;
+  reduce_df_footprint?: boolean;
+  reverse_train_test_order?: boolean;
+  feature_engineering_method?: string;
 }
 
 /** Pair candle data — GET /api/v1/pair_candles */
@@ -644,6 +923,17 @@ export interface FTBacktestStrategyResult {
   sharpe?: number;
   sortino?: number;
   calmar?: number;
+}
+
+/** Hyperopt result entry — POST /api/v1/hyperopt-list §6 */
+export interface FTHyperoptResult {
+  epoch?: number;
+  profit_total?: number;
+  trades?: number;
+  loss?: number;
+  loss_function?: string;
+  params?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 /** Backtest status/result — GET /api/v1/backtest */
@@ -832,4 +1122,38 @@ export interface AIHyperoptComparisonStats {
     avg_paper_result: number | null;
     avg_live_result: number | null;
   };
+}
+
+// ============================================================================
+// ACTIVITY LOG TYPES (orchestrator audit_log table)
+// ============================================================================
+
+export type LogLevel = "info" | "warning" | "error" | "critical";
+
+/** Single activity log entry from audit_log table */
+export interface ActivityLog {
+  id: number;
+  action: string;
+  level: LogLevel;
+  actor: string;
+  bot_id: number | null;
+  bot_name: string | null;
+  target_type: string | null;
+  target_id: number | null;
+  target_name: string | null;
+  details: string | null;        // JSON string
+  created_at: string | null;     // ISO 8601
+}
+
+/** Paginated log response from GET /api/logs */
+export interface ActivityLogResponse {
+  total: number;
+  offset: number;
+  limit: number;
+  logs: ActivityLog[];
+}
+
+/** Per-bot log response from GET /api/logs/bot/{botId} */
+export interface BotLogResponse extends ActivityLogResponse {
+  bot_id: number;
 }

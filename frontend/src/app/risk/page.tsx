@@ -4,8 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { REFRESH_INTERVALS } from "@/lib/constants";
 import AppShell from "@/components/layout/AppShell";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
+import Tooltip from "@/components/ui/Tooltip";
 import { SkeletonTable, SkeletonCard } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
+import { TOOLTIPS } from "@/lib/tooltips";
 import {
   getBots,
   softKill,
@@ -141,7 +143,7 @@ export default function RiskPage() {
         const pb = await portfolioBalance();
         setPortfolio(pb);
         portfolioFailedRef.current = false;
-      } catch {
+      } catch { /* non-blocking */
         if (!portfolioFailedRef.current) {
           toast.warning("Failed to load portfolio data");
           portfolioFailedRef.current = true;
@@ -153,7 +155,7 @@ export default function RiskPage() {
         const evts = await getRiskEvents();
         setRiskEvents(evts);
         eventsFailedRef.current = false;
-      } catch {
+      } catch { /* non-blocking */
         if (!eventsFailedRef.current) {
           toast.warning("Failed to load risk events");
           eventsFailedRef.current = true;
@@ -183,17 +185,15 @@ export default function RiskPage() {
 
               if (configRes.status === "fulfilled" && configRes.value.protections) {
                 for (const rawProt of configRes.value.protections) {
-                  const prot: ProtectionWithStatus = {
-                    ...(rawProt as Record<string, unknown>),
-                    _status: "active",
-                    _drawdown: undefined,
-                    _flaggedPairs: undefined,
-                  } as ProtectionWithStatus;
+                  const prot: ProtectionWithStatus = Object.assign(
+                    { _status: "active" as const, _drawdown: undefined, _flaggedPairs: undefined },
+                    rawProt,
+                  );
 
                   // MaxDrawdown: compute current drawdown
-                  if (prot.method === "MaxDrawdown" && statsRes.status === "fulfilled") {
+                  if (rawProt.method === "MaxDrawdown" && statsRes.status === "fulfilled") {
                     const rawDd = statsRes.value.max_drawdown ?? 0;
-                    const rawMax = (rawProt as { max_allowed_drawdown?: number }).max_allowed_drawdown ?? 0.15;
+                    const rawMax = rawProt.max_allowed_drawdown ?? 0.15;
                     // If value > 1, it's already a percentage (e.g. 15 = 15%); don't multiply by 100
                     const dd = rawDd > 1 ? rawDd : rawDd * 100;
                     const maxAllowed = rawMax > 1 ? rawMax : rawMax * 100;
@@ -218,7 +218,7 @@ export default function RiskPage() {
                   allProtections.push(prot);
                 }
               }
-            } catch {
+            } catch { /* non-blocking */
               // per-bot error isolated
             }
           })
@@ -226,7 +226,7 @@ export default function RiskPage() {
 
       setLocks(allLocks);
       setProtections(allProtections);
-    } catch {
+    } catch { /* non-blocking */
       if (!loadFailedRef.current) {
         toast.error("Failed to load risk data.", {
           action: { label: "RETRY", onClick: () => loadData() },
@@ -333,7 +333,7 @@ export default function RiskPage() {
       try {
         const wl = await botWhitelist(runningBot.id);
         setWhitelist(wl.whitelist);
-      } catch {
+      } catch { /* non-blocking */
         setWhitelist([]);
       }
     }
@@ -345,7 +345,7 @@ export default function RiskPage() {
     try {
       const wl = await botWhitelist(parseInt(botIdStr, 10));
       setWhitelist(wl.whitelist);
-    } catch {
+    } catch { /* non-blocking */
       setWhitelist([]);
     }
   }
@@ -427,7 +427,7 @@ export default function RiskPage() {
           }
         }
         setCorrelationData({ botNames, matrix, pairOverlaps });
-      } catch {
+      } catch { /* non-blocking */
         // Non-critical
         setCorrelationData(null);
       }
@@ -450,7 +450,10 @@ export default function RiskPage() {
       <div className="bg-gradient-to-br from-bg-2 to-red/[0.03] border border-red/15 rounded-card overflow-hidden mb-6">
         <div className="px-6 py-4 flex items-center justify-between border-b border-red/10">
           <h3 className="text-sm font-semibold text-text-0 flex items-center gap-2">
-            <span>🚨</span> Kill Switch Control
+            <span>🚨</span>
+            <Tooltip content={"Emergency controls to stop bot trading. Soft Kill stops new entries; Hard Kill force-exits all positions at market price."} configKey="kill_switch">
+              Kill Switch Control
+            </Tooltip>
           </h3>
           {lastEvent && (
             <div className="flex items-center gap-2">
@@ -648,10 +651,28 @@ export default function RiskPage() {
                   inactive: "bg-bg-3 text-text-3 border border-border",
                   triggered: "bg-red-bg text-red border border-red/20",
                 };
+                // Map protection method names to tooltip keys
+                const protectionTooltipMap: Record<string, keyof typeof TOOLTIPS> = {
+                  "MaxDrawdown": "protection_max_drawdown",
+                  "StoplossGuard": "protection_stoploss_guard",
+                  "CooldownPeriod": "protection_cooldown_period",
+                  "LowProfitPairs": "protection_low_profit_pairs",
+                };
+                const tooltipKey = protectionTooltipMap[prot.method] || undefined;
+
                 return (
-                  <div key={idx} className="bg-bg-1 border border-border rounded-lg p-4 hover:border-border-hover transition-colors">
+                  <div key={`prot-${prot.method}-${idx}`} className="bg-bg-1 border border-border rounded-lg p-4 hover:border-border-hover transition-colors">
                     <div className="flex items-center justify-between mb-3">
-                      <div className="text-[12.5px] font-semibold text-text-0">{prot.method}</div>
+                      {tooltipKey && TOOLTIPS[tooltipKey] ? (
+                        <Tooltip
+                          content={TOOLTIPS[tooltipKey]?.description || prot.method}
+                          configKey={TOOLTIPS[tooltipKey]?.configKey}
+                        >
+                          <div className="text-[12.5px] font-semibold text-text-0">{prot.method}</div>
+                        </Tooltip>
+                      ) : (
+                        <div className="text-[12.5px] font-semibold text-text-0">{prot.method}</div>
+                      )}
                       <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider ${badgeStyles[prot._status]}`}>
                         {prot._status}
                       </span>
@@ -660,12 +681,16 @@ export default function RiskPage() {
                       {Object.entries(prot)
                         .filter(([k]) => !k.startsWith("_") && k !== "method")
                         .slice(0, 6)
-                        .map(([k, v]) => (
-                          <div key={k} className="flex flex-col gap-0.5">
-                            <span className="text-[9px] text-text-3 uppercase tracking-wider">{k}</span>
-                            <span className="text-xs font-semibold text-text-1 font-mono">{String(v)}</span>
-                          </div>
-                        ))}
+                        .map(([k, v]) => {
+                          // Convert snake_case to Title Case for display
+                          const label = k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+                          return (
+                            <div key={k} className="flex flex-col gap-0.5">
+                              <span className="text-[9px] text-text-3 uppercase tracking-wider">{label}</span>
+                              <span className="text-xs font-semibold text-text-1 font-mono">{String(v)}</span>
+                            </div>
+                          );
+                        })}
                     </div>
                     {prot._drawdown && (
                       <div className="mt-2.5">
@@ -883,7 +908,7 @@ export default function RiskPage() {
       {/* ════ Modal: SOFT KILL confirm ════ */}
       {showSoftKillConfirm && (
         <div
-          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center"
+          role="dialog" aria-modal="true" className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center"
           onClick={(e) => { if (e.target === e.currentTarget) setShowSoftKillConfirm(false); }}
         >
           <div className="bg-bg-2 border border-amber/30 rounded-card p-8 max-w-md w-full mx-4 text-center">
@@ -910,7 +935,7 @@ export default function RiskPage() {
       {/* ════ Modal: HARD KILL confirm ════ */}
       {showHardKillConfirm && (
         <div
-          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center"
+          role="dialog" aria-modal="true" className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center"
           onClick={(e) => { if (e.target === e.currentTarget) setShowHardKillConfirm(false); }}
         >
           <div className="bg-bg-2 border border-red/30 rounded-card p-8 max-w-md w-full mx-4 text-center">
@@ -1001,7 +1026,7 @@ export default function RiskPage() {
       {/* ════ Modal: Lock Pair Dialog ════ */}
       {showLockDialog && (
         <div
-          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center"
+          role="dialog" aria-modal="true" className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center"
           onClick={(e) => { if (e.target === e.currentTarget) setShowLockDialog(false); }}
         >
           <div className="bg-bg-2 border border-border rounded-card p-6 max-w-md w-full mx-4">
@@ -1011,7 +1036,9 @@ export default function RiskPage() {
             <div className="flex flex-col gap-4">
               {/* Bot selector */}
               <div>
-                <label className="text-[10px] font-semibold text-text-3 uppercase tracking-wider mb-1 block">Bot</label>
+                <Tooltip content={"Bot instance to apply the pair lock to"} configKey="bot_id">
+                  <label className="text-[10px] font-semibold text-text-3 uppercase tracking-wider mb-1 block">Bot</label>
+                </Tooltip>
                 <select
                   value={lockBotId}
                   onChange={(e) => handleLockBotChange(e.target.value)}
@@ -1025,7 +1052,9 @@ export default function RiskPage() {
               </div>
               {/* Pair selector */}
               <div>
-                <label className="text-[10px] font-semibold text-text-3 uppercase tracking-wider mb-1 block">Pair</label>
+                <Tooltip content={"Trading pair to lock. Locked pairs will not be traded until the lock expires."} configKey="pair">
+                  <label className="text-[10px] font-semibold text-text-3 uppercase tracking-wider mb-1 block">Pair</label>
+                </Tooltip>
                 <select
                   value={lockPair}
                   onChange={(e) => setLockPair(e.target.value)}
@@ -1039,7 +1068,9 @@ export default function RiskPage() {
               </div>
               {/* Duration */}
               <div>
-                <label className="text-[10px] font-semibold text-text-3 uppercase tracking-wider mb-1 block">Duration (minutes)</label>
+                <Tooltip content={"How long to lock this pair, in minutes. The pair will be automatically unlocked after this duration."} configKey="duration">
+                  <label className="text-[10px] font-semibold text-text-3 uppercase tracking-wider mb-1 block">Duration (minutes)</label>
+                </Tooltip>
                 <input
                   type="number"
                   min={1}
@@ -1051,7 +1082,9 @@ export default function RiskPage() {
               </div>
               {/* Reason */}
               <div>
-                <label className="text-[10px] font-semibold text-text-3 uppercase tracking-wider mb-1 block">Reason (optional)</label>
+                <Tooltip content={"Optional reason for locking this pair. Recorded in the lock log for auditing."} configKey="reason">
+                  <label className="text-[10px] font-semibold text-text-3 uppercase tracking-wider mb-1 block">Reason (optional)</label>
+                </Tooltip>
                 <input
                   type="text"
                   value={lockReason}

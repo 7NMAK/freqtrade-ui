@@ -17,7 +17,7 @@ Our job = make FreqTrade easy for a normal user to use.
 
 **If FreqTrade does it → we show it in our UI (using THEIR parameter names).**
 **If FreqTrade doesn't do it → we DON'T add it.**
-**The ONLY exceptions are: multi-bot orchestration and kill switch.**
+**The ONLY exceptions are: multi-bot orchestration, kill switch, and unified strategy-bot cards with lifecycle.**
 
 ---
 
@@ -99,6 +99,7 @@ That's it. Nothing more.
 - **Strategy Builder** = wizard that generates a .py strategy file (§2, §3, §4 callbacks)
 - **Backtesting page** = form that runs `freqtrade backtesting` with arguments (§5) and `freqtrade hyperopt` (§6)
 - **Dashboard** = displays data from FT REST API (§8 endpoints, §16 trade fields)
+  - **RULE:** Dashboard shows ALL bots aggregated by default (portfolio-level stats). No bot selector required for top-level view. Clicking a bot card = drill-down into that single bot's details. Top stats are ALWAYS cross-portfolio.
 - **FreqAI page** = form for freqai{} section of config.json (§24, §25, §26)
 - **Analytics** = renders FT's plot_config (§19) and orderflow data (§29)
 - **Data Management** = form that runs `freqtrade download-data` (§12) and utility commands (§18)
@@ -124,6 +125,31 @@ That's it. Nothing more.
 ```
 
 **Key principle:** 1 strategy = 1 FreqTrade bot (Docker container). Orchestrator manages N bots via FT REST API.
+
+### CUSTOM FEATURE: Unified Strategy-Bot Cards (approved deviation from FT)
+
+FT treats strategies (.py files) and bots (processes) as separate concepts. We intentionally merge them into **one unified card** on the Strategies page because:
+- 1 bot always runs 1 strategy with 1 config — they are always 1:1
+- Even the same .py used on different pairs = different bot = different card
+- Users need to see everything in one place: code + config + backtest results + hyperopt + trades + stats
+
+**Strategies page** = the master list. Each card shows:
+- Strategy name, description, pairs, timeframe, leverage
+- Lifecycle status: DRAFT → BACKTEST → PAPER → LIVE → RETIRED
+- Stats: total profit, win rate, max DD, trade count (from FT data, not invented)
+- Actions based on status: Edit in Builder, Run Backtest, Start Paper, Go Live, View Bot, Clone, Export .py
+- Drill-down on click: all backtests, all hyperopt runs, all trades, AI suggestions, config, full stats
+
+**Dashboard** = monitoring only. Shows portfolio-level aggregation of all LIVE/PAPER bots. No strategy management.
+
+**Lifecycle** (our custom metadata, stored in Orchestrator DB):
+- DRAFT = .py exists, not tested yet → actions: Edit in Builder, Run Backtest
+- BACKTEST = has backtest results → actions: View Results, Re-run, Edit, Start Paper
+- PAPER = bot running with dry_run:true → actions: View Trades, Stats, Go Live
+- LIVE = bot running with dry_run:false → actions: View Trades, Stats, Edit, Analytics
+- RETIRED = bot stopped, kept for history → actions: View History, Clone, Export .py
+
+This is documented as a custom feature alongside multi-bot orchestration and kill switch.
 
 ---
 

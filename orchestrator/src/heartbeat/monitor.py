@@ -15,6 +15,7 @@ from sqlalchemy import select
 from ..config import settings
 from ..database import async_session
 from ..models.bot_instance import BotInstance, BotStatus
+from ..activity_logger import log_activity
 
 logger = logging.getLogger(__name__)
 
@@ -113,6 +114,14 @@ class HeartbeatMonitor:
                 if alive:
                     if bot.consecutive_failures > 0:
                         logger.info("Bot %s recovered (was at %d failures)", bot.name, bot.consecutive_failures)
+                        await log_activity(
+                            db,
+                            action="heartbeat.recovered",
+                            level="info",
+                            bot_id=bot.id,
+                            bot_name=bot.name,
+                            details=f"Recovered after {bot.consecutive_failures} failures",
+                        )
                     bot.consecutive_failures = 0
                     bot.is_healthy = True
                 else:
@@ -125,12 +134,33 @@ class HeartbeatMonitor:
                         settings.heartbeat_max_failures,
                     )
 
+                    await log_activity(
+                        db,
+                        action="heartbeat.failure",
+                        level="warning",
+                        bot_id=bot.id,
+                        bot_name=bot.name,
+                        details=f"Ping failed ({bot.consecutive_failures}/{settings.heartbeat_max_failures})",
+                        diagnosis=f"Bot {bot.name} is not responding to ping. "
+                                  f"Failure {bot.consecutive_failures} of {settings.heartbeat_max_failures} before auto-kill.",
+                    )
+
                     if bot.consecutive_failures >= settings.heartbeat_max_failures:
                         bot.is_healthy = False
                         logger.critical(
                             "Bot %s: %d consecutive failures — triggering HARD KILL",
                             bot.name,
                             bot.consecutive_failures,
+                        )
+                        await log_activity(
+                            db,
+                            action="heartbeat.auto_kill",
+                            level="critical",
+                            bot_id=bot.id,
+                            bot_name=bot.name,
+                            details=f"{bot.consecutive_failures} consecutive ping failures",
+                            diagnosis=f"Bot {bot.name} failed {bot.consecutive_failures} consecutive heartbeat pings. "
+                                      f"Triggering automatic HARD KILL. Check: docker logs {bot.name}",
                         )
                         await self._trigger_hard_kill(db, bot)
 

@@ -43,7 +43,7 @@ export default function Header({ title }: HeaderProps) {
         if (!selectedBotId && botList.length > 0) {
           setSelectedBotId(String(botList[0].id));
         }
-      } catch {
+      } catch { /* non-blocking */
         // Non-critical
       }
     }
@@ -64,7 +64,7 @@ export default function Header({ title }: HeaderProps) {
           (e) => new Date(e.created_at).getTime() > oneHourAgo
         );
         setHasRecentEvents(recent);
-      } catch {
+      } catch { /* non-blocking */
         // Non-critical — don't show error for notification load failure
       }
     }
@@ -77,7 +77,7 @@ export default function Header({ title }: HeaderProps) {
   useEffect(() => {
     if (!showNotifs) return;
     function handleClick(e: MouseEvent) {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+      if (notifRef.current && e.target instanceof Node && !notifRef.current.contains(e.target)) {
         setShowNotifs(false);
       }
     }
@@ -89,7 +89,7 @@ export default function Header({ title }: HeaderProps) {
   useEffect(() => {
     if (!showBotDropdown) return;
     function handleClick(e: MouseEvent) {
-      if (botDropdownRef.current && !botDropdownRef.current.contains(e.target as Node)) {
+      if (botDropdownRef.current && e.target instanceof Node && !botDropdownRef.current.contains(e.target)) {
         setShowBotDropdown(false);
       }
     }
@@ -138,7 +138,7 @@ export default function Header({ title }: HeaderProps) {
         hour: "2-digit",
         minute: "2-digit",
       });
-    } catch {
+    } catch { /* non-blocking */
       
       return ts;
     }
@@ -300,6 +300,7 @@ export default function Header({ title }: HeaderProps) {
           {/* H-4: Kill Switch Button */}
           <button
             type="button"
+            aria-label="Emergency kill switch — stop all bots"
             onClick={() => setShowKillConfirm(true)}
             className="bg-red-bg border border-red/25 rounded-btn px-3.5 py-1.5 text-xs font-semibold text-red tracking-wide flex items-center gap-1.5 hover:bg-red/[0.18] hover:border-red transition-all cursor-pointer"
           >
@@ -310,6 +311,7 @@ export default function Header({ title }: HeaderProps) {
           {/* H-6: User Avatar */}
           <button
             type="button"
+            aria-label="Logout"
             onClick={handleLogout}
             className="w-[30px] h-[30px] rounded-full bg-gradient-to-br from-accent to-purple flex items-center justify-center text-sm font-bold text-white cursor-pointer ml-1 hover:opacity-90 transition-opacity"
             title="Logout"
@@ -322,6 +324,8 @@ export default function Header({ title }: HeaderProps) {
       {/* H-5: Kill Switch Confirmation Modal */}
       {showKillConfirm && (
         <div
+          role="dialog"
+          aria-modal="true"
           className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowKillConfirm(false);

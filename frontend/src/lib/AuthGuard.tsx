@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getToken } from "./api";
+import { getToken, isTokenExpiringSoon, setToken } from "./api";
 
 /**
  * Wraps pages that require authentication.
@@ -16,9 +16,23 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const token = getToken();
     if (!token) {
       router.replace("/login");
-    } else {
-      setReady(true);
+      return;
     }
+    if (isTokenExpiringSoon()) {
+      setToken(null);
+      router.replace("/login?expired=1");
+      return;
+    }
+    setReady(true);
+
+    // Periodic check: redirect if token expires while page is open
+    const interval = setInterval(() => {
+      if (isTokenExpiringSoon()) {
+        setToken(null);
+        router.replace("/login?expired=1");
+      }
+    }, 60_000);
+    return () => clearInterval(interval);
   }, [router]);
 
   if (!ready) {

@@ -23,6 +23,7 @@ from ..ft_client import FTClient, FTClientError
 from ..models.bot_instance import BotInstance, BotStatus
 from ..models.risk_event import RiskEvent, KillType, KillTrigger
 from ..models.audit_log import AuditLog
+from ..activity_logger import log_activity
 
 logger = logging.getLogger(__name__)
 
@@ -96,14 +97,18 @@ class KillSwitch:
         ))
 
         # Audit log
-        db.add(AuditLog(
+        await log_activity(
+            db,
             action="kill_switch.soft",
+            level="warning",
             actor=actor,
+            bot_id=bot.id,
+            bot_name=bot.name,
             target_type="bot",
             target_id=bot.id,
             target_name=bot.name,
             details=json.dumps({"trigger": trigger, "reason": reason}),
-        ))
+        )
 
         _inc_kill_counter("soft", trigger)
         logger.warning("SOFT KILL: bot=%s trigger=%s reason=%s", bot.name, trigger, reason)
@@ -156,9 +161,13 @@ class KillSwitch:
         ))
 
         # Audit log
-        db.add(AuditLog(
+        await log_activity(
+            db,
             action="kill_switch.hard",
+            level="critical",
             actor=actor,
+            bot_id=bot.id,
+            bot_name=bot.name,
             target_type="bot",
             target_id=bot.id,
             target_name=bot.name,
@@ -167,7 +176,8 @@ class KillSwitch:
                 "reason": reason,
                 "forceexit_failed": forceexit_failed,
             }),
-        ))
+            diagnosis="POSITIONS MAY STILL BE OPEN — forceexit failed" if forceexit_failed else None,
+        )
 
         _inc_kill_counter("hard", trigger)
         logger.critical("HARD KILL: bot=%s trigger=%s reason=%s forceexit_failed=%s",
@@ -213,19 +223,19 @@ class KillSwitch:
         results = dict(kill_results)
 
         # Additional audit for the "all" action
-        db.add(AuditLog(
+        await log_activity(
+            db,
             action="kill_switch.hard_all",
+            level="critical",
             actor=actor,
             target_type="all_bots",
-            target_id=None,
-            target_name=None,
             details=json.dumps({
                 "trigger": trigger,
                 "reason": reason,
                 "bot_count": len(running_bots),
                 "bots": [b.name for b in running_bots],
             }),
-        ))
+        )
 
         logger.critical(
             "HARD KILL ALL: %d bots killed, trigger=%s reason=%s",
@@ -265,17 +275,17 @@ class KillSwitch:
         kill_results = await asyncio.gather(*[_kill_one(b) for b in running_bots])
         results = dict(kill_results)
 
-        db.add(AuditLog(
+        await log_activity(
+            db,
             action="kill_switch.soft_all",
+            level="warning",
             actor=actor,
             target_type="all_bots",
-            target_id=None,
-            target_name=None,
             details=json.dumps({
                 "trigger": trigger,
                 "reason": reason,
                 "bot_count": len(running_bots),
             }),
-        ))
+        )
 
         return results

@@ -96,9 +96,44 @@
 - [x] Login page
 
 ### 3. Next.js 14 Frontend (Phase 3)
-- [ ] Project setup + auth + layout
-- [ ] Convert HTML prototypes to React components
-- [ ] Connect to orchestrator API
+- [x] Project setup + auth + layout
+- [x] Convert HTML prototypes to React components
+- [x] Connect to orchestrator API
+- [x] ZERO TOLERANCE audit (key={i}, silent catches, typing, constants, ErrorBoundary)
 
-### 4. Extras (Phase 4 — ONLY after 1-3)
+### 4. Remaining Work — Agent Prompts (docs/AGENT_*.md)
+
+**Agent 1 — Dashboard** (`docs/AGENT_1_DASHBOARD.md`)
+- [x] Dashboard two-view architecture (All Bots default + Single Bot drill-down) — REWRITTEN
+- [ ] Wire Bot Management components (BotRegisterModal, BotEditModal, BotDeleteDialog, BotManagementTable)
+- [ ] Verify all API calls work end-to-end
+
+**Agent 2 — Strategies** (`docs/AGENT_2_STRATEGIES.md`)
+- [ ] Rewrite strategies page with unified strategy-bot card grid (matching prototype)
+- [ ] Build drill-down view (backtests, hyperopt, trades, stats, AI, config, timeline)
+- [ ] Lifecycle actions (Run Backtest, Start Paper, Go Live, Retire, Clone, Export)
+- [ ] Import .py modal
+
+**Agent 3 — Builder + Deploy** (`docs/AGENT_3_BUILDER_DEPLOY.md`)
+- [ ] Deploy flow: Builder → Save → Deploy modal → Select bot → Upload .py → Reload
+- [ ] Re-edit: Load existing strategy into Builder wizard (via builder_state JSON)
+- [ ] Code Editor: Install Monaco, Visual/Code toggle tabs
+
+**Agent 4 — UX Polish** (`docs/AGENT_4_UX_POLISH.md`)
+- [x] Tooltip component (components/ui/Tooltip.tsx)
+- [x] Tooltip database (lib/tooltips.ts — 193 entries from §1-§29)
+- [x] FreqAI page — tooltips applied, raw config keys hidden
+- [x] Settings page — tooltips applied, paramRef removed
+- [x] Backtesting — TagInput bug fixed, multi-strategy comparison table added
+- [x] Knowledge Base document (docs/KNOWLEDGE_BASE.md)
+- [x] i18n check — no i18n lib installed, "raw codes" were config keys (now fixed)
+- [ ] Tooltips on remaining pages (Backtesting, Builder, Data, Analytics, Risk)
+- [ ] HTML/CSS consistency fixes (all pages)
+- [ ] Design standards enforcement (all pages)
+
+**Agent 5 — Server** (`docs/AGENT_5_SERVER_DIAGNOSTICS.md`)
+- [ ] Diagnose why default FT bot won't start on server
+- [ ] Fix and verify bot responds on port 8080
+
+### 5. Extras (Phase 4 — ONLY after above)
 - [ ] AI Strategy Analyst (OpenRouter)

@@ -122,7 +122,17 @@ curl -sf http://127.0.0.1/health > /dev/null && ok "Nginx health (port 80)" || f
 curl -sf http://127.0.0.1/api/health > /dev/null && ok "Orchestrator via Nginx (/api/health)" || fail "Nginx→Orchestrator proxy broken"
 curl -sf http://127.0.0.1/ > /dev/null && ok "Frontend via Nginx (/)" || fail "Nginx→Frontend proxy broken"
 
-# ── Step 6: Register FT bot (if not already) ──────────────
+# ── Step 6: Verify FT bot is reachable ────────────────────
+step "Verifying FreqTrade bot connectivity"
+FT_PING=$(docker exec freqtrade curl -sf http://127.0.0.1:8080/api/v1/ping 2>/dev/null || echo "FAIL")
+if echo "$FT_PING" | grep -q "pong"; then
+    ok "FreqTrade bot responds to ping"
+else
+    warn "FreqTrade bot not responding (status: $FT_PING). Bot may not be running."
+    warn "Check: docker logs freqtrade --tail 30"
+fi
+
+# ── Step 7: Register FT bot (if not already) ──────────────
 step "Checking bot registration"
 BOT_LIST=$(curl -sf http://127.0.0.1:8888/api/bots/ 2>&1) || fail "Cannot list bots"
 

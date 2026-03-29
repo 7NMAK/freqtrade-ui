@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import AppShell from "@/components/layout/AppShell";
 import { useToast } from "@/components/ui/Toast";
+import Tooltip from "@/components/ui/Tooltip";
+import { TOOLTIPS } from "@/lib/tooltips";
 import { getBots, botConfig, saveBotConfig } from "@/lib/api";
-import type { Bot } from "@/types";
+import type { Bot, FTShowConfig } from "@/types";
 
 /* ─── Toggle Component ─── */
-function Toggle({ on, onChange, label, sub }: { on: boolean; onChange: () => void; label: string; sub?: string }) {
+function Toggle({ on, onChange, label }: { on: boolean; onChange: () => void; label: string }) {
   return (
     <div className="flex items-center gap-2.5">
       <button
@@ -25,7 +27,6 @@ function Toggle({ on, onChange, label, sub }: { on: boolean; onChange: () => voi
       </button>
       <div>
         <div className="text-xs text-text-1">{label}</div>
-        {sub && <div className="text-[10px] text-text-3 mt-0.5">{sub}</div>}
       </div>
     </div>
   );
@@ -163,7 +164,7 @@ function KvEditor({
     <div>
       <div className="flex flex-col gap-1.5">
         {rows.map((r, i) => (
-          <div key={`row-${i}`} className="flex gap-2 items-center">
+          <div key={`kv-${i}-${r.key}`} className="flex gap-2 items-center">
             <input
               className="flex-1 px-2.5 py-2 rounded border border-border bg-bg-3 text-text-0 text-xs font-mono outline-none focus:border-accent"
               value={r.key}
@@ -204,10 +205,6 @@ function FormLabel({ children }: { children: React.ReactNode }) {
       {children}
     </div>
   );
-}
-
-function FtParam({ name }: { name: string }) {
-  return <span className="font-normal text-purple normal-case tracking-normal text-[10px] font-mono">{name}</span>;
 }
 
 function Hint({ text }: { text: string }) {
@@ -355,9 +352,9 @@ export default function FreqAIPage() {
   const [configLoading, setConfigLoading] = useState(false);
   const [botsLoading, setBotsLoading] = useState(true);
 
-  // Populate form state from a loaded FT config object
-  function applyConfig(cfg: Record<string, unknown>) {
-    const fai = cfg.freqai as Record<string, unknown> | undefined;
+  // Populate form state from a loaded FT config object — typed via FTShowConfig
+  function applyConfig(cfg: FTShowConfig) {
+    const fai = cfg.freqai;
     if (!fai) return;
 
     if (typeof fai.enabled === "boolean") setFreqaiEnabled(fai.enabled);
@@ -386,34 +383,33 @@ export default function FreqAIPage() {
     // feature_engineering_method (custom per-strategy)
     if (typeof fai.feature_engineering_method === "string") setSelectedMethod(fai.feature_engineering_method);
 
-    // model_training_parameters
-    const mtp = fai.model_training_parameters as Record<string, unknown> | undefined;
+    // model_training_parameters — typed via FTModelTrainingParameters
+    const mtp = fai.model_training_parameters;
     if (mtp && typeof mtp.model_type === "string") setModel(mtp.model_type);
 
-    // feature_parameters
-    const fp = fai.feature_parameters as Record<string, unknown> | undefined;
+    // feature_parameters — typed via FTFeatureParameters
+    const fp = fai.feature_parameters;
     if (fp) {
-      if (Array.isArray(fp.include_timeframes)) setSelectedTimeframes(fp.include_timeframes as string[]);
-      if (Array.isArray(fp.include_corr_pairlist)) setSelectedCorrPairs(fp.include_corr_pairlist as string[]);
+      if (Array.isArray(fp.include_timeframes)) setSelectedTimeframes(fp.include_timeframes);
+      if (Array.isArray(fp.include_corr_pairlist)) setSelectedCorrPairs(fp.include_corr_pairlist);
       if (typeof fp.include_shifted_candles === "number") setIncludeShiftedCandles(fp.include_shifted_candles);
       if (typeof fp.label_period_candles === "number") setLabelPeriodCandles(fp.label_period_candles);
-      if (Array.isArray(fp.indicator_periods_candles)) setIndicatorPeriods((fp.indicator_periods_candles as number[]).map(String));
+      if (Array.isArray(fp.indicator_periods_candles)) setIndicatorPeriods(fp.indicator_periods_candles.map(String));
       if (typeof fp.shuffle_after_split === "boolean") setShuffleAfterSplit(fp.shuffle_after_split);
       if (typeof fp.principal_component_analysis === "boolean") setPrincipalComponentAnalysis(fp.principal_component_analysis);
       if (typeof fp.use_SVM_to_remove_outliers === "boolean") setUseSVM(fp.use_SVM_to_remove_outliers);
       if (typeof fp.use_DBSCAN_to_remove_outliers === "boolean") setUseDBSCAN(fp.use_DBSCAN_to_remove_outliers);
       if (typeof fp.DI_threshold === "number") setDiThreshold(String(fp.DI_threshold));
       if (typeof fp.weight_factor === "number") setWeightFactor(Math.round(fp.weight_factor * 10));
-      const svmP = fp.svm_params as Record<string, unknown> | undefined;
-      if (svmP && typeof svmP.nu === "number") setSvmNu(String(svmP.nu));
+      if (fp.svm_params && typeof fp.svm_params.nu === "number") setSvmNu(String(fp.svm_params.nu));
     }
 
-    // data_split_parameters
-    const dsp = fai.data_split_parameters as Record<string, unknown> | undefined;
+    // data_split_parameters — typed via FTDataSplitParameters
+    const dsp = fai.data_split_parameters;
     if (dsp && typeof dsp.test_size === "number") setTestSize(Math.round(dsp.test_size * 100));
 
-    // rl_config
-    const rl = fai.rl_config as Record<string, unknown> | undefined;
+    // rl_config — typed via FTRLConfig
+    const rl = fai.rl_config;
     if (rl) {
       if (typeof rl.model_type === "string") setRlModelType(rl.model_type);
       if (typeof rl.policy_type === "string") setRlPolicyType(rl.policy_type);
@@ -423,21 +419,20 @@ export default function FreqAIPage() {
       if (typeof rl.max_training_drawdown_pct === "number") setMaxTrainingDrawdown(String(rl.max_training_drawdown_pct));
       if (typeof rl.add_state_info === "boolean") setAddStateInfo(rl.add_state_info);
       if (typeof rl.cpu_count === "number") setRlCpuCount(rl.cpu_count);
-      if (Array.isArray(rl.net_arch)) setRlNetArch((rl.net_arch as number[]).map(String));
+      if (Array.isArray(rl.net_arch)) setRlNetArch(rl.net_arch.map(String));
       if (typeof rl.randomize_starting_position === "boolean") setRlRandomizeStart(rl.randomize_starting_position);
       if (typeof rl.drop_ohlc_from_features === "boolean") setRlDropOhlc(rl.drop_ohlc_from_features);
       if (typeof rl.progress_bar === "boolean") setRlProgressBar(rl.progress_bar);
-      const mrp = rl.model_reward_parameters as Record<string, unknown> | undefined;
-      if (mrp) {
-        setRewardParams(Object.entries(mrp).map(([key, value]) => ({ key, value: String(value) })));
+      if (rl.model_reward_parameters) {
+        setRewardParams(Object.entries(rl.model_reward_parameters).map(([key, value]) => ({ key, value: String(value) })));
       }
     }
 
-    // PyTorch config (inside model_training_parameters)
+    // PyTorch config (inside model_training_parameters) — typed via FTModelTrainingParameters
     if (mtp) {
       if (typeof mtp.learning_rate === "number") setLearningRate(String(mtp.learning_rate));
-      const tk = mtp.trainer_kwargs as Record<string, unknown> | undefined;
-      if (tk) {
+      if (mtp.trainer_kwargs) {
+        const tk = mtp.trainer_kwargs;
         if (typeof tk.n_epochs === "number") setEpochs(tk.n_epochs);
         if (typeof tk.batch_size === "number") setBatchSize(tk.batch_size);
       }
@@ -462,7 +457,7 @@ export default function FreqAIPage() {
     setConfigLoading(true);
     botConfig(botId)
       .then((cfg) => {
-        applyConfig(cfg as Record<string, unknown>);
+        applyConfig(cfg);
       })
       .catch((err) => {
         toast.error(err instanceof Error ? `Failed to load config: ${err.message}` : "Failed to load config.");
@@ -631,11 +626,15 @@ export default function FreqAIPage() {
       <Section id="core" icon="&#9881;&#65039;" title="Core Configuration" tag="§24" collapsed={!!collapsed.core} onToggle={() => toggle("core")}>
         <div className="grid grid-cols-2 gap-3.5 mb-6">
           <div>
-            <FormLabel>Identifier <FtParam name="freqai.identifier" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_identifier?.description ?? "Unique identifier for this FreqAI model"} configKey="freqai.identifier">
+              <FormLabel>Identifier</FormLabel>
+            </Tooltip>
             <FormInput type="text" value={identifier} onChange={(e) => setIdentifier(e.target.value)} placeholder="unique-freqai-model-1" />
           </div>
           <div>
-            <FormLabel>Model <FtParam name="freqai.model_training_parameters" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_model_training_parameters?.description ?? "Type of model to train (LightGBM, XGBoost, PyTorch, etc)"} configKey="freqai.model_training_parameters">
+              <FormLabel>Model</FormLabel>
+            </Tooltip>
             <FormSelect value={model} onChange={(e) => setModel(e.target.value)}>
               <option>LightGBMRegressor</option>
               <option>LightGBMClassifier</option>
@@ -649,46 +648,66 @@ export default function FreqAIPage() {
 
         <div className="grid grid-cols-4 gap-3.5 mb-6">
           <div>
-            <FormLabel>Train Period <FtParam name="train_period_days" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_train_period_days?.description ?? "Days of historical data to use for training"} configKey="train_period_days">
+              <FormLabel>Train Period</FormLabel>
+            </Tooltip>
             <FormInput type="number" value={trainPeriodDays} onChange={(e) => setTrainPeriodDays(Number(e.target.value))} min={1} />
           </div>
           <div>
-            <FormLabel>Backtest Period <FtParam name="backtest_period_days" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_backtest_period_days?.description ?? "Days of data to backtest the model against"} configKey="backtest_period_days">
+              <FormLabel>Backtest Period</FormLabel>
+            </Tooltip>
             <FormInput type="number" value={backtestPeriodDays} onChange={(e) => setBacktestPeriodDays(Number(e.target.value))} min={1} />
           </div>
           <div>
-            <FormLabel>Live Retrain Hours <FtParam name="live_retrain_hours" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_live_retrain_hours?.description ?? "Hours between retraining the model during live trading"} configKey="live_retrain_hours">
+              <FormLabel>Live Retrain Hours</FormLabel>
+            </Tooltip>
             <FormInput type="number" value={liveRetrainHours} onChange={(e) => setLiveRetrainHours(Number(e.target.value))} min={1} />
           </div>
           <div>
-            <FormLabel>Expired Hours <FtParam name="expired_hours" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_expired_hours?.description ?? "Hours after which a model prediction expires"} configKey="expired_hours">
+              <FormLabel>Expired Hours</FormLabel>
+            </Tooltip>
             <FormInput type="number" value={expiredHours} onChange={(e) => setExpiredHours(Number(e.target.value))} min={1} />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3.5 mb-6">
           <div>
-            <FormLabel>Purge Old Models <FtParam name="purge_old_models" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_purge_old_models?.description ?? "Number of old models to keep before deletion"} configKey="purge_old_models">
+              <FormLabel>Purge Old Models</FormLabel>
+            </Tooltip>
             <FormInput type="number" value={purgeOldModels} onChange={(e) => setPurgeOldModels(Number(e.target.value))} min={0} />
           </div>
           <div className="flex flex-col justify-end">
-            <Toggle on={continualLearning} onChange={() => setContinualLearning(!continualLearning)} label="Continual Learning" sub="freqai.continual_learning" />
+            <Tooltip content={TOOLTIPS.freqai_continual_learning?.description ?? "Enable continual/incremental learning"} configKey="freqai.continual_learning">
+              <Toggle on={continualLearning} onChange={() => setContinualLearning(!continualLearning)} label="Continual Learning" />
+            </Tooltip>
           </div>
         </div>
 
-        <Toggle on={activateTensorboard} onChange={() => setActivateTensorboard(!activateTensorboard)} label="Activate TensorBoard" sub="freqai.activate_tensorboard" />
+        <Tooltip content={TOOLTIPS.freqai_activate_tensorboard?.description ?? "Enable TensorBoard logging for training metrics"} configKey="freqai.activate_tensorboard">
+          <Toggle on={activateTensorboard} onChange={() => setActivateTensorboard(!activateTensorboard)} label="Activate TensorBoard" />
+        </Tooltip>
         <div className="mt-3">
-          <Toggle on={waitForTrainingOnReload} onChange={() => setWaitForTrainingOnReload(!waitForTrainingOnReload)} label="Wait for Training on Reload" sub="freqai.wait_for_training_iteration_on_reload" />
+          <Tooltip content={TOOLTIPS.freqai_wait_for_training?.description ?? "Wait for training iteration to complete on reload"} configKey="freqai.wait_for_training_iteration_on_reload">
+            <Toggle on={waitForTrainingOnReload} onChange={() => setWaitForTrainingOnReload(!waitForTrainingOnReload)} label="Wait for Training on Reload" />
+          </Tooltip>
         </div>
         <div className="mt-3 p-3 px-3.5 rounded-md border border-red/30 bg-red/[0.04]">
-          <Toggle on={overrideExchangeCheck} onChange={() => setOverrideExchangeCheck(!overrideExchangeCheck)} label="Override Exchange Check" sub="freqai.override_exchange_check — ⚠️ Force FreqAI on limited-support exchanges" />
+          <Tooltip content={TOOLTIPS.freqai_override_exchange_check?.description ?? "Force FreqAI on limited-support exchanges"} configKey="freqai.override_exchange_check">
+            <Toggle on={overrideExchangeCheck} onChange={() => setOverrideExchangeCheck(!overrideExchangeCheck)} label="Override Exchange Check ⚠️" />
+          </Tooltip>
         </div>
       </Section>
 
       {/* ═══ SECTION: Feature Parameters (§24) ═══ */}
       <Section id="features" icon="&#128208;" title="Feature Parameters" tag="§24" collapsed={!!collapsed.features} onToggle={() => toggle("features")}>
         <div className="mb-6">
-          <FormLabel>Include Timeframes <FtParam name="include_timeframes" /></FormLabel>
+          <Tooltip content={TOOLTIPS.freqai_include_timeframes?.description ?? "Timeframes to include in feature generation"} configKey="include_timeframes">
+            <FormLabel>Include Timeframes</FormLabel>
+          </Tooltip>
           <div className="flex flex-wrap gap-1.5">
             {allTimeframes.map((tf) => (
               <Chip key={tf} label={tf} selected={selectedTimeframes.includes(tf)} onClick={() => toggleMulti(selectedTimeframes, setSelectedTimeframes, tf)} />
@@ -697,7 +716,9 @@ export default function FreqAIPage() {
         </div>
 
         <div className="mb-6">
-          <FormLabel>Include Corr Pairlist <FtParam name="include_corr_pairlist" /></FormLabel>
+          <Tooltip content={TOOLTIPS.freqai_include_corr_pairlist?.description ?? "Correlated pairs to include in feature generation"} configKey="include_corr_pairlist">
+            <FormLabel>Include Corr Pairlist</FormLabel>
+          </Tooltip>
           <div className="flex flex-wrap gap-1.5">
             {allCorrPairs.map((p) => (
               <Chip key={p} label={p} selected={selectedCorrPairs.includes(p)} onClick={() => toggleMulti(selectedCorrPairs, setSelectedCorrPairs, p)} />
@@ -707,26 +728,36 @@ export default function FreqAIPage() {
 
         <div className="grid grid-cols-3 gap-3.5 mb-6">
           <div>
-            <FormLabel>Include Shifted Candles <FtParam name="include_shifted_candles" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_include_shifted_candles?.description ?? "Number of shifted candles to include"} configKey="include_shifted_candles">
+              <FormLabel>Include Shifted Candles</FormLabel>
+            </Tooltip>
             <FormInput type="number" value={includeShiftedCandles} onChange={(e) => setIncludeShiftedCandles(Number(e.target.value))} min={0} />
           </div>
           <div>
-            <FormLabel>Label Period Candles <FtParam name="label_period_candles" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_label_period_candles?.description ?? "Number of candles in a training label"} configKey="label_period_candles">
+              <FormLabel>Label Period Candles</FormLabel>
+            </Tooltip>
             <FormInput type="number" value={labelPeriodCandles} onChange={(e) => setLabelPeriodCandles(Number(e.target.value))} min={1} />
           </div>
           <div>
-            <FormLabel>Fit Live Predictions <FtParam name="fit_live_predictions_candles" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_fit_live_predictions?.description ?? "Number of candles to fit in live predictions"} configKey="fit_live_predictions_candles">
+              <FormLabel>Fit Live Predictions</FormLabel>
+            </Tooltip>
             <FormInput type="number" value={fitLivePredictions} onChange={(e) => setFitLivePredictions(Number(e.target.value))} min={0} />
           </div>
         </div>
 
         <div className="mb-6">
-          <FormLabel>Indicator Periods (Candles) <FtParam name="indicator_periods_candles" /></FormLabel>
+          <Tooltip content={TOOLTIPS.freqai_indicator_periods?.description ?? "Periods to use for indicator calculations"} configKey="indicator_periods_candles">
+            <FormLabel>Indicator Periods (Candles)</FormLabel>
+          </Tooltip>
           <ArrayTagInput values={indicatorPeriods} onChange={setIndicatorPeriods} placeholder="Add period, press Enter" />
         </div>
 
         <div>
-          <FormLabel>Test Size <FtParam name="data_split_parameters.test_size" /></FormLabel>
+          <Tooltip content={TOOLTIPS.freqai_test_size?.description ?? "Proportion of data to use for testing"} configKey="data_split_parameters.test_size">
+            <FormLabel>Test Size</FormLabel>
+          </Tooltip>
           <SliderRow min={0} max={100} value={testSize} onChange={setTestSize} format={(v) => (v / 100).toFixed(2)} />
         </div>
       </Section>
@@ -768,7 +799,9 @@ export default function FreqAIPage() {
       <Section id="rl" icon="&#127918;" title="Reinforcement Learning" tag="§25" collapsed={!!collapsed.rl} onToggle={() => toggle("rl")}>
         <div className="grid grid-cols-3 gap-3.5 mb-6">
           <div>
-            <FormLabel>Model Type <FtParam name="rl_config.model_type" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_rl_model_type?.description ?? "Reinforcement learning model algorithm"} configKey="rl_config.model_type">
+              <FormLabel>Model Type</FormLabel>
+            </Tooltip>
             <FormSelect value={rlModelType} onChange={(e) => setRlModelType(e.target.value)}>
               <option>PPO</option>
               <option>A2C</option>
@@ -776,7 +809,9 @@ export default function FreqAIPage() {
             </FormSelect>
           </div>
           <div>
-            <FormLabel>Policy Type <FtParam name="rl_config.policy_type" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_rl_policy_type?.description ?? "Policy network architecture"} configKey="rl_config.policy_type">
+              <FormLabel>Policy Type</FormLabel>
+            </Tooltip>
             <FormSelect value={rlPolicyType} onChange={(e) => setRlPolicyType(e.target.value)}>
               <option>MlpPolicy</option>
               <option>CnnPolicy</option>
@@ -794,42 +829,62 @@ export default function FreqAIPage() {
 
         <div className="grid grid-cols-3 gap-3.5 mb-6">
           <div>
-            <FormLabel>Train Cycles <FtParam name="rl_config.train_cycles" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_rl_train_cycles?.description ?? "Number of training cycles for RL"} configKey="rl_config.train_cycles">
+              <FormLabel>Train Cycles</FormLabel>
+            </Tooltip>
             <FormInput type="number" value={trainCycles} onChange={(e) => setTrainCycles(Number(e.target.value))} min={1} />
           </div>
           <div>
-            <FormLabel>Max Trade Duration <FtParam name="max_trade_duration_candles" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_max_trade_duration?.description ?? "Maximum candles a trade can stay open"} configKey="max_trade_duration_candles">
+              <FormLabel>Max Trade Duration</FormLabel>
+            </Tooltip>
             <FormInput type="number" value={maxTradeDuration} onChange={(e) => setMaxTradeDuration(Number(e.target.value))} min={1} />
           </div>
           <div>
-            <FormLabel>Max Training Drawdown <FtParam name="max_training_drawdown_pct" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_max_training_drawdown?.description ?? "Maximum drawdown allowed during training"} configKey="max_training_drawdown_pct">
+              <FormLabel>Max Training Drawdown</FormLabel>
+            </Tooltip>
             <FormInput type="number" value={maxTrainingDrawdown} onChange={(e) => setMaxTrainingDrawdown(e.target.value)} step={0.01} min={0} max={1} />
           </div>
         </div>
 
         <div className="mb-4">
-          <Toggle on={addStateInfo} onChange={() => setAddStateInfo(!addStateInfo)} label="Add State Info" sub="rl_config.add_state_info" />
+          <Tooltip content={TOOLTIPS.freqai_rl_add_state_info?.description ?? "Add agent state info to observations"} configKey="rl_config.add_state_info">
+            <Toggle on={addStateInfo} onChange={() => setAddStateInfo(!addStateInfo)} label="Add State Info" />
+          </Tooltip>
         </div>
 
         <div className="grid grid-cols-2 gap-3.5 mb-6">
           <div>
-            <FormLabel>CPU Count <FtParam name="rl_config.cpu_count" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_rl_cpu_count?.description ?? "Number of CPUs for parallel training"} configKey="rl_config.cpu_count">
+              <FormLabel>CPU Count</FormLabel>
+            </Tooltip>
             <FormInput type="number" value={rlCpuCount} onChange={(e) => setRlCpuCount(Number(e.target.value))} min={1} />
           </div>
           <div>
-            <FormLabel>Net Architecture <FtParam name="rl_config.net_arch" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_rl_net_arch?.description ?? "Neural network layer architecture"} configKey="rl_config.net_arch">
+              <FormLabel>Net Architecture</FormLabel>
+            </Tooltip>
             <ArrayTagInput values={rlNetArch} onChange={setRlNetArch} placeholder="Add layer size, press Enter" />
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-y-3.5 gap-x-6 mb-6">
-          <Toggle on={rlRandomizeStart} onChange={() => setRlRandomizeStart(!rlRandomizeStart)} label="Randomize Starting Position" sub="rl_config.randomize_starting_position" />
-          <Toggle on={rlDropOhlc} onChange={() => setRlDropOhlc(!rlDropOhlc)} label="Drop OHLC from Features" sub="rl_config.drop_ohlc_from_features" />
-          <Toggle on={rlProgressBar} onChange={() => setRlProgressBar(!rlProgressBar)} label="Show Progress Bar" sub="rl_config.progress_bar" />
+          <Tooltip content={TOOLTIPS.freqai_rl_randomize_start?.description ?? "Randomize starting position in RL"} configKey="rl_config.randomize_starting_position">
+            <Toggle on={rlRandomizeStart} onChange={() => setRlRandomizeStart(!rlRandomizeStart)} label="Randomize Starting Position" />
+          </Tooltip>
+          <Tooltip content={TOOLTIPS.freqai_rl_drop_ohlc?.description ?? "Drop OHLC data from features"} configKey="rl_config.drop_ohlc_from_features">
+            <Toggle on={rlDropOhlc} onChange={() => setRlDropOhlc(!rlDropOhlc)} label="Drop OHLC from Features" />
+          </Tooltip>
+          <Tooltip content={TOOLTIPS.freqai_rl_progress_bar?.description ?? "Show progress bar during training"} configKey="rl_config.progress_bar">
+            <Toggle on={rlProgressBar} onChange={() => setRlProgressBar(!rlProgressBar)} label="Show Progress Bar" />
+          </Tooltip>
         </div>
 
         <div className="mt-3.5">
-          <FormLabel>Model Reward Parameters <FtParam name="model_reward_parameters" /></FormLabel>
+          <Tooltip content={TOOLTIPS.freqai_model_reward_parameters?.description ?? "Reward function parameters for RL"} configKey="model_reward_parameters">
+            <FormLabel>Model Reward Parameters</FormLabel>
+          </Tooltip>
           <KvEditor rows={rewardParams} onChange={setRewardParams} />
         </div>
       </Section>
@@ -838,32 +893,52 @@ export default function FreqAIPage() {
       <Section id="outlier" icon="&#128300;" title="Data Processing & Outlier Detection" tag="§26" collapsed={!!collapsed.outlier} onToggle={() => toggle("outlier")}>
         <div className="grid grid-cols-3 gap-3.5 mb-6">
           <div>
-            <FormLabel>Data Kitchen Thread Count <FtParam name="data_kitchen_thread_count" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_data_kitchen_thread_count?.description ?? "Number of threads for data kitchen processing"} configKey="data_kitchen_thread_count">
+              <FormLabel>Data Kitchen Thread Count</FormLabel>
+            </Tooltip>
             <FormInput type="number" value={dataKitchenThreadCount} onChange={(e) => setDataKitchenThreadCount(Number(e.target.value))} min={1} />
           </div>
           <div>
-            <FormLabel>Buffer Train Data Candles <FtParam name="buffer_train_data_candles" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_buffer_train_data?.description ?? "Buffer candles before training"} configKey="buffer_train_data_candles">
+              <FormLabel>Buffer Train Data Candles</FormLabel>
+            </Tooltip>
             <FormInput type="number" value={bufferTrainDataCandles} onChange={(e) => setBufferTrainDataCandles(Number(e.target.value))} min={0} />
           </div>
           <div>
-            <FormLabel>Noise Std Deviation <FtParam name="noise_standard_deviation" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_noise_std_dev?.description ?? "Standard deviation of noise for augmentation"} configKey="noise_standard_deviation">
+              <FormLabel>Noise Std Deviation</FormLabel>
+            </Tooltip>
             <FormInput type="number" value={noiseStdDev} onChange={(e) => setNoiseStdDev(e.target.value)} step={0.01} min={0} />
           </div>
         </div>
 
         <div className="mb-6">
-          <FormLabel>Weight Factor <FtParam name="weight_factor" /></FormLabel>
+          <Tooltip content={TOOLTIPS.freqai_weight_factor?.description ?? "Weight factor for sample importance"} configKey="weight_factor">
+            <FormLabel>Weight Factor</FormLabel>
+          </Tooltip>
           <SliderRow min={0} max={100} value={weightFactor} onChange={setWeightFactor} format={(v) => (v / 10).toFixed(1)} />
         </div>
 
         {/* Toggles grid */}
         <div className="grid grid-cols-2 gap-y-3.5 gap-x-6 mb-6">
-          <Toggle on={saveBacktestModels} onChange={() => setSaveBacktestModels(!saveBacktestModels)} label="Save Backtest Models" sub="save_backtest_models" />
-          <Toggle on={writeMetricsToDisk} onChange={() => setWriteMetricsToDisk(!writeMetricsToDisk)} label="Write Metrics to Disk" sub="write_metrics_to_disk" />
-          <Toggle on={reduceDfFootprint} onChange={() => setReduceDfFootprint(!reduceDfFootprint)} label="Reduce DF Footprint" sub="reduce_df_footprint" />
-          <Toggle on={shuffleAfterSplit} onChange={() => setShuffleAfterSplit(!shuffleAfterSplit)} label="Shuffle After Split" sub="shuffle_after_split" />
-          <Toggle on={reverseTrainTestOrder} onChange={() => setReverseTrainTestOrder(!reverseTrainTestOrder)} label="Reverse Train/Test Order" sub="reverse_train_test_order" />
-          <Toggle on={principalComponentAnalysis} onChange={() => setPrincipalComponentAnalysis(!principalComponentAnalysis)} label="Principal Component Analysis" sub="principal_component_analysis" />
+          <Tooltip content={TOOLTIPS.freqai_save_backtest_models?.description ?? "Save models created during backtesting"} configKey="save_backtest_models">
+            <Toggle on={saveBacktestModels} onChange={() => setSaveBacktestModels(!saveBacktestModels)} label="Save Backtest Models" />
+          </Tooltip>
+          <Tooltip content={TOOLTIPS.freqai_write_metrics?.description ?? "Write training metrics to disk"} configKey="write_metrics_to_disk">
+            <Toggle on={writeMetricsToDisk} onChange={() => setWriteMetricsToDisk(!writeMetricsToDisk)} label="Write Metrics to Disk" />
+          </Tooltip>
+          <Tooltip content={TOOLTIPS.freqai_reduce_df_footprint?.description ?? "Reduce dataframe memory footprint"} configKey="reduce_df_footprint">
+            <Toggle on={reduceDfFootprint} onChange={() => setReduceDfFootprint(!reduceDfFootprint)} label="Reduce DF Footprint" />
+          </Tooltip>
+          <Tooltip content={TOOLTIPS.freqai_shuffle_after_split?.description ?? "Shuffle data after train/test split"} configKey="shuffle_after_split">
+            <Toggle on={shuffleAfterSplit} onChange={() => setShuffleAfterSplit(!shuffleAfterSplit)} label="Shuffle After Split" />
+          </Tooltip>
+          <Tooltip content={TOOLTIPS.freqai_reverse_train_test?.description ?? "Reverse train/test order for validation"} configKey="reverse_train_test_order">
+            <Toggle on={reverseTrainTestOrder} onChange={() => setReverseTrainTestOrder(!reverseTrainTestOrder)} label="Reverse Train/Test Order" />
+          </Tooltip>
+          <Tooltip content={TOOLTIPS.freqai_principal_component_analysis?.description ?? "Apply principal component analysis"} configKey="principal_component_analysis">
+            <Toggle on={principalComponentAnalysis} onChange={() => setPrincipalComponentAnalysis(!principalComponentAnalysis)} label="Principal Component Analysis" />
+          </Tooltip>
         </div>
 
         {/* Outlier Detection Methods */}
@@ -874,28 +949,38 @@ export default function FreqAIPage() {
             {/* SVM */}
             <div className="p-3 px-3.5 rounded-md border border-border bg-bg-3">
               <div className="mb-2">
-                <Toggle on={useSVM} onChange={() => setUseSVM(!useSVM)} label="SVM Outlier Removal" sub="use_SVM_to_remove_outliers" />
+                <Tooltip content={TOOLTIPS.freqai_use_SVM_to_remove_outliers?.description ?? "Use Support Vector Machine for outlier removal"} configKey="use_SVM_to_remove_outliers">
+                  <Toggle on={useSVM} onChange={() => setUseSVM(!useSVM)} label="SVM Outlier Removal" />
+                </Tooltip>
               </div>
               <div className="max-w-[300px]">
-                <FormLabel>SVM Nu <FtParam name="svm_params.nu" /></FormLabel>
+                <Tooltip content={TOOLTIPS.freqai_svm_nu?.description ?? "Nu parameter for SVM"} configKey="svm_params.nu">
+                  <FormLabel>SVM Nu</FormLabel>
+                </Tooltip>
                 <FormInput type="number" value={svmNu} onChange={(e) => setSvmNu(e.target.value)} step={0.01} min={0} max={1} />
               </div>
             </div>
 
             {/* DBSCAN */}
             <div className="p-3 px-3.5 rounded-md border border-border bg-bg-3">
-              <Toggle on={useDBSCAN} onChange={() => setUseDBSCAN(!useDBSCAN)} label="DBSCAN Outlier Removal" sub="use_DBSCAN_to_remove_outliers" />
+              <Tooltip content={TOOLTIPS.freqai_use_DBSCAN_to_remove_outliers?.description ?? "Use DBSCAN for outlier removal"} configKey="use_DBSCAN_to_remove_outliers">
+                <Toggle on={useDBSCAN} onChange={() => setUseDBSCAN(!useDBSCAN)} label="DBSCAN Outlier Removal" />
+              </Tooltip>
             </div>
 
             {/* DI Threshold */}
             <div className="p-3 px-3.5 rounded-md border border-border bg-bg-3">
               <div className="grid grid-cols-2 gap-3.5 max-w-[500px]">
                 <div>
-                  <FormLabel>DI Threshold <FtParam name="DI_threshold" /></FormLabel>
+                  <Tooltip content={TOOLTIPS.freqai_di_threshold?.description ?? "Diversity index threshold"} configKey="DI_threshold">
+                    <FormLabel>DI Threshold</FormLabel>
+                  </Tooltip>
                   <FormInput type="number" value={diThreshold} onChange={(e) => setDiThreshold(e.target.value)} step={0.1} min={0} />
                 </div>
                 <div>
-                  <FormLabel>Outlier Protection % <FtParam name="outlier_protection_percentage" /></FormLabel>
+                  <Tooltip content={TOOLTIPS.freqai_outlier_protection?.description ?? "Percentage protection for outliers"} configKey="outlier_protection_percentage">
+                    <FormLabel>Outlier Protection %</FormLabel>
+                  </Tooltip>
                   <FormInput type="number" value={outlierProtectionPct} onChange={(e) => setOutlierProtectionPct(Number(e.target.value))} min={0} max={100} />
                 </div>
               </div>
@@ -905,7 +990,9 @@ export default function FreqAIPage() {
 
         {/* SVM Params JSON editor */}
         <div className="border-t border-border pt-4 mt-4">
-          <FormLabel>SVM Parameters (JSON) <FtParam name="svm_params" /></FormLabel>
+          <Tooltip content={TOOLTIPS.freqai_svm_params?.description ?? "SVM parameters in JSON format"} configKey="svm_params">
+            <FormLabel>SVM Parameters (JSON)</FormLabel>
+          </Tooltip>
           <textarea
             value={svmParamsJson}
             onChange={(e) => setSvmParamsJson(e.target.value)}
@@ -917,7 +1004,9 @@ export default function FreqAIPage() {
 
         {/* Plot Feature Importances */}
         <div className="mt-4 max-w-[300px]">
-          <FormLabel>Plot Feature Importances <FtParam name="plot_feature_importances" /></FormLabel>
+          <Tooltip content={TOOLTIPS.freqai_plot_feature_importances?.description ?? "Number of top features to plot (0 = disabled)"} configKey="plot_feature_importances">
+            <FormLabel>Plot Feature Importances</FormLabel>
+          </Tooltip>
           <FormInput type="number" value={plotFeatureImportances} onChange={(e) => setPlotFeatureImportances(Number(e.target.value))} min={0} />
           <div className="text-[10px] text-text-3 mt-1">Number of top features to plot. 0 = disabled.</div>
         </div>
@@ -932,19 +1021,27 @@ export default function FreqAIPage() {
 
         <div className="grid grid-cols-4 gap-3.5">
           <div>
-            <FormLabel>Learning Rate <FtParam name="learning_rate" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_learning_rate?.description ?? "Learning rate for PyTorch optimizer"} configKey="learning_rate">
+              <FormLabel>Learning Rate</FormLabel>
+            </Tooltip>
             <FormInput type="text" value={learningRate} onChange={(e) => setLearningRate(e.target.value)} placeholder="e.g. 0.001" />
           </div>
           <div>
-            <FormLabel>Epochs <FtParam name="trainer_kwargs.n_epochs" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_epochs?.description ?? "Number of training epochs for PyTorch"} configKey="trainer_kwargs.n_epochs">
+              <FormLabel>Epochs</FormLabel>
+            </Tooltip>
             <FormInput type="number" value={epochs} onChange={(e) => setEpochs(Number(e.target.value))} min={1} />
           </div>
           <div>
-            <FormLabel>Batch Size <FtParam name="trainer_kwargs.batch_size" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_batch_size?.description ?? "Batch size for PyTorch training"} configKey="trainer_kwargs.batch_size">
+              <FormLabel>Batch Size</FormLabel>
+            </Tooltip>
             <FormInput type="number" value={batchSize} onChange={(e) => setBatchSize(Number(e.target.value))} min={1} />
           </div>
           <div>
-            <FormLabel>Conv Width <FtParam name="conv_width" /></FormLabel>
+            <Tooltip content={TOOLTIPS.freqai_conv_width?.description ?? "Convolutional layer width"} configKey="conv_width">
+              <FormLabel>Conv Width</FormLabel>
+            </Tooltip>
             <FormInput type="number" value={convWidth} onChange={(e) => setConvWidth(Number(e.target.value))} min={1} />
           </div>
         </div>

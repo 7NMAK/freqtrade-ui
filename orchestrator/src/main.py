@@ -18,7 +18,7 @@ from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconn
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
-from .database import engine
+from .database import engine, async_session
 from .models.base import Base
 from .heartbeat.monitor import HeartbeatMonitor
 from .bot_manager.manager import BotManager
@@ -36,6 +36,21 @@ async def lifespan(app: FastAPI):
     # Create tables (dev convenience — production uses Alembic)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    # Wire up ft_client activity logging callback (logs FT connection errors to DB)
+    from .ft_client import set_activity_log_callback
+    from .activity_logger import log_activity as _log_activity
+
+    async def _ft_activity_callback(**kwargs):
+        """Bridge ft_client events into the audit_log DB table."""
+        async with async_session() as session:
+            try:
+                await _log_activity(session, **kwargs)
+                await session.commit()
+            except Exception:
+                await session.rollback()
+
+    set_activity_log_callback(_ft_activity_callback)
 
     # Initialize bot manager
     app.state.bot_manager = BotManager()
@@ -135,6 +150,7 @@ from .api.bots import router as bots_router
 from .api.kill_switch import router as kill_switch_router
 from .api.portfolio import router as portfolio_router
 from .api.strategies import router as strategies_router
+from .api.logs import router as logs_router
 
 from .auth import require_auth as _auth_dep
 
@@ -142,6 +158,7 @@ app.include_router(bots_router, prefix="/api/bots", tags=["bots"], dependencies=
 app.include_router(kill_switch_router, prefix="/api/kill-switch", tags=["kill-switch"], dependencies=[Depends(_auth_dep)])
 app.include_router(portfolio_router, prefix="/api/portfolio", tags=["portfolio"], dependencies=[Depends(_auth_dep)])
 app.include_router(strategies_router, prefix="/api/strategies", tags=["strategies"], dependencies=[Depends(_auth_dep)])
+app.include_router(logs_router, prefix="/api/logs", tags=["logs"], dependencies=[Depends(_auth_dep)])
 
 # AI Validation Layer routes
 from .api.ai import router as ai_router

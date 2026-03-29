@@ -4,8 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 import AppShell from "@/components/layout/AppShell";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
+import Tooltip from "@/components/ui/Tooltip";
 import { getBots, botConfig, saveBotConfig, reloadBotConfig, botWhitelist } from "@/lib/api";
-import type { Bot } from "@/types";
+import { TOOLTIPS } from "@/lib/tooltips";
+import type { Bot, FTShowConfig } from "@/types";
 
 /* ── Types ── */
 type TabId = "core" | "pairlists" | "exchange" | "telegram" | "webhooks" | "producer" | "advanced";
@@ -22,11 +24,40 @@ interface RoiRow {
   roi: number;
 }
 
+/** §7 Pairlist filter params — all optional, each filter uses a subset */
+interface PairlistFilterParams {
+  // AgeFilter
+  min_days_listed?: number;
+  max_days_listed?: number | string;
+  // DelistFilter
+  min_days_until_removed?: number;
+  // SpreadFilter
+  max_spread_ratio?: number;
+  // PriceFilter
+  low_price_ratio?: number;
+  min_price?: number;
+  max_price?: number;
+  // RangeStabilityFilter
+  min_rate_of_change?: number;
+  max_rate_of_change?: number;
+  lookback_days?: number;
+  // VolatilityFilter
+  min_volatility?: number;
+  max_volatility?: number;
+  // OffsetFilter
+  offset?: number;
+  number_assets?: number;
+  // VolumePairList / PerformanceFilter
+  trade_back_seconds?: number;
+  // ShuffleFilter
+  seed?: number | string;
+}
+
 interface PairlistFilter {
   name: string;
   enabled: boolean;
   open: boolean;
-  params: Record<string, unknown>;
+  params: PairlistFilterParams;
 }
 
 interface WebhookEvent {
@@ -418,32 +449,27 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
 }
 
 function ToggleRow({
-  name,
   desc,
   on,
   onToggle,
 }: {
-  name: string;
+  name?: string;
   desc: string;
   on: boolean;
   onToggle: () => void;
 }) {
   return (
     <div className="flex items-center justify-between py-2.5 border-b border-border/40 last:border-b-0">
-      <div className="flex flex-col gap-0.5">
-        <span className="text-xs font-semibold text-text-0">{name}</span>
-        <span className="text-[10px] text-text-3">{desc}</span>
-      </div>
+      <span className="text-xs font-semibold text-text-0">{desc}</span>
       <Toggle on={on} onToggle={onToggle} />
     </div>
   );
 }
 
-function FormLabel({ children, paramRef }: { children: React.ReactNode; paramRef?: string }) {
+function FormLabel({ children }: { children: React.ReactNode }) {
   return (
     <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-1.5">
       {children}
-      {paramRef && <span className="font-mono text-cyan text-[10px] normal-case tracking-normal ml-1.5">{paramRef}</span>}
     </label>
   );
 }
@@ -522,12 +548,11 @@ function SectionDesc({ children }: { children: React.ReactNode }) {
   return <p className="text-xs text-text-2 mb-7">{children}</p>;
 }
 
-function SubsectionTitle({ icon, children, paramRef }: { icon: string; children: React.ReactNode; paramRef?: string }) {
+function SubsectionTitle({ icon, children }: { icon: string; children: React.ReactNode }) {
   return (
     <h3 className="text-[13px] font-semibold text-text-0 mb-4.5 flex items-center gap-2">
       <span className="text-[13px]">{icon}</span>
       {children}
-      {paramRef && <span className="font-mono text-cyan text-[10px] font-normal">{paramRef}</span>}
     </h3>
   );
 }
@@ -594,7 +619,10 @@ interface TabProps {
 /* ─────────────────────────────────────────── */
 function CoreTab({ config, update }: TabProps) {
   const toggleBool = (key: keyof ConfigState) => {
-    update(key, !config[key] as never);
+    const current = config[key];
+    if (typeof current === "boolean") {
+      update(key, !current);
+    }
   };
 
   return (
@@ -606,11 +634,11 @@ function CoreTab({ config, update }: TabProps) {
       <SubsectionTitle icon={"\uD83E\uDD16"}>Bot Identity</SubsectionTitle>
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="bot_name">Bot Name</FormLabel>
+          <Tooltip content={TOOLTIPS.bot_name?.description ?? "Bot Name"} configKey="bot_name"><FormLabel>Bot Name</FormLabel></Tooltip>
           <FormInput value={config.bot_name} onChange={(v) => update("bot_name", v)} />
         </div>
         <div>
-          <FormLabel paramRef="initial_state">Initial State</FormLabel>
+          <Tooltip content={TOOLTIPS.initial_state?.description ?? "Initial State"} configKey="initial_state"><FormLabel>Initial State</FormLabel></Tooltip>
           <FormSelect
             value={config.initial_state}
             onChange={(v) => update("initial_state", v)}
@@ -628,32 +656,32 @@ function CoreTab({ config, update }: TabProps) {
       <SubsectionTitle icon={"\uD83D\uDCB0"}>Stake & Trade Limits</SubsectionTitle>
       <div className="grid grid-cols-3 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="max_open_trades">Max Open Trades</FormLabel>
+          <Tooltip content={TOOLTIPS.max_open_trades?.description ?? "Max Open Trades"} configKey="max_open_trades"><FormLabel>Max Open Trades</FormLabel></Tooltip>
           <FormInput type="number" value={config.max_open_trades} onChange={(v) => update("max_open_trades", Number(v))} />
           <FormHint>-1 for unlimited</FormHint>
         </div>
         <div>
-          <FormLabel paramRef="stake_currency">Stake Currency</FormLabel>
+          <Tooltip content={TOOLTIPS.stake_currency?.description ?? "Stake Currency"} configKey="stake_currency"><FormLabel>Stake Currency</FormLabel></Tooltip>
           <FormInput value={config.stake_currency} onChange={(v) => update("stake_currency", v)} />
         </div>
         <div>
-          <FormLabel paramRef="stake_amount">Stake Amount</FormLabel>
+          <Tooltip content={TOOLTIPS.stake_amount?.description ?? "Stake Amount"} configKey="stake_amount"><FormLabel>Stake Amount</FormLabel></Tooltip>
           <FormInput value={config.stake_amount} onChange={(v) => update("stake_amount", v)} />
           <FormHint>Or &quot;unlimited&quot; for dynamic</FormHint>
         </div>
       </div>
       <div className="grid grid-cols-3 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="tradable_balance_ratio">Tradable Balance Ratio</FormLabel>
+          <Tooltip content={TOOLTIPS.tradable_balance_ratio?.description ?? "Tradable Balance Ratio"} configKey="tradable_balance_ratio"><FormLabel>Tradable Balance Ratio</FormLabel></Tooltip>
           <FormInput type="number" value={config.tradable_balance_ratio} onChange={(v) => update("tradable_balance_ratio", Number(v))} step="0.01" min="0" max="1" />
         </div>
         <div>
-          <FormLabel paramRef="available_capital">Available Capital</FormLabel>
+          <Tooltip content={TOOLTIPS.available_capital?.description ?? "Available Capital"} configKey="available_capital"><FormLabel>Available Capital</FormLabel></Tooltip>
           <FormInput type="number" value={config.available_capital} onChange={(v) => update("available_capital", Number(v))} />
           <FormHint>If set, used instead of wallet balance</FormHint>
         </div>
         <div>
-          <FormLabel paramRef="fiat_display_currency">Fiat Display Currency</FormLabel>
+          <Tooltip content={TOOLTIPS.fiat_display_currency?.description ?? "Fiat Display Currency"} configKey="fiat_display_currency"><FormLabel>Fiat Display Currency</FormLabel></Tooltip>
           <FormSelect
             value={config.fiat_display_currency}
             onChange={(v) => update("fiat_display_currency", v)}
@@ -669,7 +697,7 @@ function CoreTab({ config, update }: TabProps) {
       </div>
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="timeframe">Timeframe</FormLabel>
+          <Tooltip content={TOOLTIPS.timeframe?.description ?? "Timeframe"} configKey="timeframe"><FormLabel>Timeframe</FormLabel></Tooltip>
           <FormSelect
             value={config.timeframe}
             onChange={(v) => update("timeframe", v)}
@@ -685,7 +713,7 @@ function CoreTab({ config, update }: TabProps) {
           />
         </div>
         <div>
-          <FormLabel paramRef="force_entry_enable">Force Entry Enable</FormLabel>
+          <Tooltip content={TOOLTIPS.force_entry_enable?.description ?? "Force Entry Enable"} configKey="force_entry_enable"><FormLabel>Force Entry Enable</FormLabel></Tooltip>
           <FormSelect
             value={config.force_entry_enable}
             onChange={(v) => update("force_entry_enable", v)}
@@ -703,13 +731,13 @@ function CoreTab({ config, update }: TabProps) {
       <SubsectionTitle icon={"\uD83E\uDDEA"}>Dry Run</SubsectionTitle>
       <Card className="mb-6">
         <CardBody>
-          <ToggleRow name="dry_run" desc="Simulate trades without real orders" on={config.dry_run} onToggle={() => toggleBool("dry_run")} />
-          <ToggleRow name="cancel_open_orders_on_exit" desc="Cancel pending orders when bot stops" on={config.cancel_open_orders_on_exit} onToggle={() => toggleBool("cancel_open_orders_on_exit")} />
-          <ToggleRow name="process_only_new_candles" desc="Only process strategy on new candle data" on={config.process_only_new_candles} onToggle={() => toggleBool("process_only_new_candles")} />
+          <Tooltip content={TOOLTIPS.dry_run?.description ?? "Simulate trades without real orders"} configKey="dry_run"><ToggleRow name="dry_run" desc="Simulate trades without real orders" on={config.dry_run} onToggle={() => toggleBool("dry_run")} /></Tooltip>
+          <Tooltip content={TOOLTIPS.cancel_open_orders_on_exit?.description ?? "Cancel pending orders when bot stops"} configKey="cancel_open_orders_on_exit"><ToggleRow name="cancel_open_orders_on_exit" desc="Cancel pending orders when bot stops" on={config.cancel_open_orders_on_exit} onToggle={() => toggleBool("cancel_open_orders_on_exit")} /></Tooltip>
+          <Tooltip content={TOOLTIPS.process_only_new_candles?.description ?? "Only process strategy on new candle data"} configKey="process_only_new_candles"><ToggleRow name="process_only_new_candles" desc="Only process strategy on new candle data" on={config.process_only_new_candles} onToggle={() => toggleBool("process_only_new_candles")} /></Tooltip>
         </CardBody>
       </Card>
       <div className="mb-6">
-        <FormLabel paramRef="dry_run_wallet">Dry Run Wallet</FormLabel>
+        <Tooltip content={TOOLTIPS.dry_run_wallet?.description ?? "Dry Run Wallet"} configKey="dry_run_wallet"><FormLabel>Dry Run Wallet</FormLabel></Tooltip>
         <FormInput type="number" value={config.dry_run_wallet} onChange={(v) => update("dry_run_wallet", Number(v))} step="100" />
         <FormHint>Simulated wallet balance in stake_currency</FormHint>
       </div>
@@ -717,7 +745,7 @@ function CoreTab({ config, update }: TabProps) {
       <FormDivider />
 
       {/* Minimal ROI */}
-      <SubsectionTitle icon={"\uD83D\uDCC9"} paramRef="minimal_roi">Minimal ROI</SubsectionTitle>
+      <Tooltip content={TOOLTIPS.minimal_roi?.description ?? "Minimal ROI"} configKey="minimal_roi"><SubsectionTitle icon={"\uD83D\uDCC9"}>Minimal ROI</SubsectionTitle></Tooltip>
       <Card className="mb-7">
         <CardHeader
           title="ROI Table"
@@ -790,7 +818,7 @@ function CoreTab({ config, update }: TabProps) {
       <SubsectionTitle icon={"\uD83D\uDED1"}>Stoploss & Trailing</SubsectionTitle>
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="stoploss">Stoploss</FormLabel>
+          <Tooltip content={TOOLTIPS.stoploss?.description ?? "Stoploss"} configKey="stoploss"><FormLabel>Stoploss</FormLabel></Tooltip>
           <FormInput type="number" value={config.stoploss} onChange={(v) => update("stoploss", Number(v))} step="0.01" max="0" />
           <FormHint>Negative decimal (e.g. -0.10 = 10%)</FormHint>
         </div>
@@ -798,20 +826,20 @@ function CoreTab({ config, update }: TabProps) {
       </div>
       <Card className="mb-6">
         <CardBody>
-          <ToggleRow name="trailing_stop" desc="Enable trailing stoploss" on={config.trailing_stop} onToggle={() => toggleBool("trailing_stop")} />
+          <Tooltip content={TOOLTIPS.trailing_stop?.description ?? "Enable trailing stoploss"} configKey="trailing_stop"><ToggleRow name="trailing_stop" desc="Enable trailing stoploss" on={config.trailing_stop} onToggle={() => toggleBool("trailing_stop")} /></Tooltip>
         </CardBody>
       </Card>
       <div className="grid grid-cols-3 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="trailing_stop_positive">Trailing Stop Positive</FormLabel>
+          <Tooltip content={TOOLTIPS.trailing_stop_positive?.description ?? "Trailing Stop Positive"} configKey="trailing_stop_positive"><FormLabel>Trailing Stop Positive</FormLabel></Tooltip>
           <FormInput type="number" value={config.trailing_stop_positive} onChange={(v) => update("trailing_stop_positive", Number(v))} step="0.01" />
         </div>
         <div>
-          <FormLabel paramRef="trailing_stop_positive_offset">Trailing Stop Positive Offset</FormLabel>
+          <Tooltip content={TOOLTIPS.trailing_stop_positive_offset?.description ?? "Trailing Stop Positive Offset"} configKey="trailing_stop_positive_offset"><FormLabel>Trailing Stop Positive Offset</FormLabel></Tooltip>
           <FormInput type="number" value={config.trailing_stop_positive_offset} onChange={(v) => update("trailing_stop_positive_offset", Number(v))} step="0.01" />
         </div>
         <div>
-          <FormLabel paramRef="trailing_only_offset_is_reached">Trailing Only Offset Is Reached</FormLabel>
+          <Tooltip content={TOOLTIPS.trailing_only_offset_is_reached?.description ?? "Trailing Only Offset Is Reached"} configKey="trailing_only_offset_is_reached"><FormLabel>Trailing Only Offset Is Reached</FormLabel></Tooltip>
           <FormSelect
             value={config.trailing_only_offset_is_reached}
             onChange={(v) => update("trailing_only_offset_is_reached", v)}
@@ -829,13 +857,13 @@ function CoreTab({ config, update }: TabProps) {
       <SubsectionTitle icon={"\uD83D\uDEAA"}>Exit Signal Control</SubsectionTitle>
       <Card className="mb-6">
         <CardBody>
-          <ToggleRow name="use_exit_signal" desc="Use strategy exit signals (not just ROI/stoploss)" on={config.use_exit_signal} onToggle={() => toggleBool("use_exit_signal")} />
-          <ToggleRow name="exit_profit_only" desc="Only exit when trade is in profit" on={config.exit_profit_only} onToggle={() => toggleBool("exit_profit_only")} />
-          <ToggleRow name="ignore_roi_if_entry_signal" desc="Don't exit via ROI if entry signal is still active" on={config.ignore_roi_if_entry_signal} onToggle={() => toggleBool("ignore_roi_if_entry_signal")} />
+          <Tooltip content={TOOLTIPS.use_exit_signal?.description ?? "Use strategy exit signals (not just ROI/stoploss)"} configKey="use_exit_signal"><ToggleRow name="use_exit_signal" desc="Use strategy exit signals (not just ROI/stoploss)" on={config.use_exit_signal} onToggle={() => toggleBool("use_exit_signal")} /></Tooltip>
+          <Tooltip content={TOOLTIPS.exit_profit_only?.description ?? "Only exit when trade is in profit"} configKey="exit_profit_only"><ToggleRow name="exit_profit_only" desc="Only exit when trade is in profit" on={config.exit_profit_only} onToggle={() => toggleBool("exit_profit_only")} /></Tooltip>
+          <Tooltip content={TOOLTIPS.ignore_roi_if_entry_signal?.description ?? "Don't exit via ROI if entry signal is still active"} configKey="ignore_roi_if_entry_signal"><ToggleRow name="ignore_roi_if_entry_signal" desc="Don't exit via ROI if entry signal is still active" on={config.ignore_roi_if_entry_signal} onToggle={() => toggleBool("ignore_roi_if_entry_signal")} /></Tooltip>
         </CardBody>
       </Card>
       <div className="mb-6">
-        <FormLabel paramRef="exit_profit_offset">Exit Profit Offset</FormLabel>
+        <Tooltip content={TOOLTIPS.exit_profit_offset?.description ?? "Exit Profit Offset"} configKey="exit_profit_offset"><FormLabel>Exit Profit Offset</FormLabel></Tooltip>
         <FormInput type="number" value={config.exit_profit_offset} onChange={(v) => update("exit_profit_offset", Number(v))} step="0.01" className="max-w-[300px]" />
         <FormHint>Minimum profit before exit signal is honoured</FormHint>
       </div>
@@ -843,50 +871,50 @@ function CoreTab({ config, update }: TabProps) {
       <FormDivider />
 
       {/* Order Types */}
-      <SubsectionTitle icon={"\uD83D\uDCDD"} paramRef="order_types">Order Types</SubsectionTitle>
+      <Tooltip content={TOOLTIPS.order_types?.description ?? "Order Types"} configKey="order_types"><SubsectionTitle icon={"\uD83D\uDCDD"}>Order Types</SubsectionTitle></Tooltip>
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="entry">Entry</FormLabel>
+          <Tooltip content={TOOLTIPS.entry?.description ?? "Entry"} configKey="entry"><FormLabel>Entry</FormLabel></Tooltip>
           <FormSelect value={config.order_types_entry} onChange={(v) => update("order_types_entry", v)} options={[{ value: "limit", label: "limit" }, { value: "market", label: "market" }]} />
         </div>
         <div>
-          <FormLabel paramRef="exit">Exit</FormLabel>
+          <Tooltip content={TOOLTIPS.exit?.description ?? "Exit"} configKey="exit"><FormLabel>Exit</FormLabel></Tooltip>
           <FormSelect value={config.order_types_exit} onChange={(v) => update("order_types_exit", v)} options={[{ value: "limit", label: "limit" }, { value: "market", label: "market" }]} />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="emergency_exit">Emergency Exit</FormLabel>
+          <Tooltip content={TOOLTIPS.emergency_exit?.description ?? "Emergency Exit"} configKey="emergency_exit"><FormLabel>Emergency Exit</FormLabel></Tooltip>
           <FormSelect value={config.order_types_emergency_exit} onChange={(v) => update("order_types_emergency_exit", v)} options={[{ value: "limit", label: "limit" }, { value: "market", label: "market" }]} />
         </div>
         <div>
-          <FormLabel paramRef="force_exit">Force Exit</FormLabel>
+          <Tooltip content={TOOLTIPS.force_exit?.description ?? "Force Exit"} configKey="force_exit"><FormLabel>Force Exit</FormLabel></Tooltip>
           <FormSelect value={config.order_types_force_exit} onChange={(v) => update("order_types_force_exit", v)} options={[{ value: "limit", label: "limit" }, { value: "market", label: "market" }]} />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="force_entry">Force Entry</FormLabel>
+          <Tooltip content={TOOLTIPS.force_entry?.description ?? "Force Entry"} configKey="force_entry"><FormLabel>Force Entry</FormLabel></Tooltip>
           <FormSelect value={config.order_types_force_entry} onChange={(v) => update("order_types_force_entry", v)} options={[{ value: "limit", label: "limit" }, { value: "market", label: "market" }]} />
         </div>
         <div>
-          <FormLabel paramRef="stoploss">Stoploss</FormLabel>
+          <Tooltip content={TOOLTIPS.stoploss?.description ?? "Stoploss"} configKey="stoploss"><FormLabel>Stoploss</FormLabel></Tooltip>
           <FormSelect value={config.order_types_stoploss} onChange={(v) => update("order_types_stoploss", v)} options={[{ value: "limit", label: "limit" }, { value: "market", label: "market" }]} />
         </div>
       </div>
       <Card className="mb-6">
         <CardBody>
-          <ToggleRow name="stoploss_on_exchange" desc="Place stoploss order on the exchange" on={config.stoploss_on_exchange} onToggle={() => toggleBool("stoploss_on_exchange")} />
+          <Tooltip content={TOOLTIPS.stoploss_on_exchange?.description ?? "Place stoploss order on the exchange"} configKey="stoploss_on_exchange"><ToggleRow name="stoploss_on_exchange" desc="Place stoploss order on the exchange" on={config.stoploss_on_exchange} onToggle={() => toggleBool("stoploss_on_exchange")} /></Tooltip>
         </CardBody>
       </Card>
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="stoploss_on_exchange_interval">Stoploss on Exchange Interval</FormLabel>
+          <Tooltip content={TOOLTIPS.stoploss_on_exchange_interval?.description ?? "Stoploss on Exchange Interval"} configKey="stoploss_on_exchange_interval"><FormLabel>Stoploss on Exchange Interval</FormLabel></Tooltip>
           <FormInput type="number" value={config.stoploss_on_exchange_interval} onChange={(v) => update("stoploss_on_exchange_interval", Number(v))} className="max-w-[200px]" />
           <FormHint>Seconds between stoploss order updates</FormHint>
         </div>
         <div>
-          <FormLabel paramRef="stoploss_on_exchange_limit_ratio">Stoploss on Exchange Limit Ratio</FormLabel>
+          <Tooltip content={TOOLTIPS.stoploss_on_exchange_limit_ratio?.description ?? "Stoploss on Exchange Limit Ratio"} configKey="stoploss_on_exchange_limit_ratio"><FormLabel>Stoploss on Exchange Limit Ratio</FormLabel></Tooltip>
           <FormInput type="number" value={config.stoploss_on_exchange_limit_ratio} onChange={(v) => update("stoploss_on_exchange_limit_ratio", Number(v))} step="0.01" className="max-w-[200px]" />
         </div>
       </div>
@@ -894,14 +922,14 @@ function CoreTab({ config, update }: TabProps) {
       <FormDivider />
 
       {/* Order Time in Force */}
-      <SubsectionTitle icon={"\u23F1\uFE0F"} paramRef="order_time_in_force">Order Time in Force</SubsectionTitle>
+      <Tooltip content={TOOLTIPS.order_time_in_force?.description ?? "Order Time in Force"} configKey="order_time_in_force"><SubsectionTitle icon={"\u23F1\uFE0F"}>Order Time in Force</SubsectionTitle></Tooltip>
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="entry">Entry</FormLabel>
+          <Tooltip content={TOOLTIPS.entry?.description ?? "Entry"} configKey="entry"><FormLabel>Entry</FormLabel></Tooltip>
           <FormSelect value={config.order_time_in_force_entry} onChange={(v) => update("order_time_in_force_entry", v)} options={[{ value: "GTC", label: "GTC" }, { value: "FOK", label: "FOK" }, { value: "IOC", label: "IOC" }]} />
         </div>
         <div>
-          <FormLabel paramRef="exit">Exit</FormLabel>
+          <Tooltip content={TOOLTIPS.exit?.description ?? "Exit"} configKey="exit"><FormLabel>Exit</FormLabel></Tooltip>
           <FormSelect value={config.order_time_in_force_exit} onChange={(v) => update("order_time_in_force_exit", v)} options={[{ value: "GTC", label: "GTC" }, { value: "FOK", label: "FOK" }, { value: "IOC", label: "IOC" }]} />
         </div>
       </div>
@@ -909,23 +937,23 @@ function CoreTab({ config, update }: TabProps) {
       <FormDivider />
 
       {/* Unfilled Timeout */}
-      <SubsectionTitle icon={"\u23F3"} paramRef="unfilledtimeout">Unfilled Timeout</SubsectionTitle>
+      <Tooltip content={TOOLTIPS.unfilledtimeout?.description ?? "Unfilled Timeout"} configKey="unfilledtimeout"><SubsectionTitle icon={"\u23F3"}>Unfilled Timeout</SubsectionTitle></Tooltip>
       <div className="grid grid-cols-3 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="entry">Entry Timeout</FormLabel>
+          <Tooltip content={TOOLTIPS.entry?.description ?? "Entry Timeout"} configKey="entry"><FormLabel>Entry Timeout</FormLabel></Tooltip>
           <FormInput type="number" value={config.unfilledtimeout_entry} onChange={(v) => update("unfilledtimeout_entry", Number(v))} />
         </div>
         <div>
-          <FormLabel paramRef="exit">Exit Timeout</FormLabel>
+          <Tooltip content={TOOLTIPS.exit?.description ?? "Exit Timeout"} configKey="exit"><FormLabel>Exit Timeout</FormLabel></Tooltip>
           <FormInput type="number" value={config.unfilledtimeout_exit} onChange={(v) => update("unfilledtimeout_exit", Number(v))} />
         </div>
         <div>
-          <FormLabel paramRef="unit">Unit</FormLabel>
+          <Tooltip content={TOOLTIPS.unit?.description ?? "Unit"} configKey="unit"><FormLabel>Unit</FormLabel></Tooltip>
           <FormSelect value={config.unfilledtimeout_unit} onChange={(v) => update("unfilledtimeout_unit", v)} options={[{ value: "minutes", label: "minutes" }, { value: "seconds", label: "seconds" }]} />
         </div>
       </div>
       <div className="mb-6">
-        <FormLabel paramRef="exit_timeout_count">Exit Timeout Count</FormLabel>
+        <Tooltip content={TOOLTIPS.exit_timeout_count?.description ?? "Exit Timeout Count"} configKey="exit_timeout_count"><FormLabel>Exit Timeout Count</FormLabel></Tooltip>
         <FormInput type="number" value={config.exit_timeout_count} onChange={(v) => update("exit_timeout_count", Number(v))} className="max-w-[200px]" />
         <FormHint>0 = cancel and re-enter, &gt;0 = force exit after N timeouts</FormHint>
       </div>
@@ -933,42 +961,42 @@ function CoreTab({ config, update }: TabProps) {
       <FormDivider />
 
       {/* Entry Pricing */}
-      <SubsectionTitle icon={"\uD83D\uDCB2"} paramRef="entry_pricing">Entry Pricing</SubsectionTitle>
+      <Tooltip content={TOOLTIPS.entry_pricing?.description ?? "Entry Pricing"} configKey="entry_pricing"><SubsectionTitle icon={"\uD83D\uDCB2"}>Entry Pricing</SubsectionTitle></Tooltip>
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="price_side">Price Side</FormLabel>
+          <Tooltip content={TOOLTIPS.price_side?.description ?? "Price Side"} configKey="price_side"><FormLabel>Price Side</FormLabel></Tooltip>
           <FormSelect value={config.entry_pricing_price_side} onChange={(v) => update("entry_pricing_price_side", v)} options={[{ value: "same", label: "same" }, { value: "other", label: "other" }, { value: "bid", label: "bid" }, { value: "ask", label: "ask" }]} />
         </div>
         <div>
-          <FormLabel paramRef="use_order_book">Use Order Book</FormLabel>
+          <Tooltip content={TOOLTIPS.use_order_book?.description ?? "Use Order Book"} configKey="use_order_book"><FormLabel>Use Order Book</FormLabel></Tooltip>
           <FormSelect value={config.entry_pricing_use_order_book} onChange={(v) => update("entry_pricing_use_order_book", v)} options={[{ value: "true", label: "true" }, { value: "false", label: "false" }]} />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="order_book_top">Order Book Top</FormLabel>
+          <Tooltip content={TOOLTIPS.order_book_top?.description ?? "Order Book Top"} configKey="order_book_top"><FormLabel>Order Book Top</FormLabel></Tooltip>
           <FormInput type="number" value={config.entry_pricing_order_book_top} onChange={(v) => update("entry_pricing_order_book_top", Number(v))} min="1" />
         </div>
         <div>
-          <FormLabel paramRef="price_last_balance">Price Last Balance</FormLabel>
+          <Tooltip content={TOOLTIPS.price_last_balance?.description ?? "Price Last Balance"} configKey="price_last_balance"><FormLabel>Price Last Balance</FormLabel></Tooltip>
           <FormInput type="number" value={config.entry_pricing_price_last_balance} onChange={(v) => update("entry_pricing_price_last_balance", Number(v))} step="0.1" min="0" max="1" />
         </div>
       </div>
 
       {/* Exit Pricing */}
-      <SubsectionTitle icon={"\uD83D\uDCB2"} paramRef="exit_pricing">Exit Pricing</SubsectionTitle>
+      <Tooltip content={TOOLTIPS.exit_pricing?.description ?? "Exit Pricing"} configKey="exit_pricing"><SubsectionTitle icon={"\uD83D\uDCB2"}>Exit Pricing</SubsectionTitle></Tooltip>
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="price_side">Price Side</FormLabel>
+          <Tooltip content={TOOLTIPS.price_side?.description ?? "Price Side"} configKey="price_side"><FormLabel>Price Side</FormLabel></Tooltip>
           <FormSelect value={config.exit_pricing_price_side} onChange={(v) => update("exit_pricing_price_side", v)} options={[{ value: "same", label: "same" }, { value: "other", label: "other" }, { value: "bid", label: "bid" }, { value: "ask", label: "ask" }]} />
         </div>
         <div>
-          <FormLabel paramRef="use_order_book">Use Order Book</FormLabel>
+          <Tooltip content={TOOLTIPS.use_order_book?.description ?? "Use Order Book"} configKey="use_order_book"><FormLabel>Use Order Book</FormLabel></Tooltip>
           <FormSelect value={config.exit_pricing_use_order_book} onChange={(v) => update("exit_pricing_use_order_book", v)} options={[{ value: "true", label: "true" }, { value: "false", label: "false" }]} />
         </div>
       </div>
       <div className="mb-6">
-        <FormLabel paramRef="order_book_top">Order Book Top</FormLabel>
+        <Tooltip content={TOOLTIPS.order_book_top?.description ?? "Order Book Top"} configKey="order_book_top"><FormLabel>Order Book Top</FormLabel></Tooltip>
         <FormInput type="number" value={config.exit_pricing_order_book_top} onChange={(v) => update("exit_pricing_order_book_top", Number(v))} min="1" className="max-w-[200px]" />
       </div>
 
@@ -978,11 +1006,11 @@ function CoreTab({ config, update }: TabProps) {
       <SubsectionTitle icon={"\uD83D\uDD04"}>Position Adjustment</SubsectionTitle>
       <Card className="mb-6">
         <CardBody>
-          <ToggleRow name="position_adjustment_enable" desc="Allow adjusting position size via adjust_trade_position callback" on={config.position_adjustment_enable} onToggle={() => toggleBool("position_adjustment_enable")} />
+          <Tooltip content={TOOLTIPS.position_adjustment_enable?.description ?? "Allow adjusting position size via adjust_trade_position callback"} configKey="position_adjustment_enable"><ToggleRow name="position_adjustment_enable" desc="Allow adjusting position size via adjust_trade_position callback" on={config.position_adjustment_enable} onToggle={() => toggleBool("position_adjustment_enable")} /></Tooltip>
         </CardBody>
       </Card>
       <div className="mb-6">
-        <FormLabel paramRef="max_entry_position_adjustment">Max Entry Position Adjustment</FormLabel>
+        <Tooltip content={TOOLTIPS.max_entry_position_adjustment?.description ?? "Max Entry Position Adjustment"} configKey="max_entry_position_adjustment"><FormLabel>Max Entry Position Adjustment</FormLabel></Tooltip>
         <FormInput type="number" value={config.max_entry_position_adjustment} onChange={(v) => update("max_entry_position_adjustment", Number(v))} className="max-w-[200px]" />
         <FormHint>-1 = unlimited additional entries</FormHint>
       </div>
@@ -993,15 +1021,15 @@ function CoreTab({ config, update }: TabProps) {
       <SubsectionTitle icon={"\uD83D\uDE80"}>Trading Mode</SubsectionTitle>
       <div className="grid grid-cols-3 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="trading_mode">Trading Mode</FormLabel>
+          <Tooltip content={TOOLTIPS.trading_mode?.description ?? "Trading Mode"} configKey="trading_mode"><FormLabel>Trading Mode</FormLabel></Tooltip>
           <FormSelect value={config.trading_mode} onChange={(v) => update("trading_mode", v)} options={[{ value: "spot", label: "spot" }, { value: "futures", label: "futures" }]} />
         </div>
         <div>
-          <FormLabel paramRef="margin_mode">Margin Mode</FormLabel>
+          <Tooltip content={TOOLTIPS.margin_mode?.description ?? "Margin Mode"} configKey="margin_mode"><FormLabel>Margin Mode</FormLabel></Tooltip>
           <FormSelect value={config.margin_mode} onChange={(v) => update("margin_mode", v)} options={[{ value: "isolated", label: "isolated" }, { value: "cross", label: "cross" }]} />
         </div>
         <div>
-          <FormLabel paramRef="liquidation_buffer">Liquidation Buffer</FormLabel>
+          <Tooltip content={TOOLTIPS.liquidation_buffer?.description ?? "Liquidation Buffer"} configKey="liquidation_buffer"><FormLabel>Liquidation Buffer</FormLabel></Tooltip>
           <FormInput type="number" value={config.liquidation_buffer} onChange={(v) => update("liquidation_buffer", Number(v))} step="0.01" min="0" max="0.99" />
           <FormHint>Stoploss before liquidation (0.05 = 5%)</FormHint>
         </div>
@@ -1013,45 +1041,45 @@ function CoreTab({ config, update }: TabProps) {
       <SubsectionTitle icon={"\uD83D\uDD27"}>Advanced Core Parameters</SubsectionTitle>
       <Card className="mb-6">
         <CardBody>
-          <ToggleRow name="amend_last_stake_amount" desc="Use remaining balance if insufficient for full stake" on={config.amend_last_stake_amount} onToggle={() => toggleBool("amend_last_stake_amount")} />
+          <Tooltip content={TOOLTIPS.amend_last_stake_amount?.description ?? "Use remaining balance if insufficient for full stake"} configKey="amend_last_stake_amount"><ToggleRow name="amend_last_stake_amount" desc="Use remaining balance if insufficient for full stake" on={config.amend_last_stake_amount} onToggle={() => toggleBool("amend_last_stake_amount")} /></Tooltip>
         </CardBody>
       </Card>
       <div className="grid grid-cols-3 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="last_stake_amount_min_ratio">Last Stake Amount Min Ratio</FormLabel>
+          <Tooltip content={TOOLTIPS.last_stake_amount_min_ratio?.description ?? "Last Stake Amount Min Ratio"} configKey="last_stake_amount_min_ratio"><FormLabel>Last Stake Amount Min Ratio</FormLabel></Tooltip>
           <FormInput type="number" value={config.last_stake_amount_min_ratio} onChange={(v) => update("last_stake_amount_min_ratio", Number(v))} step="0.01" min="0" max="1" />
           <FormHint>Min ratio of stake_amount for amended orders</FormHint>
         </div>
         <div>
-          <FormLabel paramRef="amount_reserve_percent">Amount Reserve Percent</FormLabel>
+          <Tooltip content={TOOLTIPS.amount_reserve_percent?.description ?? "Amount Reserve Percent"} configKey="amount_reserve_percent"><FormLabel>Amount Reserve Percent</FormLabel></Tooltip>
           <FormInput type="number" value={config.amount_reserve_percent} onChange={(v) => update("amount_reserve_percent", Number(v))} step="0.01" min="0" max="0.5" />
           <FormHint>Reserve to account for fees (0.05 = 5%)</FormHint>
         </div>
         <div>
-          <FormLabel paramRef="custom_price_max_distance_ratio">Custom Price Max Distance Ratio</FormLabel>
+          <Tooltip content={TOOLTIPS.custom_price_max_distance_ratio?.description ?? "Custom Price Max Distance Ratio"} configKey="custom_price_max_distance_ratio"><FormLabel>Custom Price Max Distance Ratio</FormLabel></Tooltip>
           <FormInput type="number" value={config.custom_price_max_distance_ratio} onChange={(v) => update("custom_price_max_distance_ratio", Number(v))} step="0.001" />
           <FormHint>Max deviation from current price for custom pricing</FormHint>
         </div>
       </div>
       <div className="grid grid-cols-3 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="ignore_buying_expired_candle_after">Ignore Buying Expired Candle After</FormLabel>
+          <Tooltip content={TOOLTIPS.ignore_buying_expired_candle_after?.description ?? "Ignore Buying Expired Candle After"} configKey="ignore_buying_expired_candle_after"><FormLabel>Ignore Buying Expired Candle After</FormLabel></Tooltip>
           <FormInput type="number" value={config.ignore_buying_expired_candle_after} onChange={(v) => update("ignore_buying_expired_candle_after", Number(v))} />
           <FormHint>Seconds. 0 = disabled</FormHint>
         </div>
         <div>
-          <FormLabel paramRef="futures_funding_rate">Futures Funding Rate</FormLabel>
+          <Tooltip content={TOOLTIPS.futures_funding_rate?.description ?? "Futures Funding Rate"} configKey="futures_funding_rate"><FormLabel>Futures Funding Rate</FormLabel></Tooltip>
           <FormInput type="number" value={config.futures_funding_rate} onChange={(v) => update("futures_funding_rate", Number(v))} step="0.0001" />
           <FormHint>Override funding rate (0 = use exchange)</FormHint>
         </div>
         <div>
-          <FormLabel paramRef="process_throttle_secs">Process Throttle Secs</FormLabel>
+          <Tooltip content={TOOLTIPS.process_throttle_secs?.description ?? "Process Throttle Secs"} configKey="process_throttle_secs"><FormLabel>Process Throttle Secs</FormLabel></Tooltip>
           <FormInput type="number" value={config.process_throttle_secs} onChange={(v) => update("process_throttle_secs", Number(v))} />
           <FormHint>Min seconds between bot loops</FormHint>
         </div>
       </div>
       <div className="mb-6">
-        <FormLabel paramRef="heartbeat_interval">Heartbeat Interval</FormLabel>
+        <Tooltip content={TOOLTIPS.heartbeat_interval?.description ?? "Heartbeat Interval"} configKey="heartbeat_interval"><FormLabel>Heartbeat Interval</FormLabel></Tooltip>
         <FormInput type="number" value={config.heartbeat_interval} onChange={(v) => update("heartbeat_interval", Number(v))} className="max-w-[200px]" />
         <FormHint>Seconds between heartbeat log messages (0 = disabled)</FormHint>
       </div>
@@ -1079,7 +1107,7 @@ function PairlistsTab({ config, update, botId }: TabProps) {
     update("pairlist_filters", next);
   };
 
-  const updateFilterParam = (i: number, param: string, value: unknown) => {
+  const updateFilterParam = (i: number, param: keyof PairlistFilterParams, value: PairlistFilterParams[typeof param]) => {
     const next = [...filters];
     next[i] = { ...next[i], params: { ...next[i].params, [param]: value } };
     update("pairlist_filters", next);
@@ -1093,7 +1121,7 @@ function PairlistsTab({ config, update, botId }: TabProps) {
       <SubsectionTitle icon={"\uD83D\uDCCB"}>Primary Handler</SubsectionTitle>
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="pairlists[0].method">Handler</FormLabel>
+          <Tooltip content={TOOLTIPS.pairlist_handler?.description ?? "Handler"} configKey="pairlists[0].method"><FormLabel>Handler</FormLabel></Tooltip>
           <FormSelect
             value={config.pairlist_handler}
             onChange={(v) => update("pairlist_handler", v)}
@@ -1108,21 +1136,21 @@ function PairlistsTab({ config, update, botId }: TabProps) {
           />
         </div>
         <div>
-          <FormLabel paramRef="number_assets">Number of Assets</FormLabel>
+          <Tooltip content={TOOLTIPS.number_assets?.description ?? "Number of Assets"} configKey="number_assets"><FormLabel>Number of Assets</FormLabel></Tooltip>
           <FormInput type="number" value={config.pairlist_number_assets} onChange={(v) => update("pairlist_number_assets", Number(v))} />
         </div>
       </div>
       <div className="grid grid-cols-3 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="sort_key">Sort Key</FormLabel>
+          <Tooltip content={TOOLTIPS.sort_key?.description ?? "Sort Key"} configKey="sort_key"><FormLabel>Sort Key</FormLabel></Tooltip>
           <FormSelect value={config.pairlist_sort_key} onChange={(v) => update("pairlist_sort_key", v)} options={[{ value: "quoteVolume", label: "quoteVolume" }, { value: "baseVolume", label: "baseVolume" }]} />
         </div>
         <div>
-          <FormLabel paramRef="min_value">Min Value</FormLabel>
+          <Tooltip content={TOOLTIPS.min_value?.description ?? "Min Value"} configKey="min_value"><FormLabel>Min Value</FormLabel></Tooltip>
           <FormInput type="number" value={config.pairlist_min_value} onChange={(v) => update("pairlist_min_value", Number(v))} />
         </div>
         <div>
-          <FormLabel paramRef="refresh_period">Refresh Period</FormLabel>
+          <Tooltip content={TOOLTIPS.refresh_period?.description ?? "Refresh Period"} configKey="refresh_period"><FormLabel>Refresh Period</FormLabel></Tooltip>
           <FormInput type="number" value={config.pairlist_refresh_period} onChange={(v) => update("pairlist_refresh_period", Number(v))} />
           <FormHint>Seconds</FormHint>
         </div>
@@ -1148,42 +1176,42 @@ function PairlistsTab({ config, update, botId }: TabProps) {
               {f.name === "AgeFilter" && (
                 <div className="grid grid-cols-2 gap-5">
                   <div>
-                    <FormLabel paramRef="min_days_listed">Min Days Listed</FormLabel>
-                    <FormInput type="number" value={f.params.min_days_listed as number} onChange={(v) => updateFilterParam(i, "min_days_listed", Number(v))} />
+                    <Tooltip content={TOOLTIPS.min_days_listed?.description ?? "Min Days Listed"} configKey="min_days_listed"><FormLabel>Min Days Listed</FormLabel></Tooltip>
+                    <FormInput type="number" value={f.params.min_days_listed} onChange={(v) => updateFilterParam(i, "min_days_listed", Number(v))} />
                   </div>
                   <div>
-                    <FormLabel paramRef="max_days_listed">Max Days Listed</FormLabel>
-                    <FormInput type="number" value={f.params.max_days_listed as string} onChange={(v) => updateFilterParam(i, "max_days_listed", v)} placeholder="" />
+                    <Tooltip content={TOOLTIPS.max_days_listed?.description ?? "Max Days Listed"} configKey="max_days_listed"><FormLabel>Max Days Listed</FormLabel></Tooltip>
+                    <FormInput type="number" value={f.params.max_days_listed} onChange={(v) => updateFilterParam(i, "max_days_listed", v)} placeholder="" />
                     <FormHint>Leave empty for no max</FormHint>
                   </div>
                 </div>
               )}
               {f.name === "DelistFilter" && (
                 <div>
-                  <FormLabel paramRef="min_days_until_removed">Days Until Delist</FormLabel>
-                  <FormInput type="number" value={f.params.min_days_until_removed as number} onChange={(v) => updateFilterParam(i, "min_days_until_removed", Number(v))} />
+                  <Tooltip content={TOOLTIPS.min_days_until_removed?.description ?? "Days Until Delist"} configKey="min_days_until_removed"><FormLabel>Days Until Delist</FormLabel></Tooltip>
+                  <FormInput type="number" value={f.params.min_days_until_removed} onChange={(v) => updateFilterParam(i, "min_days_until_removed", Number(v))} />
                 </div>
               )}
               {f.name === "SpreadFilter" && (
                 <div>
-                  <FormLabel paramRef="max_spread_ratio">Max Spread Ratio</FormLabel>
-                  <FormInput type="number" value={f.params.max_spread_ratio as number} onChange={(v) => updateFilterParam(i, "max_spread_ratio", Number(v))} step="0.001" />
+                  <Tooltip content={TOOLTIPS.max_spread_ratio?.description ?? "Max Spread Ratio"} configKey="max_spread_ratio"><FormLabel>Max Spread Ratio</FormLabel></Tooltip>
+                  <FormInput type="number" value={f.params.max_spread_ratio} onChange={(v) => updateFilterParam(i, "max_spread_ratio", Number(v))} step="0.001" />
                   <FormHint>0.005 = 0.5% max spread</FormHint>
                 </div>
               )}
               {f.name === "PriceFilter" && (
                 <div className="grid grid-cols-3 gap-5">
                   <div>
-                    <FormLabel paramRef="low_price_ratio">Low Price Ratio</FormLabel>
-                    <FormInput type="number" value={f.params.low_price_ratio as number} onChange={(v) => updateFilterParam(i, "low_price_ratio", Number(v))} step="0.001" />
+                    <Tooltip content={TOOLTIPS.low_price_ratio?.description ?? "Low Price Ratio"} configKey="low_price_ratio"><FormLabel>Low Price Ratio</FormLabel></Tooltip>
+                    <FormInput type="number" value={f.params.low_price_ratio} onChange={(v) => updateFilterParam(i, "low_price_ratio", Number(v))} step="0.001" />
                   </div>
                   <div>
-                    <FormLabel paramRef="min_price">Min Price</FormLabel>
-                    <FormInput type="number" value={f.params.min_price as number} onChange={(v) => updateFilterParam(i, "min_price", Number(v))} step="0.00000001" />
+                    <Tooltip content={TOOLTIPS.min_price?.description ?? "Min Price"} configKey="min_price"><FormLabel>Min Price</FormLabel></Tooltip>
+                    <FormInput type="number" value={f.params.min_price} onChange={(v) => updateFilterParam(i, "min_price", Number(v))} step="0.00000001" />
                   </div>
                   <div>
-                    <FormLabel paramRef="max_price">Max Price</FormLabel>
-                    <FormInput type="number" value={f.params.max_price as number} onChange={(v) => updateFilterParam(i, "max_price", Number(v))} />
+                    <Tooltip content={TOOLTIPS.max_price?.description ?? "Max Price"} configKey="max_price"><FormLabel>Max Price</FormLabel></Tooltip>
+                    <FormInput type="number" value={f.params.max_price} onChange={(v) => updateFilterParam(i, "max_price", Number(v))} />
                     <FormHint>0 = disabled</FormHint>
                   </div>
                 </div>
@@ -1191,52 +1219,52 @@ function PairlistsTab({ config, update, botId }: TabProps) {
               {f.name === "RangeStabilityFilter" && (
                 <div className="grid grid-cols-3 gap-5">
                   <div>
-                    <FormLabel paramRef="min_rate_of_change">Min Rate of Change</FormLabel>
-                    <FormInput type="number" value={f.params.min_rate_of_change as number} onChange={(v) => updateFilterParam(i, "min_rate_of_change", Number(v))} step="0.01" />
+                    <Tooltip content={TOOLTIPS.min_rate_of_change?.description ?? "Min Rate of Change"} configKey="min_rate_of_change"><FormLabel>Min Rate of Change</FormLabel></Tooltip>
+                    <FormInput type="number" value={f.params.min_rate_of_change} onChange={(v) => updateFilterParam(i, "min_rate_of_change", Number(v))} step="0.01" />
                   </div>
                   <div>
-                    <FormLabel paramRef="max_rate_of_change">Max Rate of Change</FormLabel>
-                    <FormInput type="number" value={f.params.max_rate_of_change as number} onChange={(v) => updateFilterParam(i, "max_rate_of_change", Number(v))} />
+                    <Tooltip content={TOOLTIPS.max_rate_of_change?.description ?? "Max Rate of Change"} configKey="max_rate_of_change"><FormLabel>Max Rate of Change</FormLabel></Tooltip>
+                    <FormInput type="number" value={f.params.max_rate_of_change} onChange={(v) => updateFilterParam(i, "max_rate_of_change", Number(v))} />
                   </div>
                   <div>
-                    <FormLabel paramRef="lookback_days">Lookback Days</FormLabel>
-                    <FormInput type="number" value={f.params.lookback_days as number} onChange={(v) => updateFilterParam(i, "lookback_days", Number(v))} />
+                    <Tooltip content={TOOLTIPS.lookback_days?.description ?? "Lookback Days"} configKey="lookback_days"><FormLabel>Lookback Days</FormLabel></Tooltip>
+                    <FormInput type="number" value={f.params.lookback_days} onChange={(v) => updateFilterParam(i, "lookback_days", Number(v))} />
                   </div>
                 </div>
               )}
               {f.name === "VolatilityFilter" && (
                 <div className="grid grid-cols-3 gap-5">
                   <div>
-                    <FormLabel paramRef="min_volatility">Min Volatility</FormLabel>
-                    <FormInput type="number" value={f.params.min_volatility as number} onChange={(v) => updateFilterParam(i, "min_volatility", Number(v))} step="0.01" />
+                    <Tooltip content={TOOLTIPS.min_volatility?.description ?? "Min Volatility"} configKey="min_volatility"><FormLabel>Min Volatility</FormLabel></Tooltip>
+                    <FormInput type="number" value={f.params.min_volatility} onChange={(v) => updateFilterParam(i, "min_volatility", Number(v))} step="0.01" />
                   </div>
                   <div>
-                    <FormLabel paramRef="max_volatility">Max Volatility</FormLabel>
-                    <FormInput type="number" value={f.params.max_volatility as number} onChange={(v) => updateFilterParam(i, "max_volatility", Number(v))} step="0.01" />
+                    <Tooltip content={TOOLTIPS.max_volatility?.description ?? "Max Volatility"} configKey="max_volatility"><FormLabel>Max Volatility</FormLabel></Tooltip>
+                    <FormInput type="number" value={f.params.max_volatility} onChange={(v) => updateFilterParam(i, "max_volatility", Number(v))} step="0.01" />
                   </div>
                   <div>
-                    <FormLabel paramRef="lookback_days">Lookback Days</FormLabel>
-                    <FormInput type="number" value={f.params.lookback_days as number} onChange={(v) => updateFilterParam(i, "lookback_days", Number(v))} />
+                    <Tooltip content={TOOLTIPS.lookback_days?.description ?? "Lookback Days"} configKey="lookback_days"><FormLabel>Lookback Days</FormLabel></Tooltip>
+                    <FormInput type="number" value={f.params.lookback_days} onChange={(v) => updateFilterParam(i, "lookback_days", Number(v))} />
                   </div>
                 </div>
               )}
               {f.name === "OffsetFilter" && (
                 <div className="grid grid-cols-2 gap-5">
                   <div>
-                    <FormLabel paramRef="offset">Offset</FormLabel>
-                    <FormInput type="number" value={f.params.offset as number} onChange={(v) => updateFilterParam(i, "offset", Number(v))} />
+                    <Tooltip content={TOOLTIPS.offset?.description ?? "Offset"} configKey="offset"><FormLabel>Offset</FormLabel></Tooltip>
+                    <FormInput type="number" value={f.params.offset} onChange={(v) => updateFilterParam(i, "offset", Number(v))} />
                   </div>
                   <div>
-                    <FormLabel paramRef="number_assets">Number Assets</FormLabel>
-                    <FormInput type="number" value={f.params.number_assets as number} onChange={(v) => updateFilterParam(i, "number_assets", Number(v))} />
+                    <Tooltip content={TOOLTIPS.number_assets?.description ?? "Number Assets"} configKey="number_assets"><FormLabel>Number Assets</FormLabel></Tooltip>
+                    <FormInput type="number" value={f.params.number_assets} onChange={(v) => updateFilterParam(i, "number_assets", Number(v))} />
                     <FormHint>0 = no limit</FormHint>
                   </div>
                 </div>
               )}
               {f.name === "PerformanceFilter" && (
                 <div>
-                  <FormLabel paramRef="trade_back_seconds">Trade Count Weight</FormLabel>
-                  <FormInput type="number" value={f.params.trade_back_seconds as number} onChange={(v) => updateFilterParam(i, "trade_back_seconds", Number(v))} />
+                  <Tooltip content={TOOLTIPS.trade_back_seconds?.description ?? "Trade Count Weight"} configKey="trade_back_seconds"><FormLabel>Trade Count Weight</FormLabel></Tooltip>
+                  <FormInput type="number" value={f.params.trade_back_seconds} onChange={(v) => updateFilterParam(i, "trade_back_seconds", Number(v))} />
                   <FormHint>Seconds to look back. 0 = all trades</FormHint>
                 </div>
               )}
@@ -1248,8 +1276,8 @@ function PairlistsTab({ config, update, botId }: TabProps) {
               )}
               {f.name === "ShuffleFilter" && (
                 <div>
-                  <FormLabel paramRef="seed">Seed</FormLabel>
-                  <FormInput type="number" value={f.params.seed as string} onChange={(v) => updateFilterParam(i, "seed", v)} placeholder="" />
+                  <Tooltip content={TOOLTIPS.seed?.description ?? "Seed"} configKey="seed"><FormLabel>Seed</FormLabel></Tooltip>
+                  <FormInput type="number" value={f.params.seed} onChange={(v) => updateFilterParam(i, "seed", v)} placeholder="" />
                   <FormHint>Leave empty for random, set for reproducible</FormHint>
                 </div>
               )}
@@ -1296,7 +1324,7 @@ function ExchangeTab({ config, update }: TabProps) {
 
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="exchange.name">Exchange</FormLabel>
+          <Tooltip content={TOOLTIPS.exchange_name?.description ?? "Exchange"} configKey="exchange.name"><FormLabel>Exchange</FormLabel></Tooltip>
           <FormSelect
             value={config.exchange_name}
             onChange={(v) => update("exchange_name", v)}
@@ -1319,29 +1347,29 @@ function ExchangeTab({ config, update }: TabProps) {
       <SubsectionTitle icon={"\uD83D\uDD11"}>API Credentials</SubsectionTitle>
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="exchange.key">API Key</FormLabel>
+          <Tooltip content={TOOLTIPS.exchange_key?.description ?? "API Key"} configKey="exchange.key"><FormLabel>API Key</FormLabel></Tooltip>
           <FormInput type="password" value={config.exchange_key} onChange={(v) => update("exchange_key", v)} placeholder="Enter API key" />
         </div>
         <div>
-          <FormLabel paramRef="exchange.secret">API Secret</FormLabel>
+          <Tooltip content={TOOLTIPS.exchange_secret?.description ?? "API Secret"} configKey="exchange.secret"><FormLabel>API Secret</FormLabel></Tooltip>
           <FormInput type="password" value={config.exchange_secret} onChange={(v) => update("exchange_secret", v)} placeholder="Enter API secret" />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="exchange.password">Password</FormLabel>
+          <Tooltip content={TOOLTIPS.exchange_password?.description ?? "Password"} configKey="exchange.password"><FormLabel>Password</FormLabel></Tooltip>
           <FormInput type="password" value={config.exchange_password} onChange={(v) => update("exchange_password", v)} placeholder="Exchange passphrase (if required)" />
           <FormHint>Required for some exchanges (e.g., OKX)</FormHint>
         </div>
         <div>
-          <FormLabel paramRef="exchange.uid">UID</FormLabel>
+          <Tooltip content={TOOLTIPS.exchange_uid?.description ?? "UID"} configKey="exchange.uid"><FormLabel>UID</FormLabel></Tooltip>
           <FormInput value={config.exchange_uid} onChange={(v) => update("exchange_uid", v)} placeholder="User ID (if required)" />
         </div>
       </div>
 
       <FormDivider />
 
-      <SubsectionTitle icon={"\uD83D\uDCDD"} paramRef="exchange.pair_whitelist">Pair Whitelist</SubsectionTitle>
+      <Tooltip content={TOOLTIPS.exchange_pair_whitelist?.description ?? "Pair Whitelist"} configKey="exchange.pair_whitelist"><SubsectionTitle icon={"\uD83D\uDCDD"}>Pair Whitelist</SubsectionTitle></Tooltip>
       <TagEditor
         tags={config.pair_whitelist}
         onAdd={(tag) => update("pair_whitelist", [...config.pair_whitelist, tag])}
@@ -1351,7 +1379,7 @@ function ExchangeTab({ config, update }: TabProps) {
       <FormHint>Use exchange pair format. For futures: PAIR:SETTLE (e.g. BTC/USDT:USDT)</FormHint>
       <div className="mb-5" />
 
-      <SubsectionTitle icon={"\uD83D\uDEAB"} paramRef="exchange.pair_blacklist">Pair Blacklist</SubsectionTitle>
+      <Tooltip content={TOOLTIPS.exchange_pair_blacklist?.description ?? "Pair Blacklist"} configKey="exchange.pair_blacklist"><SubsectionTitle icon={"\uD83D\uDEAB"}>Pair Blacklist</SubsectionTitle></Tooltip>
       <TagEditor
         tags={config.pair_blacklist}
         onAdd={(tag) => update("pair_blacklist", [...config.pair_blacklist, tag])}
@@ -1366,25 +1394,25 @@ function ExchangeTab({ config, update }: TabProps) {
       <SubsectionTitle icon={"\uD83D\uDD27"}>Advanced Exchange Settings</SubsectionTitle>
       <Card className="mb-6">
         <CardBody>
-          <ToggleRow name="enable_ws" desc="Enable WebSocket for real-time data (exchange.enable_ws)" on={config.enable_ws} onToggle={() => update("enable_ws", !config.enable_ws)} />
-          <ToggleRow name="skip_open_order_update" desc="Skip updating open orders on startup (exchange.skip_open_order_update)" on={config.skip_open_order_update} onToggle={() => update("skip_open_order_update", !config.skip_open_order_update)} />
-          <ToggleRow name="log_responses" desc="Log raw exchange API responses for debugging (exchange.log_responses)" on={config.log_responses} onToggle={() => update("log_responses", !config.log_responses)} />
-          <ToggleRow name="only_from_ccxt" desc="Only use fee rates from ccxt, not from trades (exchange.only_from_ccxt)" on={config.only_from_ccxt} onToggle={() => update("only_from_ccxt", !config.only_from_ccxt)} />
+          <Tooltip content={TOOLTIPS.enable_ws?.description ?? "Enable WebSocket for real-time data (exchange.enable_ws)"} configKey="enable_ws"><ToggleRow name="enable_ws" desc="Enable WebSocket for real-time data" on={config.enable_ws} onToggle={() => update("enable_ws", !config.enable_ws)} /></Tooltip>
+          <Tooltip content={TOOLTIPS.skip_open_order_update?.description ?? "Skip updating open orders on startup (exchange.skip_open_order_update)"} configKey="skip_open_order_update"><ToggleRow name="skip_open_order_update" desc="Skip updating open orders on startup" on={config.skip_open_order_update} onToggle={() => update("skip_open_order_update", !config.skip_open_order_update)} /></Tooltip>
+          <Tooltip content={TOOLTIPS.log_responses?.description ?? "Log raw exchange API responses for debugging (exchange.log_responses)"} configKey="log_responses"><ToggleRow name="log_responses" desc="Log raw exchange API responses for debugging" on={config.log_responses} onToggle={() => update("log_responses", !config.log_responses)} /></Tooltip>
+          <Tooltip content={TOOLTIPS.only_from_ccxt?.description ?? "Only use fee rates from ccxt, not from trades (exchange.only_from_ccxt)"} configKey="only_from_ccxt"><ToggleRow name="only_from_ccxt" desc="Only use fee rates from ccxt, not from trades" on={config.only_from_ccxt} onToggle={() => update("only_from_ccxt", !config.only_from_ccxt)} /></Tooltip>
         </CardBody>
       </Card>
       <div className="mb-6">
-        <FormLabel paramRef="exchange.markets_refresh_interval">Markets Refresh Interval</FormLabel>
+        <Tooltip content={TOOLTIPS.exchange_markets_refresh_interval?.description ?? "Markets Refresh Interval"} configKey="exchange.markets_refresh_interval"><FormLabel>Markets Refresh Interval</FormLabel></Tooltip>
         <FormInput type="number" value={config.markets_refresh_interval} onChange={(v) => update("markets_refresh_interval", Number(v))} className="max-w-[200px]" />
         <FormHint>Minutes between market data refresh</FormHint>
       </div>
       <div className="mb-6">
-        <FormLabel paramRef="exchange.unknown_fee_rate">Unknown Fee Rate</FormLabel>
+        <Tooltip content={TOOLTIPS.exchange_unknown_fee_rate?.description ?? "Unknown Fee Rate"} configKey="exchange.unknown_fee_rate"><FormLabel>Unknown Fee Rate</FormLabel></Tooltip>
         <FormInput type="number" value={config.unknown_fee_rate} onChange={(v) => update("unknown_fee_rate", Number(v))} step="0.0001" className="max-w-[200px]" />
         <FormHint>Fallback fee rate when exchange does not report it (0 = disabled)</FormHint>
       </div>
 
       <div className="mt-5">
-        <FormLabel paramRef="exchange.ccxt_config">CCXT Config (Advanced)</FormLabel>
+        <Tooltip content={TOOLTIPS.exchange_ccxt_config?.description ?? "CCXT Config (Advanced)"} configKey="exchange.ccxt_config"><FormLabel>CCXT Config (Advanced)</FormLabel></Tooltip>
         <textarea
           spellCheck={false}
           value={config.ccxt_config}
@@ -1408,34 +1436,34 @@ function TelegramTab({ config, update }: TabProps) {
 
       <Card className="mb-6">
         <CardBody>
-          <ToggleRow name="telegram.enabled" desc="Enable Telegram bot notifications" on={config.telegram_enabled} onToggle={() => update("telegram_enabled", !config.telegram_enabled)} />
+          <Tooltip content={TOOLTIPS.telegram_enabled?.description ?? "Enable Telegram bot notifications"} configKey="telegram.enabled"><ToggleRow name="telegram.enabled" desc="Enable Telegram bot notifications" on={config.telegram_enabled} onToggle={() => update("telegram_enabled", !config.telegram_enabled)} /></Tooltip>
         </CardBody>
       </Card>
 
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="telegram.token">Bot Token</FormLabel>
+          <Tooltip content={TOOLTIPS.telegram_token?.description ?? "Bot Token"} configKey="telegram.token"><FormLabel>Bot Token</FormLabel></Tooltip>
           <FormInput type="password" value={config.telegram_token} onChange={(v) => update("telegram_token", v)} placeholder="Enter Telegram bot token" />
         </div>
         <div>
-          <FormLabel paramRef="telegram.chat_id">Chat ID</FormLabel>
+          <Tooltip content={TOOLTIPS.telegram_chat_id?.description ?? "Chat ID"} configKey="telegram.chat_id"><FormLabel>Chat ID</FormLabel></Tooltip>
           <FormInput value={config.telegram_chat_id} onChange={(v) => update("telegram_chat_id", v)} placeholder="Enter chat ID" />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="telegram.topic_id">Topic ID</FormLabel>
+          <Tooltip content={TOOLTIPS.telegram_topic_id?.description ?? "Topic ID"} configKey="telegram.topic_id"><FormLabel>Topic ID</FormLabel></Tooltip>
           <FormInput value={config.telegram_topic_id} onChange={(v) => update("telegram_topic_id", v)} placeholder="Forum topic ID (optional)" />
           <FormHint>For Telegram forum/topic groups</FormHint>
         </div>
         <div>
-          <FormLabel paramRef="telegram.balance_dust_level">Balance Dust Level</FormLabel>
+          <Tooltip content={TOOLTIPS.telegram_balance_dust_level?.description ?? "Balance Dust Level"} configKey="telegram.balance_dust_level"><FormLabel>Balance Dust Level</FormLabel></Tooltip>
           <FormInput type="number" value={config.telegram_balance_dust_level} onChange={(v) => update("telegram_balance_dust_level", Number(v))} step="0.01" />
           <FormHint>Ignore balances below this value in /balance</FormHint>
         </div>
       </div>
 
-      <SubsectionTitle icon={"\uD83D\uDC65"} paramRef="telegram.authorized_users">Authorized Users</SubsectionTitle>
+      <Tooltip content={TOOLTIPS.telegram_authorized_users?.description ?? "Authorized Users"} configKey="telegram.authorized_users"><SubsectionTitle icon={"\uD83D\uDC65"}>Authorized Users</SubsectionTitle></Tooltip>
       <TagEditor
         tags={config.telegram_authorized_users}
         onAdd={(tag) => update("telegram_authorized_users", [...config.telegram_authorized_users, tag])}
@@ -1447,30 +1475,30 @@ function TelegramTab({ config, update }: TabProps) {
 
       <Card className="mb-6">
         <CardBody>
-          <ToggleRow name="telegram.reload" desc="Allow /reload_config command via Telegram" on={config.telegram_reload} onToggle={() => update("telegram_reload", !config.telegram_reload)} />
+          <Tooltip content={TOOLTIPS.telegram_reload?.description ?? "Allow /reload_config command via Telegram"} configKey="telegram.reload"><ToggleRow name="telegram.reload" desc="Allow /reload_config command via Telegram" on={config.telegram_reload} onToggle={() => update("telegram_reload", !config.telegram_reload)} /></Tooltip>
         </CardBody>
       </Card>
 
       <FormDivider />
 
-      <SubsectionTitle icon={"\uD83D\uDD14"} paramRef="telegram.notification_settings">Notification Settings</SubsectionTitle>
+      <Tooltip content={TOOLTIPS.telegram_notification_settings?.description ?? "Notification Settings"} configKey="telegram.notification_settings"><SubsectionTitle icon={"\uD83D\uDD14"}>Notification Settings</SubsectionTitle></Tooltip>
       <Card className="mb-6">
         <CardBody>
-          <ToggleRow name="entry" desc="Notify on trade entry" on={config.telegram_notification_entry} onToggle={() => update("telegram_notification_entry", !config.telegram_notification_entry)} />
-          <ToggleRow name="exit" desc="Notify on trade exit" on={config.telegram_notification_exit} onToggle={() => update("telegram_notification_exit", !config.telegram_notification_exit)} />
-          <ToggleRow name="entry_cancel" desc="Notify when entry order is cancelled" on={config.telegram_notification_entry_cancel} onToggle={() => update("telegram_notification_entry_cancel", !config.telegram_notification_entry_cancel)} />
-          <ToggleRow name="exit_cancel" desc="Notify when exit order is cancelled" on={config.telegram_notification_exit_cancel} onToggle={() => update("telegram_notification_exit_cancel", !config.telegram_notification_exit_cancel)} />
-          <ToggleRow name="entry_fill" desc="Notify when entry order is filled" on={config.telegram_notification_entry_fill} onToggle={() => update("telegram_notification_entry_fill", !config.telegram_notification_entry_fill)} />
-          <ToggleRow name="exit_fill" desc="Notify when exit order is filled" on={config.telegram_notification_exit_fill} onToggle={() => update("telegram_notification_exit_fill", !config.telegram_notification_exit_fill)} />
-          <ToggleRow name="status" desc="Periodic status updates" on={config.telegram_notification_status} onToggle={() => update("telegram_notification_status", !config.telegram_notification_status)} />
+          <Tooltip content={TOOLTIPS.entry?.description ?? "Notify on trade entry"} configKey="entry"><ToggleRow name="entry" desc="Notify on trade entry" on={config.telegram_notification_entry} onToggle={() => update("telegram_notification_entry", !config.telegram_notification_entry)} /></Tooltip>
+          <Tooltip content={TOOLTIPS.exit?.description ?? "Notify on trade exit"} configKey="exit"><ToggleRow name="exit" desc="Notify on trade exit" on={config.telegram_notification_exit} onToggle={() => update("telegram_notification_exit", !config.telegram_notification_exit)} /></Tooltip>
+          <Tooltip content={TOOLTIPS.entry_cancel?.description ?? "Notify when entry order is cancelled"} configKey="entry_cancel"><ToggleRow name="entry_cancel" desc="Notify when entry order is cancelled" on={config.telegram_notification_entry_cancel} onToggle={() => update("telegram_notification_entry_cancel", !config.telegram_notification_entry_cancel)} /></Tooltip>
+          <Tooltip content={TOOLTIPS.exit_cancel?.description ?? "Notify when exit order is cancelled"} configKey="exit_cancel"><ToggleRow name="exit_cancel" desc="Notify when exit order is cancelled" on={config.telegram_notification_exit_cancel} onToggle={() => update("telegram_notification_exit_cancel", !config.telegram_notification_exit_cancel)} /></Tooltip>
+          <Tooltip content={TOOLTIPS.entry_fill?.description ?? "Notify when entry order is filled"} configKey="entry_fill"><ToggleRow name="entry_fill" desc="Notify when entry order is filled" on={config.telegram_notification_entry_fill} onToggle={() => update("telegram_notification_entry_fill", !config.telegram_notification_entry_fill)} /></Tooltip>
+          <Tooltip content={TOOLTIPS.exit_fill?.description ?? "Notify when exit order is filled"} configKey="exit_fill"><ToggleRow name="exit_fill" desc="Notify when exit order is filled" on={config.telegram_notification_exit_fill} onToggle={() => update("telegram_notification_exit_fill", !config.telegram_notification_exit_fill)} /></Tooltip>
+          <Tooltip content={TOOLTIPS.status?.description ?? "Periodic status updates"} configKey="status"><ToggleRow name="status" desc="Periodic status updates" on={config.telegram_notification_status} onToggle={() => update("telegram_notification_status", !config.telegram_notification_status)} /></Tooltip>
         </CardBody>
       </Card>
 
       <FormDivider />
 
-      <SubsectionTitle icon={"\uD83D\uDCCA"} paramRef="notification_settings.show_candle">Show Candle</SubsectionTitle>
+      <Tooltip content={TOOLTIPS.telegram_notification_show_candle?.description ?? "Show Candle"} configKey="notification_settings.show_candle"><SubsectionTitle icon={"\uD83D\uDCCA"}>Show Candle</SubsectionTitle></Tooltip>
       <div className="mb-6">
-        <FormLabel paramRef="show_candle">Candle Display in Notifications</FormLabel>
+        <Tooltip content={TOOLTIPS.telegram_notification_show_candle?.description ?? "Candle Display in Notifications"} configKey="show_candle"><FormLabel>Candle Display in Notifications</FormLabel></Tooltip>
         <FormSelect
           value={config.telegram_notification_show_candle}
           onChange={(v) => update("telegram_notification_show_candle", v)}
@@ -1485,31 +1513,31 @@ function TelegramTab({ config, update }: TabProps) {
 
       <FormDivider />
 
-      <SubsectionTitle icon={"\uD83D\uDEAA"} paramRef="notification_settings.exit_*">Per-Exit-Reason Notifications</SubsectionTitle>
+      <Tooltip content={TOOLTIPS.telegram_notification_exit_reasons?.description ?? "Per-Exit-Reason Notifications"} configKey="notification_settings.exit_*"><SubsectionTitle icon={"\uD83D\uDEAA"}>Per-Exit-Reason Notifications</SubsectionTitle></Tooltip>
       <Card className="mb-6">
         <CardBody>
-          <ToggleRow name="exit_stoploss" desc="Notify on exit due to stoploss" on={config.telegram_notification_exit_stoploss} onToggle={() => update("telegram_notification_exit_stoploss", !config.telegram_notification_exit_stoploss)} />
-          <ToggleRow name="exit_roi" desc="Notify on exit due to ROI" on={config.telegram_notification_exit_roi} onToggle={() => update("telegram_notification_exit_roi", !config.telegram_notification_exit_roi)} />
-          <ToggleRow name="exit_exit_signal" desc="Notify on exit due to exit signal" on={config.telegram_notification_exit_exit_signal} onToggle={() => update("telegram_notification_exit_exit_signal", !config.telegram_notification_exit_exit_signal)} />
-          <ToggleRow name="exit_force_exit" desc="Notify on force exit" on={config.telegram_notification_exit_force_exit} onToggle={() => update("telegram_notification_exit_force_exit", !config.telegram_notification_exit_force_exit)} />
-          <ToggleRow name="exit_trailing_stop_loss" desc="Notify on exit due to trailing stoploss" on={config.telegram_notification_exit_trailing_stop_loss} onToggle={() => update("telegram_notification_exit_trailing_stop_loss", !config.telegram_notification_exit_trailing_stop_loss)} />
+          <Tooltip content={TOOLTIPS.exit_stoploss?.description ?? "Notify on exit due to stoploss"} configKey="exit_stoploss"><ToggleRow name="exit_stoploss" desc="Notify on exit due to stoploss" on={config.telegram_notification_exit_stoploss} onToggle={() => update("telegram_notification_exit_stoploss", !config.telegram_notification_exit_stoploss)} /></Tooltip>
+          <Tooltip content={TOOLTIPS.exit_roi?.description ?? "Notify on exit due to ROI"} configKey="exit_roi"><ToggleRow name="exit_roi" desc="Notify on exit due to ROI" on={config.telegram_notification_exit_roi} onToggle={() => update("telegram_notification_exit_roi", !config.telegram_notification_exit_roi)} /></Tooltip>
+          <Tooltip content={TOOLTIPS.exit_exit_signal?.description ?? "Notify on exit due to exit signal"} configKey="exit_exit_signal"><ToggleRow name="exit_exit_signal" desc="Notify on exit due to exit signal" on={config.telegram_notification_exit_exit_signal} onToggle={() => update("telegram_notification_exit_exit_signal", !config.telegram_notification_exit_exit_signal)} /></Tooltip>
+          <Tooltip content={TOOLTIPS.exit_force_exit?.description ?? "Notify on force exit"} configKey="exit_force_exit"><ToggleRow name="exit_force_exit" desc="Notify on force exit" on={config.telegram_notification_exit_force_exit} onToggle={() => update("telegram_notification_exit_force_exit", !config.telegram_notification_exit_force_exit)} /></Tooltip>
+          <Tooltip content={TOOLTIPS.exit_trailing_stop_loss?.description ?? "Notify on exit due to trailing stoploss"} configKey="exit_trailing_stop_loss"><ToggleRow name="exit_trailing_stop_loss" desc="Notify on exit due to trailing stoploss" on={config.telegram_notification_exit_trailing_stop_loss} onToggle={() => update("telegram_notification_exit_trailing_stop_loss", !config.telegram_notification_exit_trailing_stop_loss)} /></Tooltip>
         </CardBody>
       </Card>
 
       <FormDivider />
 
-      <SubsectionTitle icon={"\uD83D\uDEE1\uFE0F"} paramRef="notification_settings.protection_trigger">Protection Trigger Notifications</SubsectionTitle>
+      <Tooltip content={TOOLTIPS.telegram_notification_protection_trigger?.description ?? "Protection Trigger Notifications"} configKey="notification_settings.protection_trigger"><SubsectionTitle icon={"\uD83D\uDEE1\uFE0F"}>Protection Trigger Notifications</SubsectionTitle></Tooltip>
       <Card className="mb-6">
         <CardBody>
-          <ToggleRow name="protection_trigger.lock" desc="Notify on pair lock protection trigger" on={config.telegram_notification_protection_trigger_lock} onToggle={() => update("telegram_notification_protection_trigger_lock", !config.telegram_notification_protection_trigger_lock)} />
-          <ToggleRow name="protection_trigger.stop" desc="Notify on stop protection trigger" on={config.telegram_notification_protection_trigger_stop} onToggle={() => update("telegram_notification_protection_trigger_stop", !config.telegram_notification_protection_trigger_stop)} />
-          <ToggleRow name="protection_trigger.global_stop" desc="Notify on global stop protection trigger" on={config.telegram_notification_protection_trigger_global_stop} onToggle={() => update("telegram_notification_protection_trigger_global_stop", !config.telegram_notification_protection_trigger_global_stop)} />
+          <Tooltip content={TOOLTIPS.telegram_notification_protection_trigger_lock?.description ?? "Notify on pair lock protection trigger"} configKey="protection_trigger.lock"><ToggleRow name="protection_trigger.lock" desc="Notify on pair lock protection trigger" on={config.telegram_notification_protection_trigger_lock} onToggle={() => update("telegram_notification_protection_trigger_lock", !config.telegram_notification_protection_trigger_lock)} /></Tooltip>
+          <Tooltip content={TOOLTIPS.telegram_notification_protection_trigger_stop?.description ?? "Notify on stop protection trigger"} configKey="protection_trigger.stop"><ToggleRow name="protection_trigger.stop" desc="Notify on stop protection trigger" on={config.telegram_notification_protection_trigger_stop} onToggle={() => update("telegram_notification_protection_trigger_stop", !config.telegram_notification_protection_trigger_stop)} /></Tooltip>
+          <Tooltip content={TOOLTIPS.telegram_notification_protection_trigger_global_stop?.description ?? "Notify on global stop protection trigger"} configKey="protection_trigger.global_stop"><ToggleRow name="protection_trigger.global_stop" desc="Notify on global stop protection trigger" on={config.telegram_notification_protection_trigger_global_stop} onToggle={() => update("telegram_notification_protection_trigger_global_stop", !config.telegram_notification_protection_trigger_global_stop)} /></Tooltip>
         </CardBody>
       </Card>
 
       <FormDivider />
 
-      <SubsectionTitle icon={"\u2328\uFE0F"} paramRef="telegram.keyboard">Custom Keyboard</SubsectionTitle>
+      <Tooltip content={TOOLTIPS.telegram_keyboard?.description ?? "Custom Keyboard"} configKey="telegram.keyboard"><SubsectionTitle icon={"\u2328\uFE0F"}>Custom Keyboard</SubsectionTitle></Tooltip>
       <textarea
         spellCheck={false}
         value={config.telegram_keyboard}
@@ -1521,7 +1549,7 @@ function TelegramTab({ config, update }: TabProps) {
 
       <Card>
         <CardBody>
-          <ToggleRow name="telegram.allow_custom_messages" desc="Allow strategy to send custom Telegram messages" on={config.telegram_allow_custom_messages} onToggle={() => update("telegram_allow_custom_messages", !config.telegram_allow_custom_messages)} />
+          <Tooltip content={TOOLTIPS.telegram_allow_custom_messages?.description ?? "Allow strategy to send custom Telegram messages"} configKey="telegram.allow_custom_messages"><ToggleRow name="telegram.allow_custom_messages" desc="Allow strategy to send custom Telegram messages" on={config.telegram_allow_custom_messages} onToggle={() => update("telegram_allow_custom_messages", !config.telegram_allow_custom_messages)} /></Tooltip>
         </CardBody>
       </Card>
     </div>
@@ -1553,18 +1581,18 @@ function WebhooksTab({ config, update }: TabProps) {
 
       <Card className="mb-6">
         <CardBody>
-          <ToggleRow name="webhook.enabled" desc="Enable webhook notifications" on={config.webhook_enabled} onToggle={() => update("webhook_enabled", !config.webhook_enabled)} />
+          <Tooltip content={TOOLTIPS.webhook_enabled?.description ?? "Enable webhook notifications"} configKey="webhook.enabled"><ToggleRow name="webhook.enabled" desc="Enable webhook notifications" on={config.webhook_enabled} onToggle={() => update("webhook_enabled", !config.webhook_enabled)} /></Tooltip>
         </CardBody>
       </Card>
 
       <div className="mb-6">
-        <FormLabel paramRef="webhook.url">Webhook URL</FormLabel>
+        <Tooltip content={TOOLTIPS.webhook_url?.description ?? "Webhook URL"} configKey="webhook.url"><FormLabel>Webhook URL</FormLabel></Tooltip>
         <FormInput type="url" value={config.webhook_url} onChange={(v) => update("webhook_url", v)} placeholder="https://..." />
       </div>
 
       <div className="grid grid-cols-4 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="webhook.format">Format</FormLabel>
+          <Tooltip content={TOOLTIPS.webhook_format?.description ?? "Format"} configKey="webhook.format"><FormLabel>Format</FormLabel></Tooltip>
           <FormSelect
             value={config.webhook_format}
             onChange={(v) => update("webhook_format", v)}
@@ -1576,16 +1604,16 @@ function WebhooksTab({ config, update }: TabProps) {
           />
         </div>
         <div>
-          <FormLabel paramRef="webhook.retries">Retries</FormLabel>
+          <Tooltip content={TOOLTIPS.webhook_retries?.description ?? "Retries"} configKey="webhook.retries"><FormLabel>Retries</FormLabel></Tooltip>
           <FormInput type="number" value={config.webhook_retries} onChange={(v) => update("webhook_retries", Number(v))} min="0" />
         </div>
         <div>
-          <FormLabel paramRef="webhook.retry_delay">Retry Delay</FormLabel>
+          <Tooltip content={TOOLTIPS.webhook_retry_delay?.description ?? "Retry Delay"} configKey="webhook.retry_delay"><FormLabel>Retry Delay</FormLabel></Tooltip>
           <FormInput type="number" value={config.webhook_retry_delay} onChange={(v) => update("webhook_retry_delay", Number(v))} step="0.1" />
           <FormHint>Seconds</FormHint>
         </div>
         <div>
-          <FormLabel paramRef="webhook.timeout">Timeout</FormLabel>
+          <Tooltip content={TOOLTIPS.webhook_timeout?.description ?? "Timeout"} configKey="webhook.timeout"><FormLabel>Timeout</FormLabel></Tooltip>
           <FormInput type="number" value={config.webhook_timeout} onChange={(v) => update("webhook_timeout", Number(v))} />
           <FormHint>Seconds</FormHint>
         </div>
@@ -1593,7 +1621,7 @@ function WebhooksTab({ config, update }: TabProps) {
 
       <FormDivider />
 
-      <SubsectionTitle icon={"\uD83D\uDCE7"} paramRef="webhook.webhookstrategy_msg">Strategy Message Payload</SubsectionTitle>
+      <Tooltip content={TOOLTIPS.webhook_webhookstrategy_msg?.description ?? "Strategy Message Payload"} configKey="webhook.webhookstrategy_msg"><SubsectionTitle icon={"\uD83D\uDCE7"}>Strategy Message Payload</SubsectionTitle></Tooltip>
       <textarea
         spellCheck={false}
         value={config.webhook_strategy_msg}
@@ -1648,20 +1676,20 @@ function WebhooksTab({ config, update }: TabProps) {
       <FormDivider />
 
       {/* Discord Section */}
-      <SubsectionTitle icon={"\uD83D\uDCAC"} paramRef="discord">Discord Integration</SubsectionTitle>
+      <Tooltip content={TOOLTIPS.discord_enabled?.description ?? "Discord Integration"} configKey="discord"><SubsectionTitle icon={"\uD83D\uDCAC"}>Discord Integration</SubsectionTitle></Tooltip>
       <Card className="mb-6">
         <CardBody>
-          <ToggleRow name="discord.enabled" desc="Enable Discord webhook notifications" on={config.discord_enabled} onToggle={() => update("discord_enabled", !config.discord_enabled)} />
+          <Tooltip content={TOOLTIPS.discord_enabled_enabled?.description ?? "Enable Discord webhook notifications"} configKey="discord.enabled"><ToggleRow name="discord.enabled" desc="Enable Discord webhook notifications" on={config.discord_enabled} onToggle={() => update("discord_enabled", !config.discord_enabled)} /></Tooltip>
         </CardBody>
       </Card>
       <div className="mb-6">
-        <FormLabel paramRef="discord.webhook_url">Discord Webhook URL</FormLabel>
+        <Tooltip content={TOOLTIPS.discord_enabled_webhook_url?.description ?? "Discord Webhook URL"} configKey="discord.webhook_url"><FormLabel>Discord Webhook URL</FormLabel></Tooltip>
         <FormInput type="url" value={config.discord_webhook_url} onChange={(v) => update("discord_webhook_url", v)} placeholder="https://discord.com/api/webhooks/..." />
       </div>
 
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="discord.entry">Entry Payload</FormLabel>
+          <Tooltip content={TOOLTIPS.discord_enabled_entry?.description ?? "Entry Payload"} configKey="discord.entry"><FormLabel>Entry Payload</FormLabel></Tooltip>
           <textarea
             spellCheck={false}
             value={config.discord_entry_payload}
@@ -1670,7 +1698,7 @@ function WebhooksTab({ config, update }: TabProps) {
           />
         </div>
         <div>
-          <FormLabel paramRef="discord.exit">Exit Payload</FormLabel>
+          <Tooltip content={TOOLTIPS.discord_enabled_exit?.description ?? "Exit Payload"} configKey="discord.exit"><FormLabel>Exit Payload</FormLabel></Tooltip>
           <textarea
             spellCheck={false}
             value={config.discord_exit_payload}
@@ -1681,7 +1709,7 @@ function WebhooksTab({ config, update }: TabProps) {
       </div>
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="discord.exit_fill">Exit Fill Payload</FormLabel>
+          <Tooltip content={TOOLTIPS.discord_enabled_exit_fill?.description ?? "Exit Fill Payload"} configKey="discord.exit_fill"><FormLabel>Exit Fill Payload</FormLabel></Tooltip>
           <textarea
             spellCheck={false}
             value={config.discord_exit_fill_payload}
@@ -1690,7 +1718,7 @@ function WebhooksTab({ config, update }: TabProps) {
           />
         </div>
         <div>
-          <FormLabel paramRef="discord.status">Status Payload</FormLabel>
+          <Tooltip content={TOOLTIPS.discord_enabled_status?.description ?? "Status Payload"} configKey="discord.status"><FormLabel>Status Payload</FormLabel></Tooltip>
           <textarea
             spellCheck={false}
             value={config.discord_status_payload}
@@ -1728,19 +1756,19 @@ function ProducerTab({ config, update }: TabProps) {
 
       <Card className="mb-6">
         <CardBody>
-          <ToggleRow name="external_message_consumer.enabled" desc="Enable this bot as a signal consumer" on={config.consumer_enabled} onToggle={() => update("consumer_enabled", !config.consumer_enabled)} />
-          <ToggleRow name="remove_entry_exit_signals" desc="Remove local entry/exit signals and only use producer signals" on={config.remove_entry_exit_signals} onToggle={() => update("remove_entry_exit_signals", !config.remove_entry_exit_signals)} />
+          <Tooltip content={TOOLTIPS.producer_enabled?.description ?? "Enable this bot as a signal consumer"} configKey="external_message_consumer.enabled"><ToggleRow name="external_message_consumer.enabled" desc="Enable this bot as a signal consumer" on={config.consumer_enabled} onToggle={() => update("consumer_enabled", !config.consumer_enabled)} /></Tooltip>
+          <Tooltip content={TOOLTIPS.remove_entry_exit_signals?.description ?? "Remove local entry/exit signals and only use producer signals"} configKey="remove_entry_exit_signals"><ToggleRow name="remove_entry_exit_signals" desc="Remove local entry/exit signals and only use producer signals" on={config.remove_entry_exit_signals} onToggle={() => update("remove_entry_exit_signals", !config.remove_entry_exit_signals)} /></Tooltip>
         </CardBody>
       </Card>
 
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="external_message_consumer.wait_timeout">Wait Timeout</FormLabel>
+          <Tooltip content={TOOLTIPS.producer_wait_timeout?.description ?? "Wait Timeout"} configKey="external_message_consumer.wait_timeout"><FormLabel>Wait Timeout</FormLabel></Tooltip>
           <FormInput type="number" value={config.consumer_wait_timeout} onChange={(v) => update("consumer_wait_timeout", Number(v))} />
           <FormHint>Seconds to wait for data from producers</FormHint>
         </div>
         <div>
-          <FormLabel paramRef="external_message_consumer.ping_timeout">Ping Timeout</FormLabel>
+          <Tooltip content={TOOLTIPS.producer_ping_timeout?.description ?? "Ping Timeout"} configKey="external_message_consumer.ping_timeout"><FormLabel>Ping Timeout</FormLabel></Tooltip>
           <FormInput type="number" value={config.consumer_ping_timeout} onChange={(v) => update("consumer_ping_timeout", Number(v))} />
           <FormHint>Seconds for WebSocket ping timeout</FormHint>
         </div>
@@ -1748,12 +1776,12 @@ function ProducerTab({ config, update }: TabProps) {
 
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="external_message_consumer.initial_candle_limit">Initial Candle Limit</FormLabel>
+          <Tooltip content={TOOLTIPS.producer_initial_candle_limit?.description ?? "Initial Candle Limit"} configKey="external_message_consumer.initial_candle_limit"><FormLabel>Initial Candle Limit</FormLabel></Tooltip>
           <FormInput type="number" value={config.consumer_initial_candle_limit} onChange={(v) => update("consumer_initial_candle_limit", Number(v))} />
           <FormHint>Number of candles to request on initial connection</FormHint>
         </div>
         <div>
-          <FormLabel paramRef="external_message_consumer.message_size_limit">Message Size Limit</FormLabel>
+          <Tooltip content={TOOLTIPS.producer_message_size_limit?.description ?? "Message Size Limit"} configKey="external_message_consumer.message_size_limit"><FormLabel>Message Size Limit</FormLabel></Tooltip>
           <FormInput type="number" value={config.consumer_message_size_limit} onChange={(v) => update("consumer_message_size_limit", Number(v))} />
           <FormHint>Max message size in MB</FormHint>
         </div>
@@ -1761,7 +1789,7 @@ function ProducerTab({ config, update }: TabProps) {
 
       <FormDivider />
 
-      <SubsectionTitle icon={"\uD83D\uDCE1"} paramRef="external_message_consumer.producers">Producers</SubsectionTitle>
+      <Tooltip content={TOOLTIPS.producer_producers?.description ?? "Producers"} configKey="external_message_consumer.producers"><SubsectionTitle icon={"\uD83D\uDCE1"}>Producers</SubsectionTitle></Tooltip>
 
       {config.producers.map((p, i) => (
         <div key={`producer-${p.name || i}`} className="bg-bg-1 border border-border rounded-btn p-4 mb-2">
@@ -1777,26 +1805,26 @@ function ProducerTab({ config, update }: TabProps) {
           </div>
           <div className="grid grid-cols-2 gap-5 mb-2">
             <div>
-              <FormLabel paramRef="name">Name</FormLabel>
+              <Tooltip content={TOOLTIPS.name?.description ?? "Name"} configKey="name"><FormLabel>Name</FormLabel></Tooltip>
               <FormInput value={p.name} onChange={(v) => updateProducer(i, "name", v)} placeholder="e.g. default" />
             </div>
             <div>
-              <FormLabel paramRef="host">Host</FormLabel>
+              <Tooltip content={TOOLTIPS.host?.description ?? "Host"} configKey="host"><FormLabel>Host</FormLabel></Tooltip>
               <FormInput value={p.host} onChange={(v) => updateProducer(i, "host", v)} placeholder="e.g. 127.0.0.1" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-5 mb-2">
             <div>
-              <FormLabel paramRef="port">Port</FormLabel>
+              <Tooltip content={TOOLTIPS.port?.description ?? "Port"} configKey="port"><FormLabel>Port</FormLabel></Tooltip>
               <FormInput type="number" value={p.port} onChange={(v) => updateProducer(i, "port", Number(v))} />
             </div>
             <div>
-              <FormLabel paramRef="ws_token">WS Token</FormLabel>
+              <Tooltip content={TOOLTIPS.ws_token?.description ?? "WS Token"} configKey="ws_token"><FormLabel>WS Token</FormLabel></Tooltip>
               <FormInput type="password" value={p.ws_token} onChange={(v) => updateProducer(i, "ws_token", v)} placeholder="Enter WS token" />
             </div>
           </div>
           <div className="pt-1">
-            <ToggleRow name="secure" desc="Use TLS/WSS for this producer connection" on={p.secure} onToggle={() => updateProducer(i, "secure", !p.secure)} />
+            <Tooltip content={TOOLTIPS.secure?.description ?? "Use TLS/WSS for this producer connection"} configKey="secure"><ToggleRow name="secure" desc="Use TLS/WSS for this producer connection" on={p.secure} onToggle={() => updateProducer(i, "secure", !p.secure)} /></Tooltip>
           </div>
         </div>
       ))}
@@ -1827,7 +1855,7 @@ function AdvancedTab({ config, update }: TabProps) {
       <SubsectionTitle icon={"\uD83D\uDCBE"}>Database</SubsectionTitle>
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="db_url">Database Type</FormLabel>
+          <Tooltip content={TOOLTIPS.db_url?.description ?? "Database Type"} configKey="db_url"><FormLabel>Database Type</FormLabel></Tooltip>
           <FormSelect
             value={config.db_type}
             onChange={(v) => update("db_type", v)}
@@ -1839,7 +1867,7 @@ function AdvancedTab({ config, update }: TabProps) {
           />
         </div>
         <div>
-          <FormLabel paramRef="db_url">Connection String</FormLabel>
+          <Tooltip content={TOOLTIPS.db_url?.description ?? "Connection String"} configKey="db_url"><FormLabel>Connection String</FormLabel></Tooltip>
           <FormInput value={config.db_url} onChange={(v) => update("db_url", v)} mono />
           <FormHint>SQLite: sqlite:///path, PG: postgresql://user:pass@host/db</FormHint>
         </div>
@@ -1851,7 +1879,7 @@ function AdvancedTab({ config, update }: TabProps) {
       <SubsectionTitle icon={"\uD83D\uDCC4"}>Logging</SubsectionTitle>
       <div className="grid grid-cols-3 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="verbosity">Log Level</FormLabel>
+          <Tooltip content={TOOLTIPS.verbosity?.description ?? "Log Level"} configKey="verbosity"><FormLabel>Log Level</FormLabel></Tooltip>
           <FormSelect
             value={config.verbosity}
             onChange={(v) => update("verbosity", v)}
@@ -1864,22 +1892,22 @@ function AdvancedTab({ config, update }: TabProps) {
           />
         </div>
         <div>
-          <FormLabel paramRef="logfile">Log File</FormLabel>
+          <Tooltip content={TOOLTIPS.logfile?.description ?? "Log File"} configKey="logfile"><FormLabel>Log File</FormLabel></Tooltip>
           <FormInput value={config.logfile} onChange={(v) => update("logfile", v)} mono placeholder="/freqtrade/user_data/logs/freqtrade.log" />
         </div>
         <div>
-          <FormLabel paramRef="log_rotate">Log Rotate</FormLabel>
+          <Tooltip content={TOOLTIPS.log_rotate?.description ?? "Log Rotate"} configKey="log_rotate"><FormLabel>Log Rotate</FormLabel></Tooltip>
           <FormSelect value={config.log_rotate} onChange={(v) => update("log_rotate", v)} options={[{ value: "true", label: "Enabled" }, { value: "false", label: "Disabled" }]} />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-5 mb-7">
         <div>
-          <FormLabel paramRef="log_rotate_bytes">Log Rotate Bytes</FormLabel>
+          <Tooltip content={TOOLTIPS.log_rotate_bytes?.description ?? "Log Rotate Bytes"} configKey="log_rotate_bytes"><FormLabel>Log Rotate Bytes</FormLabel></Tooltip>
           <FormInput type="number" value={config.log_rotate_bytes} onChange={(v) => update("log_rotate_bytes", Number(v))} />
           <FormHint>Max log file size before rotation (bytes). Default: 10MB</FormHint>
         </div>
         <div>
-          <FormLabel paramRef="log_rotate_backup_count">Log Rotate Backup Count</FormLabel>
+          <Tooltip content={TOOLTIPS.log_rotate_backup_count?.description ?? "Log Rotate Backup Count"} configKey="log_rotate_backup_count"><FormLabel>Log Rotate Backup Count</FormLabel></Tooltip>
           <FormInput type="number" value={config.log_rotate_backup_count} onChange={(v) => update("log_rotate_backup_count", Number(v))} />
           <FormHint>Number of rotated log files to keep</FormHint>
         </div>
@@ -1943,8 +1971,7 @@ export default function SettingsPage() {
       .catch((err) => { toast.error(err instanceof Error ? err.message : "Failed to load bots."); });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function populateFromApi(data: Record<string, any>) {
+  function populateFromApi(data: FTShowConfig) {
     const c = getDefaultConfig();
 
     // Core fields
@@ -1993,7 +2020,7 @@ export default function SettingsPage() {
       }));
     }
 
-    // Order types
+    // Order types — typed via FTOrderTypes
     if (data.order_types) {
       const ot = data.order_types;
       if (ot.entry) c.order_types_entry = String(ot.entry);
@@ -2007,58 +2034,63 @@ export default function SettingsPage() {
       if (ot.stoploss_on_exchange_limit_ratio != null) c.stoploss_on_exchange_limit_ratio = Number(ot.stoploss_on_exchange_limit_ratio);
     }
 
-    // Order time in force
+    // Order time in force — typed via FTOrderTimeInForce
     if (data.order_time_in_force) {
-      if (data.order_time_in_force.entry) c.order_time_in_force_entry = String(data.order_time_in_force.entry);
-      if (data.order_time_in_force.exit) c.order_time_in_force_exit = String(data.order_time_in_force.exit);
+      const otif = data.order_time_in_force;
+      if (otif.entry) c.order_time_in_force_entry = String(otif.entry);
+      if (otif.exit) c.order_time_in_force_exit = String(otif.exit);
     }
 
-    // Unfilled timeout
+    // Unfilled timeout — typed via FTUnfilledTimeout
     if (data.unfilledtimeout) {
-      if (data.unfilledtimeout.entry != null) c.unfilledtimeout_entry = Number(data.unfilledtimeout.entry);
-      if (data.unfilledtimeout.exit != null) c.unfilledtimeout_exit = Number(data.unfilledtimeout.exit);
-      if (data.unfilledtimeout.unit) c.unfilledtimeout_unit = String(data.unfilledtimeout.unit);
-      if (data.unfilledtimeout.exit_timeout_count != null) c.exit_timeout_count = Number(data.unfilledtimeout.exit_timeout_count);
+      const uft = data.unfilledtimeout;
+      if (uft.entry != null) c.unfilledtimeout_entry = Number(uft.entry);
+      if (uft.exit != null) c.unfilledtimeout_exit = Number(uft.exit);
+      if (uft.unit) c.unfilledtimeout_unit = String(uft.unit);
+      if (uft.exit_timeout_count != null) c.exit_timeout_count = Number(uft.exit_timeout_count);
     }
 
-    // Entry/exit pricing
+    // Entry/exit pricing — typed via FTPricing
     if (data.entry_pricing) {
-      if (data.entry_pricing.price_side) c.entry_pricing_price_side = String(data.entry_pricing.price_side);
-      if (data.entry_pricing.use_order_book != null) c.entry_pricing_use_order_book = String(data.entry_pricing.use_order_book);
-      if (data.entry_pricing.order_book_top != null) c.entry_pricing_order_book_top = Number(data.entry_pricing.order_book_top);
-      if (data.entry_pricing.price_last_balance != null) c.entry_pricing_price_last_balance = Number(data.entry_pricing.price_last_balance);
+      const ep = data.entry_pricing;
+      if (ep.price_side) c.entry_pricing_price_side = String(ep.price_side);
+      if (ep.use_order_book != null) c.entry_pricing_use_order_book = String(ep.use_order_book);
+      if (ep.order_book_top != null) c.entry_pricing_order_book_top = Number(ep.order_book_top);
+      if (ep.price_last_balance != null) c.entry_pricing_price_last_balance = Number(ep.price_last_balance);
     }
     if (data.exit_pricing) {
-      if (data.exit_pricing.price_side) c.exit_pricing_price_side = String(data.exit_pricing.price_side);
-      if (data.exit_pricing.use_order_book != null) c.exit_pricing_use_order_book = String(data.exit_pricing.use_order_book);
-      if (data.exit_pricing.order_book_top != null) c.exit_pricing_order_book_top = Number(data.exit_pricing.order_book_top);
+      const xp = data.exit_pricing;
+      if (xp.price_side) c.exit_pricing_price_side = String(xp.price_side);
+      if (xp.use_order_book != null) c.exit_pricing_use_order_book = String(xp.use_order_book);
+      if (xp.order_book_top != null) c.exit_pricing_order_book_top = Number(xp.order_book_top);
     }
 
-    // Exchange
+    // Exchange — typed as string | FTExchangeConfig
     if (data.exchange) {
       if (typeof data.exchange === "string") {
         c.exchange_name = data.exchange;
       } else if (typeof data.exchange === "object") {
-        if (data.exchange.name) c.exchange_name = String(data.exchange.name);
-        if (data.exchange.key) c.exchange_key = String(data.exchange.key);
-        if (data.exchange.secret) c.exchange_secret = String(data.exchange.secret);
-        if (data.exchange.password) c.exchange_password = String(data.exchange.password);
-        if (data.exchange.uid) c.exchange_uid = String(data.exchange.uid);
-        if (Array.isArray(data.exchange.pair_whitelist)) c.pair_whitelist = data.exchange.pair_whitelist;
-        if (Array.isArray(data.exchange.pair_blacklist)) c.pair_blacklist = data.exchange.pair_blacklist;
-        if (data.exchange.enable_ws != null) c.enable_ws = Boolean(data.exchange.enable_ws);
-        if (data.exchange.markets_refresh_interval != null) c.markets_refresh_interval = Number(data.exchange.markets_refresh_interval);
-        if (data.exchange.ccxt_config) {
+        const ex = data.exchange;
+        if (ex.name) c.exchange_name = String(ex.name);
+        if (ex.key) c.exchange_key = String(ex.key);
+        if (ex.secret) c.exchange_secret = String(ex.secret);
+        if (ex.password) c.exchange_password = String(ex.password);
+        if (ex.uid) c.exchange_uid = String(ex.uid);
+        if (Array.isArray(ex.pair_whitelist)) c.pair_whitelist = ex.pair_whitelist;
+        if (Array.isArray(ex.pair_blacklist)) c.pair_blacklist = ex.pair_blacklist;
+        if (ex.enable_ws != null) c.enable_ws = Boolean(ex.enable_ws);
+        if (ex.markets_refresh_interval != null) c.markets_refresh_interval = Number(ex.markets_refresh_interval);
+        if (ex.ccxt_config) {
           try {
-            c.ccxt_config = JSON.stringify(data.exchange.ccxt_config, null, 2);
-          } catch {
+            c.ccxt_config = JSON.stringify(ex.ccxt_config, null, 2);
+          } catch { /* non-blocking */
             // keep default
           }
         }
-        if (data.exchange.skip_open_order_update != null) c.skip_open_order_update = Boolean(data.exchange.skip_open_order_update);
-        if (data.exchange.unknown_fee_rate != null) c.unknown_fee_rate = Number(data.exchange.unknown_fee_rate);
-        if (data.exchange.log_responses != null) c.log_responses = Boolean(data.exchange.log_responses);
-        if (data.exchange.only_from_ccxt != null) c.only_from_ccxt = Boolean(data.exchange.only_from_ccxt);
+        if (ex.skip_open_order_update != null) c.skip_open_order_update = Boolean(ex.skip_open_order_update);
+        if (ex.unknown_fee_rate != null) c.unknown_fee_rate = Number(ex.unknown_fee_rate);
+        if (ex.log_responses != null) c.log_responses = Boolean(ex.log_responses);
+        if (ex.only_from_ccxt != null) c.only_from_ccxt = Boolean(ex.only_from_ccxt);
       }
     }
     // FTShowConfig returns pair_whitelist at top level too
@@ -2066,7 +2098,7 @@ export default function SettingsPage() {
       c.pair_whitelist = data.pair_whitelist;
     }
 
-    // Pairlists
+    // Pairlists — typed via pairlists?: Array<{ method: string; [key: string]: unknown }>
     if (Array.isArray(data.pairlists) && data.pairlists.length > 0) {
       const primary = data.pairlists[0];
       if (primary.method) c.pairlist_handler = String(primary.method);
@@ -2077,9 +2109,9 @@ export default function SettingsPage() {
 
       // Map remaining pairlists entries to filters
       const filterEntries = data.pairlists.slice(1);
-      const enabledNames = new Set(filterEntries.map((f: { method: string }) => f.method));
+      const enabledNames = new Set(filterEntries.map((f) => String(f.method)));
       c.pairlist_filters = c.pairlist_filters.map((f) => {
-        const match = filterEntries.find((fe: { method: string }) => fe.method === f.name);
+        const match = filterEntries.find((fe) => String(fe.method) === f.name);
         if (match) {
           const { method: _method, ...params } = match; // eslint-disable-line @typescript-eslint/no-unused-vars
           return { ...f, enabled: true, params: { ...f.params, ...params } };
@@ -2088,25 +2120,26 @@ export default function SettingsPage() {
       });
     }
 
-    // Telegram
+    // Telegram — typed via FTTelegramConfig
     if (data.telegram) {
-      if (data.telegram.enabled != null) c.telegram_enabled = Boolean(data.telegram.enabled);
-      if (data.telegram.token) c.telegram_token = String(data.telegram.token);
-      if (data.telegram.chat_id) c.telegram_chat_id = String(data.telegram.chat_id);
-      if (data.telegram.allow_custom_messages != null) c.telegram_allow_custom_messages = Boolean(data.telegram.allow_custom_messages);
-      if (data.telegram.balance_dust_level != null) c.telegram_balance_dust_level = Number(data.telegram.balance_dust_level);
-      if (data.telegram.reload != null) c.telegram_reload = Boolean(data.telegram.reload);
-      if (data.telegram.topic_id != null) c.telegram_topic_id = String(data.telegram.topic_id);
-      if (Array.isArray(data.telegram.authorized_users)) c.telegram_authorized_users = data.telegram.authorized_users.map(String);
-      if (data.telegram.keyboard) {
+      const tg = data.telegram;
+      if (tg.enabled != null) c.telegram_enabled = Boolean(tg.enabled);
+      if (tg.token) c.telegram_token = String(tg.token);
+      if (tg.chat_id) c.telegram_chat_id = String(tg.chat_id);
+      if (tg.allow_custom_messages != null) c.telegram_allow_custom_messages = Boolean(tg.allow_custom_messages);
+      if (tg.balance_dust_level != null) c.telegram_balance_dust_level = Number(tg.balance_dust_level);
+      if (tg.reload != null) c.telegram_reload = Boolean(tg.reload);
+      if (tg.topic_id != null) c.telegram_topic_id = String(tg.topic_id);
+      if (Array.isArray(tg.authorized_users)) c.telegram_authorized_users = tg.authorized_users.map(String);
+      if (tg.keyboard) {
         try {
-          c.telegram_keyboard = JSON.stringify(data.telegram.keyboard, null, 2);
-        } catch {
+          c.telegram_keyboard = JSON.stringify(tg.keyboard, null, 2);
+        } catch { /* non-blocking */
           // keep default
         }
       }
-      if (data.telegram.notification_settings) {
-        const ns = data.telegram.notification_settings;
+      if (tg.notification_settings) {
+        const ns = tg.notification_settings;
         if (ns.entry != null) c.telegram_notification_entry = ns.entry !== "off";
         if (ns.exit != null) c.telegram_notification_exit = ns.exit !== "off";
         if (ns.entry_cancel != null) c.telegram_notification_entry_cancel = ns.entry_cancel !== "off";
@@ -2130,28 +2163,29 @@ export default function SettingsPage() {
       }
     }
 
-    // Webhooks
+    // Webhooks — typed via FTWebhookConfig
     if (data.webhook) {
-      if (data.webhook.enabled != null) c.webhook_enabled = Boolean(data.webhook.enabled);
-      if (data.webhook.url) c.webhook_url = String(data.webhook.url);
-      if (data.webhook.format) c.webhook_format = String(data.webhook.format);
-      if (data.webhook.retries != null) c.webhook_retries = Number(data.webhook.retries);
-      if (data.webhook.retry_delay != null) c.webhook_retry_delay = Number(data.webhook.retry_delay);
-      if (data.webhook.timeout != null) c.webhook_timeout = Number(data.webhook.timeout);
-      if (data.webhook.webhookstrategy_msg) {
+      const wh = data.webhook;
+      if (wh.enabled != null) c.webhook_enabled = Boolean(wh.enabled);
+      if (wh.url) c.webhook_url = String(wh.url);
+      if (wh.format) c.webhook_format = String(wh.format);
+      if (wh.retries != null) c.webhook_retries = Number(wh.retries);
+      if (wh.retry_delay != null) c.webhook_retry_delay = Number(wh.retry_delay);
+      if (wh.timeout != null) c.webhook_timeout = Number(wh.timeout);
+      if (wh.webhookstrategy_msg) {
         try {
-          c.webhook_strategy_msg = JSON.stringify(data.webhook.webhookstrategy_msg, null, 2);
-        } catch {
+          c.webhook_strategy_msg = JSON.stringify(wh.webhookstrategy_msg, null, 2);
+        } catch { /* non-blocking */
           // keep default
         }
       }
-      // Map webhook event payloads from config
+      // Map webhook event payloads from config (dynamic keys via index signature on FTWebhookConfig)
       c.webhook_events = c.webhook_events.map((evt) => {
-        const payload = data.webhook[evt.name];
+        const payload = wh[evt.name];
         if (payload) {
           try {
             return { ...evt, enabled: true, payload: JSON.stringify(payload, null, 2) };
-          } catch {
+          } catch { /* non-blocking */
             return { ...evt, enabled: true };
           }
         }
@@ -2159,17 +2193,18 @@ export default function SettingsPage() {
       });
     }
 
-    // Discord
+    // Discord — typed via FTDiscordConfig
     if (data.discord) {
-      if (data.discord.enabled != null) c.discord_enabled = Boolean(data.discord.enabled);
-      if (data.discord.webhook_url) c.discord_webhook_url = String(data.discord.webhook_url);
-      if (data.discord.entry) { try { c.discord_entry_payload = JSON.stringify(data.discord.entry, null, 2); } catch { } }
-      if (data.discord.exit) { try { c.discord_exit_payload = JSON.stringify(data.discord.exit, null, 2); } catch { } }
-      if (data.discord.exit_fill) { try { c.discord_exit_fill_payload = JSON.stringify(data.discord.exit_fill, null, 2); } catch { } }
-      if (data.discord.status) { try { c.discord_status_payload = JSON.stringify(data.discord.status, null, 2); } catch { } }
+      const dc = data.discord;
+      if (dc.enabled != null) c.discord_enabled = Boolean(dc.enabled);
+      if (dc.webhook_url) c.discord_webhook_url = String(dc.webhook_url);
+      if (dc.entry) { try { c.discord_entry_payload = JSON.stringify(dc.entry, null, 2); } catch { /* keep default */ } }
+      if (dc.exit) { try { c.discord_exit_payload = JSON.stringify(dc.exit, null, 2); } catch { /* keep default */ } }
+      if (dc.exit_fill) { try { c.discord_exit_fill_payload = JSON.stringify(dc.exit_fill, null, 2); } catch { /* keep default */ } }
+      if (dc.status) { try { c.discord_status_payload = JSON.stringify(dc.status, null, 2); } catch { /* keep default */ } }
     }
 
-    // Producer/Consumer
+    // Producer/Consumer — typed via FTExternalMessageConsumer
     if (data.external_message_consumer) {
       const emc = data.external_message_consumer;
       if (emc.enabled != null) c.consumer_enabled = Boolean(emc.enabled);
@@ -2179,7 +2214,7 @@ export default function SettingsPage() {
       if (emc.initial_candle_limit != null) c.consumer_initial_candle_limit = Number(emc.initial_candle_limit);
       if (emc.message_size_limit != null) c.consumer_message_size_limit = Number(emc.message_size_limit);
       if (Array.isArray(emc.producers)) {
-        c.producers = emc.producers.map((p: { name?: string; host?: string; port?: number; ws_token?: string; secure?: boolean }) => ({
+        c.producers = emc.producers.map((p) => ({
           name: String(p.name || ""),
           host: String(p.host || ""),
           port: Number(p.port || 8080),
@@ -2189,11 +2224,12 @@ export default function SettingsPage() {
       }
     }
 
-    // Advanced
+    // Advanced — typed on FTShowConfig
     if (data.db_url) {
-      c.db_url = String(data.db_url);
-      if (data.db_url.startsWith("postgresql")) c.db_type = "postgresql";
-      else if (data.db_url.startsWith("mysql") || data.db_url.startsWith("mariadb")) c.db_type = "mariadb";
+      const dbUrl = data.db_url;
+      c.db_url = dbUrl;
+      if (dbUrl.startsWith("postgresql")) c.db_type = "postgresql";
+      else if (dbUrl.startsWith("mysql") || dbUrl.startsWith("mariadb")) c.db_type = "mariadb";
       else c.db_type = "sqlite";
     }
     if (data.verbosity != null) c.verbosity = String(data.verbosity);
@@ -2236,18 +2272,18 @@ export default function SettingsPage() {
     };
     for (const evt of c.webhook_events) {
       if (evt.enabled) {
-        try { webhookPayload[evt.name] = JSON.parse(evt.payload); } catch {  webhookPayload[evt.name] = evt.payload; }
+        try { webhookPayload[evt.name] = JSON.parse(evt.payload); } catch { /* parse fallback */ webhookPayload[evt.name] = evt.payload; }
       }
     }
     if (c.webhook_strategy_msg) {
-      try { webhookPayload.webhookstrategy_msg = JSON.parse(c.webhook_strategy_msg); } catch {  webhookPayload.webhookstrategy_msg = c.webhook_strategy_msg; }
+      try { webhookPayload.webhookstrategy_msg = JSON.parse(c.webhook_strategy_msg); } catch { /* parse fallback */ webhookPayload.webhookstrategy_msg = c.webhook_strategy_msg; }
     }
 
     // Build notification_settings for telegram
     const notifToValue = (on: boolean) => (on ? "on" : "off");
 
     let ccxtConfig: unknown = {};
-    try { ccxtConfig = JSON.parse(c.ccxt_config); } catch {  /* skip */ }
+    try { ccxtConfig = JSON.parse(c.ccxt_config); } catch { /* parse failed — skip */ }
 
     return {
       bot_name: c.bot_name,
@@ -2345,7 +2381,7 @@ export default function SettingsPage() {
         reload: c.telegram_reload,
         ...(c.telegram_topic_id ? { topic_id: c.telegram_topic_id } : {}),
         ...(c.telegram_authorized_users.length > 0 ? { authorized_users: c.telegram_authorized_users } : {}),
-        ...(() => { try { return { keyboard: JSON.parse(c.telegram_keyboard) }; } catch {  return {}; } })(),
+        ...(() => { try { return { keyboard: JSON.parse(c.telegram_keyboard) }; } catch { /* parse failed */ return {}; } })(),
         notification_settings: {
           entry: notifToValue(c.telegram_notification_entry),
           exit: notifToValue(c.telegram_notification_exit),
@@ -2372,10 +2408,10 @@ export default function SettingsPage() {
         discord: {
           enabled: c.discord_enabled,
           webhook_url: c.discord_webhook_url,
-          ...(() => { try { return { entry: JSON.parse(c.discord_entry_payload) }; } catch {  return {}; } })(),
-          ...(() => { try { return { exit: JSON.parse(c.discord_exit_payload) }; } catch {  return {}; } })(),
-          ...(() => { try { return { exit_fill: JSON.parse(c.discord_exit_fill_payload) }; } catch {  return {}; } })(),
-          ...(() => { try { return { status: JSON.parse(c.discord_status_payload) }; } catch {  return {}; } })(),
+          ...(() => { try { return { entry: JSON.parse(c.discord_entry_payload) }; } catch { /* parse failed */ return {}; } })(),
+          ...(() => { try { return { exit: JSON.parse(c.discord_exit_payload) }; } catch { /* parse failed */ return {}; } })(),
+          ...(() => { try { return { exit_fill: JSON.parse(c.discord_exit_fill_payload) }; } catch { /* parse failed */ return {}; } })(),
+          ...(() => { try { return { status: JSON.parse(c.discord_status_payload) }; } catch { /* parse failed */ return {}; } })(),
         },
       } : {}),
       external_message_consumer: {

@@ -1,9 +1,16 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { Suspense, useState, useCallback, useEffect, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import AppShell from "@/components/layout/AppShell";
 import { useToast } from "@/components/ui/Toast";
-import { createStrategy, getBots, botWhitelist } from "@/lib/api";
+import { createStrategy, getStrategy, updateStrategy, getBots, botWhitelist } from "@/lib/api";
+import DeployModal from "@/components/builder/DeployModal";
+import Tooltip from "@/components/ui/Tooltip";
+import { TOOLTIPS } from "@/lib/tooltips";
+
+const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
 // ─── Static Options ───────────────────────────────────────────
 const exchanges = ["Binance (Futures)", "Hyperliquid", "Bitget (Futures)"];
@@ -77,6 +84,69 @@ interface Condition {
   compareType: "indicator" | "value";
   compareIndicator: string;
   compareValue: number;
+}
+
+// ── Builder state union types ──
+type StoplossTypeOption = "fixed" | "trailing" | "trailing_offset" | "custom_callback" | "on_exchange";
+type StoplossExchangePriceType = "last" | "mark" | "index";
+type StakePresetOption = "fixed" | "percent" | "kelly";
+type StoplossPresetOption = "time_based" | "profit_based" | "atr_based";
+type LeveragePresetOption = "fixed" | "dynamic";
+type OrderTypeOption = "market" | "limit";
+type OrderTifOption = "GTC" | "FOK" | "IOC" | "PO";
+
+/** Serialized builder wizard state (stored in builder_state JSON) */
+interface BuilderState {
+  leverage?: string;
+  marginMode?: string;
+  tradingMode?: string;
+  liquidationBuffer?: number;
+  selectedPairs?: string[];
+  indicators?: Record<string, boolean>;
+  longConditions?: Condition[];
+  shortConditions?: Condition[];
+  exitConditions?: Condition[];
+  stoploss?: number;
+  stakeAmount?: number;
+  maxOpenTrades?: number;
+  trailingStop?: boolean;
+  trailingStopPositive?: number;
+  trailingStopPositiveOffset?: number;
+  trailingOnlyOffsetIsReached?: boolean;
+  roiTable?: Array<{ minutes: number; roi: number }>;
+  stoplossGuard?: boolean;
+  maxDrawdown?: boolean;
+  cooldownPeriod?: boolean;
+  stoplossType?: StoplossTypeOption;
+  stoplossOnExchange?: boolean;
+  enabledCallbacks?: Record<string, boolean>;
+  stakePreset?: StakePresetOption;
+  stakeFixedAmount?: number;
+  stakePercent?: number;
+  stoplossPreset?: StoplossPresetOption;
+  entryPriceOffset?: number;
+  exitPriceOffset?: number;
+  dcaLevels?: number;
+  dcaMultiplier?: number;
+  leveragePreset?: LeveragePresetOption;
+  leverageFixedValue?: number;
+  startupCandleCount?: number;
+  processOnlyNewCandles?: boolean;
+  strategyVersion?: string;
+  orderTypeEntry?: OrderTypeOption;
+  orderTypeExit?: OrderTypeOption;
+  orderTypeStoploss?: OrderTypeOption;
+  orderTifEntry?: OrderTifOption;
+  orderTypeEmergencyExit?: OrderTypeOption;
+  orderTypeForceEntry?: OrderTypeOption;
+  orderTypeForceExit?: OrderTypeOption;
+  orderTifExit?: OrderTifOption;
+  informativePairs?: Array<{ pair: string; timeframe: string }>;
+  stoplossOnExchangeLimitRatio?: number;
+  stoplossOnExchangeInterval?: number;
+  stoplossOnExchangePriceType?: StoplossExchangePriceType;
+  entryTimeoutMinutes?: number;
+  exitTimeoutMinutes?: number;
 }
 
 const defaultLongConditions: Condition[] = [
@@ -265,9 +335,30 @@ function CollapsibleSection({ title, description, enabled, onToggle, children, d
 }
 
 // ─── Component ───────────────────────────────────────────
-export default function BuilderPage() {
+export default function BuilderPageWrapper() {
+  return (
+    <Suspense fallback={
+      <AppShell title="Strategy Builder">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-sm text-text-3 animate-pulse">Loading...</div>
+        </div>
+      </AppShell>
+    }>
+      <BuilderPage />
+    </Suspense>
+  );
+}
+
+function BuilderPage() {
   const toast = useToast();
+  const searchParams = useSearchParams();
   const [saving, setSaving] = useState(false);
+  const [savedStrategyId, setSavedStrategyId] = useState<number | null>(null);
+  const [deployOpen, setDeployOpen] = useState(false);
+  const [editorMode, setEditorMode] = useState<"visual" | "code">("visual");
+  const [manualCodeEdit, setManualCodeEdit] = useState(false);
+  const [editableCode, setEditableCode] = useState("");
+  const [loadingStrategy, setLoadingStrategy] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [strategyName, setStrategyName] = useState("MyNewStrategy");
   const [description, setDescription] = useState(
@@ -301,7 +392,7 @@ export default function BuilderPage() {
   const [stoploss, setStoploss] = useState(-0.035);
   const [stakeAmount, setStakeAmount] = useState(1000);
   const [maxOpenTrades, setMaxOpenTrades] = useState(3);
-  const [trailingStop, _setTrailingStop] = useState(true); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [trailingStop, setTrailingStop] = useState(true);
   const [trailingStopPositive, setTrailingStopPositive] = useState(0.01);
   const [trailingStopPositiveOffset, setTrailingStopPositiveOffset] = useState(0.02);
   const [trailingOnlyOffsetIsReached, setTrailingOnlyOffsetIsReached] = useState(true);
@@ -378,11 +469,104 @@ export default function BuilderPage() {
             wl.whitelist.map((p: string) => ({ icon: "", pair: p }))
           );
         }
-      } catch {
+      } catch { /* non-blocking */
         // Fallback to hardcoded tradingPairs — already set as default
       }
     })();
     return () => { cancelled = true; };
+  }, []);
+
+  // ─── Re-edit: load strategy from URL param ────────────
+  useEffect(() => {
+    const strategyIdParam = searchParams.get("strategyId");
+    if (!strategyIdParam) return;
+    const sid = parseInt(strategyIdParam, 10);
+    if (isNaN(sid)) return;
+
+    setLoadingStrategy(true);
+    getStrategy(sid)
+      .then((strat) => {
+        setSavedStrategyId(strat.id);
+        setStrategyName(strat.name);
+        if (strat.description) setDescription(strat.description);
+        if (strat.exchange) setExchange(strat.exchange);
+        if (strat.timeframe) setTimeframe(strat.timeframe);
+
+        // Try to restore builder_state JSON
+        const rawState = strat.builder_state;
+        if (rawState && typeof rawState === "string") {
+          try {
+            const bs: BuilderState = JSON.parse(rawState);
+            if (bs.leverage) setLeverage(bs.leverage);
+            if (bs.marginMode) setMarginMode(bs.marginMode);
+            if (bs.tradingMode) setTradingMode(bs.tradingMode);
+            if (bs.liquidationBuffer != null) setLiquidationBuffer(bs.liquidationBuffer);
+            if (bs.selectedPairs) setSelectedPairs(bs.selectedPairs);
+            if (bs.indicators) setIndicators(bs.indicators);
+            if (bs.longConditions) setLongConditions(bs.longConditions);
+            if (bs.shortConditions) setShortConditions(bs.shortConditions);
+            if (bs.exitConditions) setExitConditions(bs.exitConditions);
+            if (bs.stoploss != null) setStoploss(bs.stoploss);
+            if (bs.stakeAmount != null) setStakeAmount(bs.stakeAmount);
+            if (bs.maxOpenTrades != null) setMaxOpenTrades(bs.maxOpenTrades);
+            if (bs.trailingStop != null) setTrailingStop(bs.trailingStop);
+            if (bs.trailingStopPositive != null) setTrailingStopPositive(bs.trailingStopPositive);
+            if (bs.trailingStopPositiveOffset != null) setTrailingStopPositiveOffset(bs.trailingStopPositiveOffset);
+            if (bs.trailingOnlyOffsetIsReached != null) setTrailingOnlyOffsetIsReached(bs.trailingOnlyOffsetIsReached);
+            if (bs.roiTable) setRoiTable(bs.roiTable);
+            if (bs.stoplossGuard != null) setStoplossGuard(bs.stoplossGuard);
+            if (bs.maxDrawdown != null) setMaxDrawdown(bs.maxDrawdown);
+            if (bs.cooldownPeriod != null) setCooldownPeriod(bs.cooldownPeriod);
+            if (bs.stoplossType) setStoplossType(bs.stoplossType);
+            if (bs.stoplossOnExchange != null) setStoplossOnExchange(bs.stoplossOnExchange);
+            if (bs.enabledCallbacks) setEnabledCallbacks(bs.enabledCallbacks);
+            if (bs.stakePreset) setStakePreset(bs.stakePreset);
+            if (bs.stakeFixedAmount != null) setStakeFixedAmount(bs.stakeFixedAmount);
+            if (bs.stakePercent != null) setStakePercent(bs.stakePercent);
+            if (bs.stoplossPreset) setStoplossPreset(bs.stoplossPreset);
+            if (bs.entryPriceOffset != null) setEntryPriceOffset(bs.entryPriceOffset);
+            if (bs.exitPriceOffset != null) setExitPriceOffset(bs.exitPriceOffset);
+            if (bs.dcaLevels != null) setDcaLevels(bs.dcaLevels);
+            if (bs.dcaMultiplier != null) setDcaMultiplier(bs.dcaMultiplier);
+            if (bs.leveragePreset) setLeveragePreset(bs.leveragePreset);
+            if (bs.leverageFixedValue != null) setLeverageFixedValue(bs.leverageFixedValue);
+            if (bs.startupCandleCount != null) setStartupCandleCount(bs.startupCandleCount);
+            if (bs.processOnlyNewCandles != null) setProcessOnlyNewCandles(bs.processOnlyNewCandles);
+            if (bs.strategyVersion) setStrategyVersion(bs.strategyVersion);
+            if (bs.orderTypeEntry) setOrderTypeEntry(bs.orderTypeEntry);
+            if (bs.orderTypeExit) setOrderTypeExit(bs.orderTypeExit);
+            if (bs.orderTypeStoploss) setOrderTypeStoploss(bs.orderTypeStoploss);
+            if (bs.orderTifEntry) setOrderTifEntry(bs.orderTifEntry);
+            if (bs.orderTypeEmergencyExit) setOrderTypeEmergencyExit(bs.orderTypeEmergencyExit);
+            if (bs.orderTypeForceEntry) setOrderTypeForceEntry(bs.orderTypeForceEntry);
+            if (bs.orderTypeForceExit) setOrderTypeForceExit(bs.orderTypeForceExit);
+            if (bs.orderTifExit) setOrderTifExit(bs.orderTifExit);
+            if (bs.informativePairs) setInformativePairs(bs.informativePairs);
+            if (bs.stoplossOnExchangeLimitRatio != null) setStoplossOnExchangeLimitRatio(bs.stoplossOnExchangeLimitRatio);
+            if (bs.stoplossOnExchangeInterval != null) setStoplossOnExchangeInterval(bs.stoplossOnExchangeInterval);
+            if (bs.stoplossOnExchangePriceType) setStoplossOnExchangePriceType(bs.stoplossOnExchangePriceType);
+            if (bs.entryTimeoutMinutes != null) setEntryTimeoutMinutes(bs.entryTimeoutMinutes);
+            if (bs.exitTimeoutMinutes != null) setExitTimeoutMinutes(bs.exitTimeoutMinutes);
+            toast.success(`Loaded strategy "${strat.name}" into Builder.`);
+          } catch { /* non-blocking */
+            // builder_state parse failed, fallback to code-only mode
+            setEditorMode("code");
+            setManualCodeEdit(true);
+            toast.warning("Could not restore wizard state. Showing code editor.");
+          }
+        } else if (strat.code) {
+          // No builder_state — code-only mode
+          setEditableCode(strat.code);
+          setEditorMode("code");
+          setManualCodeEdit(true);
+          toast.info("No wizard state saved. Showing code editor.");
+        }
+      })
+      .catch((err) => {
+        toast.error(err instanceof Error ? err.message : "Failed to load strategy.");
+      })
+      .finally(() => setLoadingStrategy(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function toggleCallback(key: string) {
@@ -676,13 +860,32 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
     setShowAddPairInput(false);
   }
 
+  // ─── Builder state snapshot (for re-edit) ──────────────
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+  function getBuilderState(): BuilderState & Record<string, unknown> {
+    return {
+      strategyName, description, exchange, timeframe, leverage, marginMode, tradingMode,
+      liquidationBuffer, selectedPairs, indicators, longConditions, shortConditions, exitConditions,
+      stoploss, stakeAmount, maxOpenTrades, trailingStop, trailingStopPositive, trailingStopPositiveOffset,
+      trailingOnlyOffsetIsReached, roiTable, stoplossGuard, maxDrawdown, cooldownPeriod,
+      stoplossType, stoplossOnExchange, stoplossOnExchangeLimitRatio, stoplossOnExchangeInterval,
+      stoplossOnExchangePriceType, enabledCallbacks, stakePreset, stakeFixedAmount, stakePercent,
+      stoplossPreset, entryPriceOffset, exitPriceOffset, entryTimeoutMinutes, exitTimeoutMinutes,
+      dcaLevels, dcaMultiplier, leveragePreset, leverageFixedValue, startupCandleCount,
+      processOnlyNewCandles, strategyVersion, orderTypeEntry, orderTypeExit, orderTypeEmergencyExit,
+      orderTypeForceEntry, orderTypeForceExit, orderTypeStoploss, orderTifEntry, orderTifExit,
+      informativePairs,
+    };
+  }
+
   // ─── Save strategy (C11 + Mi16) ───────────────────────
   const handleSaveStrategy = useCallback(async () => {
     if (!strategyName.trim()) { toast.warning("Strategy name is required."); return; }
     setSaving(true);
     const id = toast.loading(`Saving ${strategyName} to Orchestrator...`);
+    const finalCode = manualCodeEdit ? editableCode : generateStrategyCode;
     try {
-      await createStrategy({
+      const saveData = {
         name: strategyName,
         description,
         exchange,
@@ -707,8 +910,16 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         long_conditions: longConditions,
         short_conditions: shortConditions,
         exit_conditions: exitConditions,
-        code: generateStrategyCode,
-      });
+        code: finalCode,
+        builder_state: JSON.stringify(getBuilderState()),
+      };
+
+      if (savedStrategyId) {
+        await updateStrategy(savedStrategyId, saveData);
+      } else {
+        const created = await createStrategy(saveData);
+        setSavedStrategyId(created.id);
+      }
       toast.dismiss(id);
       toast.success(`${strategyName} saved as DRAFT in Orchestrator.`);
     } catch (err) {
@@ -720,10 +931,12 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
     } finally {
       setSaving(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [strategyName, description, exchange, timeframe, selectedPairs, stoploss, stakeAmount, maxOpenTrades,
      trailingStop, trailingStopPositive, trailingStopPositiveOffset, roiTable,
      stoplossGuard, maxDrawdown, cooldownPeriod, indicators, longConditions,
-     shortConditions, exitConditions, generateStrategyCode, toast]);
+     shortConditions, exitConditions, generateStrategyCode, manualCodeEdit, editableCode,
+     savedStrategyId, toast]);
 
   function togglePair(pair: string) {
     setSelectedPairs((prev) =>
@@ -1012,9 +1225,11 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
       <div className="space-y-6">
         {/* Strategy Name */}
         <div>
-          <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-            Strategy Name <span className="text-red text-[13px]">*</span>
-          </label>
+          <Tooltip content={TOOLTIPS.strategy_name?.description ?? "Name for this strategy"} configKey="strategy_name">
+            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+              Strategy Name <span className="text-red text-[13px]">*</span>
+            </label>
+          </Tooltip>
           <input
             className="w-full px-3.5 py-2.5 rounded-md border border-border bg-bg-2 text-text-0 text-[13px] outline-none focus:border-accent placeholder:text-text-3"
             type="text"
@@ -1026,9 +1241,11 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
 
         {/* Description */}
         <div>
-          <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-            Description
-          </label>
+          <Tooltip content={"A brief description of what this strategy does and its approach"} configKey="description">
+            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+              Description
+            </label>
+          </Tooltip>
           <textarea
             className="w-full px-3.5 py-2.5 rounded-md border border-border bg-bg-2 text-text-0 text-[13px] outline-none focus:border-accent placeholder:text-text-3 resize-y min-h-[60px]"
             placeholder="What does this strategy do?"
@@ -1040,9 +1257,11 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         {/* Exchange + Timeframe */}
         <div className="grid grid-cols-2 gap-3.5">
           <div>
-            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-              Exchange
-            </label>
+            <Tooltip content={TOOLTIPS.exchange_name?.description ?? "Exchange to trade on"} configKey="exchange.name">
+              <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+                Exchange
+              </label>
+            </Tooltip>
             <select
               className="w-full px-3.5 py-2.5 rounded-md border border-border bg-bg-2 text-text-0 text-[13px] outline-none focus:border-accent cursor-pointer appearance-none"
               value={exchange}
@@ -1054,9 +1273,11 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
             </select>
           </div>
           <div>
-            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-              Timeframe <span className="text-red text-[13px]">*</span>
-            </label>
+            <Tooltip content={TOOLTIPS.timeframe?.description ?? "Candle timeframe for the strategy"} configKey="timeframe">
+              <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+                Timeframe <span className="text-red text-[13px]">*</span>
+              </label>
+            </Tooltip>
             <select
               className="w-full px-3.5 py-2.5 rounded-md border border-border bg-bg-2 text-text-0 text-[13px] outline-none focus:border-accent cursor-pointer appearance-none"
               value={timeframe}
@@ -1071,10 +1292,12 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
 
         {/* Trading Pairs */}
         <div>
-          <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-            Trading Pairs <span className="text-red text-[13px]">*</span>{" "}
-            <span className="font-normal text-text-3 normal-case tracking-normal">&mdash; click to add</span>
-          </label>
+          <Tooltip content={TOOLTIPS.exchange_pair_whitelist?.description ?? "Trading pairs for this strategy"} configKey="exchange.pair_whitelist">
+            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+              Trading Pairs <span className="text-red text-[13px]">*</span>{" "}
+              <span className="font-normal text-text-3 normal-case tracking-normal">&mdash; click to add</span>
+            </label>
+          </Tooltip>
           <div className="flex flex-wrap gap-2">
             {availablePairs.map((tp) => {
               const isSelected = selectedPairs.includes(tp.pair);
@@ -1136,13 +1359,22 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
 
         {/* Leverage/Futures Section (§10) */}
         <div>
-          <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-            Trading Mode &amp; Leverage{" "}
-            <span className="font-normal text-text-3 normal-case tracking-normal">&mdash; &sect;10 Leverage / Futures</span>
-          </label>
+          <Tooltip content={TOOLTIPS.trading_mode?.description ?? "Trading mode and leverage configuration"} configKey="trading_mode">
+            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+              Trading Mode &amp; Leverage{" "}
+              <span className="font-normal text-text-3 normal-case tracking-normal">&mdash; &sect;10 Leverage / Futures</span>
+            </label>
+          </Tooltip>
           <div className="grid grid-cols-3 gap-3.5">
             <div>
-              <div className="text-[10px] text-text-3 mb-1">trading_mode</div>
+              <div className="text-[10px] text-text-3 mb-1">
+                <Tooltip
+                  content={TOOLTIPS.trading_mode?.description || "Trading mode"}
+                  configKey={TOOLTIPS.trading_mode?.configKey}
+                >
+                  Trading Mode
+                </Tooltip>
+              </div>
               <select
                 className="w-full px-3.5 py-2.5 rounded-md border border-border bg-bg-2 text-text-0 text-[13px] outline-none focus:border-accent cursor-pointer appearance-none"
                 value={tradingMode}
@@ -1154,7 +1386,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               </select>
             </div>
             <div>
-              <div className="text-[10px] text-text-3 mb-1">margin_mode</div>
+              <div className="text-[10px] text-text-3 mb-1">
+                <Tooltip
+                  content={TOOLTIPS.margin_mode?.description || "Margin mode"}
+                  configKey={TOOLTIPS.margin_mode?.configKey}
+                >
+                  Margin Mode
+                </Tooltip>
+              </div>
               <select
                 className="w-full px-3.5 py-2.5 rounded-md border border-border bg-bg-2 text-text-0 text-[13px] outline-none focus:border-accent cursor-pointer appearance-none"
                 value={marginMode}
@@ -1167,7 +1406,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               </select>
             </div>
             <div>
-              <div className="text-[10px] text-text-3 mb-1">Leverage</div>
+              <div className="text-[10px] text-text-3 mb-1">
+                <Tooltip
+                  content={TOOLTIPS.leverage?.description || "Leverage for futures trading"}
+                  configKey={TOOLTIPS.leverage?.configKey}
+                >
+                  Leverage
+                </Tooltip>
+              </div>
               <select
                 className="w-full px-3.5 py-2.5 rounded-md border border-border bg-bg-2 text-text-0 text-[13px] outline-none focus:border-accent cursor-pointer appearance-none"
                 value={leverage}
@@ -1183,7 +1429,12 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
           {tradingMode === "futures" && (
             <div className="mt-3">
               <div className="flex items-center gap-2">
-                <div className="text-[10px] text-text-3">liquidation_buffer:</div>
+                <Tooltip
+                  content={TOOLTIPS.liquidation_buffer?.description || "Buffer to maintain before liquidation"}
+                  configKey={TOOLTIPS.liquidation_buffer?.configKey}
+                >
+                  <div className="text-[10px] text-text-3">Liquidation Buffer</div>
+                </Tooltip>
                 <input
                   type="number"
                   className="w-20 px-2 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs font-mono outline-none focus:border-accent text-center"
@@ -1205,12 +1456,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
   function renderIndicators() {
     return (
       <div>
-        <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-          Select Indicators{" "}
-          <span className="font-normal text-text-3 normal-case tracking-normal">
-            &mdash; these will be calculated in populate_indicators()
-          </span>
-        </label>
+        <Tooltip content={"Technical indicators calculated in populate_indicators(). Select the ones your strategy will use for signals."} configKey="populate_indicators">
+          <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+            Select Indicators{" "}
+            <span className="font-normal text-text-3 normal-case tracking-normal">
+              &mdash; these will be calculated in populate_indicators()
+            </span>
+          </label>
+        </Tooltip>
         <input
           className="w-full px-3.5 py-2.5 rounded-md border border-border bg-bg-2 text-text-0 text-[13px] outline-none focus:border-accent placeholder:text-text-3 mb-4"
           type="text"
@@ -1263,23 +1516,27 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
       <div className="space-y-6">
         {/* Long Entry */}
         <div>
-          <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-            Long Entry Conditions{" "}
-            <span className="font-normal text-text-3 normal-case tracking-normal">
-              &mdash; populate_entry_trend() buy signals
-            </span>
-          </label>
+          <Tooltip content={"Conditions that trigger long (buy) entries in populate_entry_trend(). All conditions must be true simultaneously."} configKey="populate_entry_trend">
+            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+              Long Entry Conditions{" "}
+              <span className="font-normal text-text-3 normal-case tracking-normal">
+                &mdash; populate_entry_trend() buy signals
+              </span>
+            </label>
+          </Tooltip>
           {renderConditionBlock(longConditions, setLongConditions, "IF", "Add condition")}
         </div>
 
         {/* Short Entry */}
         <div>
-          <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-            Short Entry Conditions{" "}
-            <span className="font-normal text-text-3 normal-case tracking-normal">
-              &mdash; optional, leave empty for long-only
-            </span>
-          </label>
+          <Tooltip content={"Conditions that trigger short (sell) entries. Leave empty for long-only strategies. Requires futures trading mode."} configKey="populate_entry_trend">
+            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+              Short Entry Conditions{" "}
+              <span className="font-normal text-text-3 normal-case tracking-normal">
+                &mdash; optional, leave empty for long-only
+              </span>
+            </label>
+          </Tooltip>
           {renderConditionBlock(shortConditions, setShortConditions, "IF", "Add condition")}
         </div>
       </div>
@@ -1290,12 +1547,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
     return (
       <div className="space-y-5">
         <div>
-          <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-            Custom Exit Conditions{" "}
-            <span className="font-normal text-text-3 normal-case tracking-normal">
-              &mdash; populate_exit_trend() signals (optional &mdash; stoploss/ROI also exits)
-            </span>
-          </label>
+          <Tooltip content={"Custom exit signals defined in populate_exit_trend(). Optional — trades can also exit via stoploss, trailing_stop, and minimal_roi."} configKey="populate_exit_trend">
+            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+              Custom Exit Conditions{" "}
+              <span className="font-normal text-text-3 normal-case tracking-normal">
+                &mdash; populate_exit_trend() signals (optional &mdash; stoploss/ROI also exits)
+              </span>
+            </label>
+          </Tooltip>
           {renderConditionBlock(exitConditions, setExitConditions, "EXIT IF", "Add exit condition")}
         </div>
 
@@ -1323,7 +1582,13 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
           {/* stoploss */}
           <div className="bg-bg-2 border border-border rounded-lg p-4">
             <div className="text-xs font-semibold text-text-0 mb-1 flex items-center gap-1.5">
-              <span className="text-sm">&#128721;</span> stoploss
+              <span className="text-sm">&#128721;</span>
+              <Tooltip
+                content={TOOLTIPS.stoploss?.description || "Maximum loss per trade"}
+                configKey={TOOLTIPS.stoploss?.configKey}
+              >
+                Stoploss
+              </Tooltip>
             </div>
             <div className="text-[10px] text-text-3 mb-2.5 leading-snug">
               Maximum loss before FT closes the trade. Applied per trade.
@@ -1343,7 +1608,13 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
           {/* stake_amount */}
           <div className="bg-bg-2 border border-border rounded-lg p-4">
             <div className="text-xs font-semibold text-text-0 mb-1 flex items-center gap-1.5">
-              <span className="text-sm">&#128207;</span> stake_amount
+              <span className="text-sm">&#128207;</span>
+              <Tooltip
+                content={TOOLTIPS.stake_amount?.description || "Amount per trade"}
+                configKey={TOOLTIPS.stake_amount?.configKey}
+              >
+                Stake Amount
+              </Tooltip>
             </div>
             <div className="text-[10px] text-text-3 mb-2.5 leading-snug">
               Amount per trade in quote currency (USDT).
@@ -1363,7 +1634,13 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
           {/* max_open_trades */}
           <div className="bg-bg-2 border border-border rounded-lg p-4">
             <div className="text-xs font-semibold text-text-0 mb-1 flex items-center gap-1.5">
-              <span className="text-sm">&#128202;</span> max_open_trades
+              <span className="text-sm">&#128202;</span>
+              <Tooltip
+                content={TOOLTIPS.max_open_trades?.description || "Maximum concurrent trades"}
+                configKey={TOOLTIPS.max_open_trades?.configKey}
+              >
+                Max Open Trades
+              </Tooltip>
             </div>
             <div className="text-[10px] text-text-3 mb-2.5 leading-snug">
               Maximum concurrent open trades per bot.
@@ -1383,12 +1660,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
 
         {/* Stoploss Type Selector (§4) */}
         <div>
-          <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-            Stoploss Type{" "}
-            <span className="font-normal text-text-3 normal-case tracking-normal">
-              &mdash; &sect;4: 6 stoploss types
-            </span>
-          </label>
+          <Tooltip content={TOOLTIPS.stoploss?.description ?? "Choose the stoploss mechanism: fixed, trailing, trailing with offset, custom callback, or on-exchange."} configKey="stoploss">
+            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+              Stoploss Type{" "}
+              <span className="font-normal text-text-3 normal-case tracking-normal">
+                &mdash; &sect;4: 6 stoploss types
+              </span>
+            </label>
+          </Tooltip>
           <div className="flex flex-wrap gap-2 mb-3">
             {([
               { value: "fixed" as const, label: "Fixed" },
@@ -1416,7 +1695,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
           {(stoplossType === "trailing" || stoplossType === "trailing_offset") && (
             <div className="bg-bg-2 border border-border rounded-lg p-4 space-y-3">
               <div>
-                <div className="text-[10px] text-text-3 mb-1">trailing_stop_positive</div>
+                <div className="text-[10px] text-text-3 mb-1">
+                  <Tooltip
+                    content={TOOLTIPS.trailing_stop_positive?.description || "Profit stoploss distance"}
+                    configKey={TOOLTIPS.trailing_stop_positive?.configKey}
+                  >
+                    Trailing Stop Positive
+                  </Tooltip>
+                </div>
                 <div className="flex items-center gap-2">
                   <input
                     className="flex-1 px-2.5 py-2 rounded border border-border bg-bg-3 text-text-0 text-[13px] font-mono outline-none focus:border-accent text-center"
@@ -1427,7 +1713,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 </div>
               </div>
               <div>
-                <div className="text-[10px] text-text-3 mb-1">trailing_stop_positive_offset</div>
+                <div className="text-[10px] text-text-3 mb-1">
+                  <Tooltip
+                    content={TOOLTIPS.trailing_stop_positive_offset?.description || "Offset for positive trailing stop"}
+                    configKey={TOOLTIPS.trailing_stop_positive_offset?.configKey}
+                  >
+                    Trailing Stop Positive Offset
+                  </Tooltip>
+                </div>
                 <div className="flex items-center gap-2">
                   <input
                     className="flex-1 px-2.5 py-2 rounded border border-border bg-bg-3 text-text-0 text-[13px] font-mono outline-none focus:border-accent text-center"
@@ -1438,11 +1731,15 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <ToggleSwitch
-                  enabled={trailingOnlyOffsetIsReached}
-                  onToggle={() => setTrailingOnlyOffsetIsReached(!trailingOnlyOffsetIsReached)}
-                  label="trailing_only_offset_is_reached"
-                />
+                <Tooltip
+                  content={TOOLTIPS.trailing_only_offset_is_reached?.description || "Only use positive stoploss after offset is reached"}
+                  configKey={TOOLTIPS.trailing_only_offset_is_reached?.configKey}
+                >
+                  <ToggleSwitch
+                    enabled={trailingOnlyOffsetIsReached}
+                    onToggle={() => setTrailingOnlyOffsetIsReached(!trailingOnlyOffsetIsReached)}
+                  />
+                </Tooltip>
               </div>
             </div>
           )}
@@ -1474,15 +1771,26 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
           {/* On Exchange stoploss */}
           {stoplossType === "on_exchange" && (
             <div className="bg-bg-2 border border-border rounded-lg p-4 space-y-3">
-              <ToggleSwitch
-                enabled={stoplossOnExchange}
-                onToggle={() => setStoplossOnExchange(!stoplossOnExchange)}
-                label="stoploss_on_exchange"
-              />
+              <Tooltip
+                content={TOOLTIPS.stoploss_on_exchange?.description || "Place stoploss order on exchange"}
+                configKey={TOOLTIPS.stoploss_on_exchange?.configKey}
+              >
+                <ToggleSwitch
+                  enabled={stoplossOnExchange}
+                  onToggle={() => setStoplossOnExchange(!stoplossOnExchange)}
+                />
+              </Tooltip>
               {stoplossOnExchange && (
                 <>
                   <div>
-                    <div className="text-[10px] text-text-3 mb-1">stoploss_on_exchange_limit_ratio</div>
+                    <div className="text-[10px] text-text-3 mb-1">
+                      <Tooltip
+                        content={TOOLTIPS.stoploss_on_exchange_limit_ratio?.description || "Limit ratio for exchange stoploss"}
+                        configKey={TOOLTIPS.stoploss_on_exchange_limit_ratio?.configKey}
+                      >
+                        Limit Ratio
+                      </Tooltip>
+                    </div>
                     <input
                       type="number"
                       className="w-24 px-2 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs font-mono outline-none focus:border-accent text-center"
@@ -1491,7 +1799,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                     />
                   </div>
                   <div>
-                    <div className="text-[10px] text-text-3 mb-1">stoploss_on_exchange_interval (seconds)</div>
+                    <div className="text-[10px] text-text-3 mb-1">
+                      <Tooltip
+                        content={TOOLTIPS.stoploss_on_exchange_interval?.description || "Update interval for exchange stoploss"}
+                        configKey={TOOLTIPS.stoploss_on_exchange_interval?.configKey}
+                      >
+                        Update Interval (seconds)
+                      </Tooltip>
+                    </div>
                     <input
                       type="number"
                       className="w-24 px-2 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs font-mono outline-none focus:border-accent text-center"
@@ -1500,11 +1815,21 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                     />
                   </div>
                   <div>
-                    <div className="text-[10px] text-text-3 mb-1">stoploss_price_type</div>
+                    <div className="text-[10px] text-text-3 mb-1">
+                      <Tooltip
+                        content={TOOLTIPS.stoploss_on_exchange_price_type?.description || "Price type for exchange stoploss"}
+                        configKey={TOOLTIPS.stoploss_on_exchange_price_type?.configKey}
+                      >
+                        Price Type
+                      </Tooltip>
+                    </div>
                     <select
                       className="w-32 px-2 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs outline-none focus:border-accent"
                       value={stoplossOnExchangePriceType}
-                      onChange={(e) => setStoplossOnExchangePriceType(e.target.value as "last" | "mark" | "index")}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                        const v = e.target.value;
+                        if (v === "last" || v === "mark" || v === "index") setStoplossOnExchangePriceType(v);
+                      }}
                     >
                       <option value="last">last</option>
                       <option value="mark">mark</option>
@@ -1520,7 +1845,13 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         {/* minimal_roi */}
         <div>
           <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-            minimal_roi{" "}
+            <Tooltip
+              content={TOOLTIPS.minimal_roi?.description || "Target ROI at different time intervals"}
+              configKey={TOOLTIPS.minimal_roi?.configKey}
+            >
+              Minimal ROI
+            </Tooltip>
+            {" "}
             <span className="font-normal text-text-3 normal-case tracking-normal">
               &mdash; Return targets at minutes elapsed
             </span>
@@ -1578,17 +1909,21 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
 
         {/* Protections */}
         <div>
-          <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-            FT Protections{" "}
-            <span className="font-normal text-text-3 normal-case tracking-normal">
-              &mdash; per-bot safety handled by FreqTrade
-            </span>
-          </label>
+          <Tooltip content={"FreqTrade built-in protections (§7). Per-bot safety mechanisms that pause trading when conditions are met."} configKey="protections">
+            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+              FT Protections{" "}
+              <span className="font-normal text-text-3 normal-case tracking-normal">
+                &mdash; per-bot safety handled by FreqTrade
+              </span>
+            </label>
+          </Tooltip>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
             {/* StoplossGuard */}
             <div className="bg-bg-2 border border-border rounded-lg p-4">
               <div className="text-xs font-semibold text-text-0 mb-2 flex items-center gap-1.5">
-                StoplossGuard
+                <Tooltip content={TOOLTIPS.protection_stoploss_guard?.description ?? "Pause trading after N stoploss events in a time period"} configKey="protections[].method: StoplossGuard">
+                  StoplossGuard
+                </Tooltip>
               </div>
               <ToggleSwitch enabled={stoplossGuard} onToggle={() => setStoplossGuard(!stoplossGuard)} label="3 SL in 1h &rarr; lock 30m" />
             </div>
@@ -1596,7 +1931,9 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
             {/* MaxDrawdown */}
             <div className="bg-bg-2 border border-border rounded-lg p-4">
               <div className="text-xs font-semibold text-text-0 mb-2 flex items-center gap-1.5">
-                MaxDrawdown
+                <Tooltip content={TOOLTIPS.protection_max_drawdown?.description ?? "Pause trading when portfolio drawdown exceeds a threshold"} configKey="protections[].method: MaxDrawdown">
+                  MaxDrawdown
+                </Tooltip>
               </div>
               <ToggleSwitch enabled={maxDrawdown} onToggle={() => setMaxDrawdown(!maxDrawdown)} label="5% DD in 48h &rarr; lock 12h" />
             </div>
@@ -1604,7 +1941,9 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
             {/* CooldownPeriod */}
             <div className="bg-bg-2 border border-border rounded-lg p-4">
               <div className="text-xs font-semibold text-text-0 mb-2 flex items-center gap-1.5">
-                CooldownPeriod
+                <Tooltip content={TOOLTIPS.protection_cooldown_period?.description ?? "Cooldown period after a trade closes on a pair"} configKey="protections[].method: CooldownPeriod">
+                  CooldownPeriod
+                </Tooltip>
               </div>
               <ToggleSwitch enabled={cooldownPeriod} onToggle={() => setCooldownPeriod(!cooldownPeriod)} label="5 candles cooldown after trade" />
             </div>
@@ -1620,12 +1959,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
       <div className="space-y-3">
         <div className="flex items-center justify-between mb-2">
           <div>
-            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-              Strategy Callbacks{" "}
-              <span className="font-normal text-text-3 normal-case tracking-normal">
-                &mdash; &sect;3: 19 IStrategy callbacks
-              </span>
-            </label>
+            <Tooltip content={"IStrategy callbacks (§3). Enable callbacks to add custom logic for trade entry, exit, stoploss, position sizing, and more."} configKey="IStrategy callbacks">
+              <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide">
+                Strategy Callbacks{" "}
+                <span className="font-normal text-text-3 normal-case tracking-normal">
+                  &mdash; &sect;3: 19 IStrategy callbacks
+                </span>
+              </label>
+            </Tooltip>
             <div className="text-[10px] text-text-3 mt-1">
               {enabledCount} of 19 callbacks enabled. Each generates code in the strategy file.
             </div>
@@ -1667,17 +2008,26 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
       <div className="space-y-6">
         {/* Strategy Interface (§2) */}
         <div>
-          <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-            Strategy Interface{" "}
-            <span className="font-normal text-text-3 normal-case tracking-normal">
-              &mdash; &sect;2 IStrategy class attributes
-            </span>
-          </label>
+          <Tooltip content={"IStrategy class attributes (§2). Core settings that define how the strategy behaves."} configKey="IStrategy">
+            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+              Strategy Interface{" "}
+              <span className="font-normal text-text-3 normal-case tracking-normal">
+                &mdash; &sect;2 IStrategy class attributes
+              </span>
+            </label>
+          </Tooltip>
 
           <div className="grid grid-cols-2 gap-4">
             {/* startup_candle_count */}
             <div className="bg-bg-2 border border-border rounded-lg p-4">
-              <div className="text-xs font-semibold text-text-0 mb-1">startup_candle_count</div>
+              <div className="text-xs font-semibold text-text-0 mb-1">
+                <Tooltip
+                  content={TOOLTIPS.startup_candle_count?.description || "Candles needed before strategy starts"}
+                  configKey={TOOLTIPS.startup_candle_count?.configKey}
+                >
+                  Startup Candle Count
+                </Tooltip>
+              </div>
               <div className="text-[10px] text-text-3 mb-2 leading-snug">
                 Number of candles needed before the strategy starts generating signals.
               </div>
@@ -1691,20 +2041,38 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
 
             {/* process_only_new_candles */}
             <div className="bg-bg-2 border border-border rounded-lg p-4">
-              <div className="text-xs font-semibold text-text-0 mb-1">process_only_new_candles</div>
+              <div className="text-xs font-semibold text-text-0 mb-1">
+                <Tooltip
+                  content={TOOLTIPS.process_only_new_candles?.description || "Only process on new candles"}
+                  configKey={TOOLTIPS.process_only_new_candles?.configKey}
+                >
+                  Process Only New Candles
+                </Tooltip>
+              </div>
               <div className="text-[10px] text-text-3 mb-2 leading-snug">
                 Only process indicators/signals when a new candle appears. Recommended: True.
               </div>
-              <ToggleSwitch
-                enabled={processOnlyNewCandles}
-                onToggle={() => setProcessOnlyNewCandles(!processOnlyNewCandles)}
-                label={processOnlyNewCandles ? "True" : "False"}
-              />
+              <Tooltip
+                content={TOOLTIPS.process_only_new_candles?.description || "Only process on new candles"}
+                configKey={TOOLTIPS.process_only_new_candles?.configKey}
+              >
+                <ToggleSwitch
+                  enabled={processOnlyNewCandles}
+                  onToggle={() => setProcessOnlyNewCandles(!processOnlyNewCandles)}
+                />
+              </Tooltip>
             </div>
 
             {/* version */}
             <div className="bg-bg-2 border border-border rounded-lg p-4">
-              <div className="text-xs font-semibold text-text-0 mb-1">version()</div>
+              <div className="text-xs font-semibold text-text-0 mb-1">
+                <Tooltip
+                  content={TOOLTIPS.strategy_version?.description || "Strategy version identifier"}
+                  configKey={TOOLTIPS.strategy_version?.configKey}
+                >
+                  Strategy Version
+                </Tooltip>
+              </div>
               <div className="text-[10px] text-text-3 mb-2 leading-snug">
                 Strategy version string. Used for tracking strategy changes.
               </div>
@@ -1722,7 +2090,13 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         {/* Order Types (§2) */}
         <div>
           <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-            order_types{" "}
+            <Tooltip
+              content={TOOLTIPS.order_types?.description || "Order types for different order stages"}
+              configKey={TOOLTIPS.order_types?.configKey}
+            >
+              Order Types
+            </Tooltip>
+            {" "}
             <span className="font-normal text-text-3 normal-case tracking-normal">
               &mdash; market or limit for each order type
             </span>
@@ -1750,7 +2124,10 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                       <select
                         className="px-2 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs outline-none focus:border-accent"
                         value={row.value}
-                        onChange={(e) => row.setter(e.target.value as "market" | "limit")}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                          const v = e.target.value;
+                          if (v === "market" || v === "limit") row.setter(v);
+                        }}
                       >
                         <option value="market">market</option>
                         <option value="limit">limit</option>
@@ -1766,7 +2143,13 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         {/* Order Time in Force */}
         <div>
           <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-            order_time_in_force{" "}
+            <Tooltip
+              content={TOOLTIPS.order_time_in_force?.description || "Time in force for orders"}
+              configKey={TOOLTIPS.order_time_in_force?.configKey}
+            >
+              Order Time in Force
+            </Tooltip>
+            {" "}
             <span className="font-normal text-text-3 normal-case tracking-normal">
               &mdash; GTC / FOK / IOC / PO
             </span>
@@ -1777,7 +2160,10 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               <select
                 className="w-full px-2.5 py-2 rounded border border-border bg-bg-3 text-text-0 text-xs outline-none focus:border-accent"
                 value={orderTifEntry}
-                onChange={(e) => setOrderTifEntry(e.target.value as "GTC" | "FOK" | "IOC" | "PO")}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                  const v = e.target.value;
+                  if (v === "GTC" || v === "FOK" || v === "IOC" || v === "PO") setOrderTifEntry(v);
+                }}
               >
                 <option value="GTC">GTC (Good Till Cancelled)</option>
                 <option value="FOK">FOK (Fill or Kill)</option>
@@ -1790,7 +2176,10 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               <select
                 className="w-full px-2.5 py-2 rounded border border-border bg-bg-3 text-text-0 text-xs outline-none focus:border-accent"
                 value={orderTifExit}
-                onChange={(e) => setOrderTifExit(e.target.value as "GTC" | "FOK" | "IOC" | "PO")}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                  const v = e.target.value;
+                  if (v === "GTC" || v === "FOK" || v === "IOC" || v === "PO") setOrderTifExit(v);
+                }}
               >
                 <option value="GTC">GTC (Good Till Cancelled)</option>
                 <option value="FOK">FOK (Fill or Kill)</option>
@@ -1804,7 +2193,13 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         {/* Informative Pairs */}
         <div>
           <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-            informative_pairs(){" "}
+            <Tooltip
+              content={TOOLTIPS.informative_pairs?.description || "Additional pairs and timeframes for analysis"}
+              configKey={TOOLTIPS.informative_pairs?.configKey}
+            >
+              Informative Pairs
+            </Tooltip>
+            {" "}
             <span className="font-normal text-text-3 normal-case tracking-normal">
               &mdash; additional pairs/timeframes for multi-timeframe analysis
             </span>
@@ -1997,6 +2392,16 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
     8: renderReview,
   };
 
+  if (loadingStrategy) {
+    return (
+      <AppShell title="Strategy Builder">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-sm text-text-3 animate-pulse">Loading strategy...</div>
+        </div>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell title="Strategy Builder">
       <div className="flex -m-8 h-[calc(100vh-56px)]">
@@ -2057,6 +2462,13 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               >
                 {saving ? "Saving..." : "Save as Draft"}
               </button>
+              <button
+                type="button"
+                className="px-3.5 py-2 rounded-md border border-accent/30 bg-accent/10 text-accent text-xs font-semibold cursor-pointer hover:bg-accent/20 transition-all flex items-center gap-1.5"
+                onClick={() => setDeployOpen(true)}
+              >
+                Deploy to Bot
+              </button>
               {currentStep < steps.length ? (
                 <button
                   type="button"
@@ -2079,46 +2491,106 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
           </div>
         </div>
 
-        {/* Right: Code Preview */}
+        {/* Right: Code Panel (Visual preview / Monaco editor) */}
         <div className="w-[420px] flex flex-col bg-bg-1 flex-shrink-0">
           <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-            <div className="text-xs font-semibold text-text-0 flex items-center gap-1.5">
-              {strategyName}.py
+            <div className="flex items-center gap-2">
+              <div className="flex bg-bg-3 rounded p-0.5">
+                <button type="button"
+                  onClick={() => setEditorMode("visual")}
+                  className={`px-2.5 py-1 text-[10px] font-semibold rounded cursor-pointer transition-all ${
+                    editorMode === "visual" ? "bg-bg-2 text-text-0 shadow-sm" : "text-text-3 hover:text-text-1"
+                  }`}>
+                  Preview
+                </button>
+                <button type="button"
+                  onClick={() => {
+                    if (editorMode !== "code" && !manualCodeEdit) {
+                      setEditableCode(generateStrategyCode);
+                    }
+                    setEditorMode("code");
+                  }}
+                  className={`px-2.5 py-1 text-[10px] font-semibold rounded cursor-pointer transition-all ${
+                    editorMode === "code" ? "bg-bg-2 text-text-0 shadow-sm" : "text-text-3 hover:text-text-1"
+                  }`}>
+                  Editor
+                </button>
+              </div>
+              <span className="text-xs font-semibold text-text-0">{strategyName}.py</span>
             </div>
             <div className="flex gap-1.5">
-              <button
-                type="button"
+              <button type="button"
                 className="px-2.5 py-1 rounded border border-border bg-bg-2 text-text-2 text-[10px] cursor-pointer hover:border-border-hover hover:text-text-1 transition-all"
                 onClick={() => {
-                  navigator.clipboard.writeText(generateStrategyCode);
+                  const code = editorMode === "code" && manualCodeEdit ? editableCode : generateStrategyCode;
+                  navigator.clipboard.writeText(code);
                   toast.success("Code copied to clipboard.");
-                }}
-              >
+                }}>
                 Copy
               </button>
-              <button
-                type="button"
+              <button type="button"
                 className="px-2.5 py-1 rounded border border-border bg-bg-2 text-text-2 text-[10px] cursor-pointer hover:border-border-hover hover:text-text-1 transition-all"
                 onClick={() => {
-                  const blob = new Blob([generateStrategyCode], { type: "text/plain" });
+                  const code = editorMode === "code" && manualCodeEdit ? editableCode : generateStrategyCode;
+                  const blob = new Blob([code], { type: "text/plain" });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement("a");
                   a.href = url;
                   a.download = `${strategyName}.py`;
                   a.click();
                   URL.revokeObjectURL(url);
-                }}
-              >
+                }}>
                 Download .py
               </button>
             </div>
           </div>
-          <div className="flex-1 overflow-auto p-5 px-6">
-            <pre className="font-mono text-[11.5px] leading-[1.7] text-text-1 whitespace-pre tab-size-4">
-              {generateStrategyCode}
-            </pre>
-          </div>
+
+          {manualCodeEdit && editorMode === "visual" && (
+            <div className="px-4 py-2 bg-amber-bg border-b border-amber/20">
+              <span className="text-2xs text-amber">Code was edited manually. Preview may not reflect all changes.</span>
+            </div>
+          )}
+
+          {editorMode === "visual" ? (
+            <div className="flex-1 overflow-auto p-5 px-6">
+              <pre className="font-mono text-[11.5px] leading-[1.7] text-text-1 whitespace-pre tab-size-4">
+                {generateStrategyCode}
+              </pre>
+            </div>
+          ) : (
+            <div className="flex-1 overflow-hidden">
+              <MonacoEditor
+                height="100%"
+                language="python"
+                theme="vs-dark"
+                value={editableCode || generateStrategyCode}
+                onChange={(value) => {
+                  setEditableCode(value || "");
+                  setManualCodeEdit(true);
+                }}
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 13,
+                  lineNumbers: "on",
+                  scrollBeyondLastLine: false,
+                  wordWrap: "on",
+                  automaticLayout: true,
+                  readOnly: false,
+                }}
+              />
+            </div>
+          )}
         </div>
+
+        {/* Deploy Modal */}
+        <DeployModal
+          open={deployOpen}
+          strategyName={strategyName}
+          strategyCode={manualCodeEdit ? editableCode : generateStrategyCode}
+          strategyId={savedStrategyId}
+          onClose={() => setDeployOpen(false)}
+          onSuccess={() => {}}
+        />
       </div>
     </AppShell>
   );

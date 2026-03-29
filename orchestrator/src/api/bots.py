@@ -228,7 +228,8 @@ async def start_bot(bot_id: int, request: Request, db: AsyncSession = Depends(ge
     except ValueError as e:
         raise HTTPException(404, str(e))
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.post("/{bot_id}/stop")
@@ -241,7 +242,8 @@ async def stop_bot(bot_id: int, request: Request, db: AsyncSession = Depends(get
     except ValueError as e:
         raise HTTPException(404, str(e))
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.post("/{bot_id}/reload-config")
@@ -254,7 +256,8 @@ async def reload_config(bot_id: int, request: Request, db: AsyncSession = Depend
     except ValueError as e:
         raise HTTPException(404, str(e))
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 # ── FT API Passthrough (read-only) ──────────────────────────
@@ -271,7 +274,8 @@ async def bot_status(bot_id: int, request: Request, db: AsyncSession = Depends(g
     try:
         return await manager.get_bot_status(bot)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/trades")
@@ -290,7 +294,8 @@ async def bot_trades(
     try:
         return await manager.get_bot_trades(bot, limit=limit, offset=offset)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/profit")
@@ -303,7 +308,8 @@ async def bot_profit(bot_id: int, request: Request, db: AsyncSession = Depends(g
     try:
         return await manager.get_bot_profit(bot)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/balance")
@@ -316,7 +322,8 @@ async def bot_balance(bot_id: int, request: Request, db: AsyncSession = Depends(
     try:
         return await manager.get_bot_balance(bot)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/daily")
@@ -334,7 +341,8 @@ async def bot_daily(
     try:
         return await manager.get_bot_daily(bot, days=days)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/performance")
@@ -347,7 +355,8 @@ async def bot_performance(bot_id: int, request: Request, db: AsyncSession = Depe
     try:
         return await manager.get_bot_performance(bot)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/config")
@@ -360,7 +369,8 @@ async def bot_config(bot_id: int, request: Request, db: AsyncSession = Depends(g
     try:
         return await manager.get_bot_config(bot)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.put("/{bot_id}/config")
@@ -416,7 +426,8 @@ async def bot_logs(
     try:
         return await manager.get_bot_logs(bot, limit=limit)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 # ── Additional FT API Passthrough ─────────────────────────────
@@ -441,7 +452,8 @@ async def bot_weekly(bot_id: int, request: Request, db: AsyncSession = Depends(g
     try:
         return await client.weekly(weeks=weeks)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/monthly")
@@ -451,7 +463,8 @@ async def bot_monthly(bot_id: int, request: Request, db: AsyncSession = Depends(
     try:
         return await client.monthly(months=months)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/entries")
@@ -461,7 +474,8 @@ async def bot_entries(bot_id: int, request: Request, db: AsyncSession = Depends(
     try:
         return await client.entries()
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/exits")
@@ -471,7 +485,8 @@ async def bot_exits(bot_id: int, request: Request, db: AsyncSession = Depends(ge
     try:
         return await client.exits()
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/mix-tags")
@@ -481,7 +496,8 @@ async def bot_mix_tags(bot_id: int, request: Request, db: AsyncSession = Depends
     try:
         return await client.mix_tags()
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/stats")
@@ -491,7 +507,8 @@ async def bot_stats(bot_id: int, request: Request, db: AsyncSession = Depends(ge
     try:
         return await client.stats()
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/count")
@@ -501,7 +518,8 @@ async def bot_count(bot_id: int, request: Request, db: AsyncSession = Depends(ge
     try:
         return await client.count()
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/version")
@@ -511,7 +529,8 @@ async def bot_version(bot_id: int, request: Request, db: AsyncSession = Depends(
     try:
         return await client.version()
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/sysinfo")
@@ -521,7 +540,8 @@ async def bot_sysinfo(bot_id: int, request: Request, db: AsyncSession = Depends(
     try:
         return await client.sysinfo()
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/health")
@@ -531,7 +551,8 @@ async def bot_health(bot_id: int, request: Request, db: AsyncSession = Depends(g
     try:
         return await client.health()
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 # ── Trading actions (§8) ──────────────────────────────────────
@@ -548,7 +569,8 @@ async def bot_forceenter(
     try:
         return await client.forceenter(pair=body.pair, side=body.side, stake_amount=body.stake_amount)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.post("/{bot_id}/forceexit")
@@ -563,7 +585,8 @@ async def bot_forceexit(
     try:
         return await client.forceexit(trade_id=body.trade_id)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.post("/{bot_id}/stopbuy")
@@ -573,7 +596,8 @@ async def bot_stopbuy(bot_id: int, request: Request, db: AsyncSession = Depends(
     try:
         return await client.stopbuy()
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.post("/{bot_id}/pause")
@@ -583,7 +607,8 @@ async def bot_pause(bot_id: int, request: Request, db: AsyncSession = Depends(ge
     try:
         return await client.pause()
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.delete("/{bot_id}/trades/{trade_id}")
@@ -593,7 +618,8 @@ async def bot_delete_trade(bot_id: int, trade_id: int, request: Request, db: Asy
     try:
         return await client.delete_trade(trade_id)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.delete("/{bot_id}/trades/{trade_id}/open-order")
@@ -603,7 +629,8 @@ async def bot_cancel_open_order(bot_id: int, trade_id: int, request: Request, db
     try:
         return await client.cancel_open_order(trade_id)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.post("/{bot_id}/trades/{trade_id}/reload")
@@ -613,7 +640,8 @@ async def bot_reload_trade(bot_id: int, trade_id: int, request: Request, db: Asy
     try:
         return await client.reload_trade(trade_id)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 # ── Data & Settings (§7, §8) ─────────────────────────────────
@@ -625,7 +653,8 @@ async def bot_whitelist(bot_id: int, request: Request, db: AsyncSession = Depend
     try:
         return await client.whitelist()
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/blacklist")
@@ -635,7 +664,8 @@ async def bot_blacklist_get(bot_id: int, request: Request, db: AsyncSession = De
     try:
         return await client.blacklist_get()
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.post("/{bot_id}/blacklist")
@@ -645,7 +675,8 @@ async def bot_blacklist_add(bot_id: int, body: BlacklistRequest, request: Reques
     try:
         return await client.blacklist_add(body.pairs)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.delete("/{bot_id}/blacklist")
@@ -655,7 +686,8 @@ async def bot_blacklist_remove(bot_id: int, body: BlacklistRequest, request: Req
     try:
         return await client.blacklist_remove(body.pairs)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/locks")
@@ -665,7 +697,8 @@ async def bot_locks(bot_id: int, request: Request, db: AsyncSession = Depends(ge
     try:
         return await client.locks()
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.post("/{bot_id}/locks")
@@ -675,7 +708,8 @@ async def bot_lock_add(bot_id: int, body: LockRequest, request: Request, db: Asy
     try:
         return await client.lock_add(pair=body.pair, until=body.until, reason=body.reason)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.delete("/{bot_id}/locks/{lock_id}")
@@ -685,7 +719,8 @@ async def bot_lock_delete(bot_id: int, lock_id: int, request: Request, db: Async
     try:
         return await client.lock_delete(lock_id)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 # ── Analytics & Strategy data (§19, §2) ──────────────────────
@@ -697,7 +732,8 @@ async def bot_plot_config(bot_id: int, request: Request, db: AsyncSession = Depe
     try:
         return await client.plot_config()
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/pair-candles")
@@ -716,7 +752,8 @@ async def bot_pair_candles(
     try:
         return await client.pair_candles(pair=pair, timeframe=timeframe, limit=limit)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/pair-history")
@@ -735,7 +772,8 @@ async def bot_pair_history(
     try:
         return await client.pair_history(pair=pair, timeframe=timeframe, timerange=timerange)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/available-pairs")
@@ -745,7 +783,8 @@ async def bot_available_pairs(bot_id: int, request: Request, db: AsyncSession = 
     try:
         return await client.available_pairs(timeframe=timeframe)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/ft-strategies")
@@ -755,7 +794,8 @@ async def bot_ft_strategies(bot_id: int, request: Request, db: AsyncSession = De
     try:
         return await client.strategies()
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/ft-strategy/{strategy_name}")
@@ -765,7 +805,8 @@ async def bot_ft_strategy(bot_id: int, strategy_name: str, request: Request, db:
     try:
         return await client.strategy(strategy_name)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/freqaimodels")
@@ -775,7 +816,8 @@ async def bot_freqaimodels(bot_id: int, request: Request, db: AsyncSession = Dep
     try:
         return await client.freqaimodels()
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 # ── Backtesting (§5) ─────────────────────────────────────────
@@ -787,7 +829,8 @@ async def bot_backtest_start(bot_id: int, body: dict[str, Any], request: Request
     try:
         return await client.backtest_start(body)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/backtest")
@@ -797,7 +840,8 @@ async def bot_backtest_status(bot_id: int, request: Request, db: AsyncSession = 
     try:
         return await client.backtest_status()
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.delete("/{bot_id}/backtest")
@@ -807,7 +851,8 @@ async def bot_backtest_abort(bot_id: int, request: Request, db: AsyncSession = D
     try:
         return await client.backtest_abort()
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/backtest/history")
@@ -817,7 +862,8 @@ async def bot_backtest_history(bot_id: int, request: Request, db: AsyncSession =
     try:
         return await client.backtest_history()
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.get("/{bot_id}/backtest/history/result")
@@ -827,7 +873,8 @@ async def bot_backtest_history_result(bot_id: int, request: Request, db: AsyncSe
     try:
         return await client.backtest_history_result(id)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 @router.delete("/{bot_id}/backtest/history/{result_id}")
@@ -837,7 +884,8 @@ async def bot_backtest_history_delete(bot_id: int, result_id: str, request: Requ
     try:
         return await client.backtest_history_delete(result_id)
     except FTClientError as e:
-        raise HTTPException(502, f"FT API error: {e}")
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
 
 
 # ── Data management (CLI commands — not native FT REST API) ──────────

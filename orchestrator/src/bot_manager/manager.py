@@ -19,6 +19,7 @@ from ..config import settings
 from ..ft_client import FTClient, FTClientError
 from ..models.bot_instance import BotInstance, BotStatus
 from ..models.audit_log import AuditLog
+from ..activity_logger import log_activity
 
 logger = logging.getLogger(__name__)
 
@@ -102,14 +103,18 @@ class BotManager:
         await db.flush()
 
         # Audit
-        db.add(AuditLog(
+        await log_activity(
+            db,
             action="bot.register",
+            level="info",
             actor="user",
+            bot_id=bot.id,
+            bot_name=name,
             target_type="bot",
             target_id=bot.id,
             target_name=name,
             details=json.dumps({"api_url": api_url, "strategy": strategy_name}),
-        ))
+        )
 
         return bot
 
@@ -149,13 +154,17 @@ class BotManager:
         bot.status = BotStatus.STOPPED
         await self.remove_client(bot_id)
 
-        db.add(AuditLog(
+        await log_activity(
+            db,
             action="bot.delete",
+            level="warning",
             actor="user",
+            bot_id=bot.id,
+            bot_name=bot.name,
             target_type="bot",
             target_id=bot.id,
             target_name=bot.name,
-        ))
+        )
 
         return bot
 
@@ -177,13 +186,17 @@ class BotManager:
         bot.consecutive_failures = 0
         bot.is_healthy = True
 
-        db.add(AuditLog(
+        await log_activity(
+            db,
             action="bot.start",
+            level="info",
             actor="user",
+            bot_id=bot.id,
+            bot_name=bot.name,
             target_type="bot",
             target_id=bot.id,
             target_name=bot.name,
-        ))
+        )
 
         return result
 
@@ -201,13 +214,17 @@ class BotManager:
 
         bot.status = BotStatus.STOPPED
 
-        db.add(AuditLog(
+        await log_activity(
+            db,
             action="bot.stop",
+            level="info",
             actor="user",
+            bot_id=bot.id,
+            bot_name=bot.name,
             target_type="bot",
             target_id=bot.id,
             target_name=bot.name,
-        ))
+        )
 
         return result
 
@@ -220,13 +237,17 @@ class BotManager:
         client = await self.get_client(bot)
         result = await client.reload_config()
 
-        db.add(AuditLog(
+        await log_activity(
+            db,
             action="bot.reload_config",
+            level="info",
             actor="user",
+            bot_id=bot.id,
+            bot_name=bot.name,
             target_type="bot",
             target_id=bot.id,
             target_name=bot.name,
-        ))
+        )
 
         return result
 

@@ -1336,7 +1336,7 @@ function BacktestingInner() {
                       )}
                     </div>
                     <div className="text-[10px] text-text-3 mt-1.5">
-                      Cost: ${aiPreAnalysis.total_cost_usd.toFixed(4)}
+                      Cost: ${(aiPreAnalysis.total_cost_usd ?? 0).toFixed(4)}
                     </div>
                   </div>
                 )}
@@ -1395,7 +1395,7 @@ function BacktestingInner() {
                       </div>
                     )}
                     <div className="text-[10px] text-text-3 mt-1.5">
-                      Cost: ${aiPostAnalysis.total_cost_usd.toFixed(4)}
+                      Cost: ${(aiPostAnalysis.total_cost_usd ?? 0).toFixed(4)}
                     </div>
                   </div>
                 )}

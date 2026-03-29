@@ -1600,7 +1600,7 @@ function DetailContent({
                       </div>
                       {tradeAiDetail.claude_reasoning && <div className="mt-2 text-2xs text-text-2"><span className="text-text-3">Claude:</span> {tradeAiDetail.claude_reasoning}</div>}
                       {tradeAiDetail.grok_reasoning && <div className="mt-1 text-2xs text-text-2"><span className="text-text-3">Grok:</span> {tradeAiDetail.grok_reasoning}</div>}
-                      <div className="mt-2 text-2xs text-text-3">Cost: ${tradeAiDetail.total_cost_usd.toFixed(4)}</div>
+                      <div className="mt-2 text-2xs text-text-3">Cost: ${(tradeAiDetail.total_cost_usd ?? 0).toFixed(4)}</div>
                     </td></tr>
                   )}
                   </Fragment>

@@ -608,7 +608,7 @@ export default function AIInsightsPage() {
                       {(v.agreement_pct * 100).toFixed(0)}%
                     </td>
                     <td className="px-4 py-3 text-xs font-mono text-text-2">
-                      ${v.total_cost_usd.toFixed(4)}
+                      ${(v.total_cost_usd ?? 0).toFixed(4)}
                     </td>
                     <td className="px-4 py-3 text-xs text-text-3 whitespace-nowrap">
                       {new Date(v.created_at).toLocaleTimeString()}
@@ -878,7 +878,7 @@ export default function AIInsightsPage() {
                       {a.grok_confidence != null ? pct(a.grok_confidence) : "\u2014"}
                     </td>
                     <td className="px-4 py-3 text-xs font-mono text-text-2">
-                      ${a.total_cost_usd.toFixed(4)}
+                      ${(a.total_cost_usd ?? 0).toFixed(4)}
                     </td>
                     <td className="px-4 py-3 text-xs text-text-3 whitespace-nowrap">
                       {new Date(a.created_at).toLocaleString()}

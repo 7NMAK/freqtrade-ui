@@ -509,21 +509,21 @@ function BacktestingInner() {
   async function preflight(botId: number): Promise<string | null> {
     // 1. Check bot exists and is registered
     const bot = bots.find((b) => b.id === botId);
-    if (!bot) return `Bot #${botId} not found in orchestrator.`;
+    if (!bot) return "Backtest engine not found. Please check system configuration.";
 
     // 2. Check bot status in orchestrator (skip for webserver-mode bots — they don't need to be "running" in trade sense)
     if (bot.ft_mode !== "webserver") {
-      if (bot.status === "killed") return `Bot "${bot.name}" was killed. Go to Dashboard → Start Bot to recover.`;
-      if (bot.status === "stopped") return `Bot "${bot.name}" is stopped. Go to Dashboard → Start Bot first.`;
-      if (bot.status === "error") return `Bot "${bot.name}" is in ERROR state. Check Dashboard for details.`;
-      if (bot.status === "starting") return `Bot "${bot.name}" is still starting. Wait a moment and retry.`;
+      if (bot.status === "killed") return "Backtest engine was stopped. Go to Dashboard to restart it.";
+      if (bot.status === "stopped") return "Backtest engine is stopped. Go to Dashboard to start it first.";
+      if (bot.status === "error") return "Backtest engine is in ERROR state. Check Dashboard for details.";
+      if (bot.status === "starting") return "Backtest engine is still starting. Wait a moment and retry.";
     }
 
     // 3. Connectivity check — ping works in both trade and webserver mode
     try {
       await botPing(botId);
     } catch {
-      return `Bot "${bot.name}" is not responding. FreqTrade may be down or unreachable.`;
+      return "Backtest engine is not responding. FreqTrade may be down or unreachable.";
     }
 
     // 4. Check if a backtest is already running
@@ -538,7 +538,7 @@ function BacktestingInner() {
   }
 
   async function handleRunBacktest() {
-    if (!selectedBotId) { toast.warning("Select a bot first."); return; }
+    if (!selectedBotId) { toast.warning("Backtest engine not available. Please check that FreqTrade is running."); return; }
     setRunning(true);
     const id = toast.loading("Pre-flight checks...");
     try {
@@ -603,7 +603,7 @@ function BacktestingInner() {
   }
 
   async function handleRunHyperopt() {
-    if (!selectedBotId) { toast.warning("Select a bot first."); return; }
+    if (!selectedBotId) { toast.warning("Backtest engine not available. Please check that FreqTrade is running."); return; }
     setRunning(true);
     const id = toast.loading("Starting hyperopt...");
     try {
@@ -630,7 +630,7 @@ function BacktestingInner() {
   }
 
   async function handleAIPreAnalyze() {
-    if (!selectedBotId) { toast.warning("Select a bot first."); return; }
+    if (!selectedBotId) { toast.warning("Backtest engine not available. Please check that FreqTrade is running."); return; }
     setAiAnalyzing(true);
     const id = toast.loading("AI Pre-Analysis running...");
     try {
@@ -660,7 +660,7 @@ function BacktestingInner() {
   }
 
   async function handleAIPostAnalyze() {
-    if (!selectedBotId) { toast.warning("Select a bot first."); return; }
+    if (!selectedBotId) { toast.warning("Backtest engine not available. Please check that FreqTrade is running."); return; }
     const sr = getStrategyResult(btResult);
     if (!sr) { toast.warning("Run hyperopt/backtest first to get results."); return; }
     setAiAnalyzing(true);
@@ -738,7 +738,7 @@ function BacktestingInner() {
   }
 
   async function handleLookaheadAnalysis() {
-    if (!selectedBotId) { toast.warning("Select a bot first."); return; }
+    if (!selectedBotId) { toast.warning("Backtest engine not available. Please check that FreqTrade is running."); return; }
     const id = toast.loading("Running lookahead analysis...");
     try {
       const botId = parseInt(selectedBotId, 10);
@@ -752,7 +752,7 @@ function BacktestingInner() {
   }
 
   async function handleRecursiveAnalysis() {
-    if (!selectedBotId) { toast.warning("Select a bot first."); return; }
+    if (!selectedBotId) { toast.warning("Backtest engine not available. Please check that FreqTrade is running."); return; }
     const id = toast.loading("Running recursive analysis...");
     try {
       const botId = parseInt(selectedBotId, 10);
@@ -833,17 +833,7 @@ function BacktestingInner() {
           <Card>
             {/* Tab Selector */}
             <div className="flex gap-0.5 px-[18px] bg-bg-1 border-b border-border">
-          {/* Bot selector in header */}
-          <div className="flex items-center gap-2 py-1.5 pr-3 border-r border-border mr-2">
-            <span className="text-[10px] text-text-3 uppercase tracking-wider">Bot</span>
-            <select
-              value={selectedBotId}
-              onChange={(e) => setSelectedBotId(e.target.value)}
-              className="bg-bg-3 border border-border rounded px-2 py-1 text-[11px] text-text-1 outline-none focus:border-accent cursor-pointer"
-            >
-              {bots.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-            </select>
-          </div>
+          {/* Bot selector hidden — auto-selects ft-backtest worker internally */}
               {(["backtest", "hyperopt", "validation"] as const).map((tab) => (
                 <button
                   type="button"

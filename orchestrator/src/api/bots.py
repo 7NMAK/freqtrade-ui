@@ -791,6 +791,71 @@ async def reload_config(bot_id: int, request: Request, db: AsyncSession = Depend
 # Frontend calls orchestrator → orchestrator calls FT API → returns data.
 # No transformation. FT field names preserved exactly.
 
+@router.get("/{bot_id}/ping")
+async def bot_ping(bot_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    """GET /api/v1/ping — lightweight connectivity check."""
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    try:
+        client = await manager.get_client(bot)
+        return await client.ping()
+    except FTClientError as e:
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
+
+
+@router.get("/{bot_id}/health")
+async def bot_health(bot_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    """GET /api/v1/health — detailed health info."""
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    try:
+        client = await manager.get_client(bot)
+        return await client.health()
+    except FTClientError as e:
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
+
+
+@router.get("/{bot_id}/sysinfo")
+async def bot_sysinfo(bot_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    """GET /api/v1/sysinfo — system info (CPU, RAM)."""
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    try:
+        client = await manager.get_client(bot)
+        return await client.sysinfo()
+    except FTClientError as e:
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
+
+
+@router.get("/{bot_id}/logs")
+async def bot_logs(
+    bot_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    limit: int = Query(default=50, ge=1, le=500),
+):
+    """GET /api/v1/logs — FT log output."""
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    try:
+        client = await manager.get_client(bot)
+        return await client.logs(limit=limit)
+    except FTClientError as e:
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
+
+
 @router.get("/{bot_id}/status")
 async def bot_status(bot_id: int, request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any] | list[dict[str, Any]]:
     """GET /api/v1/status — open trades (FT field names: open_rate, stake_amount, etc.)."""
@@ -867,6 +932,106 @@ async def bot_daily(
         raise HTTPException(404, "Bot not found")
     try:
         return await manager.get_bot_daily(bot, days=days)
+    except FTClientError as e:
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
+
+
+@router.get("/{bot_id}/weekly")
+async def bot_weekly(
+    bot_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    weeks: int = Query(default=12, ge=1, le=52),
+) -> dict[str, Any]:
+    """GET /api/v1/weekly — weekly profit."""
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    try:
+        client = await manager.get_client(bot)
+        return await client.weekly(weeks=weeks)
+    except FTClientError as e:
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
+
+
+@router.get("/{bot_id}/monthly")
+async def bot_monthly(
+    bot_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    months: int = Query(default=12, ge=1, le=36),
+) -> dict[str, Any]:
+    """GET /api/v1/monthly — monthly profit."""
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    try:
+        client = await manager.get_client(bot)
+        return await client.monthly(months=months)
+    except FTClientError as e:
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
+
+
+@router.get("/{bot_id}/entries")
+async def bot_entries(bot_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    """GET /api/v1/entries — enter_tag performance."""
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    try:
+        client = await manager.get_client(bot)
+        return await client.entries()
+    except FTClientError as e:
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
+
+
+@router.get("/{bot_id}/exits")
+async def bot_exits(bot_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    """GET /api/v1/exits — exit_reason performance."""
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    try:
+        client = await manager.get_client(bot)
+        return await client.exits()
+    except FTClientError as e:
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
+
+
+@router.get("/{bot_id}/mix-tags")
+async def bot_mix_tags(bot_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    """GET /api/v1/mix_tags — combined enter/exit tag performance."""
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    try:
+        client = await manager.get_client(bot)
+        return await client.mix_tags()
+    except FTClientError as e:
+        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
+        raise HTTPException(502, detail=detail)
+
+
+@router.get("/{bot_id}/stats")
+async def bot_stats(bot_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    """GET /api/v1/stats — trade stats (durations, buy/sell counts)."""
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    try:
+        client = await manager.get_client(bot)
+        return await client.stats()
     except FTClientError as e:
         detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
         raise HTTPException(502, detail=detail)

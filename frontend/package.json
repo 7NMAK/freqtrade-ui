@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
-    "@parcel/watcher-linux-arm64-glibc": "^2.5.6",
     "clsx": "^2.1.1",
     "next": "14.2.35",
     "next-intl": "^4.8.3",

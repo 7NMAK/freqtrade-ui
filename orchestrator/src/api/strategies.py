@@ -302,6 +302,7 @@ async def import_strategy(
         id=strategy.id,
         name=strategy.name,
         lifecycle=strategy.lifecycle.value,
+        bot_instance_id=None,
         description=strategy.description,
         current_version_id=strategy.current_version_id,
         current_version_number=1,

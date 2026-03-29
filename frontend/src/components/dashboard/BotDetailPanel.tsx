@@ -21,7 +21,7 @@ import type {
   FTLocksResponse,
   FTBalance,
 } from "@/types";
-import { Card, CardBody } from "@/components/ui/Card";
+// Card components available if needed for future tabs
 
 type DetailTab = "overview" | "trades" | "performance" | "config" | "system";
 
@@ -297,17 +297,17 @@ function DetailContent({
   profit,
   openTrades,
   closedTrades,
-  weeklyData,
-  monthlyData,
+  weeklyData: _weeklyData,
+  monthlyData: _monthlyData,
   perfData,
   entryData,
   exitData,
-  mixTagData,
+  mixTagData: _mixTagData,
   statsData,
   configData,
   sysinfoData,
   logsData,
-  whitelistData,
+  whitelistData: _whitelistData,
   locksData,
   balanceData,
   healthData,

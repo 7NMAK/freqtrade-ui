@@ -1583,14 +1583,13 @@ async def bot_hyperopt_start(bot_id: int, body: dict[str, Any], request: Request
     except Exception as e:
         raise HTTPException(502, f"Hyperopt start failed: {e}")
 
-    cmd = ["freqtrade", "hyperopt"]
+    cmd = ["freqtrade", "hyperopt", "--config", "/freqtrade/user_data/config_backtest.json"]
     if body.get("strategy"):
         cmd += ["--strategy", body["strategy"]]
     if body.get("epochs"):
         cmd += ["--epochs", str(body["epochs"])]
     if body.get("spaces"):
-        for s in body["spaces"]:
-            cmd += ["--spaces", s]
+        cmd += ["--spaces"] + list(body["spaces"])
     if body.get("jobs"):
         cmd += ["-j", str(body["jobs"])]
     if body.get("hyperopt_loss"):
@@ -1601,10 +1600,7 @@ async def bot_hyperopt_start(bot_id: int, body: dict[str, Any], request: Request
         cmd += ["--timerange", body["timerange"]]
     if body.get("timeframe"):
         cmd += ["--timeframe", body["timeframe"]]
-    if body.get("effort"):
-        cmd += ["--effort", str(body["effort"])]
-    if body.get("sampler"):
-        cmd += ["--sampler", body["sampler"]]
+    # Note: --effort and --sampler are NOT valid FT 2026.2 CLI args — ignored
 
     job_id = str(_uuid.uuid4())[:8]
     _hyperopt_jobs[job_id] = {"status": "running", "exit_code": None, "output": "", "cmd": " ".join(cmd)}

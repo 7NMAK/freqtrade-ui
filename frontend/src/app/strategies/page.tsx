@@ -315,9 +315,9 @@ export default function StrategiesPage() {
             .catch(() => {}),
           botBacktestResults(bot.id)
             .then((r) => {
-              if (r.backtest_result) {
-                const keys = Object.keys(r.backtest_result);
-                if (keys.length > 0) btResults[bot.id] = r.backtest_result[keys[0]];
+              if (r.backtest_result?.strategy) {
+                const keys = Object.keys(r.backtest_result.strategy);
+                if (keys.length > 0) btResults[bot.id] = r.backtest_result.strategy[keys[0]];
               }
             })
             .catch(() => {}),
@@ -388,9 +388,9 @@ export default function StrategiesPage() {
       let btStratResult: FTBacktestStrategyResult | null = null;
       if (results[9].status === "fulfilled") {
         const btRes = results[9].value;
-        if (btRes.backtest_result) {
-          const keys = Object.keys(btRes.backtest_result);
-          if (keys.length > 0) btStratResult = btRes.backtest_result[keys[0]];
+        if (btRes.backtest_result?.strategy) {
+          const keys = Object.keys(btRes.backtest_result.strategy);
+          if (keys.length > 0) btStratResult = btRes.backtest_result.strategy[keys[0]];
         }
       }
 

@@ -85,7 +85,7 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
 
       try {
         const profs = await getExchangeProfiles();
-        setProfiles(profs);
+        setProfiles(profs.items || []);
       } catch (err) {
         console.error("Failed to load profiles:", err);
       }

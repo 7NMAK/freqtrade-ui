@@ -24,7 +24,7 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [profiles, setProfiles] = useState<ExchangeProfile[]>([]);
   const [strategiesLoading, setStrategiesLoading] = useState(false);
-  const [profilesLoading, setProfilesLoading] = useState(false);
+  const [, setProfilesLoading] = useState(false);
 
   // Step 1: Bot Name + Exchange
   const [name, setName] = useState("");
@@ -74,7 +74,7 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
       try {
         setProfilesLoading(true);
         const profs = await getExchangeProfiles();
-        setProfiles(profs);
+        setProfiles(profs.items || []);
       } catch (err) {
         console.error("Failed to load profiles:", err);
       } finally {

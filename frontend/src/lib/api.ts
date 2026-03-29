@@ -784,7 +784,7 @@ export const importStrategyFromSource = (data: {
 // ── Exchange Profiles ────────────────────────────────────────────────────
 
 export const getExchangeProfiles = () =>
-  request<import("@/types").ExchangeProfile[]>("/api/exchange-profiles/");
+  request<import("@/types").ExchangeProfileListResponse>("/api/exchange-profiles/");
 
 export const createExchangeProfile = (data: {
   name: string;

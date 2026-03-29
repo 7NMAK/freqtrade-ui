@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { getBots, registerBot, updateBot, drainBot } from "@/lib/api";
 import { useToast } from "@/components/ui/Toast";
-import type { Bot, StrategyVersion } from "@/types";
+import type { Bot } from "@/types";
 
 interface DeployModalProps {
   isOpen: boolean;
@@ -20,7 +20,7 @@ type ReplacementOption = "graceful" | "force" | "save-only";
 export default function DeployModal({
   isOpen,
   onClose,
-  strategyId,
+  strategyId: _strategyId,
   strategyName,
   currentVersionId,
   onSuccess,
@@ -75,7 +75,7 @@ export default function DeployModal({
         .map(p => p.trim())
         .filter(p => p);
 
-      const botData = {
+      await registerBot({
         name: botName,
         exchange_name: exchange,
         pair_whitelist: pairList,
@@ -87,10 +87,7 @@ export default function DeployModal({
         stake_currency: "USDT",
         stake_amount: "unlimited",
         max_open_trades: 3,
-      };
-
-      // TODO: Call registerBot API when available
-      // const newBot = await registerBot(botData);
+      });
       toast.dismiss(id);
       toast.success(`Bot ${botName} created and strategy deployed.`);
       onSuccess?.();

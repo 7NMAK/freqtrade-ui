@@ -248,7 +248,7 @@ export default function StrategiesPage() {
     try {
       const versions = await getStrategyVersions(strategyId);
       setStrategyVersions(versions);
-    } catch (err) {
+    } catch {
       toast.error("Failed to load versions");
       setStrategyVersions([]);
     } finally {

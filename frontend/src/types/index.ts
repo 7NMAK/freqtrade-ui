@@ -1196,10 +1196,19 @@ export interface ExchangeProfile {
   id: number;
   name: string;
   exchange_name: string;
+  has_api_key?: boolean;
+  has_api_secret?: boolean;
+  uid?: string;
   subaccount?: string;
   created_at: string;
   updated_at: string;
   // Note: API keys are never returned to frontend
+}
+
+/** Exchange Profiles List Response */
+export interface ExchangeProfileListResponse {
+  total: number;
+  items: ExchangeProfile[];
 }
 
 /** Backtest Result — result from a single backtest run */

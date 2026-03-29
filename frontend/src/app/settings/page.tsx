@@ -5,12 +5,13 @@ import AppShell from "@/components/layout/AppShell";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
 import Tooltip from "@/components/ui/Tooltip";
+import SystemSettingsTab from "@/components/settings/SystemSettingsTab";
 import { getBots, botConfig, saveBotConfig, reloadBotConfig, botWhitelist } from "@/lib/api";
 import { TOOLTIPS } from "@/lib/tooltips";
 import type { Bot, FTShowConfig } from "@/types";
 
 /* ── Types ── */
-type TabId = "core" | "pairlists" | "exchange" | "telegram" | "webhooks" | "producer" | "advanced";
+type TabId = "system" | "core" | "pairlists" | "exchange" | "telegram" | "webhooks" | "producer" | "advanced";
 
 interface SettingsTab {
   id: TabId;
@@ -227,6 +228,7 @@ interface ConfigState {
 
 /* ── Constants ── */
 const TABS: SettingsTab[] = [
+  { id: "system", label: "System", icon: "\uD83D\uDC27", ref: "System" },
   { id: "core", label: "Core Trading", icon: "\u2699\uFE0F", ref: "\u00A71" },
   { id: "pairlists", label: "Pairlists", icon: "\uD83D\uDCCB", ref: "\u00A77" },
   { id: "exchange", label: "Exchange", icon: "\uD83C\uDFE6", ref: "\u00A79" },
@@ -1948,7 +1950,7 @@ function AdvancedTab({ config, update }: TabProps) {
 /* ─────────────────────────────────────────── */
 export default function SettingsPage() {
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<TabId>("core");
+  const [activeTab, setActiveTab] = useState<TabId>("system");
   const [bots, setBots] = useState<Bot[]>([]);
   const [selectedBotId, setSelectedBotId] = useState<string>("");
   const [loadingConfig, setLoadingConfig] = useState(false);
@@ -2480,6 +2482,7 @@ export default function SettingsPage() {
   }
 
   const tabContent: Record<TabId, React.ReactNode> = {
+    system: <SystemSettingsTab />,
     core: <CoreTab config={config} update={updateConfig} />,
     pairlists: <PairlistsTab config={config} update={updateConfig} botId={selectedBotId ? parseInt(selectedBotId, 10) : undefined} />,
     exchange: <ExchangeTab config={config} update={updateConfig} />,
@@ -2491,33 +2494,35 @@ export default function SettingsPage() {
 
   return (
     <AppShell title="Settings">
-      {/* Bot selector bar */}
-      <div className="flex items-center gap-3 mb-4 p-4 bg-bg-2 border border-border rounded-card">
-        <span className="text-xs font-semibold text-text-2 uppercase tracking-wide shrink-0">Target Bot</span>
-        <select
-          value={selectedBotId}
-          onChange={(e) => { setSelectedBotId(e.target.value); setHasChanges(false); }}
-          className="bg-bg-1 border border-border rounded-btn px-3.5 py-2 text-xs text-text-1 outline-none focus:border-accent cursor-pointer min-w-[200px]"
-        >
-          <option value="">Select bot...</option>
-          {bots.map((bot) => (
-            <option key={bot.id} value={bot.id}>
-              {bot.name} ({bot.is_dry_run ? "PAPER" : "LIVE"})
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          onClick={handleLoadConfig}
-          disabled={loadingConfig || !selectedBotId}
-          className="px-4 py-2 text-xs font-semibold rounded-btn border border-border bg-bg-3 text-text-1 hover:border-border-hover hover:text-text-0 transition-colors disabled:opacity-50 cursor-pointer"
-        >
-          {loadingConfig ? "Loading..." : "Load Config"}
-        </button>
-        <span className="text-xs text-text-3 ml-2">
-          Changes you make are written to the bot&apos;s config.json via the Orchestrator API.
-        </span>
-      </div>
+      {/* Bot selector bar — hidden on System tab */}
+      {activeTab !== "system" && (
+        <div className="flex items-center gap-3 mb-4 p-4 bg-bg-2 border border-border rounded-card">
+          <span className="text-xs font-semibold text-text-2 uppercase tracking-wide shrink-0">Target Bot</span>
+          <select
+            value={selectedBotId}
+            onChange={(e) => { setSelectedBotId(e.target.value); setHasChanges(false); }}
+            className="bg-bg-1 border border-border rounded-btn px-3.5 py-2 text-xs text-text-1 outline-none focus:border-accent cursor-pointer min-w-[200px]"
+          >
+            <option value="">Select bot...</option>
+            {bots.map((bot) => (
+              <option key={bot.id} value={bot.id}>
+                {bot.name} ({bot.is_dry_run ? "PAPER" : "LIVE"})
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={handleLoadConfig}
+            disabled={loadingConfig || !selectedBotId}
+            className="px-4 py-2 text-xs font-semibold rounded-btn border border-border bg-bg-3 text-text-1 hover:border-border-hover hover:text-text-0 transition-colors disabled:opacity-50 cursor-pointer"
+          >
+            {loadingConfig ? "Loading..." : "Load Config"}
+          </button>
+          <span className="text-xs text-text-3 ml-2">
+            Changes you make are written to the bot&apos;s config.json via the Orchestrator API.
+          </span>
+        </div>
+      )}
 
       <div className="flex h-[calc(100vh-var(--header-h,56px)-120px)] -mx-8 -mt-2">
         {/* Vertical Tab Bar */}
@@ -2546,34 +2551,36 @@ export default function SettingsPage() {
             {tabContent[activeTab]}
           </div>
 
-          {/* Sticky Save Bar */}
-          <div className="sticky bottom-0 bg-bg-1 border-t border-border px-8 py-3.5 flex items-center justify-between z-10">
-            <div className="flex items-center gap-1.5 text-[11px] text-text-3">
-              {hasChanges && (
-                <>
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber" />
-                  Unsaved changes
-                </>
-              )}
+          {/* Sticky Save Bar — hidden on System tab */}
+          {activeTab !== "system" && (
+            <div className="sticky bottom-0 bg-bg-1 border-t border-border px-8 py-3.5 flex items-center justify-between z-10">
+              <div className="flex items-center gap-1.5 text-[11px] text-text-3">
+                {hasChanges && (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber" />
+                    Unsaved changes
+                  </>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn text-[11px] font-semibold bg-transparent border border-border text-text-2 hover:bg-bg-3 hover:text-text-1 transition-colors cursor-pointer"
+                >
+                  Reset
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveConfig}
+                  disabled={saving || !selectedBotId}
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn text-[11px] font-semibold bg-accent border border-accent text-white hover:bg-accent-dim transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {saving ? "Saving..." : "Save Configuration"}
+                </button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleReset}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn text-[11px] font-semibold bg-transparent border border-border text-text-2 hover:bg-bg-3 hover:text-text-1 transition-colors cursor-pointer"
-              >
-                Reset
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveConfig}
-                disabled={saving || !selectedBotId}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn text-[11px] font-semibold bg-accent border border-accent text-white hover:bg-accent-dim transition-colors disabled:opacity-50 cursor-pointer"
-              >
-                {saving ? "Saving..." : "Save Configuration"}
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </AppShell>

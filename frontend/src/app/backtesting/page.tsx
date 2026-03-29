@@ -597,8 +597,13 @@ function BacktestingInner() {
       toast.update(id, { message: `Backtest running — ${selectedStrategy}...`, type: "loading" });
       const result = await pollResults(botId);
       toast.dismiss(id);
-      if (result.status === "success" || !result.running) {
+      if (result.status === "error") {
+        const msg = result.status_msg || "Backtest failed with unknown error.";
+        toast.error(msg);
+      } else if (result.backtest_result?.strategy && Object.keys(result.backtest_result.strategy).length > 0) {
         toast.success("Backtest complete!");
+      } else if (!result.running) {
+        toast.warning("Backtest finished but produced no results. Check your strategy and timerange.");
       } else {
         toast.error("Backtest ended with unknown status.");
       }

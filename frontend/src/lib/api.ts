@@ -477,10 +477,14 @@ export const botHyperoptList = (id: number, params?: {
 export const botHyperoptShow = (id: number, epoch: number) =>
   request<Record<string, unknown>>(`/api/bots/${id}/hyperopt-show?epoch=${epoch}`);
 
-export const botBacktestHistory = (id: number) =>
-  request<{ results: Array<{ filename: string; strategy: string; run_id: string; backtest_start_time: number }> }>(
-    `/api/bots/${id}/backtest/history`
-  );
+export const botBacktestHistory = async (id: number) => {
+  const raw = await request<
+    | Array<{ filename: string; strategy: string; run_id: string; backtest_start_time: number; notes?: string; timeframe?: string; timeframe_detail?: string }>
+    | { results: Array<{ filename: string; strategy: string; run_id: string; backtest_start_time: number; notes?: string; timeframe?: string; timeframe_detail?: string }> }
+  >(`/api/bots/${id}/backtest/history`);
+  // FT returns a bare array; normalise to {results: [...]}
+  return { results: Array.isArray(raw) ? raw : (raw.results ?? []) };
+};
 
 export const botListData = (id: number) =>
   request<{ data: Array<{ pair: string; timeframe: string; candle_type?: string; start: string; end: string; candle_count: number; format?: string }>; output?: string }>(

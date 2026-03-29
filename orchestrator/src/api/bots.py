@@ -1611,6 +1611,8 @@ async def bot_hyperopt_start(bot_id: int, body: dict[str, Any], request: Request
         try:
             dk2 = docker.from_env()
             c = dk2.containers.get(container_name)
+            # Clean stale lock file from any previous crashed run
+            c.exec_run(["rm", "-f", "/freqtrade/user_data/hyperopt.lock"])
             result = c.exec_run(cmd, detach=False)
             _hyperopt_jobs[job_id] = {
                 "status": "completed" if result.exit_code == 0 else "error",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { Suspense, useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
@@ -327,6 +327,20 @@ function StatBox({ label, value, sub, color }: { label: string; value: string; s
 /* ─── Main Page ─── */
 
 export default function BacktestingPage() {
+  return (
+    <Suspense fallback={
+      <AppShell title="Backtesting">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-sm text-text-3 animate-pulse">Loading...</div>
+        </div>
+      </AppShell>
+    }>
+      <BacktestingInner />
+    </Suspense>
+  );
+}
+
+function BacktestingInner() {
   const toast = useToast();
   const searchParams = useSearchParams();
   const qsStrategyId = useMemo(() => searchParams.get("strategyId"), [searchParams]);

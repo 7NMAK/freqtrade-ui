@@ -7,21 +7,16 @@ import type {
   FTHealth,
   FTTrade,
   FTProfit,
-  FTWeeklyResponse,
-  FTMonthlyResponse,
   FTPerformance,
   FTEntry,
   FTExit,
-  FTMixTag,
   FTStats,
   FTShowConfig,
   FTSysinfo,
   FTLogsResponse,
-  FTWhitelist,
   FTLocksResponse,
   FTBalance,
 } from "@/types";
-// Card components available if needed for future tabs
 
 type DetailTab = "overview" | "trades" | "performance" | "config" | "system";
 
@@ -33,17 +28,13 @@ interface BotDetailPanelProps {
   profit: Partial<FTProfit> | null;
   openTrades: FTTrade[];
   closedTrades: FTTrade[];
-  weeklyData: FTWeeklyResponse | null;
-  monthlyData: FTMonthlyResponse | null;
   perfData: FTPerformance[];
   entryData: FTEntry[];
   exitData: FTExit[];
-  mixTagData: FTMixTag[];
   statsData: FTStats | null;
   configData: FTShowConfig | null;
   sysinfoData: FTSysinfo | null;
   logsData: FTLogsResponse | null;
-  whitelistData: FTWhitelist | null;
   locksData: FTLocksResponse | null;
   balanceData: FTBalance | null;
   healthData: FTHealth | null;
@@ -95,17 +86,13 @@ export default function BotDetailPanel({
   profit,
   openTrades,
   closedTrades,
-  weeklyData,
-  monthlyData,
   perfData,
   entryData,
   exitData,
-  mixTagData,
   statsData,
   configData,
   sysinfoData,
   logsData,
-  whitelistData,
   locksData,
   balanceData,
   healthData,
@@ -247,17 +234,13 @@ export default function BotDetailPanel({
               profit={profit}
               openTrades={openTrades}
               closedTrades={closedTrades}
-              weeklyData={weeklyData}
-              monthlyData={monthlyData}
               perfData={perfData}
               entryData={entryData}
               exitData={exitData}
-              mixTagData={mixTagData}
               statsData={statsData}
               configData={configData}
               sysinfoData={sysinfoData}
               logsData={logsData}
-              whitelistData={whitelistData}
               locksData={locksData}
               balanceData={balanceData}
               healthData={healthData}
@@ -297,17 +280,13 @@ function DetailContent({
   profit,
   openTrades,
   closedTrades,
-  weeklyData: _weeklyData,
-  monthlyData: _monthlyData,
   perfData,
   entryData,
   exitData,
-  mixTagData: _mixTagData,
   statsData,
   configData,
   sysinfoData,
   logsData,
-  whitelistData: _whitelistData,
   locksData,
   balanceData,
   healthData,
@@ -317,17 +296,13 @@ function DetailContent({
   profit: Partial<FTProfit> | null;
   openTrades: FTTrade[];
   closedTrades: FTTrade[];
-  weeklyData: FTWeeklyResponse | null;
-  monthlyData: FTMonthlyResponse | null;
   perfData: FTPerformance[];
   entryData: FTEntry[];
   exitData: FTExit[];
-  mixTagData: FTMixTag[];
   statsData: FTStats | null;
   configData: FTShowConfig | null;
   sysinfoData: FTSysinfo | null;
   logsData: FTLogsResponse | null;
-  whitelistData: FTWhitelist | null;
   locksData: FTLocksResponse | null;
   balanceData: FTBalance | null;
   healthData: FTHealth | null;

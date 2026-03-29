@@ -1396,17 +1396,13 @@ export default function DashboardPage() {
         profit={selectedBot ? botProfits[selectedBot.id] ?? null : null}
         openTrades={singleBotOpenTrades}
         closedTrades={singleBotClosedTrades}
-        weeklyData={weeklyData}
-        monthlyData={monthlyData}
         perfData={perfData}
         entryData={entryData}
         exitData={exitData}
-        mixTagData={mixTagData}
         statsData={statsData}
         configData={configData}
         sysinfoData={sysinfoData}
         logsData={logsData}
-        whitelistData={whitelistData}
         locksData={locksData}
         balanceData={balanceData}
         healthData={healthData}

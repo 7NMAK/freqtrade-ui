@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { getBots, registerBot, updateBot, drainBot } from "@/lib/api";
+import { getBots, registerBot, updateBot, drainBot, hardKill } from "@/lib/api";
 import { useToast } from "@/components/ui/Toast";
 import type { Bot } from "@/types";
 
@@ -121,10 +121,10 @@ export default function DeployModal({
         await drainBot(selectedBotId);
       }
 
-      // Step 2: Force exit if option selected
+      // Step 2: Force exit all positions and stop bot
       if (replacementOption === "force" && selectedBot.status === "running") {
-        // TODO: Add forceexit API call
         toast.info("Force exiting all positions...");
+        await hardKill(selectedBotId, "Strategy replacement (force)");
       }
 
       // Step 3: Update bot with new strategy version

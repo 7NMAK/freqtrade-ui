@@ -11,7 +11,7 @@ FROM node:20-alpine AS deps
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci --ignore-scripts
+RUN npm ci --ignore-scripts --omit=optional
 
 # ── Stage 2: Build ─────────────────────────────────────────
 FROM node:20-alpine AS builder

@@ -9,25 +9,60 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        background: "var(--background)",
+        foreground: "var(--foreground)",
+        card: {
+          DEFAULT: "var(--card)",
+          foreground: "var(--card-foreground)",
+        },
+        popover: {
+          DEFAULT: "var(--popover)",
+          foreground: "var(--popover-foreground)",
+        },
+        primary: {
+          DEFAULT: "var(--primary)",
+          foreground: "var(--primary-foreground)",
+        },
+        secondary: {
+          DEFAULT: "var(--secondary)",
+          foreground: "var(--secondary-foreground)",
+        },
+        muted: {
+          DEFAULT: "var(--muted)",
+          foreground: "var(--muted-foreground)",
+        },
+        accentBase: {
+          DEFAULT: "var(--accent)",
+          foreground: "var(--accent-foreground)",
+        },
+        destructive: {
+          DEFAULT: "var(--destructive)",
+          foreground: "var(--destructive-foreground)",
+        },
+        borderBase: "var(--border)",
+        input: "var(--input)",
+        ring: "var(--ring)",
+
+        // ─── V1 Backward Compatibility Map ───
         bg: {
-          0: "#06060b",
-          1: "#0c0c14",
-          2: "#12121c",
-          3: "#1a1a28",
+          0: "var(--background)",
+          1: "var(--card)",
+          2: "var(--muted)",
+          3: "var(--popover)",
         },
         border: {
-          DEFAULT: "#1e1e30",
-          hover: "#2e2e48",
+          DEFAULT: "var(--border)",
+          hover: "var(--ring)",
         },
         text: {
-          0: "#f0f0f5",
-          1: "#c0c0d0",
-          2: "#808098",
-          3: "#55556a",
+          0: "var(--foreground)",
+          1: "var(--foreground)",
+          2: "var(--muted-foreground)",
+          3: "var(--secondary-foreground)",
         },
         accent: {
-          DEFAULT: "#6366f1",
-          dim: "#4f46e5",
+          DEFAULT: "var(--primary)",
+          dim: "var(--primary)",
           glow: "rgba(99,102,241,0.12)",
         },
         green: {
@@ -36,7 +71,7 @@ const config: Config = {
           bg: "rgba(34,197,94,0.08)",
         },
         red: {
-          DEFAULT: "#ef4444",
+          DEFAULT: "var(--destructive)",
           dim: "#991b1b",
           bg: "rgba(239,68,68,0.08)",
         },
@@ -67,8 +102,8 @@ const config: Config = {
         xl: "22px",
       },
       borderRadius: {
-        card: "10px",
-        btn: "6px",
+        card: "var(--radius)",
+        btn: "calc(var(--radius) - 2px)",
       },
       spacing: {
         sidebar: "240px",

@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import Tooltip from "@/components/ui/Tooltip";
-import { botLogs, botBacktestResults } from "@/lib/api";
+import { botLogs, botBacktestResults, botBacktestStart, botBacktestDelete } from "@/lib/api";
 
 interface BacktestTabProps {
   strategy: string;
@@ -99,11 +99,19 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
         const btRes = await botBacktestResults(backtestBotId);
         if (btRes) {
           const raw = btRes as unknown as Record<string, unknown>;
-          const step = raw.step || "";
+          const step = (raw.step as string) || "";
           const progress = raw.progress as number | undefined;
-          if (step === "finished" || step === "done") {
-            setBtProgress("Backtest complete");
-            addLog("INFO", "Backtest finished");
+          const ftRunning = raw.running as boolean | undefined;
+          const ftStatus = (raw.status_msg as string) || "";
+
+          // FT returns running:false + step:"" when backtest is done
+          if (ftRunning === false && raw.backtest_result) {
+            setBtProgress("✓ Backtest complete");
+            addLog("INFO", "Backtest finished — results available");
+            setIsRunning(false);
+          } else if (step === "error" || ftStatus.toLowerCase().includes("error")) {
+            setBtProgress("✗ Error");
+            addLog("ERROR", ftStatus || "Backtest failed");
             setIsRunning(false);
           } else if (step) {
             const pct = progress != null ? ` (${(progress * 100).toFixed(0)}%)` : "";
@@ -111,7 +119,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
           }
         }
       } catch {
-        // Status fetch failed
+        // Status fetch may fail before backtest starts — ignore
       }
     };
     poll();
@@ -134,16 +142,68 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
     return parts.join(" · ");
   }, [strategy, startDate, endDate, timeframeOverride, maxOpenTrades, startingCapital, enableFreqAI, enableProtections]);
 
-  const handleStart = () => {
+  const handleStart = async () => {
     setLogs([]);
     setBtProgress("");
     addLog("INFO", `Starting backtest: ${strategy} — ${startDate} → ${endDate}`);
-    setIsRunning(true);
-    // TODO: POST to orchestrator /api/bots/{id}/backtest
+
+    // Build FT backtest config (§5 — exact FT parameter names)
+    const timerange = `${startDate.replace(/-/g, "")}-${endDate.replace(/-/g, "")}`;
+    const params: Record<string, unknown> = {
+      strategy,
+      timerange,
+      max_open_trades: parseInt(maxOpenTrades, 10) || 3,
+      stake_amount: stakeAmount,
+      dry_run_wallet: parseFloat(startingCapital) || 10000,
+      enable_protections: enableProtections,
+      cache: cacheResults ? "day" : "none",
+      export: exportType,
+    };
+
+    // Optional overrides — only include if user changed from defaults
+    if (timeframeOverride !== "Use strategy default") {
+      params.timeframe = timeframeOverride;
+    }
+    if (timeframeDetail !== "Same as timeframe") {
+      params.timeframe_detail = timeframeDetail;
+    }
+    if (feeOverride) {
+      params.fee = parseFloat(feeOverride) / 100; // FT expects decimal (0.001 not 0.1%)
+    }
+    if (enableFreqAI) {
+      params.freqaimodel = "LightGBMRegressor"; // default model
+    }
+
+    // Breakdown periods
+    const breakdowns: string[] = [];
+    if (breakdownDay) breakdowns.push("day");
+    if (breakdownWeek) breakdowns.push("week");
+    if (breakdownMonth) breakdowns.push("month");
+    if (breakdowns.length > 0) {
+      params.breakdown = breakdowns.join(" ");
+    }
+
+    setIsRunning(true); // start polling immediately
+
+    try {
+      addLog("INFO", `POST /api/bots/${backtestBotId}/backtest — timerange=${timerange}`);
+      await botBacktestStart(backtestBotId, params);
+      addLog("INFO", "Backtest job submitted — polling for results...");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      addLog("ERROR", `Failed to start backtest: ${msg}`);
+      setIsRunning(false);
+    }
   };
 
-  const handleStop = () => {
-    addLog("WARNING", "Backtest stopped by user");
+  const handleStop = async () => {
+    try {
+      addLog("WARNING", "Aborting backtest...");
+      await botBacktestDelete(backtestBotId);
+      addLog("WARNING", "Backtest aborted by user");
+    } catch {
+      addLog("WARNING", "Backtest stop requested (may have already finished)");
+    }
     setIsRunning(false);
     setBtProgress("");
   };

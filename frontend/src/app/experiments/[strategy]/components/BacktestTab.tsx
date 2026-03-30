@@ -78,18 +78,23 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
       if (pollRef.current) clearInterval(pollRef.current);
       return;
     }
-    let lastLogCount = 0;
+    let lastLogCount = -1; // -1 = skip initial batch (startup logs)
     const poll = async () => {
       try {
-        const logRes = await botLogs(backtestBotId, 30);
+        const logRes = await botLogs(backtestBotId, 50);
         if (logRes && logRes.logs) {
-          const newLogs = logRes.logs.slice(lastLogCount);
-          lastLogCount = logRes.logs.length;
-          for (const entry of newLogs) {
-            // FT log format: [timestamp, epoch, module, level, message]
-            const level = entry[3] || "INFO";
-            const msg = entry[4] || entry.join(" ");
-            addLog(level, msg);
+          if (lastLogCount === -1) {
+            // First poll: record baseline, skip existing startup logs
+            lastLogCount = logRes.logs.length;
+          } else {
+            const newLogs = logRes.logs.slice(lastLogCount);
+            lastLogCount = logRes.logs.length;
+            for (const entry of newLogs) {
+              // FT log format: [timestamp, epoch, module, level, message]
+              const level = entry[3] || "INFO";
+              const msg = entry[4] || entry.join(" ");
+              addLog(level, msg);
+            }
           }
         }
       } catch {
@@ -183,16 +188,14 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
       params.breakdown = breakdowns.join(" ");
     }
 
-    setIsRunning(true); // start polling immediately
-
     try {
       addLog("INFO", `POST /api/bots/${backtestBotId}/backtest — timerange=${timerange}`);
       await botBacktestStart(backtestBotId, params);
       addLog("INFO", "Backtest job submitted — polling for results...");
+      setIsRunning(true); // start polling AFTER POST succeeds (avoids race condition)
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       addLog("ERROR", `Failed to start backtest: ${msg}`);
-      setIsRunning(false);
     }
   };
 

@@ -43,18 +43,18 @@ export default function BotManagementTable({ bots, botProfits, onRefresh }: BotM
         <button
           type="button"
           onClick={() => setRegisterOpen(true)}
-          className="px-3 py-1.5 text-xs font-semibold rounded bg-primary text-white hover:brightness-110 cursor-pointer transition-all"
+          className="inline-flex items-center justify-center rounded-md text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow-[0_0_15px_rgba(99,102,241,0.2)] hover:bg-primary/90 h-8 px-4 cursor-pointer"
         >
           + Register New Bot
         </button>
       </div>
 
       {bots.length === 0 ? (
-        <div className="py-8 text-center text-sm text-muted-foreground bg-muted/50 border border-border rounded-card">
+        <div className="py-8 text-center text-sm text-muted-foreground bg-muted/10 border border-border/50 rounded-xl shadow-sm">
           No bots registered yet. Click &quot;Register New Bot&quot; to get started.
         </div>
       ) : (
-        <div className="overflow-x-auto bg-muted/50 border border-border rounded-card">
+        <div className="overflow-x-auto bg-muted/10 border border-border/50 rounded-xl shadow-sm">
           <table className="w-full border-collapse">
             <thead>
               <tr>
@@ -87,7 +87,7 @@ export default function BotManagementTable({ bots, botProfits, onRefresh }: BotM
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
                       {bot.exchange_name ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-semibold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold bg-secondary text-secondary-foreground border border-border/50">
                           {bot.exchange_name}
                         </span>
                       ) : "\u2014"}
@@ -189,7 +189,7 @@ function ActionBtn({
       type="button"
       onClick={onClick}
       disabled={disabled || loading}
-      className={`text-xs font-semibold px-2 py-1 rounded border disabled:opacity-50 cursor-pointer transition-all ${className}`}
+      className={`inline-flex items-center justify-center rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border disabled:opacity-50 h-6 px-2.5 cursor-pointer ${className}`}
     >
       {loading ? "..." : label}
     </button>

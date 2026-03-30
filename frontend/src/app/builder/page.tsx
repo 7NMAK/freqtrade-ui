@@ -10,6 +10,8 @@ import DeployModal from "@/components/builder/DeployModal";
 import Tooltip from "@/components/ui/Tooltip";
 import { TOOLTIPS } from "@/lib/tooltips";
 import type { StrategyVersion } from "@/types";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
@@ -1061,7 +1063,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 {i === 0 ? labelPrefix : "AND"}
               </span>
               <select
-                className="px-3 py-2 rounded border border-border bg-muted text-foreground text-xs font-inherit outline-none focus:border-primary"
+                className="flex h-8 w-auto rounded-md border border-input bg-transparent px-3 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
                 value={cond.indicator}
                 onChange={(e) => updateCondition(setter, i, "indicator", e.target.value)}
               >
@@ -1070,7 +1072,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 ))}
               </select>
               <select
-                className="px-3 py-2 rounded border border-border bg-muted text-foreground text-xs font-inherit outline-none focus:border-primary"
+                className="flex h-8 w-auto rounded-md border border-input bg-transparent px-3 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
                 value={cond.operator}
                 onChange={(e) => updateCondition(setter, i, "operator", e.target.value)}
               >
@@ -1080,7 +1082,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               </select>
               {cond.compareType === "indicator" ? (
                 <select
-                  className="px-3 py-2 rounded border border-border bg-muted text-foreground text-xs font-inherit outline-none focus:border-primary"
+                  className="flex h-8 w-auto rounded-md border border-input bg-transparent px-3 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
                   value={cond.compareIndicator}
                   onChange={(e) => updateCondition(setter, i, "compareIndicator", e.target.value)}
                 >
@@ -1132,14 +1134,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         {stakePreset === "fixed" && (
           <div className="flex items-center gap-2 mt-2">
             <span className="text-xs text-muted-foreground">Amount:</span>
-            <input type="number" className="w-24 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center" value={stakeFixedAmount} onChange={(e) => setStakeFixedAmount(Number(e.target.value))} />
+            <input type="number" className="flex h-8 w-24 rounded-md border border-input bg-transparent px-2 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 text-center" value={stakeFixedAmount} onChange={(e) => setStakeFixedAmount(Number(e.target.value))} />
             <span className="text-xs text-muted-foreground">USDT</span>
           </div>
         )}
         {stakePreset === "percent" && (
           <div className="flex items-center gap-2 mt-2">
             <span className="text-xs text-muted-foreground">Percent:</span>
-            <input type="number" className="w-20 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center" value={stakePercent} step={1} min={1} max={100} onChange={(e) => setStakePercent(Number(e.target.value))} />
+            <input type="number" className="flex h-8 w-20 rounded-md border border-input bg-transparent px-2 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 text-center" value={stakePercent} step={1} min={1} max={100} onChange={(e) => setStakePercent(Number(e.target.value))} />
             <span className="text-xs text-muted-foreground">%</span>
           </div>
         )}
@@ -1181,7 +1183,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
     return (
       <div className="flex items-center gap-2">
         <span className="text-xs text-muted-foreground">{label}:</span>
-        <input type="number" className="w-24 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center" value={value} step={0.001} onChange={(e) => setter(Number(e.target.value))} />
+        <input type="number" className="flex h-8 w-24 rounded-md border border-input bg-transparent px-2 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 text-center" value={value} step={0.001} onChange={(e) => setter(Number(e.target.value))} />
         <span className="text-xs text-muted-foreground">({(value * 100).toFixed(1)}%)</span>
       </div>
     );
@@ -1191,7 +1193,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
     return (
       <div className="flex items-center gap-2">
         <span className="text-xs text-muted-foreground">Cancel after:</span>
-        <input type="number" className="w-20 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center" value={value} step={5} min={1} onChange={(e) => setter(Number(e.target.value))} />
+        <input type="number" className="flex h-8 w-20 rounded-md border border-input bg-transparent px-2 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 text-center" value={value} step={5} min={1} onChange={(e) => setter(Number(e.target.value))} />
         <span className="text-xs text-muted-foreground">minutes</span>
       </div>
     );
@@ -1203,11 +1205,11 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">DCA levels:</span>
-            <input type="number" className="w-16 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center" value={dcaLevels} min={1} max={10} onChange={(e) => setDcaLevels(Number(e.target.value))} />
+            <input type="number" className="flex h-8 w-16 rounded-md border border-input bg-transparent px-2 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 text-center" value={dcaLevels} min={1} max={10} onChange={(e) => setDcaLevels(Number(e.target.value))} />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Multiplier:</span>
-            <input type="number" className="w-16 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center" value={dcaMultiplier} step={0.1} min={1} onChange={(e) => setDcaMultiplier(Number(e.target.value))} />
+            <input type="number" className="flex h-8 w-16 rounded-md border border-input bg-transparent px-2 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 text-center" value={dcaMultiplier} step={0.1} min={1} onChange={(e) => setDcaMultiplier(Number(e.target.value))} />
             <span className="text-xs text-muted-foreground">x</span>
           </div>
         </div>
@@ -1238,7 +1240,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         {leveragePreset === "fixed" && (
           <div className="flex items-center gap-2 mt-1">
             <span className="text-xs text-muted-foreground">Leverage:</span>
-            <input type="number" className="w-16 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center" value={leverageFixedValue} min={1} max={125} onChange={(e) => setLeverageFixedValue(Number(e.target.value))} />
+            <input type="number" className="flex h-8 w-16 rounded-md border border-input bg-transparent px-2 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 text-center" value={leverageFixedValue} min={1} max={125} onChange={(e) => setLeverageFixedValue(Number(e.target.value))} />
             <span className="text-xs text-muted-foreground">x</span>
           </div>
         )}
@@ -1277,8 +1279,8 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               Strategy Name <span className="text-rose-500 text-sm">*</span>
             </label>
           </Tooltip>
-          <input
-            className="w-full px-3.5 py-2.5 rounded-md border border-border bg-muted/50 text-foreground text-sm outline-none focus:border-primary placeholder:text-muted-foreground"
+          <Input
+            className="w-full"
             type="text"
             placeholder="e.g. TrendFollowerV3"
             value={strategyName}
@@ -1293,8 +1295,8 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               Description
             </label>
           </Tooltip>
-          <textarea
-            className="w-full px-3.5 py-2.5 rounded-md border border-border bg-muted/50 text-foreground text-sm outline-none focus:border-primary placeholder:text-muted-foreground resize-y min-h-[60px]"
+          <Textarea
+            className="w-full resize-y min-h-[60px]"
             placeholder="What does this strategy do?"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -1310,7 +1312,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               </label>
             </Tooltip>
             <select
-              className="w-full px-3.5 py-2.5 rounded-md border border-border bg-muted/50 text-foreground text-sm outline-none focus:border-primary cursor-pointer appearance-none"
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               value={exchange}
               onChange={(e) => setExchange(e.target.value)}
             >
@@ -1326,7 +1328,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               </label>
             </Tooltip>
             <select
-              className="w-full px-3.5 py-2.5 rounded-md border border-border bg-muted/50 text-foreground text-sm outline-none focus:border-primary cursor-pointer appearance-none"
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               value={timeframe}
               onChange={(e) => setTimeframe(e.target.value)}
             >
@@ -1367,7 +1369,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
             {showAddPairInput ? (
               <div className="flex items-center gap-1.5">
                 <input
-                  className="px-2.5 py-1.5 rounded border border-primary bg-muted/50 text-foreground text-xs outline-none placeholder:text-muted-foreground w-[140px]"
+                  className="flex h-8 w-[140px] rounded-md border border-input bg-transparent px-2 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   type="text"
                   placeholder="e.g. XRP/USDT:USDT"
                   value={addPairInput}
@@ -1423,7 +1425,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 </Tooltip>
               </div>
               <select
-                className="w-full px-3.5 py-2.5 rounded-md border border-border bg-muted/50 text-foreground text-sm outline-none focus:border-primary cursor-pointer appearance-none"
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 value={tradingMode}
                 onChange={(e) => setTradingMode(e.target.value)}
               >
@@ -1442,7 +1444,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 </Tooltip>
               </div>
               <select
-                className="w-full px-3.5 py-2.5 rounded-md border border-border bg-muted/50 text-foreground text-sm outline-none focus:border-primary cursor-pointer appearance-none"
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 value={marginMode}
                 onChange={(e) => setMarginMode(e.target.value)}
                 disabled={tradingMode === "spot"}
@@ -1462,7 +1464,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 </Tooltip>
               </div>
               <select
-                className="w-full px-3.5 py-2.5 rounded-md border border-border bg-muted/50 text-foreground text-sm outline-none focus:border-primary cursor-pointer appearance-none"
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 value={leverage}
                 onChange={(e) => setLeverage(e.target.value)}
                 disabled={tradingMode === "spot"}
@@ -1484,7 +1486,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 </Tooltip>
                 <input
                   type="number"
-                  className="w-20 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center"
+                  className="flex h-8 w-20 rounded-md border border-input bg-transparent px-2 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 text-center"
                   value={liquidationBuffer}
                   step={0.01}
                   min={0}
@@ -1512,7 +1514,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
           </label>
         </Tooltip>
         <input
-          className="w-full px-3.5 py-2.5 rounded-md border border-border bg-muted/50 text-foreground text-sm outline-none focus:border-primary placeholder:text-muted-foreground mb-4"
+          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           type="text"
           placeholder="Search indicators... (EMA, RSI, Bollinger, MACD, ATR...)"
           value={indicatorSearch}
@@ -1841,7 +1843,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                     </div>
                     <input
                       type="number"
-                      className="w-24 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center"
+                      className="flex h-8 w-24 rounded-md border border-input bg-transparent px-2 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 text-center"
                       value={stoplossOnExchangeLimitRatio} step={0.01} min={0.9} max={1}
                       onChange={(e) => setStoplossOnExchangeLimitRatio(Number(e.target.value))}
                     />
@@ -1857,7 +1859,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                     </div>
                     <input
                       type="number"
-                      className="w-24 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center"
+                      className="flex h-8 w-24 rounded-md border border-input bg-transparent px-2 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 text-center"
                       value={stoplossOnExchangeInterval} step={10} min={10}
                       onChange={(e) => setStoplossOnExchangeInterval(Number(e.target.value))}
                     />
@@ -1872,7 +1874,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                       </Tooltip>
                     </div>
                     <select
-                      className="w-32 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs outline-none focus:border-primary"
+                      className="flex h-8 w-32 rounded-md border border-input bg-transparent px-2 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 text-center"
                       value={stoplossOnExchangePriceType}
                       onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                         const v = e.target.value;

@@ -69,23 +69,23 @@ export function BotDetailPanel({ bot, onClose }: Props) {
         <SheetHeader className="px-6 pt-5 pb-4 border-b border-border flex-shrink-0">
           <div className="flex items-center gap-3">
             <SheetTitle className="text-lg font-extrabold text-foreground flex-1">{bot.name}</SheetTitle>
-            <Badge variant="outline" className={`text-2xs font-bold uppercase ${bot.status === "live" ? "bg-ft-green/15 text-ft-green border-ft-green/20" : "bg-ft-amber/15 text-ft-amber border-ft-amber/20"}`}>{bot.status}</Badge>
-            <Badge variant="outline" className={`text-2xs font-bold ${botState === "running" ? "bg-ft-green/15 text-ft-green" : botState === "paused" ? "bg-ft-amber/15 text-ft-amber" : "bg-ft-red/15 text-ft-red"}`}>{botState}</Badge>
+            <Badge variant="outline" className={`text-2xs font-bold uppercase ${bot.status === "live" ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/20" : "bg-amber-500/15 text-amber-500 border-amber-500/20"}`}>{bot.status}</Badge>
+            <Badge variant="outline" className={`text-2xs font-bold ${botState === "running" ? "bg-emerald-500/15 text-emerald-500" : botState === "paused" ? "bg-amber-500/15 text-amber-500" : "bg-rose-500/15 text-rose-500"}`}>{botState}</Badge>
             <div className="flex gap-1.5 ml-2">
-              <Button variant="outline" size="sm" className="text-2xs h-7 border-ft-amber/30 text-ft-amber" disabled={botState !== "running"} onClick={() => setBotState("paused")}>Pause</Button>
-              <Button variant="outline" size="sm" className="text-2xs h-7 border-ft-red/30 text-ft-red" disabled={botState === "killed"} onClick={() => { if (window.confirm(`Stop ${bot.name}?`)) setBotState("stopped"); }}>Stop</Button>
-              <Button variant="outline" size="sm" className="text-2xs h-7 border-ft-red/30 text-ft-red font-extrabold" disabled={botState === "killed"} onClick={() => { if (window.confirm(`HARD KILL ${bot.name}?`)) setBotState("killed"); }}>Kill</Button>
-              {botState !== "running" && <Button variant="outline" size="sm" className="text-2xs h-7 border-ft-green/30 text-ft-green" onClick={() => setBotState("running")}>Restart</Button>}
+              <Button variant="outline" size="sm" className="text-2xs h-7 border-amber-500/30 text-amber-500" disabled={botState !== "running"} onClick={() => setBotState("paused")}>Pause</Button>
+              <Button variant="outline" size="sm" className="text-2xs h-7 border-rose-500/30 text-rose-500" disabled={botState === "killed"} onClick={() => { if (window.confirm(`Stop ${bot.name}?`)) setBotState("stopped"); }}>Stop</Button>
+              <Button variant="outline" size="sm" className="text-2xs h-7 border-rose-500/30 text-rose-500 font-extrabold" disabled={botState === "killed"} onClick={() => { if (window.confirm(`HARD KILL ${bot.name}?`)) setBotState("killed"); }}>Kill</Button>
+              {botState !== "running" && <Button variant="outline" size="sm" className="text-2xs h-7 border-emerald-500/30 text-emerald-500" onClick={() => setBotState("running")}>Restart</Button>}
             </div>
           </div>
           <div className="text-xs text-muted-foreground">{bot.strategy} \u00b7 {bot.pair}</div>
         </SheetHeader>
 
         {/* ═══ TABS ═══ */}
-        <div className="px-6 py-2 border-b border-border flex gap-1 overflow-x-auto flex-shrink-0">
+        <div className="px-6 border-b border-border flex gap-1 overflow-x-auto flex-shrink-0 pt-4 items-end">
           {tabs.map((t) => (
             <button key={t.key} onClick={() => { setTab(t.key); setSelectedTradeId(null); }}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap ${tab === t.key ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-primary/30"}`}>
+              className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap border-b-2 ${tab === t.key ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground hover:opacity-100 opacity-80"}`}>
               {t.label}
             </button>
           ))}
@@ -100,10 +100,10 @@ export function BotDetailPanel({ bot, onClose }: Props) {
               {/* Hero stats */}
               <div className="grid grid-cols-4 gap-3">
                 {[
-                  { label: "Total Profit", value: `+$${stats.total_profit.toFixed(0)}`, sub: `${stats.total_trades} trades`, color: "text-ft-green", bg: "from-ft-green/10 to-ft-green/5" },
+                  { label: "Total Profit", value: `+$${stats.total_profit.toFixed(0)}`, sub: `${stats.total_trades} trades`, color: "text-emerald-500", bg: "from-emerald-500/10 to-emerald-500/5" },
                   { label: "Win Rate", value: `${wr}%`, sub: `${stats.winning}W / ${stats.losing}L`, color: "text-foreground", bg: "from-primary/10 to-primary/5" },
-                  { label: "Max Drawdown", value: `${stats.max_dd}%`, sub: `$${stats.max_dd_abs.toLocaleString()}`, color: "text-ft-red", bg: "from-ft-red/10 to-ft-red/5" },
-                  { label: "Today P&L", value: bot.pnl, sub: `${bot.positions} open`, color: bot.pnlUp ? "text-ft-green" : "text-ft-red", bg: bot.pnlUp ? "from-ft-green/10 to-ft-green/5" : "from-ft-red/10 to-ft-red/5" },
+                  { label: "Max Drawdown", value: `${stats.max_dd}%`, sub: `$${stats.max_dd_abs.toLocaleString()}`, color: "text-rose-500", bg: "from-rose-500/10 to-rose-500/5" },
+                  { label: "Today P&L", value: bot.pnl, sub: `${bot.positions} open`, color: bot.pnlUp ? "text-emerald-500" : "text-rose-500", bg: bot.pnlUp ? "from-emerald-500/10 to-emerald-500/5" : "from-rose-500/10 to-rose-500/5" },
                 ].map((s) => (
                   <div key={s.label} className={`bg-gradient-to-br ${s.bg} border border-border rounded-xl p-4`}>
                     <div className="text-2xs text-muted-foreground uppercase tracking-wider">{s.label}</div>
@@ -126,7 +126,7 @@ export function BotDetailPanel({ bot, onClose }: Props) {
                     ))}
                   </div>
                   <div className="flex items-center gap-4 text-2xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-ft-green inline-block" /> Absolute profit</span>
+                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" /> Absolute profit</span>
                     <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-muted-foreground/30 inline-block" /> Trade Count</span>
                   </div>
                   <div className="flex bg-primary/40 rounded-md p-0.5">
@@ -225,10 +225,10 @@ export function BotDetailPanel({ bot, onClose }: Props) {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-bold text-foreground">{t.pair}</span>
-                        <Badge variant="outline" className={`text-2xs font-bold ${t.is_short ? "text-ft-red border-ft-red/20" : "text-ft-green border-ft-green/20"}`}>{t.is_short ? "SHORT" : "LONG"} {t.leverage}x</Badge>
+                        <Badge variant="outline" className={`text-2xs font-bold ${t.is_short ? "text-rose-500 border-rose-500/20" : "text-emerald-500 border-emerald-500/20"}`}>{t.is_short ? "SHORT" : "LONG"} {t.leverage}x</Badge>
                         <Badge variant="secondary" className="text-2xs">{t.enter_tag}</Badge>
                       </div>
-                      <span className={`text-md font-extrabold font-mono ${t.current_profit >= 0 ? "text-ft-green" : "text-ft-red"}`}>
+                      <span className={`text-md font-extrabold font-mono ${t.current_profit >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
                         {t.current_profit >= 0 ? "+" : ""}{(t.current_profit * 100).toFixed(2)}% (${t.current_profit_abs >= 0 ? "+" : ""}${t.current_profit_abs.toFixed(2)})
                       </span>
                     </div>
@@ -236,7 +236,7 @@ export function BotDetailPanel({ bot, onClose }: Props) {
                       <div><span className="text-muted-foreground">open_rate</span><br /><span className="text-foreground font-mono font-semibold">${t.open_rate.toLocaleString()}</span></div>
                       <div><span className="text-muted-foreground">current_rate</span><br /><span className="text-foreground font-mono font-semibold">${t.current_rate.toLocaleString()}</span></div>
                       <div><span className="text-muted-foreground">stake_amount</span><br /><span className="text-foreground font-mono font-semibold">${t.stake_amount}</span></div>
-                      <div><span className="text-muted-foreground">stop_loss</span><br /><span className="text-ft-red font-mono font-semibold">${t.stop_loss.toLocaleString()}</span></div>
+                      <div><span className="text-muted-foreground">stop_loss</span><br /><span className="text-rose-500 font-mono font-semibold">${t.stop_loss.toLocaleString()}</span></div>
                       <div><span className="text-muted-foreground">open_date</span><br /><span className="text-foreground font-mono font-semibold">{t.open_date}</span></div>
                     </div>
                   </div>
@@ -251,11 +251,11 @@ export function BotDetailPanel({ bot, onClose }: Props) {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-bold text-foreground">{t.pair}</span>
-                        <Badge variant="outline" className={`text-2xs font-bold ${t.is_short ? "text-ft-red border-ft-red/20" : "text-ft-green border-ft-green/20"}`}>{t.is_short ? "SHORT" : "LONG"} {t.leverage}x</Badge>
+                        <Badge variant="outline" className={`text-2xs font-bold ${t.is_short ? "text-rose-500 border-rose-500/20" : "text-emerald-500 border-emerald-500/20"}`}>{t.is_short ? "SHORT" : "LONG"} {t.leverage}x</Badge>
                         <Badge variant="secondary" className="text-2xs">{t.enter_tag}</Badge>
                         <span className="text-2xs text-muted-foreground">\u2192 {t.exit_reason}</span>
                       </div>
-                      <span className={`text-md font-extrabold font-mono ${t.close_profit_abs >= 0 ? "text-ft-green" : "text-ft-red"}`}>
+                      <span className={`text-md font-extrabold font-mono ${t.close_profit_abs >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
                         {t.close_profit_abs >= 0 ? "+" : ""}${t.close_profit_abs.toFixed(2)}
                       </span>
                     </div>
@@ -287,7 +287,7 @@ export function BotDetailPanel({ bot, onClose }: Props) {
               </div>
               {selectedTrade._open && (
                 <div className="flex gap-2 mt-3">
-                  <Button variant="outline" className="text-xs border-ft-red/30 text-ft-red" onClick={() => { if (window.confirm("Force exit?")) setSelectedTradeId(null); }}>Force Exit (Market)</Button>
+                  <Button variant="outline" className="text-xs border-rose-500/30 text-rose-500" onClick={() => { if (window.confirm("Force exit?")) setSelectedTradeId(null); }}>Force Exit (Market)</Button>
                   <Button variant="outline" className="text-xs" onClick={() => setSelectedTradeId(null)}>Cancel Open Order</Button>
                   <Button variant="outline" className="text-xs" onClick={() => setSelectedTradeId(null)}>Reload Trade</Button>
                 </div>
@@ -306,7 +306,7 @@ export function BotDetailPanel({ bot, onClose }: Props) {
                 <div key={b.id} className="bg-primary/20 border border-border rounded-xl p-4">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-xs text-muted-foreground">{b.date} \u2014 {b.range}</span>
-                    <span className="text-md font-extrabold text-ft-green font-mono">{b.profit} ({b.profitAbs})</span>
+                    <span className="text-md font-extrabold text-emerald-500 font-mono">{b.profit} ({b.profitAbs})</span>
                   </div>
                   <div className="grid grid-cols-5 gap-3">
                     {[{ l: "Sharpe", v: b.sharpe }, { l: "Trades", v: b.trades }, { l: "Win Rate", v: b.winRate }, { l: "Max DD", v: b.maxDd }, { l: "Avg Duration", v: b.duration }].map((m) => (
@@ -328,10 +328,10 @@ export function BotDetailPanel({ bot, onClose }: Props) {
               {[
                 { key: "strategy", val: `${bot.strategy}.py`, accent: true }, { key: "exchange", val: "binance" }, { key: "timeframe", val: "1h" },
                 { key: "pair_whitelist", val: bot.pair }, { key: "stake_amount", val: "$1,000" }, { key: "stake_currency", val: "USDT" },
-                { key: "max_open_trades", val: "5" }, { key: "stoploss", val: "-0.035 (-3.5%)", color: "text-ft-red" },
-                { key: "trailing_stop", val: "enabled", color: "text-ft-green" }, { key: "trailing_stop_positive", val: "0.01" },
+                { key: "max_open_trades", val: "5" }, { key: "stoploss", val: "-0.035 (-3.5%)", color: "text-rose-500" },
+                { key: "trailing_stop", val: "enabled", color: "text-emerald-500" }, { key: "trailing_stop_positive", val: "0.01" },
                 { key: "minimal_roi", val: '{"0": 0.10, "30": 0.05, "60": 0.02}' }, { key: "leverage", val: "10x" },
-                { key: "dry_run", val: bot.status === "paper" ? "true" : "false", color: bot.status === "paper" ? "text-ft-amber" : "text-ft-red" },
+                { key: "dry_run", val: bot.status === "paper" ? "true" : "false", color: bot.status === "paper" ? "text-amber-500" : "text-rose-500" },
                 { key: "trading_mode", val: "futures" }, { key: "margin_mode", val: "isolated" },
               ].map((c) => (
                 <div key={c.key} className="flex justify-between items-baseline py-2 border-b border-border/30 last:border-b-0">
@@ -350,7 +350,7 @@ export function BotDetailPanel({ bot, onClose }: Props) {
                 {logs.map((l) => (
                   <div key={`${l.time}-${l.msg.slice(0,15)}`} className="flex gap-3">
                     <span className="text-muted-foreground/40 w-16 flex-shrink-0">{l.time}</span>
-                    <span className={`w-16 flex-shrink-0 font-bold ${l.level === "WARNING" ? "text-ft-amber" : l.level === "ERROR" ? "text-ft-red" : "text-muted-foreground/60"}`}>{l.level}</span>
+                    <span className={`w-16 flex-shrink-0 font-bold ${l.level === "WARNING" ? "text-amber-500" : l.level === "ERROR" ? "text-rose-500" : "text-muted-foreground/60"}`}>{l.level}</span>
                     <span className="text-foreground/80">{l.msg}</span>
                   </div>
                 ))}
@@ -362,7 +362,7 @@ export function BotDetailPanel({ bot, onClose }: Props) {
           {tab === "actions" && (
             <div className="space-y-4">
               <div className={`px-4 py-3 rounded-xl border text-xs font-bold ${
-                botState === "running" ? "border-ft-green/30 bg-ft-green/10 text-ft-green" : botState === "paused" ? "border-ft-amber/30 bg-ft-amber/10 text-ft-amber" : "border-ft-red/30 bg-ft-red/10 text-ft-red"
+                botState === "running" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-500" : botState === "paused" ? "border-amber-500/30 bg-amber-500/10 text-amber-500" : "border-rose-500/30 bg-rose-500/10 text-rose-500"
               }`}>Bot status: {botState.toUpperCase()}</div>
 
               <h4 className="text-xs font-bold text-foreground">Bot Control</h4>
@@ -389,13 +389,13 @@ export function BotDetailPanel({ bot, onClose }: Props) {
 
               <Separator />
 
-              <h4 className="text-xs font-bold text-ft-red">Danger Zone</h4>
+              <h4 className="text-xs font-bold text-rose-500">Danger Zone</h4>
               <div className="grid grid-cols-3 gap-2">
-                <Button variant="outline" className="text-xs border-ft-amber/30 text-ft-amber" disabled={botState !== "running"} onClick={() => setBotState("paused")}>Pause</Button>
-                <Button variant="outline" className="text-xs border-ft-red/30 text-ft-red" disabled={botState === "killed"} onClick={() => { if (window.confirm(`Stop?`)) setBotState("stopped"); }}>Stop</Button>
-                <Button variant="outline" className="text-xs border-ft-red/30 text-ft-red font-bold" disabled={botState === "killed"} onClick={() => { if (window.confirm(`HARD KILL?`)) setBotState("killed"); }}>Hard Kill</Button>
+                <Button variant="outline" className="text-xs border-amber-500/30 text-amber-500" disabled={botState !== "running"} onClick={() => setBotState("paused")}>Pause</Button>
+                <Button variant="outline" className="text-xs border-rose-500/30 text-rose-500" disabled={botState === "killed"} onClick={() => { if (window.confirm(`Stop?`)) setBotState("stopped"); }}>Stop</Button>
+                <Button variant="outline" className="text-xs border-rose-500/30 text-rose-500 font-bold" disabled={botState === "killed"} onClick={() => { if (window.confirm(`HARD KILL?`)) setBotState("killed"); }}>Hard Kill</Button>
               </div>
-              {botState !== "running" && <Button variant="outline" className="text-xs border-ft-green/30 text-ft-green w-full" onClick={() => setBotState("running")}>Restart Bot</Button>}
+              {botState !== "running" && <Button variant="outline" className="text-xs border-emerald-500/30 text-emerald-500 w-full" onClick={() => setBotState("running")}>Restart Bot</Button>}
             </div>
           )}
         </div>

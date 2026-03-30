@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import { useToast } from "@/components/ui/Toast";
 import Tooltip from "@/components/ui/Tooltip";
+import { Input } from "@/components/ui/input";
 import {
   fmtDateTime,
   fmtPct,
@@ -207,17 +208,17 @@ export default function ExperimentsPage() {
 
       {/* ── Filters Bar ── */}
       <div className="flex items-center gap-2.5 mb-4">
-        <input
+        <Input
           type="text"
           placeholder="Search strategies..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-[240px] w-full px-3 py-2 bg-muted border border-border rounded-btn text-[12.5px] text-foreground placeholder-text-3 focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all"
+          className="max-w-[240px] w-full"
         />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="max-w-[160px] w-full px-3 py-2 bg-muted border border-border rounded-btn text-[12.5px] text-foreground focus:outline-none focus:border-primary cursor-pointer appearance-none transition-all"
+          className="flex h-9 w-full max-w-[160px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed appearance-none"
         >
           <option value="">All Status</option>
           <option value="Draft">Draft</option>
@@ -229,7 +230,7 @@ export default function ExperimentsPage() {
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
-          className="max-w-[160px] w-full px-3 py-2 bg-muted border border-border rounded-btn text-[12.5px] text-foreground focus:outline-none focus:border-primary cursor-pointer appearance-none transition-all"
+          className="flex h-9 w-full max-w-[160px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed appearance-none"
         >
           <option value="lastTest">Sort: Last Activity</option>
           <option value="name">Sort: Name A-Z</option>

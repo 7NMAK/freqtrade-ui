@@ -103,12 +103,12 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
         {view === "main" && (
           <>
             <DialogHeader>
-              <DialogTitle className="text-lg font-extrabold text-foreground flex items-center gap-2">
+              <DialogTitle className="text-lg font-extrabold text-foreground flex items-center gap-2 tracking-tight">
                 🚨 Kill Switch
               </DialogTitle>
               <DialogDescription className="text-sm text-muted-foreground mt-2">
-                Select an action. <strong className="text-ft-amber">Soft Kill</strong> stops trading on all bots — existing positions remain open.{" "}
-                <strong className="text-ft-red">Hard Kill</strong> force-exits ALL positions on ALL bots at MARKET immediately.
+                Select an action. <strong className="text-amber-500">Soft Kill</strong> stops trading on all bots — existing positions remain open.{" "}
+                <strong className="text-rose-500">Hard Kill</strong> force-exits ALL positions on ALL bots at MARKET immediately.
               </DialogDescription>
             </DialogHeader>
             <div className="mt-2">
@@ -123,19 +123,19 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
               <Button
                 variant="outline"
                 onClick={resetAndClose}
-                className="flex-1"
+                className="flex-1 uppercase text-[10px] tracking-wider font-bold"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleSoftKill}
-                className="flex-1 bg-ft-amber/15 text-ft-amber border border-ft-amber/30 hover:bg-ft-amber/25"
+                className="flex-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 hover:bg-amber-500/20 uppercase text-[10px] tracking-wider font-bold shadow-none"
               >
                 ⚠️ Soft Kill (Stop)
               </Button>
               <Button
                 onClick={handleHardKill}
-                className="flex-1 bg-ft-red/15 text-ft-red border border-ft-red/30 hover:bg-ft-red/25 font-extrabold"
+                className="flex-1 bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500/20 uppercase text-[10px] tracking-wider font-extrabold shadow-none"
               >
                 🛑 HARD KILL ALL
               </Button>
@@ -147,7 +147,7 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
         {view === "confirm-soft" && (
           <>
             <DialogHeader>
-              <DialogTitle className="text-lg font-extrabold text-ft-amber flex items-center gap-2">
+              <DialogTitle className="text-lg font-extrabold text-amber-500 flex items-center gap-2 tracking-tight">
                 ⚠️ Confirm Soft Kill
               </DialogTitle>
               <DialogDescription className="text-sm text-muted-foreground mt-2">
@@ -156,12 +156,12 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="flex gap-3 mt-4 sm:justify-between">
-              <Button variant="outline" onClick={() => setView("main")} className="flex-1">
+              <Button variant="outline" onClick={() => setView("main")} className="flex-1 uppercase text-[10px] tracking-wider font-bold">
                 ← Back
               </Button>
               <Button
                 onClick={confirmSoftKill}
-                className="flex-1 bg-ft-amber/15 text-ft-amber border border-ft-amber/30 hover:bg-ft-amber/25 font-bold"
+                className="flex-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 hover:bg-amber-500/20 font-bold uppercase text-[10px] tracking-wider shadow-none"
               >
                 Confirm Soft Kill
               </Button>
@@ -173,27 +173,27 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
         {view === "confirm-hard" && (
           <>
             <DialogHeader>
-              <DialogTitle className="text-lg font-extrabold text-ft-red flex items-center gap-2">
+              <DialogTitle className="text-lg font-extrabold text-rose-500 flex items-center gap-2 tracking-tight">
                 🛑 WARNING: Hard Kill
               </DialogTitle>
               <DialogDescription className="text-sm mt-2 space-y-2">
-                <span className="block text-ft-red font-bold">This action is IRREVERSIBLE.</span>
+                <span className="block text-rose-500 font-bold">This action is IRREVERSIBLE.</span>
                 <span className="block text-muted-foreground">
                   This will send <strong className="text-foreground">POST /api/v1/forceexit</strong> for ALL open positions on ALL {activeBots.length} bots,
                   closing them at <strong className="text-foreground">MARKET price</strong> immediately. Then all bots will be stopped.
                 </span>
-                <span className="block text-ft-red/80 text-xs font-semibold">
+                <span className="block text-rose-500/80 text-xs font-semibold">
                   Slippage may occur. Recovery requires manual restart.
                 </span>
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="flex gap-3 mt-4 sm:justify-between">
-              <Button variant="outline" onClick={() => setView("main")} className="flex-1">
+              <Button variant="outline" onClick={() => setView("main")} className="flex-1 uppercase text-[10px] tracking-wider font-bold">
                 ← Back
               </Button>
               <Button
                 onClick={confirmHardKill}
-                className="flex-1 bg-ft-red text-white hover:bg-ft-red/90 font-extrabold"
+                className="flex-1 bg-rose-500 text-white hover:bg-rose-500/90 font-extrabold uppercase text-[10px] tracking-wider"
               >
                 🛑 CONFIRM HARD KILL
               </Button>
@@ -205,7 +205,7 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
         {view === "success-soft" && (
           <>
             <DialogHeader>
-              <DialogTitle className="text-lg font-extrabold text-ft-green flex items-center gap-2">
+              <DialogTitle className="text-lg font-extrabold text-emerald-500 flex items-center gap-2 tracking-tight">
                 ✅ Soft Kill Executed
               </DialogTitle>
               <DialogDescription className="text-sm text-muted-foreground mt-2">
@@ -214,7 +214,7 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="mt-4">
-              <Button onClick={resetAndClose} className="w-full">
+              <Button onClick={resetAndClose} className="w-full uppercase text-[10px] tracking-wider font-bold">
                 Close
               </Button>
             </DialogFooter>
@@ -225,7 +225,7 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
         {view === "success-hard" && (
           <>
             <DialogHeader>
-              <DialogTitle className="text-lg font-extrabold text-ft-green flex items-center gap-2">
+              <DialogTitle className="text-lg font-extrabold text-emerald-500 flex items-center gap-2 tracking-tight">
                 ✅ Hard Kill Executed
               </DialogTitle>
               <DialogDescription className="text-sm text-muted-foreground mt-2">
@@ -234,7 +234,7 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="mt-4">
-              <Button onClick={resetAndClose} className="w-full">
+              <Button onClick={resetAndClose} className="w-full uppercase text-[10px] tracking-wider font-bold">
                 Close
               </Button>
             </DialogFooter>
@@ -260,30 +260,30 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
                 return (
                   <div
                     key={bot.id}
-                    className={`flex items-center justify-between py-3 px-4 rounded-lg border ${
+                    className={`flex items-center justify-between py-3 px-4 rounded-[10px] border transition-colors ${
                       isKilled
-                        ? "border-ft-red/30 bg-ft-red/5"
-                        : "border-border bg-primary/20"
+                        ? "border-rose-500/30 bg-rose-500/5"
+                        : "border-border bg-muted/30"
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <span
                         className={`w-2.5 h-2.5 rounded-full ${
                           isKilled
-                            ? "bg-ft-red"
+                            ? "bg-rose-500"
                             : isLive
-                            ? "bg-ft-green shadow-[0_0_6px_hsla(97,75%,33%,0.3)]"
-                            : "bg-ft-amber"
+                            ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.3)]"
+                            : "bg-amber-500"
                         }`}
                       />
                       <div>
                         <span className="text-sm font-bold text-foreground">{bot.name}</span>
-                        <span className={`ml-2 text-2xs font-semibold ${
+                        <span className={`ml-2 text-[10px] uppercase font-bold tracking-wider ${
                           isKilled
-                            ? "text-ft-red"
+                            ? "text-rose-500"
                             : isLive
-                            ? "text-ft-green"
-                            : "text-ft-amber"
+                            ? "text-emerald-500"
+                            : "text-amber-500"
                         }`}>
                           {isKilled ? "KILLED" : (isLive ? "LIVE" : "PAPER")}
                         </span>
@@ -292,22 +292,22 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
                     {!isKilled ? (
                       <button
                         onClick={() => handlePerBotKill(bot.id, bot.name)}
-                        className="text-xs font-bold text-ft-red/70 hover:text-ft-red transition-colors px-3 py-1.5 rounded border border-ft-red/20 hover:border-ft-red/40 hover:bg-ft-red/10"
+                        className="text-[10px] uppercase font-bold tracking-wider text-rose-500 hover:text-rose-400 transition-colors px-3 py-1.5 rounded-md border border-rose-500/20 hover:border-rose-500/40 hover:bg-rose-500/10 shadow-sm shadow-black/20"
                       >
                         KILL
                       </button>
                     ) : (
-                      <span className="text-2xs font-bold text-ft-red">Stopped</span>
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-rose-500">Stopped</span>
                     )}
                   </div>
                 );
               })}
             </div>
             <DialogFooter className="flex gap-3 mt-4 sm:justify-between">
-              <Button variant="outline" onClick={() => setView("main")} className="flex-1">
+              <Button variant="outline" onClick={() => setView("main")} className="flex-1 uppercase text-[10px] tracking-wider font-bold">
                 ← Back
               </Button>
-              <Button onClick={resetAndClose} className="flex-1">
+              <Button onClick={resetAndClose} className="flex-1 uppercase text-[10px] tracking-wider font-bold">
                 Close
               </Button>
             </DialogFooter>

@@ -147,14 +147,14 @@ export default function BotDetailPanel({
             <button
               type="button"
               onClick={onEdit}
-              className="px-3 py-1.5 rounded-md border border-border bg-muted/50 text-muted-foreground text-xs font-medium hover:border-border hover:bg-muted transition-all cursor-pointer"
+              className="inline-flex items-center justify-center rounded-md text-[10px] uppercase font-bold tracking-wider transition-colors focus-visible:outline-none border border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground h-7 px-3 cursor-pointer"
             >
               Edit
             </button>
             <button
               type="button"
               onClick={onDuplicate}
-              className="px-3 py-1.5 rounded-md border border-border bg-muted/50 text-muted-foreground text-xs font-medium hover:border-border hover:bg-muted transition-all cursor-pointer"
+              className="inline-flex items-center justify-center rounded-md text-[10px] uppercase font-bold tracking-wider transition-colors focus-visible:outline-none border border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground h-7 px-3 cursor-pointer"
             >
               Duplicate
             </button>
@@ -162,7 +162,7 @@ export default function BotDetailPanel({
               <button
                 type="button"
                 onClick={onStart}
-                className="px-3 py-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 text-emerald-500 text-xs font-semibold hover:border-emerald-500/40 transition-all cursor-pointer"
+                className="inline-flex items-center justify-center rounded-md text-[10px] uppercase font-bold tracking-wider transition-colors focus-visible:outline-none border border-emerald-500/20 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 h-7 px-3 cursor-pointer"
               >
                 Start
               </button>
@@ -171,7 +171,7 @@ export default function BotDetailPanel({
               <button
                 type="button"
                 onClick={onStop}
-                className="px-3 py-1.5 rounded-md border border-rose-500/20 bg-rose-500/10 text-rose-500 text-xs font-semibold hover:border-rose-500/40 transition-all cursor-pointer"
+                className="inline-flex items-center justify-center rounded-md text-[10px] uppercase font-bold tracking-wider transition-colors focus-visible:outline-none border border-rose-500/20 bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 h-7 px-3 cursor-pointer"
               >
                 Stop
               </button>
@@ -180,7 +180,7 @@ export default function BotDetailPanel({
               <button
                 type="button"
                 onClick={onDrain}
-                className="px-3 py-1.5 rounded-md border border-amber-500-500/20 bg-amber-500/10 text-amber-500 text-xs font-semibold hover:border-amber-500/40 transition-all cursor-pointer"
+                className="inline-flex items-center justify-center rounded-md text-[10px] uppercase font-bold tracking-wider transition-colors focus-visible:outline-none border border-amber-500/20 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 h-7 px-3 cursor-pointer"
               >
                 Drain
               </button>
@@ -188,7 +188,7 @@ export default function BotDetailPanel({
             <button
               type="button"
               onClick={onDelete}
-              className="px-3 py-1.5 rounded-md border border-rose-500/20 bg-rose-500/10 text-rose-500 text-xs font-semibold hover:border-rose-500/40 transition-all cursor-pointer"
+              className="inline-flex items-center justify-center rounded-md text-[10px] uppercase font-bold tracking-wider transition-colors focus-visible:outline-none border border-rose-500/20 bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 h-7 px-3 cursor-pointer"
             >
               Delete
             </button>
@@ -196,7 +196,7 @@ export default function BotDetailPanel({
         </div>
 
         {/* Tabs */}
-        <div className="px-6 border-b border-border flex gap-1 overflow-x-auto flex-shrink-0 py-1">
+        <div className="px-6 border-b border-border flex gap-1 overflow-x-auto flex-shrink-0 pt-4 pb-0 items-end">
           {(
             [
               { key: "overview", label: "Overview" },
@@ -210,10 +210,10 @@ export default function BotDetailPanel({
               key={tab.key}
               type="button"
               onClick={() => setDetailTab(tab.key)}
-              className={`px-3 py-2 text-xs font-medium rounded-md transition-all whitespace-nowrap cursor-pointer ${
+              className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer border-b-2 ${
                 detailTab === tab.key
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-muted-foreground hover:bg-muted"
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground opacity-80 hover:opacity-100"
               }`}
             >
               {tab.label}
@@ -371,25 +371,25 @@ function DetailContent({
             <div>
               <div className={sectionTitle}>P&L Summary</div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-muted/50 border border-border rounded-lg p-3">
-                  <div className="text-xs text-muted-foreground mb-1">Closed Profit</div>
-                  <div className={`text-sm font-bold ${profitColor(profit.profit_closed_coin)}`}>
+                <div className="bg-muted/10 border border-border/50 rounded-xl p-3 shadow-sm">
+                  <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1 tracking-wider">Closed Profit</div>
+                  <div className={`text-sm font-black ${profitColor(profit.profit_closed_coin)}`}>
                     {fmtMoney(profit.profit_closed_coin)}
                   </div>
                 </div>
-                <div className="bg-muted/50 border border-border rounded-lg p-3">
-                  <div className="text-xs text-muted-foreground mb-1">Total Profit</div>
-                  <div className={`text-sm font-bold ${profitColor(profit.profit_all_coin)}`}>
+                <div className="bg-muted/10 border border-border/50 rounded-xl p-3 shadow-sm">
+                  <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1 tracking-wider">Total Profit</div>
+                  <div className={`text-sm font-black ${profitColor(profit.profit_all_coin)}`}>
                     {fmtMoney(profit.profit_all_coin)}
                   </div>
                 </div>
-                <div className="bg-muted/50 border border-border rounded-lg p-3">
-                  <div className="text-xs text-muted-foreground mb-1">Trade Count</div>
-                  <div className="text-sm font-bold text-foreground">{profit.trade_count}</div>
+                <div className="bg-muted/10 border border-border/50 rounded-xl p-3 shadow-sm">
+                  <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1 tracking-wider">Trade Count</div>
+                  <div className="text-sm font-black text-foreground">{profit.trade_count}</div>
                 </div>
-                <div className="bg-muted/50 border border-border rounded-lg p-3">
-                  <div className="text-xs text-muted-foreground mb-1">Win Rate</div>
-                  <div className="text-sm font-bold text-foreground">
+                <div className="bg-muted/10 border border-border/50 rounded-xl p-3 shadow-sm">
+                  <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1 tracking-wider">Win Rate</div>
+                  <div className="text-sm font-black text-foreground">
                     {(profit.winning_trades ?? 0) + (profit.losing_trades ?? 0) > 0
                       ? (((profit.winning_trades ?? 0) / ((profit.winning_trades ?? 0) + (profit.losing_trades ?? 0))) * 100).toFixed(1) + "%"
                       : "—"}

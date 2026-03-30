@@ -1,0 +1,118 @@
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Global Scrollbar (Muted, Bloomberg style) ─── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1e1e30; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #2e2e48; }
+
+/* ─── Base Typography & Body ─── */
+@layer base {
+  html { font-size: 13px;
+    @apply font-sans; }
+  body {
+    @apply antialiased selection:bg-accent/30 tracking-[0.015em] bg-background text-foreground;
+  }
+  .theme { --font-heading: var(--font-sans); --font-sans: var(--font-sans); }
+  :root { --background: oklch(1 0 0); --foreground: oklch(0.141 0.005 285.823); --card: oklch(1 0 0); --card-foreground: oklch(0.141 0.005 285.823); --popover: oklch(1 0 0); --popover-foreground: oklch(0.141 0.005 285.823); --primary: oklch(0.555 0.163 48.998); --primary-foreground: oklch(0.987 0.022 95.277); --secondary: oklch(0.967 0.001 286.375); --secondary-foreground: oklch(0.21 0.006 285.885); --muted: oklch(0.967 0.001 286.375); --muted-foreground: oklch(0.552 0.016 285.938); --accent: oklch(0.967 0.001 286.375); --accent-foreground: oklch(0.21 0.006 285.885); --destructive: oklch(0.577 0.245 27.325); --border: oklch(0.92 0.004 286.32); --input: oklch(0.92 0.004 286.32); --ring: oklch(0.705 0.015 286.067); --chart-1: oklch(0.879 0.169 91.605); --chart-2: oklch(0.769 0.188 70.08); --chart-3: oklch(0.666 0.179 58.318); --chart-4: oklch(0.555 0.163 48.998); --chart-5: oklch(0.473 0.137 46.201); --radius: 0.625rem; --sidebar: oklch(0.985 0 0); --sidebar-foreground: oklch(0.141 0.005 285.823); --sidebar-primary: oklch(0.666 0.179 58.318); --sidebar-primary-foreground: oklch(0.987 0.022 95.277); --sidebar-accent: oklch(0.967 0.001 286.375); --sidebar-accent-foreground: oklch(0.21 0.006 285.885); --sidebar-border: oklch(0.92 0.004 286.32); --sidebar-ring: oklch(0.705 0.015 286.067); }
+  .dark { --background: oklch(0.141 0.005 285.823); --foreground: oklch(0.985 0 0); --card: oklch(0.21 0.006 285.885); --card-foreground: oklch(0.985 0 0); --popover: oklch(0.21 0.006 285.885); --popover-foreground: oklch(0.985 0 0); --primary: oklch(0.473 0.137 46.201); --primary-foreground: oklch(0.987 0.022 95.277); --secondary: oklch(0.274 0.006 286.033); --secondary-foreground: oklch(0.985 0 0); --muted: oklch(0.274 0.006 286.033); --muted-foreground: oklch(0.705 0.015 286.067); --accent: oklch(0.274 0.006 286.033); --accent-foreground: oklch(0.985 0 0); --destructive: oklch(0.704 0.191 22.216); --border: oklch(1 0 0 / 10%); --input: oklch(1 0 0 / 15%); --ring: oklch(0.552 0.016 285.938); --chart-1: oklch(0.879 0.169 91.605); --chart-2: oklch(0.769 0.188 70.08); --chart-3: oklch(0.666 0.179 58.318); --chart-4: oklch(0.555 0.163 48.998); --chart-5: oklch(0.473 0.137 46.201); --sidebar: oklch(0.21 0.006 285.885); --sidebar-foreground: oklch(0.985 0 0); --sidebar-primary: oklch(0.769 0.188 70.08); --sidebar-primary-foreground: oklch(0.279 0.077 45.635); --sidebar-accent: oklch(0.274 0.006 286.033); --sidebar-accent-foreground: oklch(0.985 0 0); --sidebar-border: oklch(1 0 0 / 10%); --sidebar-ring: oklch(0.552 0.016 285.938); }
+  * {
+    @apply border-border outline-ring/50; }
+}
+
+/* ─── Standardized V1 Architecture Components ─── */
+@layer components {
+
+  /* ── 1. Panels & Cards ── */
+  .ft-card {
+    @apply bg-bg-1/90 backdrop-blur-sm border border-border rounded-card transition-all;
+  }
+  .ft-card-interactive {
+    @apply hover:border-hover hover:shadow-[0_4px_24px_-8px_rgba(0,0,0,0.5)] cursor-pointer hover:-translate-y-[1px];
+  }
+  .ft-card-header {
+    @apply py-3.5 px-5 flex flex-row items-center justify-between border-b border-border/50;
+  }
+  .ft-card-title {
+    @apply text-sm font-bold flex items-center gap-2 text-text-0 tracking-tight;
+  }
+
+  /* ── 2. Data Tables ── */
+  .ft-table {
+    @apply w-full text-left border-collapse;
+  }
+  .ft-table-header {
+    @apply text-[10px] font-semibold text-text-2 uppercase tracking-wider bg-bg-2 border-b border-border;
+  }
+  .ft-table-th {
+    @apply h-8 px-4 align-middle whitespace-nowrap;
+  }
+  .ft-table-row {
+    @apply border-b border-border/40 hover:bg-bg-2/50 transition-colors;
+  }
+  .ft-table-td {
+    @apply px-4 py-2.5 align-middle text-[12px] whitespace-nowrap;
+  }
+  .ft-table-td-mono {
+    @apply px-4 py-2.5 align-middle text-[12px] font-medium font-mono-data whitespace-nowrap;
+  }
+
+  /* ── 3. Action Buttons ── */
+  .ft-button {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-btn font-bold text-xs transition-colors border shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .ft-button-primary {
+    @apply bg-accent border-accent text-white hover:bg-accent-dim shadow-[0_0_12px_rgba(99,102,241,0.2)];
+  }
+  .ft-button-outline {
+    @apply bg-transparent border-border text-text-1 hover:bg-bg-2 hover:text-text-0 hover:border-hover;
+  }
+  .ft-button-danger {
+    @apply bg-red-bg border-red/30 text-red hover:bg-red/20;
+  }
+
+  /* ── 4. Typography Utils ── */
+  .ft-label {
+    @apply text-2xs uppercase font-bold tracking-wider text-muted-foreground mb-1 block;
+  }
+  .ft-value {
+    @apply text-base font-extrabold text-foreground tracking-tight;
+  }
+
+  /* ── 5. Standardized Dropdowns ── */
+  .ft-select-trigger {
+    @apply h-8 px-3 py-1.5 flex w-full items-center justify-between rounded-btn border border-border bg-bg-1 text-xs text-text-0 placeholder:text-text-2 focus:outline-none focus:ring-1 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-50 hover:border-hover transition-colors;
+  }
+  .ft-select-content {
+    @apply relative z-50 min-w-[8rem] overflow-hidden rounded-md border border-border bg-bg-1 text-text-0 shadow-xl;
+  }
+  .ft-select-item {
+    @apply relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-xs outline-none hover:bg-bg-2 focus:bg-accent focus:text-white data-[disabled]:pointer-events-none data-[disabled]:opacity-50;
+  }
+}
+
+/* ─── Toggle switch (legacy support from V1) ─── */
+.toggle {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background: #1e1e30;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  background: #f0f0f5;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}

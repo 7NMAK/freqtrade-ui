@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FreqTrade | Full Redesign 3 (Command Center)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+    
+    :root {
+      --bg: #030612;
+      --card: #080D20;
+      --border: #1a254c;
+      --cyan: #00ffff;
+      --cyan-glow: rgba(0, 255, 255, 0.5);
+      --pink: #ff007f;
+      --green: #00ff66;
+      --amber: #ffaa00;
+      --text: #e2e8f0;
+    }
+
+    body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; font-size: 13px; margin: 0; padding: 20px; min-height: 100vh; background-image: radial-gradient(rgba(0,255,255,0.05) 1px, transparent 0); background-size: 40px 40px; }
+    
+    .data { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+    
+    .cyber-card { background: var(--card); border: 1px solid var(--border); position: relative; padding: 1.2rem; }
+    .cyber-card::before { content: ''; position: absolute; top:0; left:0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, var(--border), transparent); }
+    .cyber-card.glow::before { background: linear-gradient(90deg, transparent, var(--cyan), transparent); box-shadow: 0 0 15px var(--cyan-glow); }
+    
+    .cyber-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; color: #64748b; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+    
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 0.7rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    td { padding: 8px 12px; border-bottom: 1px solid rgba(26,37,76,0.5); font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
+    tr:hover td { background: rgba(0,255,255,0.02); }
+    
+    .btn-cyber { background: transparent; border: 1px solid var(--border); color: var(--text); font-family: 'JetBrains Mono', monospace; text-transform: uppercase; font-size: 0.7rem; padding: 6px 12px; cursor: pointer; transition: all 0.2s; }
+    .btn-cyber:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 10px rgba(0,255,255,0.2); }
+    
+    .kill-btn { background: rgba(255,0,127,0.1); border: 1px solid var(--pink); color: var(--pink); font-family: 'JetBrains Mono', monospace; text-transform: uppercase; font-size: 0.8rem; font-weight: 700; padding: 8px 16px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 0 15px rgba(255,0,127,0.2); transition: all 0.2s; }
+    .kill-btn:hover { background: var(--pink); color: #fff; box-shadow: 0 0 25px rgba(255,0,127,0.6); }
+
+    .status-dot { width: 8px; height: 8px; border-radius: 5px; display: inline-block; }
+    .status-ok { background: var(--green); box-shadow: 0 0 10px var(--green); }
+    .status-warn { background: var(--amber); box-shadow: 0 0 10px var(--amber); }
+  </style>
+</head>
+<body>
+
+  <header class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-2xl font-extrabold tracking-widest text-white">FREQTRADE<span class="text-[var(--cyan)]">_CMD</span></h1>
+      <div class="flex items-center gap-2 mt-1">
+        <span class="status-dot status-ok"></span><span class="data text-xs" style="color:var(--green)">UPTIME: 14D 02:44:11</span>
+      </div>
+    </div>
+    <div class="flex gap-4 items-center border border-[var(--border)] bg-[#0A1128] px-4 py-2">
+      <div class="data text-xs text-zinc-400">SAT MAR 29 2026</div><div class="w-px h-4 bg-[var(--border)]"></div>
+      <div class="data text-xs text-white">15:42:01 UTC</div>
+    </div>
+    <div class="flex gap-4">
+      <button class="btn-cyber">Settings</button>
+      <button class="kill-btn"><span>⚠️</span> HALT ENGINE</button>
+    </div>
+  </header>
+
+  <div class="grid grid-cols-[1fr_250px] gap-6">
+
+    <!-- Primary Grid -->
+    <div class="flex flex-col gap-6">
+      
+      <!-- Stats Row -->
+      <div class="grid grid-cols-5 gap-4">
+        <div class="cyber-card glow">
+          <div class="text-[10px] uppercase tracking-widest text-[#64748b] mb-2 font-bold">Portfolio Equity</div>
+          <div class="data text-2xl font-bold text-white mb-1">$127,432</div>
+          <div class="data text-[10px]" style="color:var(--cyan)">+$2,341 (1.87%)</div>
+        </div>
+        <div class="cyber-card">
+          <div class="text-[10px] uppercase tracking-widest text-[#64748b] mb-2">Unrealized P&L</div>
+          <div class="data text-2xl font-bold mb-1" style="color:var(--green)">+$1,892</div>
+          <div class="data text-[10px] text-zinc-400">7 OPEN POS</div>
+        </div>
+        <div class="cyber-card">
+          <div class="text-[10px] uppercase tracking-widest text-[#64748b] mb-2">Today Realized</div>
+          <div class="data text-2xl font-bold mb-1" style="color:var(--green)">+$449</div>
+          <div class="data text-[10px] text-zinc-400">5 CLOSED T</div>
+        </div>
+        <div class="cyber-card" style="border-bottom: 2px solid var(--pink)">
+          <div class="text-[10px] uppercase tracking-widest text-[#64748b] mb-2 flex justify-between">Max DD <span>(30D)</span></div>
+          <div class="data text-2xl font-bold mb-1" style="color:var(--pink)">-4.2%</div>
+          <div class="data text-[10px] text-zinc-400">PEAK $5,352</div>
+        </div>
+        <div class="cyber-card">
+          <div class="text-[10px] uppercase tracking-widest text-[#64748b] mb-2">Active Bots</div>
+          <div class="data text-2xl font-bold text-white mb-1">5/5</div>
+          <div class="data text-[10px] text-zinc-400">3 L · 2 P</div>
+        </div>
+      </div>
+
+      <!-- Main Data Row (Bot Grid + Charts) -->
+      <div class="grid grid-cols-2 gap-6">
+        
+        <div class="cyber-card flex flex-col">
+          <div class="cyber-title">Active Bots (5) <button class="btn-cyber text-[9px] py-1">View Strategies</button></div>
+          <div class="flex flex-col gap-3 flex-1 overflow-y-auto">
+            
+            <div class="border border-[var(--border)] bg-[#030612] p-3 flex justify-between items-center group hover:border-[var(--cyan)] cursor-pointer">
+              <div class="flexitems-center gap-3">
+                <span class="status-dot status-ok shrink-0"></span>
+                <div>
+                   <div class="text-sm font-bold text-white">bot-trend-01 <span class="data text-[10px] text-zinc-500 font-normal ml-2">BTC/USDT</span></div>
+                   <div class="data text-[11px]" style="color:var(--green)">P&L: +$312  <span class="text-zinc-600 ml-2">POS: 2</span></div>
+                </div>
+              </div>
+              <!-- Mini chart area -->
+              <div class="w-24 h-6 border-b border-[var(--border)] flex items-end gap-[2px]">
+                <div class="w-full bg-[var(--green)]" style="height:40%"></div><div class="w-full bg-[var(--green)]" style="height:60%"></div><div class="w-full bg-[var(--pink)]" style="height:20%; translate: 0 100%"></div><div class="w-full bg-[var(--green)]" style="height:80%"></div><div class="w-full bg-[var(--green)]" style="height:55%"></div>
+              </div>
+            </div>
+
+            <div class="border border-[var(--border)] bg-[#030612] p-3 flex justify-between items-center group hover:border-[var(--cyan)] cursor-pointer">
+              <div class="flexitems-center gap-3">
+                <span class="status-dot status-ok shrink-0"></span>
+                <div>
+                   <div class="text-sm font-bold text-white">bot-mean-rev <span class="data text-[10px] text-zinc-500 font-normal ml-2">ETH/USDT</span></div>
+                   <div class="data text-[11px]" style="color:var(--green)">P&L: +$187  <span class="text-zinc-600 ml-2">POS: 3</span></div>
+                </div>
+              </div>
+              <div class="w-24 h-6 border-b border-[var(--border)] flex items-end gap-[2px]">
+                <div class="w-full bg-[var(--green)]" style="height:30%"></div><div class="w-full bg-[var(--pink)]" style="height:15%; translate: 0 100%"></div><div class="w-full bg-[var(--green)]" style="height:45%"></div>
+              </div>
+            </div>
+
+            <div class="border border-[var(--pink)] bg-[rgba(255,0,127,0.05)] p-3 flex justify-between items-center group cursor-pointer">
+              <div class="flexitems-center gap-3">
+                <span class="status-dot status-warn shrink-0"></span>
+                <div>
+                   <div class="text-sm font-bold text-white">bot-scalp-hl <span class="data text-[10px] text-zinc-500 font-normal ml-2">SOL/USDT</span></div>
+                   <div class="data text-[11px]" style="color:var(--pink)">P&L: -$51  <span class="text-zinc-600 ml-2">POS: 1</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-6">
+          <div class="cyber-card flex-1">
+             <div class="cyber-title">Equity Curve (30D)</div>
+             <div class="h-32 bg-[#030612] border border-[var(--border)] relative flex items-center justify-center">
+               <span class="data text-[#64748b]">SVG CHART RENDERS HERE</span>
+             </div>
+          </div>
+          <div class="cyber-card">
+             <div class="cyber-title">Daily P&L <span class="data text-[10px] text-zinc-500 font-normal">7-DAY HISTOGRAM</span></div>
+             <div class="h-16 flex items-end justify-between px-2 gap-2 mt-4">
+                 <div class="data text-[10px] text-center w-8" style="color:var(--green)"><span class="block mb-1">+$380</span><div class="h-8 bg-[var(--green)] opacity-60"></div></div>
+                 <div class="data text-[10px] text-center w-8" style="color:var(--pink)"><div class="h-4 bg-[var(--pink)] opacity-60 mb-1"></div><span class="block mt-1">-$120</span></div>
+                 <div class="data text-[10px] text-center w-8" style="color:var(--green)"><span class="block mb-1">+$710</span><div class="h-12 bg-[var(--green)] opacity-60"></div></div>
+                 <div class="data text-[10px] text-center w-8" style="color:var(--green)"><span class="block mb-1">+$295</span><div class="h-6 bg-[var(--green)] opacity-60"></div></div>
+                 <div class="data text-[10px] text-center w-8" style="color:var(--cyan)"><span class="block mb-1">+$449</span><div class="h-10 bg-[var(--cyan)] shadow-[0_0_10px_rgba(0,255,255,0.4)]"></div></div>
+             </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Combined Table Area (Open + Closed Trades) -->
+      <div class="cyber-card">
+        <div class="flex justify-between items-center mb-4">
+          <div class="flex gap-4">
+             <button class="font-bold text-white border-b-2 border-[var(--cyan)] pb-1 transition-colors hover:text-[var(--cyan)]">OPEN POSITIONS (7)</button>
+             <button class="font-bold text-zinc-500 pb-1 transition-colors hover:text-white">CLOSED TRADES (5)</button>
+          </div>
+          <button class="btn-cyber border-[var(--cyan)] text-[var(--cyan)] shadow-[0_0_10px_rgba(0,255,255,0.2)]">FORCE EXIT ALL</button>
+        </div>
+        <div class="overflow-hidden">
+          <table>
+            <thead><tr><th>Pair</th><th>Bot</th><th>Side</th><th>Lev</th><th>Entry</th><th>Current</th><th>P&L</th><th>Dur</th><th></th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="font-bold text-white">BTC/USDT <div class="text-[9px] text-zinc-500 inline ml-2">1h</div></td>
+                <td class="text-zinc-400">trend-01</td>
+                <td><span style="color:var(--green)" class="mr-2">LONG</span></td>
+                <td><span class="bg-[#1a254c] px-2 py-1 text-[10px]">10x</span></td>
+                <td>87,234.00</td><td>87,891.00</td>
+                <td style="color:var(--green); font-weight: bold;">+$656.70</td>
+                <td class="text-zinc-400">4h 23m</td>
+                <td><button class="btn-cyber text-[10px]">EXIT</button></td>
+              </tr>
+              <tr>
+                <td class="font-bold text-white">ETH/USDT <div class="text-[9px] text-zinc-500 inline ml-2">1h</div></td>
+                <td class="text-zinc-400">mean-rev</td>
+                <td><span style="color:var(--pink)" class="mr-2">SHRT</span></td>
+                <td><span class="bg-[#1a254c] px-2 py-1 text-[10px]">5x</span></td>
+                <td>2,087.00</td><td>2,074.00</td>
+                <td style="color:var(--green); font-weight: bold;">+$66.50</td>
+                <td class="text-zinc-400">2h 11m</td>
+                <td><button class="btn-cyber text-[10px]">EXIT</button></td>
+              </tr>
+              <tr>
+                <td class="font-bold text-white">SOL/USDT <div class="text-[9px] text-zinc-500 inline ml-2">5m</div></td>
+                <td class="text-zinc-400">scalp-hl</td>
+                <td><span style="color:var(--green)" class="mr-2">LONG</span></td>
+                <td><span class="bg-[#1a254c] px-2 py-1 text-[10px]">20x</span></td>
+                <td>142.85</td><td>141.90</td>
+                <td style="color:var(--pink); font-weight: bold;">-$190.00</td>
+                <td class="text-zinc-400">48m</td>
+                <td><button class="btn-cyber text-[10px]">EXIT</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Secondary Column (Health, Alerts, Actions) -->
+    <div class="flex flex-col gap-6">
+      
+      <div class="cyber-card">
+         <div class="cyber-title">System Health</div>
+         <div class="flex flex-col gap-1 data text-[10px] mt-2">
+            <div class="flex justify-between items-center py-1.5 border-b border-[var(--border)] text-[#fff]"><div class="flex items-center gap-2"><span class="status-dot status-ok"></span> bot-trend-01</div> <span class="text-zinc-500">12ms</span></div>
+            <div class="flex justify-between items-center py-1.5 border-b border-[var(--border)] text-[#fff]"><div class="flex items-center gap-2"><span class="status-dot status-ok"></span> bot-mean-rev</div> <span class="text-zinc-500">8ms</span></div>
+            <div class="flex justify-between items-center py-1.5 border-b border-[var(--pink)]" style="color:var(--pink)"><div class="flex items-center gap-2"><span class="status-dot status-warn shadow-none" style="background:var(--pink)"></span> bot-scalp-hl</div> <span>45ms (WARN)</span></div>
+            <div class="flex justify-between items-center py-1.5 border-b border-[var(--border)] text-zinc-400"><div class="flex items-center gap-2"><span class="status-dot bg-zinc-600"></span> bot-breakout-p</div> <span>PAPER</span></div>
+            <div class="my-2 border-t border-[var(--border)]"></div>
+            <div class="flex justify-between items-center py-1.5 border-b border-[var(--border)]"><div class="flex items-center gap-2 text-white"><span class="status-dot status-ok"></span> PostgreSQL</div> <span class="text-zinc-500">12.4 MB</span></div>
+            <div class="flex justify-between items-center py-1.5 border-b border-[var(--border)]"><div class="flex items-center gap-2 text-white"><span class="status-dot status-ok"></span> Binance API</div> <span class="text-zinc-500">340/1200</span></div>
+         </div>
+      </div>
+
+      <div class="cyber-card flex-1 flex flex-col">
+         <div class="cyber-title">Command Log <span class="data text-[9px] text-[#00ffff] border border-[var(--cyan)] px-1">TAIL -F</span></div>
+         <div class="bg-black border border-[var(--border)] p-2 h-full overflow-y-auto data text-[10px] flex flex-col gap-2">
+           <div><span class="text-zinc-600">[12m ago]</span> <span style="color:var(--green)">SUCCESS</span> Trade closed BTC/USDT +$312.40</div>
+           <div><span class="text-zinc-600">[34m ago]</span> <span style="color:var(--amber)">WARN</span> bot-scalp-hl nearing 3% DD</div>
+           <div><span class="text-zinc-600">[1h ago]</span> <span style="color:var(--cyan)">INFO</span> Backtest BreakoutAI v3 Done</div>
+           <div class="bg-[rgba(255,0,127,0.2)] p-1 border-l-2 border-[var(--pink)]"><span class="text-[var(--pink)] font-bold">[3h ago] CRITICAL</span> Protection triggered on bot-scalp</div>
+           <div><span class="text-zinc-600">[5h ago]</span> <span style="color:var(--cyan)">INFO</span> DB Sync OK</div>
+         </div>
+      </div>
+
+      <div class="cyber-card">
+         <div class="cyber-title">Quick Exec</div>
+         <div class="grid grid-cols-2 gap-2 mt-2">
+            <button class="btn-cyber w-full text-center hover:bg-[rgba(0,255,255,0.1)]">BUILD STRAT</button>
+            <button class="btn-cyber w-full text-center hover:bg-[rgba(0,255,255,0.1)]">BACKTEST</button>
+            <button class="btn-cyber w-full text-center hover:bg-[rgba(0,255,255,0.1)]">IMPORT</button>
+            <button class="btn-cyber w-full text-center hover:bg-[rgba(0,255,255,0.1)]">SYNC DB</button>
+         </div>
+      </div>
+
+    </div>
+
+  </div>
+</body>
+</html>

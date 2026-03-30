@@ -395,25 +395,33 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
           const ftRunning = raw.running as boolean | undefined;
           const ftStatus = (raw.status_msg as string) || "";
 
+          addLog("INFO", `[poll] status=${raw.status} running=${ftRunning} step="${step}" hasResult=${!!raw.backtest_result}`);
+
           if (ftRunning === false && raw.backtest_result) {
-            setBtProgress("✓ Backtest complete");
-            addLog("INFO", "Backtest finished — results available");
-            // Extract and save the result
+            setBtProgress("\u2713 Backtest complete");
+            addLog("INFO", "Extracting results...");
             const result = extractResult(raw.backtest_result as Record<string, unknown>);
-            if (result) setBtResult(result);
+            if (result) {
+              addLog("INFO", `Result: ${result.strategy_name || "?"} \u2014 ${result.total_trades} trades`);
+              setBtResult(result);
+            } else {
+              addLog("WARNING", `extractResult null. backtest_result keys: ${JSON.stringify(Object.keys(raw.backtest_result as object))}`);
+            }
             setIsRunning(false);
-            fetchHistory(); // Refresh history list
+            fetchHistory();
           } else if (step === "error" || ftStatus.toLowerCase().includes("error")) {
-            setBtProgress("✗ Error");
+            setBtProgress("\u2717 Error");
             addLog("ERROR", ftStatus || "Backtest failed");
             setIsRunning(false);
           } else if (step) {
             const pct = progress != null ? ` (${(progress * 100).toFixed(0)}%)` : "";
             setBtProgress(`${step}${pct}`);
           }
+        } else {
+          addLog("WARNING", "[poll] botBacktestResults returned falsy");
         }
-      } catch {
-        // Status fetch may fail
+      } catch (pollErr) {
+        addLog("ERROR", `[poll] status error: ${pollErr instanceof Error ? pollErr.message : String(pollErr)}`);
       }
     };
     poll();

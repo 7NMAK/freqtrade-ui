@@ -438,7 +438,7 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
       type="button"
       onClick={onToggle}
       className={`w-[38px] h-[20px] rounded-[10px] border cursor-pointer relative transition-all flex-shrink-0 ${
-        on ? "bg-accent border-accent" : "bg-bg-3 border-border"
+        on ? "bg-primary border-primary" : "bg-muted border-border"
       }`}
     >
       <span
@@ -462,7 +462,7 @@ function ToggleRow({
 }) {
   return (
     <div className="flex items-center justify-between py-2.5 border-b border-border/40 last:border-b-0">
-      <span className="text-xs font-semibold text-text-0">{desc}</span>
+      <span className="text-xs font-semibold text-foreground">{desc}</span>
       <Toggle on={on} onToggle={onToggle} />
     </div>
   );
@@ -470,7 +470,7 @@ function ToggleRow({
 
 function FormLabel({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-1.5">
+    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
       {children}
     </label>
   );
@@ -506,8 +506,8 @@ function FormInput({
       step={step}
       min={min}
       max={max}
-      className={`w-full bg-bg-2 border border-border rounded-btn px-3.5 py-2.5 text-xs text-text-0 outline-none transition-colors focus:border-accent placeholder:text-text-3 ${
-        mono ? "font-mono text-[11px]" : ""
+      className={`w-full bg-muted/50 border border-border rounded-btn px-3.5 py-2.5 text-xs text-foreground outline-none transition-colors focus:border-primary placeholder:text-muted-foreground ${
+        mono ? "font-mono text-xs" : ""
       } ${className}`}
     />
   );
@@ -528,7 +528,7 @@ function FormSelect({
     <select
       value={value ?? ""}
       onChange={(e) => onChange?.(e.target.value)}
-      className={`w-full bg-bg-2 border border-border rounded-btn px-3.5 py-2.5 text-xs text-text-0 outline-none transition-colors focus:border-accent cursor-pointer appearance-none bg-no-repeat bg-[right_12px_center] pr-8 ${className}`}
+      className={`w-full bg-muted/50 border border-border rounded-btn px-3.5 py-2.5 text-xs text-foreground outline-none transition-colors focus:border-primary cursor-pointer appearance-none bg-no-repeat bg-[right_12px_center] pr-8 ${className}`}
       style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23808098'/%3E%3C/svg%3E")` }}
     >
       {options.map((o) => (
@@ -539,21 +539,21 @@ function FormSelect({
 }
 
 function FormHint({ children }: { children: React.ReactNode }) {
-  return <div className="text-[10px] text-text-3 mt-1">{children}</div>;
+  return <div className="text-xs text-muted-foreground mt-1">{children}</div>;
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-lg font-bold text-text-0 mb-2">{children}</h2>;
+  return <h2 className="text-lg font-bold text-foreground mb-2">{children}</h2>;
 }
 
 function SectionDesc({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs text-text-2 mb-7">{children}</p>;
+  return <p className="text-xs text-muted-foreground mb-7">{children}</p>;
 }
 
 function SubsectionTitle({ icon, children }: { icon: string; children: React.ReactNode }) {
   return (
-    <h3 className="text-[13px] font-semibold text-text-0 mb-4.5 flex items-center gap-2">
-      <span className="text-[13px]">{icon}</span>
+    <h3 className="text-sm font-semibold text-foreground mb-4.5 flex items-center gap-2">
+      <span className="text-sm">{icon}</span>
       {children}
     </h3>
   );
@@ -585,12 +585,12 @@ function TagEditor({
   };
 
   return (
-    <div className="flex flex-wrap gap-1.5 p-2 bg-bg-2 border border-border rounded-btn min-h-[38px] items-center">
+    <div className="flex flex-wrap gap-1.5 p-2 bg-muted/50 border border-border rounded-btn min-h-[38px] items-center">
       {tags.map((tag, i) => (
-        <span key={`${tag}-${i}`} className="inline-flex items-center gap-1 px-2 py-0.5 bg-bg-3 border border-border rounded text-[11px] text-text-0 font-mono">
+        <span key={`${tag}-${i}`} className="inline-flex items-center gap-1 px-2 py-0.5 bg-muted border border-border rounded text-xs text-foreground font-mono">
           {tag}
           <span
-            className="text-text-3 cursor-pointer text-xs hover:text-red"
+            className="text-muted-foreground cursor-pointer text-xs hover:text-rose-500"
             onClick={() => onRemove(i)}
           >
             &times;
@@ -603,7 +603,7 @@ function TagEditor({
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className="border-none bg-transparent text-text-0 text-[11px] outline-none min-w-[80px] font-mono placeholder:text-text-3"
+        className="border-none bg-transparent text-foreground text-xs outline-none min-w-[80px] font-mono placeholder:text-muted-foreground"
       />
     </div>
   );
@@ -754,7 +754,7 @@ function CoreTab({ config, update }: TabProps) {
           action={
             <button
               type="button"
-              className="text-[11px] text-accent font-medium hover:text-accent cursor-pointer"
+              className="text-xs text-primary font-medium hover:text-primary cursor-pointer"
               onClick={() => update("minimal_roi", [...config.minimal_roi, { time: 0, roi: 0 }])}
             >
               + Add Row
@@ -765,8 +765,8 @@ function CoreTab({ config, update }: TabProps) {
           <table className="w-full border-collapse">
             <thead>
               <tr>
-                <th className="text-left px-3.5 py-2.5 text-[10px] font-semibold text-text-3 uppercase tracking-wide border-b border-border">Time (minutes)</th>
-                <th className="text-left px-3.5 py-2.5 text-[10px] font-semibold text-text-3 uppercase tracking-wide border-b border-border">ROI (%)</th>
+                <th className="text-left px-3.5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b border-border">Time (minutes)</th>
+                <th className="text-left px-3.5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b border-border">ROI (%)</th>
                 <th className="w-8 border-b border-border" />
               </tr>
             </thead>
@@ -782,7 +782,7 @@ function CoreTab({ config, update }: TabProps) {
                         next[i] = { ...next[i], time: Number(e.target.value) };
                         update("minimal_roi", next);
                       }}
-                      className="w-full bg-bg-1 border border-border rounded px-2 py-1.5 text-xs text-text-0 outline-none focus:border-accent"
+                      className="w-full bg-card border border-border rounded px-2 py-1.5 text-xs text-foreground outline-none focus:border-primary"
                     />
                   </td>
                   <td className="px-3 py-1.5 border-b border-border/40">
@@ -795,13 +795,13 @@ function CoreTab({ config, update }: TabProps) {
                         next[i] = { ...next[i], roi: Number(e.target.value) };
                         update("minimal_roi", next);
                       }}
-                      className="w-full bg-bg-1 border border-border rounded px-2 py-1.5 text-xs text-text-0 outline-none focus:border-accent"
+                      className="w-full bg-card border border-border rounded px-2 py-1.5 text-xs text-foreground outline-none focus:border-primary"
                     />
                   </td>
                   <td className="px-2 py-1.5 border-b border-border/40">
                     <button
                       type="button"
-                      className="text-red text-sm opacity-60 hover:opacity-100 cursor-pointer"
+                      className="text-rose-500 text-sm opacity-60 hover:opacity-100 cursor-pointer"
                       onClick={() => update("minimal_roi", config.minimal_roi.filter((_, j) => j !== i))}
                     >
                       &#x2715;
@@ -1161,17 +1161,17 @@ function PairlistsTab({ config, update, botId }: TabProps) {
       <FormDivider />
 
       {/* Filter Stack */}
-      <SubsectionTitle icon={"\uD83D\uDD0D"}>Filter Stack <span className="text-[10px] text-text-3 font-normal">Drag to reorder</span></SubsectionTitle>
+      <SubsectionTitle icon={"\uD83D\uDD0D"}>Filter Stack <span className="text-xs text-muted-foreground font-normal">Drag to reorder</span></SubsectionTitle>
 
       {filters.map((f, i) => (
-        <div key={f.name} className="bg-bg-1 border border-border rounded-btn mb-2 overflow-hidden">
+        <div key={f.name} className="bg-card border border-border rounded-btn mb-2 overflow-hidden">
           <div
             className="flex items-center gap-3.5 px-4 py-3 cursor-pointer hover:bg-white/[.01]"
             onClick={() => toggleFilterOpen(i)}
           >
             <Toggle on={f.enabled} onToggle={() => { toggleFilter(i); }} />
-            <span className="text-xs font-semibold text-text-0 flex-1">{f.name}</span>
-            <span className="text-text-3 text-sm cursor-grab">{"\u2630"}</span>
+            <span className="text-xs font-semibold text-foreground flex-1">{f.name}</span>
+            <span className="text-muted-foreground text-sm cursor-grab">{"\u2630"}</span>
           </div>
           {f.open && (
             <div className="px-3.5 pb-3 pt-2 border-t border-border/40">
@@ -1305,11 +1305,11 @@ function PairlistsTab({ config, update, botId }: TabProps) {
               setTestingPairlist(false);
             }
           }}
-          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn text-[11px] font-semibold bg-green-bg border border-green/25 text-green hover:bg-green/[.18] transition-colors cursor-pointer mr-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn text-xs font-semibold bg-emerald-500/10 border border-emerald-500/25 text-emerald-500 hover:bg-green/[.18] transition-colors cursor-pointer mr-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {testingPairlist ? "Testing..." : "Test Pairlist"}
         </button>
-        <span className="text-[11px] text-text-3">Runs <code className="text-cyan">freqtrade test-pairlist</code> and shows results</span>
+        <span className="text-xs text-muted-foreground">Runs <code className="text-cyan">freqtrade test-pairlist</code> and shows results</span>
       </div>
     </div>
   );
@@ -1419,7 +1419,7 @@ function ExchangeTab({ config, update }: TabProps) {
           spellCheck={false}
           value={config.ccxt_config}
           onChange={(e) => update("ccxt_config", e.target.value)}
-          className="w-full bg-bg-1 border border-border rounded-btn p-3 font-mono text-[11px] text-cyan leading-relaxed min-h-[120px] resize-y outline-none focus:border-accent"
+          className="w-full bg-card border border-border rounded-btn p-3 font-mono text-xs text-cyan leading-relaxed min-h-[120px] resize-y outline-none focus:border-primary"
         />
         <FormHint>Raw ccxt configuration object in JSON. Applied to exchange connection.</FormHint>
       </div>
@@ -1544,7 +1544,7 @@ function TelegramTab({ config, update }: TabProps) {
         spellCheck={false}
         value={config.telegram_keyboard}
         onChange={(e) => update("telegram_keyboard", e.target.value)}
-        className="w-full bg-bg-1 border border-border rounded-btn p-3 font-mono text-[11px] text-cyan leading-relaxed min-h-[120px] resize-y outline-none focus:border-accent"
+        className="w-full bg-card border border-border rounded-btn p-3 font-mono text-xs text-cyan leading-relaxed min-h-[120px] resize-y outline-none focus:border-primary"
       />
       <FormHint>JSON array of arrays defining Telegram keyboard layout</FormHint>
       <div className="mb-5" />
@@ -1628,7 +1628,7 @@ function WebhooksTab({ config, update }: TabProps) {
         spellCheck={false}
         value={config.webhook_strategy_msg}
         onChange={(e) => update("webhook_strategy_msg", e.target.value)}
-        className="w-full bg-bg-1 border border-border rounded-btn p-3 font-mono text-[11px] text-cyan leading-relaxed min-h-[100px] resize-y outline-none focus:border-accent mb-6"
+        className="w-full bg-card border border-border rounded-btn p-3 font-mono text-xs text-cyan leading-relaxed min-h-[100px] resize-y outline-none focus:border-primary mb-6"
       />
 
       <FormDivider />
@@ -1638,14 +1638,14 @@ function WebhooksTab({ config, update }: TabProps) {
           <SubsectionTitle icon={"\uD83D\uDCE4"}>Event Payloads</SubsectionTitle>
 
           {events.map((evt, i) => (
-            <div key={evt.name} className="bg-bg-1 border border-border rounded-btn mb-2 overflow-hidden">
+            <div key={evt.name} className="bg-card border border-border rounded-btn mb-2 overflow-hidden">
               <div
                 className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/[.01]"
                 onClick={() => toggleEvent(i, "open")}
               >
                 <Toggle on={evt.enabled} onToggle={() => toggleEvent(i, "enabled")} />
-                <span className="text-xs font-semibold text-text-0 flex-1">{evt.name}</span>
-                <span className="text-text-3 text-xs">{evt.open ? "\u25BC" : "\u25B6"}</span>
+                <span className="text-xs font-semibold text-foreground flex-1">{evt.name}</span>
+                <span className="text-muted-foreground text-xs">{evt.open ? "\u25BC" : "\u25B6"}</span>
               </div>
               {evt.open && (
                 <div className="px-3.5 pb-3 pt-2 border-t border-border/40">
@@ -1653,7 +1653,7 @@ function WebhooksTab({ config, update }: TabProps) {
                     spellCheck={false}
                     value={evt.payload}
                     onChange={(e) => updatePayload(i, e.target.value)}
-                    className="w-full bg-bg-1 border border-border rounded-btn p-3 font-mono text-[11px] text-cyan leading-relaxed min-h-[100px] resize-y outline-none focus:border-accent"
+                    className="w-full bg-card border border-border rounded-btn p-3 font-mono text-xs text-cyan leading-relaxed min-h-[100px] resize-y outline-none focus:border-primary"
                   />
                 </div>
               )}
@@ -1664,11 +1664,11 @@ function WebhooksTab({ config, update }: TabProps) {
         {/* Variable Reference */}
         <div>
           <SubsectionTitle icon={"\uD83D\uDCD6"}>Available Variables</SubsectionTitle>
-          <div className="bg-bg-1 border border-border rounded-btn p-3 max-h-[300px] overflow-y-auto">
+          <div className="bg-card border border-border rounded-btn p-3 max-h-[300px] overflow-y-auto">
             {webhookVars.map((v) => (
               <div key={v.key} className="flex items-baseline gap-2 py-1 border-b border-border/30 last:border-b-0">
-                <span className="font-mono text-[11px] text-cyan whitespace-nowrap">{v.key}</span>
-                <span className="text-[10px] text-text-3">{v.desc}</span>
+                <span className="font-mono text-xs text-cyan whitespace-nowrap">{v.key}</span>
+                <span className="text-xs text-muted-foreground">{v.desc}</span>
               </div>
             ))}
           </div>
@@ -1696,7 +1696,7 @@ function WebhooksTab({ config, update }: TabProps) {
             spellCheck={false}
             value={config.discord_entry_payload}
             onChange={(e) => update("discord_entry_payload", e.target.value)}
-            className="w-full bg-bg-1 border border-border rounded-btn p-3 font-mono text-[11px] text-cyan leading-relaxed min-h-[80px] resize-y outline-none focus:border-accent"
+            className="w-full bg-card border border-border rounded-btn p-3 font-mono text-xs text-cyan leading-relaxed min-h-[80px] resize-y outline-none focus:border-primary"
           />
         </div>
         <div>
@@ -1705,7 +1705,7 @@ function WebhooksTab({ config, update }: TabProps) {
             spellCheck={false}
             value={config.discord_exit_payload}
             onChange={(e) => update("discord_exit_payload", e.target.value)}
-            className="w-full bg-bg-1 border border-border rounded-btn p-3 font-mono text-[11px] text-cyan leading-relaxed min-h-[80px] resize-y outline-none focus:border-accent"
+            className="w-full bg-card border border-border rounded-btn p-3 font-mono text-xs text-cyan leading-relaxed min-h-[80px] resize-y outline-none focus:border-primary"
           />
         </div>
       </div>
@@ -1716,7 +1716,7 @@ function WebhooksTab({ config, update }: TabProps) {
             spellCheck={false}
             value={config.discord_exit_fill_payload}
             onChange={(e) => update("discord_exit_fill_payload", e.target.value)}
-            className="w-full bg-bg-1 border border-border rounded-btn p-3 font-mono text-[11px] text-cyan leading-relaxed min-h-[80px] resize-y outline-none focus:border-accent"
+            className="w-full bg-card border border-border rounded-btn p-3 font-mono text-xs text-cyan leading-relaxed min-h-[80px] resize-y outline-none focus:border-primary"
           />
         </div>
         <div>
@@ -1725,7 +1725,7 @@ function WebhooksTab({ config, update }: TabProps) {
             spellCheck={false}
             value={config.discord_status_payload}
             onChange={(e) => update("discord_status_payload", e.target.value)}
-            className="w-full bg-bg-1 border border-border rounded-btn p-3 font-mono text-[11px] text-cyan leading-relaxed min-h-[80px] resize-y outline-none focus:border-accent"
+            className="w-full bg-card border border-border rounded-btn p-3 font-mono text-xs text-cyan leading-relaxed min-h-[80px] resize-y outline-none focus:border-primary"
           />
         </div>
       </div>
@@ -1794,12 +1794,12 @@ function ProducerTab({ config, update }: TabProps) {
       <Tooltip content={TOOLTIPS.producer_producers?.description ?? "Producers"} configKey="external_message_consumer.producers"><SubsectionTitle icon={"\uD83D\uDCE1"}>Producers</SubsectionTitle></Tooltip>
 
       {config.producers.map((p, i) => (
-        <div key={`producer-${p.name || i}`} className="bg-bg-1 border border-border rounded-btn p-4 mb-2">
+        <div key={`producer-${p.name || i}`} className="bg-card border border-border rounded-btn p-4 mb-2">
           <div className="flex items-center justify-between mb-2.5">
-            <span className="text-xs font-semibold text-text-0">Producer #{i + 1}</span>
+            <span className="text-xs font-semibold text-foreground">Producer #{i + 1}</span>
             <button
               type="button"
-              className="text-red text-[13px] cursor-pointer"
+              className="text-rose-500 text-sm cursor-pointer"
               onClick={() => removeProducer(i)}
             >
               &times; Remove
@@ -1834,7 +1834,7 @@ function ProducerTab({ config, update }: TabProps) {
       <div className="mt-3">
         <button
           type="button"
-          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn text-[11px] font-semibold bg-transparent border border-border text-text-2 hover:bg-bg-3 hover:text-text-1 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn text-xs font-semibold bg-transparent border border-border text-muted-foreground hover:bg-muted hover:text-muted-foreground transition-colors cursor-pointer"
           onClick={addProducer}
         >
           + Add Producer
@@ -1921,7 +1921,7 @@ function AdvancedTab({ config, update }: TabProps) {
       <SubsectionTitle icon={"\uD83D\uDCE6"}>Multi-Instance Info</SubsectionTitle>
       <Card>
         <CardBody>
-          <p className="text-xs text-text-1 leading-relaxed mb-3">
+          <p className="text-xs text-muted-foreground leading-relaxed mb-3">
             Each FreqTrade instance runs in its own Docker container with a separate config, database, and API port.
             The orchestrator manages multiple instances via the REST API.
           </p>
@@ -1932,10 +1932,10 @@ function AdvancedTab({ config, update }: TabProps) {
               { label: "API Username", param: "api_server.username", detail: "Required for auth" },
               { label: "API Password", param: "api_server.password", detail: "Required for auth" },
             ].map((item) => (
-              <div key={item.param} className="bg-bg-1 border border-border rounded-btn p-3">
-                <div className="text-[10px] text-text-3 uppercase tracking-wide mb-1">{item.label}</div>
-                <div className="text-xs text-text-0 font-mono">{item.param}</div>
-                <div className="text-[11px] text-text-2 mt-0.5">{item.detail}</div>
+              <div key={item.param} className="bg-card border border-border rounded-btn p-3">
+                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">{item.label}</div>
+                <div className="text-xs text-foreground font-mono">{item.param}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{item.detail}</div>
               </div>
             ))}
           </div>
@@ -2496,12 +2496,12 @@ export default function SettingsPage() {
     <AppShell title="Settings">
       {/* Bot selector bar — hidden on System tab */}
       {activeTab !== "system" && (
-        <div className="flex items-center gap-3 mb-4 p-4 bg-bg-2 border border-border rounded-card">
-          <span className="text-xs font-semibold text-text-2 uppercase tracking-wide shrink-0">Target Bot</span>
+        <div className="flex items-center gap-3 mb-4 p-4 bg-muted/50 border border-border rounded-card">
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide shrink-0">Target Bot</span>
           <select
             value={selectedBotId}
             onChange={(e) => { setSelectedBotId(e.target.value); setHasChanges(false); }}
-            className="bg-bg-1 border border-border rounded-btn px-3.5 py-2 text-xs text-text-1 outline-none focus:border-accent cursor-pointer min-w-[200px]"
+            className="bg-card border border-border rounded-btn px-3.5 py-2 text-xs text-muted-foreground outline-none focus:border-primary cursor-pointer min-w-[200px]"
           >
             <option value="">Select bot...</option>
             {bots.map((bot) => (
@@ -2514,11 +2514,11 @@ export default function SettingsPage() {
             type="button"
             onClick={handleLoadConfig}
             disabled={loadingConfig || !selectedBotId}
-            className="px-4 py-2 text-xs font-semibold rounded-btn border border-border bg-bg-3 text-text-1 hover:border-border-hover hover:text-text-0 transition-colors disabled:opacity-50 cursor-pointer"
+            className="px-4 py-2 text-xs font-semibold rounded-btn border border-border bg-muted text-muted-foreground hover:border-border-border hover:border-ring hover:text-foreground transition-colors disabled:opacity-50 cursor-pointer"
           >
             {loadingConfig ? "Loading..." : "Load Config"}
           </button>
-          <span className="text-xs text-text-3 ml-2">
+          <span className="text-xs text-muted-foreground ml-2">
             Changes you make are written to the bot&apos;s config.json via the Orchestrator API.
           </span>
         </div>
@@ -2526,7 +2526,7 @@ export default function SettingsPage() {
 
       <div className="flex h-[calc(100vh-var(--header-h,56px)-120px)] -mx-8 -mt-2">
         {/* Vertical Tab Bar */}
-        <div className="w-[200px] bg-bg-1 border-r border-border flex-shrink-0 py-4 overflow-y-auto">
+        <div className="w-[200px] bg-card border-r border-border flex-shrink-0 py-4 overflow-y-auto">
           {TABS.map((tab) => (
             <button
               type="button"
@@ -2534,13 +2534,13 @@ export default function SettingsPage() {
               onClick={() => setActiveTab(tab.id)}
               className={`w-full flex items-center gap-2.5 px-5 py-2.5 cursor-pointer transition-all text-xs font-medium border-l-[3px] ${
                 activeTab === tab.id
-                  ? "bg-accent/[.12] text-accent border-l-accent"
-                  : "text-text-2 border-l-transparent hover:bg-bg-3 hover:text-text-1"
+                  ? "bg-primary/[.12] text-primary border-l-accent"
+                  : "text-muted-foreground border-l-transparent hover:bg-muted hover:text-muted-foreground"
               }`}
             >
               <span className="text-sm w-[18px] text-center">{tab.icon}</span>
               <span className="flex-1 text-left">{tab.label}</span>
-              <span className="text-[9px] text-text-3 font-mono ml-auto">{tab.ref}</span>
+              <span className="text-[9px] text-muted-foreground font-mono ml-auto">{tab.ref}</span>
             </button>
           ))}
         </div>
@@ -2553,8 +2553,8 @@ export default function SettingsPage() {
 
           {/* Sticky Save Bar — hidden on System tab */}
           {activeTab !== "system" && (
-            <div className="sticky bottom-0 bg-bg-1 border-t border-border px-8 py-3.5 flex items-center justify-between z-10">
-              <div className="flex items-center gap-1.5 text-[11px] text-text-3">
+            <div className="sticky bottom-0 bg-card border-t border-border px-8 py-3.5 flex items-center justify-between z-10">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 {hasChanges && (
                   <>
                     <span className="w-1.5 h-1.5 rounded-full bg-amber" />
@@ -2566,7 +2566,7 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn text-[11px] font-semibold bg-transparent border border-border text-text-2 hover:bg-bg-3 hover:text-text-1 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn text-xs font-semibold bg-transparent border border-border text-muted-foreground hover:bg-muted hover:text-muted-foreground transition-colors cursor-pointer"
                 >
                   Reset
                 </button>
@@ -2574,7 +2574,7 @@ export default function SettingsPage() {
                   type="button"
                   onClick={handleSaveConfig}
                   disabled={saving || !selectedBotId}
-                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn text-[11px] font-semibold bg-accent border border-accent text-white hover:bg-accent-dim transition-colors disabled:opacity-50 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn text-xs font-semibold bg-primary border border-primary text-white hover:bg-primary-dim transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {saving ? "Saving..." : "Save Configuration"}
                 </button>

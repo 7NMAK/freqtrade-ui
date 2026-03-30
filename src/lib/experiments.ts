@@ -190,11 +190,11 @@ export function fmtNum(val: number | null | undefined, decimals = 2): string {
 // ── Color helpers ─────────────────────────────────────────────────────────
 
 export function profitColor(val: number | null | undefined): string {
-  if (val == null) return "text-text-2";
-  return val >= 0 ? "text-green" : "text-red";
+  if (val == null) return "text-muted-foreground";
+  return val >= 0 ? "text-emerald-500" : "text-rose-500";
 }
 
 export function ddColor(val: number | null | undefined): string {
-  if (val == null) return "text-text-2";
-  return "text-red";
+  if (val == null) return "text-muted-foreground";
+  return "text-rose-500";
 }

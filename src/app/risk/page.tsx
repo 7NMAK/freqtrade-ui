@@ -46,12 +46,12 @@ interface ProtectionWithStatus {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 const statusColor = {
-  running: "text-green",
-  stopped: "text-text-3",
-  error: "text-red",
-  starting: "text-amber",
-  killed: "text-red",
-  draining: "text-amber",
+  running: "text-emerald-500",
+  stopped: "text-muted-foreground",
+  error: "text-rose-500",
+  starting: "text-amber-500",
+  killed: "text-rose-500",
+  draining: "text-amber-500",
 };
 
 const dotBg: Record<string, string> = {
@@ -68,11 +68,11 @@ function botHeartbeatStatus(bot: Bot): "ok" | "warn" | "fail" {
 
 function KillTypeBadge({ type }: { type: string }) {
   const styles: Record<string, string> = {
-    HARD_KILL: "bg-red-bg text-red border border-red/20",
-    SOFT_KILL: "bg-amber-bg text-amber border border-amber/20",
+    HARD_KILL: "bg-rose-500/10 text-rose-500 border border-rose-500/20",
+    SOFT_KILL: "bg-amber-500/10 text-amber-500 border border-amber-500-500/20",
   };
   return (
-    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${styles[type] ?? "bg-bg-3 text-text-3"}`}>
+    <span className={`text-xs font-semibold px-2 py-0.5 rounded ${styles[type] ?? "bg-muted text-muted-foreground"}`}>
       {type.replace("_", " ")}
     </span>
   );
@@ -80,13 +80,13 @@ function KillTypeBadge({ type }: { type: string }) {
 
 function TriggerBadge({ trigger }: { trigger: string }) {
   const styles: Record<string, string> = {
-    MANUAL: "bg-accent/10 text-accent border border-accent/20",
+    MANUAL: "bg-primary/10 text-primary border border-primary/20",
     HEARTBEAT_FAILURE: "bg-purple/10 text-purple border border-purple/20",
     DRAWDOWN_LIMIT: "bg-cyan/10 text-cyan border border-cyan/20",
   };
   if (!trigger) return null;
   return (
-    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${styles[trigger] ?? "bg-bg-3 text-text-3"}`}>
+    <span className={`text-xs font-semibold px-2 py-0.5 rounded ${styles[trigger] ?? "bg-muted text-muted-foreground"}`}>
       {trigger.replace(/_/g, " ")}
     </span>
   );
@@ -448,9 +448,9 @@ export default function RiskPage() {
     <AppShell title="Risk Management">
 
       {/* ════ KILL SWITCH PANEL ════ */}
-      <div className="bg-gradient-to-br from-bg-2 to-red/[0.03] border border-red/15 rounded-card overflow-hidden mb-6">
-        <div className="px-6 py-4 flex items-center justify-between border-b border-red/10">
-          <h3 className="text-sm font-semibold text-text-0 flex items-center gap-2">
+      <div className="bg-gradient-to-br from-bg-2 to-red/[0.03] border border-rose-500/15 rounded-card overflow-hidden mb-6">
+        <div className="px-6 py-4 flex items-center justify-between border-b border-rose-500/10">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
             <span>🚨</span>
             <Tooltip content={"Emergency controls to stop bot trading. Soft Kill stops new entries; Hard Kill force-exits all positions at market price."} configKey="kill_switch">
               Kill Switch Control
@@ -458,8 +458,8 @@ export default function RiskPage() {
           </h3>
           {lastEvent && (
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-text-3">Last event:</span>
-              <span className="text-[10px] text-amber font-semibold">
+              <span className="text-xs text-muted-foreground">Last event:</span>
+              <span className="text-xs text-amber-500 font-semibold">
                 {lastEvent.kill_type.replace("_", " ")} — {new Date(lastEvent.created_at).toLocaleString()}
               </span>
             </div>
@@ -472,31 +472,31 @@ export default function RiskPage() {
             {/* SOFT KILL */}
             <button
               type="button"
-              className="bg-amber-bg border-2 border-amber/25 rounded-card p-6 text-center cursor-pointer transition-all hover:border-amber hover:shadow-[0_0_24px_var(--color-amber)] disabled:opacity-50"
+              className="bg-amber-500/10 border-2 border-amber-500/25 rounded-card p-6 text-center cursor-pointer transition-all hover:border-amber-500 hover:shadow-[0_0_24px_var(--color-amber)] disabled:opacity-50"
               onClick={() => setShowSoftKillConfirm(true)}
               disabled={killing}
             >
               <div className="text-[32px] mb-2.5">⏸️</div>
-              <div className="text-[15px] font-bold text-amber mb-1">SOFT KILL</div>
-              <div className="text-[11px] text-text-2 leading-relaxed">
+              <div className="text-[15px] font-bold text-amber-500 mb-1">SOFT KILL</div>
+              <div className="text-xs text-muted-foreground leading-relaxed">
                 Stop Trading — no new entries.<br />Open positions remain untouched.
               </div>
-              <div className="text-[10px] text-text-3 mt-2 font-mono">POST /api/v1/stop</div>
+              <div className="text-xs text-muted-foreground mt-2 font-mono">POST /api/v1/stop</div>
             </button>
 
             {/* HARD KILL */}
             <button
               type="button"
-              className="bg-red-bg border-2 border-red/25 rounded-card p-6 text-center cursor-pointer transition-all hover:border-red hover:shadow-[0_0_24px_var(--color-red)] disabled:opacity-50"
+              className="bg-rose-500/10 border-2 border-rose-500/25 rounded-card p-6 text-center cursor-pointer transition-all hover:border-rose-500 hover:shadow-[0_0_24px_var(--color-red)] disabled:opacity-50"
               onClick={() => setShowHardKillConfirm(true)}
               disabled={killing}
             >
               <div className="text-[32px] mb-2.5">🛑</div>
-              <div className="text-[15px] font-bold text-red mb-1">EMERGENCY CLOSE ALL</div>
-              <div className="text-[11px] text-text-2 leading-relaxed">
+              <div className="text-[15px] font-bold text-rose-500 mb-1">EMERGENCY CLOSE ALL</div>
+              <div className="text-xs text-muted-foreground leading-relaxed">
                 Force-exit ALL positions at MARKET<br />and stop ALL bots. Nuclear option.
               </div>
-              <div className="text-[10px] text-text-3 mt-2 font-mono">POST /api/v1/forceexit + /stop</div>
+              <div className="text-xs text-muted-foreground mt-2 font-mono">POST /api/v1/forceexit + /stop</div>
             </button>
           </div>
 
@@ -505,7 +505,7 @@ export default function RiskPage() {
             <select
               value={selectedBotId}
               onChange={(e) => setSelectedBotId(e.target.value)}
-              className="bg-bg-1 border border-border rounded-btn px-3.5 py-2.5 text-xs text-text-1 outline-none min-w-[220px] font-inherit focus:border-accent cursor-pointer"
+              className="bg-card border border-border rounded-btn px-3.5 py-2.5 text-xs text-muted-foreground outline-none min-w-[220px] font-inherit focus:border-primary cursor-pointer"
             >
               <option value="">Select bot to kill...</option>
               {bots.map((bot) => (
@@ -518,7 +518,7 @@ export default function RiskPage() {
               type="button"
               onClick={() => handlePerBotKill("soft")}
               disabled={!selectedBotId}
-              className="bg-amber-bg border border-amber/30 rounded-btn px-4 py-2 text-[11px] font-semibold text-amber cursor-pointer transition-all hover:bg-amber/[0.18] hover:border-amber disabled:opacity-40 disabled:cursor-not-allowed"
+              className="bg-amber-500/10 border border-amber-500/30 rounded-btn px-4 py-2 text-xs font-semibold text-amber-500 cursor-pointer transition-all hover:bg-amber/[0.18] hover:border-amber-500 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Soft Kill
             </button>
@@ -526,7 +526,7 @@ export default function RiskPage() {
               type="button"
               onClick={() => handlePerBotKill("hard")}
               disabled={!selectedBotId}
-              className="bg-red-bg border border-red/30 rounded-btn px-4 py-2 text-[11px] font-semibold text-red cursor-pointer transition-all hover:bg-red/[0.18] hover:border-red disabled:opacity-40 disabled:cursor-not-allowed"
+              className="bg-rose-500/10 border border-rose-500/30 rounded-btn px-4 py-2 text-xs font-semibold text-rose-500 cursor-pointer transition-all hover:bg-red/[0.18] hover:border-rose-500 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Hard Kill
             </button>
@@ -539,11 +539,11 @@ export default function RiskPage() {
                 }`}
               />
               <div>
-                <div className="text-xs font-semibold text-text-0">
+                <div className="text-xs font-semibold text-foreground">
                   {runningBots.length} / {bots.length} Running
                 </div>
                 {stoppedBots.length > 0 && (
-                  <div className="text-[10px] text-text-3">
+                  <div className="text-xs text-muted-foreground">
                     {stoppedBots.map((b) => b.name).join(", ")} stopped
                   </div>
                 )}
@@ -558,7 +558,7 @@ export default function RiskPage() {
         <CardHeader
           title="Heartbeat Monitor"
           icon="💓"
-          action={<span className="text-[10px] text-text-3">15s refresh · 3 failures = HARD KILL</span>}
+          action={<span className="text-xs text-muted-foreground">15s refresh · 3 failures = HARD KILL</span>}
         />
         <CardBody>
           {loading ? (
@@ -566,7 +566,7 @@ export default function RiskPage() {
               {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={`skel-3-${i}`} lines={3} />)}
             </div>
           ) : bots.length === 0 ? (
-            <div className="py-6 text-center text-sm text-text-3">No bots registered</div>
+            <div className="py-6 text-center text-sm text-muted-foreground">No bots registered</div>
           ) : (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
               {bots.map((bot) => {
@@ -574,33 +574,33 @@ export default function RiskPage() {
                 return (
                   <div
                     key={bot.id}
-                    className={`bg-bg-1 border rounded-lg p-4 transition-colors ${
+                    className={`bg-card border rounded-lg p-4 transition-colors ${
                       hbStatus === "warn"
-                        ? "border-amber/30"
+                        ? "border-amber-500/30"
                         : hbStatus === "fail"
-                        ? "border-red/30"
-                        : "border-border hover:border-border-hover"
+                        ? "border-rose-500/30"
+                        : "border-border hover:border-border-border hover:border-ring"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-3">
-                      <div className="text-xs font-semibold text-text-0">{bot.name}</div>
+                      <div className="text-xs font-semibold text-foreground">{bot.name}</div>
                       <div className={`w-2.5 h-2.5 rounded-full ${dotBg[hbStatus]}`} />
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <div className="flex justify-between items-center">
-                        <span className="text-[10px] text-text-3 uppercase tracking-wider">Status</span>
-                        <span className={`text-[11px] font-semibold ${statusColor[bot.status] ?? "text-text-2"}`}>
+                        <span className="text-xs text-muted-foreground uppercase tracking-wider">Status</span>
+                        <span className={`text-xs font-semibold ${statusColor[bot.status] ?? "text-muted-foreground"}`}>
                           {bot.status}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-[10px] text-text-3 uppercase tracking-wider">Health</span>
-                        <span className={`text-[11px] font-semibold ${bot.is_healthy ? "text-green" : "text-red"}`}>
+                        <span className="text-xs text-muted-foreground uppercase tracking-wider">Health</span>
+                        <span className={`text-xs font-semibold ${bot.is_healthy ? "text-emerald-500" : "text-rose-500"}`}>
                           {bot.is_healthy ? "Healthy" : "Unhealthy"}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-[10px] text-text-3 uppercase tracking-wider">Failures</span>
+                        <span className="text-xs text-muted-foreground uppercase tracking-wider">Failures</span>
                         <div className="flex items-center gap-1">
                           {[0, 1, 2].map((dot) => (
                             <div
@@ -608,13 +608,13 @@ export default function RiskPage() {
                               className={`w-2 h-2 rounded-full ${
                                 dot < bot.consecutive_failures
                                   ? hbStatus === "fail"
-                                    ? "bg-red border border-red shadow-[0_0_4px_var(--color-red)]"
-                                    : "bg-amber border border-amber"
-                                  : "bg-bg-3 border border-border"
+                                    ? "bg-red border border-rose-500 shadow-[0_0_4px_var(--color-red)]"
+                                    : "bg-amber border border-amber-500"
+                                  : "bg-muted border border-border"
                               }`}
                             />
                           ))}
-                          <span className={`text-[11px] font-semibold ml-1 ${statusColor[bot.status] ?? "text-text-2"}`}>
+                          <span className={`text-xs font-semibold ml-1 ${statusColor[bot.status] ?? "text-muted-foreground"}`}>
                             {bot.consecutive_failures}
                           </span>
                         </div>
@@ -633,7 +633,7 @@ export default function RiskPage() {
         <CardHeader
           title="FT Protections Status"
           icon="🔒"
-          action={<span className="text-xs text-text-3">From bot config.json (read-only)</span>}
+          action={<span className="text-xs text-muted-foreground">From bot config.json (read-only)</span>}
         />
         <CardBody>
           {loading ? (
@@ -641,16 +641,16 @@ export default function RiskPage() {
               {[0,1,2,3].map(i => <SkeletonCard key={`skel-4-${i}`} lines={4} />)}
             </div>
           ) : protections.length === 0 ? (
-            <div className="py-6 text-center text-sm text-text-3">
+            <div className="py-6 text-center text-sm text-muted-foreground">
               No protections configured. Add them under Settings → Core Trading.
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4">
               {protections.map((prot, idx) => {
                 const badgeStyles: Record<string, string> = {
-                  active: "bg-green-bg text-green border border-green/20",
-                  inactive: "bg-bg-3 text-text-3 border border-border",
-                  triggered: "bg-red-bg text-red border border-red/20",
+                  active: "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20",
+                  inactive: "bg-muted text-muted-foreground border border-border",
+                  triggered: "bg-rose-500/10 text-rose-500 border border-rose-500/20",
                 };
                 // Map protection method names to tooltip keys
                 const protectionTooltipMap: Record<string, keyof typeof TOOLTIPS> = {
@@ -662,17 +662,17 @@ export default function RiskPage() {
                 const tooltipKey = protectionTooltipMap[prot.method] || undefined;
 
                 return (
-                  <div key={`prot-${prot.method}-${idx}`} className="bg-bg-1 border border-border rounded-lg p-4 hover:border-border-hover transition-colors">
+                  <div key={`prot-${prot.method}-${idx}`} className="bg-card border border-border rounded-lg p-4 hover:border-border-border hover:border-ring transition-colors">
                     <div className="flex items-center justify-between mb-3">
                       {tooltipKey && TOOLTIPS[tooltipKey] ? (
                         <Tooltip
                           content={TOOLTIPS[tooltipKey]?.description || prot.method}
                           configKey={TOOLTIPS[tooltipKey]?.configKey}
                         >
-                          <div className="text-[12.5px] font-semibold text-text-0">{prot.method}</div>
+                          <div className="text-[12.5px] font-semibold text-foreground">{prot.method}</div>
                         </Tooltip>
                       ) : (
-                        <div className="text-[12.5px] font-semibold text-text-0">{prot.method}</div>
+                        <div className="text-[12.5px] font-semibold text-foreground">{prot.method}</div>
                       )}
                       <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider ${badgeStyles[prot._status]}`}>
                         {prot._status}
@@ -687,21 +687,21 @@ export default function RiskPage() {
                           const label = k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
                           return (
                             <div key={k} className="flex flex-col gap-0.5">
-                              <span className="text-[9px] text-text-3 uppercase tracking-wider">{label}</span>
-                              <span className="text-xs font-semibold text-text-1 font-mono">{String(v)}</span>
+                              <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{label}</span>
+                              <span className="text-xs font-semibold text-muted-foreground font-mono">{String(v)}</span>
                             </div>
                           );
                         })}
                     </div>
                     {prot._drawdown && (
                       <div className="mt-2.5">
-                        <div className="flex justify-between text-[10px] text-text-3 mb-1">
+                        <div className="flex justify-between text-xs text-muted-foreground mb-1">
                           <span>Current Drawdown</span>
-                          <span className="font-semibold text-amber">
+                          <span className="font-semibold text-amber-500">
                             {prot._drawdown.current.toFixed(1)}% / {prot._drawdown.max.toFixed(1)}%
                           </span>
                         </div>
-                        <div className="h-1.5 bg-bg-3 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                           <div
                             className="h-full bg-amber rounded-full transition-all"
                             style={{ width: `${prot._drawdown.pct}%` }}
@@ -711,10 +711,10 @@ export default function RiskPage() {
                     )}
                     {prot._flaggedPairs && prot._flaggedPairs.length > 0 && (
                       <div className="mt-2">
-                        <div className="text-[10px] text-text-3 mb-1">Flagged pairs:</div>
+                        <div className="text-xs text-muted-foreground mb-1">Flagged pairs:</div>
                         <div className="flex flex-wrap gap-1">
                           {prot._flaggedPairs.map((p) => (
-                            <span key={p} className="text-[10px] font-semibold text-amber bg-amber-bg border border-amber/20 rounded px-2 py-0.5">
+                            <span key={p} className="text-xs font-semibold text-amber-500 bg-amber-500/10 border border-amber-500-500/20 rounded px-2 py-0.5">
                               {p}
                             </span>
                           ))}
@@ -741,7 +741,7 @@ export default function RiskPage() {
               <button
                 type="button"
                 onClick={handleOpenLockDialog}
-                className="text-[11px] font-semibold text-accent bg-accent/10 border border-accent/20 rounded-btn px-3 py-1 hover:bg-accent/20 transition-colors cursor-pointer"
+                className="text-xs font-semibold text-primary bg-primary/10 border border-primary/20 rounded-btn px-3 py-1 hover:bg-primary/20 transition-colors cursor-pointer"
               >
                 + Lock Pair
               </button>
@@ -751,7 +751,7 @@ export default function RiskPage() {
             <SkeletonTable rows={4} cols={5} />
           ) : locks.length === 0 ? (
             <CardBody>
-              <div className="py-6 text-center text-sm text-text-3">No active pair locks</div>
+              <div className="py-6 text-center text-sm text-muted-foreground">No active pair locks</div>
             </CardBody>
           ) : (
             <div className="p-0 overflow-x-auto">
@@ -759,7 +759,7 @@ export default function RiskPage() {
                 <thead>
                   <tr>
                     {["Pair", "Bot", "Lock Until", "Reason", "Status", ""].map((h) => (
-                      <th key={h} className="text-left px-4 py-3 text-[10px] font-semibold text-text-3 uppercase tracking-wider border-b border-border whitespace-nowrap">
+                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border whitespace-nowrap">
                         {h}
                       </th>
                     ))}
@@ -767,13 +767,13 @@ export default function RiskPage() {
                 </thead>
                 <tbody>
                   {locks.map((lock, i) => (
-                    <tr key={`${lock._botId}-${lock.id}-${i}`} className="hover:bg-bg-3 transition-colors">
-                      <td className="px-4 py-3 text-xs font-semibold text-text-0">{lock.pair}</td>
-                      <td className="px-4 py-3 text-xs text-text-2">{lock._botName}</td>
-                      <td className="px-4 py-3 text-[11px] text-text-2 font-mono whitespace-nowrap">{lock.lock_end_time}</td>
-                      <td className="px-4 py-3 text-xs text-text-2 max-w-[180px] truncate">{lock.reason}</td>
+                    <tr key={`${lock._botId}-${lock.id}-${i}`} className="hover:bg-muted transition-colors">
+                      <td className="px-4 py-3 text-xs font-semibold text-foreground">{lock.pair}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{lock._botName}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground font-mono whitespace-nowrap">{lock.lock_end_time}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground max-w-[180px] truncate">{lock.reason}</td>
                       <td className="px-4 py-3">
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${lock.active ? "bg-red-bg text-red" : "bg-bg-3 text-text-3"}`}>
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded ${lock.active ? "bg-rose-500/10 text-rose-500" : "bg-muted text-muted-foreground"}`}>
                           {lock.active ? "Active" : "Expired"}
                         </span>
                       </td>
@@ -782,7 +782,7 @@ export default function RiskPage() {
                           <button
                             type="button"
                             onClick={() => handleDeleteLock(lock)}
-                            className="text-[10px] text-red hover:text-red cursor-pointer font-medium hover:underline"
+                            className="text-xs text-rose-500 hover:text-rose-500 cursor-pointer font-medium hover:underline"
                           >
                             Delete
                           </button>
@@ -801,7 +801,7 @@ export default function RiskPage() {
           <CardHeader
             title="Portfolio Exposure (Cross-Bot)"
             icon="💰"
-            action={<span className="text-xs text-text-3">Aggregated from all bots</span>}
+            action={<span className="text-xs text-muted-foreground">Aggregated from all bots</span>}
           />
           <CardBody>
             {loading ? (
@@ -809,10 +809,10 @@ export default function RiskPage() {
             ) : portfolio ? (
               <>
                 <div className="flex items-baseline gap-2 mb-4">
-                  <div className="text-[28px] font-bold text-text-0 tracking-tight">
+                  <div className="text-[28px] font-bold text-foreground tracking-tight">
                     ${portfolio.total_value.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                   </div>
-                  <div className="text-[11px] text-text-3">
+                  <div className="text-xs text-muted-foreground">
                     Total across {portfolio.bot_count} bot{portfolio.bot_count !== 1 ? "s" : ""}
                   </div>
                 </div>
@@ -823,17 +823,17 @@ export default function RiskPage() {
                       : 0;
                     return (
                       <div key={botName} className="flex items-center gap-3">
-                        <div className="text-xs font-semibold min-w-[120px] text-text-0 truncate">{botName}</div>
-                        <div className="flex-1 h-4 bg-bg-3 rounded overflow-hidden relative">
+                        <div className="text-xs font-semibold min-w-[120px] text-foreground truncate">{botName}</div>
+                        <div className="flex-1 h-4 bg-muted rounded overflow-hidden relative">
                           <div
                             className="h-full rounded bg-gradient-to-r from-accent to-accent/60"
                             style={{ width: `${Math.min(100, pct)}%` }}
                           />
                         </div>
-                        <div className="text-[11px] font-semibold min-w-[80px] text-right text-text-0">
+                        <div className="text-xs font-semibold min-w-[80px] text-right text-foreground">
                           ${bal.total.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                         </div>
-                        <div className="text-[10px] min-w-[40px] text-right text-text-3">
+                        <div className="text-xs min-w-[40px] text-right text-muted-foreground">
                           {pct.toFixed(1)}%
                         </div>
                       </div>
@@ -842,7 +842,7 @@ export default function RiskPage() {
                 </div>
               </>
             ) : (
-              <div className="py-6 text-center text-sm text-text-3">
+              <div className="py-6 text-center text-sm text-muted-foreground">
                 Portfolio data unavailable
               </div>
             )}
@@ -856,7 +856,7 @@ export default function RiskPage() {
           title="Risk Events Log (Immutable Audit Trail)"
           icon="📋"
           action={
-            <span className="text-xs text-text-3">
+            <span className="text-xs text-muted-foreground">
               {riskEvents.length} events total
             </span>
           }
@@ -865,7 +865,7 @@ export default function RiskPage() {
           <SkeletonTable rows={5} cols={6} />
         ) : riskEvents.length === 0 ? (
           <CardBody>
-            <div className="py-6 text-center text-sm text-text-3">No risk events recorded</div>
+            <div className="py-6 text-center text-sm text-muted-foreground">No risk events recorded</div>
           </CardBody>
         ) : (
           <div className="overflow-x-auto">
@@ -873,7 +873,7 @@ export default function RiskPage() {
               <thead>
                 <tr>
                   {["Timestamp", "Bot ID", "Kill Type", "Trigger", "Reason", "Triggered By"].map((h) => (
-                    <th key={h} className="text-left px-4 py-3 text-[10px] font-semibold text-text-3 uppercase tracking-wider border-b border-border whitespace-nowrap">
+                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border whitespace-nowrap">
                       {h}
                     </th>
                   ))}
@@ -881,11 +881,11 @@ export default function RiskPage() {
               </thead>
               <tbody>
                 {riskEvents.map((ev) => (
-                  <tr key={ev.id} className="hover:bg-bg-3 transition-colors">
-                    <td className="px-4 py-3 text-[11px] font-mono text-text-2 whitespace-nowrap">
+                  <tr key={ev.id} className="hover:bg-muted transition-colors">
+                    <td className="px-4 py-3 text-xs font-mono text-muted-foreground whitespace-nowrap">
                       {new Date(ev.created_at).toLocaleString()}
                     </td>
-                    <td className="px-4 py-3 text-xs text-text-2">
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
                       {ev.bot_instance_id != null ? `Bot ${ev.bot_instance_id}` : "ALL"}
                     </td>
                     <td className="px-4 py-3">
@@ -894,10 +894,10 @@ export default function RiskPage() {
                     <td className="px-4 py-3">
                       <TriggerBadge trigger={ev.trigger} />
                     </td>
-                    <td className="px-4 py-3 text-xs text-text-2 max-w-[240px] truncate">
+                    <td className="px-4 py-3 text-xs text-muted-foreground max-w-[240px] truncate">
                       {ev.reason ?? "—"}
                     </td>
-                    <td className="px-4 py-3 text-xs text-text-2">{ev.triggered_by}</td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">{ev.triggered_by}</td>
                   </tr>
                 ))}
               </tbody>
@@ -912,20 +912,20 @@ export default function RiskPage() {
           role="dialog" aria-modal="true" className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center"
           onClick={(e) => { if (e.target === e.currentTarget) setShowSoftKillConfirm(false); }}
         >
-          <div className="bg-bg-2 border border-amber/30 rounded-card p-8 max-w-md w-full mx-4 text-center">
+          <div className="bg-muted/50 border border-amber-500/30 rounded-card p-8 max-w-md w-full mx-4 text-center">
             <div className="text-5xl mb-4">⏸️</div>
-            <h2 className="text-lg font-bold text-text-0 mb-2">Soft Kill All Bots</h2>
-            <p className="text-sm text-text-2 mb-6">
+            <h2 className="text-lg font-bold text-foreground mb-2">Soft Kill All Bots</h2>
+            <p className="text-sm text-muted-foreground mb-6">
               This will stop all bots from entering new trades.<br />
-              <strong className="text-amber">Open positions will remain untouched.</strong>
+              <strong className="text-amber-500">Open positions will remain untouched.</strong>
             </p>
             <div className="flex gap-3">
               <button type="button" onClick={() => setShowSoftKillConfirm(false)}
-                className="flex-1 bg-bg-3 border border-border rounded-btn py-2.5 text-sm font-medium text-text-1 hover:border-border-hover transition-colors cursor-pointer">
+                className="flex-1 bg-muted border border-border rounded-btn py-2.5 text-sm font-medium text-muted-foreground hover:border-border-border hover:border-ring transition-colors cursor-pointer">
                 Cancel
               </button>
               <button type="button" onClick={handleSoftKillAll} disabled={killing}
-                className="flex-1 bg-amber border border-amber rounded-btn py-2.5 text-sm font-bold text-black hover:opacity-90 transition-colors disabled:opacity-50 cursor-pointer">
+                className="flex-1 bg-amber border border-amber-500 rounded-btn py-2.5 text-sm font-bold text-black hover:opacity-90 transition-colors disabled:opacity-50 cursor-pointer">
                 {killing ? "Stopping..." : "SOFT KILL ALL"}
               </button>
             </div>
@@ -939,24 +939,24 @@ export default function RiskPage() {
           role="dialog" aria-modal="true" className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center"
           onClick={(e) => { if (e.target === e.currentTarget) setShowHardKillConfirm(false); }}
         >
-          <div className="bg-bg-2 border border-red/30 rounded-card p-8 max-w-md w-full mx-4 text-center">
+          <div className="bg-muted/50 border border-rose-500/30 rounded-card p-8 max-w-md w-full mx-4 text-center">
             <div className="text-5xl mb-4">🛑</div>
-            <h2 className="text-lg font-bold text-text-0 mb-2">Emergency Close All</h2>
-            <p className="text-sm text-text-2 mb-2">
+            <h2 className="text-lg font-bold text-foreground mb-2">Emergency Close All</h2>
+            <p className="text-sm text-muted-foreground mb-2">
               This will force-exit{" "}
-              <strong className="text-red">ALL positions at MARKET price</strong>{" "}
+              <strong className="text-rose-500">ALL positions at MARKET price</strong>{" "}
               and stop ALL bots.
             </p>
-            <p className="text-xs text-text-3 mb-6">
+            <p className="text-xs text-muted-foreground mb-6">
               This action is immutably logged and cannot be undone.
             </p>
             <div className="flex gap-3">
               <button type="button" onClick={() => setShowHardKillConfirm(false)}
-                className="flex-1 bg-bg-3 border border-border rounded-btn py-2.5 text-sm font-medium text-text-1 hover:border-border-hover transition-colors cursor-pointer">
+                className="flex-1 bg-muted border border-border rounded-btn py-2.5 text-sm font-medium text-muted-foreground hover:border-border-border hover:border-ring transition-colors cursor-pointer">
                 Cancel
               </button>
               <button type="button" onClick={handleHardKillAll} disabled={killing}
-                className="flex-1 bg-red border border-red rounded-btn py-2.5 text-sm font-bold text-white hover:bg-red-dim transition-colors disabled:opacity-50 cursor-pointer">
+                className="flex-1 bg-red border border-rose-500 rounded-btn py-2.5 text-sm font-bold text-white hover:bg-red-dim transition-colors disabled:opacity-50 cursor-pointer">
                 {killing ? "Killing..." : "EMERGENCY CLOSE ALL"}
               </button>
             </div>
@@ -970,15 +970,15 @@ export default function RiskPage() {
           <CardHeader
             title="Cross-Bot Pair Overlap"
             icon="🔗"
-            action={<span className="text-xs text-text-3">Shared pairs between bots</span>}
+            action={<span className="text-xs text-muted-foreground">Shared pairs between bots</span>}
           />
           <div className="p-0 overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
                 <tr>
-                  <th className="text-left px-4 py-3 text-[10px] font-semibold text-text-3 uppercase tracking-wider border-b border-border" />
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border" />
                   {correlationData.botNames.map((name) => (
-                    <th key={name} className="text-center px-4 py-3 text-[10px] font-semibold text-text-3 uppercase tracking-wider border-b border-border whitespace-nowrap">
+                    <th key={name} className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border whitespace-nowrap">
                       {name}
                     </th>
                   ))}
@@ -986,8 +986,8 @@ export default function RiskPage() {
               </thead>
               <tbody>
                 {correlationData.botNames.map((rowName, i) => (
-                  <tr key={rowName} className="hover:bg-bg-3 transition-colors">
-                    <td className="px-4 py-3 text-xs font-semibold text-text-0 whitespace-nowrap border-r border-border">{rowName}</td>
+                  <tr key={rowName} className="hover:bg-muted transition-colors">
+                    <td className="px-4 py-3 text-xs font-semibold text-foreground whitespace-nowrap border-r border-border">{rowName}</td>
                     {correlationData.botNames.map((colName, j) => {
                       const val = correlationData.matrix[i][j];
                       const isDiag = i === j;
@@ -997,21 +997,21 @@ export default function RiskPage() {
                           key={colName}
                           className={`text-center px-4 py-3 text-xs font-semibold ${
                             isDiag
-                              ? "text-text-3 bg-bg-2"
+                              ? "text-muted-foreground bg-muted/50"
                               : val > 0
-                              ? "text-amber"
-                              : "text-text-3"
+                              ? "text-amber-500"
+                              : "text-muted-foreground"
                           }`}
                           title={isDiag ? `${val} unique pairs` : overlaps.length > 0 ? `Overlapping: ${overlaps.join(", ")}` : "No overlap"}
                         >
                           {isDiag ? (
-                            <span className="text-text-3">{val} pairs</span>
+                            <span className="text-muted-foreground">{val} pairs</span>
                           ) : val > 0 ? (
-                            <span className="bg-amber-bg border border-amber/20 rounded px-2 py-0.5">
+                            <span className="bg-amber-500/10 border border-amber-500-500/20 rounded px-2 py-0.5">
                               {val} overlap
                             </span>
                           ) : (
-                            <span className="text-text-3">0</span>
+                            <span className="text-muted-foreground">0</span>
                           )}
                         </td>
                       );
@@ -1030,20 +1030,20 @@ export default function RiskPage() {
           role="dialog" aria-modal="true" className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center"
           onClick={(e) => { if (e.target === e.currentTarget) setShowLockDialog(false); }}
         >
-          <div className="bg-bg-2 border border-border rounded-card p-6 max-w-md w-full mx-4">
-            <h2 className="text-base font-bold text-text-0 mb-4 flex items-center gap-2">
+          <div className="bg-muted/50 border border-border rounded-card p-6 max-w-md w-full mx-4">
+            <h2 className="text-base font-bold text-foreground mb-4 flex items-center gap-2">
               <span>🔐</span> Lock Pair
             </h2>
             <div className="flex flex-col gap-4">
               {/* Bot selector */}
               <div>
                 <Tooltip content={"Bot instance to apply the pair lock to"} configKey="bot_id">
-                  <label className="text-[10px] font-semibold text-text-3 uppercase tracking-wider mb-1 block">Bot</label>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Bot</label>
                 </Tooltip>
                 <select
                   value={lockBotId}
                   onChange={(e) => handleLockBotChange(e.target.value)}
-                  className="w-full bg-bg-1 border border-border rounded-btn px-3 py-2 text-xs text-text-1 outline-none focus:border-accent cursor-pointer font-inherit"
+                  className="w-full bg-card border border-border rounded-btn px-3 py-2 text-xs text-muted-foreground outline-none focus:border-primary cursor-pointer font-inherit"
                 >
                   <option value="">Select bot...</option>
                   {bots.filter((b) => b.status === "running").map((bot) => (
@@ -1054,12 +1054,12 @@ export default function RiskPage() {
               {/* Pair selector */}
               <div>
                 <Tooltip content={"Trading pair to lock. Locked pairs will not be traded until the lock expires."} configKey="pair">
-                  <label className="text-[10px] font-semibold text-text-3 uppercase tracking-wider mb-1 block">Pair</label>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Pair</label>
                 </Tooltip>
                 <select
                   value={lockPair}
                   onChange={(e) => setLockPair(e.target.value)}
-                  className="w-full bg-bg-1 border border-border rounded-btn px-3 py-2 text-xs text-text-1 outline-none focus:border-accent cursor-pointer font-inherit"
+                  className="w-full bg-card border border-border rounded-btn px-3 py-2 text-xs text-muted-foreground outline-none focus:border-primary cursor-pointer font-inherit"
                 >
                   <option value="">Select pair...</option>
                   {whitelist.map((p) => (
@@ -1070,27 +1070,27 @@ export default function RiskPage() {
               {/* Duration */}
               <div>
                 <Tooltip content={"How long to lock this pair, in minutes. The pair will be automatically unlocked after this duration."} configKey="duration">
-                  <label className="text-[10px] font-semibold text-text-3 uppercase tracking-wider mb-1 block">Duration (minutes)</label>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Duration (minutes)</label>
                 </Tooltip>
                 <input
                   type="number"
                   min={1}
                   value={lockDuration}
                   onChange={(e) => setLockDuration(e.target.value)}
-                  className="w-full bg-bg-1 border border-border rounded-btn px-3 py-2 text-xs text-text-1 outline-none focus:border-accent font-inherit"
+                  className="w-full bg-card border border-border rounded-btn px-3 py-2 text-xs text-muted-foreground outline-none focus:border-primary font-inherit"
                   placeholder="60"
                 />
               </div>
               {/* Reason */}
               <div>
                 <Tooltip content={"Optional reason for locking this pair. Recorded in the lock log for auditing."} configKey="reason">
-                  <label className="text-[10px] font-semibold text-text-3 uppercase tracking-wider mb-1 block">Reason (optional)</label>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Reason (optional)</label>
                 </Tooltip>
                 <input
                   type="text"
                   value={lockReason}
                   onChange={(e) => setLockReason(e.target.value)}
-                  className="w-full bg-bg-1 border border-border rounded-btn px-3 py-2 text-xs text-text-1 outline-none focus:border-accent font-inherit"
+                  className="w-full bg-card border border-border rounded-btn px-3 py-2 text-xs text-muted-foreground outline-none focus:border-primary font-inherit"
                   placeholder="Manual lock from Risk page"
                 />
               </div>
@@ -1099,7 +1099,7 @@ export default function RiskPage() {
               <button
                 type="button"
                 onClick={() => setShowLockDialog(false)}
-                className="flex-1 bg-bg-3 border border-border rounded-btn py-2.5 text-sm font-medium text-text-1 hover:border-border-hover transition-colors cursor-pointer"
+                className="flex-1 bg-muted border border-border rounded-btn py-2.5 text-sm font-medium text-muted-foreground hover:border-border-border hover:border-ring transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -1107,7 +1107,7 @@ export default function RiskPage() {
                 type="button"
                 onClick={handleSubmitLock}
                 disabled={lockSubmitting || !lockBotId || !lockPair}
-                className="flex-1 bg-accent border border-accent rounded-btn py-2.5 text-sm font-bold text-white hover:opacity-90 transition-colors disabled:opacity-50 cursor-pointer"
+                className="flex-1 bg-primary border border-primary rounded-btn py-2.5 text-sm font-bold text-white hover:opacity-90 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {lockSubmitting ? "Locking..." : "Lock Pair"}
               </button>

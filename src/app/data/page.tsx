@@ -89,7 +89,7 @@ function StatusBadge({ status }: { status: string }) {
   const ok = status === "ok" || status === "active" || status === "supported";
   return (
     <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider border ${
-      ok ? "bg-green-bg text-green border-green/20" : "bg-amber-bg text-amber border-amber/20"
+      ok ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-amber-500/10 text-amber-500 border-amber-500-500/20"
     }`}>
       {status}
     </span>
@@ -98,7 +98,7 @@ function StatusBadge({ status }: { status: string }) {
 
 function SectionTitle({ icon, children }: { icon: string; children: React.ReactNode }) {
   return (
-    <h2 className="text-sm font-bold text-text-0 mb-1.5 flex items-center gap-2">
+    <h2 className="text-sm font-bold text-foreground mb-1.5 flex items-center gap-2">
       <span className="text-[15px]">{icon}</span>
       {children}
     </h2>
@@ -106,20 +106,20 @@ function SectionTitle({ icon, children }: { icon: string; children: React.ReactN
 }
 
 function SectionRef({ children }: { children: React.ReactNode }) {
-  return <p className="text-[10px] text-text-3 font-medium mb-5">{children}</p>;
+  return <p className="text-xs text-muted-foreground font-medium mb-5">{children}</p>;
 }
 
 function Spinner({ className }: { className?: string }) {
   return (
     <div className={`flex items-center justify-center py-6 ${className ?? ""}`}>
-      <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
     </div>
   );
 }
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="flex items-center justify-center py-8 text-[11px] text-text-3">
+    <div className="flex items-center justify-center py-8 text-xs text-muted-foreground">
       {message}
     </div>
   );
@@ -135,11 +135,11 @@ function LogArea({ lines, className }: { lines: LogLine[]; className?: string })
     if (ref.current) ref.current.scrollTop = ref.current.scrollHeight;
   }, [lines]);
 
-  const color = { info: "text-cyan", ok: "text-green", warn: "text-amber", err: "text-red" };
+  const color = { info: "text-cyan", ok: "text-emerald-500", warn: "text-amber-500", err: "text-rose-500" };
   return (
     <div
       ref={ref}
-      className={`bg-bg-0 border border-border rounded-btn p-3 font-mono text-[11px] leading-relaxed text-text-2 max-h-40 overflow-y-auto whitespace-pre-wrap ${className ?? ""}`}
+      className={`bg-background border border-border rounded-btn p-3 font-mono text-xs leading-relaxed text-muted-foreground max-h-40 overflow-y-auto whitespace-pre-wrap ${className ?? ""}`}
     >
       {lines.map((l, i) => (
         <div key={`log-${i}-${l.type}-${l.text.slice(0, 20)}`}>
@@ -172,24 +172,24 @@ function UtilCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`bg-bg-2 border border-border rounded-card overflow-hidden hover:border-border-hover transition-colors ${span2 ? "col-span-full lg:col-span-2" : ""}`}>
+    <div className={`bg-muted/50 border border-border rounded-card overflow-hidden hover:border-border-border hover:border-ring transition-colors ${span2 ? "col-span-full lg:col-span-2" : ""}`}>
       <div className="px-4 py-3 flex items-center justify-between border-b border-border">
-        <span className="text-xs font-semibold text-text-0 flex items-center gap-2">
-          <span className="text-[13px]">{icon}</span> {title}
+        <span className="text-xs font-semibold text-foreground flex items-center gap-2">
+          <span className="text-sm">{icon}</span> {title}
         </span>
         {onRun && (
           <button
             type="button"
             onClick={onRun}
             disabled={loading}
-            className="text-[11px] font-semibold px-3 py-1 rounded-btn bg-bg-3 text-text-1 border border-border hover:border-border-hover hover:bg-bg-1 transition-all disabled:opacity-50"
+            className="text-xs font-semibold px-3 py-1 rounded-btn bg-muted text-muted-foreground border border-border hover:border-border-border hover:border-ring hover:bg-card transition-all disabled:opacity-50"
           >
             {loading ? "Loading..." : runLabel}
           </button>
         )}
       </div>
       <div className="px-4 py-1.5 border-b border-border">
-        <span className="text-[10px] text-text-3 font-mono">{cmd}</span>
+        <span className="text-xs text-muted-foreground font-mono">{cmd}</span>
       </div>
       <div className="p-4 max-h-72 overflow-y-auto">{children}</div>
     </div>
@@ -609,10 +609,10 @@ export default function DataManagementPage() {
       {/* ── Bot Selector ── */}
       <div className="mb-5 flex items-center gap-3">
         <Tooltip content={"Select the bot instance to manage data for"} configKey="bot_id">
-          <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">Bot</label>
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Bot</label>
         </Tooltip>
         <select
-          className="bg-bg-1 border border-border rounded-btn py-2 px-3 text-xs text-text-1 outline-none focus:border-accent transition-colors appearance-none min-w-[200px]"
+          className="bg-card border border-border rounded-btn py-2 px-3 text-xs text-muted-foreground outline-none focus:border-primary transition-colors appearance-none min-w-[200px]"
           value={selectedBotId}
           onChange={(e) => setSelectedBotId(e.target.value)}
         >
@@ -624,7 +624,7 @@ export default function DataManagementPage() {
           ))}
         </select>
         {!botId && bots.length === 0 && (
-          <span className="text-[10px] text-amber">Register a bot in Settings to use data management</span>
+          <span className="text-xs text-amber-500">Register a bot in Settings to use data management</span>
         )}
       </div>
 
@@ -642,25 +642,25 @@ export default function DataManagementPage() {
         <CardHeader
           title="Download Configuration"
           icon="⚙️"
-          action={<span className="text-[10px] text-text-3">CLI: freqtrade download-data [args]</span>}
+          action={<span className="text-xs text-muted-foreground">CLI: freqtrade download-data [args]</span>}
         />
         <CardBody>
           {/* Row 1: Pairs + Exchange */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
             <div className="flex flex-col gap-1.5">
               <Tooltip content={TOOLTIPS.download_data_pairs?.description ?? "Pairs to download historical data for"} configKey="--pairs">
-                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-                  --pairs <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">(multi-select)</span>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  --pairs <span className="font-normal normal-case tracking-normal text-muted-foreground text-xs">(multi-select)</span>
                 </label>
               </Tooltip>
               <select
-                className="bg-bg-1 border border-border rounded-btn p-2.5 text-xs text-text-1 outline-none focus:border-accent transition-colors min-h-[110px]"
+                className="bg-card border border-border rounded-btn p-2.5 text-xs text-muted-foreground outline-none focus:border-primary transition-colors min-h-[110px]"
                 multiple
                 value={selectedPairs}
                 onChange={handlePairSelect}
               >
                 {PAIRS.map((p) => (
-                  <option key={p} value={p} className="bg-bg-1 text-text-1 py-1 px-2 rounded-sm">
+                  <option key={p} value={p} className="bg-card text-muted-foreground py-1 px-2 rounded-sm">
                     {p}
                   </option>
                 ))}
@@ -669,10 +669,10 @@ export default function DataManagementPage() {
 
             <div className="flex flex-col gap-1.5">
               <Tooltip content={TOOLTIPS.download_data_exchange?.description ?? "Exchange to download data from"} configKey="--exchange">
-                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">--exchange</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">--exchange</label>
               </Tooltip>
               <select
-                className="bg-bg-1 border border-border rounded-btn py-2.5 px-3.5 text-xs text-text-1 outline-none focus:border-accent transition-colors appearance-none"
+                className="bg-card border border-border rounded-btn py-2.5 px-3.5 text-xs text-muted-foreground outline-none focus:border-primary transition-colors appearance-none"
                 value={exchange}
                 onChange={(e) => setExchange(e.target.value)}
               >
@@ -683,10 +683,10 @@ export default function DataManagementPage() {
 
               <div className="mt-3">
                 <Tooltip content={TOOLTIPS.download_data_trading_mode?.description ?? "Download data for spot or futures"} configKey="--trading-mode">
-                  <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">--trading-mode</label>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">--trading-mode</label>
                 </Tooltip>
                 <select
-                  className="mt-1.5 w-full bg-bg-1 border border-border rounded-btn py-2.5 px-3.5 text-xs text-text-1 outline-none focus:border-accent transition-colors appearance-none"
+                  className="mt-1.5 w-full bg-card border border-border rounded-btn py-2.5 px-3.5 text-xs text-muted-foreground outline-none focus:border-primary transition-colors appearance-none"
                   value={tradingMode}
                   onChange={(e) => setTradingMode(e.target.value)}
                 >
@@ -700,8 +700,8 @@ export default function DataManagementPage() {
           {/* Row 2: Timeframes */}
           <div className="mb-4">
             <Tooltip content={TOOLTIPS.download_data_timeframes?.description ?? "Timeframes to download data for"} configKey="--timeframes">
-              <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-                --timeframes <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">(select one or more)</span>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                --timeframes <span className="font-normal normal-case tracking-normal text-muted-foreground text-xs">(select one or more)</span>
               </label>
             </Tooltip>
             <div className="flex flex-wrap gap-1.5 mt-1.5">
@@ -710,10 +710,10 @@ export default function DataManagementPage() {
                   type="button"
                   key={tf}
                   onClick={() => toggleTimeframe(tf)}
-                  className={`text-[11px] px-2.5 py-1 rounded-btn border transition-all cursor-pointer select-none ${
+                  className={`text-xs px-2.5 py-1 rounded-btn border transition-all cursor-pointer select-none ${
                     selectedTimeframes.includes(tf)
-                      ? "border-accent bg-accent-glow text-accent"
-                      : "border-border bg-bg-1 text-text-2 hover:border-border-hover hover:text-text-1"
+                      ? "border-primary bg-primary-glow text-primary"
+                      : "border-border bg-card text-muted-foreground hover:border-border-border hover:border-ring hover:text-muted-foreground"
                   }`}
                 >
                   {tf}
@@ -726,13 +726,13 @@ export default function DataManagementPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
             <div className="flex flex-col gap-1.5">
               <Tooltip content={TOOLTIPS.download_data_timerange?.description ?? "Start date for data download range"} configKey="--timerange">
-                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-                  --timerange <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">start</span>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  --timerange <span className="font-normal normal-case tracking-normal text-muted-foreground text-xs">start</span>
                 </label>
               </Tooltip>
               <input
                 type="date"
-                className="bg-bg-1 border border-border rounded-btn py-2.5 px-3.5 text-xs text-text-1 outline-none focus:border-accent transition-colors disabled:opacity-40"
+                className="bg-card border border-border rounded-btn py-2.5 px-3.5 text-xs text-muted-foreground outline-none focus:border-primary transition-colors disabled:opacity-40"
                 value={dateStart}
                 onChange={(e) => setDateStart(e.target.value)}
                 disabled={!!dlDays}
@@ -740,13 +740,13 @@ export default function DataManagementPage() {
             </div>
             <div className="flex flex-col gap-1.5">
               <Tooltip content={TOOLTIPS.download_data_timerange?.description ?? "End date for data download range"} configKey="--timerange">
-                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-                  --timerange <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">end</span>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  --timerange <span className="font-normal normal-case tracking-normal text-muted-foreground text-xs">end</span>
                 </label>
               </Tooltip>
               <input
                 type="date"
-                className="bg-bg-1 border border-border rounded-btn py-2.5 px-3.5 text-xs text-text-1 outline-none focus:border-accent transition-colors disabled:opacity-40"
+                className="bg-card border border-border rounded-btn py-2.5 px-3.5 text-xs text-muted-foreground outline-none focus:border-primary transition-colors disabled:opacity-40"
                 value={dateEnd}
                 onChange={(e) => setDateEnd(e.target.value)}
                 disabled={!!dlDays}
@@ -754,13 +754,13 @@ export default function DataManagementPage() {
             </div>
             <div className="flex flex-col gap-1.5">
               <Tooltip content={"Number of days of data to download. Overrides --timerange when set."} configKey="--days">
-                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-                  --days <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">(overrides timerange)</span>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  --days <span className="font-normal normal-case tracking-normal text-muted-foreground text-xs">(overrides timerange)</span>
                 </label>
               </Tooltip>
               <input
                 type="number"
-                className="bg-bg-1 border border-border rounded-btn py-2.5 px-3.5 text-xs text-text-1 outline-none focus:border-accent transition-colors"
+                className="bg-card border border-border rounded-btn py-2.5 px-3.5 text-xs text-muted-foreground outline-none focus:border-primary transition-colors"
                 value={dlDays}
                 onChange={(e) => setDlDays(e.target.value)}
                 placeholder="e.g. 30"
@@ -773,13 +773,13 @@ export default function DataManagementPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
             <div className="flex flex-col gap-1.5">
               <Tooltip content={"Number of days to download for newly listed pairs. Only applies to pairs not yet in the data directory."} configKey="--new-pairs-days">
-                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-                  --new-pairs-days <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">Days for newly listed pairs</span>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  --new-pairs-days <span className="font-normal normal-case tracking-normal text-muted-foreground text-xs">Days for newly listed pairs</span>
                 </label>
               </Tooltip>
               <input
                 type="number"
-                className="bg-bg-1 border border-border rounded-btn py-2.5 px-3.5 text-xs text-text-1 outline-none focus:border-accent transition-colors"
+                className="bg-card border border-border rounded-btn py-2.5 px-3.5 text-xs text-muted-foreground outline-none focus:border-primary transition-colors"
                 value={dlNewPairsDays}
                 onChange={(e) => setDlNewPairsDays(e.target.value)}
                 placeholder="e.g. 30"
@@ -788,12 +788,12 @@ export default function DataManagementPage() {
             </div>
             <div className="flex flex-col gap-1.5">
               <Tooltip content={"Storage format for OHLCV data. Options: json, jsongz, feather, parquet. Feather and parquet are faster for large datasets."} configKey="--data-format-ohlcv">
-                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-                  --data-format-ohlcv <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">Storage format</span>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  --data-format-ohlcv <span className="font-normal normal-case tracking-normal text-muted-foreground text-xs">Storage format</span>
                 </label>
               </Tooltip>
               <select
-                className="bg-bg-1 border border-border rounded-btn py-2.5 px-3.5 text-xs text-text-1 outline-none focus:border-accent transition-colors appearance-none"
+                className="bg-card border border-border rounded-btn py-2.5 px-3.5 text-xs text-muted-foreground outline-none focus:border-primary transition-colors appearance-none"
                 value={dlDataFormatOhlcv}
                 onChange={(e) => setDlDataFormatOhlcv(e.target.value)}
               >
@@ -808,8 +808,8 @@ export default function DataManagementPage() {
           {/* Row 3c: Candle Types multi-select */}
           <div className="mb-4">
             <Tooltip content={"Types of candle data to download: spot, futures, mark price, index price, premium index, or funding rate."} configKey="--candle-types">
-              <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-                --candle-types <span className="font-normal normal-case tracking-normal text-text-3 text-[10px]">(select one or more)</span>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                --candle-types <span className="font-normal normal-case tracking-normal text-muted-foreground text-xs">(select one or more)</span>
               </label>
             </Tooltip>
             <div className="flex flex-wrap gap-1.5 mt-1.5">
@@ -822,10 +822,10 @@ export default function DataManagementPage() {
                       prev.includes(ct) ? prev.filter((c) => c !== ct) : [...prev, ct]
                     )
                   }
-                  className={`text-[11px] px-2.5 py-1 rounded-btn border transition-all cursor-pointer select-none ${
+                  className={`text-xs px-2.5 py-1 rounded-btn border transition-all cursor-pointer select-none ${
                     dlCandleTypes.includes(ct)
-                      ? "border-accent bg-accent-glow text-accent"
-                      : "border-border bg-bg-1 text-text-2 hover:border-border-hover hover:text-text-1"
+                      ? "border-primary bg-primary-glow text-primary"
+                      : "border-border bg-card text-muted-foreground hover:border-border-border hover:border-ring hover:text-muted-foreground"
                   }`}
                 >
                   {ct}
@@ -840,12 +840,12 @@ export default function DataManagementPage() {
               <button
                 type="button"
                 onClick={() => setEraseEnabled(!eraseEnabled)}
-                className={`w-9 h-5 rounded-full relative transition-colors flex-shrink-0 ${eraseEnabled ? "bg-red" : "bg-bg-3"}`}
+                className={`w-9 h-5 rounded-full relative transition-colors flex-shrink-0 ${eraseEnabled ? "bg-red" : "bg-muted"}`}
               >
                 <span className={`absolute w-4 h-4 bg-white rounded-full top-0.5 left-0.5 transition-transform ${eraseEnabled ? "translate-x-4" : ""}`} />
               </button>
-              <span className="text-xs text-text-1">
-                --erase <span className="text-red text-[10px] font-medium ml-1">Delete existing data first (destructive)</span>
+              <span className="text-xs text-muted-foreground">
+                --erase <span className="text-rose-500 text-xs font-medium ml-1">Delete existing data first (destructive)</span>
               </span>
             </div>
 
@@ -853,12 +853,12 @@ export default function DataManagementPage() {
               <button
                 type="button"
                 onClick={() => setPrependEnabled(!prependEnabled)}
-                className={`w-9 h-5 rounded-full relative transition-colors flex-shrink-0 ${prependEnabled ? "bg-accent" : "bg-bg-3"}`}
+                className={`w-9 h-5 rounded-full relative transition-colors flex-shrink-0 ${prependEnabled ? "bg-primary" : "bg-muted"}`}
               >
                 <span className={`absolute w-4 h-4 bg-white rounded-full top-0.5 left-0.5 transition-transform ${prependEnabled ? "translate-x-4" : ""}`} />
               </button>
-              <span className="text-xs text-text-1">
-                --prepend <span className="text-text-3 text-[10px] ml-1">Add older data before existing</span>
+              <span className="text-xs text-muted-foreground">
+                --prepend <span className="text-muted-foreground text-xs ml-1">Add older data before existing</span>
               </span>
             </div>
 
@@ -866,12 +866,12 @@ export default function DataManagementPage() {
               <button
                 type="button"
                 onClick={() => setDlIncludeInactivePairs(!dlIncludeInactivePairs)}
-                className={`w-9 h-5 rounded-full relative transition-colors flex-shrink-0 ${dlIncludeInactivePairs ? "bg-accent" : "bg-bg-3"}`}
+                className={`w-9 h-5 rounded-full relative transition-colors flex-shrink-0 ${dlIncludeInactivePairs ? "bg-primary" : "bg-muted"}`}
               >
                 <span className={`absolute w-4 h-4 bg-white rounded-full top-0.5 left-0.5 transition-transform ${dlIncludeInactivePairs ? "translate-x-4" : ""}`} />
               </button>
-              <span className="text-xs text-text-1">
-                --include-inactive-pairs <span className="text-text-3 text-[10px] ml-1">Include delisted pairs</span>
+              <span className="text-xs text-muted-foreground">
+                --include-inactive-pairs <span className="text-muted-foreground text-xs ml-1">Include delisted pairs</span>
               </span>
             </div>
 
@@ -879,12 +879,12 @@ export default function DataManagementPage() {
               <button
                 type="button"
                 onClick={() => setDlTrades(!dlTrades)}
-                className={`w-9 h-5 rounded-full relative transition-colors flex-shrink-0 ${dlTrades ? "bg-accent" : "bg-bg-3"}`}
+                className={`w-9 h-5 rounded-full relative transition-colors flex-shrink-0 ${dlTrades ? "bg-primary" : "bg-muted"}`}
               >
                 <span className={`absolute w-4 h-4 bg-white rounded-full top-0.5 left-0.5 transition-transform ${dlTrades ? "translate-x-4" : ""}`} />
               </button>
-              <span className="text-xs text-text-1">
-                --dl-trades <span className="text-text-3 text-[10px] ml-1">Download trades instead of OHLCV</span>
+              <span className="text-xs text-muted-foreground">
+                --dl-trades <span className="text-muted-foreground text-xs ml-1">Download trades instead of OHLCV</span>
               </span>
             </div>
 
@@ -892,7 +892,7 @@ export default function DataManagementPage() {
               <button
                 type="button"
                 onClick={() => setDlConvert(!dlConvert)}
-                className={`w-9 h-5 rounded-full relative transition-colors flex-shrink-0 ${dlConvert ? "bg-accent" : "bg-bg-3"}`}
+                className={`w-9 h-5 rounded-full relative transition-colors flex-shrink-0 ${dlConvert ? "bg-primary" : "bg-muted"}`}
               >
                 <span className={`absolute w-4 h-4 bg-white rounded-full top-0.5 left-0.5 transition-transform ${dlConvert ? "translate-x-4" : ""}`} />
               </button>
@@ -900,7 +900,7 @@ export default function DataManagementPage() {
                 content={TOOLTIPS.download_data_convert?.description || "Auto-convert after download"}
                 configKey={TOOLTIPS.download_data_convert?.configKey}
               >
-                <span className="text-xs text-text-1">Auto-convert after download</span>
+                <span className="text-xs text-muted-foreground">Auto-convert after download</span>
               </Tooltip>
             </div>
 
@@ -908,7 +908,7 @@ export default function DataManagementPage() {
               <button
                 type="button"
                 onClick={() => setDlNoParallelDownload(!dlNoParallelDownload)}
-                className={`w-9 h-5 rounded-full relative transition-colors flex-shrink-0 ${dlNoParallelDownload ? "bg-amber" : "bg-bg-3"}`}
+                className={`w-9 h-5 rounded-full relative transition-colors flex-shrink-0 ${dlNoParallelDownload ? "bg-amber" : "bg-muted"}`}
               >
                 <span className={`absolute w-4 h-4 bg-white rounded-full top-0.5 left-0.5 transition-transform ${dlNoParallelDownload ? "translate-x-4" : ""}`} />
               </button>
@@ -916,14 +916,14 @@ export default function DataManagementPage() {
                 content={TOOLTIPS.download_data_parallel?.description || "Sequential download (advanced)"}
                 configKey={TOOLTIPS.download_data_parallel?.configKey}
               >
-                <span className="text-xs text-text-1">Sequential download (advanced)</span>
+                <span className="text-xs text-muted-foreground">Sequential download (advanced)</span>
               </Tooltip>
             </div>
           </div>
 
           {/* Erase warning */}
           {eraseEnabled && (
-            <div className="mb-3 px-3 py-2 bg-red-bg border border-red/20 rounded-btn text-[11px] text-red">
+            <div className="mb-3 px-3 py-2 bg-rose-500/10 border border-rose-500/20 rounded-btn text-xs text-rose-500">
               WARNING: --erase will permanently delete all existing data for the selected pairs and timeframes before downloading. This cannot be undone.
             </div>
           )}
@@ -934,21 +934,21 @@ export default function DataManagementPage() {
               type="button"
               onClick={startDownload}
               disabled={downloading}
-              className="px-4 py-2 rounded-btn text-xs font-semibold bg-accent text-white border border-accent hover:bg-accent-dim hover:shadow-[0_0_20px_var(--color-accent)] transition-all disabled:opacity-50"
+              className="px-4 py-2 rounded-btn text-xs font-semibold bg-primary text-white border border-primary hover:bg-primary-dim hover:shadow-[0_0_20px_var(--color-accent)] transition-all disabled:opacity-50"
             >
               {downloading ? "Downloading..." : "📥 Download Data"}
             </button>
             <button
               type="button"
               onClick={showCommand}
-              className="px-4 py-2 rounded-btn text-xs font-semibold bg-bg-3 text-text-1 border border-border hover:border-border-hover hover:bg-bg-1 transition-all"
+              className="px-4 py-2 rounded-btn text-xs font-semibold bg-muted text-muted-foreground border border-border hover:border-border-border hover:border-ring hover:bg-card transition-all"
             >
               📋 Show CLI Command
             </button>
             {downloading && (
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-amber border-t-transparent rounded-full animate-spin" />
-                <span className="text-[11px] text-amber font-medium">Downloading...</span>
+                <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                <span className="text-xs text-amber-500 font-medium">Downloading...</span>
               </div>
             )}
           </div>
@@ -992,7 +992,7 @@ export default function DataManagementPage() {
                 <thead>
                   <tr>
                     {["#", "Strategy Name"].map((h) => (
-                      <th key={h} className="text-left px-3 py-2 text-[10px] font-semibold text-text-3 uppercase tracking-wider border-b border-border whitespace-nowrap">
+                      <th key={h} className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border whitespace-nowrap">
                         {h}
                       </th>
                     ))}
@@ -1000,14 +1000,14 @@ export default function DataManagementPage() {
                 </thead>
                 <tbody>
                   {strategiesList.map((name, i) => (
-                    <tr key={name} className="hover:bg-bg-3 transition-colors">
-                      <td className="px-3 py-2 text-[11px] font-mono text-text-2">{i + 1}</td>
-                      <td className="px-3 py-2 text-[11px] text-text-1">{name}</td>
+                    <tr key={name} className="hover:bg-muted transition-colors">
+                      <td className="px-3 py-2 text-xs font-mono text-muted-foreground">{i + 1}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">{name}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <div className="text-[10px] text-text-3 pt-2">{strategiesList.length} strategies found</div>
+              <div className="text-xs text-muted-foreground pt-2">{strategiesList.length} strategies found</div>
             </>
           )}
         </UtilCard>
@@ -1024,7 +1024,7 @@ export default function DataManagementPage() {
               <thead>
                 <tr>
                   {["Exchange", "Spot", "Margin", "Futures", "Status"].map((h) => (
-                    <th key={h} className="text-left px-3 py-2 text-[10px] font-semibold text-text-3 uppercase tracking-wider border-b border-border whitespace-nowrap">
+                    <th key={h} className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border whitespace-nowrap">
                       {h}
                     </th>
                   ))}
@@ -1032,13 +1032,13 @@ export default function DataManagementPage() {
               </thead>
               <tbody>
                 {exchangeList.map((ex) => (
-                  <tr key={ex.name} className="hover:bg-bg-3 transition-colors">
-                    <td className={`px-3 py-2 text-[11px] ${ex.name === "binance" ? "text-accent font-semibold" : "text-text-1"}`}>
+                  <tr key={ex.name} className="hover:bg-muted transition-colors">
+                    <td className={`px-3 py-2 text-xs ${ex.name === "binance" ? "text-primary font-semibold" : "text-muted-foreground"}`}>
                       {ex.name}
                     </td>
-                    <td className={`px-3 py-2 text-[11px] ${ex.spot ? "text-green" : "text-text-2"}`}>{ex.spot ? "Yes" : "No"}</td>
-                    <td className={`px-3 py-2 text-[11px] ${ex.margin ? "text-green" : "text-text-2"}`}>{ex.margin ? "Yes" : "No"}</td>
-                    <td className={`px-3 py-2 text-[11px] ${ex.futures ? "text-green" : "text-text-2"}`}>{ex.futures ? "Yes" : "No"}</td>
+                    <td className={`px-3 py-2 text-xs ${ex.spot ? "text-emerald-500" : "text-muted-foreground"}`}>{ex.spot ? "Yes" : "No"}</td>
+                    <td className={`px-3 py-2 text-xs ${ex.margin ? "text-emerald-500" : "text-muted-foreground"}`}>{ex.margin ? "Yes" : "No"}</td>
+                    <td className={`px-3 py-2 text-xs ${ex.futures ? "text-emerald-500" : "text-muted-foreground"}`}>{ex.futures ? "Yes" : "No"}</td>
                     <td className="px-3 py-2"><StatusBadge status={ex.status} /></td>
                   </tr>
                 ))}
@@ -1059,7 +1059,7 @@ export default function DataManagementPage() {
               <thead>
                 <tr>
                   {["Exchange", "Available Timeframes"].map((h) => (
-                    <th key={h} className="text-left px-3 py-2 text-[10px] font-semibold text-text-3 uppercase tracking-wider border-b border-border whitespace-nowrap">
+                    <th key={h} className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border whitespace-nowrap">
                       {h}
                     </th>
                   ))}
@@ -1067,11 +1067,11 @@ export default function DataManagementPage() {
               </thead>
               <tbody>
                 {timeframeList.map((row) => (
-                  <tr key={row.exchange} className="hover:bg-bg-3 transition-colors">
-                    <td className={`px-3 py-2 text-[11px] ${row.exchange === "binance" ? "text-accent font-semibold" : "text-text-1"}`}>
+                  <tr key={row.exchange} className="hover:bg-muted transition-colors">
+                    <td className={`px-3 py-2 text-xs ${row.exchange === "binance" ? "text-primary font-semibold" : "text-muted-foreground"}`}>
                       {row.exchange}
                     </td>
-                    <td className="px-3 py-2 text-[11px] text-text-1">{row.timeframes}</td>
+                    <td className="px-3 py-2 text-xs text-muted-foreground">{row.timeframes}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1094,21 +1094,21 @@ export default function DataManagementPage() {
             <>
               <div className="flex gap-2 mb-2.5 flex-wrap items-center">
                 <input
-                  className="bg-bg-1 border border-border rounded-btn py-1 px-2.5 text-[11px] text-text-1 outline-none focus:border-accent w-40"
+                  className="bg-card border border-border rounded-btn py-1 px-2.5 text-xs text-muted-foreground outline-none focus:border-primary w-40"
                   placeholder="Filter pairs..."
                   value={pairFilter}
                   onChange={(e) => setPairFilter(e.target.value)}
                 />
-                <select className="bg-bg-1 border border-border rounded-btn py-1 px-2.5 text-[11px] text-text-1 outline-none appearance-none pr-5">
+                <select className="bg-card border border-border rounded-btn py-1 px-2.5 text-xs text-muted-foreground outline-none appearance-none pr-5">
                   <option>Quote: USDT</option>
                   <option>Quote: BUSD</option>
                   <option>Quote: All</option>
                 </select>
-                <select className="bg-bg-1 border border-border rounded-btn py-1 px-2.5 text-[11px] text-text-1 outline-none appearance-none pr-5">
+                <select className="bg-card border border-border rounded-btn py-1 px-2.5 text-xs text-muted-foreground outline-none appearance-none pr-5">
                   <option>Mode: futures</option>
                   <option>Mode: spot</option>
                 </select>
-                <span className="text-[10px] text-text-3 ml-auto">
+                <span className="text-xs text-muted-foreground ml-auto">
                   Showing {filteredPairs.length} of {displayPairs.length} pairs
                   {availablePairsList.length === 0 && " (static fallback)"}
                 </span>
@@ -1117,10 +1117,10 @@ export default function DataManagementPage() {
                 {filteredPairs.map((p) => (
                   <span
                     key={p}
-                    className={`inline-block px-2 py-0.5 rounded-sm text-[10px] font-semibold m-0.5 ${
+                    className={`inline-block px-2 py-0.5 rounded-sm text-xs font-semibold m-0.5 ${
                       selectedPairs.includes(p)
-                        ? "bg-accent-glow text-accent border border-accent/20"
-                        : "bg-bg-3 text-text-1"
+                        ? "bg-primary-glow text-primary border border-primary/20"
+                        : "bg-muted text-muted-foreground"
                     }`}
                   >
                     {p}
@@ -1151,7 +1151,7 @@ export default function DataManagementPage() {
                 <thead>
                   <tr>
                     {["Pair", "Timeframe", "Start", "End", "Candles", "Format"].map((h) => (
-                      <th key={h} className="text-left px-3 py-2 text-[10px] font-semibold text-text-3 uppercase tracking-wider border-b border-border whitespace-nowrap">
+                      <th key={h} className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border whitespace-nowrap">
                         {h}
                       </th>
                     ))}
@@ -1159,20 +1159,20 @@ export default function DataManagementPage() {
                 </thead>
                 <tbody>
                   {dataEntries.map((d) => (
-                    <tr key={`${d.pair}-${d.timeframe}`} className="hover:bg-bg-3 transition-colors">
-                      <td className={`px-3 py-2 text-[11px] ${["BTC/USDT:USDT", "ETH/USDT:USDT"].includes(d.pair) ? "text-accent font-semibold" : "text-text-1"}`}>
+                    <tr key={`${d.pair}-${d.timeframe}`} className="hover:bg-muted transition-colors">
+                      <td className={`px-3 py-2 text-xs ${["BTC/USDT:USDT", "ETH/USDT:USDT"].includes(d.pair) ? "text-primary font-semibold" : "text-muted-foreground"}`}>
                         {d.pair}
                       </td>
-                      <td className="px-3 py-2 text-[11px] text-text-1">{d.timeframe}</td>
-                      <td className="px-3 py-2 text-[10px] font-mono text-text-2">{d.start}</td>
-                      <td className="px-3 py-2 text-[10px] font-mono text-text-2">{d.end}</td>
-                      <td className="px-3 py-2 text-[10px] font-mono text-text-2">{d.candle_count.toLocaleString()}</td>
-                      <td className="px-3 py-2 text-[10px] font-mono text-text-2">{d.candle_type || d.format || "futures"}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">{d.timeframe}</td>
+                      <td className="px-3 py-2 text-xs font-mono text-muted-foreground">{d.start}</td>
+                      <td className="px-3 py-2 text-xs font-mono text-muted-foreground">{d.end}</td>
+                      <td className="px-3 py-2 text-xs font-mono text-muted-foreground">{d.candle_count.toLocaleString()}</td>
+                      <td className="px-3 py-2 text-xs font-mono text-muted-foreground">{d.candle_type || d.format || "futures"}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <div className="text-[10px] text-text-3 pt-2">
+              <div className="text-xs text-muted-foreground pt-2">
                 Total: {dataEntries.length} datasets
               </div>
             </>
@@ -1191,10 +1191,10 @@ export default function DataManagementPage() {
           <div className="grid grid-cols-2 gap-4 mb-3">
             <div className="flex flex-col gap-1.5">
               <Tooltip content={"Source data format to convert from"} configKey="--format-from">
-                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">--format-from</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">--format-from</label>
               </Tooltip>
               <select
-                className="bg-bg-1 border border-border rounded-btn py-2 px-3 text-xs text-text-1 outline-none focus:border-accent appearance-none"
+                className="bg-card border border-border rounded-btn py-2 px-3 text-xs text-muted-foreground outline-none focus:border-primary appearance-none"
                 value={convertFrom}
                 onChange={(e) => setConvertFrom(e.target.value)}
               >
@@ -1205,10 +1205,10 @@ export default function DataManagementPage() {
             </div>
             <div className="flex flex-col gap-1.5">
               <Tooltip content={"Target data format to convert to"} configKey="--format-to">
-                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">--format-to</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">--format-to</label>
               </Tooltip>
               <select
-                className="bg-bg-1 border border-border rounded-btn py-2 px-3 text-xs text-text-1 outline-none focus:border-accent appearance-none"
+                className="bg-card border border-border rounded-btn py-2 px-3 text-xs text-muted-foreground outline-none focus:border-primary appearance-none"
                 value={convertTo}
                 onChange={(e) => setConvertTo(e.target.value)}
               >
@@ -1236,20 +1236,20 @@ export default function DataManagementPage() {
             <EmptyState message={botId ? "Click Run to test the pairlist config" : "Select a bot first"} />
           ) : (
             <>
-              <div className="text-[11px] text-text-2 mb-2">
+              <div className="text-xs text-muted-foreground mb-2">
                 Pairlist result from config.json pairlist handlers:
               </div>
               <div className="leading-loose">
                 {pairlistResult.map((p) => (
                   <span
                     key={p}
-                    className="inline-block px-2 py-0.5 rounded-sm text-[10px] font-semibold m-0.5 bg-accent-glow text-accent border border-accent/20"
+                    className="inline-block px-2 py-0.5 rounded-sm text-xs font-semibold m-0.5 bg-primary-glow text-primary border border-primary/20"
                   >
                     {p}
                   </span>
                 ))}
               </div>
-              <div className="text-[10px] text-text-3 pt-2">
+              <div className="text-xs text-muted-foreground pt-2">
                 {pairlistResult.length} pairs passed
               </div>
             </>
@@ -1277,7 +1277,7 @@ export default function DataManagementPage() {
                   <thead>
                     <tr>
                       {["trade_id", "Pair", "is_short", "open_rate", "close_rate", "close_profit_abs", "stake_amount", "open_date", "close_date", "exit_reason"].map((h) => (
-                        <th key={h} className="text-left px-3 py-2 text-[10px] font-semibold text-text-3 uppercase tracking-wider border-b border-border whitespace-nowrap">
+                        <th key={h} className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border whitespace-nowrap">
                           {h}
                         </th>
                       ))}
@@ -1289,28 +1289,28 @@ export default function DataManagementPage() {
                       const profitStr = profitAbs != null ? (profitAbs >= 0 ? `+${fmtNum(profitAbs)}` : fmtNum(profitAbs)) : "-";
                       const isNeg = profitAbs != null && profitAbs < 0;
                       return (
-                        <tr key={t.trade_id} className="hover:bg-bg-3 transition-colors">
-                          <td className="px-3 py-2 text-[10px] font-mono text-text-2">{t.trade_id}</td>
-                          <td className={`px-3 py-2 text-[11px] ${["BTC/USDT:USDT", "ETH/USDT:USDT"].includes(t.pair) ? "text-accent font-semibold" : "text-text-1"}`}>
+                        <tr key={t.trade_id} className="hover:bg-muted transition-colors">
+                          <td className="px-3 py-2 text-xs font-mono text-muted-foreground">{t.trade_id}</td>
+                          <td className={`px-3 py-2 text-xs ${["BTC/USDT:USDT", "ETH/USDT:USDT"].includes(t.pair) ? "text-primary font-semibold" : "text-muted-foreground"}`}>
                             {t.pair}
                           </td>
-                          <td className="px-3 py-2 text-[11px] text-text-1">{String(t.is_short)}</td>
-                          <td className="px-3 py-2 text-[10px] font-mono text-text-2">{fmtNum(t.open_rate)}</td>
-                          <td className="px-3 py-2 text-[10px] font-mono text-text-2">{fmtNum(t.close_rate)}</td>
-                          <td className={`px-3 py-2 text-[11px] font-semibold ${isNeg ? "text-red" : "text-green"}`}>
+                          <td className="px-3 py-2 text-xs text-muted-foreground">{String(t.is_short)}</td>
+                          <td className="px-3 py-2 text-xs font-mono text-muted-foreground">{fmtNum(t.open_rate)}</td>
+                          <td className="px-3 py-2 text-xs font-mono text-muted-foreground">{fmtNum(t.close_rate)}</td>
+                          <td className={`px-3 py-2 text-xs font-semibold ${isNeg ? "text-rose-500" : "text-emerald-500"}`}>
                             {profitStr}
                           </td>
-                          <td className="px-3 py-2 text-[10px] font-mono text-text-2">{fmtNum(t.stake_amount)}</td>
-                          <td className="px-3 py-2 text-[10px] font-mono text-text-2">{fmtDate(t.open_date)}</td>
-                          <td className="px-3 py-2 text-[10px] font-mono text-text-2">{fmtDate(t.close_date)}</td>
-                          <td className="px-3 py-2 text-[11px] text-text-1">{t.exit_reason ?? "-"}</td>
+                          <td className="px-3 py-2 text-xs font-mono text-muted-foreground">{fmtNum(t.stake_amount)}</td>
+                          <td className="px-3 py-2 text-xs font-mono text-muted-foreground">{fmtDate(t.open_date)}</td>
+                          <td className="px-3 py-2 text-xs font-mono text-muted-foreground">{fmtDate(t.close_date)}</td>
+                          <td className="px-3 py-2 text-xs text-muted-foreground">{t.exit_reason ?? "-"}</td>
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
               </div>
-              <div className="text-[10px] text-text-3 pt-2">
+              <div className="text-xs text-muted-foreground pt-2">
                 {tradesList.length} trades loaded from bot
               </div>
             </>
@@ -1330,7 +1330,7 @@ export default function DataManagementPage() {
                 <thead>
                   <tr>
                     {["#", "Loss Function"].map((h) => (
-                      <th key={h} className="text-left px-3 py-2 text-[10px] font-semibold text-text-3 uppercase tracking-wider border-b border-border whitespace-nowrap">
+                      <th key={h} className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border whitespace-nowrap">
                         {h}
                       </th>
                     ))}
@@ -1338,14 +1338,14 @@ export default function DataManagementPage() {
                 </thead>
                 <tbody>
                   {hyperoptLosses.map((name, i) => (
-                    <tr key={name} className="hover:bg-bg-3 transition-colors">
-                      <td className="px-3 py-2 text-[10px] font-mono text-text-2">{i + 1}</td>
-                      <td className="px-3 py-2 text-[11px] text-text-1">{name}</td>
+                    <tr key={name} className="hover:bg-muted transition-colors">
+                      <td className="px-3 py-2 text-xs font-mono text-muted-foreground">{i + 1}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">{name}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <div className="text-[10px] text-text-3 pt-2">12 loss functions available</div>
+              <div className="text-xs text-muted-foreground pt-2">12 loss functions available</div>
             </>
           )}
         </UtilCard>
@@ -1363,7 +1363,7 @@ export default function DataManagementPage() {
                 <thead>
                   <tr>
                     {["#", "Model", "Type"].map((h) => (
-                      <th key={h} className="text-left px-3 py-2 text-[10px] font-semibold text-text-3 uppercase tracking-wider border-b border-border whitespace-nowrap">
+                      <th key={h} className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border whitespace-nowrap">
                         {h}
                       </th>
                     ))}
@@ -1371,15 +1371,15 @@ export default function DataManagementPage() {
                 </thead>
                 <tbody>
                   {freqaiModels.map((m, i) => (
-                    <tr key={m.name} className="hover:bg-bg-3 transition-colors">
-                      <td className="px-3 py-2 text-[10px] font-mono text-text-2">{i + 1}</td>
-                      <td className="px-3 py-2 text-[11px] text-text-1">{m.name}</td>
-                      <td className="px-3 py-2 text-[11px] text-text-2">{m.type}</td>
+                    <tr key={m.name} className="hover:bg-muted transition-colors">
+                      <td className="px-3 py-2 text-xs font-mono text-muted-foreground">{i + 1}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">{m.name}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">{m.type}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <div className="text-[10px] text-text-3 pt-2">
+              <div className="text-xs text-muted-foreground pt-2">
                 14 FreqAI models available &middot; Installed: LightGBM 4.6.0, XGBoost 3.2.0, scikit-learn 1.8.0
               </div>
             </>
@@ -1414,10 +1414,10 @@ export default function DataManagementPage() {
           <div className="grid grid-cols-2 gap-4 mb-3">
             <div className="flex flex-col gap-1.5">
               <Tooltip content={"Source trade data format to convert from"} configKey="--format-from">
-                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">--format-from</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">--format-from</label>
               </Tooltip>
               <select
-                className="bg-bg-1 border border-border rounded-btn py-2 px-3 text-xs text-text-1 outline-none focus:border-accent appearance-none"
+                className="bg-card border border-border rounded-btn py-2 px-3 text-xs text-muted-foreground outline-none focus:border-primary appearance-none"
                 value={convertTradeFrom}
                 onChange={(e) => setConvertTradeFrom(e.target.value)}
               >
@@ -1426,10 +1426,10 @@ export default function DataManagementPage() {
             </div>
             <div className="flex flex-col gap-1.5">
               <Tooltip content={"Target trade data format to convert to"} configKey="--format-to">
-                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">--format-to</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">--format-to</label>
               </Tooltip>
               <select
-                className="bg-bg-1 border border-border rounded-btn py-2 px-3 text-xs text-text-1 outline-none focus:border-accent appearance-none"
+                className="bg-card border border-border rounded-btn py-2 px-3 text-xs text-muted-foreground outline-none focus:border-primary appearance-none"
                 value={convertTradeTo}
                 onChange={(e) => setConvertTradeTo(e.target.value)}
               >
@@ -1464,7 +1464,7 @@ export default function DataManagementPage() {
           runLabel={tradesToOhlcvLoading ? "Generating..." : "\u25B6 Generate"}
           loading={tradesToOhlcvLoading}
         >
-          <div className="text-[11px] text-text-2 mb-2">
+          <div className="text-xs text-muted-foreground mb-2">
             Generate OHLCV candle data from previously downloaded raw trades.
             Uses the pairs and timeframes selected in the download form above.
           </div>
@@ -1505,7 +1505,7 @@ export default function DataManagementPage() {
                 <thead>
                   <tr>
                     {["Epoch", "Trades", "Avg Profit", "Total Profit", "Loss"].map((h) => (
-                      <th key={h} className="text-left px-3 py-2 text-[10px] font-semibold text-text-3 uppercase tracking-wider border-b border-border whitespace-nowrap">
+                      <th key={h} className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border whitespace-nowrap">
                         {h}
                       </th>
                     ))}
@@ -1513,17 +1513,17 @@ export default function DataManagementPage() {
                 </thead>
                 <tbody>
                   {hyperoptListResults.slice(0, 50).map((r, i) => (
-                    <tr key={`ho-${i}`} className="hover:bg-bg-3 transition-colors cursor-pointer" onClick={() => setHyperoptShowEpoch(String(r.epoch ?? i + 1))}>
-                      <td className="px-3 py-2 text-[10px] font-mono text-accent">{String(r.epoch ?? i + 1)}</td>
-                      <td className="px-3 py-2 text-[11px] text-text-1">{String(r.trades ?? r.total_trades ?? "-")}</td>
-                      <td className="px-3 py-2 text-[11px] text-text-1">{typeof r.avg_profit === "number" ? r.avg_profit.toFixed(4) : String(r.avg_profit ?? "-")}</td>
-                      <td className="px-3 py-2 text-[11px] text-text-1">{typeof r.total_profit === "number" ? r.total_profit.toFixed(4) : String(r.total_profit ?? "-")}</td>
-                      <td className="px-3 py-2 text-[11px] text-text-2">{typeof r.loss === "number" ? r.loss.toFixed(6) : String(r.loss ?? "-")}</td>
+                    <tr key={`ho-${i}`} className="hover:bg-muted transition-colors cursor-pointer" onClick={() => setHyperoptShowEpoch(String(r.epoch ?? i + 1))}>
+                      <td className="px-3 py-2 text-xs font-mono text-primary">{String(r.epoch ?? i + 1)}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">{String(r.trades ?? r.total_trades ?? "-")}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">{typeof r.avg_profit === "number" ? r.avg_profit.toFixed(4) : String(r.avg_profit ?? "-")}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">{typeof r.total_profit === "number" ? r.total_profit.toFixed(4) : String(r.total_profit ?? "-")}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">{typeof r.loss === "number" ? r.loss.toFixed(6) : String(r.loss ?? "-")}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <div className="text-[10px] text-text-3 pt-2">{hyperoptListResults.length} epochs found (click row to view details)</div>
+              <div className="text-xs text-muted-foreground pt-2">{hyperoptListResults.length} epochs found (click row to view details)</div>
             </>
           )}
         </UtilCard>
@@ -1554,11 +1554,11 @@ export default function DataManagementPage() {
         >
           <div className="mb-3">
             <Tooltip content={"Hyperopt epoch number to view detailed results for"} configKey="--hyperopt-show">
-              <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">Epoch #</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Epoch #</label>
             </Tooltip>
             <input
               type="number"
-              className="mt-1 bg-bg-1 border border-border rounded-btn py-2 px-3 text-xs text-text-1 outline-none focus:border-accent w-24"
+              className="mt-1 bg-card border border-border rounded-btn py-2 px-3 text-xs text-muted-foreground outline-none focus:border-primary w-24"
               value={hyperoptShowEpoch}
               onChange={(e) => setHyperoptShowEpoch(e.target.value)}
               placeholder="e.g. 1"
@@ -1570,7 +1570,7 @@ export default function DataManagementPage() {
           ) : !hyperoptShowResult ? (
             <EmptyState message="Enter an epoch number and click Show" />
           ) : (
-            <div className="bg-bg-0 border border-border rounded-btn p-3 font-mono text-[11px] leading-relaxed text-text-2 max-h-52 overflow-y-auto whitespace-pre-wrap">
+            <div className="bg-background border border-border rounded-btn p-3 font-mono text-xs leading-relaxed text-muted-foreground max-h-52 overflow-y-auto whitespace-pre-wrap">
               {JSON.stringify(hyperoptShowResult, null, 2)}
             </div>
           )}

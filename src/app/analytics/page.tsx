@@ -18,11 +18,11 @@ const timeframes = ["1m", "5m", "15m", "30m", "1h", "4h", "1d"];
 
 function heatmapCellStyle(val: string) {
   const n = parseFloat(val);
-  if (n === 0 || isNaN(n)) return { bg: "", text: "text-text-3" };
-  if (n > 2) return { bg: "bg-green/[.15]", text: "text-green" };
-  if (n > 0) return { bg: "bg-green/[.08]", text: "text-green" };
-  if (n < -1.5) return { bg: "bg-red/[.15]", text: "text-red" };
-  return { bg: "bg-red/[.08]", text: "text-red" };
+  if (n === 0 || isNaN(n)) return { bg: "", text: "text-muted-foreground" };
+  if (n > 2) return { bg: "bg-green/[.15]", text: "text-emerald-500" };
+  if (n > 0) return { bg: "bg-green/[.08]", text: "text-emerald-500" };
+  if (n < -1.5) return { bg: "bg-red/[.15]", text: "text-rose-500" };
+  return { bg: "bg-red/[.08]", text: "text-rose-500" };
 }
 
 /** Parse FT pair-candles columnar data into row objects */
@@ -201,16 +201,16 @@ export default function AnalyticsPage() {
   // Derive analysis stats from real data — using close_profit_abs per CLAUDE.md
   const analysisStatsLive: AnalysisStat[] = perfData.length > 0
     ? [
-        { label: "Pairs Analyzed", value: String(perfData.length), sub: "All active pairs", subClass: "text-text-3" },
-        { label: "Best Pair", value: perfData[0]?.pair ?? "\u2014", valueClass: "!text-base text-green", sub: `+${(perfData[0]?.close_profit_abs ?? perfData[0]?.profit_abs)?.toFixed(2) ?? "0"} USDT`, subClass: "text-green" },
-        { label: "Worst Pair", value: perfData[perfData.length - 1]?.pair ?? "\u2014", valueClass: "!text-base text-red", sub: `${(perfData[perfData.length - 1]?.close_profit_abs ?? perfData[perfData.length - 1]?.profit_abs)?.toFixed(2) ?? "0"} USDT`, subClass: "text-red" },
-        { label: "Total Trades", value: String(perfData.reduce((s, p) => s + p.count, 0)), sub: "All pairs combined", subClass: "text-text-3" },
+        { label: "Pairs Analyzed", value: String(perfData.length), sub: "All active pairs", subClass: "text-muted-foreground" },
+        { label: "Best Pair", value: perfData[0]?.pair ?? "\u2014", valueClass: "!text-base text-emerald-500", sub: `+${(perfData[0]?.close_profit_abs ?? perfData[0]?.profit_abs)?.toFixed(2) ?? "0"} USDT`, subClass: "text-emerald-500" },
+        { label: "Worst Pair", value: perfData[perfData.length - 1]?.pair ?? "\u2014", valueClass: "!text-base text-rose-500", sub: `${(perfData[perfData.length - 1]?.close_profit_abs ?? perfData[perfData.length - 1]?.profit_abs)?.toFixed(2) ?? "0"} USDT`, subClass: "text-rose-500" },
+        { label: "Total Trades", value: String(perfData.reduce((s, p) => s + p.count, 0)), sub: "All pairs combined", subClass: "text-muted-foreground" },
       ]
     : [
-        { label: "Pairs Analyzed", value: "\u2014", sub: "No bot selected", subClass: "text-text-3" },
-        { label: "Best Pair", value: "\u2014", valueClass: "!text-base text-text-3", sub: "No data", subClass: "text-text-3" },
-        { label: "Worst Pair", value: "\u2014", valueClass: "!text-base text-text-3", sub: "No data", subClass: "text-text-3" },
-        { label: "Total Trades", value: "\u2014", sub: "No data", subClass: "text-text-3" },
+        { label: "Pairs Analyzed", value: "\u2014", sub: "No bot selected", subClass: "text-muted-foreground" },
+        { label: "Best Pair", value: "\u2014", valueClass: "!text-base text-muted-foreground", sub: "No data", subClass: "text-muted-foreground" },
+        { label: "Worst Pair", value: "\u2014", valueClass: "!text-base text-muted-foreground", sub: "No data", subClass: "text-muted-foreground" },
+        { label: "Total Trades", value: "\u2014", sub: "No data", subClass: "text-muted-foreground" },
       ];
 
   // Derive heatmap rows from daily data if available
@@ -242,17 +242,17 @@ export default function AnalyticsPage() {
     <AppShell title="Analytics">
       {/* No bots empty state */}
       {bots.length === 0 && !loadingCandles && (
-        <div className="py-16 text-center text-sm text-text-3">No bots registered. Register a bot on the Dashboard to view analytics.</div>
+        <div className="py-16 text-center text-sm text-muted-foreground">No bots registered. Register a bot on the Dashboard to view analytics.</div>
       )}
 
       {/* Bot selector bar */}
       {bots.length > 0 && (
-        <div className="flex items-center gap-3 mb-4 p-3 px-4 bg-bg-2 border border-border rounded-card text-xs">
-          <span className="text-text-3 uppercase tracking-wide font-semibold shrink-0">Bot</span>
+        <div className="flex items-center gap-3 mb-4 p-3 px-4 bg-muted/50 border border-border rounded-card text-xs">
+          <span className="text-muted-foreground uppercase tracking-wide font-semibold shrink-0">Bot</span>
           <select
             value={selectedBotId}
             onChange={(e) => setSelectedBotId(e.target.value)}
-            className="bg-bg-1 border border-border rounded-btn px-3 py-1.5 text-[11px] text-text-1 outline-none focus:border-accent cursor-pointer min-w-[200px]"
+            className="bg-card border border-border rounded-btn px-3 py-1.5 text-xs text-muted-foreground outline-none focus:border-primary cursor-pointer min-w-[200px]"
           >
             {bots.map((b) => (
               <option key={b.id} value={b.id}>{b.name}</option>
@@ -261,7 +261,7 @@ export default function AnalyticsPage() {
           <button
             type="button"
             onClick={loadCandles}
-            className="text-[11px] px-3 py-1.5 rounded-btn border border-border bg-bg-3 text-text-1 hover:border-border-hover transition-colors cursor-pointer"
+            className="text-xs px-3 py-1.5 rounded-btn border border-border bg-muted text-muted-foreground hover:border-border-border hover:border-ring transition-colors cursor-pointer"
           >
             Refresh Candles
           </button>
@@ -271,10 +271,10 @@ export default function AnalyticsPage() {
       {/* SECTION: PLOTTING & VISUALIZATION (ss19)    */}
       {/* ════════════════════════════════════════════ */}
       <div className="flex items-center gap-3.5 mb-5 pb-2.5 border-b border-border">
-        <span className="text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest bg-accent/[.12] text-accent">
+        <span className="text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest bg-primary/[.12] text-primary">
           &sect;19
         </span>
-        <span className="text-[15px] font-bold text-text-0">Plotting &amp; Visualization</span>
+        <span className="text-[15px] font-bold text-foreground">Plotting &amp; Visualization</span>
       </div>
 
       {/* Candlestick Chart Card */}
@@ -287,22 +287,22 @@ export default function AnalyticsPage() {
               <select
                 value={selectedPair}
                 onChange={(e) => setSelectedPair(e.target.value)}
-                className="bg-bg-1 border border-border rounded-md px-3 py-1.5 text-xs text-text-1 outline-none focus:border-accent cursor-pointer"
+                className="bg-card border border-border rounded-md px-3 py-1.5 text-xs text-muted-foreground outline-none focus:border-primary cursor-pointer"
               >
                 {pairs.map((p) => (
                   <option key={p} value={p}>{p}</option>
                 ))}
               </select>
-              <div className="flex gap-0.5 bg-bg-1 border border-border rounded-md p-0.5">
+              <div className="flex gap-0.5 bg-card border border-border rounded-md p-0.5">
                 {timeframes.map((tf) => (
                   <button
                     type="button"
                     key={tf}
                     onClick={() => setSelectedTf(tf)}
-                    className={`px-2.5 py-1 text-[11px] font-medium rounded cursor-pointer transition-all ${
+                    className={`px-2.5 py-1 text-xs font-medium rounded cursor-pointer transition-all ${
                       selectedTf === tf
-                        ? "bg-accent text-white"
-                        : "text-text-3 hover:text-text-1"
+                        ? "bg-primary text-white"
+                        : "text-muted-foreground hover:text-muted-foreground"
                     }`}
                   >
                     {tf}
@@ -316,17 +316,17 @@ export default function AnalyticsPage() {
         {/* Candlestick Area */}
         <div className="h-[280px] relative flex items-end pl-[40px] pr-[10px] pt-[30px] pb-[24px] overflow-hidden">
           {loadingCandles && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-bg-1/60 backdrop-blur-sm">
-              <span className="text-[11px] text-accent animate-pulse">Loading candles...</span>
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/60 backdrop-blur-sm">
+              <span className="text-xs text-primary animate-pulse">Loading candles...</span>
             </div>
           )}
           {!loadingCandles && candleShapes.length === 0 && (
             <div className="absolute inset-0 z-10 flex items-center justify-center">
-              <span className="text-[11px] text-text-3">No candle data. Select a bot and pair to load.</span>
+              <span className="text-xs text-muted-foreground">No candle data. Select a bot and pair to load.</span>
             </div>
           )}
           {candlesData && candleShapes.length > 0 && (
-            <div className="absolute top-2 right-3 text-[9px] text-green font-mono">
+            <div className="absolute top-2 right-3 text-[9px] text-emerald-500 font-mono">
               {candlesData.pair} &middot; {candlesData.timeframe} &middot; {candlesData.data?.length ?? 0} candles (live)
             </div>
           )}
@@ -336,14 +336,14 @@ export default function AnalyticsPage() {
           {/* Y-axis */}
           <div className="absolute left-0 top-[30px] bottom-[24px] w-[38px] flex flex-col justify-between px-1">
             {yAxisLabels.map((l, i) => (
-              <span key={`y-${i}-${l}`} className="text-[9px] text-text-3 text-right leading-none">{l}</span>
+              <span key={`y-${i}-${l}`} className="text-[9px] text-muted-foreground text-right leading-none">{l}</span>
             ))}
           </div>
 
           {/* Crosshair — only show when data present */}
           {candleShapes.length > 0 && (
-            <div className="absolute left-[40px] right-[10px] h-px bg-accent/25 pointer-events-none" style={{ top: "45%" }}>
-              <span className="absolute right-0 -top-[7px] text-[9px] text-accent bg-bg-2 px-1 rounded-sm">
+            <div className="absolute left-[40px] right-[10px] h-px bg-primary/25 pointer-events-none" style={{ top: "45%" }}>
+              <span className="absolute right-0 -top-[7px] text-[9px] text-primary bg-muted/50 px-1 rounded-sm">
                 {candleRows.length > 0 ? candleRows[Math.floor(candleRows.length / 2)]?.close?.toLocaleString(undefined, { maximumFractionDigits: 2 }) : ""}
               </span>
             </div>
@@ -389,7 +389,7 @@ export default function AnalyticsPage() {
           {/* X-axis */}
           <div className="absolute bottom-0 left-[40px] right-[10px] flex justify-between pt-1.5">
             {xAxisLabels.map((d, i) => (
-              <span key={`x-${i}-${d}`} className="text-[9px] text-text-3">{d}</span>
+              <span key={`x-${i}-${d}`} className="text-[9px] text-muted-foreground">{d}</span>
             ))}
           </div>
         </div>
@@ -400,14 +400,14 @@ export default function AnalyticsPage() {
             content={TOOLTIPS.plot_config_main_plot?.description || "Indicators displayed on the main chart"}
             configKey={TOOLTIPS.plot_config_main_plot?.configKey}
           >
-            <span className="text-[10px] text-text-3 font-semibold uppercase tracking-wider">Overlays</span>
+            <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Overlays</span>
           </Tooltip>
           <div className="flex items-center gap-3.5">
-            <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-text-2">
+            <label className="flex items-center gap-1.5 cursor-pointer text-xs text-muted-foreground">
               <input type="checkbox" checked={showTema} onChange={() => setShowTema(!showTema)} className="accent-accent w-[13px] h-[13px] cursor-pointer" />
               <span className="inline-block w-2.5 h-[3px] rounded-sm bg-amber" /> tema
             </label>
-            <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-text-2">
+            <label className="flex items-center gap-1.5 cursor-pointer text-xs text-muted-foreground">
               <input type="checkbox" checked={showSar} onChange={() => setShowSar(!showSar)} className="accent-accent w-[13px] h-[13px] cursor-pointer" />
               <span className="inline-block w-2.5 h-[3px] rounded-sm bg-cyan" /> sar
             </label>
@@ -420,7 +420,7 @@ export default function AnalyticsPage() {
             content={TOOLTIPS.plot_config_subplots?.description || "Additional subcharts below the main chart"}
             configKey={TOOLTIPS.plot_config_subplots?.configKey}
           >
-            <span className="px-[18px] py-2.5 text-[10px] text-text-3 font-semibold uppercase tracking-wider">Subcharts</span>
+            <span className="px-[18px] py-2.5 text-xs text-muted-foreground font-semibold uppercase tracking-wider">Subcharts</span>
           </Tooltip>
           <div className="flex gap-0 flex-1">
             {(["RSI", "MACD", "Volume"] as const).map((tab) => (
@@ -428,10 +428,10 @@ export default function AnalyticsPage() {
                 type="button"
                 key={tab}
                 onClick={() => setActiveSubchart(tab)}
-                className={`px-[18px] py-2.5 text-[11px] font-semibold cursor-pointer border-b-2 transition-all ${
+                className={`px-[18px] py-2.5 text-xs font-semibold cursor-pointer border-b-2 transition-all ${
                   activeSubchart === tab
-                    ? "text-accent border-accent"
-                    : "text-text-3 border-transparent hover:text-text-1"
+                    ? "text-primary border-primary"
+                    : "text-muted-foreground border-transparent hover:text-muted-foreground"
                 }`}
               >
                 {tab}
@@ -447,14 +447,14 @@ export default function AnalyticsPage() {
           {activeSubchart === "RSI" && (
             <>
               {/* RSI zone lines */}
-              <div className="absolute left-[40px] right-[10px] border-t border-dashed border-red/30 pointer-events-none" style={{ top: "22%" }}>
-                <span className="absolute right-0.5 -top-2.5 text-[8px] text-red">70</span>
+              <div className="absolute left-[40px] right-[10px] border-t border-dashed border-rose-500/30 pointer-events-none" style={{ top: "22%" }}>
+                <span className="absolute right-0.5 -top-2.5 text-[8px] text-rose-500">70</span>
               </div>
-              <div className="absolute left-[40px] right-[10px] border-t border-dashed border-green/30 pointer-events-none" style={{ top: "78%" }}>
-                <span className="absolute right-0.5 -top-2.5 text-[8px] text-green">30</span>
+              <div className="absolute left-[40px] right-[10px] border-t border-dashed border-emerald-500/30 pointer-events-none" style={{ top: "78%" }}>
+                <span className="absolute right-0.5 -top-2.5 text-[8px] text-emerald-500">30</span>
               </div>
               {candleShapes.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center text-[11px] text-text-3">
+                <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground">
                   RSI data requires loaded candles
                 </div>
               ) : (
@@ -466,7 +466,7 @@ export default function AnalyticsPage() {
                   const rng = maxC - minC || 1;
                   return candleRows.map((row, i) => {
                   const normalized = ((row.close - minC) / rng) * 80 + 10;
-                  const color = normalized > 70 ? "bg-red" : normalized < 30 ? "bg-green" : "bg-accent";
+                  const color = normalized > 70 ? "bg-red" : normalized < 30 ? "bg-green" : "bg-primary";
                   return (
                     <div
                       key={`rsi-${i}`}
@@ -484,7 +484,7 @@ export default function AnalyticsPage() {
             <>
               <div className="absolute left-[40px] right-[10px] top-1/2 h-px bg-border" />
               {candleShapes.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center text-[11px] text-text-3">
+                <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground">
                   MACD data requires loaded candles
                 </div>
               ) : (
@@ -514,7 +514,7 @@ export default function AnalyticsPage() {
           {activeSubchart === "Volume" && (
             <>
               {volumeBarsLive.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center text-[11px] text-text-3">
+                <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground">
                   Volume data requires loaded candles
                 </div>
               ) : (
@@ -531,24 +531,24 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Trade Markers Legend */}
-        <div className="flex items-center gap-[18px] px-[18px] py-2.5 border-t border-border bg-bg-1">
-          <div className="flex items-center gap-1.5 text-[11px] text-text-2">
-            <span className="text-[13px] text-green">{"\u25B3"}</span> Buy (enter_long)
+        <div className="flex items-center gap-[18px] px-[18px] py-2.5 border-t border-border bg-card">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="text-sm text-emerald-500">{"\u25B3"}</span> Buy (enter_long)
           </div>
-          <div className="flex items-center gap-1.5 text-[11px] text-text-2">
-            <span className="text-[13px] text-red">{"\u25BD"}</span> Sell (exit_long)
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="text-sm text-rose-500">{"\u25BD"}</span> Sell (exit_long)
           </div>
-          <div className="flex items-center gap-1.5 text-[11px] text-text-2">
-            <span className="text-[13px] text-red">{"\u25B3"}</span> Short (enter_short)
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="text-sm text-rose-500">{"\u25B3"}</span> Short (enter_short)
           </div>
-          <div className="flex items-center gap-1.5 text-[11px] text-text-2">
-            <span className="text-[13px] text-green">{"\u25BD"}</span> Cover (exit_short)
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="text-sm text-emerald-500">{"\u25BD"}</span> Cover (exit_short)
           </div>
-          <div className="flex items-center gap-1.5 text-[11px] text-text-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-accent mr-0.5" /> enter_tag marker
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="inline-block w-2 h-2 rounded-full bg-primary mr-0.5" /> enter_tag marker
           </div>
-          <div className="flex items-center gap-1.5 text-[11px] text-text-2">
-            <span className="inline-block w-2 h-2 rounded-full border-2 border-amber mr-0.5" /> exit_reason marker
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="inline-block w-2 h-2 rounded-full border-2 border-amber-500 mr-0.5" /> exit_reason marker
           </div>
         </div>
       </Card>
@@ -560,7 +560,7 @@ export default function AnalyticsPage() {
           icon={"\uD83D\uDCB0"}
           action={
             <span
-              className="text-xs text-accent cursor-pointer font-medium hover:text-accent hover:underline"
+              className="text-xs text-primary cursor-pointer font-medium hover:text-primary hover:underline"
               onClick={handleExportData}
               role="button"
               tabIndex={0}
@@ -572,7 +572,7 @@ export default function AnalyticsPage() {
         />
         <div className="h-[160px] relative px-[10px] pt-[10px] pb-5 pl-[40px]">
           {perfData.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-[11px] text-text-3">No performance data available</div>
+            <div className="flex items-center justify-center h-full text-xs text-muted-foreground">No performance data available</div>
           ) : (() => {
             const cumulative = perfData.reduce<number[]>((acc, p, i) => {
               acc.push((acc[i - 1] ?? 0) + (p.close_profit_abs ?? p.profit_abs));
@@ -601,7 +601,7 @@ export default function AnalyticsPage() {
               <>
                 <div className="absolute left-0 top-[10px] bottom-5 w-[38px] flex flex-col justify-between px-1">
                   {yTicks.map((v, i) => (
-                    <span key={`yt-${i}-${v}`} className={`text-[9px] text-right leading-none ${v > 0 ? "text-green" : v < 0 ? "text-red" : "text-text-3"}`}>{fmtY(v)}</span>
+                    <span key={`yt-${i}-${v}`} className={`text-[9px] text-right leading-none ${v > 0 ? "text-emerald-500" : v < 0 ? "text-rose-500" : "text-muted-foreground"}`}>{fmtY(v)}</span>
                   ))}
                 </div>
                 <div
@@ -625,7 +625,7 @@ export default function AnalyticsPage() {
                 </div>
                 <div className="absolute bottom-0 left-[40px] right-[10px] flex justify-between">
                   {xLabels.map((d) => (
-                    <span key={d} className="text-[9px] text-text-3">{d}</span>
+                    <span key={d} className="text-[9px] text-muted-foreground">{d}</span>
                   ))}
                 </div>
               </>
@@ -641,7 +641,7 @@ export default function AnalyticsPage() {
         <span className="text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest bg-purple/[.12] text-purple">
           &sect;29
         </span>
-        <span className="text-[15px] font-bold text-text-0">Orderflow (Beta)</span>
+        <span className="text-[15px] font-bold text-foreground">Orderflow (Beta)</span>
       </div>
 
       {/* Orderflow Configuration */}
@@ -654,12 +654,12 @@ export default function AnalyticsPage() {
               type="button"
               onClick={() => setUsePublicTrades(!usePublicTrades)}
               className={`w-9 h-5 rounded-full border relative cursor-pointer transition-all ${
-                usePublicTrades ? "bg-accent/[.12] border-accent" : "bg-bg-3 border-border"
+                usePublicTrades ? "bg-primary/[.12] border-primary" : "bg-muted border-border"
               }`}
             >
               <div
                 className={`w-3.5 h-3.5 rounded-full absolute top-0.5 transition-all ${
-                  usePublicTrades ? "left-[18px] bg-accent" : "left-0.5 bg-text-3"
+                  usePublicTrades ? "left-[18px] bg-primary" : "left-0.5 bg-text-3"
                 }`}
               />
             </button>
@@ -667,12 +667,12 @@ export default function AnalyticsPage() {
               content={TOOLTIPS.use_public_trades?.description || "Fetch real-time public trade data from exchange"}
               configKey={TOOLTIPS.use_public_trades?.configKey}
             >
-              <span className="text-xs text-text-1 font-medium">Orderflow Data</span>
+              <span className="text-xs text-muted-foreground font-medium">Orderflow Data</span>
             </Tooltip>
           </div>
 
           {/* Orderflow params */}
-          <div className="text-[10px] text-text-3 font-semibold uppercase tracking-wider mb-1.5 mt-4">Orderflow Parameters</div>
+          <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1.5 mt-4">Orderflow Parameters</div>
           <div className="grid grid-cols-4 gap-3.5">
             {[
               { key: "orderflow_scale", label: "Scale", value: ofScale, set: setOfScale },
@@ -687,13 +687,13 @@ export default function AnalyticsPage() {
                   content={TOOLTIPS[p.key]?.description || p.label}
                   configKey={TOOLTIPS[p.key]?.configKey}
                 >
-                  <label className="text-[10px] text-text-3 font-medium uppercase tracking-wider">{p.label}</label>
+                  <label className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{p.label}</label>
                 </Tooltip>
                 <input
                   type="number"
                   value={p.value}
                   onChange={(e) => p.set(e.target.value)}
-                  className="bg-bg-1 border border-border rounded-md px-2.5 py-[7px] text-xs text-text-0 outline-none focus:border-accent w-full font-inherit"
+                  className="bg-card border border-border rounded-md px-2.5 py-[7px] text-xs text-foreground outline-none focus:border-primary w-full font-inherit"
                 />
               </div>
             ))}
@@ -708,12 +708,12 @@ export default function AnalyticsPage() {
           <CardHeader
             title="Footprint Chart"
             icon={"\uD83E\uDDF1"}
-            action={<span className="text-xs text-text-3">{selectedPair} &middot; {selectedTf}</span>}
+            action={<span className="text-xs text-muted-foreground">{selectedPair} &middot; {selectedTf}</span>}
           />
           <CardBody className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="text-[11px] text-text-3 mb-1">Orderflow data requires live connection</div>
-              <div className="text-[10px] text-text-3">Enable use_public_trades and connect to a running bot</div>
+              <div className="text-xs text-muted-foreground mb-1">Orderflow data requires live connection</div>
+              <div className="text-xs text-muted-foreground">Enable use_public_trades and connect to a running bot</div>
             </div>
           </CardBody>
         </Card>
@@ -723,7 +723,7 @@ export default function AnalyticsPage() {
           <Card>
             <CardHeader title="Delta Chart (Ask - Bid)" icon={"\uD83D\uDCCA"} />
             <CardBody className="flex items-center justify-center py-8">
-              <div className="text-[11px] text-text-3">Orderflow data requires live connection</div>
+              <div className="text-xs text-muted-foreground">Orderflow data requires live connection</div>
             </CardBody>
           </Card>
 
@@ -731,10 +731,10 @@ export default function AnalyticsPage() {
             <CardHeader
               title="Imbalance Highlights"
               icon={"\u26A1"}
-              action={<span className="text-xs text-text-3">0 detected</span>}
+              action={<span className="text-xs text-muted-foreground">0 detected</span>}
             />
             <CardBody className="flex items-center justify-center py-8">
-              <div className="text-[11px] text-text-3">Orderflow data requires live connection</div>
+              <div className="text-xs text-muted-foreground">Orderflow data requires live connection</div>
             </CardBody>
           </Card>
         </div>
@@ -747,16 +747,16 @@ export default function AnalyticsPage() {
         <span className="text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest bg-cyan/[.12] text-cyan">
           &sect;20
         </span>
-        <span className="text-[15px] font-bold text-text-0">Data Analysis</span>
+        <span className="text-[15px] font-bold text-foreground">Data Analysis</span>
       </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-4 gap-3.5 mb-6">
         {analysisStatsLive.map((s) => (
-          <div key={s.label} className="bg-bg-1 border border-border rounded-lg p-3.5 px-4">
-            <div className="text-[10px] text-text-3 font-medium uppercase tracking-wider mb-1.5">{s.label}</div>
-            <div className={`text-lg font-bold text-text-0 tracking-tight ${s.valueClass ?? ""}`}>{s.value}</div>
-            <div className={`text-[11px] mt-0.5 font-medium ${s.subClass}`}>{s.sub}</div>
+          <div key={s.label} className="bg-card border border-border rounded-lg p-3.5 px-4">
+            <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1.5">{s.label}</div>
+            <div className={`text-lg font-bold text-foreground tracking-tight ${s.valueClass ?? ""}`}>{s.value}</div>
+            <div className={`text-xs mt-0.5 font-medium ${s.subClass}`}>{s.sub}</div>
           </div>
         ))}
       </div>
@@ -768,28 +768,28 @@ export default function AnalyticsPage() {
           <CardHeader
             title="Performance Heatmap (Pair x Day)"
             icon={"\uD83D\uDD25"}
-            action={<span className="text-xs text-text-3">Last 7 days</span>}
+            action={<span className="text-xs text-muted-foreground">Last 7 days</span>}
           />
           <CardBody className="p-0 overflow-x-auto">
             {heatmapRows.length === 0 ? (
               <div className="flex items-center justify-center py-10">
-                <span className="text-[11px] text-text-3">No daily data available. Select a bot to load.</span>
+                <span className="text-xs text-muted-foreground">No daily data available. Select a bot to load.</span>
               </div>
             ) : (
               <div className="grid gap-px bg-border border border-border rounded-md overflow-hidden min-w-[500px]" style={{ gridTemplateColumns: "90px repeat(7, 1fr)" }}>
                 {/* Header */}
-                <div className="bg-bg-3 text-text-3 text-[9px] font-semibold uppercase tracking-wider text-center px-1.5 py-2" />
+                <div className="bg-muted text-muted-foreground text-[9px] font-semibold uppercase tracking-wider text-center px-1.5 py-2" />
                 {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-                  <div key={d} className="bg-bg-3 text-text-3 text-[9px] font-semibold uppercase tracking-wider text-center px-1.5 py-2">{d}</div>
+                  <div key={d} className="bg-muted text-muted-foreground text-[9px] font-semibold uppercase tracking-wider text-center px-1.5 py-2">{d}</div>
                 ))}
                 {/* Data rows */}
                 {heatmapRows.map((row) => (
                   <Fragment key={row.pair}>
-                    <div className="bg-bg-3 text-text-1 text-[11px] font-semibold text-left px-2.5 py-2.5">{row.pair}</div>
+                    <div className="bg-muted text-muted-foreground text-xs font-semibold text-left px-2.5 py-2.5">{row.pair}</div>
                     {row.days.map((val, di) => {
                       const style = heatmapCellStyle(val);
                       return (
-                        <div key={`${row.pair}-${di}`} className={`${style.bg} ${style.text} bg-bg-1 text-[10px] font-medium text-center px-1.5 py-2.5`}>
+                        <div key={`${row.pair}-${di}`} className={`${style.bg} ${style.text} bg-card text-xs font-medium text-center px-1.5 py-2.5`}>
                           {val}
                         </div>
                       );
@@ -806,11 +806,11 @@ export default function AnalyticsPage() {
           <CardHeader title="Jupyter Notebooks" icon={"\uD83D\uDCD3"} />
           <CardBody>
             <div className="flex items-center justify-center py-6">
-              <span className="text-[11px] text-text-3">No notebooks found on this bot</span>
+              <span className="text-xs text-muted-foreground">No notebooks found on this bot</span>
             </div>
-            <div className="mt-3.5 p-2.5 px-3 bg-bg-3 rounded-md text-[11px] text-text-3 leading-relaxed">
+            <div className="mt-3.5 p-2.5 px-3 bg-muted rounded-md text-xs text-muted-foreground leading-relaxed">
               Notebooks run on the FreqTrade server at<br />
-              <span className="text-text-2 font-mono text-[10px]">/freqtrade/user_data/notebooks/</span><br />
+              <span className="text-muted-foreground font-mono text-xs">/freqtrade/user_data/notebooks/</span><br />
               Access via Jupyter on port 8888
             </div>
           </CardBody>

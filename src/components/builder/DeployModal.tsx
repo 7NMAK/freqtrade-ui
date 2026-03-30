@@ -161,10 +161,10 @@ export default function DeployModal({
       onClick={onClose}
     >
       <div
-        className="bg-bg-2 border border-border rounded-card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-muted/50 border border-border rounded-card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-semibold text-text-0 mb-5">
+        <h2 className="text-lg font-semibold text-foreground mb-5">
           Deploy {strategyName} {currentVersionId && `(v${currentVersionId})`}
         </h2>
 
@@ -175,8 +175,8 @@ export default function DeployModal({
             onClick={() => setTab("new-bot")}
             className={`px-4 py-2 rounded text-xs font-semibold transition-all ${
               tab === "new-bot"
-                ? "bg-accent text-white"
-                : "bg-bg-3 text-text-2 hover:bg-bg-2"
+                ? "bg-primary text-white"
+                : "bg-muted text-muted-foreground hover:bg-muted/50"
             }`}
           >
             Create New Bot
@@ -186,8 +186,8 @@ export default function DeployModal({
             onClick={() => setTab("existing-bot")}
             className={`px-4 py-2 rounded text-xs font-semibold transition-all ${
               tab === "existing-bot"
-                ? "bg-accent text-white"
-                : "bg-bg-3 text-text-2 hover:bg-bg-2"
+                ? "bg-primary text-white"
+                : "bg-muted text-muted-foreground hover:bg-muted/50"
             }`}
           >
             Deploy to Existing Bot
@@ -198,7 +198,7 @@ export default function DeployModal({
         {tab === "new-bot" && (
           <div className="space-y-4 mb-6">
             <div>
-              <label className="block text-xs font-semibold text-text-2 uppercase tracking-wide mb-2">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                 Bot Name
               </label>
               <input
@@ -206,19 +206,19 @@ export default function DeployModal({
                 value={botName}
                 onChange={(e) => setBotName(e.target.value)}
                 placeholder="e.g. supertrend-binance"
-                className="w-full px-3 py-2 bg-bg-1 border border-border rounded text-xs text-text-0 outline-none focus:border-accent"
+                className="w-full px-3 py-2 bg-card border border-border rounded text-xs text-foreground outline-none focus:border-primary"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-text-2 uppercase tracking-wide mb-2">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                   Exchange
                 </label>
                 <select
                   value={exchange}
                   onChange={(e) => setExchange(e.target.value)}
-                  className="w-full px-3 py-2 bg-bg-1 border border-border rounded text-xs text-text-0 outline-none focus:border-accent cursor-pointer"
+                  className="w-full px-3 py-2 bg-card border border-border rounded text-xs text-foreground outline-none focus:border-primary cursor-pointer"
                 >
                   <option value="binance">Binance</option>
                   <option value="bybit">Bybit</option>
@@ -228,13 +228,13 @@ export default function DeployModal({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-text-2 uppercase tracking-wide mb-2">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                   Timeframe
                 </label>
                 <select
                   value={timeframe}
                   onChange={(e) => setTimeframe(e.target.value)}
-                  className="w-full px-3 py-2 bg-bg-1 border border-border rounded text-xs text-text-0 outline-none focus:border-accent cursor-pointer"
+                  className="w-full px-3 py-2 bg-card border border-border rounded text-xs text-foreground outline-none focus:border-primary cursor-pointer"
                 >
                   <option value="1m">1m</option>
                   <option value="5m">5m</option>
@@ -247,17 +247,17 @@ export default function DeployModal({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-text-2 uppercase tracking-wide mb-2">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                 Trading Pairs
               </label>
               <textarea
                 value={pairs}
                 onChange={(e) => setPairs(e.target.value)}
                 placeholder="BTC/USDT:USDT, ETH/USDT:USDT, SOL/USDT:USDT"
-                className="w-full px-3 py-2 bg-bg-1 border border-border rounded text-xs text-text-0 outline-none focus:border-accent resize-none"
+                className="w-full px-3 py-2 bg-card border border-border rounded text-xs text-foreground outline-none focus:border-primary resize-none"
                 rows={3}
               />
-              <div className="text-2xs text-text-3 mt-1">Comma-separated list of pairs</div>
+              <div className="text-2xs text-muted-foreground mt-1">Comma-separated list of pairs</div>
             </div>
 
             <div className="flex items-center gap-2">
@@ -268,7 +268,7 @@ export default function DeployModal({
                 onChange={(e) => setDryRun(e.target.checked)}
                 className="w-3.5 h-3.5 accent-accent cursor-pointer"
               />
-              <label htmlFor="dryRun" className="text-xs text-text-1 cursor-pointer">
+              <label htmlFor="dryRun" className="text-xs text-muted-foreground cursor-pointer">
                 Paper Trading (Dry Run)
               </label>
             </div>
@@ -279,18 +279,18 @@ export default function DeployModal({
         {tab === "existing-bot" && (
           <div className="space-y-4 mb-6">
             <div>
-              <label className="block text-xs font-semibold text-text-2 uppercase tracking-wide mb-2">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                 Select Bot
               </label>
               {loadingBots ? (
-                <div className="text-xs text-text-3 animate-pulse py-2">Loading bots...</div>
+                <div className="text-xs text-muted-foreground animate-pulse py-2">Loading bots...</div>
               ) : bots.length === 0 ? (
-                <div className="text-xs text-red py-2">No bots found. Create a bot first.</div>
+                <div className="text-xs text-rose-500 py-2">No bots found. Create a bot first.</div>
               ) : (
                 <select
                   value={selectedBotId ?? ""}
                   onChange={(e) => setSelectedBotId(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-bg-1 border border-border rounded text-xs text-text-0 outline-none focus:border-accent cursor-pointer"
+                  className="w-full px-3 py-2 bg-card border border-border rounded text-xs text-foreground outline-none focus:border-primary cursor-pointer"
                 >
                   {bots.map((bot) => (
                     <option key={bot.id} value={bot.id}>
@@ -302,9 +302,9 @@ export default function DeployModal({
             </div>
 
             {selectedBot && (
-              <div className="p-3 bg-bg-1 border border-border rounded">
-                <div className="text-[11px] text-text-3 uppercase font-semibold mb-2">Current Config</div>
-                <div className="space-y-1 text-xs text-text-1">
+              <div className="p-3 bg-card border border-border rounded">
+                <div className="text-xs text-muted-foreground uppercase font-semibold mb-2">Current Config</div>
+                <div className="space-y-1 text-xs text-muted-foreground">
                   <div>Exchange: {selectedBot.exchange_name || "Unknown"}</div>
                   <div>Strategy: {selectedBot.strategy_name || "None"}</div>
                   <div>Status: {selectedBot.status}</div>
@@ -315,9 +315,9 @@ export default function DeployModal({
 
             {selectedBot?.status === "running" && (
               <div className="space-y-3">
-                <div className="text-xs font-semibold text-text-0">How to replace strategy?</div>
+                <div className="text-xs font-semibold text-foreground">How to replace strategy?</div>
                 <div className="space-y-2">
-                  <label className="flex items-center gap-2 p-3 bg-bg-1 border border-border rounded cursor-pointer hover:border-accent transition-all">
+                  <label className="flex items-center gap-2 p-3 bg-card border border-border rounded cursor-pointer hover:border-primary transition-all">
                     <input
                       type="radio"
                       name="replacement"
@@ -327,12 +327,12 @@ export default function DeployModal({
                       className="accent-accent cursor-pointer"
                     />
                     <div>
-                      <div className="text-xs font-semibold text-text-0">Graceful Drain</div>
-                      <div className="text-2xs text-text-3">Stop new entries, wait for exits, then switch</div>
+                      <div className="text-xs font-semibold text-foreground">Graceful Drain</div>
+                      <div className="text-2xs text-muted-foreground">Stop new entries, wait for exits, then switch</div>
                     </div>
                   </label>
 
-                  <label className="flex items-center gap-2 p-3 bg-bg-1 border border-border rounded cursor-pointer hover:border-accent transition-all">
+                  <label className="flex items-center gap-2 p-3 bg-card border border-border rounded cursor-pointer hover:border-primary transition-all">
                     <input
                       type="radio"
                       name="replacement"
@@ -342,12 +342,12 @@ export default function DeployModal({
                       className="accent-accent cursor-pointer"
                     />
                     <div>
-                      <div className="text-xs font-semibold text-text-0">Force Replace</div>
-                      <div className="text-2xs text-text-3">Force exit all positions (market orders) and switch immediately</div>
+                      <div className="text-xs font-semibold text-foreground">Force Replace</div>
+                      <div className="text-2xs text-muted-foreground">Force exit all positions (market orders) and switch immediately</div>
                     </div>
                   </label>
 
-                  <label className="flex items-center gap-2 p-3 bg-bg-1 border border-border rounded cursor-pointer hover:border-accent transition-all">
+                  <label className="flex items-center gap-2 p-3 bg-card border border-border rounded cursor-pointer hover:border-primary transition-all">
                     <input
                       type="radio"
                       name="replacement"
@@ -357,8 +357,8 @@ export default function DeployModal({
                       className="accent-accent cursor-pointer"
                     />
                     <div>
-                      <div className="text-xs font-semibold text-text-0">Save Only</div>
-                      <div className="text-2xs text-text-3">Update version reference, manual restart later</div>
+                      <div className="text-xs font-semibold text-foreground">Save Only</div>
+                      <div className="text-2xs text-muted-foreground">Update version reference, manual restart later</div>
                     </div>
                   </label>
                 </div>
@@ -372,7 +372,7 @@ export default function DeployModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-2 rounded border border-border bg-bg-2 text-text-1 text-xs font-semibold cursor-pointer hover:bg-bg-3 transition-all"
+            className="flex-1 px-4 py-2 rounded border border-border bg-muted/50 text-muted-foreground text-xs font-semibold cursor-pointer hover:bg-muted transition-all"
           >
             Cancel
           </button>
@@ -386,7 +386,7 @@ export default function DeployModal({
               (tab === "new-bot" && !botName.trim()) ||
               (tab === "existing-bot" && !selectedBotId)
             }
-            className="flex-1 px-4 py-2 rounded bg-accent text-white text-xs font-semibold cursor-pointer hover:brightness-110 disabled:opacity-50 transition-all"
+            className="flex-1 px-4 py-2 rounded bg-primary text-white text-xs font-semibold cursor-pointer hover:brightness-110 disabled:opacity-50 transition-all"
           >
             {deploying ? "Deploying..." : "Deploy"}
           </button>

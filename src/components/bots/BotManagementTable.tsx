@@ -39,27 +39,27 @@ export default function BotManagementTable({ bots, botProfits, onRefresh }: BotM
   return (
     <>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-text-0">Bot Management</h2>
+        <h2 className="text-sm font-semibold text-foreground">Bot Management</h2>
         <button
           type="button"
           onClick={() => setRegisterOpen(true)}
-          className="px-3 py-1.5 text-xs font-semibold rounded bg-accent text-white hover:brightness-110 cursor-pointer transition-all"
+          className="inline-flex items-center justify-center rounded-md text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow-[0_0_15px_rgba(99,102,241,0.2)] hover:bg-primary/90 h-8 px-4 cursor-pointer"
         >
           + Register New Bot
         </button>
       </div>
 
       {bots.length === 0 ? (
-        <div className="py-8 text-center text-sm text-text-3 bg-bg-2 border border-border rounded-card">
+        <div className="py-8 text-center text-sm text-muted-foreground bg-muted/10 border border-border/50 rounded-xl shadow-sm">
           No bots registered yet. Click &quot;Register New Bot&quot; to get started.
         </div>
       ) : (
-        <div className="overflow-x-auto bg-bg-2 border border-border rounded-card">
+        <div className="overflow-x-auto bg-muted/10 border border-border/50 rounded-xl shadow-sm">
           <table className="w-full border-collapse">
             <thead>
               <tr>
                 {["Status", "Name", "Exchange", "Strategy", "Version", "Mode", "P&L (closed)", "Trades", "Actions"].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-2xs font-semibold text-text-3 uppercase tracking-wider border-b border-border whitespace-nowrap">
+                  <th key={h} className="text-left px-4 py-3 text-2xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border whitespace-nowrap">
                     {h}
                   </th>
                 ))}
@@ -72,35 +72,35 @@ export default function BotManagementTable({ bots, botProfits, onRefresh }: BotM
                 const loadingKey = (label: string) => `${label}-${bot.id}`;
 
                 return (
-                  <tr key={bot.id} className="hover:bg-bg-3 transition-colors">
+                  <tr key={bot.id} className="hover:bg-muted transition-colors">
                     <td className="px-4 py-3">
                       <div className={`w-2.5 h-2.5 rounded-full ${
                         bot.status === "draining" ? "bg-amber animate-pulse"
                           : isRunning && bot.is_healthy ? "bg-green shadow-[0_0_6px_var(--color-green)]"
                           : bot.status === "error" ? "bg-red animate-pulse"
-                          : isRunning ? "bg-amber" : "bg-bg-3"
+                          : isRunning ? "bg-amber" : "bg-muted"
                       }`} />
                     </td>
                     <td className="px-4 py-3">
-                      <div className="text-xs font-semibold text-text-0">{bot.name}</div>
-                      {bot.description && <div className="text-2xs text-text-3 truncate max-w-[160px]">{bot.description}</div>}
+                      <div className="text-xs font-semibold text-foreground">{bot.name}</div>
+                      {bot.description && <div className="text-2xs text-muted-foreground truncate max-w-[160px]">{bot.description}</div>}
                     </td>
-                    <td className="px-4 py-3 text-xs text-text-2">
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
                       {bot.exchange_name ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-semibold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold bg-secondary text-secondary-foreground border border-border/50">
                           {bot.exchange_name}
                         </span>
                       ) : "\u2014"}
                     </td>
-                    <td className="px-4 py-3 text-xs text-text-2">{bot.strategy_name ?? "\u2014"}</td>
-                    <td className="px-4 py-3 text-xs text-text-2">
+                    <td className="px-4 py-3 text-xs text-muted-foreground">{bot.strategy_name ?? "\u2014"}</td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
                       {bot.strategy_version_id ? `v${bot.strategy_version_id}` : "\u2014"}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide border ${
                         bot.is_dry_run
-                          ? "bg-amber-bg text-amber border-amber/20"
-                          : "bg-green-bg text-green border-green/20"
+                          ? "bg-amber-500/10 text-amber-500 border-amber-500-500/20"
+                          : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
                       }`}>
                         {bot.is_dry_run ? "Paper" : "Live"}
                       </span>
@@ -108,7 +108,7 @@ export default function BotManagementTable({ bots, botProfits, onRefresh }: BotM
                     <td className={`px-4 py-3 text-xs font-bold ${profitColor(profit?.profit_closed_coin)}`}>
                       {profit ? `${fmt(profit.profit_closed_coin, 2)} USDT` : "\u2014"}
                     </td>
-                    <td className="px-4 py-3 text-xs text-text-2">
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
                       {profit ? profit.trade_count : "\u2014"}
                     </td>
                     <td className="px-4 py-3">
@@ -119,7 +119,7 @@ export default function BotManagementTable({ bots, botProfits, onRefresh }: BotM
                             loading={actionLoading === loadingKey("Start")}
                             disabled={actionLoading !== null}
                             onClick={() => handleAction("Start", bot.id, () => startBot(bot.id))}
-                            className="border-green/30 text-green bg-green-bg hover:bg-green/[0.18]"
+                            className="border-emerald-500/30 text-emerald-500 bg-emerald-500/10 hover:bg-green/[0.18]"
                           />
                         ) : (
                           <>
@@ -128,14 +128,14 @@ export default function BotManagementTable({ bots, botProfits, onRefresh }: BotM
                               loading={actionLoading === loadingKey("Stop")}
                               disabled={actionLoading !== null}
                               onClick={() => handleAction("Stop", bot.id, () => stopBot(bot.id))}
-                              className="border-red/30 text-red bg-red-bg hover:bg-red/[0.18]"
+                              className="border-rose-500/30 text-rose-500 bg-rose-500/10 hover:bg-red/[0.18]"
                             />
                             <ActionBtn
                               label="Pause"
                               loading={actionLoading === loadingKey("Pause")}
                               disabled={actionLoading !== null}
                               onClick={() => handleAction("Pause", bot.id, () => botPause(bot.id))}
-                              className="border-amber/30 text-amber bg-amber-bg hover:bg-amber/[0.18]"
+                              className="border-amber-500/30 text-amber-500 bg-amber-500/10 hover:bg-amber/[0.18]"
                             />
                             {bot.status !== "draining" && (
                               <ActionBtn
@@ -147,7 +147,7 @@ export default function BotManagementTable({ bots, botProfits, onRefresh }: BotM
                                     handleAction("Drain", bot.id, () => drainBot(bot.id));
                                   }
                                 }}
-                                className="border-amber/30 text-amber bg-amber-bg hover:bg-amber/[0.18]"
+                                className="border-amber-500/30 text-amber-500 bg-amber-500/10 hover:bg-amber/[0.18]"
                               />
                             )}
                           </>
@@ -155,12 +155,12 @@ export default function BotManagementTable({ bots, botProfits, onRefresh }: BotM
                         <ActionBtn
                           label="Edit"
                           onClick={() => setEditBot(bot)}
-                          className="border-border text-text-2 bg-bg-1 hover:bg-bg-3"
+                          className="border-border text-muted-foreground bg-card hover:bg-muted"
                         />
                         <ActionBtn
                           label="Del"
                           onClick={() => setDeleteBot(bot)}
-                          className="border-red/20 text-red/70 bg-bg-1 hover:bg-red-bg hover:text-red"
+                          className="border-rose-500/20 text-rose-500/70 bg-card hover:bg-rose-500/10 hover:text-rose-500"
                         />
                       </div>
                     </td>
@@ -189,7 +189,7 @@ function ActionBtn({
       type="button"
       onClick={onClick}
       disabled={disabled || loading}
-      className={`text-[10px] font-semibold px-2 py-1 rounded border disabled:opacity-50 cursor-pointer transition-all ${className}`}
+      className={`inline-flex items-center justify-center rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border disabled:opacity-50 h-6 px-2.5 cursor-pointer ${className}`}
     >
       {loading ? "..." : label}
     </button>

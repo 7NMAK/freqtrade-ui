@@ -499,6 +499,9 @@ export const botBacktestHistory = async (id: number) => {
   return { results: Array.isArray(raw) ? raw : (raw.results ?? []) };
 };
 
+export const botBacktestHistoryResult = (id: number, filename: string) =>
+  request<Record<string, unknown>>(`/api/bots/${id}/backtest/history/result?id=${encodeURIComponent(filename)}`);
+
 export const botListData = (id: number) =>
   request<{ data: Array<{ pair: string; timeframe: string; candle_type?: string; start: string; end: string; candle_count: number; format?: string }>; output?: string }>(
     `/api/bots/${id}/list-data`
@@ -897,6 +900,8 @@ export interface ExperimentRun {
   win_rate: number | null;
   profit_abs: number | null;
   profit_pct: number | null;
+  profit_mean: number | null;
+  profit_factor: number | null;
   max_drawdown: number | null;
   sharpe_ratio: number | null;
   sortino_ratio: number | null;

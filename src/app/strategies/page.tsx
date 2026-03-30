@@ -56,10 +56,10 @@ function LifecycleBadge({ lifecycle }: { lifecycle: Lifecycle }) {
     draft: "bg-zinc-700/40 text-zinc-300 border border-zinc-600",
     backtest: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
     ai_tested: "bg-purple/10 text-purple border border-purple/20",
-    deployable: "bg-green/10 text-green border border-green/20",
-    paper: "bg-amber/10 text-amber border border-amber/20",
+    deployable: "bg-green/10 text-emerald-500 border border-emerald-500/20",
+    paper: "bg-amber/10 text-amber-500 border border-amber-500-500/20",
     live: "bg-emerald/10 text-emerald border border-emerald/20",
-    retired: "bg-red/10 text-red border border-red/15",
+    retired: "bg-red/10 text-rose-500 border border-rose-500/15",
   };
   return (
     <span
@@ -92,11 +92,11 @@ function MetricCell({
   colorClass?: string;
 }) {
   return (
-    <div className="bg-bg-2 py-2.5 px-3 text-center">
-      <div className="text-[9px] text-text-3 uppercase tracking-wider mb-0.5">
+    <div className="bg-muted/50 py-2.5 px-3 text-center">
+      <div className="text-[9px] text-muted-foreground uppercase tracking-wider mb-0.5">
         {label}
       </div>
-      <div className={`text-[13px] font-bold ${colorClass ?? "text-text-0"}`}>
+      <div className={`text-sm font-bold ${colorClass ?? "text-foreground"}`}>
         {value}
       </div>
     </div>
@@ -106,26 +106,26 @@ function MetricCell({
 /** Skeleton card shown during loading */
 function CardSkeleton() {
   return (
-    <div className="bg-bg-2 border border-border rounded-[10px] overflow-hidden animate-pulse">
+    <div className="bg-muted/50 border border-border rounded-[10px] overflow-hidden animate-pulse">
       <div className="p-[18px_20px_14px] flex gap-3.5">
-        <div className="w-10 h-10 rounded-[10px] bg-bg-3" />
+        <div className="w-10 h-10 rounded-[10px] bg-muted" />
         <div className="flex-1 space-y-2">
-          <div className="h-4 w-40 bg-bg-3 rounded" />
-          <div className="h-3 w-full bg-bg-3 rounded" />
-          <div className="h-3 w-24 bg-bg-3 rounded" />
+          <div className="h-4 w-40 bg-muted rounded" />
+          <div className="h-3 w-full bg-muted rounded" />
+          <div className="h-3 w-24 bg-muted rounded" />
         </div>
       </div>
       <div className="grid grid-cols-4 gap-px bg-border border-t border-border">
         {["m1", "m2", "m3", "m4"].map((id) => (
-          <div key={id} className="bg-bg-2 py-2.5 px-3">
-            <div className="h-2 w-10 bg-bg-3 rounded mx-auto mb-1" />
-            <div className="h-4 w-12 bg-bg-3 rounded mx-auto" />
+          <div key={id} className="bg-muted/50 py-2.5 px-3">
+            <div className="h-2 w-10 bg-muted rounded mx-auto mb-1" />
+            <div className="h-4 w-12 bg-muted rounded mx-auto" />
           </div>
         ))}
       </div>
       <div className="p-2.5 px-4 border-t border-border flex gap-1.5">
-        <div className="h-7 w-20 bg-bg-3 rounded" />
-        <div className="h-7 w-20 bg-bg-3 rounded" />
+        <div className="h-7 w-20 bg-muted rounded" />
+        <div className="h-7 w-20 bg-muted rounded" />
       </div>
     </div>
   );
@@ -630,10 +630,10 @@ export default function StrategiesPage() {
   function cardActions(strat: Strategy) {
     const lc = strat.lifecycle;
     const stop = (e: React.MouseEvent) => e.stopPropagation();
-    const btnBase = "py-1.5 px-3 rounded-md border text-[11px] font-medium transition-all cursor-pointer";
-    const btnDefault = `${btnBase} border-border bg-bg-1 text-text-2 hover:border-border-hover hover:text-text-1 hover:bg-bg-3`;
-    const btnPrimary = `${btnBase} border-accent bg-accent text-white font-semibold hover:bg-accent-dim ml-auto`;
-    const btnPromote = `${btnBase} border-green/30 bg-green-bg text-green hover:bg-green/15`;
+    const btnBase = "py-1.5 px-3 rounded-md border text-xs font-medium transition-all cursor-pointer";
+    const btnDefault = `${btnBase} border-border bg-card text-muted-foreground hover:border-border-border hover:border-ring hover:text-muted-foreground hover:bg-muted`;
+    const btnPrimary = `${btnBase} border-primary bg-primary text-white font-semibold hover:bg-primary-dim ml-auto`;
+    const btnPromote = `${btnBase} border-emerald-500/30 bg-emerald-500/10 text-emerald-500 hover:bg-green/15`;
 
     switch (lc) {
       case "draft":
@@ -764,16 +764,16 @@ export default function StrategiesPage() {
                     type="button"
                     key={filter}
                     onClick={() => setActiveFilter(filter)}
-                    className={`px-3.5 py-1.5 rounded-full border text-[11px] font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+                    className={`px-3.5 py-1.5 rounded-full border text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
                       activeFilter === filter
-                        ? "bg-accent/10 border-accent/30 text-accent"
-                        : "bg-bg-2 border-border text-text-2 hover:border-border-hover hover:text-text-1"
+                        ? "bg-primary/10 border-primary/30 text-primary"
+                        : "bg-muted/50 border-border text-muted-foreground hover:border-border-border hover:border-ring hover:text-muted-foreground"
                     }`}
                   >
                     {filter === "all" ? "All" : filter.charAt(0).toUpperCase() + filter.slice(1)}
                     <span
-                      className={`text-[10px] font-semibold px-1.5 py-px rounded-lg ${
-                        activeFilter === filter ? "bg-accent/20" : "bg-bg-3"
+                      className={`text-xs font-semibold px-1.5 py-px rounded-lg ${
+                        activeFilter === filter ? "bg-primary/20" : "bg-muted"
                       }`}
                     >
                       {count}
@@ -787,14 +787,14 @@ export default function StrategiesPage() {
             <button
               type="button"
               onClick={() => setShowImport(true)}
-              className="px-3.5 py-1.5 rounded-md border border-border bg-bg-2 text-text-1 text-xs font-medium transition-all hover:border-border-hover hover:bg-bg-3 flex items-center gap-1.5 cursor-pointer"
+              className="px-3.5 py-1.5 rounded-md border border-border bg-muted/50 text-muted-foreground text-xs font-medium transition-all hover:border-border-border hover:border-ring hover:bg-muted flex items-center gap-1.5 cursor-pointer"
             >
               {t("importPy")}
             </button>
             <button
               type="button"
               onClick={() => router.push("/builder")}
-              className="px-4 py-1.5 rounded-md border-none bg-accent text-white text-xs font-semibold transition-all hover:bg-accent-dim hover:-translate-y-px hover:shadow-[0_4px_12px_var(--color-accent)] flex items-center gap-1.5 cursor-pointer"
+              className="px-4 py-1.5 rounded-md border-none bg-primary text-white text-xs font-semibold transition-all hover:bg-primary-dim hover:-translate-y-px hover:shadow-[0_4px_12px_var(--color-accent)] flex items-center gap-1.5 cursor-pointer"
             >
               {t("newStrategy")}
             </button>
@@ -810,7 +810,7 @@ export default function StrategiesPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16">
-            <div className="text-text-3 text-sm">
+            <div className="text-muted-foreground text-sm">
               {strategies.length === 0
                 ? t("noStrategies")
                 : t("noFilterMatch", { filter: activeFilter })}
@@ -843,7 +843,7 @@ export default function StrategiesPage() {
                 <div
                   key={strat.id}
                   onClick={() => openDetail(strat.id)}
-                  className={`bg-bg-2 border border-border rounded-[10px] overflow-hidden transition-all cursor-pointer hover:border-accent hover:-translate-y-0.5 hover:shadow-lg ${
+                  className={`bg-muted/50 border border-border rounded-[10px] overflow-hidden transition-all cursor-pointer hover:border-primary hover:-translate-y-0.5 hover:shadow-lg ${
                     isRetired ? "opacity-60" : ""
                   }`}
                 >
@@ -856,17 +856,17 @@ export default function StrategiesPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-sm font-bold text-text-0 truncate">
+                        <span className="text-sm font-bold text-foreground truncate">
                           {strat.name}
                         </span>
                         <LifecycleBadge lifecycle={strat.lifecycle} />
                       </div>
                       {strat.description && (
-                        <div className="text-[11px] text-text-2 leading-relaxed mb-1.5 line-clamp-2">
+                        <div className="text-xs text-muted-foreground leading-relaxed mb-1.5 line-clamp-2">
                           {strat.description}
                         </div>
                       )}
-                      <div className="text-[10px] text-text-3 mb-1">
+                      <div className="text-xs text-muted-foreground mb-1">
                         {getBotsUsingStrategy(strat)} bot{getBotsUsingStrategy(strat) !== 1 ? "s" : ""} using this
                       </div>
                       <div className="flex gap-1 flex-wrap">
@@ -876,7 +876,7 @@ export default function StrategiesPage() {
                           </span>
                         ))}
                         {(botCfg?.pair_whitelist?.length ?? 0) > 2 && (
-                          <span className="text-[9.5px] px-1.5 py-0.5 rounded-sm font-medium bg-bg-3 text-text-3">
+                          <span className="text-[9.5px] px-1.5 py-0.5 rounded-sm font-medium bg-muted text-muted-foreground">
                             +{(botCfg?.pair_whitelist?.length ?? 0) - 2} more
                           </span>
                         )}
@@ -886,13 +886,13 @@ export default function StrategiesPage() {
                           </span>
                         )}
                         {botCfg?.trading_mode === "futures" && botCfg?.margin_mode && (
-                          <span className="text-[9.5px] px-1.5 py-0.5 rounded-sm font-medium bg-bg-3 text-text-2">
+                          <span className="text-[9.5px] px-1.5 py-0.5 rounded-sm font-medium bg-muted text-muted-foreground">
                             {botCfg.margin_mode}
                           </span>
                         )}
                       </div>
                       {linkedBot && (
-                        <div className="flex items-center gap-1.5 text-[10px] text-text-3 mt-1.5">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5">
                           <BotStatusDot status={linkedBot.status} />
                           <span>
                             {linkedBot.name} {linkedBot.status}
@@ -906,10 +906,10 @@ export default function StrategiesPage() {
                   <div className="grid grid-cols-4 gap-px bg-border border-t border-border">
                     {strat.lifecycle === "draft" ? (
                       <>
-                        <MetricCell label="Backtest" value="\u2014" colorClass="text-text-3" />
-                        <MetricCell label="Win Rate" value="\u2014" colorClass="text-text-3" />
-                        <MetricCell label="Sharpe" value="\u2014" colorClass="text-text-3" />
-                        <MetricCell label="Trades" value="\u2014" colorClass="text-text-3" />
+                        <MetricCell label="Backtest" value="\u2014" colorClass="text-muted-foreground" />
+                        <MetricCell label="Win Rate" value="\u2014" colorClass="text-muted-foreground" />
+                        <MetricCell label="Sharpe" value="\u2014" colorClass="text-muted-foreground" />
+                        <MetricCell label="Trades" value="\u2014" colorClass="text-muted-foreground" />
                       </>
                     ) : strat.lifecycle === "backtest" && btResult ? (
                       <>
@@ -933,16 +933,16 @@ export default function StrategiesPage() {
                         <MetricCell
                           label="Max DD"
                           value={stats?.max_drawdown != null ? fmt(stats.max_drawdown * 100, 1) + "%" : "\u2014"}
-                          colorClass={stats?.max_drawdown != null ? "text-red" : "text-text-3"}
+                          colorClass={stats?.max_drawdown != null ? "text-rose-500" : "text-muted-foreground"}
                         />
                         <MetricCell label="Trades" value={String(profit.trade_count)} />
                       </>
                     ) : (
                       <>
-                        <MetricCell label={strat.lifecycle === "backtest" ? "Backtest" : "Total"} value="\u2014" colorClass="text-text-3" />
-                        <MetricCell label="Win Rate" value="\u2014" colorClass="text-text-3" />
-                        <MetricCell label={strat.lifecycle === "backtest" ? "Sharpe" : "Max DD"} value="\u2014" colorClass="text-text-3" />
-                        <MetricCell label="Trades" value="\u2014" colorClass="text-text-3" />
+                        <MetricCell label={strat.lifecycle === "backtest" ? "Backtest" : "Total"} value="\u2014" colorClass="text-muted-foreground" />
+                        <MetricCell label="Win Rate" value="\u2014" colorClass="text-muted-foreground" />
+                        <MetricCell label={strat.lifecycle === "backtest" ? "Sharpe" : "Max DD"} value="\u2014" colorClass="text-muted-foreground" />
+                        <MetricCell label="Trades" value="\u2014" colorClass="text-muted-foreground" />
                       </>
                     )}
                   </div>
@@ -972,7 +972,7 @@ export default function StrategiesPage() {
 
       {/* Panel */}
       <div
-        className={`fixed top-0 h-screen w-[560px] max-w-[90vw] bg-bg-1 border-l border-border z-[501] transition-[right] duration-300 ease-out flex flex-col overflow-hidden ${
+        className={`fixed top-0 h-screen w-[560px] max-w-[90vw] bg-card border-l border-border z-[501] transition-[right] duration-300 ease-out flex flex-col overflow-hidden ${
           selectedId != null ? "right-0" : "-right-[560px]"
         }`}
       >
@@ -983,11 +983,11 @@ export default function StrategiesPage() {
               <button
                 type="button"
                 onClick={closeDetail}
-                className="w-8 h-8 rounded-lg border border-border bg-bg-2 flex items-center justify-center text-text-2 text-base transition-all hover:bg-bg-3 hover:text-text-0 cursor-pointer"
+                className="w-8 h-8 rounded-lg border border-border bg-muted/50 flex items-center justify-center text-muted-foreground text-base transition-all hover:bg-muted hover:text-foreground cursor-pointer"
               >
                 &times;
               </button>
-              <div className="text-base font-bold text-text-0 flex-1 truncate">
+              <div className="text-base font-bold text-foreground flex-1 truncate">
                 {selectedStrat.name}
               </div>
               <LifecycleBadge lifecycle={selectedStrat.lifecycle} />
@@ -996,7 +996,7 @@ export default function StrategiesPage() {
                 <button
                   type="button"
                   onClick={() => router.push(`/builder?strategyId=${selectedStrat.id}`)}
-                  className="px-3 py-1.5 rounded-md border border-border bg-bg-2 text-text-1 text-[11px] font-medium hover:border-border-hover hover:bg-bg-3 transition-all cursor-pointer"
+                  className="px-3 py-1.5 rounded-md border border-border bg-muted/50 text-muted-foreground text-xs font-medium hover:border-border-border hover:border-ring hover:bg-muted transition-all cursor-pointer"
                 >
                   {tc("edit")}
                 </button>
@@ -1015,7 +1015,7 @@ export default function StrategiesPage() {
                           toast.error(err instanceof Error ? err.message : "Pause failed");
                         }
                       }}
-                      className="px-3 py-1.5 rounded-md border border-amber/20 bg-amber-bg text-amber text-[11px] font-semibold hover:border-amber/40 transition-all cursor-pointer"
+                      className="px-3 py-1.5 rounded-md border border-amber-500-500/20 bg-amber-500/10 text-amber-500 text-xs font-semibold hover:border-amber-500/40 transition-all cursor-pointer"
                     >
                       Pause
                     </button>
@@ -1037,7 +1037,7 @@ export default function StrategiesPage() {
                           },
                         })
                       }
-                      className="px-3 py-1.5 rounded-md border border-red/20 bg-red-bg text-red text-[11px] font-semibold hover:border-red/40 transition-all cursor-pointer"
+                      className="px-3 py-1.5 rounded-md border border-rose-500/20 bg-rose-500/10 text-rose-500 text-xs font-semibold hover:border-rose-500/40 transition-all cursor-pointer"
                     >
                       Stop
                     </button>
@@ -1052,7 +1052,7 @@ export default function StrategiesPage() {
                         onConfirm: () => handleTransition(selectedStrat, "retired"),
                       })
                     }
-                    className="px-3 py-1.5 rounded-md border border-red/20 bg-red-bg text-red text-[11px] font-semibold hover:border-red/40 transition-all cursor-pointer"
+                    className="px-3 py-1.5 rounded-md border border-rose-500/20 bg-rose-500/10 text-rose-500 text-xs font-semibold hover:border-rose-500/40 transition-all cursor-pointer"
                   >
                     Retire
                   </button>
@@ -1065,7 +1065,7 @@ export default function StrategiesPage() {
                       onConfirm: () => handleDelete(selectedStrat),
                     })
                   }
-                  className="px-3 py-1.5 rounded-md border border-red/20 bg-red-bg text-red text-[11px] font-semibold hover:border-red/40 transition-all cursor-pointer"
+                  className="px-3 py-1.5 rounded-md border border-rose-500/20 bg-rose-500/10 text-rose-500 text-xs font-semibold hover:border-rose-500/40 transition-all cursor-pointer"
                 >
                   Delete
                 </button>
@@ -1093,10 +1093,10 @@ export default function StrategiesPage() {
                   key={tab.key}
                   type="button"
                   onClick={() => setDetailTab(tab.key)}
-                  className={`px-3 py-2 text-[11px] font-medium rounded-md transition-all whitespace-nowrap cursor-pointer ${
+                  className={`px-3 py-2 text-xs font-medium rounded-md transition-all whitespace-nowrap cursor-pointer ${
                     detailTab === tab.key
-                      ? "bg-accent/10 text-accent"
-                      : "text-text-3 hover:text-text-1 hover:bg-bg-3"
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-muted-foreground hover:bg-muted"
                   }`}
                 >
                   {tab.label}
@@ -1107,7 +1107,7 @@ export default function StrategiesPage() {
             {/* Body */}
             <div className="flex-1 overflow-y-auto px-6 py-5">
               {detailLoading ? (
-                <div className="flex items-center justify-center h-32 text-text-3 text-sm">
+                <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
                   Loading details...
                 </div>
               ) : (
@@ -1134,7 +1134,7 @@ export default function StrategiesPage() {
               <button
                 type="button"
                 onClick={() => router.push(`/builder?strategyId=${selectedStrat.id}`)}
-                className="flex-1 py-2.5 rounded-md border border-border bg-bg-2 text-text-1 text-xs font-medium text-center transition-all hover:bg-bg-3 hover:border-border-hover cursor-pointer"
+                className="flex-1 py-2.5 rounded-md border border-border bg-muted/50 text-muted-foreground text-xs font-medium text-center transition-all hover:bg-muted hover:border-border-border hover:border-ring cursor-pointer"
               >
                 {t("detail.editStrategy")}
               </button>
@@ -1142,7 +1142,7 @@ export default function StrategiesPage() {
                 <button
                   type="button"
                   onClick={() => router.push("/dashboard")}
-                  className="flex-1 py-2.5 rounded-md border-none bg-accent text-white text-xs font-semibold text-center transition-all hover:bg-accent-dim cursor-pointer"
+                  className="flex-1 py-2.5 rounded-md border-none bg-primary text-white text-xs font-semibold text-center transition-all hover:bg-primary-dim cursor-pointer"
                 >
                   {t("viewBot")}
                 </button>
@@ -1162,20 +1162,20 @@ export default function StrategiesPage() {
             if (e.target === e.currentTarget) setShowImport(false);
           }}
         >
-          <div className="bg-bg-1 border border-border rounded-2xl p-8 max-w-[480px] w-[90%]">
-            <div className="text-base font-bold text-text-0 mb-4">
+          <div className="bg-card border border-border rounded-2xl p-8 max-w-[480px] w-[90%]">
+            <div className="text-base font-bold text-foreground mb-4">
               {t("importTitle")}
             </div>
             <label
-              className="border-2 border-dashed border-border rounded-xl py-10 px-5 text-center mb-4 cursor-pointer transition-colors hover:border-accent block"
+              className="border-2 border-dashed border-border rounded-xl py-10 px-5 text-center mb-4 cursor-pointer transition-colors hover:border-primary block"
               htmlFor="import-file-input"
             >
-              <div className="text-[13px] text-text-1 mb-1">
+              <div className="text-sm text-muted-foreground mb-1">
                 {importFile
                   ? importFile.name
                   : "Drop .py strategy file here or click to browse"}
               </div>
-              <div className="text-[11px] text-text-3">
+              <div className="text-xs text-muted-foreground">
                 Accepts FreqTrade strategy Python files
               </div>
               <input
@@ -1188,14 +1188,14 @@ export default function StrategiesPage() {
             </label>
             {bots.length > 1 && (
               <div className="mb-4">
-                <label htmlFor="import-bot-select" className="text-[11px] text-text-3 font-medium block mb-1">
+                <label htmlFor="import-bot-select" className="text-xs text-muted-foreground font-medium block mb-1">
                   Import to bot
                 </label>
                 <select
                   id="import-bot-select"
                   value={importBotId ?? bots[0]?.id ?? ""}
                   onChange={(e) => setImportBotId(Number(e.target.value))}
-                  className="w-full bg-bg-2 border border-border rounded-md px-3 py-2 text-xs text-text-1 outline-none focus:border-accent transition-colors"
+                  className="w-full bg-muted/50 border border-border rounded-md px-3 py-2 text-xs text-muted-foreground outline-none focus:border-primary transition-colors"
                 >
                   {bots.map((b) => (
                     <option key={b.id} value={b.id}>
@@ -1213,7 +1213,7 @@ export default function StrategiesPage() {
                   setImportFile(null);
                   setImportBotId(null);
                 }}
-                className="px-5 py-2 rounded-md border border-border bg-bg-2 text-text-1 cursor-pointer text-xs hover:bg-bg-3 transition-all"
+                className="px-5 py-2 rounded-md border border-border bg-muted/50 text-muted-foreground cursor-pointer text-xs hover:bg-muted transition-all"
               >
                 Cancel
               </button>
@@ -1221,7 +1221,7 @@ export default function StrategiesPage() {
                 type="button"
                 onClick={handleImportFile}
                 disabled={importing || !importFile}
-                className="px-5 py-2 rounded-md border-none bg-accent text-white cursor-pointer text-xs font-semibold hover:bg-accent-dim transition-all disabled:opacity-50"
+                className="px-5 py-2 rounded-md border-none bg-primary text-white cursor-pointer text-xs font-semibold hover:bg-primary-dim transition-all disabled:opacity-50"
               >
                 {importing ? "Uploading..." : "Import"}
               </button>
@@ -1240,18 +1240,18 @@ export default function StrategiesPage() {
             if (e.target === e.currentTarget) setConfirmAction(null);
           }}
         >
-          <div className="bg-bg-1 border border-border rounded-2xl p-8 max-w-[420px] w-[90%]">
-            <div className="text-base font-bold text-text-0 mb-3">
+          <div className="bg-card border border-border rounded-2xl p-8 max-w-[420px] w-[90%]">
+            <div className="text-base font-bold text-foreground mb-3">
               {tc("confirm")}
             </div>
-            <div className="text-sm text-text-1 mb-6">
+            <div className="text-sm text-muted-foreground mb-6">
               {confirmAction.message}
             </div>
             <div className="flex gap-2 justify-end">
               <button
                 type="button"
                 onClick={() => setConfirmAction(null)}
-                className="px-5 py-2 rounded-md border border-border bg-bg-2 text-text-1 cursor-pointer text-xs hover:bg-bg-3 transition-all"
+                className="px-5 py-2 rounded-md border border-border bg-muted/50 text-muted-foreground cursor-pointer text-xs hover:bg-muted transition-all"
               >
                 Cancel
               </button>
@@ -1283,20 +1283,20 @@ function ClosedTradesTab({ trades }: { trades: FTTrade[] }) {
   const [limit, setLimit] = useState(TRADES_PAGE);
 
   if (trades.length === 0) {
-    return <div className="text-center py-12 text-text-3 text-sm">No closed trades</div>;
+    return <div className="text-center py-12 text-muted-foreground text-sm">No closed trades</div>;
   }
 
   const shown = trades.slice(0, limit);
 
   return (
     <div className="space-y-2">
-      <div className="text-[11px] font-semibold text-text-3 uppercase tracking-wider mb-3">
+      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
         Closed Trades ({trades.length})
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
-            <tr className="text-text-3 border-b border-border">
+            <tr className="text-muted-foreground border-b border-border">
               <th className="text-left py-2 font-medium">Pair</th>
               <th className="text-left py-2 font-medium">Side</th>
               <th className="text-right py-2 font-medium">open_rate</th>
@@ -1311,21 +1311,21 @@ function ClosedTradesTab({ trades }: { trades: FTTrade[] }) {
           <tbody>
             {shown.map((t) => (
               <tr key={t.trade_id} className="border-b border-border/30">
-                <td className="py-2 text-text-0 font-medium">{t.pair}</td>
+                <td className="py-2 text-foreground font-medium">{t.pair}</td>
                 <td className="py-2">
-                  <span className={t.is_short ? "text-red" : "text-green"}>
+                  <span className={t.is_short ? "text-rose-500" : "text-emerald-500"}>
                     {t.is_short ? "SHORT" : "LONG"}
                   </span>
                 </td>
-                <td className="py-2 text-right text-text-0">{fmt(t.open_rate, 4)}</td>
-                <td className="py-2 text-right text-text-0">{fmt(t.close_rate, 4)}</td>
+                <td className="py-2 text-right text-foreground">{fmt(t.open_rate, 4)}</td>
+                <td className="py-2 text-right text-foreground">{fmt(t.close_rate, 4)}</td>
                 <td className={`py-2 text-right font-semibold ${profitColor(t.close_profit_abs)}`}>
                   {fmtMoney(t.close_profit_abs)}
                 </td>
-                <td className="py-2 text-text-2">{t.enter_tag ?? "\u2014"}</td>
-                <td className="py-2 text-text-2">{t.exit_reason ?? "\u2014"}</td>
-                <td className="py-2 text-text-2 whitespace-nowrap">{t.open_date ? new Date(t.open_date).toLocaleDateString() : "\u2014"}</td>
-                <td className="py-2 text-text-2 whitespace-nowrap">{t.close_date ? new Date(t.close_date).toLocaleDateString() : "\u2014"}</td>
+                <td className="py-2 text-muted-foreground">{t.enter_tag ?? "\u2014"}</td>
+                <td className="py-2 text-muted-foreground">{t.exit_reason ?? "\u2014"}</td>
+                <td className="py-2 text-muted-foreground whitespace-nowrap">{t.open_date ? new Date(t.open_date).toLocaleDateString() : "\u2014"}</td>
+                <td className="py-2 text-muted-foreground whitespace-nowrap">{t.close_date ? new Date(t.close_date).toLocaleDateString() : "\u2014"}</td>
               </tr>
             ))}
           </tbody>
@@ -1334,13 +1334,13 @@ function ClosedTradesTab({ trades }: { trades: FTTrade[] }) {
           <button
             type="button"
             onClick={() => setLimit((l) => l + TRADES_PAGE)}
-            className="w-full mt-2 py-2 rounded-md border border-border bg-bg-2 text-text-2 text-[11px] font-medium hover:bg-bg-3 hover:text-text-1 transition-all cursor-pointer"
+            className="w-full mt-2 py-2 rounded-md border border-border bg-muted/50 text-muted-foreground text-xs font-medium hover:bg-muted hover:text-muted-foreground transition-all cursor-pointer"
           >
             Load more ({trades.length - limit} remaining)
           </button>
         )}
         {trades.length <= limit && trades.length > TRADES_PAGE && (
-          <div className="text-center text-[10px] text-text-3 mt-2">
+          <div className="text-center text-xs text-muted-foreground mt-2">
             All {trades.length} trades shown
           </div>
         )}
@@ -1394,10 +1394,10 @@ function DetailContent({
   versionsLoading: boolean;
   onLoadVersions: (strategyId: number) => void;
 }) {
-  const sectionTitle = "text-[11px] font-semibold text-text-3 uppercase tracking-wider mb-3";
+  const sectionTitle = "text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3";
   const row = "flex justify-between py-2 border-b border-border/40 last:border-b-0";
-  const key = "text-xs text-text-2";
-  const val = "text-xs font-semibold text-text-0 text-right";
+  const key = "text-xs text-muted-foreground";
+  const val = "text-xs font-semibold text-foreground text-right";
 
   switch (tab) {
     /* ─── Overview ─── */
@@ -1409,33 +1409,33 @@ function DetailContent({
             <div>
               <div className={sectionTitle}>Key Stats</div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-bg-2 border border-border rounded-lg p-3">
-                  <div className="text-[10px] text-text-3 mb-1">Total Profit</div>
+                <div className="bg-muted/50 border border-border rounded-lg p-3">
+                  <div className="text-xs text-muted-foreground mb-1">Total Profit</div>
                   <div className={`text-sm font-bold ${profitColor(profit.profit_all_coin)}`}>
                     {fmtMoney(profit.profit_all_coin)}
                   </div>
-                  <div className="text-[10px] text-text-3">{fmt(profit.profit_all_percent)}%</div>
+                  <div className="text-xs text-muted-foreground">{fmt(profit.profit_all_percent)}%</div>
                 </div>
-                <div className="bg-bg-2 border border-border rounded-lg p-3">
-                  <div className="text-[10px] text-text-3 mb-1">Win Rate</div>
-                  <div className="text-sm font-bold text-text-0">{winRate(profit)}</div>
-                  <div className="text-[10px] text-text-3">
+                <div className="bg-muted/50 border border-border rounded-lg p-3">
+                  <div className="text-xs text-muted-foreground mb-1">Win Rate</div>
+                  <div className="text-sm font-bold text-foreground">{winRate(profit)}</div>
+                  <div className="text-xs text-muted-foreground">
                     {profit.winning_trades}W / {profit.losing_trades}L
                   </div>
                 </div>
-                <div className="bg-bg-2 border border-border rounded-lg p-3">
-                  <div className="text-[10px] text-text-3 mb-1">Trade Count</div>
-                  <div className="text-sm font-bold text-text-0">{profit.trade_count}</div>
-                  <div className="text-[10px] text-text-3">{profit.closed_trade_count} closed</div>
+                <div className="bg-muted/50 border border-border rounded-lg p-3">
+                  <div className="text-xs text-muted-foreground mb-1">Trade Count</div>
+                  <div className="text-sm font-bold text-foreground">{profit.trade_count}</div>
+                  <div className="text-xs text-muted-foreground">{profit.closed_trade_count} closed</div>
                 </div>
-                <div className="bg-bg-2 border border-border rounded-lg p-3">
-                  <div className="text-[10px] text-text-3 mb-1">Avg Duration</div>
-                  <div className="text-sm font-bold text-text-0">
+                <div className="bg-muted/50 border border-border rounded-lg p-3">
+                  <div className="text-xs text-muted-foreground mb-1">Avg Duration</div>
+                  <div className="text-sm font-bold text-foreground">
                     {typeof profit.avg_duration === "number"
                       ? `${Math.round(profit.avg_duration / 60)}m`
                       : profit.avg_duration}
                   </div>
-                  <div className="text-[10px] text-text-3">Best pair: {profit.best_pair}</div>
+                  <div className="text-xs text-muted-foreground">Best pair: {profit.best_pair}</div>
                 </div>
               </div>
             </div>
@@ -1446,7 +1446,7 @@ function DetailContent({
             <div>
               <div className={sectionTitle}>Advanced Stats</div>
               <div className={row}><span className={key}>Profit Factor</span><span className={val}>{fmt(data.stats.profit_factor)}</span></div>
-              <div className={row}><span className={key}>Max Drawdown</span><span className={`${val} text-red`}>{data.stats.max_drawdown != null ? fmt(data.stats.max_drawdown * 100, 1) + "%" : "\u2014"}</span></div>
+              <div className={row}><span className={key}>Max Drawdown</span><span className={`${val} text-rose-500`}>{data.stats.max_drawdown != null ? fmt(data.stats.max_drawdown * 100, 1) + "%" : "\u2014"}</span></div>
               {data.stats.sharpe_ratio != null && (
                 <div className={row}><span className={key}>Sharpe Ratio</span><span className={val}>{fmt(data.stats.sharpe_ratio)}</span></div>
               )}
@@ -1464,31 +1464,31 @@ function DetailContent({
             <div>
               <div className={sectionTitle}>Latest Backtest</div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-bg-2 border border-border rounded-lg p-3">
-                  <div className="text-[10px] text-text-3 mb-1">Total Profit</div>
+                <div className="bg-muted/50 border border-border rounded-lg p-3">
+                  <div className="text-xs text-muted-foreground mb-1">Total Profit</div>
                   <div className={`text-sm font-bold ${profitColor(data.backtestResult.profit_total_abs ?? 0)}`}>
                     {fmtMoney(data.backtestResult.profit_total_abs ?? 0)}
                   </div>
-                  <div className="text-[10px] text-text-3">{fmt((data.backtestResult.profit_total ?? 0) * 100, 2)}%</div>
+                  <div className="text-xs text-muted-foreground">{fmt((data.backtestResult.profit_total ?? 0) * 100, 2)}%</div>
                 </div>
-                <div className="bg-bg-2 border border-border rounded-lg p-3">
-                  <div className="text-[10px] text-text-3 mb-1">Win Rate</div>
-                  <div className="text-sm font-bold text-text-0">{fmt(data.backtestResult.win_rate * 100, 1)}%</div>
-                  <div className="text-[10px] text-text-3">
+                <div className="bg-muted/50 border border-border rounded-lg p-3">
+                  <div className="text-xs text-muted-foreground mb-1">Win Rate</div>
+                  <div className="text-sm font-bold text-foreground">{fmt(data.backtestResult.win_rate * 100, 1)}%</div>
+                  <div className="text-xs text-muted-foreground">
                     {data.backtestResult.wins}W / {data.backtestResult.losses}L
                   </div>
                 </div>
-                <div className="bg-bg-2 border border-border rounded-lg p-3">
-                  <div className="text-[10px] text-text-3 mb-1">Trades</div>
-                  <div className="text-sm font-bold text-text-0">{data.backtestResult.total_trades}</div>
-                  <div className="text-[10px] text-text-3">{data.backtestResult.backtest_days} days</div>
+                <div className="bg-muted/50 border border-border rounded-lg p-3">
+                  <div className="text-xs text-muted-foreground mb-1">Trades</div>
+                  <div className="text-sm font-bold text-foreground">{data.backtestResult.total_trades}</div>
+                  <div className="text-xs text-muted-foreground">{data.backtestResult.backtest_days} days</div>
                 </div>
-                <div className="bg-bg-2 border border-border rounded-lg p-3">
-                  <div className="text-[10px] text-text-3 mb-1">Max Drawdown</div>
-                  <div className="text-sm font-bold text-red">
+                <div className="bg-muted/50 border border-border rounded-lg p-3">
+                  <div className="text-xs text-muted-foreground mb-1">Max Drawdown</div>
+                  <div className="text-sm font-bold text-rose-500">
                     {fmt((data.backtestResult.max_drawdown_account ?? data.backtestResult.max_drawdown ?? 0) * 100, 1)}%
                   </div>
-                  <div className="text-[10px] text-text-3">
+                  <div className="text-xs text-muted-foreground">
                     {data.backtestResult.sharpe != null ? `Sharpe: ${fmt(data.backtestResult.sharpe, 2)}` : ""}
                   </div>
                 </div>
@@ -1498,7 +1498,7 @@ function DetailContent({
 
           {/* No bot notice */}
           {!bot && !profit && !data.backtestResult && (
-            <div className="text-center py-6 text-text-3 text-xs">
+            <div className="text-center py-6 text-muted-foreground text-xs">
               No bot linked and no backtest results yet. Run a backtest to see stats here.
             </div>
           )}
@@ -1511,13 +1511,13 @@ function DetailContent({
       return (
         <div className="space-y-3">
           {versionsLoading ? (
-            <div className="text-center py-6 text-text-3 text-sm">Loading versions...</div>
+            <div className="text-center py-6 text-muted-foreground text-sm">Loading versions...</div>
           ) : versions.length === 0 ? (
-            <div className="text-center py-6 text-text-3 text-sm">
+            <div className="text-center py-6 text-muted-foreground text-sm">
               <button
                 type="button"
                 onClick={() => onLoadVersions(strat.id)}
-                className="text-accent hover:text-accent-dim"
+                className="text-primary hover:text-primary-dim"
               >
                 Load versions
               </button>
@@ -1528,13 +1528,13 @@ function DetailContent({
                 <div key={v.id} className="flex items-center justify-between p-3 border-b border-border/40 last:border-b-0">
                   <div className="flex-1">
                     <span className="font-mono text-sm text-blue-400">v{v.version_number}</span>
-                    <span className="text-text-3 text-xs ml-2">{new Date(v.created_at).toLocaleDateString()}</span>
-                    {v.changelog && <p className="text-text-2 text-xs mt-1">{v.changelog}</p>}
+                    <span className="text-muted-foreground text-xs ml-2">{new Date(v.created_at).toLocaleDateString()}</span>
+                    {v.changelog && <p className="text-muted-foreground text-xs mt-1">{v.changelog}</p>}
                   </div>
                   <div className="flex gap-2 ml-3">
                     <button className="text-xs text-blue-400 hover:text-blue-300 whitespace-nowrap">View Code</button>
                     {v.version_number > 1 && (
-                      <button className="text-xs text-text-3 hover:text-text-2 whitespace-nowrap">Diff v{v.version_number - 1}</button>
+                      <button className="text-xs text-muted-foreground hover:text-muted-foreground whitespace-nowrap">Diff v{v.version_number - 1}</button>
                     )}
                   </div>
                 </div>
@@ -1548,7 +1548,7 @@ function DetailContent({
     /* ─── Open Trades ─── */
     case "open_trades": {
       if (data.openTrades.length === 0) {
-        return <div className="text-center py-12 text-text-3 text-sm">No open trades</div>;
+        return <div className="text-center py-12 text-muted-foreground text-sm">No open trades</div>;
       }
       return (
         <div className="space-y-2">
@@ -1556,7 +1556,7 @@ function DetailContent({
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-text-3 border-b border-border">
+                <tr className="text-muted-foreground border-b border-border">
                   <th className="text-left py-2 font-medium">Pair</th>
                   <th className="text-left py-2 font-medium">Side</th>
                   <th className="text-right py-2 font-medium">open_rate</th>
@@ -1570,37 +1570,37 @@ function DetailContent({
               <tbody>
                 {data.openTrades.map((t) => (
                   <Fragment key={t.trade_id}>
-                  <tr className="border-b border-border/30 cursor-pointer hover:bg-bg-3 transition-colors" onClick={() => onLoadTradeAi(t.trade_id)}>
-                    <td className="py-2 text-text-0 font-medium">{t.pair}</td>
+                  <tr className="border-b border-border/30 cursor-pointer hover:bg-muted transition-colors" onClick={() => onLoadTradeAi(t.trade_id)}>
+                    <td className="py-2 text-foreground font-medium">{t.pair}</td>
                     <td className="py-2">
-                      <span className={t.is_short ? "text-red" : "text-green"}>
+                      <span className={t.is_short ? "text-rose-500" : "text-emerald-500"}>
                         {t.is_short ? "SHORT" : "LONG"}
                       </span>
                     </td>
-                    <td className="py-2 text-right text-text-0">{fmt(t.open_rate, 4)}</td>
-                    <td className="py-2 text-right text-text-0">{fmt(t.stake_amount)}</td>
+                    <td className="py-2 text-right text-foreground">{fmt(t.open_rate, 4)}</td>
+                    <td className="py-2 text-right text-foreground">{fmt(t.stake_amount)}</td>
                     <td className={`py-2 text-right font-semibold ${profitColor(t.current_profit)}`}>
                       {t.current_profit != null ? (t.current_profit * 100).toFixed(2) + "%" : "\u2014"}
                     </td>
-                    <td className="py-2 text-text-2 whitespace-nowrap">{t.open_date ? new Date(t.open_date).toLocaleDateString() : "\u2014"}</td>
-                    <td className="py-2 text-text-2">{t.enter_tag ?? "\u2014"}</td>
+                    <td className="py-2 text-muted-foreground whitespace-nowrap">{t.open_date ? new Date(t.open_date).toLocaleDateString() : "\u2014"}</td>
+                    <td className="py-2 text-muted-foreground">{t.enter_tag ?? "\u2014"}</td>
                     <td className="py-2 text-center">
-                      <span className="text-[10px] px-1.5 py-0.5 rounded border border-accent/30 text-accent cursor-pointer">
+                      <span className="text-xs px-1.5 py-0.5 rounded border border-primary/30 text-primary cursor-pointer">
                         {tradeAiLoading && tradeAiTradeId === t.trade_id ? "..." : "AI"}
                       </span>
                     </td>
                   </tr>
                   {tradeAiTradeId === t.trade_id && tradeAiDetail && (
-                    <tr><td colSpan={8} className="bg-bg-1 border-b border-border px-4 py-3">
+                    <tr><td colSpan={8} className="bg-card border-b border-border px-4 py-3">
                       <div className="grid grid-cols-4 gap-3 text-xs">
-                        <div><span className="text-text-3 block text-2xs uppercase mb-0.5">FreqAI</span><span className={`font-mono font-bold ${tradeAiDetail.freqai_direction === "long" ? "text-green" : "text-red"}`}>{tradeAiDetail.freqai_direction} ({(tradeAiDetail.freqai_confidence * 100).toFixed(0)}%)</span></div>
-                        <div><span className="text-text-3 block text-2xs uppercase mb-0.5">Claude</span><span className={`font-mono font-bold ${tradeAiDetail.claude_direction === "long" ? "text-green" : "text-red"}`}>{tradeAiDetail.claude_direction} ({(tradeAiDetail.claude_confidence * 100).toFixed(0)}%)</span></div>
-                        <div><span className="text-text-3 block text-2xs uppercase mb-0.5">Grok</span><span className={`font-mono font-bold ${tradeAiDetail.grok_direction === "long" ? "text-green" : "text-red"}`}>{tradeAiDetail.grok_direction} ({(tradeAiDetail.grok_confidence * 100).toFixed(0)}%)</span></div>
-                        <div><span className="text-text-3 block text-2xs uppercase mb-0.5">Combined</span><span className={`font-mono font-bold ${tradeAiDetail.all_agree ? "text-green" : tradeAiDetail.strong_disagree ? "text-red" : "text-amber"}`}>{(tradeAiDetail.combined_confidence * 100).toFixed(0)}% {tradeAiDetail.all_agree ? "AGREE" : tradeAiDetail.strong_disagree ? "DISAGREE" : "PARTIAL"}</span></div>
+                        <div><span className="text-muted-foreground block text-2xs uppercase mb-0.5">FreqAI</span><span className={`font-mono font-bold ${tradeAiDetail.freqai_direction === "long" ? "text-emerald-500" : "text-rose-500"}`}>{tradeAiDetail.freqai_direction} ({(tradeAiDetail.freqai_confidence * 100).toFixed(0)}%)</span></div>
+                        <div><span className="text-muted-foreground block text-2xs uppercase mb-0.5">Claude</span><span className={`font-mono font-bold ${tradeAiDetail.claude_direction === "long" ? "text-emerald-500" : "text-rose-500"}`}>{tradeAiDetail.claude_direction} ({(tradeAiDetail.claude_confidence * 100).toFixed(0)}%)</span></div>
+                        <div><span className="text-muted-foreground block text-2xs uppercase mb-0.5">Grok</span><span className={`font-mono font-bold ${tradeAiDetail.grok_direction === "long" ? "text-emerald-500" : "text-rose-500"}`}>{tradeAiDetail.grok_direction} ({(tradeAiDetail.grok_confidence * 100).toFixed(0)}%)</span></div>
+                        <div><span className="text-muted-foreground block text-2xs uppercase mb-0.5">Combined</span><span className={`font-mono font-bold ${tradeAiDetail.all_agree ? "text-emerald-500" : tradeAiDetail.strong_disagree ? "text-rose-500" : "text-amber-500"}`}>{(tradeAiDetail.combined_confidence * 100).toFixed(0)}% {tradeAiDetail.all_agree ? "AGREE" : tradeAiDetail.strong_disagree ? "DISAGREE" : "PARTIAL"}</span></div>
                       </div>
-                      {tradeAiDetail.claude_reasoning && <div className="mt-2 text-2xs text-text-2"><span className="text-text-3">Claude:</span> {tradeAiDetail.claude_reasoning}</div>}
-                      {tradeAiDetail.grok_reasoning && <div className="mt-1 text-2xs text-text-2"><span className="text-text-3">Grok:</span> {tradeAiDetail.grok_reasoning}</div>}
-                      <div className="mt-2 text-2xs text-text-3">Cost: ${(tradeAiDetail.total_cost_usd ?? 0).toFixed(4)}</div>
+                      {tradeAiDetail.claude_reasoning && <div className="mt-2 text-2xs text-muted-foreground"><span className="text-muted-foreground">Claude:</span> {tradeAiDetail.claude_reasoning}</div>}
+                      {tradeAiDetail.grok_reasoning && <div className="mt-1 text-2xs text-muted-foreground"><span className="text-muted-foreground">Grok:</span> {tradeAiDetail.grok_reasoning}</div>}
+                      <div className="mt-2 text-2xs text-muted-foreground">Cost: ${(tradeAiDetail.total_cost_usd ?? 0).toFixed(4)}</div>
                     </td></tr>
                   )}
                   </Fragment>
@@ -1619,7 +1619,7 @@ function DetailContent({
     /* ─── Backtest History ─── */
     case "backtest_history": {
       if (data.backtestHistory.length === 0 && !data.backtestResult) {
-        return <div className="text-center py-12 text-text-3 text-sm">No backtest history</div>;
+        return <div className="text-center py-12 text-muted-foreground text-sm">No backtest history</div>;
       }
       const btr = data.backtestResult;
       return (
@@ -1628,22 +1628,22 @@ function DetailContent({
           {btr && (
             <div>
               <div className={sectionTitle}>Latest Backtest Result</div>
-              <div className="bg-bg-2 border border-accent/30 rounded-lg p-4">
+              <div className="bg-muted/50 border border-primary/30 rounded-lg p-4">
                 <div className="flex justify-between items-center mb-3">
-                  <span className="text-xs font-semibold text-text-0">{btr.strategy_name}</span>
+                  <span className="text-xs font-semibold text-foreground">{btr.strategy_name}</span>
                   <span className={`text-sm font-bold ${profitColor(btr.profit_total_abs)}`}>
                     {fmtMoney(btr.profit_total_abs)}
                   </span>
                 </div>
-                <div className="grid grid-cols-3 gap-3 text-[10px]">
-                  <div><span className="text-text-3">Trades</span><br /><span className="text-text-0 font-semibold">{btr.total_trades}</span></div>
-                  <div><span className="text-text-3">Win Rate</span><br /><span className="text-text-0 font-semibold">{fmt(btr.win_rate * 100, 1)}%</span></div>
-                  <div><span className="text-text-3">Sharpe</span><br /><span className="text-text-0 font-semibold">{btr.sharpe != null ? fmt(btr.sharpe, 2) : "\u2014"}</span></div>
-                  <div><span className="text-text-3">Max DD</span><br /><span className="text-red font-semibold">{fmt((btr.max_drawdown_account ?? btr.max_drawdown ?? 0) * 100, 1)}%</span></div>
-                  <div><span className="text-text-3">Avg Duration</span><br /><span className="text-text-0 font-semibold">{btr.holding_avg}</span></div>
-                  <div><span className="text-text-3">Profit Factor</span><br /><span className="text-text-0 font-semibold">{btr.profit_factor != null ? fmt(btr.profit_factor, 2) : "\u2014"}</span></div>
+                <div className="grid grid-cols-3 gap-3 text-xs">
+                  <div><span className="text-muted-foreground">Trades</span><br /><span className="text-foreground font-semibold">{btr.total_trades}</span></div>
+                  <div><span className="text-muted-foreground">Win Rate</span><br /><span className="text-foreground font-semibold">{fmt(btr.win_rate * 100, 1)}%</span></div>
+                  <div><span className="text-muted-foreground">Sharpe</span><br /><span className="text-foreground font-semibold">{btr.sharpe != null ? fmt(btr.sharpe, 2) : "\u2014"}</span></div>
+                  <div><span className="text-muted-foreground">Max DD</span><br /><span className="text-rose-500 font-semibold">{fmt((btr.max_drawdown_account ?? btr.max_drawdown ?? 0) * 100, 1)}%</span></div>
+                  <div><span className="text-muted-foreground">Avg Duration</span><br /><span className="text-foreground font-semibold">{btr.holding_avg}</span></div>
+                  <div><span className="text-muted-foreground">Profit Factor</span><br /><span className="text-foreground font-semibold">{btr.profit_factor != null ? fmt(btr.profit_factor, 2) : "\u2014"}</span></div>
                 </div>
-                <div className="text-[10px] text-text-3 mt-2">
+                <div className="text-xs text-muted-foreground mt-2">
                   {btr.backtest_start} &rarr; {btr.backtest_end} ({btr.backtest_days} days)
                 </div>
               </div>
@@ -1654,14 +1654,14 @@ function DetailContent({
             <div>
               <div className={sectionTitle}>Run History ({data.backtestHistory.length})</div>
               {data.backtestHistory.map((bt) => (
-                <div key={bt.run_id} className="bg-bg-2 border border-border rounded-lg p-3 mb-2">
+                <div key={bt.run_id} className="bg-muted/50 border border-border rounded-lg p-3 mb-2">
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-[11px] text-text-2">
+                    <span className="text-xs text-muted-foreground">
                       {new Date(bt.backtest_start_time * 1000).toLocaleDateString()}
                     </span>
-                    <span className="text-xs font-medium text-text-0">{bt.strategy}</span>
+                    <span className="text-xs font-medium text-foreground">{bt.strategy}</span>
                   </div>
-                  <div className="text-[10px] text-text-3 font-mono truncate">{bt.filename}</div>
+                  <div className="text-xs text-muted-foreground font-mono truncate">{bt.filename}</div>
                 </div>
               ))}
             </div>
@@ -1673,7 +1673,7 @@ function DetailContent({
     /* ─── Hyperopt History ─── */
     case "hyperopt_history": {
       if (data.hyperoptResults.length === 0) {
-        return <div className="text-center py-12 text-text-3 text-sm">No hyperopt results</div>;
+        return <div className="text-center py-12 text-muted-foreground text-sm">No hyperopt results</div>;
       }
       const bestHoIdx = data.hyperoptResults.reduce((best, r, idx) => {
         const p = r.profit_total;
@@ -1689,17 +1689,17 @@ function DetailContent({
             const origIdx = data.hyperoptResults.indexOf(result);
             const isBest = origIdx === bestHoIdx;
             return (
-              <div key={`ho-${epoch ?? "x"}-${String(result.loss ?? "")}-${String(result.profit_total ?? "")}`} className={`bg-bg-2 border rounded-lg p-3 ${isBest ? "border-green/40" : "border-border"}`}>
+              <div key={`ho-${epoch ?? "x"}-${String(result.loss ?? "")}-${String(result.profit_total ?? "")}`} className={`bg-muted/50 border rounded-lg p-3 ${isBest ? "border-emerald-500/40" : "border-border"}`}>
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-text-2">Epoch {epoch ?? "?"}</span>
-                    {isBest && <span className="text-[9px] font-bold text-green bg-green-bg px-1.5 py-px rounded-full">BEST</span>}
+                    <span className="text-xs text-muted-foreground">Epoch {epoch ?? "?"}</span>
+                    {isBest && <span className="text-[9px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-px rounded-full">BEST</span>}
                   </div>
                   <span className={`text-xs font-bold ${profitColor(result.profit_total)}`}>
                     {result.profit_total != null ? fmt(result.profit_total, 2) + "%" : "\u2014"}
                   </span>
                 </div>
-                <div className="flex gap-3 text-[10px] text-text-3 mt-1">
+                <div className="flex gap-3 text-xs text-muted-foreground mt-1">
                   {result.trades != null && <span>Trades: {String(result.trades)}</span>}
                   {result.loss != null && <span>Loss: {fmt(result.loss, 4)}</span>}
                   {result.loss_function != null && <span>Fn: {String(result.loss_function)}</span>}
@@ -1714,14 +1714,14 @@ function DetailContent({
     /* ─── Performance (per-pair) ─── */
     case "performance": {
       if (data.performance.length === 0) {
-        return <div className="text-center py-12 text-text-3 text-sm">No performance data</div>;
+        return <div className="text-center py-12 text-muted-foreground text-sm">No performance data</div>;
       }
       return (
         <div className="space-y-2">
           <div className={sectionTitle}>Per-Pair Performance</div>
           <table className="w-full text-xs">
             <thead>
-              <tr className="text-text-3 border-b border-border">
+              <tr className="text-muted-foreground border-b border-border">
                 <th className="text-left py-2 font-medium">Pair</th>
                 <th className="text-right py-2 font-medium">Trades</th>
                 <th className="text-right py-2 font-medium">profit_abs</th>
@@ -1731,8 +1731,8 @@ function DetailContent({
             <tbody>
               {data.performance.map((p) => (
                 <tr key={p.pair} className="border-b border-border/30">
-                  <td className="py-2 text-text-0 font-medium">{p.pair}</td>
-                  <td className="py-2 text-right text-text-0">{p.count}</td>
+                  <td className="py-2 text-foreground font-medium">{p.pair}</td>
+                  <td className="py-2 text-right text-foreground">{p.count}</td>
                   <td className={`py-2 text-right font-semibold ${profitColor(p.profit_abs)}`}>
                     {fmtMoney(p.profit_abs)}
                   </td>
@@ -1756,7 +1756,7 @@ function DetailContent({
               <div className={sectionTitle}>Entry Tags</div>
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="text-text-3 border-b border-border">
+                  <tr className="text-muted-foreground border-b border-border">
                     <th className="text-left py-2 font-medium">enter_tag</th>
                     <th className="text-right py-2 font-medium">Entries</th>
                     <th className="text-right py-2 font-medium">Win Rate</th>
@@ -1766,9 +1766,9 @@ function DetailContent({
                 <tbody>
                   {data.entries.map((e) => (
                     <tr key={e.enter_tag} className="border-b border-border/30">
-                      <td className="py-2 text-text-0 font-medium">{e.enter_tag}</td>
-                      <td className="py-2 text-right text-text-0">{e.entries}</td>
-                      <td className="py-2 text-right text-text-0">{fmt(e.winrate * 100, 1)}%</td>
+                      <td className="py-2 text-foreground font-medium">{e.enter_tag}</td>
+                      <td className="py-2 text-right text-foreground">{e.entries}</td>
+                      <td className="py-2 text-right text-foreground">{fmt(e.winrate * 100, 1)}%</td>
                       <td className={`py-2 text-right font-semibold ${profitColor(e.profit_abs)}`}>
                         {fmtMoney(e.profit_abs)}
                       </td>
@@ -1783,7 +1783,7 @@ function DetailContent({
               <div className={sectionTitle}>Exit Reasons</div>
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="text-text-3 border-b border-border">
+                  <tr className="text-muted-foreground border-b border-border">
                     <th className="text-left py-2 font-medium">exit_reason</th>
                     <th className="text-right py-2 font-medium">Exits</th>
                     <th className="text-right py-2 font-medium">Win Rate</th>
@@ -1793,9 +1793,9 @@ function DetailContent({
                 <tbody>
                   {data.exits.map((e) => (
                     <tr key={e.exit_reason} className="border-b border-border/30">
-                      <td className="py-2 text-text-0 font-medium">{e.exit_reason}</td>
-                      <td className="py-2 text-right text-text-0">{e.exits}</td>
-                      <td className="py-2 text-right text-text-0">{fmt(e.winrate * 100, 1)}%</td>
+                      <td className="py-2 text-foreground font-medium">{e.exit_reason}</td>
+                      <td className="py-2 text-right text-foreground">{e.exits}</td>
+                      <td className="py-2 text-right text-foreground">{fmt(e.winrate * 100, 1)}%</td>
                       <td className={`py-2 text-right font-semibold ${profitColor(e.profit_abs)}`}>
                         {fmtMoney(e.profit_abs)}
                       </td>
@@ -1806,7 +1806,7 @@ function DetailContent({
             </div>
           )}
           {data.entries.length === 0 && data.exits.length === 0 && (
-            <div className="text-center py-12 text-text-3 text-sm">No entry/exit data</div>
+            <div className="text-center py-12 text-muted-foreground text-sm">No entry/exit data</div>
           )}
         </div>
       );
@@ -1815,30 +1815,30 @@ function DetailContent({
     /* ─── AI Suggestions ─── */
     case "ai_suggestions": {
       if (data.aiValidations.length === 0) {
-        return <div className="text-center py-12 text-text-3 text-sm">No AI validations</div>;
+        return <div className="text-center py-12 text-muted-foreground text-sm">No AI validations</div>;
       }
       return (
         <div className="space-y-3">
           <div className={sectionTitle}>AI Validations ({data.aiValidations.length})</div>
           {data.aiValidations.map((v) => (
-            <div key={v.id} className="bg-bg-2 border border-border rounded-lg p-3">
+            <div key={v.id} className="bg-muted/50 border border-border rounded-lg p-3">
               <div className="flex justify-between items-center mb-1">
-                <span className="text-[11px] text-text-0 font-medium">{v.pair}</span>
+                <span className="text-xs text-foreground font-medium">{v.pair}</span>
                 <span
-                  className={`text-[10px] font-bold ${
-                    v.all_agree ? "text-green" : v.strong_disagree ? "text-red" : "text-amber"
+                  className={`text-xs font-bold ${
+                    v.all_agree ? "text-emerald-500" : v.strong_disagree ? "text-rose-500" : "text-amber-500"
                   }`}
                 >
                   {v.all_agree ? "ALL AGREE" : v.strong_disagree ? "DISAGREE" : "PARTIAL"}
                 </span>
               </div>
-              <div className="flex gap-4 text-[10px] text-text-3">
+              <div className="flex gap-4 text-xs text-muted-foreground">
                 <span>FreqAI: {v.freqai_direction} ({fmt(v.freqai_confidence * 100, 0)}%)</span>
                 <span>Claude: {v.claude_direction} ({fmt(v.claude_confidence * 100, 0)}%)</span>
                 <span>Grok: {v.grok_direction} ({fmt(v.grok_confidence * 100, 0)}%)</span>
               </div>
               {v.claude_reasoning && (
-                <div className="text-[10px] text-text-2 mt-1 line-clamp-2">{v.claude_reasoning}</div>
+                <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{v.claude_reasoning}</div>
               )}
             </div>
           ))}
@@ -1852,11 +1852,11 @@ function DetailContent({
         return (
           <div className="space-y-1">
             <div className={sectionTitle}>Strategy Info</div>
-            <div className={row}><span className={key}>Name</span><span className={`${val} font-mono text-accent`}>{strat.name}</span></div>
+            <div className={row}><span className={key}>Name</span><span className={`${val} font-mono text-primary`}>{strat.name}</span></div>
             <div className={row}><span className={key}>Lifecycle</span><span className={val}>{strat.lifecycle}</span></div>
             <div className={row}><span className={key}>Timeframe</span><span className={val}>{strat.timeframe ?? "\u2014"}</span></div>
             {strat.description && <div className={row}><span className={key}>Description</span><span className={`${val} max-w-[200px] text-left`}>{strat.description}</span></div>}
-            <div className="text-center py-4 text-text-3 text-[10px] mt-4 border-t border-border/40">
+            <div className="text-center py-4 text-muted-foreground text-xs mt-4 border-t border-border/40">
               Full bot configuration will appear when a bot is assigned to this strategy.
             </div>
           </div>
@@ -1866,20 +1866,20 @@ function DetailContent({
       return (
         <div className="space-y-1">
           <div className={sectionTitle}>Bot Configuration</div>
-          <div className={row}><span className={key}>strategy</span><span className={`${val} font-mono text-accent`}>{c.strategy}</span></div>
+          <div className={row}><span className={key}>strategy</span><span className={`${val} font-mono text-primary`}>{c.strategy}</span></div>
           <div className={row}><span className={key}>exchange</span><span className={val}>{typeof c.exchange === "string" ? c.exchange : c.exchange?.name ?? "\u2014"}</span></div>
           <div className={row}><span className={key}>timeframe</span><span className={val}>{c.timeframe}</span></div>
           <div className={row}><span className={key}>pair_whitelist</span><span className={val}>{c.pair_whitelist?.join(", ") ?? "\u2014"}</span></div>
           <div className={row}><span className={key}>stake_currency</span><span className={val}>{c.stake_currency}</span></div>
           <div className={row}><span className={key}>stake_amount</span><span className={val}>{String(c.stake_amount)}</span></div>
           <div className={row}><span className={key}>max_open_trades</span><span className={val}>{c.max_open_trades}</span></div>
-          <div className={row}><span className={key}>stoploss</span><span className={`${val} text-red`}>{c.stoploss}</span></div>
+          <div className={row}><span className={key}>stoploss</span><span className={`${val} text-rose-500`}>{c.stoploss}</span></div>
           <div className={row}><span className={key}>trailing_stop</span><span className={val}>{c.trailing_stop ? "enabled" : "disabled"}</span></div>
           {c.trailing_stop_positive != null && (
             <div className={row}><span className={key}>trailing_stop_positive</span><span className={val}>{c.trailing_stop_positive}</span></div>
           )}
-          <div className={row}><span className={key}>minimal_roi</span><span className={`${val} font-mono text-[10px]`}>{JSON.stringify(c.minimal_roi)}</span></div>
-          <div className={row}><span className={key}>dry_run</span><span className={`${val} ${c.dry_run ? "text-amber" : "text-red"}`}>{String(c.dry_run)}</span></div>
+          <div className={row}><span className={key}>minimal_roi</span><span className={`${val} font-mono text-xs`}>{JSON.stringify(c.minimal_roi)}</span></div>
+          <div className={row}><span className={key}>dry_run</span><span className={`${val} ${c.dry_run ? "text-amber-500" : "text-rose-500"}`}>{String(c.dry_run)}</span></div>
           <div className={row}><span className={key}>trading_mode</span><span className={val}>{c.trading_mode}</span></div>
           <div className={row}><span className={key}>margin_mode</span><span className={val}>{c.margin_mode ?? "\u2014"}</span></div>
           <div className={row}><span className={key}>can_short</span><span className={val}>{String(c.can_short)}</span></div>
@@ -1904,16 +1904,16 @@ function DetailContent({
                   <div
                     className={`absolute -left-6 top-0.5 w-3.5 h-3.5 rounded-full border-2 ${
                       isDone
-                        ? "border-green bg-green-bg"
+                        ? "border-emerald-500 bg-emerald-500/10"
                         : isCurrent
-                          ? "border-accent bg-accent/10 shadow-[0_0_8px_var(--accent)]"
-                          : "border-border bg-bg-2"
+                          ? "border-primary bg-primary/10 shadow-[0_0_8px_var(--accent)]"
+                          : "border-border bg-muted/50"
                     }`}
                   />
-                  <div className={`text-xs font-semibold ${isCurrent ? "text-text-0" : isDone ? "text-text-1" : "text-text-3"}`}>
+                  <div className={`text-xs font-semibold ${isCurrent ? "text-foreground" : isDone ? "text-muted-foreground" : "text-muted-foreground"}`}>
                     {lc.toUpperCase()}
                   </div>
-                  <div className="text-[10px] text-text-3 mt-0.5">
+                  <div className="text-xs text-muted-foreground mt-0.5">
                     {lc === "draft" && strat.created_at
                       ? `Created ${new Date(strat.created_at).toLocaleDateString()}`
                       : isCurrent
@@ -1924,17 +1924,17 @@ function DetailContent({
                   </div>
                   {/* Show contextual info per completed stage */}
                   {isDone && lc === "backtest" && data.backtestResult && (
-                    <div className="text-[10px] text-text-2 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       Best: {fmtMoney(data.backtestResult.profit_total_abs)} | {data.backtestResult.total_trades} trades | Sharpe {data.backtestResult.sharpe != null ? fmt(data.backtestResult.sharpe, 2) : "\u2014"}
                     </div>
                   )}
                   {isCurrent && lc === "live" && profit && (
-                    <div className="text-[10px] text-text-2 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       Profit: {fmtMoney(profit.profit_all_coin)} | {profit.trade_count} trades | {winRate(profit)} win rate
                     </div>
                   )}
                   {isCurrent && lc === "paper" && profit && (
-                    <div className="text-[10px] text-text-2 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       Paper profit: {fmtMoney(profit.profit_all_coin)} | {profit.trade_count} trades
                     </div>
                   )}

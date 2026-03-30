@@ -16,7 +16,7 @@ function Toggle({ on, onChange, label }: { on: boolean; onChange: () => void; la
         type="button"
         onClick={onChange}
         className={`relative w-9 h-5 rounded-full border cursor-pointer transition-all flex-shrink-0 ${
-          on ? "bg-green-bg border-green" : "bg-bg-3 border-border"
+          on ? "bg-emerald-500/10 border-emerald-500" : "bg-muted border-border"
         }`}
       >
         <span
@@ -26,7 +26,7 @@ function Toggle({ on, onChange, label }: { on: boolean; onChange: () => void; la
         />
       </button>
       <div>
-        <div className="text-xs text-text-1">{label}</div>
+        <div className="text-xs text-muted-foreground">{label}</div>
       </div>
     </div>
   );
@@ -38,10 +38,10 @@ function Chip({ label, selected, onClick }: { label: string; selected: boolean; 
     <button
       type="button"
       onClick={onClick}
-      className={`px-3 py-1.5 rounded-md border text-[11px] font-medium cursor-pointer transition-all ${
+      className={`px-3 py-1.5 rounded-md border text-xs font-medium cursor-pointer transition-all ${
         selected
-          ? "border-accent bg-accent-glow text-accent"
-          : "border-border bg-bg-2 text-text-2 hover:border-border-hover hover:text-text-1 hover:bg-bg-3"
+          ? "border-primary bg-primary-glow text-primary"
+          : "border-border bg-muted/50 text-muted-foreground hover:border-border-border hover:border-ring hover:text-muted-foreground hover:bg-muted"
       }`}
     >
       {label}
@@ -68,20 +68,20 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div id={id} className="bg-bg-2 border border-border rounded-card mb-6 overflow-hidden">
+    <div id={id} className="bg-muted/50 border border-border rounded-card mb-6 overflow-hidden">
       <button
         type="button"
         onClick={onToggle}
-        className="w-full px-6 py-4 flex items-center justify-between cursor-pointer select-none transition-colors hover:bg-bg-3"
+        className="w-full px-6 py-4 flex items-center justify-between cursor-pointer select-none transition-colors hover:bg-muted"
       >
-        <div className="text-[13px] font-semibold text-text-0 flex items-center gap-2">
+        <div className="text-sm font-semibold text-foreground flex items-center gap-2">
           <span className="text-sm">{icon}</span>
           {title}
-          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-accent-glow text-accent tracking-wide">
+          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-primary-glow text-primary tracking-wide">
             {tag}
           </span>
         </div>
-        <span className={`text-xs text-text-3 transition-transform ${collapsed ? "-rotate-90" : ""}`}>
+        <span className={`text-xs text-muted-foreground transition-transform ${collapsed ? "-rotate-90" : ""}`}>
           &#9660;
         </span>
       </button>
@@ -117,11 +117,11 @@ function ArrayTagInput({
   }
 
   return (
-    <div className="flex flex-wrap gap-1.5 p-2 px-2.5 rounded-md border border-border bg-bg-2 min-h-[40px] items-center cursor-text focus-within:border-accent">
+    <div className="flex flex-wrap gap-1.5 p-2 px-2.5 rounded-md border border-border bg-muted/50 min-h-[40px] items-center cursor-text focus-within:border-primary">
       {values.map((v, i) => (
-        <span key={`tag-${i}-${v}`} className="flex items-center gap-1 px-2 py-0.5 rounded bg-bg-3 text-text-0 text-[11px] font-mono">
+        <span key={`tag-${i}-${v}`} className="flex items-center gap-1 px-2 py-0.5 rounded bg-muted text-foreground text-xs font-mono">
           {v}
-          <button type="button" onClick={() => remove(i)} className="text-text-3 text-xs hover:text-red cursor-pointer">
+          <button type="button" onClick={() => remove(i)} className="text-muted-foreground text-xs hover:text-rose-500 cursor-pointer">
             x
           </button>
         </span>
@@ -132,7 +132,7 @@ function ArrayTagInput({
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className="border-none bg-transparent text-text-0 text-xs outline-none flex-1 min-w-[60px] placeholder:text-text-3"
+        className="border-none bg-transparent text-foreground text-xs outline-none flex-1 min-w-[60px] placeholder:text-muted-foreground"
       />
     </div>
   );
@@ -166,13 +166,13 @@ function KvEditor({
         {rows.map((r, i) => (
           <div key={`kv-${i}-${r.key}`} className="flex gap-2 items-center">
             <input
-              className="flex-1 px-2.5 py-2 rounded border border-border bg-bg-3 text-text-0 text-xs font-mono outline-none focus:border-accent"
+              className="flex-1 px-2.5 py-2 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary"
               value={r.key}
               onChange={(e) => updateRow(i, "key", e.target.value)}
               placeholder="key"
             />
             <input
-              className="flex-1 px-2.5 py-2 rounded border border-border bg-bg-3 text-text-0 text-xs font-mono outline-none focus:border-accent"
+              className="flex-1 px-2.5 py-2 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary"
               value={r.value}
               onChange={(e) => updateRow(i, "value", e.target.value)}
               placeholder="value"
@@ -180,7 +180,7 @@ function KvEditor({
             <button
               type="button"
               onClick={() => removeRow(i)}
-              className="w-7 h-7 rounded border border-border bg-bg-3 text-text-3 cursor-pointer flex items-center justify-center text-sm transition-all hover:border-red hover:text-red hover:bg-red-bg flex-shrink-0"
+              className="w-7 h-7 rounded border border-border bg-muted text-muted-foreground cursor-pointer flex items-center justify-center text-sm transition-all hover:border-rose-500 hover:text-rose-500 hover:bg-rose-500/10 flex-shrink-0"
             >
               x
             </button>
@@ -190,7 +190,7 @@ function KvEditor({
       <button
         type="button"
         onClick={addRow}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-dashed border-border text-text-3 text-[11px] cursor-pointer transition-all hover:border-accent hover:text-accent mt-1.5 w-fit"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-dashed border-border text-muted-foreground text-xs cursor-pointer transition-all hover:border-primary hover:text-primary mt-1.5 w-fit"
       >
         + Add Parameter
       </button>
@@ -201,21 +201,21 @@ function KvEditor({
 /* ─── Form helpers ─── */
 function FormLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1.5">
       {children}
     </div>
   );
 }
 
 function Hint({ text }: { text: string }) {
-  return <span className="font-normal text-text-3 normal-case tracking-normal text-[10px]">{text}</span>;
+  return <span className="font-normal text-muted-foreground normal-case tracking-normal text-xs">{text}</span>;
 }
 
 function FormInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className="w-full px-3.5 py-2.5 rounded-md border border-border bg-bg-2 text-text-0 text-[13px] outline-none transition-colors focus:border-accent placeholder:text-text-3"
+      className="w-full px-3.5 py-2.5 rounded-md border border-border bg-muted/50 text-foreground text-sm outline-none transition-colors focus:border-primary placeholder:text-muted-foreground"
     />
   );
 }
@@ -224,7 +224,7 @@ function FormSelect({ children, ...props }: React.SelectHTMLAttributes<HTMLSelec
   return (
     <select
       {...props}
-      className="w-full px-3.5 py-2.5 rounded-md border border-border bg-bg-2 text-text-0 text-[13px] outline-none transition-colors focus:border-accent cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23808098%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22/%3E%3C/svg%3E')] bg-no-repeat bg-[right_12px_center]"
+      className="w-full px-3.5 py-2.5 rounded-md border border-border bg-muted/50 text-foreground text-sm outline-none transition-colors focus:border-primary cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23808098%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22/%3E%3C/svg%3E')] bg-no-repeat bg-[right_12px_center]"
     >
       {children}
     </select>
@@ -253,9 +253,9 @@ function SliderRow({
         max={max}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="flex-1 appearance-none h-1 rounded bg-bg-3 outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-bg-0"
+        className="flex-1 appearance-none h-1 rounded bg-muted outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-bg-0"
       />
-      <span className="text-xs font-semibold text-text-0 min-w-[36px] text-right font-mono">
+      <span className="text-xs font-semibold text-foreground min-w-[36px] text-right font-mono">
         {format(value)}
       </span>
     </div>
@@ -583,13 +583,13 @@ export default function FreqAIPage() {
     <AppShell title="FreqAI Configuration">
 
       {/* Bot selector */}
-      <div className="flex items-center gap-3 mb-4 p-3 px-4 bg-bg-2 border border-border rounded-card text-xs">
-        <span className="text-text-3 uppercase tracking-wide font-semibold shrink-0">Target Bot</span>
+      <div className="flex items-center gap-3 mb-4 p-3 px-4 bg-muted/50 border border-border rounded-card text-xs">
+        <span className="text-muted-foreground uppercase tracking-wide font-semibold shrink-0">Target Bot</span>
         <select
           value={selectedBotId}
           onChange={(e) => setSelectedBotId(e.target.value)}
           disabled={configLoading}
-          className="bg-bg-1 border border-border rounded-btn px-3 py-1.5 text-[11px] text-text-1 outline-none focus:border-accent cursor-pointer min-w-[200px] disabled:opacity-50"
+          className="bg-card border border-border rounded-btn px-3 py-1.5 text-xs text-muted-foreground outline-none focus:border-primary cursor-pointer min-w-[200px] disabled:opacity-50"
         >
           <option value="">Select bot...</option>
           {bots.map((b) => (
@@ -597,7 +597,7 @@ export default function FreqAIPage() {
           ))}
         </select>
         {configLoading && (
-          <span className="text-[11px] text-accent animate-pulse">Loading config...</span>
+          <span className="text-xs text-primary animate-pulse">Loading config...</span>
         )}
       </div>
 
@@ -605,8 +605,8 @@ export default function FreqAIPage() {
       {!botsLoading && bots.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="text-4xl mb-4 opacity-40">&#129504;</div>
-          <div className="text-sm font-semibold text-text-1 mb-1">No Bots Available</div>
-          <div className="text-xs text-text-3 max-w-sm">
+          <div className="text-sm font-semibold text-muted-foreground mb-1">No Bots Available</div>
+          <div className="text-xs text-muted-foreground max-w-sm">
             Register a bot in the Settings page first, then come back here to configure FreqAI.
           </div>
         </div>
@@ -615,8 +615,8 @@ export default function FreqAIPage() {
       {/* Loading spinner while fetching config */}
       {configLoading && (
         <div className="flex items-center justify-center py-16">
-          <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-          <span className="ml-3 text-xs text-text-3">Loading FreqAI configuration...</span>
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <span className="ml-3 text-xs text-muted-foreground">Loading FreqAI configuration...</span>
         </div>
       )}
 
@@ -624,17 +624,17 @@ export default function FreqAIPage() {
       {!configLoading && bots.length > 0 && <>
 
       {/* ═══ MASTER SWITCH ═══ */}
-      <div className="flex items-center gap-3.5 p-4 px-[18px] bg-gradient-to-r from-accent/[0.06] to-purple/[0.04] border border-accent/20 rounded-card mb-6">
+      <div className="flex items-center gap-3.5 p-4 px-[18px] bg-gradient-to-r from-accent/[0.06] to-purple/[0.04] border border-primary/20 rounded-card mb-6">
         <div className="text-2xl">&#129504;</div>
         <div className="flex-1">
-          <div className="text-sm font-bold text-text-0 mb-0.5">FreqAI Engine</div>
-          <div className="text-[11px] text-text-3">freqai.enabled &mdash; Enable machine learning predictions for all configured bots</div>
+          <div className="text-sm font-bold text-foreground mb-0.5">FreqAI Engine</div>
+          <div className="text-xs text-muted-foreground">freqai.enabled &mdash; Enable machine learning predictions for all configured bots</div>
         </div>
         <button
           type="button"
           onClick={() => setFreqaiEnabled(!freqaiEnabled)}
           className={`relative w-12 h-[26px] rounded-[13px] border cursor-pointer transition-all flex-shrink-0 ${
-            freqaiEnabled ? "bg-green-bg border-green" : "bg-bg-3 border-border"
+            freqaiEnabled ? "bg-emerald-500/10 border-emerald-500" : "bg-muted border-border"
           }`}
         >
           <span
@@ -718,7 +718,7 @@ export default function FreqAIPage() {
             <Toggle on={waitForTrainingOnReload} onChange={() => setWaitForTrainingOnReload(!waitForTrainingOnReload)} label="Wait for Training on Reload" />
           </Tooltip>
         </div>
-        <div className="mt-3 p-3 px-3.5 rounded-md border border-red/30 bg-red/[0.04]">
+        <div className="mt-3 p-3 px-3.5 rounded-md border border-rose-500/30 bg-red/[0.04]">
           <Tooltip content={TOOLTIPS.freqai_override_exchange_check?.description ?? "Force FreqAI on limited-support exchanges"} configKey="freqai.override_exchange_check">
             <Toggle on={overrideExchangeCheck} onChange={() => setOverrideExchangeCheck(!overrideExchangeCheck)} label="Override Exchange Check ⚠️" />
           </Tooltip>
@@ -796,24 +796,24 @@ export default function FreqAIPage() {
           </div>
         </div>
 
-        <div className="p-3 px-3.5 rounded-md bg-accent/[0.06] border border-accent/[0.15] text-[11px] text-text-2 leading-relaxed">
-          <strong className="text-text-0">Feature Expansion</strong><br />
-          Features are expanded as: <code className="font-mono text-[11px] text-purple bg-bg-3 px-1 py-px rounded">Periods</code> x{" "}
-          <code className="font-mono text-[11px] text-purple bg-bg-3 px-1 py-px rounded">Timeframes</code> x{" "}
-          <code className="font-mono text-[11px] text-purple bg-bg-3 px-1 py-px rounded">Shifted Candles</code> x{" "}
-          <code className="font-mono text-[11px] text-purple bg-bg-3 px-1 py-px rounded">Corr Pairs</code>
+        <div className="p-3 px-3.5 rounded-md bg-primary/[0.06] border border-primary/[0.15] text-xs text-muted-foreground leading-relaxed">
+          <strong className="text-foreground">Feature Expansion</strong><br />
+          Features are expanded as: <code className="font-mono text-xs text-purple bg-muted px-1 py-px rounded">Periods</code> x{" "}
+          <code className="font-mono text-xs text-purple bg-muted px-1 py-px rounded">Timeframes</code> x{" "}
+          <code className="font-mono text-xs text-purple bg-muted px-1 py-px rounded">Shifted Candles</code> x{" "}
+          <code className="font-mono text-xs text-purple bg-muted px-1 py-px rounded">Corr Pairs</code>
           <br /><br />
-          <strong className="text-text-0">Column Naming Convention</strong><br />
-          <code className="font-mono text-[11px] text-purple bg-bg-3 px-1 py-px rounded">%</code> prefix = feature column (used for training)<br />
-          <code className="font-mono text-[11px] text-purple bg-bg-3 px-1 py-px rounded">%%</code> prefix = plot-only column (not used in training)<br />
-          <code className="font-mono text-[11px] text-purple bg-bg-3 px-1 py-px rounded">&amp;</code> prefix = target / label column<br />
-          <code className="font-mono text-[11px] text-purple bg-bg-3 px-1 py-px rounded">do_predict</code> = outlier detection flag (1 = normal, 0 = outlier)
+          <strong className="text-foreground">Column Naming Convention</strong><br />
+          <code className="font-mono text-xs text-purple bg-muted px-1 py-px rounded">%</code> prefix = feature column (used for training)<br />
+          <code className="font-mono text-xs text-purple bg-muted px-1 py-px rounded">%%</code> prefix = plot-only column (not used in training)<br />
+          <code className="font-mono text-xs text-purple bg-muted px-1 py-px rounded">&amp;</code> prefix = target / label column<br />
+          <code className="font-mono text-xs text-purple bg-muted px-1 py-px rounded">do_predict</code> = outlier detection flag (1 = normal, 0 = outlier)
         </div>
 
-        <div className="mt-4 p-3 px-3.5 rounded-md bg-bg-3 border border-border text-[11px] text-text-2 leading-relaxed">
-          <strong className="text-text-0">set_freqai_targets()</strong> <span className="text-purple font-mono text-[10px]">IStrategy callback</span><br />
-          Define target labels in your strategy&apos;s <code className="font-mono text-[11px] text-purple bg-bg-2 px-1 py-px rounded">set_freqai_targets()</code> method.
-          Use the <code className="font-mono text-[11px] text-purple bg-bg-2 px-1 py-px rounded">&amp;</code> prefix for target columns (e.g. <code className="font-mono text-[11px] text-purple bg-bg-2 px-1 py-px rounded">&amp;-s_close</code>).
+        <div className="mt-4 p-3 px-3.5 rounded-md bg-muted border border-border text-xs text-muted-foreground leading-relaxed">
+          <strong className="text-foreground">set_freqai_targets()</strong> <span className="text-purple font-mono text-xs">IStrategy callback</span><br />
+          Define target labels in your strategy&apos;s <code className="font-mono text-xs text-purple bg-muted/50 px-1 py-px rounded">set_freqai_targets()</code> method.
+          Use the <code className="font-mono text-xs text-purple bg-muted/50 px-1 py-px rounded">&amp;</code> prefix for target columns (e.g. <code className="font-mono text-xs text-purple bg-muted/50 px-1 py-px rounded">&amp;-s_close</code>).
           This method is called automatically by FreqAI during training/prediction to set the labels your model will learn from.
         </div>
       </Section>
@@ -966,11 +966,11 @@ export default function FreqAIPage() {
 
         {/* Outlier Detection Methods */}
         <div className="border-t border-border pt-4 mt-1">
-          <div className="text-xs font-semibold text-text-0 mb-3">Outlier Detection Methods</div>
+          <div className="text-xs font-semibold text-foreground mb-3">Outlier Detection Methods</div>
 
           <div className="flex flex-col gap-3">
             {/* SVM */}
-            <div className="p-3 px-3.5 rounded-md border border-border bg-bg-3">
+            <div className="p-3 px-3.5 rounded-md border border-border bg-muted">
               <div className="mb-2">
                 <Tooltip content={TOOLTIPS.freqai_use_SVM_to_remove_outliers?.description ?? "Use Support Vector Machine for outlier removal"} configKey="use_SVM_to_remove_outliers">
                   <Toggle on={useSVM} onChange={() => setUseSVM(!useSVM)} label="SVM Outlier Removal" />
@@ -985,14 +985,14 @@ export default function FreqAIPage() {
             </div>
 
             {/* DBSCAN */}
-            <div className="p-3 px-3.5 rounded-md border border-border bg-bg-3">
+            <div className="p-3 px-3.5 rounded-md border border-border bg-muted">
               <Tooltip content={TOOLTIPS.freqai_use_DBSCAN_to_remove_outliers?.description ?? "Use DBSCAN for outlier removal"} configKey="use_DBSCAN_to_remove_outliers">
                 <Toggle on={useDBSCAN} onChange={() => setUseDBSCAN(!useDBSCAN)} label="DBSCAN Outlier Removal" />
               </Tooltip>
             </div>
 
             {/* DI Threshold */}
-            <div className="p-3 px-3.5 rounded-md border border-border bg-bg-3">
+            <div className="p-3 px-3.5 rounded-md border border-border bg-muted">
               <div className="grid grid-cols-2 gap-3.5 max-w-[500px]">
                 <div>
                   <Tooltip content={TOOLTIPS.freqai_di_threshold?.description ?? "Diversity index threshold"} configKey="DI_threshold">
@@ -1020,7 +1020,7 @@ export default function FreqAIPage() {
             value={svmParamsJson}
             onChange={(e) => setSvmParamsJson(e.target.value)}
             rows={3}
-            className="w-full px-3.5 py-2.5 rounded-md border border-border bg-bg-2 text-text-0 text-xs font-mono outline-none transition-colors focus:border-accent placeholder:text-text-3 resize-y"
+            className="w-full px-3.5 py-2.5 rounded-md border border-border bg-muted/50 text-foreground text-xs font-mono outline-none transition-colors focus:border-primary placeholder:text-muted-foreground resize-y"
             placeholder='{"shuffle": false, "nu": 0.1, "kernel": "rbf"}'
           />
         </div>
@@ -1031,15 +1031,15 @@ export default function FreqAIPage() {
             <FormLabel>Plot Feature Importances</FormLabel>
           </Tooltip>
           <FormInput type="number" value={plotFeatureImportances} onChange={(e) => setPlotFeatureImportances(Number(e.target.value))} min={0} />
-          <div className="text-[10px] text-text-3 mt-1">Number of top features to plot. 0 = disabled.</div>
+          <div className="text-xs text-muted-foreground mt-1">Number of top features to plot. 0 = disabled.</div>
         </div>
       </Section>
 
       {/* ═══ SECTION: PyTorch Configuration (§24) ═══ */}
       <Section id="pytorch" icon="&#128293;" title="PyTorch Configuration" tag="§24" collapsed={!!collapsed.pytorch} onToggle={() => toggle("pytorch")}>
-        <div className="p-3 px-3.5 rounded-md bg-accent/[0.06] border border-accent/[0.15] text-[11px] text-text-2 leading-relaxed mb-4">
-          These parameters apply when using <code className="font-mono text-[11px] text-purple bg-bg-3 px-1 py-px rounded">PyTorchRegressor</code> or{" "}
-          <code className="font-mono text-[11px] text-purple bg-bg-3 px-1 py-px rounded">PyTorchClassifier</code> as the model type.
+        <div className="p-3 px-3.5 rounded-md bg-primary/[0.06] border border-primary/[0.15] text-xs text-muted-foreground leading-relaxed mb-4">
+          These parameters apply when using <code className="font-mono text-xs text-purple bg-muted px-1 py-px rounded">PyTorchRegressor</code> or{" "}
+          <code className="font-mono text-xs text-purple bg-muted px-1 py-px rounded">PyTorchClassifier</code> as the model type.
         </div>
 
         <div className="grid grid-cols-4 gap-3.5">
@@ -1076,14 +1076,14 @@ export default function FreqAIPage() {
           type="button"
           onClick={handleSave}
           disabled={!selectedBotId || configLoading}
-          className="px-5 py-2.5 rounded-md bg-accent text-white text-[13px] font-semibold cursor-pointer transition-all hover:bg-accent-dim hover:-translate-y-px flex items-center gap-2 disabled:opacity-50"
+          className="px-5 py-2.5 rounded-md bg-primary text-white text-sm font-semibold cursor-pointer transition-all hover:bg-primary-dim hover:-translate-y-px flex items-center gap-2 disabled:opacity-50"
         >
           💾 Save FreqAI Config
         </button>
         <button
           type="button"
           onClick={resetToDefaults}
-          className="px-3.5 py-2 rounded-md border border-border bg-bg-2 text-text-1 text-xs font-medium cursor-pointer transition-all hover:border-border-hover hover:bg-bg-3 flex items-center gap-1.5"
+          className="px-3.5 py-2 rounded-md border border-border bg-muted/50 text-muted-foreground text-xs font-medium cursor-pointer transition-all hover:border-border-border hover:border-ring hover:bg-muted flex items-center gap-1.5"
         >
           ↵ Reset to Defaults
         </button>

@@ -80,7 +80,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-0 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
 
         {/* L-1: Logo */}
@@ -88,18 +88,18 @@ export default function LoginPage() {
           <div className="w-16 h-16 bg-gradient-to-br from-accent to-purple rounded-2xl flex items-center justify-center text-2xl font-bold text-white mx-auto mb-5 shadow-[0_0_32px_var(--color-accent)]">
             FT
           </div>
-          <h1 className="text-xl font-bold text-text-0 mb-1">FreqTrade Platform</h1>
-          <p className="text-sm text-text-3">Multi-Strategy Trading System</p>
+          <h1 className="text-xl font-bold text-foreground mb-1">FreqTrade Platform</h1>
+          <p className="text-sm text-muted-foreground">Multi-Strategy Trading System</p>
         </div>
 
         {/* L-2: Form */}
-        <form onSubmit={handleSubmit} className="bg-bg-2 border border-border rounded-card p-10" noValidate>
+        <form onSubmit={handleSubmit} className="bg-muted/50 border border-border rounded-card p-10" noValidate>
 
           {/* L-2a: Username */}
           <div className="mb-5">
             <label
               htmlFor="login-username"
-              className="block text-xs text-text-3 font-medium uppercase tracking-wider mb-2"
+              className="block text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2"
             >
               Username
             </label>
@@ -116,15 +116,15 @@ export default function LoginPage() {
               }}
               onBlur={(e) => setUsernameError(validateUsername(e.target.value))}
               disabled={loading}
-              className={`w-full bg-bg-1 border rounded-btn px-4 py-3 text-sm text-text-0 outline-none transition-colors disabled:opacity-50 ${
+              className={`w-full bg-card border rounded-btn px-4 py-3 text-sm text-foreground outline-none transition-colors disabled:opacity-50 ${
                 usernameError
-                  ? "border-red focus:border-red"
-                  : "border-border focus:border-accent"
+                  ? "border-rose-500 focus:border-rose-500"
+                  : "border-border focus:border-primary"
               }`}
               placeholder="Enter username"
             />
             {usernameError && (
-              <p className="mt-1.5 text-xs text-red">{usernameError}</p>
+              <p className="mt-1.5 text-xs text-rose-500">{usernameError}</p>
             )}
           </div>
 
@@ -132,7 +132,7 @@ export default function LoginPage() {
           <div className="mb-5">
             <label
               htmlFor="login-password"
-              className="block text-xs text-text-3 font-medium uppercase tracking-wider mb-2"
+              className="block text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2"
             >
               Password
             </label>
@@ -150,10 +150,10 @@ export default function LoginPage() {
                 }}
                 onBlur={(e) => setPasswordError(validatePassword(e.target.value))}
                 disabled={loading}
-                className={`w-full bg-bg-1 border rounded-btn px-4 py-3 pr-11 text-sm text-text-0 outline-none transition-colors disabled:opacity-50 ${
+                className={`w-full bg-card border rounded-btn px-4 py-3 pr-11 text-sm text-foreground outline-none transition-colors disabled:opacity-50 ${
                   passwordError
-                    ? "border-red focus:border-red"
-                    : "border-border focus:border-accent"
+                    ? "border-rose-500 focus:border-rose-500"
+                    : "border-border focus:border-primary"
                 }`}
                 placeholder="Enter password"
               />
@@ -161,7 +161,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-3 hover:text-text-1 transition-colors cursor-pointer select-none p-1"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground transition-colors cursor-pointer select-none p-1"
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 tabIndex={-1}
               >
@@ -169,13 +169,13 @@ export default function LoginPage() {
               </button>
             </div>
             {passwordError && (
-              <p className="mt-1.5 text-xs text-red">{passwordError}</p>
+              <p className="mt-1.5 text-xs text-rose-500">{passwordError}</p>
             )}
           </div>
 
           {/* Form-level error (auth failures, network) */}
           {formError && (
-            <div className="mb-4 px-3.5 py-2.5 bg-red-bg border border-red/20 rounded-btn text-xs text-red font-medium">
+            <div className="mb-4 px-3.5 py-2.5 bg-rose-500/10 border border-rose-500/20 rounded-btn text-xs text-rose-500 font-medium">
               {formError}
             </div>
           )}
@@ -184,7 +184,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-accent hover:bg-accent-dim text-white font-semibold py-3 rounded-btn text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="w-full bg-primary hover:bg-primary-dim text-white font-semibold py-3 rounded-btn text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
@@ -197,7 +197,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-2xs text-text-3 mt-6">
+        <p className="text-center text-2xs text-muted-foreground mt-6">
           FreqTrade v2026.2 — Powered by FreqTrade
         </p>
       </div>

@@ -2,24 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
-::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #1e1e30; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #2e2e48; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
 @layer base {
   html { font-size: 13px; @apply font-sans; }
   body {
-    @apply antialiased tracking-[0.015em] bg-background text-foreground;
+    @apply antialiased tracking-wide bg-background text-foreground tabular-nums;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
   ::selection {
     background: rgba(99, 102, 241, 0.3);
   }
   .theme { --font-heading: var(--font-sans); --font-sans: var(--font-sans); }
-  :root { --background: 0.141 0.005 285.823; --foreground: 0.985 0 0; --card: 0.21 0.006 285.885; --card-foreground: 0.985 0 0; --popover: 0.21 0.006 285.885; --popover-foreground: 0.985 0 0; --primary: 0.473 0.137 46.201; --primary-foreground: 0.987 0.022 95.277; --secondary: 0.274 0.006 286.033; --secondary-foreground: 0.985 0 0; --muted: 0.274 0.006 286.033; --muted-foreground: 0.705 0.015 286.067; --accent: 0.274 0.006 286.033; --accent-foreground: 0.985 0 0; --destructive: 0.704 0.191 22.216; --border: 1 0 0 / 10%; --input: 1 0 0 / 15%; --ring: 0.552 0.016 285.938; --chart-1: 0.879 0.169 91.605; --chart-2: 0.769 0.188 70.08; --chart-3: 0.666 0.179 58.318; --chart-4: 0.555 0.163 48.998; --chart-5: 0.473 0.137 46.201; --sidebar: 0.21 0.006 285.885; --sidebar-foreground: 0.985 0 0; --sidebar-primary: 0.769 0.188 70.08; --sidebar-primary-foreground: 0.279 0.077 45.635; --sidebar-accent: 0.274 0.006 286.033; --sidebar-accent-foreground: 0.985 0 0; --sidebar-border: 1 0 0 / 10%; --sidebar-ring: 0.552 0.016 285.938; --radius: 0.625rem; }
+  
+  /* PREMIUM ANALYTICAL DARK THEME (Cool Slate) */
+  :root { 
+    --background: 0.13 0.005 260; 
+    --foreground: 0.98 0 0; 
+    --card: 0.15 0.005 260; 
+    --card-foreground: 0.98 0 0; 
+    --popover: 0.15 0.005 260; 
+    --popover-foreground: 0.98 0 0; 
+    --primary: 0.70 0.14 250; 
+    --primary-foreground: 0.1 0 0; 
+    --secondary: 0.20 0.005 260; 
+    --secondary-foreground: 0.98 0 0; 
+    --muted: 0.18 0.005 260; 
+    --muted-foreground: 0.65 0.01 260; 
+    --accent: 0.22 0.005 260; 
+    --accent-foreground: 0.98 0 0; 
+    --destructive: 0.55 0.2 20; 
+    --border: 1 0 0 / 4%; 
+    --input: 1 0 0 / 8%; 
+    --ring: 0.70 0.14 250; 
+    --chart-1: 0.879 0.169 91.605; 
+    --chart-2: 0.769 0.188 70.08; 
+    --chart-3: 0.666 0.179 58.318; 
+    --chart-4: 0.555 0.163 48.998; 
+    --chart-5: 0.473 0.137 46.201; 
+    --radius: 0.4rem; 
+  }
+  
   * { @apply border-border; outline-color: var(--ring); }
 }
 
 /* ─── Standard Toggle Component ─── */
-.toggle { position: relative; width: 36px; height: 20px; background: #1e1e30; border-radius: 10px; cursor: pointer; transition: background 0.2s; }
-.toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; background: #f0f0f5; border-radius: 50%; transition: transform 0.2s; }
+.toggle { position: relative; width: 36px; height: 18px; background: rgba(255,255,255,0.1); border-radius: 9px; cursor: pointer; transition: background 0.2s; border: 1px solid rgba(255,255,255,0.05); }
+.toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; background: #fff; border-radius: 50%; transition: transform 0.2s; }

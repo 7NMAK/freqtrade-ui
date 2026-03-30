@@ -1250,19 +1250,27 @@ export default function DashboardPage() {
                   <div className="p-6 text-center text-sm text-muted-foreground">No workers found.</div>
                 )}
                 {bots.filter((bot) => !bot.is_utility && bot.ft_mode !== "webserver").filter((bot) => botStatusFilter === "all" || (botStatusFilter === "running" ? bot.status === "running" : bot.status !== "running")).map((bot) => (
-                  <div key={bot.id} className="border-b border-border/40 last:border-0 p-3 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => setSelectedBotId(bot.id)}>
-                    <div className="flex items-center justify-between mb-2">
-                       <span className="text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate pr-2">{bot.name}</span>
+                  <div key={bot.id} className="relative group overflow-hidden border border-white/5 rounded-md p-3 mb-2 mx-3 bg-gradient-to-br from-white/[0.02] to-transparent hover:from-white/[0.04] hover:to-white/[0.01] hover:border-primary/20 transition-all cursor-pointer" onClick={() => setSelectedBotId(bot.id)}>
+                    <div className="flex items-center justify-between mb-3">
+                       <div className="flex flex-col min-w-0">
+                         <span className="text-sm font-bold tracking-tight text-foreground group-hover:text-primary transition-colors truncate">{bot.name}</span>
+                         <span className="text-[10px] text-muted-foreground max-w-[140px] truncate">{bot.strategy_name || "Unknown Strategy"}</span>
+                       </div>
                        <StatusBadge status={bot.status} isDryRun={bot.is_dry_run} />
                     </div>
-                    <div className="flex justify-between items-end">
-                       <div className="flex flex-col">
-                         <span className="text-[10px] uppercase font-semibold text-muted-foreground mb-0.5">Today&apos;s Net</span>
-                         <span className={`text-xs font-bold font-mono ${botProfits[bot.id] && botProfits[bot.id].profit_closed_coin && botProfits[bot.id].profit_closed_coin! >= 0 ? "text-emerald-500" : botProfits[bot.id] && botProfits[bot.id].profit_closed_coin && botProfits[bot.id].profit_closed_coin! < 0 ? "text-rose-500" : "text-muted-foreground"}`}>
-                           {botProfits[bot.id] && typeof botProfits[bot.id].profit_closed_coin !== "undefined" ? fmtMoney(botProfits[bot.id].profit_closed_coin!) : "—"}
+                    
+                    <div className="flex items-end justify-between mt-1 pt-2 border-t border-white/[0.02]">
+                      <div className="flex flex-col">
+                         <span className="text-[9px] uppercase font-bold text-muted-foreground mb-0.5 tracking-widest">Today&apos;s Net</span>
+                         <span className={`text-[13px] font-black font-mono tracking-tight ${botProfits[bot.id] && botProfits[bot.id].profit_closed_coin && botProfits[bot.id].profit_closed_coin! >= 0 ? "bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-emerald-600" : botProfits[bot.id] && botProfits[bot.id].profit_closed_coin && botProfits[bot.id].profit_closed_coin! < 0 ? "bg-clip-text text-transparent bg-gradient-to-r from-rose-400 to-rose-600" : "text-muted-foreground"}`}>
+                           {botProfits[bot.id] && typeof botProfits[bot.id].profit_closed_coin !== "undefined" 
+                              ? `${botProfits[bot.id].profit_closed_coin! > 0 ? "+" : ""}${fmtMoney(botProfits[bot.id].profit_closed_coin!)}` 
+                              : "—"}
                          </span>
-                       </div>
-                       <div className="w-20"><Sparkline data={sparklines[bot.id] ?? []} /></div>
+                      </div>
+                      <div className="w-[80px] h-[30px] opacity-70 group-hover:opacity-100 transition-opacity mix-blend-screen">
+                         <Sparkline data={sparklines[bot.id] ?? []} />
+                      </div>
                     </div>
                   </div>
                 ))}

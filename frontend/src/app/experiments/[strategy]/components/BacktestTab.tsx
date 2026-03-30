@@ -1,10 +1,18 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import Tooltip from "@/components/ui/Tooltip";
+import { botLogs, botBacktestResults } from "@/lib/api";
 
 interface BacktestTabProps {
   strategy: string;
+  backtestBotId?: number;
+}
+
+interface LogEntry {
+  ts: string;
+  level: string;
+  msg: string;
 }
 
 // ── Toggle switch ────────────────────────────────────────────────────────
@@ -27,7 +35,7 @@ const SELECT = "w-full h-[34px] py-0 px-3 bg-bg-3 border border-border rounded-b
 const LABEL = "block text-[10px] font-semibold text-text-3 uppercase tracking-[0.5px] mb-[4px]";
 
 // ══════════════════════════════════════════════════════════════════════════
-export default function BacktestTab({ strategy }: BacktestTabProps) {
+export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTabProps) {
   const [testName, setTestName] = useState(`${strategy} baseline ${new Date().toISOString().split("T")[0]}`);
   const [startDate, setStartDate] = useState("2024-01-01");
   const [endDate, setEndDate] = useState("2025-01-01");
@@ -46,6 +54,71 @@ export default function BacktestTab({ strategy }: BacktestTabProps) {
   const [breakdownMonth, setBreakdownMonth] = useState(true);
   const [isRunning, setIsRunning] = useState(false);
 
+  // ── Log window state ──────────────────────────────────────────────
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [btProgress, setBtProgress] = useState("");
+  const logEndRef = useRef<HTMLDivElement>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const addLog = useCallback((level: string, msg: string) => {
+    setLogs((prev) => {
+      const next = [...prev, { ts: new Date().toLocaleTimeString(), level, msg }];
+      return next.length > 200 ? next.slice(-200) : next;
+    });
+  }, []);
+
+  // Auto-scroll log window
+  useEffect(() => {
+    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [logs]);
+
+  // Poll FT logs + backtest status while running
+  useEffect(() => {
+    if (!isRunning) {
+      if (pollRef.current) clearInterval(pollRef.current);
+      return;
+    }
+    let lastLogCount = 0;
+    const poll = async () => {
+      try {
+        const logRes = await botLogs(backtestBotId, 30);
+        if (logRes && logRes.logs) {
+          const newLogs = logRes.logs.slice(lastLogCount);
+          lastLogCount = logRes.logs.length;
+          for (const entry of newLogs) {
+            // FT log format: [timestamp, epoch, module, level, message]
+            const level = entry[3] || "INFO";
+            const msg = entry[4] || entry.join(" ");
+            addLog(level, msg);
+          }
+        }
+      } catch {
+        // Log fetch failed — bot may not be ready
+      }
+      try {
+        const btRes = await botBacktestResults(backtestBotId);
+        if (btRes) {
+          const raw = btRes as unknown as Record<string, unknown>;
+          const step = raw.step || "";
+          const progress = raw.progress as number | undefined;
+          if (step === "finished" || step === "done") {
+            setBtProgress("Backtest complete");
+            addLog("INFO", "Backtest finished");
+            setIsRunning(false);
+          } else if (step) {
+            const pct = progress != null ? ` (${(progress * 100).toFixed(0)}%)` : "";
+            setBtProgress(`${step}${pct}`);
+          }
+        }
+      } catch {
+        // Status fetch failed
+      }
+    };
+    poll();
+    pollRef.current = setInterval(poll, 3000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [isRunning, backtestBotId, addLog]);
+
   // Auto-generate description from current settings
   const autoDescription = useMemo(() => {
     const tf = timeframeOverride === "Use strategy default" ? "default TF" : timeframeOverride;
@@ -62,10 +135,17 @@ export default function BacktestTab({ strategy }: BacktestTabProps) {
   }, [strategy, startDate, endDate, timeframeOverride, maxOpenTrades, startingCapital, enableFreqAI, enableProtections]);
 
   const handleStart = () => {
+    setLogs([]);
+    setBtProgress("");
+    addLog("INFO", `Starting backtest: ${strategy} — ${startDate} → ${endDate}`);
     setIsRunning(true);
-    // TODO: POST to orchestrator /api/backtest/run
-    // with { strategy, startDate, endDate, timeframeOverride, maxOpenTrades, startingCapital, stakeAmount, ... }
-    // On response, populate results from real FT data
+    // TODO: POST to orchestrator /api/bots/{id}/backtest
+  };
+
+  const handleStop = () => {
+    addLog("WARNING", "Backtest stopped by user");
+    setIsRunning(false);
+    setBtProgress("");
   };
 
   const handleReset = () => {
@@ -217,12 +297,55 @@ export default function BacktestTab({ strategy }: BacktestTabProps) {
           <button onClick={handleStart} disabled={isRunning} className="flex-1 h-[32px] rounded-btn text-[12px] font-semibold border bg-accent border-accent text-white hover:bg-[#5558e6] transition-all disabled:opacity-50">
             {isRunning ? "⏳ Running..." : "▶ Start Backtest"}
           </button>
-          <button disabled={!isRunning} className="h-[32px] px-3 rounded-btn text-[12px] font-semibold border bg-[rgba(239,68,68,0.08)] border-[rgba(239,68,68,0.25)] text-red hover:bg-[rgba(239,68,68,0.15)] transition-all disabled:opacity-50">
+          <button onClick={handleStop} disabled={!isRunning} className="h-[32px] px-3 rounded-btn text-[12px] font-semibold border bg-[rgba(239,68,68,0.08)] border-[rgba(239,68,68,0.25)] text-red hover:bg-[rgba(239,68,68,0.15)] transition-all disabled:opacity-50">
             ⏹ Stop
           </button>
           <button onClick={handleReset} className="h-[32px] px-3 rounded-btn text-[12px] font-semibold border border-border bg-bg-2 text-text-1 hover:bg-bg-3 transition-all">
             ↻
           </button>
+        </div>
+
+        {/* ═══════════ LOG WINDOW ═══════════ */}
+        <div className="flex flex-col mt-1 flex-1 min-h-[120px]">
+          <div className="flex items-center justify-between mb-[4px]">
+            <span className="text-[10px] font-semibold text-text-3 uppercase tracking-[0.5px]">Log</span>
+            <div className="flex items-center gap-2">
+              {btProgress && (
+                <span className="text-[10px] text-accent font-medium">{btProgress}</span>
+              )}
+              {isRunning && (
+                <span className="w-[6px] h-[6px] rounded-full bg-green animate-pulse" />
+              )}
+              {logs.length > 0 && (
+                <button
+                  onClick={() => { setLogs([]); setBtProgress(""); }}
+                  className="text-[9px] text-text-3 hover:text-text-1 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="flex-1 bg-[#0d0d14] border border-border rounded-btn p-2 overflow-y-auto font-mono text-[10px] leading-[1.6] min-h-[100px] max-h-[220px]">
+            {logs.length === 0 ? (
+              <div className="text-text-3 text-[10px] opacity-50 select-none">
+                Logs will appear here when backtest starts...
+              </div>
+            ) : (
+              logs.map((entry, i) => (
+                <div key={i} className="flex gap-[6px]">
+                  <span className="text-text-3 shrink-0">{entry.ts}</span>
+                  <span className={`shrink-0 w-[38px] ${
+                    entry.level === "ERROR" ? "text-red" :
+                    entry.level === "WARNING" ? "text-[#f59e0b]" :
+                    "text-text-3"
+                  }`}>{entry.level.substring(0, 4)}</span>
+                  <span className="text-text-1 break-all">{entry.msg}</span>
+                </div>
+              ))
+            )}
+            <div ref={logEndRef} />
+          </div>
         </div>
       </div>
 

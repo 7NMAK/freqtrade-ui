@@ -732,9 +732,9 @@ ${roiObj}
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code).then(() => {
-      alert("Code copied to clipboard!");
+      console.info("Code copied to clipboard!");
     }).catch(() => {
-      alert("Failed to copy. Check browser permissions.");
+      console.warn("Failed to copy. Check browser permissions.");
     });
   };
 
@@ -835,18 +835,18 @@ export default function BuilderPage() {
 
   const handleNext = () => {
     if (!isStepValid(step)) {
-      alert("Please fill in all required fields before proceeding.");
+      console.warn("Please fill in all required fields before proceeding.");
       return;
     }
     setStep(Math.min(STEPS.length - 1, step + 1));
   };
 
   const handleSaveDraft = () => {
-    alert("Strategy saved as draft: " + form.strategyName);
+    console.info("Strategy saved as draft: " + form.strategyName);
   };
 
   const handleSaveBacktest = () => {
-    alert("Starting backtest for: " + form.strategyName);
+    console.info("Starting backtest for: " + form.strategyName);
   };
 
   const stepContent = [

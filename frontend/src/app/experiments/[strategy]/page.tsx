@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import AppShell from "@/components/layout/AppShell";
-import { useToast } from "@/components/ui/Toast";
 import { PIPELINE_STEPS, type PipelineStepKey, type StepState } from "@/lib/experiments";
+import { getExperiments } from "@/lib/api";
 
 // ── Lazy-loaded tab components ────────────────────────────────────────────
 const BacktestTab = dynamic(() => import("./components/BacktestTab"), { ssr: false });
@@ -23,170 +23,94 @@ const AnalysisOverlay = dynamic(() => import("./components/AnalysisOverlay"), { 
 type Tab = "backtest" | "hyperopt" | "freqai" | "ai_review" | "validation";
 type Overlay = "all_tests" | "compare" | "analysis" | null;
 
-// ── Mock data for demo ───────────────────────────────────────────────────
-function getMockStrategyData(strategyName: string) {
-  return {
-    name: strategyName,
-    status: "Paper" as const,
-    paperDayStarted: "2026-03-18",
-    paperDayElapsed: 12,
-    paperDayTotal: 30,
-    backtest: { completedAt: "2026-03-15T14:30:00Z" } as const,
-    hyperopt: { completedAt: "2026-03-15T18:45:00Z" } as const,
-    freqai: { completedAt: null, skipped: true } as const,
-    verify: { completedAt: "2026-03-16T08:30:00Z" } as const,
-    ai_review: { completedAt: null, skipped: true } as const,
-    paper: { startedAt: "2026-03-18T10:00:00Z" } as const,
-    live: { completedAt: null } as const,
-  };
-}
+type StrategyDataProps = {
+  name: string;
+  status: "Draft" | "Testing" | "Optimized" | "Paper" | "Live";
+  paperDayElapsed: number;
+  paperDayTotal: number;
+  testCount: number;
+  steps: Record<PipelineStepKey, StepState>;
+};
 
-// ── Helper: Determine step state ────────────────────────────────────────
-function getStepState(
-  stepKey: PipelineStepKey,
-  data: ReturnType<typeof getMockStrategyData>
-): StepState {
-  const stepData = data[stepKey as keyof typeof data];
-
-  if (typeof stepData !== "object" || !stepData) return "pending";
-
-  // Check if skipped
-  if ("skipped" in stepData && stepData.skipped) return "skipped";
-
-  // Check if active (started but not completed)
-  if ("startedAt" in stepData && stepData.startedAt && !("completedAt" in stepData && stepData.completedAt)) {
-    return "active";
+// ── Status badge classes (matches prototype .badge-*) ────────────────────
+function statusBadgeClass(status: string): string {
+  switch (status) {
+    case "Draft": return "bg-bg-3 text-text-2";
+    case "Testing": return "bg-amber/10 text-amber border border-amber/25";
+    case "Optimized": return "bg-accent/10 text-accent border border-accent/30";
+    case "Paper": return "bg-purple/10 text-purple border border-purple/25";
+    case "Live": return "bg-green/10 text-green border border-green/25";
+    default: return "bg-bg-3 text-text-2";
   }
-
-  // Check if completed
-  if ("completedAt" in stepData && stepData.completedAt) return "completed";
-
-  return "pending";
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// PIPELINE TRACKER COMPONENT
+// PIPELINE TRACKER — matches prototype .pipeline exactly
 // ══════════════════════════════════════════════════════════════════════════
 
-interface PipelineTrackerProps {
-  strategyData: ReturnType<typeof getMockStrategyData>;
-}
-
-function PipelineTracker({ strategyData }: PipelineTrackerProps) {
-  const steps = PIPELINE_STEPS;
-  const totalWidth = 100; // percent
-  const spacing = totalWidth / (steps.length - 1); // percent between circles
-
+function PipelineTracker({ data }: { data: StrategyDataProps }) {
   return (
-    <div className="w-full">
-      <div className="relative h-20 flex items-center justify-between px-0">
-        {/* SVG connecting lines */}
-        <svg className="absolute inset-0 w-full h-full" style={{ pointerEvents: "none" }}>
-          {steps.map((step, idx) => {
-            if (idx === steps.length - 1) return null; // no line after last step
+    <div className="flex items-center gap-0 px-6 py-4 bg-bg-1 border-b border-border">
+      {PIPELINE_STEPS.map((step, idx) => {
+        const state = data.steps[step.key] ?? "pending";
+        const isOptional = "optional" in step && step.optional;
 
-            const step1 = steps[idx];
-            const state1 = getStepState(step1.key, strategyData);
-            const isOptional = "optional" in step1 && step1.optional;
+        // Step circle + label classes (matches .pipeline-step.done/.active/.skipped)
+        let circleClass = "w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center text-[10px] flex-shrink-0";
+        let labelClass = "text-[11px] whitespace-nowrap";
 
-            // Line color based on state of first step
-            let lineColor = "rgb(88, 86, 111)"; // text-2 (pending)
-            if (state1 === "completed") lineColor = "rgb(34, 197, 94)"; // green (completed)
-            else if (state1 === "active") lineColor = "rgb(139, 92, 246)"; // accent (active)
-            else if (state1 === "skipped") lineColor = "rgb(107, 114, 128)"; // gray (skipped)
+        if (state === "completed") {
+          circleClass += " bg-green border-green text-white";
+          labelClass += " text-green";
+        } else if (state === "active") {
+          circleClass += " bg-accent border-accent text-white animate-pulse";
+          labelClass += " text-accent font-semibold";
+        } else if (state === "skipped") {
+          circleClass += " border-dashed border-text-3";
+          labelClass += " text-text-3 opacity-50";
+        } else {
+          circleClass += " border-border";
+          labelClass += " text-text-3";
+        }
 
-            const x1 = (spacing * idx + 12); // center of first circle
-            const x2 = (spacing * (idx + 1) + 12); // center of second circle
+        // Connector line classes (matches .pipeline-connector)
+        let connectorClass = "w-[30px] h-[2px] flex-shrink-0";
+        if (state === "completed") {
+          connectorClass += " bg-green";
+        } else if (isOptional || state === "skipped") {
+          connectorClass += " border-t-2 border-dashed border-text-3 opacity-30 bg-transparent";
+        } else {
+          connectorClass += " bg-border";
+        }
 
-            if (isOptional) {
-              // Dashed line for optional steps
-              return (
-                <line
-                  key={`line-${idx}`}
-                  x1={`${x1}%`}
-                  y1="50%"
-                  x2={`${x2}%`}
-                  y2="50%"
-                  stroke={lineColor}
-                  strokeWidth="2"
-                  strokeDasharray="4,4"
-                />
-              );
-            } else {
-              // Solid line for required steps
-              return (
-                <line
-                  key={`line-${idx}`}
-                  x1={`${x1}%`}
-                  y1="50%"
-                  x2={`${x2}%`}
-                  y2="50%"
-                  stroke={lineColor}
-                  strokeWidth="2"
-                />
-              );
-            }
-          })}
-        </svg>
+        // Icon inside circle
+        let icon = "○";
+        if (state === "completed") icon = "✓";
+        else if (state === "active") icon = "●";
+        else if (state === "skipped") icon = "⊘";
 
-        {/* Circles and labels */}
-        <div className="absolute inset-0 flex items-center justify-between px-0">
-          {steps.map((step, idx) => {
-            const state = getStepState(step.key, strategyData);
-            let bgColor = "bg-bg-2 border-border"; // pending
-            let dotColor = "bg-text-2";
-            let isAnimated = false;
+        return (
+          <div key={step.key} className="contents">
+            {/* Step */}
+            <div className="flex items-center gap-2 px-3.5 py-1.5">
+              <div className={circleClass}>{icon}</div>
+              <span className={labelClass}>
+                {step.label}
+                {state === "active" && step.key === "paper" && (
+                  <span className="text-[10px] text-text-3 ml-1">
+                    Day {data.paperDayElapsed}/{data.paperDayTotal}
+                  </span>
+                )}
+              </span>
+            </div>
 
-            if (state === "completed") {
-              bgColor = "bg-green border-green";
-              dotColor = "bg-green";
-            } else if (state === "active") {
-              bgColor = "bg-bg-2 border-accent";
-              dotColor = "bg-accent";
-              isAnimated = true;
-            } else if (state === "skipped") {
-              bgColor = "bg-bg-2 border-text-2";
-              dotColor = "bg-text-3";
-            }
-
-            return (
-              <div key={step.key} className="flex flex-col items-center gap-2" style={{ zIndex: steps.length - idx }}>
-                {/* Circle with optional pulse animation */}
-                <div
-                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${bgColor} ${
-                    isAnimated ? "animate-pulse" : ""
-                  }`}
-                >
-                  {state === "completed" && (
-                    <svg className="w-4 h-4 text-bg-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                  {state === "active" && <div className={`w-2 h-2 rounded-full ${dotColor}`} />}
-                  {state === "skipped" && (
-                    <svg className="w-4 h-4 text-text-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                </div>
-
-                {/* Label */}
-                <div className="text-center">
-                  <p className="text-xs font-semibold text-text-1">{step.label}</p>
-                  {"optional" in step && step.optional && (
-                    <p className="text-2xs text-text-2">(optional)</p>
-                  )}
-                  {state === "active" && strategyData.paper.startedAt && (
-                    <p className="text-2xs text-accent font-semibold">
-                      Day {strategyData.paperDayElapsed}/{strategyData.paperDayTotal}
-                    </p>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+            {/* Connector (not after last step) */}
+            {idx < PIPELINE_STEPS.length - 1 && (
+              <div className={connectorClass} />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -198,176 +122,179 @@ function PipelineTracker({ strategyData }: PipelineTrackerProps) {
 export default function StrategyWorkspacePage() {
   const params = useParams();
   const router = useRouter();
-  const toast = useToast();
-
   const strategyName = (params?.strategy as string) || "Unknown";
-  const strategyData = getMockStrategyData(strategyName);
 
+  const [strategyData, setStrategyData] = useState<StrategyDataProps | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("backtest");
   const [openOverlay, setOpenOverlay] = useState<Overlay>(null);
 
-  // Tab definitions
-  const tabs: Array<{ key: Tab; label: string }> = [
-    { key: "backtest", label: "Backtest" },
-    { key: "hyperopt", label: "Hyperopt" },
-    { key: "freqai", label: "FreqAI" },
-    { key: "ai_review", label: "Naš AI" },
-    { key: "validation", label: "Validation" },
+  useEffect(() => {
+    getExperiments()
+      .then((res) => {
+        const items = res.items || [];
+        const exp = items.find(
+          (e) => e.strategy_name === strategyName || e.name === strategyName
+        );
+        if (exp) {
+          setStrategyData({
+            name: exp.strategy_name || exp.name || strategyName,
+            status: "Testing",
+            paperDayElapsed: 12,
+            paperDayTotal: 30,
+            testCount: exp.run_count || 0,
+            steps: {
+              backtest: "completed",
+              hyperopt: "completed",
+              freqai: "skipped",
+              verify: "completed",
+              ai_review: "skipped",
+              paper: "active",
+              live: "pending",
+            },
+          });
+        } else {
+          setStrategyData({
+            name: strategyName,
+            status: "Draft",
+            paperDayElapsed: 0,
+            paperDayTotal: 30,
+            testCount: 0,
+            steps: {
+              backtest: "pending", hyperopt: "pending", freqai: "pending",
+              verify: "pending", ai_review: "pending", paper: "pending", live: "pending",
+            },
+          });
+        }
+      })
+      .catch(() => {
+        setStrategyData({
+          name: strategyName, status: "Draft", paperDayElapsed: 0, paperDayTotal: 30, testCount: 0,
+          steps: { backtest: "pending", hyperopt: "pending", freqai: "pending", verify: "pending", ai_review: "pending", paper: "pending", live: "pending" },
+        });
+      });
+  }, [strategyName]);
+
+  if (!strategyData) return null;
+
+  // Tab definitions — numbered 1-5 like prototype
+  const tabs: Array<{ key: Tab; num: number; label: string }> = [
+    { key: "backtest", num: 1, label: "Backtest" },
+    { key: "hyperopt", num: 2, label: "Hyperopt" },
+    { key: "freqai", num: 3, label: "FreqAI" },
+    { key: "ai_review", num: 4, label: "Naš AI" },
+    { key: "validation", num: 5, label: "Validation" },
   ];
-
-  // Render the active tab component
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case "backtest":
-        return <BacktestTab strategy={strategyName} />;
-      case "hyperopt":
-        return <HyperoptTab strategy={strategyName} />;
-      case "freqai":
-        return <FreqAITab strategy={strategyName} />;
-      case "ai_review":
-        return <AiReviewTab strategy={strategyName} />;
-      case "validation":
-        return <ValidationTab strategy={strategyName} />;
-      default:
-        return null;
-    }
-  };
-
-  // Render overlay if open
-  const renderOverlay = () => {
-    if (!openOverlay) return null;
-
-    return (
-      <div className="fixed inset-0 bg-bg-0 z-50 flex flex-col">
-        {/* Overlay header with close button */}
-        <div className="border-b border-border px-8 py-4 flex items-center justify-between bg-bg-1">
-          <h2 className="text-base font-semibold text-text-0">
-            {openOverlay === "all_tests" && "All Tests"}
-            {openOverlay === "compare" && "Compare Runs"}
-            {openOverlay === "analysis" && "Analysis"}
-          </h2>
-          <button
-            onClick={() => setOpenOverlay(null)}
-            className="text-text-2 hover:text-text-1 transition-colors"
-            aria-label="Close overlay"
-          >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Overlay content */}
-        <div className="flex-1 overflow-y-auto p-8">
-          {openOverlay === "all_tests" && <AllTestsOverlay strategy={strategyName} onClose={() => setOpenOverlay(null)} />}
-          {openOverlay === "compare" && <CompareOverlay strategy={strategyName} onClose={() => setOpenOverlay(null)} />}
-          {openOverlay === "analysis" && <AnalysisOverlay strategy={strategyName} onClose={() => setOpenOverlay(null)} />}
-        </div>
-      </div>
-    );
-  };
 
   return (
     <AppShell title={`Experiments / ${strategyName}`}>
-      <div className="space-y-6">
-        {/* ── Header ────────────────────────────────────────────────────── */}
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            {/* Back button */}
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-2 text-sm text-text-2 hover:text-accent transition-colors"
-              aria-label="Go back to experiments list"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-              </svg>
-              <span>Back</span>
-            </button>
+      <div className="flex flex-col h-full min-h-0 overflow-hidden">
 
-            {/* Strategy name and status */}
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold text-text-0">{strategyName}</h1>
-              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                strategyData.status === "Paper"
-                  ? "bg-amber/20 text-amber"
-                  : strategyData.status === "Live"
-                  ? "bg-green/20 text-green"
-                  : "bg-accent/20 text-accent"
-              }`}>
-                {strategyData.status}
-              </span>
-            </div>
+        {/* ── Workspace Header (matches prototype header) ── */}
+        <header className="h-14 bg-bg-1 border-b border-border flex items-center px-6 gap-4 flex-shrink-0 overflow-hidden">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <button
+              onClick={() => router.push("/experiments")}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 border border-border bg-bg-2 hover:bg-bg-3 text-[11px] text-text-1 rounded-btn transition-all flex-shrink-0"
+            >
+              ← Back
+            </button>
+            <span className="text-base font-semibold text-text-0 truncate">
+              {strategyData.name}
+            </span>
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide flex-shrink-0 ${statusBadgeClass(strategyData.status)}`}>
+              {strategyData.status}
+            </span>
           </div>
 
-          {/* Header action button */}
-          <button
-            onClick={() => toast.info("New test creation coming soon")}
-            className="px-4 py-2 bg-accent text-bg-0 text-sm font-semibold rounded-lg hover:bg-accent/90 transition-colors"
-          >
-            New Test
-          </button>
-        </div>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {/* Helper buttons (matches prototype .helper-btns) */}
+            <button
+              onClick={() => setOpenOverlay("all_tests")}
+              className="px-3 py-1.5 border border-border bg-bg-2 hover:bg-bg-3 hover:border-border-hover text-[11px] text-text-2 rounded-btn transition-all flex items-center gap-1.5"
+            >
+              📋 All Tests <span className="text-[10px] opacity-60">({strategyData.testCount})</span>
+            </button>
+            <button
+              onClick={() => setOpenOverlay("compare")}
+              className="px-3 py-1.5 border border-border bg-bg-2 hover:bg-bg-3 hover:border-border-hover text-[11px] text-text-2 rounded-btn transition-all flex items-center gap-1.5"
+            >
+              ⚖️ Compare
+            </button>
+            <button
+              onClick={() => setOpenOverlay("analysis")}
+              className="px-3 py-1.5 border border-border bg-bg-2 hover:bg-bg-3 hover:border-border-hover text-[11px] text-text-2 rounded-btn transition-all flex items-center gap-1.5"
+            >
+              📊 Analysis
+            </button>
+            <button className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-accent hover:bg-[#5558e6] text-white text-[11px] font-medium rounded-btn transition-colors">
+              + New Test
+            </button>
+          </div>
+        </header>
 
-        {/* ── Pipeline Tracker ──────────────────────────────────────────── */}
-        <div className="bg-bg-1 border border-border rounded-lg p-8">
-          <PipelineTracker strategyData={strategyData} />
-        </div>
+        {/* ── Pipeline Tracker ── */}
+        <PipelineTracker data={strategyData} />
 
-        {/* ── Helper Buttons (All Tests, Compare, Analysis) ────────────── */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setOpenOverlay("all_tests")}
-            className="flex items-center gap-2 px-4 py-2 bg-bg-2 border border-border text-text-1 text-sm font-semibold rounded-lg hover:bg-bg-3 transition-colors"
-          >
-            <span>📋</span>
-            <span>All Tests (416)</span>
-          </button>
-
-          <button
-            onClick={() => setOpenOverlay("compare")}
-            className="flex items-center gap-2 px-4 py-2 bg-bg-2 border border-border text-text-1 text-sm font-semibold rounded-lg hover:bg-bg-3 transition-colors"
-          >
-            <span>⚖️</span>
-            <span>Compare</span>
-          </button>
-
-          <button
-            onClick={() => setOpenOverlay("analysis")}
-            className="flex items-center gap-2 px-4 py-2 bg-bg-2 border border-border text-text-1 text-sm font-semibold rounded-lg hover:bg-bg-3 transition-colors"
-          >
-            <span>📊</span>
-            <span>Analysis</span>
-          </button>
-        </div>
-
-        {/* ── Tab Bar ────────────────────────────────────────────────────── */}
-        <div className="border-b border-border">
-          <div className="flex gap-8">
-            {tabs.map((tab) => (
+        {/* ── Tab Bar (matches prototype .tabs with .tab-number) ── */}
+        <div className="flex border-b border-border px-6 bg-bg-1 flex-shrink-0">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-1 py-3 text-sm font-semibold border-b-2 transition-colors ${
-                  activeTab === tab.key
-                    ? "border-accent text-accent"
-                    : "border-transparent text-text-2 hover:text-text-1"
+                className={`px-4 py-2.5 text-[11.5px] font-medium border-b-2 transition-all whitespace-nowrap ${
+                  isActive
+                    ? "text-accent border-accent font-semibold"
+                    : "text-text-3 border-transparent hover:text-text-1"
                 }`}
               >
+                <span
+                  className={`inline-flex items-center justify-center w-[18px] h-[18px] rounded-full text-[10px] mr-1.5 ${
+                    isActive ? "bg-accent text-white" : "bg-bg-3 text-text-3"
+                  }`}
+                >
+                  {tab.num}
+                </span>
                 {tab.label}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
 
-        {/* ── Tab Content ────────────────────────────────────────────────── */}
-        <div className="min-h-96">
-          {renderTabContent()}
+        {/* ── Tab Content (scrollable) ── */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {activeTab === "backtest" && <BacktestTab strategy={strategyName} />}
+          {activeTab === "hyperopt" && <HyperoptTab strategy={strategyName} />}
+          {activeTab === "freqai" && <FreqAITab strategy={strategyName} />}
+          {activeTab === "ai_review" && <AiReviewTab strategy={strategyName} />}
+          {activeTab === "validation" && <ValidationTab strategy={strategyName} />}
         </div>
       </div>
 
-      {/* ── Overlays ──────────────────────────────────────────────────────── */}
-      {renderOverlay()}
+      {/* ── Overlays (matches prototype .overlay) ── */}
+      {openOverlay && (
+        <div className="fixed inset-0 bg-[rgba(6,6,11,0.92)] z-[100] flex flex-col">
+          <div className="h-14 bg-bg-1 border-b border-border flex items-center px-6 gap-4 flex-shrink-0">
+            <span className="text-base font-semibold text-text-0 flex-1">
+              {openOverlay === "all_tests" && `📋 All Tests — ${strategyName}`}
+              {openOverlay === "compare" && "⚖️ Compare Tests"}
+              {openOverlay === "analysis" && "📊 Analysis — §30 Deep Dive"}
+            </span>
+            <button
+              onClick={() => setOpenOverlay(null)}
+              className="bg-transparent border-none text-text-2 text-xl cursor-pointer p-2 rounded-btn hover:bg-bg-3 hover:text-text-0 transition-all"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-6">
+            {openOverlay === "all_tests" && <AllTestsOverlay strategy={strategyName} onClose={() => setOpenOverlay(null)} />}
+            {openOverlay === "compare" && <CompareOverlay strategy={strategyName} onClose={() => setOpenOverlay(null)} />}
+            {openOverlay === "analysis" && <AnalysisOverlay strategy={strategyName} onClose={() => setOpenOverlay(null)} />}
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

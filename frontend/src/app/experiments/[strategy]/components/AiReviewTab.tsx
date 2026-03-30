@@ -301,11 +301,9 @@ export default function AiReviewTab({ strategy: _strategy }: { strategy: string 
 
   const handleRunAnalysis = () => {
     setIsRunning(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsRunning(false);
-      setHasRun(true);
-    }, 2000);
+    // Placeholder pending backend integration
+    setIsRunning(false);
+    setHasRun(true);
   };
 
   const avgScore = Math.round(

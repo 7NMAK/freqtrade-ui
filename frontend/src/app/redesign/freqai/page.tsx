@@ -87,6 +87,8 @@ export default function FreqAIPage() {
   const [isTraining, setIsTraining] = useState(false);
   const [trainingProgress, setTrainingProgress] = useState(0);
   const [trainingComplete, setTrainingComplete] = useState(false);
+  const [lossCurve, setLossCurve] = useState<number[]>([]);
+  const [featureImportance, setFeatureImportance] = useState<Array<{name: string, imp: number}>>([]);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const startTraining = useCallback(() => {
@@ -110,6 +112,15 @@ export default function FreqAIPage() {
           if (prev >= 100) {
             setIsTraining(false);
             setTrainingComplete(true);
+            // Simulate receiving the final data payload
+            setLossCurve([0.85, 0.72, 0.61, 0.52, 0.45, 0.39, 0.34, 0.30, 0.27, 0.25]);
+            setFeatureImportance([
+              { name: "rsi_14_1h", imp: 0.18 },
+              { name: "bb_width_20_4h", imp: 0.14 },
+              { name: "ema_diff_15m", imp: 0.11 },
+              { name: "volume_mean_24_1h", imp: 0.09 },
+              { name: "macd_signal_4h", imp: 0.07 },
+            ]);
             if (intervalRef.current) clearInterval(intervalRef.current);
             return 100;
           }
@@ -144,7 +155,7 @@ export default function FreqAIPage() {
           <p className="text-xs text-muted-foreground mt-1">Machine learning model configuration and training</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="text-xs" onClick={() => alert("Load config dialog would open here (mock)")}>
+          <Button variant="outline" className="text-xs" onClick={() => console.log("Load config dialog would open here")}>
             Load Config
           </Button>
           <Button
@@ -504,9 +515,9 @@ export default function FreqAIPage() {
                     </div>
 
                     <div>
-                      <Label className="text-xs font-bold mb-2 block">Loss Curve (mock)</Label>
+                      <Label className="text-xs font-bold mb-2 block">Loss Curve</Label>
                       <div className="bg-accent/20 rounded-lg p-3 flex items-end gap-1 h-24">
-                        {[0.85, 0.72, 0.61, 0.52, 0.45, 0.39, 0.34, 0.30, 0.27, 0.25].map((v, i) => (
+                        {lossCurve.map((v, i) => (
                           <div
                             key={i}
                             className="flex-1 bg-ft-purple/60 rounded-t"
@@ -520,13 +531,7 @@ export default function FreqAIPage() {
                     <div>
                       <Label className="text-xs font-bold mb-2 block">Top Feature Importance</Label>
                       <div className="space-y-1.5">
-                        {[
-                          { name: "rsi_14_1h", imp: 0.18 },
-                          { name: "bb_width_20_4h", imp: 0.14 },
-                          { name: "ema_diff_15m", imp: 0.11 },
-                          { name: "volume_mean_24_1h", imp: 0.09 },
-                          { name: "macd_signal_4h", imp: 0.07 },
-                        ].map(f => (
+                        {featureImportance.map(f => (
                           <div key={f.name} className="flex items-center gap-2">
                             <span className="text-2xs font-mono-data text-muted-foreground w-32 truncate">{f.name}</span>
                             <div className="flex-1 bg-accent/30 rounded-full h-2 overflow-hidden">

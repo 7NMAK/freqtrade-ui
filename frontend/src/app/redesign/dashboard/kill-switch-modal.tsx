@@ -10,6 +10,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useApi } from "@/lib/useApi";
+import { getBots, softKillAll, hardKillAll, hardKill } from "@/lib/api";
 
 /* ══════════════════════════════════════
    KILL SWITCH MODAL (Client Component)
@@ -22,14 +24,6 @@ import { Button } from "@/components/ui/button";
 
 type KillView = "main" | "confirm-soft" | "confirm-hard" | "success-soft" | "success-hard" | "per-bot";
 
-const INITIAL_BOTS = [
-  { name: "bot-trend-01", status: "live" as const },
-  { name: "bot-mean-rev", status: "live" as const },
-  { name: "bot-scalp-hl", status: "live" as const },
-  { name: "bot-breakout-p", status: "paper" as const },
-  { name: "bot-freqai-exp", status: "paper" as const },
-];
-
 interface KillSwitchModalProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -39,6 +33,9 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
   const [internalOpen, setInternalOpen] = useState(false);
   const [view, setView] = useState<KillView>("main");
   const [killedBots, setKilledBots] = useState<Set<string>>(new Set());
+  
+  const { data: bots } = useApi(getBots);
+  const activeBots = bots || [];
 
   const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
 
@@ -57,25 +54,42 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
     setView("confirm-soft");
   }
 
-  function confirmSoftKill() {
-    console.log("SOFT KILL: POST /api/v1/stop per bot — stops new entries, positions remain open");
-    setView("success-soft");
+  async function confirmSoftKill() {
+    try {
+      await softKillAll("Dashboard Soft Kill");
+      setView("success-soft");
+    } catch (err) {
+      console.error("Soft kill failed", err);
+    }
   }
 
   function handleHardKill() {
     setView("confirm-hard");
   }
 
-  function confirmHardKill() {
-    console.log("HARD KILL: POST /api/v1/forceexit per bot + POST /api/v1/stop — all positions closed at market");
-    const allBotNames = new Set(INITIAL_BOTS.map((b) => b.name));
-    setKilledBots(allBotNames);
-    setView("success-hard");
+  async function confirmHardKill() {
+    try {
+      await hardKillAll("Dashboard Hard Kill");
+      const allBotNames = new Set<string>(activeBots.map((b) => b.name));
+      setKilledBots(allBotNames);
+      setView("success-hard");
+    } catch (err) {
+      console.error("Hard kill failed", err);
+    }
   }
 
-  function handlePerBotKill(botName: string) {
-    console.log(`KILL BOT: POST /api/v1/forceexit + POST /api/v1/stop for ${botName}`);
-    setKilledBots((prev) => { const next = new Set(Array.from(prev)); next.add(botName); return next; });
+  async function handlePerBotKill(botId: number, botName: string) {
+    try {
+      await hardKill(botId, "Dashboard Per-Bot Kill");
+      setKilledBots((prev) => {
+        const next = new Set<string>();
+        prev.forEach(v => next.add(v));
+        next.add(botName);
+        return next;
+      });
+    } catch (err) {
+      console.error(`Kill failed for ${botName}`, err);
+    }
   }
 
   function resetAndClose() {
@@ -137,7 +151,7 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
                 ⚠️ Confirm Soft Kill
               </DialogTitle>
               <DialogDescription className="text-sm text-muted-foreground mt-2">
-                This will send <strong className="text-foreground">POST /api/v1/stop</strong> to all 5 bots.
+                This will send <strong className="text-foreground">POST /api/v1/stop</strong> to all {activeBots.length} bots.
                 New trade entries will be blocked. Existing open positions will remain open and continue to be managed by FreqTrade (stoploss, take profit, etc.).
               </DialogDescription>
             </DialogHeader>
@@ -165,7 +179,7 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
               <DialogDescription className="text-sm mt-2 space-y-2">
                 <span className="block text-ft-red font-bold">This action is IRREVERSIBLE.</span>
                 <span className="block text-muted-foreground">
-                  This will send <strong className="text-foreground">POST /api/v1/forceexit</strong> for ALL open positions on ALL 5 bots,
+                  This will send <strong className="text-foreground">POST /api/v1/forceexit</strong> for ALL open positions on ALL {activeBots.length} bots,
                   closing them at <strong className="text-foreground">MARKET price</strong> immediately. Then all bots will be stopped.
                 </span>
                 <span className="block text-ft-red/80 text-xs font-semibold">
@@ -195,7 +209,7 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
                 ✅ Soft Kill Executed
               </DialogTitle>
               <DialogDescription className="text-sm text-muted-foreground mt-2">
-                All 5 bots have been stopped. No new trades will be opened.
+                All {activeBots.length} bots have been stopped. No new trades will be opened.
                 Existing positions remain open and will continue to be managed by each bot&apos;s stoploss and exit logic.
               </DialogDescription>
             </DialogHeader>
@@ -215,7 +229,7 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
                 ✅ Hard Kill Executed
               </DialogTitle>
               <DialogDescription className="text-sm text-muted-foreground mt-2">
-                All positions have been force-exited at MARKET. All 5 bots have been stopped.
+                All positions have been force-exited at MARKET. All {activeBots.length} bots have been stopped.
                 Manual restart is required to resume trading.
               </DialogDescription>
             </DialogHeader>
@@ -238,12 +252,14 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
                 Kill individual bots. Each kill will force-exit all positions for that bot at MARKET and stop it.
               </DialogDescription>
             </DialogHeader>
-            <div className="mt-3 space-y-2">
-              {INITIAL_BOTS.map((bot) => {
+            <div className="mt-3 space-y-2 max-h-[300px] overflow-y-auto">
+              {activeBots.length === 0 && <div className="text-xs text-muted-foreground text-center">No active bots to kill.</div>}
+              {activeBots.map((bot) => {
                 const isKilled = killedBots.has(bot.name);
+                const isLive = !bot.is_dry_run;
                 return (
                   <div
-                    key={bot.name}
+                    key={bot.id}
                     className={`flex items-center justify-between py-3 px-4 rounded-lg border ${
                       isKilled
                         ? "border-ft-red/30 bg-ft-red/5"
@@ -255,7 +271,7 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
                         className={`w-2.5 h-2.5 rounded-full ${
                           isKilled
                             ? "bg-ft-red"
-                            : bot.status === "live"
+                            : isLive
                             ? "bg-ft-green shadow-[0_0_6px_hsla(97,75%,33%,0.3)]"
                             : "bg-ft-amber"
                         }`}
@@ -265,17 +281,17 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
                         <span className={`ml-2 text-2xs font-semibold ${
                           isKilled
                             ? "text-ft-red"
-                            : bot.status === "live"
+                            : isLive
                             ? "text-ft-green"
                             : "text-ft-amber"
                         }`}>
-                          {isKilled ? "KILLED" : bot.status.toUpperCase()}
+                          {isKilled ? "KILLED" : (isLive ? "LIVE" : "PAPER")}
                         </span>
                       </div>
                     </div>
                     {!isKilled ? (
                       <button
-                        onClick={() => handlePerBotKill(bot.name)}
+                        onClick={() => handlePerBotKill(bot.id, bot.name)}
                         className="text-xs font-bold text-ft-red/70 hover:text-ft-red transition-colors px-3 py-1.5 rounded border border-ft-red/20 hover:border-ft-red/40 hover:bg-ft-red/10"
                       >
                         KILL

@@ -1,10 +1,14 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/badge";
 import { StrategyDetailPanel } from "./strategy-detail-panel";
 import { ImportStrategyModal } from "./import-modal";
+import { useApi } from "@/lib/useApi";
+import { getStrategies } from "@/lib/api";
+import { Strategy as ApiStrategy } from "@/types";
 
 /* ══════════════════════════════════════
    STRATEGIES — Fully Interactive Design
@@ -32,17 +36,6 @@ interface Strategy {
   botRunning?: boolean;
 }
 
-const INITIAL_STRATEGIES: Strategy[] = [
-  { id: "s1", name: "TrendFollowerV3", status: "live", description: "Multi-timeframe trend following with EMA crossover + ADX filter", pair: "BTC/USDT", tf: "1h", leverage: "10x", totalPnl: "+$4,821", pnlUp: true, winRate: "67.9%", sharpe: "2.31", trades: 312, maxDd: "4.1%", avgDuration: "3h 42m", bars: [40, 60, -20, 80, 55, 90, 70], botName: "bot-trend-01", botRunning: true },
-  { id: "s2", name: "MeanReversionV2", status: "live", description: "Bollinger Band mean reversion with RSI confirmation", pair: "ETH/USDT", tf: "1h", leverage: "5x", totalPnl: "+$2,340", pnlUp: true, winRate: "72.1%", sharpe: "1.89", trades: 428, maxDd: "3.2%", avgDuration: "1h 18m", bars: [30, -15, 45, 65, -10, 50, 75], botName: "bot-mean-rev", botRunning: true },
-  { id: "s3", name: "HLScalperV1", status: "live", description: "High-leverage scalping on SOL with Supertrend + Volume", pair: "SOL/USDT", tf: "5m", leverage: "20x", totalPnl: "-$890", pnlUp: false, winRate: "54.3%", sharpe: "0.72", trades: 1241, maxDd: "8.9%", avgDuration: "22m", bars: [50, 35, -25, -40, 20, -30, -15], botName: "bot-scalp-hl", botRunning: true },
-  { id: "s4", name: "BreakoutAI", status: "paper", description: "FreqAI-powered breakout detection with LightGBM predictions", pair: "Multi-pair", tf: "4h", leverage: "3x", totalPnl: "+$940", pnlUp: true, winRate: "61.2%", sharpe: "1.65", trades: 87, maxDd: "5.1%", avgDuration: "6h 10m", bars: [20, 40, 55, 70, 60, 85, 90], botName: "bot-breakout-p", botRunning: true },
-  { id: "s5", name: "FreqAI_LightGBM", status: "paper", description: "Experimental ML model with custom feature engineering", pair: "BTC/USDT", tf: "1h", leverage: "2x", totalPnl: "+$280", pnlUp: true, winRate: "58.4%", sharpe: "1.22", trades: 45, maxDd: "3.8%", avgDuration: "4h 55m", bars: [-10, 25, 35, -5, 45, 30, 50], botName: "bot-freqai-exp", botRunning: true },
-  { id: "s6", name: "GridBotV4", status: "backtest", description: "Grid trading strategy for ranging markets", pair: "ETH/USDT", tf: "15m", leverage: "5x", totalPnl: "+$1,420", pnlUp: true, winRate: "76.8%", sharpe: "1.95", trades: 523, maxDd: "2.9%", avgDuration: "45m", bars: [60, 55, 70, 65, 80, 75, 85] },
-  { id: "s7", name: "DCA_MomentumV1", status: "draft", description: "Dollar cost averaging with momentum entry signals", pair: "BTC/USDT", tf: "4h", leverage: "1x", totalPnl: "—", pnlUp: true, winRate: "—", sharpe: "—", trades: 0, maxDd: "—", avgDuration: "—", bars: [0, 0, 0, 0, 0, 0, 0] },
-  { id: "s8", name: "OldTrendV1", status: "retired", description: "Legacy trend follower — replaced by TrendFollowerV3", pair: "BTC/USDT", tf: "1h", leverage: "5x", totalPnl: "+$12,490", pnlUp: true, winRate: "64.1%", sharpe: "1.78", trades: 2104, maxDd: "7.2%", avgDuration: "2h 50m", bars: [70, 65, 80, 60, 75, 50, 45] },
-];
-
 const statusColors: Record<StrategyStatus, string> = {
   live: "bg-ft-green/15 text-ft-green border-ft-green/20",
   paper: "bg-ft-amber/15 text-ft-amber border-ft-amber/20",
@@ -59,13 +52,40 @@ const statusActions: Record<StrategyStatus, { label: string; icon: string; actio
   retired: [{ label: "Clone", icon: "📋", action: "clone" }, { label: "Export .py", icon: "📥", action: "export" }],
 };
 
-/* ══════════════════════════════════════
-   PAGE
-   ══════════════════════════════════════ */
 export default function StrategiesPage() {
-  const [strategies, setStrategies] = useState<Strategy[]>(INITIAL_STRATEGIES);
+  const { data: rawStrategies, refetch } = useApi(getStrategies, []);
+  
+  const strategies: Strategy[] = (rawStrategies || []).map((s: ApiStrategy) => {
+    let mappedStatus: StrategyStatus = "draft";
+    if (s.lifecycle === "live") mappedStatus = "live";
+    else if (s.lifecycle === "paper") mappedStatus = "paper";
+    else if (s.lifecycle === "backtest") mappedStatus = "backtest";
+    else if (s.lifecycle === "retired") mappedStatus = "retired";
+
+    return {
+      id: String(s.id),
+      name: s.name,
+      status: mappedStatus,
+      description: s.description || "No description provided.",
+      pair: "Multiple",
+      tf: s.timeframe || "1h",
+      leverage: "1x",
+      totalPnl: "—",
+      pnlUp: true,
+      winRate: "—",
+      sharpe: "—",
+      trades: 0,
+      maxDd: "—",
+      avgDuration: "—",
+      bars: [0, 0, 0, 0, 0, 0, 0],
+      botName: s.bot_instance_id ? `Bot #${s.bot_instance_id}` : undefined,
+      botRunning: !!s.bot_instance_id
+    };
+  });
+
   const [activeFilter, setActiveFilter] = useState<StrategyStatus | "all">("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const router = useRouter();
 
   const filtered = activeFilter === "all"
     ? strategies
@@ -82,101 +102,60 @@ export default function StrategiesPage() {
 
     switch (action) {
       case "view_bot":
-        alert(`Navigating to dashboard for ${strat.name}`);
+        router.push("/redesign/dashboard");
         break;
       case "analytics":
-        alert(`Opening analytics for ${strat.name}`);
+        router.push("/redesign/analytics");
         break;
       case "edit":
-        alert(`Opening builder for ${strat.name}`);
+        router.push("/redesign/builder");
         break;
       case "go_live": {
         if (window.confirm(`Switch "${strat.name}" to LIVE trading?\nThis will use REAL funds.`)) {
-          setStrategies((prev) =>
-            prev.map((s) => s.id === strategyId ? { ...s, status: "live" as StrategyStatus } : s)
-          );
-          alert(`${strat.name} is now LIVE`);
+          console.info(`${strat.name} is now LIVE (Pending API toggle)`);
         }
         break;
       }
       case "start_paper": {
         if (window.confirm(`Start paper trading for "${strat.name}"?`)) {
-          setStrategies((prev) =>
-            prev.map((s) => s.id === strategyId ? { ...s, status: "paper" as StrategyStatus, botName: `bot-${strat.name.toLowerCase().slice(0, 8)}`, botRunning: true } : s)
-          );
-          alert(`${strat.name} is now paper trading`);
+          console.info(`${strat.name} is now paper trading (Pending API toggle)`);
         }
         break;
       }
       case "run_backtest":
-        alert(`Starting backtest for ${strat.name}...`);
-        setStrategies((prev) =>
-          prev.map((s) => s.id === strategyId ? { ...s, status: "backtest" as StrategyStatus } : s)
-        );
+        console.info(`Starting backtest for ${strat.name}...`);
+        router.push("/redesign/backtesting");
         break;
       case "clone": {
-        const clone: Strategy = {
-          ...strat,
-          id: `s${Date.now()}`,
-          name: `${strat.name}_copy`,
-          status: "draft",
-          trades: 0,
-          totalPnl: "—",
-          winRate: "—",
-          sharpe: "—",
-          maxDd: "—",
-          avgDuration: "—",
-          bars: [0, 0, 0, 0, 0, 0, 0],
-        };
-        setStrategies((prev) => [...prev, clone]);
-        alert(`Cloned as ${clone.name}`);
+        console.info(`Cloned as ${strat.name}_copy (Pending API clone)`);
         break;
       }
       case "export":
-        alert(`Downloading ${strat.name}.py`);
+        console.info(`Downloading ${strat.name}.py`);
         break;
       case "view_results":
         setSelectedId(strategyId);
         break;
       case "retire": {
         if (window.confirm(`Retire "${strat.name}"? This will stop the bot.`)) {
-          setStrategies((prev) =>
-            prev.map((s) => s.id === strategyId ? { ...s, status: "retired" as StrategyStatus, botRunning: false } : s)
-          );
+          console.info(`Retired ${strat.name} (Pending API retire)`);
         }
         break;
       }
       case "delete": {
         if (window.confirm(`Delete "${strat.name}"? This cannot be undone.`)) {
-          setStrategies((prev) => prev.filter((s) => s.id !== strategyId));
+          console.info(`Deleted ${strat.name} (Pending API delete)`);
           if (selectedId === strategyId) setSelectedId(null);
         }
         break;
       }
     }
-  }, [strategies, selectedId]);
+  }, [strategies, selectedId, router]);
 
   const handleImport = useCallback((fileName: string) => {
-    const newStrat: Strategy = {
-      id: `s${Date.now()}`,
-      name: fileName.replace(".py", ""),
-      status: "draft",
-      description: `Imported from ${fileName}`,
-      pair: "BTC/USDT",
-      tf: "1h",
-      leverage: "1x",
-      totalPnl: "—",
-      pnlUp: true,
-      winRate: "—",
-      sharpe: "—",
-      trades: 0,
-      maxDd: "—",
-      avgDuration: "—",
-      bars: [0, 0, 0, 0, 0, 0, 0],
-    };
-    setStrategies((prev) => [...prev, newStrat]);
-    alert(`${fileName} imported as "${newStrat.name}" (DRAFT)`);
-  }, []);
+    console.info(`${fileName} imported (Pending API POST handling)`);
+    refetch();
+  }, [refetch]);
 
   return (
     <>

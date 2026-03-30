@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { useApi } from "@/lib/useApi";
+import { getBots } from "@/lib/api";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -26,15 +29,25 @@ import { KillSwitchModal } from "./kill-switch-modal";
    ══════════════════════════════════════ */
 
 /* ── Stat Cards — FIXED: 5 not 4 ── */
-const STATS = [
-  { label: "Portfolio Equity", value: "$127,432", change: "+$2,341 (+1.87%)", up: true, featured: true, tooltip: "Total portfolio value across all bots (GET /api/v1/balance)" },
-  { label: "Unrealized P&L", value: "+$1,892", change: "7 open positions", up: true, tooltip: "Sum of current_profit across all open trades" },
-  { label: "Today's Realized", value: "+$449", change: "5 trades closed", up: true, tooltip: "Sum of close_profit_abs for trades closed today" },
-  { label: "Max Drawdown (30d)", value: "4.2%", change: "$5,352 from peak", up: false, tooltip: "Maximum drawdown over the last 30 days" },
-  { label: "Active Bots", value: "5/5", change: "3 live · 2 paper", up: true, tooltip: "Number of running bot instances (GET /api/v1/ping)" },
-];
+interface StatData {
+  label: string;
+  value: string;
+  change: string;
+  up: boolean;
+  featured?: boolean;
+  tooltip: string;
+}
+function StatCards({ bots }: { bots: BotData[] }) {
+  const activeCount = bots.filter(b => b.status === "live" || b.status === "paper").length;
+  
+  const STATS: StatData[] = [
+    { label: "Equity", value: "$0.00", change: "0.00%", up: true, tooltip: "Total equity" },
+    { label: "Unrealized", value: "$0.00", change: "0.00%", up: true, tooltip: "Open positions PnL" },
+    { label: "Realized", value: "$0.00", change: "0.00%", up: true, tooltip: "Closed trades PnL" },
+    { label: "Drawdown", value: "0.00%", change: "0.00%", up: false, tooltip: "System Drawdown" },
+    { label: "Active Bots", value: activeCount.toString(), change: `${bots.length} total`, up: true, featured: true, tooltip: "Running bots" },
+  ];
 
-function StatCards() {
   return (
     <div className="grid grid-cols-5 gap-4 mb-6">
       {STATS.map((s) => (
@@ -65,15 +78,31 @@ function StatCards() {
 }
 
 /* ── Bot Cards ── */
-const BOTS = [
-  { name: "bot-trend-01", status: "live" as const, strategy: "TrendFollowerV3", pair: "BTC/USDT", pnl: "+$312", pnlUp: true, positions: 2, bars: [40, 60, -20, 80, 55, 90, 70] },
-  { name: "bot-mean-rev", status: "live" as const, strategy: "MeanReversionV2", pair: "ETH/USDT", pnl: "+$187", pnlUp: true, positions: 3, bars: [30, -15, 45, 65, -10, 50, 75] },
-  { name: "bot-scalp-hl", status: "live" as const, strategy: "HLScalperV1", pair: "SOL/USDT", pnl: "-$51", pnlUp: false, positions: 1, bars: [50, 35, -25, -40, 20, -30, -15] },
-  { name: "bot-breakout-p", status: "paper" as const, strategy: "BreakoutAI", pair: "Multi-pair", pnl: "+$94", pnlUp: true, positions: 1, bars: [20, 40, 55, 70, 60, 85, 90] },
-  { name: "bot-freqai-exp", status: "paper" as const, strategy: "FreqAI_LightGBM", pair: "BTC/USDT", pnl: "+$28", pnlUp: true, positions: 0, bars: [-10, 25, 35, -5, 45, 30, 50] },
-];
-
+interface BotData {
+  name: string;
+  status: "live" | "paper";
+  strategy: string;
+  pair: string;
+  pnl: string;
+  pnlUp: boolean;
+  positions: number;
+  bars: number[];
+}
 function BotGrid({ selectedBotId, onSelectBot }: { selectedBotId: string | null; onSelectBot: (name: string) => void }) {
+  const router = useRouter();
+  const { data: botsList } = useApi(getBots, [], { refreshInterval: 15000 });
+
+  const displayBots: BotData[] = (botsList || []).map(b => ({
+    name: b.name,
+    status: b.is_dry_run ? "paper" : "live",
+    strategy: b.strategy_name || "Unknown",
+    pair: b.pair_whitelist?.[0] || "Multiple",
+    pnl: "—", // Pending per-bot profit endpoint
+    pnlUp: true,
+    positions: 0, // Pending per-bot trades endpoint
+    bars: [0, 0, 0, 0, 0, 0, 0], // Sparklines pending
+  }));
+
   return (
     <Card className="mb-6">
       <CardHeader className="py-4 px-5 flex flex-row items-center justify-between">
@@ -81,14 +110,15 @@ function BotGrid({ selectedBotId, onSelectBot }: { selectedBotId: string | null;
           <span>🤖</span> Active Bots
         </CardTitle>
         <button
-          onClick={() => alert("Navigating to Strategies page")}
+          onClick={() => router.push("/redesign/strategies")}
           className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
         >
           View all strategies →
         </button>
       </CardHeader>
       <div className="grid grid-cols-5 gap-3 px-5 pb-5">
-        {BOTS.map((bot) => (
+        {displayBots.length === 0 && <div className="text-xs text-muted-foreground col-span-5 text-center py-4">No active bots found.</div>}
+        {displayBots.map((bot) => (
           <div
             key={bot.name}
             onClick={() => onSelectBot(bot.name)}
@@ -137,17 +167,24 @@ function BotGrid({ selectedBotId, onSelectBot }: { selectedBotId: string | null;
 }
 
 /* ── Open Positions Table — FIXED: 7 rows ── */
-const POSITIONS = [
-  { pair: "BTC/USDT", tf: "1h", icon: "B", bot: "bot-trend-01", side: "long", lev: "10x", entry: "$87,234", current: "$87,891", pnl: "+$656.70", pnlUp: true, duration: "4h 23m" },
-  { pair: "BTC/USDT", tf: "1h", icon: "B", bot: "bot-trend-01", side: "long", lev: "10x", entry: "$86,920", current: "$87,105", pnl: "+$185.00", pnlUp: true, duration: "6h 48m" },
-  { pair: "ETH/USDT", tf: "1h", icon: "E", bot: "bot-mean-rev", side: "short", lev: "5x", entry: "$2,087", current: "$2,074", pnl: "+$66.50", pnlUp: true, duration: "2h 11m" },
-  { pair: "ETH/USDT", tf: "15m", icon: "E", bot: "bot-mean-rev", side: "long", lev: "5x", entry: "$2,069", current: "$2,074", pnl: "+$25.00", pnlUp: true, duration: "47m" },
-  { pair: "SOL/USDT", tf: "5m", icon: "S", bot: "bot-scalp-hl", side: "long", lev: "20x", entry: "$142.85", current: "$141.90", pnl: "-$190.00", pnlUp: false, duration: "48m" },
-  { pair: "ETH/USDT", tf: "4h", icon: "E", bot: "bot-mean-rev", side: "short", lev: "3x", entry: "$2,092", current: "$2,074", pnl: "+$54.00", pnlUp: true, duration: "1h 32m" },
-  { pair: "DOGE/USDT", tf: "1h", icon: "D", bot: "bot-breakout-p", side: "long", lev: "3x", entry: "$0.1842", current: "$0.1891", pnl: "+$297.50", pnlUp: true, duration: "3h 15m", paper: true },
-];
+interface PositionData {
+  pair: string;
+  tf: string;
+  icon: string;
+  bot: string;
+  side: string;
+  lev: string;
+  entry: string;
+  current: string;
+  pnl: string;
+  pnlUp: boolean;
+  duration: string;
+  paper?: boolean;
+}
+const POSITIONS: PositionData[] = [];
 
 function PositionsTable() {
+  const router = useRouter();
   return (
     <Card>
       <CardHeader className="py-4 px-5 flex flex-row items-center justify-between">
@@ -156,7 +193,7 @@ function PositionsTable() {
           <span className="text-xs font-normal text-muted-foreground">(7 active)</span>
         </CardTitle>
         <button
-          onClick={() => alert("Navigating to Trade Journal")}
+          onClick={() => router.push("/redesign/analytics")}
           className="text-xs font-semibold text-primary hover:text-primary/80 cursor-pointer transition-colors"
         >
           View in Journal →
@@ -178,7 +215,7 @@ function PositionsTable() {
         </TableHeader>
         <TableBody>
           {POSITIONS.map((p, i) => (
-            <TableRow key={i} className="cursor-pointer" onClick={() => alert(`Viewing trade details for ${p.pair} (${p.bot})`)}>
+            <TableRow key={i} className="cursor-pointer" onClick={() => console.info(`Viewing trade details for ${p.pair} (${p.bot})`)}>
               <TableCell>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-extrabold text-primary">
@@ -213,7 +250,7 @@ function PositionsTable() {
               <TableCell>
                 <span
                   className="text-muted-foreground hover:text-foreground cursor-pointer text-lg"
-                  onClick={(e) => { e.stopPropagation(); alert(`Actions: Force Exit, Increase Position, Decrease Position for ${p.pair}`); }}
+                  onClick={(e) => { e.stopPropagation(); console.info(`Actions: Force Exit, Increase Position, Decrease Position for ${p.pair}`); }}
                 >
                   ⋮
                 </span>
@@ -227,15 +264,23 @@ function PositionsTable() {
 }
 
 /* ── TODAY'S CLOSED TRADES TABLE — PREVIOUSLY MISSING ── */
-const CLOSED_TRADES = [
-  { id: "#4821", pair: "BTC/USDT", bot: "bot-trend-01", side: "long", entry: "$86,412", exit: "$87,120", pnl: "+$312.40", pnlUp: true, fees: "$2.18", duration: "3h 42m", closed: "14:22" },
-  { id: "#4820", pair: "ETH/USDT", bot: "bot-mean-rev", side: "short", entry: "$2,094", exit: "$2,081", pnl: "+$66.50", pnlUp: true, fees: "$0.94", duration: "1h 18m", closed: "13:45" },
-  { id: "#4819", pair: "SOL/USDT", bot: "bot-scalp-hl", side: "long", entry: "$143.20", exit: "$142.85", pnl: "-$35.00", pnlUp: false, fees: "$0.48", duration: "22m", closed: "12:08" },
-  { id: "#4818", pair: "BTC/USDT", bot: "bot-trend-01", side: "long", entry: "$85,930", exit: "$86,280", pnl: "+$87.50", pnlUp: true, fees: "$1.22", duration: "5h 10m", closed: "10:55" },
-  { id: "#4817", pair: "DOGE/USDT", bot: "bot-breakout-p", side: "long", entry: "$0.1810", exit: "$0.1834", pnl: "+$18.00", pnlUp: true, fees: "$0.26", duration: "2h 05m", closed: "09:30" },
-];
+interface ClosedTradeData {
+  id: string;
+  pair: string;
+  bot: string;
+  side: string;
+  entry: string;
+  exit: string;
+  pnl: string;
+  pnlUp: boolean;
+  fees: string;
+  duration: string;
+  closed: string;
+}
+const CLOSED_TRADES: ClosedTradeData[] = [];
 
 function ClosedTradesTable() {
+  const router = useRouter();
   return (
     <Card>
       <CardHeader className="py-4 px-5 flex flex-row items-center justify-between">
@@ -244,7 +289,7 @@ function ClosedTradesTable() {
           <span className="text-xs font-normal text-muted-foreground">(5 trades)</span>
         </CardTitle>
         <button
-          onClick={() => alert("Navigating to Full Trade History")}
+          onClick={() => router.push("/redesign/analytics")}
           className="text-xs font-semibold text-primary hover:text-primary/80 cursor-pointer transition-colors"
         >
           Full history →
@@ -267,7 +312,7 @@ function ClosedTradesTable() {
         </TableHeader>
         <TableBody>
           {CLOSED_TRADES.map((t) => (
-            <TableRow key={t.id} className="cursor-pointer" onClick={() => alert(`Viewing trade ${t.id} details`)}>
+            <TableRow key={t.id} className="cursor-pointer" onClick={() => console.info(`Viewing trade ${t.id} details`)}>
               <TableCell className="text-xs font-mono-data text-muted-foreground">{t.id}</TableCell>
               <TableCell className="text-sm font-bold text-foreground">{t.pair}</TableCell>
               <TableCell className="text-xs">{t.bot}</TableCell>
@@ -301,6 +346,7 @@ const ACTIONS = [
 ];
 
 function QuickActions() {
+  const router = useRouter();
   return (
     <Card>
       <CardHeader className="py-4 px-5">
@@ -312,7 +358,7 @@ function QuickActions() {
         {ACTIONS.map((a) => (
           <button
             key={a.label}
-            onClick={() => alert(`Navigating to ${a.label} (${a.href})`)}
+            onClick={() => { if (a.href !== "#") router.push(a.href); else console.info(`Action ${a.label} clicked`); }}
             className="flex items-center gap-3 px-4 py-3 rounded-btn border border-border bg-accent/20 cursor-pointer hover:border-primary hover:bg-primary/5 hover:text-primary transition-all text-sm text-muted-foreground font-medium w-full text-left"
           >
             <span className="text-base w-5 text-center">{a.icon}</span>
@@ -326,14 +372,15 @@ function QuickActions() {
 }
 
 /* ── Daily P&L ── */
-const DAILY = [
-  { day: "Mon", val: 380 }, { day: "Tue", val: -120 }, { day: "Wed", val: 710 },
-  { day: "Thu", val: 295 }, { day: "Fri", val: -85 }, { day: "Sat", val: 520 },
-  { day: "Today", val: 449 },
-];
+interface DailyPnlData {
+  day: string;
+  val: number;
+}
+const DAILY: DailyPnlData[] = [];
 
 function DailyPnL() {
-  const max = Math.max(...DAILY.map((d) => Math.abs(d.val)));
+  const router = useRouter();
+  const max = Math.max(...DAILY.map((d) => Math.abs(d.val)), 1);
   return (
     <Card className="flex-1">
       <CardHeader className="py-4 px-5 flex flex-row items-center justify-between">
@@ -341,27 +388,33 @@ function DailyPnL() {
           <span>📅</span> Daily P&L (7d)
         </CardTitle>
         <button
-          onClick={() => alert("Navigating to Analytics")}
+          onClick={() => router.push("/redesign/analytics")}
           className="text-xs font-semibold text-primary hover:text-primary/80 cursor-pointer transition-colors"
         >
           Analytics →
         </button>
       </CardHeader>
       <CardContent className="px-5 pb-5 pt-0">
-        <div className="flex items-end gap-2 h-[120px]">
-          {DAILY.map((d) => (
-            <div key={d.day} className="flex-1 flex flex-col items-center gap-1.5">
-              <span className={`text-2xs font-bold font-mono-data ${d.val >= 0 ? "text-ft-green" : "text-ft-red"}`}>
-                {d.val >= 0 ? "+" : ""}${Math.abs(d.val)}
-              </span>
-              <div
-                className={`w-full rounded-t-[5px] min-h-[4px] ${d.val >= 0 ? "bg-gradient-to-t from-ft-green/60 to-ft-green" : "bg-gradient-to-b from-ft-red/60 to-ft-red rounded-t-none rounded-b-[5px]"}`}
-                style={{ height: `${(Math.abs(d.val) / max) * 80}%` }}
-              />
-              <span className="text-2xs text-muted-foreground">{d.day}</span>
-            </div>
-          ))}
-        </div>
+        {DAILY.length === 0 ? (
+          <div className="flex items-center justify-center h-[120px] text-xs text-muted-foreground">
+            No P&L data available
+          </div>
+        ) : (
+          <div className="flex items-end gap-2 h-[120px]">
+            {DAILY.map((d) => (
+              <div key={d.day} className="flex-1 flex flex-col items-center gap-1.5">
+                <span className={`text-2xs font-bold font-mono-data ${d.val >= 0 ? "text-ft-green" : "text-ft-red"}`}>
+                  {d.val >= 0 ? "+" : ""}${Math.abs(d.val)}
+                </span>
+                <div
+                  className={`w-full rounded-t-[5px] min-h-[4px] ${d.val >= 0 ? "bg-gradient-to-t from-ft-green/60 to-ft-green" : "bg-gradient-to-b from-ft-red/60 to-ft-red rounded-t-none rounded-b-[5px]"}`}
+                  style={{ height: `${(Math.abs(d.val) / max) * 80}%` }}
+                />
+                <span className="text-2xs text-muted-foreground">{d.day}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -369,6 +422,7 @@ function DailyPnL() {
 
 /* ── Equity Curve ── */
 function EquityCurve() {
+  const router = useRouter();
   return (
     <Card>
       <CardHeader className="py-4 px-5 flex flex-row items-center justify-between">
@@ -376,7 +430,7 @@ function EquityCurve() {
           <span>📈</span> Equity Curve (30d)
         </CardTitle>
         <button
-          onClick={() => alert("Navigating to Full Analytics")}
+          onClick={() => router.push("/redesign/analytics")}
           className="text-xs font-semibold text-primary hover:text-primary/80 cursor-pointer transition-colors"
         >
           Full Analytics →
@@ -404,13 +458,12 @@ function EquityCurve() {
 }
 
 /* ── Alerts — FIXED: 5 items ── */
-const INITIAL_ALERTS = [
-  { type: "success" as const, text: "Trade closed — BTC/USDT +$312.40", time: "12 min ago" },
-  { type: "warning" as const, text: "Drawdown alert — bot-scalp-hl nearing 3% DD", time: "34 min ago" },
-  { type: "info" as const, text: "Backtest done — BreakoutAI v3 (Sharpe 2.1)", time: "1h ago" },
-  { type: "critical" as const, text: "Protection triggered — StoplossGuard on bot-scalp-hl", time: "3h ago" },
-  { type: "info" as const, text: "Data download complete — BTC/USDT 1h 2024-01-01 → 2026-03-29", time: "5h ago" },
-];
+interface AlertData {
+  type: "success" | "warning" | "info" | "critical";
+  text: string;
+  time: string;
+}
+const INITIAL_ALERTS: AlertData[] = [];
 
 const alertDotColors = {
   success: "bg-ft-green",
@@ -436,7 +489,7 @@ function Alerts() {
           )}
         </CardTitle>
         <button
-          onClick={() => alert("Navigating to All Alerts")}
+          onClick={() => console.info("Navigating to All Alerts")}
           className="text-xs font-semibold text-primary hover:text-primary/80 cursor-pointer transition-colors"
         >
           View all →
@@ -468,16 +521,12 @@ function Alerts() {
 }
 
 /* ── System Health — FIXED: 8 items ── */
-const HEALTH = [
-  { name: "bot-trend-01", detail: "12ms · Last trade: 12m ago", status: "ok" as const },
-  { name: "bot-mean-rev", detail: "8ms · Last trade: 2h ago", status: "ok" as const },
-  { name: "bot-scalp-hl", detail: "45ms · Protection active", status: "warn" as const },
-  { name: "bot-breakout-p", detail: "15ms · Paper mode", status: "ok" as const },
-  { name: "bot-freqai-exp", detail: "22ms · Paper mode", status: "ok" as const },
-  { name: "PostgreSQL", detail: "Connected · 12.4 MB", status: "ok" as const },
-  { name: "Redis", detail: "Connected · 2.1 MB cache", status: "ok" as const },
-  { name: "Binance API", detail: "OK · Rate: 340/1200", status: "ok" as const },
-];
+interface HealthData {
+  name: string;
+  detail: string;
+  status: "ok" | "warn" | "err";
+}
+const HEALTH: HealthData[] = [];
 
 const healthDotColors = {
   ok: "bg-ft-green shadow-[0_0_6px_hsla(97,75%,33%,0.3)]",
@@ -518,6 +567,18 @@ function SystemHealth() {
 export default function DashboardPage() {
   const [selectedBotId, setSelectedBotId] = useState<string | null>(null);
   const [killSwitchOpen, setKillSwitchOpen] = useState(false);
+  
+  const { data: botsList } = useApi(getBots, [], { refreshInterval: 15000 });
+  const displayBots: BotData[] = (botsList || []).map(b => ({
+    name: b.name,
+    status: b.is_dry_run ? "paper" : "live",
+    strategy: b.strategy_name || "Unknown",
+    pair: b.pair_whitelist?.[0] || "Multiple",
+    pnl: "—",
+    pnlUp: true,
+    positions: 0,
+    bars: [0, 0, 0, 0, 0, 0, 0],
+  }));
 
   return (
     <>
@@ -532,7 +593,7 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      <StatCards />
+      <StatCards bots={displayBots} />
       <BotGrid selectedBotId={selectedBotId} onSelectBot={(name) => setSelectedBotId(prev => prev === name ? null : name)} />
 
       {/* Selected bot indicator */}

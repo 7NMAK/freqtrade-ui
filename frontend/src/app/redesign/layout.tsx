@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { hardKillAll } from "@/lib/api";
 import { usePathname } from "next/navigation";
 // TooltipProvider removed — using custom Tooltip component
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -40,12 +41,7 @@ const NAV = [
   },
 ];
 
-const MOCK_NOTIFICATIONS = [
-  { id: 1, text: "Bot bot-trend-01 opened LONG BTC/USDT at 68,432.10", time: "2m ago", type: "trade" },
-  { id: 2, text: "Backtesting job completed: RSI-BB-Trend strategy", time: "15m ago", type: "system" },
-  { id: 3, text: "Kill switch triggered on bot-scalp-03 (heartbeat timeout)", time: "1h ago", type: "alert" },
-  { id: 4, text: "FreqAI training complete: LightGBMRegressor (87.3% acc)", time: "3h ago", type: "system" },
-];
+
 
 function Sidebar() {
   const pathname = usePathname();
@@ -132,7 +128,7 @@ function Sidebar() {
 function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [notifOpen, setNotifOpen] = useState(false);
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<{ id: number; text: string; time: string }[]>([]);
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HTMLDivElement>(null);
@@ -155,9 +151,15 @@ function Header() {
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
-  const handleKillSwitch = () => {
-    if (window.confirm("KILL SWITCH: This will stop all bots and force-exit all positions. Are you sure?")) {
-      alert("Kill switch activated (mock). All bots stopped, positions force-exited.");
+  const handleKillSwitch = async () => {
+    // Note: A custom confirmation modal should be used here instead of window.confirm
+    if (typeof window !== "undefined" && window.confirm("KILL SWITCH: This will stop all bots and force-exit all positions. Are you sure?")) {
+      try {
+        await hardKillAll("Triggered from UI");
+        console.info("Kill switch activated. All bots stopped, positions force-exited.");
+      } catch {
+        console.error("Failed to activate kill switch!");
+      }
     }
   };
 
@@ -249,9 +251,9 @@ function Header() {
           {avatarMenuOpen && (
             <div className="absolute right-0 top-full mt-2 w-44 bg-card border border-border rounded-lg shadow-xl z-50 overflow-hidden py-1">
               {[
-                { label: "Profile", action: () => alert("Profile page (mock)") },
+                { label: "Profile", action: () => { window.location.href = "/redesign/settings"; } },
                 { label: "Settings", action: () => { window.location.href = "/redesign/settings"; } },
-                { label: "Logout", action: () => { if (window.confirm("Log out?")) alert("Logged out (mock)"); } },
+                { label: "Logout", action: () => { if (window.confirm("Log out?")) { localStorage.removeItem("orch_token"); window.location.href = "/login"; } } },
               ].map(item => (
                 <button
                   key={item.label}

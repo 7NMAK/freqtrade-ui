@@ -243,26 +243,23 @@ export default function ValidationTab({}: { strategy?: string }) {
 
   const handleRunVerification = () => {
     setIsRunning(true);
-    setTimeout(() => {
-      setIsRunning(false);
-      setHasRun(true);
-    }, 2500);
+    // Placeholder pending backend integration
+    setIsRunning(false);
+    setHasRun(true);
   };
 
   const handleRunLookahead = () => {
     setIsRunning(true);
-    setTimeout(() => {
-      setIsRunning(false);
-      setLookaheadRun(true);
-    }, 1500);
+    // Placeholder pending backend integration
+    setIsRunning(false);
+    setLookaheadRun(true);
   };
 
   const handleRunRecursive = () => {
     setIsRunning(true);
-    setTimeout(() => {
-      setIsRunning(false);
-      setRecursiveRun(true);
-    }, 1500);
+    // Placeholder pending backend integration
+    setIsRunning(false);
+    setRecursiveRun(true);
   };
 
   return (

@@ -45,80 +45,58 @@ interface CurrentlyRunning {
   status: "running" | "queued";
 }
 
-const generateMockResults = (): FreqAIResult[] => {
-  const models = ["LightGBMRegressor", "XGBoostRegressor", "CatboostRegressor", "PyTorchMLPRegressor", "ReinforcementLearner"];
-  const outliers = ["None", "DI", "SVM", "DBSCAN"];
-  const pca = [false, true];
-  const noise = [false, true];
-
-  const results: FreqAIResult[] = [];
-  let idx = 1;
-
-  for (const model of models) {
-    for (const outlier of outliers) {
-      for (const pcaVal of pca) {
-        for (const noiseVal of noise) {
-          const baseProfit = Math.random() * 20 - 2;
-          const modifier = Math.random() * 5;
-          const profitPct = baseProfit + (pcaVal ? 1 : 0) + (noiseVal ? -0.5 : 0) + modifier;
-
-          results.push({
-            id: `freqai_${idx}`,
-            model,
-            outlier,
-            pcaEnabled: pcaVal,
-            noiseEnabled: noiseVal,
-            trades: Math.floor(Math.random() * 50) + 20,
-            winRate: Math.random() * 40 + 45,
-            profitPct,
-            maxDD: -(Math.random() * 15 + 5),
-            sharpe: Math.random() * 1.5 + 0.5,
-            sortino: Math.random() * 2 + 0.8,
-            accuracy: Math.random() * 35 + 50,
-            started: `2024-03-${String(Math.floor(Math.random() * 28) + 1).padStart(2, "0")} ${String(Math.floor(Math.random() * 24)).padStart(2, "0")}:${String(Math.floor(Math.random() * 60)).padStart(2, "0")}:00`,
-            finished: `2024-03-${String(Math.floor(Math.random() * 28) + 1).padStart(2, "0")} ${String(Math.floor(Math.random() * 24)).padStart(2, "0")}:${String(Math.floor(Math.random() * 60)).padStart(2, "0")}:00`,
-            duration: `${Math.floor(Math.random() * 180) + 20}m`,
-            topFeatures: [
-              { name: "RSI_14", importance: 0.28 },
-              { name: "MACD", importance: 0.22 },
-              { name: "BB_Upper", importance: 0.18 },
-              { name: "ATR_14", importance: 0.15 },
-              { name: "Volume_SMA", importance: 0.17 },
-            ],
-          });
-          idx++;
-        }
-      }
-    }
-  }
-
-  // Shuffle results
-  return results.sort(() => Math.random() - 0.5);
-};
-
-const MOCK_HYPEROPT_OPTIONS: HyperoptOption[] = [
-  { label: "CmaEs · SortinoDaily · Signals Only · +15.2%", sampler: "CmaEs", loss: "SortinoDaily", space: "Signals Only", profitPct: 15.2 },
-  { label: "TPE · Sharpe · Signals+Risk · +12.8%", sampler: "TPE", loss: "Sharpe", space: "Signals+Risk", profitPct: 12.8 },
-  { label: "GPS · SharpeDaily · Full · +11.5%", sampler: "GPS", loss: "SharpeDaily", space: "Full", profitPct: 11.5 },
+// Mock hyperopt options
+const HYPEROPT_OPTIONS: HyperoptOption[] = [
+  { label: "CmaEs · SortinoDaily · +15.2% (best)", sampler: "CmaEs", loss: "SortinoDaily", space: "Signals Only", profitPct: 15.2 },
+  { label: "TPE · Sharpe · +12.8%", sampler: "TPE", loss: "Sharpe", space: "Signals+Risk", profitPct: 12.8 },
+  { label: "GPS · SharpeDaily · +11.5%", sampler: "GPS", loss: "SharpeDaily", space: "Full", profitPct: 11.5 },
 ];
 
-const getSpeedBadge = (speed: string): string => {
-  const badges: Record<string, string> = {
-    Fast: "⚡",
-    Medium: "⚡⚡",
-    Slow: "⚡⚡⚡",
-  };
-  return badges[speed] || "";
-};
+// Mock results data
+const MOCK_RESULTS: FreqAIResult[] = Array.from({ length: 128 }, (_, i) => ({
+  id: `result-${i}`,
+  model: FREQAI_MODELS[i % FREQAI_MODELS.length].label,
+  outlier: OUTLIER_METHODS[Math.floor(i / FREQAI_MODELS.length) % OUTLIER_METHODS.length].label,
+  pcaEnabled: Math.floor((i / (FREQAI_MODELS.length * OUTLIER_METHODS.length)) % 2) === 0,
+  noiseEnabled: (i % 2) === 0,
+  trades: Math.floor(Math.random() * 150) + 20,
+  winRate: Math.random() * 65 + 35,
+  profitPct: Math.random() * 40 - 5,
+  maxDD: Math.random() * 20 + 5,
+  sharpe: Math.random() * 2 + 0.5,
+  sortino: Math.random() * 3 + 1,
+  accuracy: Math.random() * 60 + 40,
+  started: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+  finished: new Date(Date.now() - Math.random() * 86400000 * 0.5).toISOString(),
+  duration: `${Math.floor(Math.random() * 120) + 30}m`,
+  topFeatures: [
+    { name: "RSI", importance: 0.25 },
+    { name: "MACD", importance: 0.18 },
+    { name: "BB", importance: 0.15 },
+    { name: "Volume", importance: 0.12 },
+    { name: "ATR", importance: 0.10 },
+  ],
+}));
+
+// Toggle component
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (val: boolean) => void }) {
+  return (
+    <label className="relative w-[36px] h-[20px] cursor-pointer inline-block">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="hidden" />
+      <span className={`absolute inset-0 rounded-[10px] border transition-all ${checked ? "bg-green/8 border-green" : "bg-bg-3 border-border"}`} />
+      <span className={`absolute w-[14px] h-[14px] bg-white rounded-full top-[3px] transition-all ${checked ? "left-[19px]" : "left-[3px]"}`} />
+    </label>
+  );
+}
 
 export default function FreqAITab({}: FreqAITabProps) {
-  // Form state - left panel
+  // Left panel form state
   const [selectedHyperopt, setSelectedHyperopt] = useState(0);
-  const [testNamePrefix, setTestNamePrefix] = useState(`freqai ${new Date().toISOString().split("T")[0]}`);
-  const [description, setDescription] = useState("");
-  const [trainStartDate, setTrainStartDate] = useState("2024-01-01");
-  const [trainEndDate, setTrainEndDate] = useState("2024-06-30");
-  const [backTestStartDate, setBackTestStartDate] = useState("2024-07-01");
+  const [testNamePrefix, setTestNamePrefix] = useState(`freqai_${new Date().toISOString().split("T")[0]}`);
+  const [description, setDescription] = useState("Auto-generated from settings. Click to edit.");
+  const [trainStartDate, setTrainStartDate] = useState("2022-01-01");
+  const [trainEndDate, setTrainEndDate] = useState("2024-01-01");
+  const [backTestStartDate, setBackTestStartDate] = useState("2024-01-01");
   const [backTestEndDate, setBackTestEndDate] = useState("2025-01-01");
   const [featurePeriod, setFeaturePeriod] = useState("20");
   const [labelPeriod, setLabelPeriod] = useState("24");
@@ -136,7 +114,7 @@ export default function FreqAITab({}: FreqAITabProps) {
 
   // Advanced options
   const [diThreshold, setDiThreshold] = useState(1.0);
-  const [svmNu, setSvmNu] = useState(0.1);
+  const [svmNu, setSvmNu] = useState(0.15);
   const [weightFactor, setWeightFactor] = useState(1.0);
   const [noiseStdDev, setNoiseStdDev] = useState(0.1);
   const [outlierProtectionPct, setOutlierProtectionPct] = useState(30);
@@ -146,10 +124,15 @@ export default function FreqAITab({}: FreqAITabProps) {
   const [includeCorrPairs, setIncludeCorrPairs] = useState(false);
   const [indicatorPeriods, setIndicatorPeriods] = useState("10, 20");
 
-  // Results state - right panel
+  // Right panel results state
   const [isRunning, setIsRunning] = useState(false);
-  const [results, setResults] = useState<FreqAIResult[]>([]);
-  const [currentlyRunning, setCurrentlyRunning] = useState<CurrentlyRunning[]>([]);
+  const [results, setResults] = useState<FreqAIResult[]>(MOCK_RESULTS);
+  const [currentlyRunning, setCurrentlyRunning] = useState<CurrentlyRunning[]>([
+    { model: "LightGBMRegressor", outlier: "DI", pcaEnabled: true, noiseEnabled: true, progress: 75, status: "running" },
+    { model: "XGBoostRegressor", outlier: "SVM", pcaEnabled: true, noiseEnabled: false, progress: 50, status: "running" },
+    { model: "CatboostRegressor", outlier: "DBSCAN", pcaEnabled: false, noiseEnabled: true, progress: 25, status: "running" },
+    { model: "PyTorchMLPRegressor", outlier: "None", pcaEnabled: false, noiseEnabled: false, progress: 0, status: "queued" },
+  ]);
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [chartPeriod, setChartPeriod] = useState<"day" | "week" | "month">("month");
@@ -158,7 +141,7 @@ export default function FreqAITab({}: FreqAITabProps) {
 
   // Calculate matrix total
   const matrixTotal = useMemo(() => {
-    return selectedModels.size * selectedOutliers.size * 2 * 2; // 2 PCA × 2 Noise
+    return selectedModels.size * selectedOutliers.size * 2 * 2;
   }, [selectedModels, selectedOutliers]);
 
   const handleToggleModel = (modelValue: string) => {
@@ -185,40 +168,12 @@ export default function FreqAITab({}: FreqAITabProps) {
     setIsRunning(true);
     setCurrentPage(1);
     setExpandedRowId(null);
-
-    // Simulate running
-    const mockRunning: CurrentlyRunning[] = [
-      { model: "LightGBMRegressor", outlier: "DI", pcaEnabled: false, noiseEnabled: true, progress: 75, status: "running" },
-      { model: "XGBoostRegressor", outlier: "SVM", pcaEnabled: true, noiseEnabled: false, progress: 50, status: "running" },
-      { model: "CatboostRegressor", outlier: "DBSCAN", pcaEnabled: true, noiseEnabled: true, progress: 25, status: "running" },
-      { model: "PyTorchMLPRegressor", outlier: "None", pcaEnabled: false, noiseEnabled: false, progress: 0, status: "queued" },
-    ];
-    setCurrentlyRunning(mockRunning);
-
-    // Simulate completion
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    const mockResults = generateMockResults();
-    setResults(mockResults);
-    setCurrentlyRunning([]);
-    setIsRunning(false);
   };
 
   const handleRunSelected = async () => {
     setIsRunning(true);
     setCurrentPage(1);
     setExpandedRowId(null);
-
-    const mockRunning: CurrentlyRunning[] = [
-      { model: "LightGBMRegressor", outlier: "DI", pcaEnabled: true, noiseEnabled: true, progress: 50, status: "running" },
-      { model: "XGBoostRegressor", outlier: "None", pcaEnabled: false, noiseEnabled: false, progress: 0, status: "queued" },
-    ];
-    setCurrentlyRunning(mockRunning);
-
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    const mockResults = generateMockResults().slice(0, matrixTotal);
-    setResults(mockResults);
-    setCurrentlyRunning([]);
-    setIsRunning(false);
   };
 
   const handleStopAll = () => {
@@ -313,166 +268,168 @@ export default function FreqAITab({}: FreqAITabProps) {
   };
 
   return (
-    <div className="flex gap-4 bg-bg-1 border border-border rounded-lg p-6">
-      {/* LEFT PANEL - FORM */}
-      <div className="w-[380px] flex flex-col gap-6 border-r border-border pr-6">
-        {/* Hyperopt Source Selection */}
+    <div className="grid grid-cols-[380px_minmax(0,1fr)] gap-5">
+      {/* LEFT PANEL ─────────────────────────────────────────────────────────────────── */}
+      <div className="bg-bg-1 border border-border rounded-card p-4 flex flex-col gap-4 h-fit sticky top-4">
+        {/* Title */}
+        <div className="text-[13px] font-semibold text-text-0">FreqAI Configuration</div>
+
+        {/* Hyperopt Source */}
         <div>
-          <label className="text-xs font-semibold text-text-0 mb-2 block">
-            <Tooltip content="Select which hyperopt run to use as the base for model training">Hyperopt Source</Tooltip>
+          <label className="text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px] block">
+            Hyperopt Source
           </label>
           <select
             value={selectedHyperopt}
             onChange={(e) => setSelectedHyperopt(Number(e.target.value))}
-            className="w-full bg-bg-2 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+            className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
           >
-            {MOCK_HYPEROPT_OPTIONS.map((opt, i) => (
+            {HYPEROPT_OPTIONS.map((opt, i) => (
               <option key={i} value={i}>
                 {opt.label}
               </option>
             ))}
           </select>
-          <div className="mt-2 p-2 bg-bg-2 rounded text-xs text-text-2 border border-border">
-            <div className="font-mono">Sampler: {MOCK_HYPEROPT_OPTIONS[selectedHyperopt].sampler}</div>
-            <div className="font-mono">Loss: {MOCK_HYPEROPT_OPTIONS[selectedHyperopt].loss}</div>
-            <div className="font-mono">Space: {MOCK_HYPEROPT_OPTIONS[selectedHyperopt].space}</div>
-          </div>
         </div>
 
         {/* Test Name Prefix */}
         <div>
-          <label className="text-xs font-semibold text-text-0 mb-2 block">
-            <Tooltip content="Prefix for all FreqAI test runs">Test Name Prefix</Tooltip>
+          <label className="text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px] block">
+            Test Name Prefix
           </label>
           <input
             type="text"
             value={testNamePrefix}
             onChange={(e) => setTestNamePrefix(e.target.value)}
-            className="w-full bg-bg-2 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+            className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
           />
         </div>
 
-        {/* Description */}
+        {/* Description (auto-generated box) */}
         <div>
-          <label className="text-xs font-semibold text-text-0 mb-2 block">
-            <Tooltip content="Optional notes about this FreqAI experiment">Description</Tooltip>
+          <label className="text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px] block">
+            Description
           </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full bg-bg-2 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent resize-none h-16"
-            placeholder="Optional notes..."
-          />
+          <div className="bg-bg-2 border border-border rounded-btn px-3 py-2 text-[11px] text-text-1">
+            {description}
+          </div>
+          <div className="text-[10px] text-text-3 mt-[3px]">
+            Auto-generated from settings. Click to edit.
+          </div>
         </div>
 
         {/* Training Timerange */}
         <div>
-          <label className="text-xs font-semibold text-text-0 mb-2 block">
-            <Tooltip content="Date range for training data">Training Timerange</Tooltip>
+          <label className="text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px] block">
+            Training Timerange
           </label>
           <div className="flex gap-2">
             <input
               type="date"
               value={trainStartDate}
               onChange={(e) => setTrainStartDate(e.target.value)}
-              className="flex-1 bg-bg-2 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+              className="flex-1 py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
             />
             <input
               type="date"
               value={trainEndDate}
               onChange={(e) => setTrainEndDate(e.target.value)}
-              className="flex-1 bg-bg-2 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+              className="flex-1 py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
             />
           </div>
         </div>
 
         {/* Backtest Timerange */}
         <div>
-          <label className="text-xs font-semibold text-text-0 mb-2 block">
-            <Tooltip content="Date range for backtesting (must be after training period)">Backtest Timerange</Tooltip>
+          <label className="text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px] block">
+            Backtest Timerange
           </label>
           <div className="flex gap-2">
             <input
               type="date"
               value={backTestStartDate}
               onChange={(e) => setBackTestStartDate(e.target.value)}
-              className="flex-1 bg-bg-2 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+              className="flex-1 py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
             />
             <input
               type="date"
               value={backTestEndDate}
               onChange={(e) => setBackTestEndDate(e.target.value)}
-              className="flex-1 bg-bg-2 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+              className="flex-1 py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
             />
           </div>
         </div>
 
-        {/* Feature & Label Period */}
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="text-xs font-semibold text-text-0 mb-2 block">
-              <Tooltip content="Lookback period for feature calculation">Feature Period</Tooltip>
-            </label>
-            <input
-              type="number"
-              value={featurePeriod}
-              onChange={(e) => setFeaturePeriod(e.target.value)}
-              className="w-full bg-bg-2 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-text-0 mb-2 block">
-              <Tooltip content="Lookback period for label generation">Label Period</Tooltip>
-            </label>
-            <input
-              type="number"
-              value={labelPeriod}
-              onChange={(e) => setLabelPeriod(e.target.value)}
-              className="w-full bg-bg-2 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
-            />
-          </div>
-        </div>
-
-        {/* Model Selection Grid */}
+        {/* Feature Period */}
         <div>
-          <label className="text-xs font-semibold text-text-0 mb-2 block">
-            <Tooltip content="Select which ML models to test (8 models max)">Models (8)</Tooltip>
+          <label className="text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px] block">
+            Feature Period (candles)
           </label>
-          <div className="grid grid-cols-2 gap-2">
+          <input
+            type="number"
+            value={featurePeriod}
+            onChange={(e) => setFeaturePeriod(e.target.value)}
+            className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
+          />
+        </div>
+
+        {/* Label Period */}
+        <div>
+          <label className="text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px] block">
+            Label Period (candles)
+          </label>
+          <input
+            type="number"
+            value={labelPeriod}
+            onChange={(e) => setLabelPeriod(e.target.value)}
+            className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
+          />
+        </div>
+
+        {/* Matrix Calculation Info Box */}
+        <div className="bg-bg-2 border border-border rounded-btn px-3 py-2 text-[11px] text-text-2">
+          {selectedModels.size} models × {selectedOutliers.size} outlier × 2 PCA × 2 noise = {matrixTotal} tests
+        </div>
+
+        {/* ML Models (8) */}
+        <div>
+          <label className="text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px] block">
+            ML Models (8)
+          </label>
+          <div className="flex flex-wrap gap-2">
             {FREQAI_MODELS.map((model) => (
               <button
                 key={model.value}
                 onClick={() => handleToggleModel(model.value)}
-                className={`p-2 rounded border transition-colors text-xs text-center ${
-                  selectedModels.has(model.value)
-                    ? "bg-accent border-accent text-bg-0"
-                    : "bg-bg-2 border-border text-text-1 hover:border-accent/50"
-                }`}
                 title={model.tip}
+                className={`inline-flex items-center gap-1 py-[5px] px-3 rounded-btn text-[11px] cursor-pointer border transition-all select-none ${
+                  selectedModels.has(model.value)
+                    ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-accent"
+                    : "bg-bg-2 border-border text-text-2"
+                }`}
               >
-                <div className="font-semibold">{model.label}</div>
-                <div className="text-xs opacity-75">{getSpeedBadge(model.speed)}</div>
+                {model.label.replace("Regressor", "Reg").replace("Classifier", "Cls")}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Outlier Methods */}
+        {/* Outlier Detection (4) */}
         <div>
-          <label className="text-xs font-semibold text-text-0 mb-2 block">
-            <Tooltip content="Select outlier detection methods (4 available)">Outlier Methods (4)</Tooltip>
+          <label className="text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px] block">
+            Outlier Detection (4)
           </label>
           <div className="flex flex-wrap gap-2">
             {OUTLIER_METHODS.map((method) => (
               <button
                 key={method.value}
                 onClick={() => handleToggleOutlier(method.value)}
-                className={`px-3 py-1 rounded border transition-colors text-xs ${
-                  selectedOutliers.has(method.value)
-                    ? "bg-accent border-accent text-bg-0"
-                    : "bg-bg-2 border-border text-text-1 hover:border-accent/50"
-                }`}
                 title={method.tip}
+                className={`inline-flex items-center gap-1 py-[5px] px-3 rounded-btn text-[11px] cursor-pointer border transition-all select-none ${
+                  selectedOutliers.has(method.value)
+                    ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-accent"
+                    : "bg-bg-2 border-border text-text-2"
+                }`}
               >
                 {method.label}
               </button>
@@ -480,483 +437,481 @@ export default function FreqAITab({}: FreqAITabProps) {
           </div>
         </div>
 
-        {/* PCA Toggle */}
+        {/* Dimensionality Reduction (2) */}
         <div>
-          <label className="text-xs font-semibold text-text-0 mb-2 block flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={pcaEnabled}
-              onChange={(e) => setPcaEnabled(e.target.checked)}
-              className="w-4 h-4 rounded border-border bg-bg-2 cursor-pointer"
-            />
-            <Tooltip content="Principal Component Analysis - reduces feature dimensionality">PCA</Tooltip>
+          <label className="text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px] block">
+            Dimensionality Reduction
           </label>
+          <div className="flex flex-wrap gap-2">
+            {["Off", "On"].map((label, i) => (
+              <button
+                key={i}
+                onClick={() => setPcaEnabled(i === 1)}
+                className={`inline-flex items-center gap-1 py-[5px] px-3 rounded-btn text-[11px] cursor-pointer border transition-all select-none ${
+                  (i === 0 && !pcaEnabled) || (i === 1 && pcaEnabled)
+                    ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-accent"
+                    : "bg-bg-2 border-border text-text-2"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Noise Toggle */}
+        {/* Anti-Overfitting (2) */}
         <div>
-          <label className="text-xs font-semibold text-text-0 mb-2 block flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={noiseEnabled}
-              onChange={(e) => setNoiseEnabled(e.target.checked)}
-              className="w-4 h-4 rounded border-border bg-bg-2 cursor-pointer"
-            />
-            <Tooltip content="Add Gaussian noise to training data for robustness">Noise</Tooltip>
+          <label className="text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px] block">
+            Anti-Overfitting
           </label>
-        </div>
-
-        {/* Matrix Calculation Display */}
-        <div className="p-3 bg-bg-2 rounded border border-accent/30 text-xs text-text-1">
-          <div className="font-mono">
-            {selectedModels.size} models × {selectedOutliers.size} outlier × 2 PCA × 2 noise = {matrixTotal} tests
+          <div className="flex flex-wrap gap-2">
+            {["Off", "On"].map((label, i) => (
+              <button
+                key={i}
+                onClick={() => setNoiseEnabled(i === 1)}
+                className={`inline-flex items-center gap-1 py-[5px] px-3 rounded-btn text-[11px] cursor-pointer border transition-all select-none ${
+                  (i === 0 && !noiseEnabled) || (i === 1 && noiseEnabled)
+                    ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-accent"
+                    : "bg-bg-2 border-border text-text-2"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
 
         {/* Advanced Options */}
-        <button
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex items-center gap-2 text-accent text-xs font-semibold hover:text-accent/80 transition-colors"
-        >
-          <ChevronDown className={`w-4 h-4 transition-transform ${showAdvanced ? "rotate-180" : ""}`} />
-          Advanced Options
-        </button>
-
-        {showAdvanced && (
-          <div className="flex flex-col gap-3 p-3 bg-bg-2 rounded border border-border/50">
+        <details className="group">
+          <summary className="flex items-center gap-2 text-accent text-[11px] cursor-pointer font-semibold hover:text-accent/80 transition-colors list-none">
+            <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
+            Advanced Options
+          </summary>
+          <div className="mt-3 grid grid-cols-2 gap-3">
             {/* DI Threshold */}
             <div>
-              <label className="text-xs font-semibold text-text-0 mb-1 block">
-                <Tooltip content="Dissimilarity Index threshold for outlier detection">DI Threshold</Tooltip>
+              <label className="text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px] block">
+                DI Threshold
               </label>
               <input
                 type="range"
                 min="0"
-                max="10"
+                max="2"
                 step="0.1"
                 value={diThreshold}
                 onChange={(e) => setDiThreshold(Number(e.target.value))}
                 className="w-full"
               />
-              <div className="text-xs text-text-2 mt-1">{diThreshold.toFixed(1)}</div>
+              <div className="text-[10px] text-text-3 mt-[3px]">{diThreshold.toFixed(1)}</div>
             </div>
 
-            {/* SVM nu */}
+            {/* SVM Nu */}
             <div>
-              <label className="text-xs font-semibold text-text-0 mb-1 block">
-                <Tooltip content="SVM nu parameter (0-1)">SVM nu</Tooltip>
+              <label className="text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px] block">
+                SVM Nu
               </label>
               <input
                 type="range"
-                min="0"
-                max="1"
-                step="0.05"
+                min="0.01"
+                max="0.5"
+                step="0.01"
                 value={svmNu}
                 onChange={(e) => setSvmNu(Number(e.target.value))}
                 className="w-full"
               />
-              <div className="text-xs text-text-2 mt-1">{svmNu.toFixed(2)}</div>
+              <div className="text-[10px] text-text-3 mt-[3px]">{svmNu.toFixed(2)}</div>
             </div>
 
             {/* Weight Factor */}
             <div>
-              <label className="text-xs font-semibold text-text-0 mb-1 block">
-                <Tooltip content="Weight factor for recent trades">Weight Factor</Tooltip>
+              <label className="text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px] block">
+                Weight Factor
               </label>
               <input
                 type="range"
-                min="0"
-                max="10"
+                min="0.1"
+                max="5"
                 step="0.1"
                 value={weightFactor}
                 onChange={(e) => setWeightFactor(Number(e.target.value))}
                 className="w-full"
               />
-              <div className="text-xs text-text-2 mt-1">{weightFactor.toFixed(1)}</div>
+              <div className="text-[10px] text-text-3 mt-[3px]">{weightFactor.toFixed(1)}</div>
             </div>
 
             {/* Noise Std Dev */}
             <div>
-              <label className="text-xs font-semibold text-text-0 mb-1 block">
-                <Tooltip content="Standard deviation of Gaussian noise">Noise Std Dev</Tooltip>
-              </label>
-              <input
-                type="number"
-                value={noiseStdDev}
-                onChange={(e) => setNoiseStdDev(Number(e.target.value))}
-                step="0.01"
-                className="w-full bg-bg-3 border border-border rounded px-2 py-1 text-xs text-text-0"
-              />
-            </div>
-
-            {/* Outlier Protection % */}
-            <div>
-              <label className="text-xs font-semibold text-text-0 mb-1 block">
-                <Tooltip content="Percentage of data to protect as outliers">Outlier Protection %</Tooltip>
+              <label className="text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px] block">
+                Noise Std Dev
               </label>
               <input
                 type="range"
                 min="0"
-                max="100"
-                step="5"
-                value={outlierProtectionPct}
-                onChange={(e) => setOutlierProtectionPct(Number(e.target.value))}
+                max="0.5"
+                step="0.01"
+                value={noiseStdDev}
+                onChange={(e) => setNoiseStdDev(Number(e.target.value))}
                 className="w-full"
               />
-              <div className="text-xs text-text-2 mt-1">{outlierProtectionPct}%</div>
+              <div className="text-[10px] text-text-3 mt-[3px]">{noiseStdDev.toFixed(2)}</div>
             </div>
 
-            {/* Shuffle After Split */}
-            <label className="flex items-center gap-2 text-xs text-text-0">
+            {/* Outlier Protection % */}
+            <div>
+              <label className="text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px] block">
+                Outlier Protection %
+              </label>
               <input
-                type="checkbox"
-                checked={shuffleAfterSplit}
-                onChange={(e) => setShuffleAfterSplit(e.target.checked)}
-                className="w-3 h-3"
+                type="number"
+                value={outlierProtectionPct}
+                onChange={(e) => setOutlierProtectionPct(Number(e.target.value))}
+                className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
               />
-              <Tooltip content="Shuffle data after train/test split">Shuffle After Split</Tooltip>
-            </label>
+            </div>
 
             {/* Buffer Train Data */}
             <div>
-              <label className="text-xs font-semibold text-text-0 mb-1 block">
-                <Tooltip content="Buffer period for training data">Buffer Train Data</Tooltip>
+              <label className="text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px] block">
+                Buffer Train Data
               </label>
               <input
                 type="number"
                 value={bufferTrainData}
                 onChange={(e) => setBufferTrainData(Number(e.target.value))}
-                className="w-full bg-bg-3 border border-border rounded px-2 py-1 text-xs text-text-0"
+                className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
               />
             </div>
 
+            {/* Shuffle After Split */}
+            <div className="flex items-center gap-2">
+              <Toggle checked={shuffleAfterSplit} onChange={setShuffleAfterSplit} />
+              <span className="text-[11px] text-text-2">Shuffle After Split</span>
+            </div>
+
             {/* Reverse Train/Test */}
-            <label className="flex items-center gap-2 text-xs text-text-0">
-              <input
-                type="checkbox"
-                checked={reverseTrainTest}
-                onChange={(e) => setReverseTrainTest(e.target.checked)}
-                className="w-3 h-3"
-              />
-              <Tooltip content="Reverse train and test periods">Reverse Train/Test</Tooltip>
-            </label>
+            <div className="flex items-center gap-2">
+              <Toggle checked={reverseTrainTest} onChange={setReverseTrainTest} />
+              <span className="text-[11px] text-text-2">Reverse Train/Test</span>
+            </div>
 
             {/* Include Corr Pairs */}
-            <label className="flex items-center gap-2 text-xs text-text-0">
-              <input
-                type="checkbox"
-                checked={includeCorrPairs}
-                onChange={(e) => setIncludeCorrPairs(e.target.checked)}
-                className="w-3 h-3"
-              />
-              <Tooltip content="Include correlated pairs in training">Include Corr Pairs</Tooltip>
-            </label>
+            <div className="flex items-center gap-2 col-span-2">
+              <Toggle checked={includeCorrPairs} onChange={setIncludeCorrPairs} />
+              <span className="text-[11px] text-text-2">Include Corr Pairs</span>
+            </div>
 
             {/* Indicator Periods */}
-            <div>
-              <label className="text-xs font-semibold text-text-0 mb-1 block">
-                <Tooltip content="Comma-separated indicator periods">Indicator Periods</Tooltip>
+            <div className="col-span-2">
+              <label className="text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px] block">
+                Indicator Periods
               </label>
               <input
                 type="text"
                 value={indicatorPeriods}
                 onChange={(e) => setIndicatorPeriods(e.target.value)}
-                className="w-full bg-bg-3 border border-border rounded px-2 py-1 text-xs text-text-0"
+                placeholder="10, 20, 50"
+                className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
               />
             </div>
           </div>
-        )}
+        </details>
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-2 pt-4 border-t border-border">
           <button
             onClick={handleRunFullMatrix}
             disabled={isRunning || selectedModels.size === 0 || selectedOutliers.size === 0}
-            className="w-full bg-accent text-bg-0 px-4 py-2 rounded text-xs font-semibold hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border w-full justify-center bg-accent border-accent text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            Run Full Matrix ({matrixTotal} tests)
+            ▶ Run Full Matrix ({matrixTotal} tests)
           </button>
           <button
             onClick={handleRunSelected}
             disabled={isRunning || selectedModels.size === 0 || selectedOutliers.size === 0}
-            className="w-full bg-bg-2 border border-border text-text-0 px-4 py-2 rounded text-xs font-semibold hover:border-accent/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border w-full justify-center bg-bg-2 border-border text-text-0 hover:border-accent/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Run Selected
           </button>
           {isRunning && (
             <button
               onClick={handleStopAll}
-              className="w-full bg-red/20 border border-red/50 text-red px-4 py-2 rounded text-xs font-semibold hover:bg-red/30 transition-colors"
+              className="inline-flex items-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border w-full justify-center bg-[rgba(239,68,68,0.08)] border-[rgba(239,68,68,0.25)] text-red hover:bg-[rgba(239,68,68,0.12)] transition-colors"
             >
-              Stop All
+              ⊗ Stop All
             </button>
           )}
         </div>
 
-        {/* Server Info Box */}
-        <div className="p-3 bg-bg-2 rounded border border-border/50 text-xs text-text-2 space-y-1">
-          <div className="font-semibold text-text-1">GPU Server: RunPod RTX 4090</div>
-          <div>Est. time: ~3-6 hours for full matrix</div>
-          <div>Auto-managed: starts when you click Run</div>
+        {/* GPU Server Stat Box */}
+        <div className="bg-bg-1 border border-border rounded-card p-[14px]">
+          <div className="text-[11px] text-accent font-semibold mb-[2px]">RunPod RTX 4090</div>
+          <div className="text-[10px] text-text-3">~3-6h for {matrixTotal} tests</div>
         </div>
       </div>
 
-      {/* RIGHT PANEL - RESULTS */}
-      <div className="flex-1 flex flex-col gap-4">
-        {/* Progress Section */}
-        {isRunning && (
-          <div className="p-4 bg-bg-2 rounded border border-border">
-            <div className="text-xs font-semibold text-text-0 mb-2">FreqAI Batch Progress</div>
-            <div className="w-full bg-bg-3 rounded-full h-2 mb-2">
-              <div className="bg-accent h-2 rounded-full" style={{ width: `${(currentlyRunning.length > 0 ? 0 : 100)}%` }} />
+      {/* RIGHT PANEL ─────────────────────────────────────────────────────────────────── */}
+      <div className="bg-bg-1 border border-border rounded-card p-4 flex flex-col gap-4">
+        {/* Title */}
+        <div className="text-[13px] font-semibold text-text-0">📊 Results & Monitoring</div>
+
+        {/* Progress Stat Box */}
+        {isRunning || results.length > 0 ? (
+          <div className="bg-bg-1 border border-border rounded-card p-[14px]">
+            <div className="text-[10px] text-text-3 uppercase tracking-[0.5px] font-semibold mb-2">FreqAI Batch Progress</div>
+            <div className="flex items-baseline gap-2 mb-3">
+              <div className="text-[18px] font-semibold text-text-0">{results.length}/128</div>
+              <div className="text-[11px] text-text-2">Completed (100%)</div>
             </div>
-            <div className="text-xs text-text-2 mb-3">
-              {results.length} / {matrixTotal}
+            <div className="h-[8px] bg-bg-3 rounded-[4px] overflow-hidden">
+              <div className="h-full bg-accent rounded-[4px]" style={{ width: "100%" }} />
+            </div>
+          </div>
+        ) : null}
+
+        {/* Currently Running */}
+        {currentlyRunning.length > 0 && (
+          <div>
+            <div className="text-[10px] text-text-3 uppercase tracking-[0.5px] font-semibold mb-2">Running (4 parallel)</div>
+            <div className="space-y-2">
+              {currentlyRunning.map((run, i) => (
+                <div key={i} className="bg-bg-2 border border-border rounded-btn p-3">
+                  <div className="text-[11px] text-text-1 mb-2 font-mono">
+                    {run.model} + {run.outlier}
+                  </div>
+                  <div className="h-[8px] bg-bg-3 rounded-[4px] overflow-hidden">
+                    <div className="h-full bg-accent rounded-[4px]" style={{ width: `${run.progress}%` }} />
+                  </div>
+                  <div className="text-[10px] text-text-3 mt-1">
+                    {run.progress}% {run.status === "queued" ? "queued" : "running"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Batch Preview */}
+        {results.length > 0 ? (
+          <div>
+            <div className="text-[10px] text-text-3 uppercase tracking-[0.5px] font-semibold mb-2">Preview (6 of 128)</div>
+            <div className="bg-bg-2 border border-border rounded-btn overflow-x-auto">
+              <table className="w-full text-[11px]">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">#</th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">Model</th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">Outlier</th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">PCA</th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">Noise</th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {results.slice(0, 6).map((result, idx) => (
+                    <tr key={result.id} className="border-b border-border/50">
+                      <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-1">{idx + 1}</td>
+                      <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-1 font-mono">{result.model.replace("Regressor", "Reg").replace("Classifier", "Cls")}</td>
+                      <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-1">{result.outlier}</td>
+                      <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-1">{result.pcaEnabled ? "On" : "Off"}</td>
+                      <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-1">{result.noiseEnabled ? "On" : "Off"}</td>
+                      <td className="py-2 px-[10px] border-b border-border/50 text-[11px]">
+                        <span className="bg-[rgba(34,197,94,0.08)] text-green border border-[rgba(34,197,94,0.25)] py-[2px] px-2 rounded text-[10px]">Pass</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="text-[10px] text-text-3 mt-2">...122 more rows</div>
+          </div>
+        ) : null}
+
+        {/* Winner Cumulative Profit Chart */}
+        {bestResult && results.length > 0 ? (
+          <div className="bg-bg-2 border border-border rounded-btn p-3">
+            <div className="text-[11px] font-semibold text-text-0 mb-3">Winner Cumulative Profit</div>
+            {generateCumulativeProfitChart()}
+          </div>
+        ) : null}
+
+        {/* Per-Trade Profit Bars */}
+        {bestResult && results.length > 0 ? (
+          <div className="bg-bg-2 border border-border rounded-btn p-3">
+            <div className="text-[11px] font-semibold text-text-0 mb-3">Per-Trade Profit Bars</div>
+            {generatePerTradeChart()}
+          </div>
+        ) : null}
+
+        {/* Master Results Table */}
+        {results.length > 0 ? (
+          <div className="bg-bg-2 border border-border rounded-btn p-3 flex-1 flex flex-col min-h-0">
+            <div className="text-[11px] font-semibold text-text-0 mb-3">All Results (128)</div>
+            <div className="overflow-auto flex-1">
+              <table className="w-full text-[11px]">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">#</th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">Model</th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">Outlier</th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">PCA</th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">Noise</th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">Started</th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">Finished</th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">Duration</th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-right">Trades</th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-right">Win%</th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-right">Profit%</th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-right">Max DD</th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-right">Sharpe</th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-right">Sortino</th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-right">Acc%</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedResults.map((result, idx) => (
+                    <tbody key={result.id}>
+                      <tr
+                        className={`border-b border-border/50 hover:bg-bg-3 cursor-pointer transition-colors ${
+                          bestResult?.id === result.id ? "bg-[rgba(99,102,241,0.08)]" : ""
+                        }`}
+                        onClick={() => setExpandedRowId(expandedRowId === result.id ? null : result.id)}
+                      >
+                        <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-1">
+                          {bestResult?.id === result.id ? "★" : idx + 1}
+                        </td>
+                        <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-0 font-mono">
+                          {result.model.replace("Regressor", "Reg").replace("Classifier", "Cls")}
+                        </td>
+                        <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-1">{result.outlier}</td>
+                        <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-1">{result.pcaEnabled ? "On" : "Off"}</td>
+                        <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-1">{result.noiseEnabled ? "On" : "Off"}</td>
+                        <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-2">{fmtDateTime(result.started)}</td>
+                        <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-2">{fmtDateTime(result.finished)}</td>
+                        <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-1">{result.duration}</td>
+                        <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-1 text-right">{result.trades}</td>
+                        <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-1 text-right">{result.winRate.toFixed(1)}%</td>
+                        <td className={`py-2 px-[10px] border-b border-border/50 text-[11px] text-right font-semibold ${profitColor(result.profitPct)}`}>
+                          {fmtPct(result.profitPct)}
+                        </td>
+                        <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-red text-right">{result.maxDD.toFixed(1)}%</td>
+                        <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-1 text-right">{result.sharpe.toFixed(2)}</td>
+                        <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-1 text-right">{result.sortino.toFixed(2)}</td>
+                        <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-1 text-right">{result.accuracy.toFixed(1)}%</td>
+                      </tr>
+
+                      {/* Expanded Row */}
+                      {expandedRowId === result.id && (
+                        <tr className="border-b border-border/50 bg-bg-3">
+                          <td colSpan={15} className="px-4 py-4">
+                            <div className="grid grid-cols-3 gap-6">
+                              {/* Model Configuration */}
+                              <div>
+                                <div className="text-[11px] font-semibold text-text-0 mb-3">Model Configuration</div>
+                                <div className="space-y-[6px] text-[10px]">
+                                  <div>
+                                    <span className="text-text-2">Model:</span>{" "}
+                                    <span className="text-text-1">{result.model}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-text-2">Outlier:</span>{" "}
+                                    <span className="text-text-1">{result.outlier}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-text-2">PCA:</span>{" "}
+                                    <span className="text-text-1">{result.pcaEnabled ? "On" : "Off"}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-text-2">Noise:</span>{" "}
+                                    <span className="text-text-1">{result.noiseEnabled ? "On" : "Off"}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-text-2">Feature Period:</span>{" "}
+                                    <span className="text-text-1">{featurePeriod}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-text-2">Label Period:</span>{" "}
+                                    <span className="text-text-1">{labelPeriod}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Top Features */}
+                              <div>
+                                <div className="text-[11px] font-semibold text-text-0 mb-3">Top Features</div>
+                                <div className="space-y-2">
+                                  {result.topFeatures.map((feature, fi) => (
+                                    <div key={fi} className="flex items-center gap-2">
+                                      <div className="text-[10px] text-text-2 w-10">{feature.name}</div>
+                                      <div className="flex-1 h-[6px] bg-bg-2 rounded-[3px] overflow-hidden">
+                                        <div className="h-full bg-accent" style={{ width: `${feature.importance * 100}%` }} />
+                                      </div>
+                                      <div className="text-[10px] text-text-2 w-8 text-right">
+                                        {(feature.importance * 100).toFixed(0)}%
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div className="flex flex-col gap-2 justify-start">
+                                <button className="inline-flex items-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-accent border-accent text-white hover:bg-[#5558e6] transition-colors">
+                                  Promote
+                                </button>
+                                <button className="inline-flex items-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-bg-1 border-border text-text-0 hover:bg-bg-2 transition-colors">
+                                  Verify
+                                </button>
+                                <button className="inline-flex items-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-bg-1 border-border text-text-0 hover:bg-bg-2 transition-colors">
+                                  Analysis
+                                </button>
+                                <button className="inline-flex items-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-bg-1 border-border text-text-0 hover:bg-bg-2 transition-colors">
+                                  Compare
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
-            {/* Currently Running */}
-            {currentlyRunning.length > 0 && (
-              <div className="space-y-2 mt-3">
-                <div className="text-xs font-semibold text-text-0">Currently Running (4 parallel)</div>
-                {currentlyRunning.map((run, i) => (
-                  <div key={i} className="p-2 bg-bg-3 rounded border border-border/50">
-                    <div className="text-xs text-text-1 mb-1">
-                      {run.model} + {run.outlier} + {run.pcaEnabled ? "PCA" : "No PCA"} {run.noiseEnabled ? "+ Noise" : ""}
-                    </div>
-                    <div className="w-full bg-bg-0 rounded-full h-1.5">
-                      <div
-                        className="bg-accent h-1.5 rounded-full transition-all"
-                        style={{ width: `${run.progress}%` }}
-                      />
-                    </div>
-                    <div className="text-xs text-text-2 mt-1">
-                      {run.progress}% {run.status === "queued" ? "queued" : "running"}
-                    </div>
+            {/* Pagination */}
+            {results.length > testsPerPage && (
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-border text-[10px] text-text-2">
+                <div>
+                  Showing {Math.min((currentPage - 1) * testsPerPage + 1, results.length)}-
+                  {Math.min(currentPage * testsPerPage, results.length)} of {results.length}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="inline-flex items-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-bg-3 border-border text-text-0 hover:border-accent/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Prev
+                  </button>
+                  <div className="inline-flex items-center gap-[6px] py-[6px] px-[14px] text-[12px] text-text-1">
+                    {currentPage} / {totalPages}
                   </div>
-                ))}
+                  <button
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="inline-flex items-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-bg-3 border-border text-text-0 hover:border-accent/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             )}
           </div>
-        )}
-
-        {/* Winner Banner */}
-        {bestResult && results.length > 0 && (
-          <div className="p-4 bg-amber/20 border border-amber/50 rounded space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">🏆</span>
-              <span className="font-semibold text-text-0">
-                Best: {bestResult.model} · {bestResult.outlier} · {bestResult.pcaEnabled ? "PCA On" : "PCA Off"}
-              </span>
-            </div>
-            <div className="text-xs text-text-1">
-              <div>{fmtPct(bestResult.profitPct)}, Sharpe {bestResult.sharpe.toFixed(2)}, DD {bestResult.maxDD.toFixed(1)}%, Acc {bestResult.accuracy.toFixed(1)}%</div>
-            </div>
-            <div className="flex gap-2 mt-2">
-              <button className="px-3 py-1 text-xs bg-bg-0 text-text-0 rounded hover:bg-text-3 transition-colors font-semibold">
-                ★ Promote
-              </button>
-              <button className="px-3 py-1 text-xs bg-bg-0 text-text-0 rounded hover:bg-text-3 transition-colors font-semibold">
-                → Verify
-              </button>
-            </div>
+        ) : (
+          <div className="flex items-center justify-center py-12 text-text-2 flex-1">
+            <div className="text-[11px]">No results yet. Click "Run Full Matrix" to start.</div>
           </div>
         )}
-
-        {/* Winner Cumulative Profit Chart */}
-        {bestResult && results.length > 0 && (
-          <div className="p-4 bg-bg-2 rounded border border-border">
-            <div className="flex items-center justify-between mb-3">
-              <div className="text-xs font-semibold text-text-0">Winner Cumulative Profit</div>
-              <div className="flex gap-1">
-                {(["day", "week", "month"] as const).map((period) => (
-                  <button
-                    key={period}
-                    onClick={() => setChartPeriod(period)}
-                    className={`text-xs px-2 py-1 rounded transition-colors ${
-                      chartPeriod === period
-                        ? "bg-accent text-bg-0"
-                        : "bg-bg-3 text-text-2 hover:text-text-1"
-                    }`}
-                  >
-                    {period.charAt(0).toUpperCase() + period.slice(1)}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {generateCumulativeProfitChart()}
-          </div>
-        )}
-
-        {/* Per-Trade Profit Bars */}
-        {bestResult && results.length > 0 && (
-          <div className="p-4 bg-bg-2 rounded border border-border">
-            <div className="text-xs font-semibold text-text-0 mb-3">Per-Trade Profit Bars</div>
-            {generatePerTradeChart()}
-          </div>
-        )}
-
-        {/* Master Results Table */}
-        <div className="p-4 bg-bg-2 rounded border border-border flex-1 flex flex-col">
-          <div className="text-xs font-semibold text-text-0 mb-3">Results Table ({results.length} total)</div>
-
-          <div className="overflow-x-auto flex-1">
-            <table className="w-full text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left px-2 py-2 text-text-1 font-semibold w-8">#</th>
-                  <th className="text-left px-2 py-2 text-text-1 font-semibold">Model</th>
-                  <th className="text-left px-2 py-2 text-text-1 font-semibold">Outlier</th>
-                  <th className="text-left px-2 py-2 text-text-1 font-semibold">PCA</th>
-                  <th className="text-left px-2 py-2 text-text-1 font-semibold">Noise</th>
-                  <th className="text-left px-2 py-2 text-text-1 font-semibold">Started</th>
-                  <th className="text-left px-2 py-2 text-text-1 font-semibold">Finished</th>
-                  <th className="text-left px-2 py-2 text-text-1 font-semibold">Duration</th>
-                  <th className="text-right px-2 py-2 text-text-1 font-semibold">Trades</th>
-                  <th className="text-right px-2 py-2 text-text-1 font-semibold">Win%</th>
-                  <th className="text-right px-2 py-2 text-text-1 font-semibold">Profit%</th>
-                  <th className="text-right px-2 py-2 text-text-1 font-semibold">Max DD</th>
-                  <th className="text-right px-2 py-2 text-text-1 font-semibold">Sharpe</th>
-                  <th className="text-right px-2 py-2 text-text-1 font-semibold">Sortino</th>
-                  <th className="text-right px-2 py-2 text-text-1 font-semibold">Acc%</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedResults.map((result, idx) => (
-                  <tbody key={result.id}>
-                    <tr
-                      className="border-b border-border/50 hover:bg-bg-3 cursor-pointer transition-colors"
-                      onClick={() => setExpandedRowId(expandedRowId === result.id ? null : result.id)}
-                    >
-                      <td className="px-2 py-2 text-text-2">
-                        {bestResult?.id === result.id ? "★" : idx + 1}
-                      </td>
-                      <td className="px-2 py-2 text-text-0 font-mono">{result.model}</td>
-                      <td className="px-2 py-2 text-text-1">{result.outlier}</td>
-                      <td className="px-2 py-2 text-text-1">{result.pcaEnabled ? "On" : "Off"}</td>
-                      <td className="px-2 py-2 text-text-1">{result.noiseEnabled ? "On" : "Off"}</td>
-                      <td className="px-2 py-2 text-text-2 text-xs">{fmtDateTime(result.started)}</td>
-                      <td className="px-2 py-2 text-text-2 text-xs">{fmtDateTime(result.finished)}</td>
-                      <td className="px-2 py-2 text-text-1">{result.duration}</td>
-                      <td className="px-2 py-2 text-right text-text-1">{result.trades}</td>
-                      <td className="px-2 py-2 text-right text-text-1">{result.winRate.toFixed(1)}%</td>
-                      <td className={`px-2 py-2 text-right font-semibold ${profitColor(result.profitPct)}`}>
-                        {fmtPct(result.profitPct)}
-                      </td>
-                      <td className="px-2 py-2 text-right text-red">{result.maxDD.toFixed(1)}%</td>
-                      <td className="px-2 py-2 text-right text-text-1">{result.sharpe.toFixed(2)}</td>
-                      <td className="px-2 py-2 text-right text-text-1">{result.sortino.toFixed(2)}</td>
-                      <td className="px-2 py-2 text-right text-text-1">{result.accuracy.toFixed(1)}%</td>
-                    </tr>
-
-                    {/* Expanded Row */}
-                    {expandedRowId === result.id && (
-                      <tr className="border-b border-border/50 bg-bg-3">
-                        <td colSpan={15} className="px-4 py-4">
-                          <div className="grid grid-cols-3 gap-6">
-                            {/* Left: Model Configuration */}
-                            <div>
-                              <div className="text-xs font-semibold text-text-0 mb-2">Model Configuration</div>
-                              <div className="space-y-1 text-xs text-text-2">
-                                <div>
-                                  <span className="text-text-1">Model:</span> {result.model}
-                                </div>
-                                <div>
-                                  <span className="text-text-1">Outlier:</span> {result.outlier}
-                                </div>
-                                <div>
-                                  <span className="text-text-1">PCA:</span> {result.pcaEnabled ? "On" : "Off"}
-                                </div>
-                                <div>
-                                  <span className="text-text-1">Noise:</span> {result.noiseEnabled ? "On" : "Off"}
-                                </div>
-                                <div>
-                                  <span className="text-text-1">Feature Period:</span> {featurePeriod}
-                                </div>
-                                <div>
-                                  <span className="text-text-1">Label Period:</span> {labelPeriod}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Middle: Top Features */}
-                            <div>
-                              <div className="text-xs font-semibold text-text-0 mb-2">Top Features</div>
-                              <div className="space-y-1">
-                                {result.topFeatures.map((feature, fi) => (
-                                  <div key={fi} className="flex items-center gap-2">
-                                    <div className="text-xs text-text-2 w-16">{feature.name}</div>
-                                    <div className="flex-1 bg-bg-2 rounded h-1.5 overflow-hidden">
-                                      <div
-                                        className="bg-accent h-1.5"
-                                        style={{ width: `${feature.importance * 100}%` }}
-                                      />
-                                    </div>
-                                    <div className="text-xs text-text-2 w-10">{(feature.importance * 100).toFixed(0)}%</div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* Right: Action Buttons */}
-                            <div className="flex flex-col gap-2 justify-center">
-                              <button className="px-3 py-1 text-xs bg-accent text-bg-0 rounded hover:bg-accent/90 transition-colors font-semibold">
-                                Promote
-                              </button>
-                              <button className="px-3 py-1 text-xs bg-bg-0 text-text-0 border border-border rounded hover:bg-bg-2 transition-colors font-semibold">
-                                Verify
-                              </button>
-                              <button className="px-3 py-1 text-xs bg-bg-0 text-text-0 border border-border rounded hover:bg-bg-2 transition-colors font-semibold">
-                                Analysis
-                              </button>
-                              <button className="px-3 py-1 text-xs bg-bg-0 text-text-0 border border-border rounded hover:bg-bg-2 transition-colors font-semibold">
-                                Compare
-                              </button>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {results.length > 0 && (
-            <div className="flex items-center justify-between mt-4 pt-4 border-t border-border text-xs text-text-2">
-              <div>
-                Showing {Math.min((currentPage - 1) * testsPerPage + 1, results.length)}-
-                {Math.min(currentPage * testsPerPage, results.length)} of {results.length}
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1 bg-bg-3 border border-border rounded hover:border-accent/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Prev
-                </button>
-                <div className="px-3 py-1 text-text-1">
-                  {currentPage} / {totalPages}
-                </div>
-                <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1 bg-bg-3 border border-border rounded hover:border-accent/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
-
-          {results.length === 0 && !isRunning && (
-            <div className="flex items-center justify-center py-8 text-text-2">
-              <div className="text-xs">No results yet. Click &quot;Run Full Matrix&quot; to start.</div>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );

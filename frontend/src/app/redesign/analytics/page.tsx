@@ -192,7 +192,7 @@ export default function AnalyticsPage() {
             className="text-2xs px-2 py-1 rounded border border-border bg-accent/20 text-foreground"
           />
           <button
-            onClick={() => alert(`Exporting CSV...\nDate range: ${dateFrom} → ${dateTo}\nPeriod: ${period}\nTab: ${activeTab}`)}
+            onClick={() => console.info(`Exporting CSV...\nDate range: ${dateFrom} → ${dateTo}\nPeriod: ${period}\nTab: ${activeTab}`)}
             className="text-2xs font-semibold text-primary px-3 py-1 rounded border border-primary/20 hover:bg-primary/10 transition-colors"
           >
             📥 Export CSV

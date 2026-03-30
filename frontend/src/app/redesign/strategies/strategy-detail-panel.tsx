@@ -36,28 +36,8 @@ interface StrategyPanelProps {
 
 type DetailTab = "overview" | "trades" | "backtests" | "config" | "lifecycle";
 
-const MOCK_OPEN_TRADES = [
-  { trade_id: 1, pair: "BTC/USDT:USDT", is_short: false, open_rate: 67842.50, stake_amount: 1000, current_profit: 0.023, open_date: "2026-03-28 14:22", enter_tag: "ema_cross_bull" },
-  { trade_id: 2, pair: "BTC/USDT:USDT", is_short: true, open_rate: 68100.00, stake_amount: 500, current_profit: -0.008, open_date: "2026-03-29 09:15", enter_tag: "rsi_overbought" },
-];
 
-const MOCK_CLOSED_TRADES = [
-  { trade_id: 101, pair: "BTC/USDT:USDT", is_short: false, open_rate: 66500.00, close_rate: 67200.00, close_profit_abs: 105.26, enter_tag: "ema_cross_bull", exit_reason: "roi", open_date: "2026-03-25", close_date: "2026-03-26" },
-  { trade_id: 102, pair: "BTC/USDT:USDT", is_short: true, open_rate: 67800.00, close_rate: 67100.00, close_profit_abs: 103.10, enter_tag: "rsi_overbought", exit_reason: "trailing_stop", open_date: "2026-03-26", close_date: "2026-03-27" },
-  { trade_id: 103, pair: "BTC/USDT:USDT", is_short: false, open_rate: 65900.00, close_rate: 65500.00, close_profit_abs: -60.70, enter_tag: "macd_cross", exit_reason: "stoploss", open_date: "2026-03-24", close_date: "2026-03-24" },
-];
 
-const MOCK_BACKTEST_RUNS = [
-  { run_id: "bt1", date: "Mar 10, 2026 — 2024-01-01 to 2026-03-01", profit: "+14.2%", profitAbs: "+$4,260", sharpe: "2.31", trades: 312, winRate: "67.9%", maxDd: "4.1%", duration: "3h 42m" },
-  { run_id: "bt2", date: "Mar 8, 2026 — before hyperopt", profit: "+9.8%", profitAbs: "+$2,940", sharpe: "1.72", trades: 298, winRate: "63.1%", maxDd: "5.6%", duration: "4h 10m" },
-  { run_id: "bt3", date: "Mar 5, 2026 — initial test", profit: "+5.2%", profitAbs: "+$1,560", sharpe: "1.15", trades: 245, winRate: "58.4%", maxDd: "7.8%", duration: "5h 22m" },
-];
-
-const PROTECTIONS = [
-  { name: "StoplossGuard", val: "3 SL in 1h → lock 30m" },
-  { name: "MaxDrawdown", val: "5% in 48h → lock 12h" },
-  { name: "CooldownPeriod", val: "5 candles after trade" },
-];
 
 const statusBadge: Record<string, string> = {
   live: "bg-ft-green/15 text-ft-green border-ft-green/20",
@@ -69,6 +49,10 @@ const statusBadge: Record<string, string> = {
 
 export function StrategyDetailPanel({ strategy, onClose, onAction }: StrategyPanelProps) {
   const [activeTab, setActiveTab] = useState<DetailTab>("overview");
+  const [openTrades] = useState<{ trade_id: number; pair: string; is_short: boolean; open_rate: number; current_profit: number; enter_tag: string }[]>([]);
+  const [closedTrades] = useState<{ trade_id: number; pair: string; is_short: boolean; close_profit_abs: number; exit_reason: string; close_date: string }[]>([]);
+  const [backtestRuns] = useState<{ run_id: string; date: string; profit: string; sharpe: string; trades: string; winRate: string; maxDd: string; duration: string; profitAbs: string }[]>([]);
+  const [protections] = useState<{name: string, val: string}[]>([]);
 
   if (!strategy) return null;
 
@@ -102,7 +86,7 @@ export function StrategyDetailPanel({ strategy, onClose, onAction }: StrategyPan
               Edit
             </Button>
             {(strategy.status === "live" || strategy.status === "paper") && strategy.botRunning && (
-              <Button variant="outline" size="sm" className="text-xs text-ft-amber border-ft-amber/20" onClick={() => alert(`Pausing bot ${strategy.botName}...`)}>
+              <Button variant="outline" size="sm" className="text-xs text-ft-amber border-ft-amber/20" onClick={() => onAction("pause")}>
                 Pause
               </Button>
             )}
@@ -172,7 +156,7 @@ export function StrategyDetailPanel({ strategy, onClose, onAction }: StrategyPan
           {activeTab === "trades" && (
             <div className="space-y-4">
               <div>
-                <h4 className="text-xs font-bold text-foreground mb-2">Open Trades ({MOCK_OPEN_TRADES.length})</h4>
+                <h4 className="text-xs font-bold text-foreground mb-2">Open Trades ({openTrades.length})</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
@@ -185,7 +169,7 @@ export function StrategyDetailPanel({ strategy, onClose, onAction }: StrategyPan
                       </tr>
                     </thead>
                     <tbody>
-                      {MOCK_OPEN_TRADES.map((t) => (
+                      {openTrades.map((t) => (
                         <tr key={t.trade_id} className="border-b border-border/30">
                           <td className="py-2 text-foreground font-medium">{t.pair}</td>
                           <td className="py-2"><span className={t.is_short ? "text-ft-red" : "text-ft-green"}>{t.is_short ? "SHORT" : "LONG"}</span></td>
@@ -204,7 +188,7 @@ export function StrategyDetailPanel({ strategy, onClose, onAction }: StrategyPan
               <Separator />
 
               <div>
-                <h4 className="text-xs font-bold text-foreground mb-2">Closed Trades ({MOCK_CLOSED_TRADES.length})</h4>
+                <h4 className="text-xs font-bold text-foreground mb-2">Closed Trades ({closedTrades.length})</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
@@ -217,7 +201,7 @@ export function StrategyDetailPanel({ strategy, onClose, onAction }: StrategyPan
                       </tr>
                     </thead>
                     <tbody>
-                      {MOCK_CLOSED_TRADES.map((t) => (
+                      {closedTrades.map((t) => (
                         <tr key={t.trade_id} className="border-b border-border/30">
                           <td className="py-2 text-foreground font-medium">{t.pair}</td>
                           <td className="py-2"><span className={t.is_short ? "text-ft-red" : "text-ft-green"}>{t.is_short ? "SHORT" : "LONG"}</span></td>
@@ -237,8 +221,8 @@ export function StrategyDetailPanel({ strategy, onClose, onAction }: StrategyPan
 
           {activeTab === "backtests" && (
             <div className="space-y-3">
-              <h4 className="text-xs font-bold text-foreground mb-2">Backtest History ({MOCK_BACKTEST_RUNS.length} runs)</h4>
-              {MOCK_BACKTEST_RUNS.map((b) => (
+              <h4 className="text-xs font-bold text-foreground mb-2">Backtest History ({backtestRuns.length} runs)</h4>
+              {backtestRuns.map((b) => (
                 <div key={b.run_id} className="bg-accent/30 border border-border rounded-lg p-3">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-2xs text-muted-foreground">{b.date}</span>
@@ -289,7 +273,8 @@ export function StrategyDetailPanel({ strategy, onClose, onAction }: StrategyPan
               <Separator className="my-3" />
 
               <h4 className="text-xs font-bold text-foreground mb-2">FT Protections (active)</h4>
-              {PROTECTIONS.map((p) => (
+              {protections.length === 0 && <div className="text-xs text-muted-foreground py-2 italic font-mono-data">No active protections.</div>}
+              {protections.map((p) => (
                 <div key={p.name} className="flex justify-between items-baseline py-1.5 border-b border-border/30 last:border-b-0">
                   <span className="text-xs text-muted-foreground">{p.name}</span>
                   <span className="text-xs font-semibold text-foreground">{p.val}</span>
@@ -337,11 +322,11 @@ export function StrategyDetailPanel({ strategy, onClose, onAction }: StrategyPan
           <Button variant="outline" className="flex-1 text-xs" onClick={() => setActiveTab("trades")}>
             📒 View Trades
           </Button>
-          <Button variant="outline" className="flex-1 text-xs" onClick={() => alert(`Opening analytics for ${strategy.name}`)}>
+          <Button variant="outline" className="flex-1 text-xs" onClick={() => onAction("analytics")}>
             📊 Analytics
           </Button>
           {(strategy.status === "live" || strategy.status === "paper") && (
-            <Button className="flex-1 text-xs" onClick={() => alert(`Navigating to dashboard for ${strategy.name}`)}>
+            <Button className="flex-1 text-xs" onClick={() => onAction("dashboard")}>
               📈 View Bot
             </Button>
           )}

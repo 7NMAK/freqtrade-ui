@@ -1,101 +1,80 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { fmtPct, fmtUsd, profitColor } from "@/lib/experiments";
 import Tooltip from "@/components/ui/Tooltip";
-import { ChevronDown } from "lucide-react";
 
 interface BacktestTabProps {
   strategy: string;
 }
 
-interface BacktestResult {
-  id: string;
-  trades: number;
-  winRate: number;
-  totalProfit: number;
-  totalProfitPct: number;
-  maxDrawdown: number;
-  maxDrawdownAbs: number;
-  sharpeRatio: number;
-  sortinoRatio: number;
-  cumulativeProfit: number[];
-  tradesList: Trade[];
-  startDate: string;
-  endDate: string;
-  timerange: string;
+// ── Toggle switch (matches prototype .toggle) ────────────────────────────
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="relative w-[36px] h-[20px] cursor-pointer inline-block">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="hidden"
+      />
+      <span
+        className={`absolute inset-0 rounded-[10px] border transition-all ${
+          checked ? "bg-green/8 border-green" : "bg-bg-3 border-border"
+        }`}
+      />
+      <span
+        className={`absolute w-[14px] h-[14px] bg-white rounded-full top-[3px] transition-all ${
+          checked ? "left-[19px]" : "left-[3px]"
+        }`}
+      />
+    </label>
+  );
 }
 
-interface Trade {
-  id: number;
-  pair: string;
-  isShort: boolean;
-  profitPct: number;
-  profitAbs: number;
-  openDate: string;
-  closeDate: string;
-  duration: string;
-  enterTag: string;
-  exitReason: string;
-}
-
-const generateMockResults = (startDate: string, endDate: string): BacktestResult => {
-  const cumulativeProfit = Array.from({ length: 156 }, (_, i) => {
-    const base = Math.sin(i / 20) * 800;
-    const trend = (i / 156) * 1247;
-    const noise = (Math.random() - 0.5) * 200;
-    return base + trend + noise;
-  });
-
-  const mockTrades: Trade[] = [
-    { id: 1, pair: "BTC/USDT", isShort: false, profitPct: 3.2, profitAbs: 320, openDate: "2024-01-15 10:45", closeDate: "2024-01-15 14:30", duration: "3h 45m", enterTag: "macd_cross", exitReason: "exit_signal" },
-    { id: 2, pair: "ETH/USDT", isShort: true, profitPct: -1.8, profitAbs: -180, openDate: "2024-01-16 08:12", closeDate: "2024-01-16 11:20", duration: "3h 8m", enterTag: "bb_lower", exitReason: "stoploss" },
-    { id: 3, pair: "BTC/USDT", isShort: false, profitPct: 5.4, profitAbs: 540, openDate: "2024-01-17 09:30", closeDate: "2024-01-17 16:45", duration: "7h 15m", enterTag: "rsi_oversold", exitReason: "exit_signal" },
-    { id: 4, pair: "SOL/USDT", isShort: false, profitPct: 2.1, profitAbs: 210, openDate: "2024-01-18 12:00", closeDate: "2024-01-18 15:45", duration: "3h 45m", enterTag: "macd_cross", exitReason: "exit_signal" },
-    { id: 5, pair: "ETH/USDT", isShort: false, profitPct: 4.7, profitAbs: 470, openDate: "2024-01-19 07:30", closeDate: "2024-01-19 13:20", duration: "5h 50m", enterTag: "bb_lower", exitReason: "exit_signal" },
-    { id: 6, pair: "BTC/USDT", isShort: true, profitPct: -2.3, profitAbs: -230, openDate: "2024-01-20 14:15", closeDate: "2024-01-20 17:30", duration: "3h 15m", enterTag: "rsi_overbought", exitReason: "stoploss" },
-    { id: 7, pair: "XRP/USDT", isShort: false, profitPct: 6.1, profitAbs: 610, openDate: "2024-01-21 10:00", closeDate: "2024-01-21 18:45", duration: "8h 45m", enterTag: "trend_up", exitReason: "exit_signal" },
-    { id: 8, pair: "ADA/USDT", isShort: false, profitPct: 1.9, profitAbs: 190, openDate: "2024-01-22 11:30", closeDate: "2024-01-22 14:15", duration: "2h 45m", enterTag: "macd_cross", exitReason: "exit_signal" },
-    { id: 9, pair: "ETH/USDT", isShort: true, profitPct: -3.5, profitAbs: -350, openDate: "2024-01-23 09:00", closeDate: "2024-01-23 10:45", duration: "1h 45m", enterTag: "rsi_overbought", exitReason: "stoploss" },
-    { id: 10, pair: "BTC/USDT", isShort: false, profitPct: 8.2, profitAbs: 820, openDate: "2024-01-24 08:30", closeDate: "2024-01-24 16:00", duration: "7h 30m", enterTag: "bb_lower", exitReason: "exit_signal" },
-  ];
-
-  return {
-    id: `backtest_${Date.now()}`,
-    trades: 156,
-    winRate: 64.1,
-    totalProfit: 1247.80,
-    totalProfitPct: 12.5,
-    maxDrawdown: -8.4,
-    maxDrawdownAbs: -840.00,
-    sharpeRatio: 1.52,
-    sortinoRatio: 2.14,
-    cumulativeProfit,
-    tradesList: mockTrades,
-    startDate,
-    endDate,
-    timerange: `${startDate.replace(/-/g, "")}-${endDate.replace(/-/g, "")}`,
-  };
-};
-
-const MOCK_HISTORY: Array<{ strategy: string; date: string; timerange: string; trades: number; profitPct: number }> = [
-  { strategy: "SampleStrategy", date: "2024-03-28 14:32:15", timerange: "20240101-20250101", trades: 156, profitPct: 12.5 },
-  { strategy: "SampleStrategy", date: "2024-03-27 09:15:42", timerange: "20240101-20240630", trades: 98, profitPct: 8.3 },
-  { strategy: "SampleStrategy", date: "2024-03-26 16:45:20", timerange: "20231201-20240229", trades: 142, profitPct: 15.2 },
+// ── Mock data for display ────────────────────────────────────────────────
+const MOCK_TRADES = [
+  { id: 156, pair: "BTC/USDT", side: "Long", profitPct: "+4.2%", profitAbs: "+$420", open: "2025-12-28 14:30", close: "2026-01-02 08:15", dur: "3d 17h", tag: "BB_UP", exit: "roi", green: true },
+  { id: 155, pair: "BTC/USDT", side: "Short", profitPct: "+2.8%", profitAbs: "+$280", open: "2025-12-25 09:00", close: "2025-12-26 16:45", dur: "1d 7h", tag: "BB_DOWN", exit: "roi", green: true },
+  { id: 154, pair: "BTC/USDT", side: "Long", profitPct: "-1.5%", profitAbs: "-$150", open: "2025-12-22 11:30", close: "2025-12-22 18:20", dur: "6h 50m", tag: "BB_UP", exit: "stoploss", green: false },
+  { id: 153, pair: "BTC/USDT", side: "Long", profitPct: "+3.1%", profitAbs: "+$310", open: "2025-12-20 13:15", close: "2025-12-21 09:40", dur: "20h 25m", tag: "BB_UP", exit: "sell_signal", green: true },
+  { id: 152, pair: "BTC/USDT", side: "Short", profitPct: "+5.4%", profitAbs: "+$540", open: "2025-12-18 10:00", close: "2025-12-19 14:30", dur: "1d 4h", tag: "BB_DOWN", exit: "roi", green: true },
+  { id: 151, pair: "BTC/USDT", side: "Long", profitPct: "+2.3%", profitAbs: "+$230", open: "2025-12-16 15:45", close: "2025-12-17 11:20", dur: "19h 35m", tag: "BB_UP", exit: "roi", green: true },
+  { id: 150, pair: "BTC/USDT", side: "Short", profitPct: "-3.2%", profitAbs: "-$320", open: "2025-12-14 08:30", close: "2025-12-14 22:15", dur: "13h 45m", tag: "BB_DOWN", exit: "stoploss", green: false },
+  { id: 149, pair: "BTC/USDT", side: "Long", profitPct: "+1.9%", profitAbs: "+$190", open: "2025-12-12 12:00", close: "2025-12-13 06:30", dur: "18h 30m", tag: "BB_UP", exit: "roi", green: true },
+  { id: 148, pair: "BTC/USDT", side: "Short", profitPct: "+4.7%", profitAbs: "+$470", open: "2025-12-10 16:20", close: "2025-12-11 13:40", dur: "21h 20m", tag: "BB_DOWN", exit: "roi", green: true },
+  { id: 147, pair: "BTC/USDT", side: "Long", profitPct: "+3.6%", profitAbs: "+$360", open: "2025-12-08 09:45", close: "2025-12-09 10:15", dur: "24h 30m", tag: "BB_UP", exit: "roi", green: true },
+  { id: 146, pair: "BTC/USDT", side: "Short", profitPct: "-0.8%", profitAbs: "-$80", open: "2025-12-06 14:10", close: "2025-12-07 08:50", dur: "18h 40m", tag: "BB_DOWN", exit: "stoploss", green: false },
 ];
 
+const MOCK_HISTORY = [
+  { name: "baseline 2026-03-30", date: "Mar 30 14:22", profit: "+12.5%", trades: 156, profitGreen: true, highlight: true },
+  { name: "tight bands 2026-03-29", date: "Mar 29 09:15", profit: "+11.8%", trades: 142, profitGreen: true, highlight: false },
+  { name: "wide bands 2026-03-28", date: "Mar 28 16:40", profit: "-2.1%", trades: 98, profitGreen: false, highlight: false },
+];
+
+const MOCK_COMPARISON = [
+  { name: "baseline 2026-03-30", profit: "+12.5%", trades: 156, dd: "-8.4%", highlight: true },
+  { name: "tight bands 2026-03-29", profit: "+11.8%", trades: 142, dd: "-7.2%", highlight: false },
+  { name: "wide bands 2026-03-28", profit: "-2.1%", trades: 98, dd: "-14.8%", highlight: false },
+];
+
+// ══════════════════════════════════════════════════════════════════════════
+// BACKTEST TAB — matches prototype Tab 1 pixel-perfect
+// ══════════════════════════════════════════════════════════════════════════
+
 export default function BacktestTab({ strategy }: BacktestTabProps) {
+  // ── Form state ──
   const [testName, setTestName] = useState(`${strategy} baseline ${new Date().toISOString().split("T")[0]}`);
   const [description, setDescription] = useState("");
   const [startDate, setStartDate] = useState("2024-01-01");
   const [endDate, setEndDate] = useState("2025-01-01");
   const [timeframeOverride, setTimeframeOverride] = useState("Use strategy default");
-  const [timeframeDetail, setTimeframeDetail] = useState("None");
+  const [timeframeDetail, setTimeframeDetail] = useState("Same as timeframe");
   const [maxOpenTrades, setMaxOpenTrades] = useState("3");
   const [startingCapital, setStartingCapital] = useState("10000");
-  const [stakeAmount, setStakeAmount] = useState("1000");
+  const [stakeAmount, setStakeAmount] = useState("100");
   const [feeOverride, setFeeOverride] = useState("");
-  const [enableProtections, setEnableProtections] = useState(true);
+  const [enableProtections, setEnableProtections] = useState(false);
   const [cacheResults, setCacheResults] = useState(true);
   const [enableFreqAI, setEnableFreqAI] = useState(false);
   const [exportType, setExportType] = useState("none");
@@ -103,10 +82,6 @@ export default function BacktestTab({ strategy }: BacktestTabProps) {
   const [breakdownWeek, setBreakdownWeek] = useState(false);
   const [breakdownMonth, setBreakdownMonth] = useState(true);
   const [isRunning, setIsRunning] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [results, setResults] = useState<BacktestResult | null>(null);
-  const [chartPeriod, setChartPeriod] = useState<"day" | "week" | "month">("month");
-  const [currentPage, setCurrentPage] = useState(1);
 
   const timerange = useMemo(() => {
     const start = startDate.replace(/-/g, "");
@@ -114,638 +89,509 @@ export default function BacktestTab({ strategy }: BacktestTabProps) {
     return `${start}-${end}`;
   }, [startDate, endDate]);
 
-  const handleStartBacktest = async () => {
+  const handleStart = () => {
     setIsRunning(true);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    const mockResults = generateMockResults(startDate, endDate);
-    setResults(mockResults);
-    setIsRunning(false);
-  };
-
-  const handleLoadResult = (index: number) => {
-    const history = MOCK_HISTORY[index];
-    const mockResults = generateMockResults(
-      history.timerange.slice(0, 4) + "-" + history.timerange.slice(4, 6) + "-" + history.timerange.slice(6, 8),
-      history.timerange.slice(9, 13) + "-" + history.timerange.slice(13, 15) + "-" + history.timerange.slice(15, 17)
-    );
-    setResults(mockResults);
+    // Placeholder — backend integration pending
+    setTimeout(() => setIsRunning(false), 100);
   };
 
   const handleReset = () => {
-    setResults(null);
     setTestName(`${strategy} baseline ${new Date().toISOString().split("T")[0]}`);
     setDescription("");
     setStartDate("2024-01-01");
     setEndDate("2025-01-01");
     setTimeframeOverride("Use strategy default");
-    setTimeframeDetail("None");
+    setTimeframeDetail("Same as timeframe");
     setMaxOpenTrades("3");
     setStartingCapital("10000");
-    setStakeAmount("1000");
+    setStakeAmount("100");
     setFeeOverride("");
-    setEnableProtections(true);
+    setEnableProtections(false);
     setCacheResults(true);
     setEnableFreqAI(false);
     setExportType("none");
     setBreakdownDay(false);
     setBreakdownWeek(false);
     setBreakdownMonth(true);
-    setCurrentPage(1);
   };
 
-  const profitColor_ = profitColor(results?.totalProfitPct || 0);
-  const drawdownColor = profitColor(results?.maxDrawdown || 0);
-
   return (
-    <div className="flex gap-6 h-full">
-      {/* LEFT PANEL - FORM */}
-      <div className="w-[380px] shrink-0 flex flex-col gap-6 overflow-y-auto pr-2">
-        {/* Test Configuration */}
-        <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-text-0">Test Configuration</h3>
+    <div className="grid grid-cols-[380px_minmax(0,1fr)] gap-5 min-h-0 max-w-full">
 
+      {/* ══════════════ LEFT PANEL: FORM ══════════════ */}
+      <div className="bg-bg-1 border border-border rounded-card p-4 overflow-y-auto">
+        <div className="text-[13px] font-semibold text-text-0 mb-4 flex items-center gap-2">
+          <span>⚙️ Test Configuration</span>
+        </div>
+
+        {/* Test Name */}
+        <div className="mb-3">
+          <label className="block text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px]">Test Name</label>
+          <input
+            type="text"
+            value={testName}
+            onChange={(e) => setTestName(e.target.value)}
+            className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 placeholder-text-3 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all"
+          />
+        </div>
+
+        {/* Description */}
+        <div className="mb-3">
+          <label className="block text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px]">Description (Optional)</label>
+          <input
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="e.g., Testing with tighter bands"
+            className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 placeholder-text-3 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all"
+          />
+        </div>
+
+        {/* Strategy (readonly) */}
+        <div className="mb-3">
+          <label className="block text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px]">Strategy</label>
+          <input
+            type="text"
+            value={strategy}
+            readOnly
+            className="w-full py-2 px-3 bg-bg-2 border border-border rounded-btn text-[12.5px] text-text-0 opacity-70 cursor-default"
+          />
+        </div>
+
+        {/* Start/End Date row */}
+        <div className="grid grid-cols-2 gap-[10px] mb-3">
           <div>
-            <label className="block text-xs font-medium text-text-1 mb-2">Test Name</label>
+            <label className="block text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px]">Start Date</label>
             <input
-              type="text"
-              value={testName}
-              onChange={(e) => setTestName(e.target.value)}
-              className="w-full px-3 py-2 bg-bg-2 border border-border rounded text-xs text-text-0 placeholder-text-3 focus:outline-none focus:border-accent"
-              placeholder="Test name"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all"
             />
           </div>
-
           <div>
-            <label className="block text-xs font-medium text-text-1 mb-2">Description</label>
+            <label className="block text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px]">End Date</label>
             <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 bg-bg-2 border border-border rounded text-xs text-text-0 placeholder-text-3 focus:outline-none focus:border-accent"
-              placeholder="Optional description"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-text-1 mb-2">Strategy</label>
-            <input
-              type="text"
-              value={strategy}
-              disabled
-              className="w-full px-3 py-2 bg-bg-3 border border-border rounded text-xs text-text-1 cursor-not-allowed"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-text-1 mb-2">Start Date</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3 py-2 bg-bg-2 border border-border rounded text-xs text-text-0 focus:outline-none focus:border-accent"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-text-1 mb-2">End Date</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-3 py-2 bg-bg-2 border border-border rounded text-xs text-text-0 focus:outline-none focus:border-accent"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-text-1 mb-2">Timerange</label>
-            <input
-              type="text"
-              value={timerange}
-              disabled
-              className="w-full px-3 py-2 bg-bg-3 border border-border rounded text-xs text-text-2 cursor-not-allowed font-mono"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all"
             />
           </div>
         </div>
 
-        {/* Advanced Options */}
-        <details className="group">
-          <summary
-            className="flex items-center justify-between cursor-pointer text-sm font-semibold text-text-0 hover:text-accent transition-colors"
-            onClick={() => setShowAdvanced(!showAdvanced)}
+        {/* Timerange (auto, readonly) */}
+        <div className="mb-3">
+          <label className="block text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px]">Timerange</label>
+          <input
+            type="text"
+            value={timerange}
+            readOnly
+            className="w-full py-2 px-3 bg-bg-2 border border-border rounded-btn text-[12.5px] text-text-0 opacity-70 cursor-default"
+          />
+        </div>
+
+        {/* Separator — Additional Settings */}
+        <div className="border-t border-border mt-4 mb-3 pt-3">
+          <div className="text-[10px] text-text-3 uppercase tracking-[0.5px] mb-2 font-semibold">Additional Settings</div>
+        </div>
+
+        {/* Timeframe Override */}
+        <div className="mb-3">
+          <label className="block text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px]">Timeframe Override</label>
+          <select
+            value={timeframeOverride}
+            onChange={(e) => setTimeframeOverride(e.target.value)}
+            className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent cursor-pointer appearance-none transition-all"
           >
-            Advanced Options
-            <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
-          </summary>
+            <option>Use strategy default</option>
+            <option>1m</option>
+            <option>5m</option>
+            <option>15m</option>
+            <option>30m</option>
+            <option>1h</option>
+            <option>4h</option>
+            <option>1d</option>
+          </select>
+        </div>
 
-          <div className="space-y-4 mt-4 pt-4 border-t border-border">
-            <div>
-              <label className="block text-xs font-medium text-text-1 mb-2">Timeframe Override</label>
-              <select
-                value={timeframeOverride}
-                onChange={(e) => setTimeframeOverride(e.target.value)}
-                className="w-full px-3 py-2 bg-bg-2 border border-border rounded text-xs text-text-0 focus:outline-none focus:border-accent"
-              >
-                <option>Use strategy default</option>
-                <option>1m</option>
-                <option>5m</option>
-                <option>15m</option>
-                <option>30m</option>
-                <option>1h</option>
-                <option>4h</option>
-                <option>1d</option>
-              </select>
-            </div>
+        {/* Timeframe Detail */}
+        <div className="mb-3">
+          <label className="block text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px]">Timeframe Detail</label>
+          <select
+            value={timeframeDetail}
+            onChange={(e) => setTimeframeDetail(e.target.value)}
+            className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent cursor-pointer appearance-none transition-all"
+          >
+            <option>Same as timeframe</option>
+            <option>1m</option>
+            <option>5m</option>
+          </select>
+        </div>
 
-            <div>
-              <label className="block text-xs font-medium text-text-1 mb-2">Timeframe Detail</label>
-              <select
-                value={timeframeDetail}
-                onChange={(e) => setTimeframeDetail(e.target.value)}
-                className="w-full px-3 py-2 bg-bg-2 border border-border rounded text-xs text-text-0 focus:outline-none focus:border-accent"
-              >
-                <option>None</option>
-                <option>1m</option>
-                <option>5m</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-text-1 mb-2">Max Open Trades</label>
-              <input
-                type="number"
-                value={maxOpenTrades}
-                onChange={(e) => setMaxOpenTrades(e.target.value)}
-                className="w-full px-3 py-2 bg-bg-2 border border-border rounded text-xs text-text-0 focus:outline-none focus:border-accent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-text-1 mb-2">Starting Capital</label>
-              <input
-                type="number"
-                value={startingCapital}
-                onChange={(e) => setStartingCapital(e.target.value)}
-                className="w-full px-3 py-2 bg-bg-2 border border-border rounded text-xs text-text-0 focus:outline-none focus:border-accent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-text-1 mb-2">Stake Amount</label>
-              <input
-                type="number"
-                value={stakeAmount}
-                onChange={(e) => setStakeAmount(e.target.value)}
-                className="w-full px-3 py-2 bg-bg-2 border border-border rounded text-xs text-text-0 focus:outline-none focus:border-accent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-text-1 mb-2">Fee Override (%)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={feeOverride}
-                onChange={(e) => setFeeOverride(e.target.value)}
-                className="w-full px-3 py-2 bg-bg-2 border border-border rounded text-xs text-text-0 placeholder-text-3 focus:outline-none focus:border-accent"
-                placeholder="Leave blank to use exchange default"
-              />
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Tooltip content="Enable trading protections during backtest (FT: --enable-protections)">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={enableProtections}
-                      onChange={(e) => setEnableProtections(e.target.checked)}
-                      className="w-4 h-4 rounded border border-border bg-bg-2 accent-accent cursor-pointer"
-                    />
-                    <span className="text-xs text-text-1">Enable Protections</span>
-                  </label>
-                </Tooltip>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Tooltip content="Cache results to avoid re-computing (FT: --cache)">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={cacheResults}
-                      onChange={(e) => setCacheResults(e.target.checked)}
-                      className="w-4 h-4 rounded border border-border bg-bg-2 accent-accent cursor-pointer"
-                    />
-                    <span className="text-xs text-text-1">Cache Results</span>
-                  </label>
-                </Tooltip>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={enableFreqAI}
-                    onChange={(e) => setEnableFreqAI(e.target.checked)}
-                    className="w-4 h-4 rounded border border-border bg-bg-2 accent-accent cursor-pointer"
-                  />
-                  <span className="text-xs text-text-1">Enable FreqAI</span>
-                </label>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-text-1 mb-2">Export</label>
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="export"
-                    value="none"
-                    checked={exportType === "none"}
-                    onChange={(e) => setExportType(e.target.value)}
-                    className="w-4 h-4 accent-accent cursor-pointer"
-                  />
-                  <span className="text-xs text-text-1">None</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="export"
-                    value="trades"
-                    checked={exportType === "trades"}
-                    onChange={(e) => setExportType(e.target.value)}
-                    className="w-4 h-4 accent-accent cursor-pointer"
-                  />
-                  <span className="text-xs text-text-1">Trades</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="export"
-                    value="signals"
-                    checked={exportType === "signals"}
-                    onChange={(e) => setExportType(e.target.value)}
-                    className="w-4 h-4 accent-accent cursor-pointer"
-                  />
-                  <span className="text-xs text-text-1">Signals</span>
-                </label>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-text-1 mb-2">Breakdown By</label>
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={breakdownDay}
-                    onChange={(e) => setBreakdownDay(e.target.checked)}
-                    className="w-4 h-4 rounded border border-border bg-bg-2 accent-accent cursor-pointer"
-                  />
-                  <span className="text-xs text-text-1">Day</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={breakdownWeek}
-                    onChange={(e) => setBreakdownWeek(e.target.checked)}
-                    className="w-4 h-4 rounded border border-border bg-bg-2 accent-accent cursor-pointer"
-                  />
-                  <span className="text-xs text-text-1">Week</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={breakdownMonth}
-                    onChange={(e) => setBreakdownMonth(e.target.checked)}
-                    className="w-4 h-4 rounded border border-border bg-bg-2 accent-accent cursor-pointer"
-                  />
-                  <span className="text-xs text-text-1">Month</span>
-                </label>
-              </div>
-            </div>
+        {/* Max Open Trades + Starting Capital row */}
+        <div className="grid grid-cols-2 gap-[10px] mb-3">
+          <div>
+            <label className="block text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px]">Max Open Trades</label>
+            <input
+              type="number"
+              value={maxOpenTrades}
+              onChange={(e) => setMaxOpenTrades(e.target.value)}
+              className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all"
+            />
           </div>
-        </details>
+          <div>
+            <label className="block text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px]">Starting Capital ($)</label>
+            <input
+              type="number"
+              value={startingCapital}
+              onChange={(e) => setStartingCapital(e.target.value)}
+              className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all"
+            />
+          </div>
+        </div>
+
+        {/* Stake Amount */}
+        <div className="mb-3">
+          <label className="block text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px]">Stake Amount ($)</label>
+          <input
+            type="number"
+            value={stakeAmount}
+            onChange={(e) => setStakeAmount(e.target.value)}
+            className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all"
+          />
+        </div>
+
+        {/* Fee Override */}
+        <div className="mb-3">
+          <label className="block text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px]">Fee Override (%)</label>
+          <input
+            type="number"
+            step="0.01"
+            value={feeOverride}
+            onChange={(e) => setFeeOverride(e.target.value)}
+            placeholder="Leave empty for exchange default"
+            className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 placeholder-text-3 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all"
+          />
+        </div>
+
+        {/* Enable Protections toggle */}
+        <div className="mb-3">
+          <label className="block text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px]">
+            <Tooltip content="Enable FT Protections (stoploss, use_sell_signal, etc.)">
+              <span className="border-b border-dotted border-text-3 cursor-help">Enable Protections</span>
+            </Tooltip>
+          </label>
+          <Toggle checked={enableProtections} onChange={setEnableProtections} />
+        </div>
+
+        {/* Cache Results toggle */}
+        <div className="mb-3">
+          <label className="block text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px]">
+            <Tooltip content="Cache results to avoid re-computing">
+              <span className="border-b border-dotted border-text-3 cursor-help">Cache Results</span>
+            </Tooltip>
+          </label>
+          <Toggle checked={cacheResults} onChange={setCacheResults} />
+        </div>
+
+        {/* Enable FreqAI toggle */}
+        <div className="mb-3">
+          <label className="block text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px]">
+            <Tooltip content="Use FreqAI model predictions in backtest">
+              <span className="border-b border-dotted border-text-3 cursor-help">Enable FreqAI</span>
+            </Tooltip>
+          </label>
+          <Toggle checked={enableFreqAI} onChange={setEnableFreqAI} />
+        </div>
+
+        {/* Export radio chips */}
+        <div className="mb-3">
+          <label className="block text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px]">Export</label>
+          <div className="flex flex-wrap gap-[6px] mt-[6px]">
+            {["none", "trades", "signals"].map((val) => (
+              <label
+                key={val}
+                className={`inline-flex items-center gap-1 py-[5px] px-3 rounded-btn text-[11px] cursor-pointer border transition-all select-none ${
+                  exportType === val
+                    ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-accent"
+                    : "bg-bg-2 border-border text-text-2 hover:border-[#2e2e48]"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="export"
+                  value={val}
+                  checked={exportType === val}
+                  onChange={(e) => setExportType(e.target.value)}
+                  className="m-0"
+                  style={{ margin: 0 }}
+                />
+                {val.charAt(0).toUpperCase() + val.slice(1)}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Breakdown checkbox chips */}
+        <div className="mb-3">
+          <label className="block text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px]">Breakdown</label>
+          <div className="flex flex-wrap gap-[6px] mt-[6px]">
+            {([
+              { label: "Day", checked: breakdownDay, set: setBreakdownDay },
+              { label: "Week", checked: breakdownWeek, set: setBreakdownWeek },
+              { label: "Month", checked: breakdownMonth, set: setBreakdownMonth },
+            ] as const).map((item) => (
+              <span
+                key={item.label}
+                onClick={() => item.set(!item.checked)}
+                className={`inline-flex items-center gap-1 py-[5px] px-3 rounded-btn text-[11px] cursor-pointer border transition-all select-none ${
+                  item.checked
+                    ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-accent"
+                    : "bg-bg-2 border-border text-text-2 hover:border-[#2e2e48]"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={item.checked}
+                  onChange={() => item.set(!item.checked)}
+                  className="m-0"
+                  style={{ margin: 0 }}
+                />
+                {item.label}
+              </span>
+            ))}
+          </div>
+        </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 mt-4">
           <button
-            onClick={handleStartBacktest}
+            onClick={handleStart}
             disabled={isRunning}
-            className="flex-1 px-4 py-2 bg-accent text-white text-xs font-semibold rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+            className="flex-1 inline-flex items-center justify-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium cursor-pointer border bg-accent border-accent text-white hover:bg-[#5558e6] hover:border-[#5558e6] transition-all whitespace-nowrap disabled:opacity-50"
           >
-            {isRunning ? "Running..." : "Start Backtest"}
+            ▶️ Start Backtest
           </button>
-          <button
-            onClick={() => results && handleLoadResult(0)}
-            className="flex-1 px-4 py-2 bg-bg-2 border border-border text-text-0 text-xs font-semibold rounded hover:bg-bg-3 transition-colors"
-          >
-            Load Result
+          <button className="flex-1 inline-flex items-center justify-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium cursor-pointer border border-border bg-bg-2 text-text-1 hover:border-[#2e2e48] hover:bg-bg-3 transition-all whitespace-nowrap">
+            📂 Load Result
           </button>
         </div>
-
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 mt-2">
           <button
             disabled={!isRunning}
-            className="flex-1 px-4 py-2 bg-red text-white text-xs font-semibold rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+            className="flex-1 inline-flex items-center justify-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium cursor-pointer border bg-[rgba(239,68,68,0.08)] border-[rgba(239,68,68,0.25)] text-red hover:bg-[rgba(239,68,68,0.15)] transition-all whitespace-nowrap disabled:opacity-50"
           >
-            Stop
+            ⏹️ Stop
           </button>
           <button
             onClick={handleReset}
-            className="flex-1 px-4 py-2 bg-bg-2 border border-border text-text-0 text-xs font-semibold rounded hover:bg-bg-3 transition-colors"
+            className="flex-1 inline-flex items-center justify-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium cursor-pointer border border-border bg-bg-2 text-text-1 hover:border-[#2e2e48] hover:bg-bg-3 transition-all whitespace-nowrap"
           >
-            Reset
+            ↻ Reset
           </button>
         </div>
 
-        {/* Backtest History */}
-        <div>
-          <h3 className="text-sm font-semibold text-text-0 mb-3">History</h3>
-          <div className="space-y-2">
-            {MOCK_HISTORY.map((item, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleLoadResult(idx)}
-                className="w-full text-left p-3 bg-bg-2 border border-border rounded hover:bg-bg-3 transition-colors"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium text-text-0">{item.strategy}</span>
-                  <span className={`text-xs font-semibold ${item.profitPct >= 0 ? "text-green" : "text-red"}`}>
-                    {fmtPct(item.profitPct)}
-                  </span>
-                </div>
-                <div className="text-xs text-text-2 mb-1">{item.date}</div>
-                <div className="flex items-center justify-between text-xs text-text-3">
-                  <span>{item.timerange}</span>
-                  <span>{item.trades} trades</span>
-                </div>
-              </button>
-            ))}
+        {/* History card */}
+        <div className="bg-bg-1 border border-border rounded-card p-4 mt-5">
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-[13px] font-semibold">📋 History</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse" style={{ fontSize: "11px" }}>
+              <thead>
+                <tr>
+                  <th className="py-2 px-[10px] text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">Name</th>
+                  <th className="py-2 px-[10px] text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">Date</th>
+                  <th className="py-2 px-[10px] text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">Profit%</th>
+                  <th className="py-2 px-[10px] text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">Trades</th>
+                </tr>
+              </thead>
+              <tbody>
+                {MOCK_HISTORY.map((h, i) => (
+                  <tr key={i} className="cursor-pointer hover:bg-[rgba(99,102,241,0.03)]">
+                    <td className={`py-2 px-[10px] border-b border-border/50 text-[11px] ${h.highlight ? "text-accent" : "text-text-1"}`}>
+                      {h.name}
+                    </td>
+                    <td className="py-2 px-[10px] border-b border-border/50 text-[10px] text-text-3">{h.date}</td>
+                    <td className={`py-2 px-[10px] border-b border-border/50 text-[11px] ${h.profitGreen ? "text-green" : "text-red"}`}>{h.profit}</td>
+                    <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-1">{h.trades}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
 
-      {/* RIGHT PANEL - RESULTS */}
-      {results && (
-        <div className="flex-1 overflow-y-auto">
-          <div className="space-y-6">
-            {/* Stat Boxes */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="bg-bg-2 border border-border rounded p-4">
-                <div className="text-xs font-medium text-text-2 mb-2">Total Trades</div>
-                <div className="text-lg font-bold text-text-0">{results.trades}</div>
-              </div>
+      {/* ══════════════ RIGHT PANEL: RESULTS ══════════════ */}
+      <div className="bg-bg-1 border border-border rounded-card p-4 overflow-y-auto">
+        <div className="text-[13px] font-semibold text-text-0 mb-4 flex items-center gap-2">
+          <span>📊 Results</span>
+        </div>
 
-              <div className="bg-bg-2 border border-border rounded p-4">
-                <div className="text-xs font-medium text-text-2 mb-2">Win Rate</div>
-                <div className="text-lg font-bold text-green">{fmtPct(results.winRate)}</div>
-              </div>
-
-              <div className="bg-bg-2 border border-border rounded p-4">
-                <div className="text-xs font-medium text-text-2 mb-2">Total Profit</div>
-                <div className={`text-lg font-bold ${profitColor_}`}>
-                  {fmtUsd(results.totalProfit)} / {fmtPct(results.totalProfitPct)}
-                </div>
-              </div>
-
-              <div className="bg-bg-2 border border-border rounded p-4">
-                <div className="text-xs font-medium text-text-2 mb-2">Max Drawdown</div>
-                <div className={`text-lg font-bold ${drawdownColor}`}>
-                  {fmtPct(results.maxDrawdown)} / {fmtUsd(results.maxDrawdownAbs)}
-                </div>
-              </div>
-
-              <div className="bg-bg-2 border border-border rounded p-4">
-                <Tooltip content="Risk-adjusted return metric — higher is better (FT: sharpe)">
-                  <div className="text-xs font-medium text-text-2 mb-2 cursor-help">Sharpe Ratio</div>
-                </Tooltip>
-                <div className="text-lg font-bold text-text-0">{results.sharpeRatio.toFixed(2)}</div>
-              </div>
-
-              <div className="bg-bg-2 border border-border rounded p-4">
-                <Tooltip content="Downside deviation metric — like Sharpe but only penalizes losses (FT: sortino)">
-                  <div className="text-xs font-medium text-text-2 mb-2 cursor-help">Sortino Ratio</div>
-                </Tooltip>
-                <div className="text-lg font-bold text-text-0">{results.sortinoRatio.toFixed(2)}</div>
-              </div>
+        {/* Stat Grid (3×2) */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-bg-1 border border-border rounded-card p-[14px]">
+            <div className="text-[10px] uppercase tracking-[0.5px] text-text-3 mb-1 font-semibold">Total Trades</div>
+            <div className="text-[18px] font-bold text-text-0">156</div>
+          </div>
+          <div className="bg-bg-1 border border-border rounded-card p-[14px]">
+            <div className="text-[10px] uppercase tracking-[0.5px] text-text-3 mb-1 font-semibold">Win Rate</div>
+            <div className="text-[18px] font-bold text-green">64.1%</div>
+          </div>
+          <div className="bg-bg-1 border border-border rounded-card p-[14px]">
+            <div className="text-[10px] uppercase tracking-[0.5px] text-text-3 mb-1 font-semibold">Total Profit</div>
+            <div className="text-[18px] font-bold text-green">+$1,247.80</div>
+            <div className="text-[10px] text-text-3 mt-[2px]">+12.5%</div>
+          </div>
+          <div className="bg-bg-1 border border-border rounded-card p-[14px]">
+            <div className="text-[10px] uppercase tracking-[0.5px] text-text-3 mb-1 font-semibold">Max Drawdown</div>
+            <div className="text-[18px] font-bold text-red">-8.4%</div>
+            <div className="text-[10px] text-text-3 mt-[2px]">-$840.00</div>
+          </div>
+          <div className="bg-bg-1 border border-border rounded-card p-[14px]">
+            <div className="text-[10px] uppercase tracking-[0.5px] text-text-3 mb-1 font-semibold">
+              <Tooltip content="Risk-adjusted return metric">
+                <span className="border-b border-dotted border-text-3 cursor-help">Sharpe Ratio</span>
+              </Tooltip>
             </div>
-
-            {/* Cumulative Profit Chart */}
-            <div className="bg-bg-2 border border-border rounded p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-text-0">Cumulative Profit</h3>
-                <div className="flex gap-2">
-                  {(["day", "week", "month"] as const).map((period) => (
-                    <button
-                      key={period}
-                      onClick={() => setChartPeriod(period)}
-                      className={`px-3 py-1 text-xs font-semibold rounded transition-colors ${
-                        chartPeriod === period ? "bg-accent text-white" : "bg-bg-3 text-text-2 hover:text-text-1"
-                      }`}
-                    >
-                      {period.charAt(0).toUpperCase() + period.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <svg viewBox="0 0 800 300" className="w-full h-auto">
-                <defs>
-                  <linearGradient id="profitGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#22c55e" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#22c55e" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-
-                {/* Grid */}
-                <line x1="40" y1="250" x2="780" y2="250" stroke="#1e1e30" strokeWidth="1" />
-                <line x1="40" y1="200" x2="780" y2="200" stroke="#1e1e30" strokeWidth="1" strokeDasharray="4" />
-                <line x1="40" y1="150" x2="780" y2="150" stroke="#1e1e30" strokeWidth="1" strokeDasharray="4" />
-                <line x1="40" y1="100" x2="780" y2="100" stroke="#1e1e30" strokeWidth="1" strokeDasharray="4" />
-                <line x1="40" y1="50" x2="780" y2="50" stroke="#1e1e30" strokeWidth="1" strokeDasharray="4" />
-
-                {/* Y-axis labels */}
-                <text x="35" y="255" textAnchor="end" className="text-[10px] fill-text-3">
-                  $0
-                </text>
-                <text x="35" y="205" textAnchor="end" className="text-[10px] fill-text-3">
-                  $312
-                </text>
-                <text x="35" y="155" textAnchor="end" className="text-[10px] fill-text-3">
-                  $624
-                </text>
-                <text x="35" y="105" textAnchor="end" className="text-[10px] fill-text-3">
-                  $936
-                </text>
-                <text x="35" y="55" textAnchor="end" className="text-[10px] fill-text-3">
-                  $1248
-                </text>
-
-                {/* X-axis labels */}
-                <text x="40" y="275" className="text-[10px] fill-text-3">
-                  Jan
-                </text>
-                <text x="200" y="275" className="text-[10px] fill-text-3">
-                  Apr
-                </text>
-                <text x="360" y="275" className="text-[10px] fill-text-3">
-                  Jul
-                </text>
-                <text x="520" y="275" className="text-[10px] fill-text-3">
-                  Oct
-                </text>
-                <text x="680" y="275" className="text-[10px] fill-text-3">
-                  Dec
-                </text>
-
-                {/* Data line with gradient fill */}
-                <polyline
-                  points={results.cumulativeProfit
-                    .map((profit, i) => {
-                      const x = 40 + (i / results.cumulativeProfit.length) * 740;
-                      const y = 250 - (profit / 1600) * 200;
-                      return `${x},${y}`;
-                    })
-                    .join(" ")}
-                  fill="none"
-                  stroke="#22c55e"
-                  strokeWidth="2"
-                />
-
-                {/* Gradient fill */}
-                <polygon
-                  points={`40,250 ${results.cumulativeProfit
-                    .map((profit, i) => {
-                      const x = 40 + (i / results.cumulativeProfit.length) * 740;
-                      const y = 250 - (profit / 1600) * 200;
-                      return `${x},${y}`;
-                    })
-                    .join(" ")} 780,250`}
-                  fill="url(#profitGrad)"
-                />
-
-                {/* Max drawdown marker */}
-                <circle cx="280" cy="110" r="4" fill="#ef4444" />
-                <line x1="280" y1="110" x2="280" y2="260" stroke="#ef4444" strokeWidth="1" strokeDasharray="2" />
-                <text x="280" y="95" textAnchor="middle" className="text-[9px] fill-red">
-                  Min: -$840
-                </text>
-
-                {/* Final profit marker */}
-                <circle cx="780" cy="50" r="4" fill="#22c55e" />
-                <text x="780" y="35" textAnchor="middle" className="text-[9px] fill-green font-semibold">
-                  Final: +$1,248
-                </text>
-              </svg>
+            <div className="text-[18px] font-bold text-text-0">1.52</div>
+          </div>
+          <div className="bg-bg-1 border border-border rounded-card p-[14px]">
+            <div className="text-[10px] uppercase tracking-[0.5px] text-text-3 mb-1 font-semibold">
+              <Tooltip content="Downside deviation metric">
+                <span className="border-b border-dotted border-text-3 cursor-help">Sortino Ratio</span>
+              </Tooltip>
             </div>
-
-            {/* Per-Trade Profit Bars */}
-            <div className="bg-bg-2 border border-border rounded p-4">
-              <h3 className="text-sm font-semibold text-text-0 mb-4">Per-Trade Profit Distribution</h3>
-              <svg viewBox="0 0 800 150" className="w-full h-auto">
-                {/* Zero line */}
-                <line x1="40" y1="75" x2="780" y2="75" stroke="#55556a" strokeWidth="1" />
-
-                {/* Bars */}
-                {results.tradesList.map((trade, i) => {
-                  const x = 40 + (i / results.tradesList.length) * 740;
-                  const barWidth = 740 / results.tradesList.length - 2;
-                  const barHeight = (Math.abs(trade.profitPct) / 10) * 50;
-                  const y = trade.profitPct >= 0 ? 75 - barHeight : 75;
-                  const color = trade.profitPct >= 0 ? "#22c55e" : "#ef4444";
-
-                  return <rect key={i} x={x} y={y} width={barWidth} height={barHeight} fill={color} opacity="0.8" />;
-                })}
-
-                {/* Y-axis labels */}
-                <text x="35" y="80" textAnchor="end" className="text-[9px] fill-text-3">
-                  0%
-                </text>
-                <text x="35" y="30" textAnchor="end" className="text-[9px] fill-text-3">
-                  +10%
-                </text>
-                <text x="35" y="130" textAnchor="end" className="text-[9px] fill-text-3">
-                  -10%
-                </text>
-              </svg>
-            </div>
-
-            {/* Trades Table */}
-            <div className="bg-bg-2 border border-border rounded overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-border bg-bg-3">
-                      <th className="px-4 py-3 text-left text-text-1 font-semibold">#</th>
-                      <th className="px-4 py-3 text-left text-text-1 font-semibold">Pair</th>
-                      <th className="px-4 py-3 text-left text-text-1 font-semibold">Side</th>
-                      <th className="px-4 py-3 text-right text-text-1 font-semibold">Profit %</th>
-                      <th className="px-4 py-3 text-right text-text-1 font-semibold">Profit $</th>
-                      <th className="px-4 py-3 text-left text-text-1 font-semibold">Open</th>
-                      <th className="px-4 py-3 text-left text-text-1 font-semibold">Close</th>
-                      <th className="px-4 py-3 text-left text-text-1 font-semibold">Duration</th>
-                      <th className="px-4 py-3 text-left text-text-1 font-semibold">
-                        <Tooltip content="FT: enter_tag — strategy signal that triggered this trade">
-                          <span className="cursor-help border-b border-dashed border-text-1">Enter Tag</span>
-                        </Tooltip>
-                      </th>
-                      <th className="px-4 py-3 text-left text-text-1 font-semibold">
-                        <Tooltip content="FT: exit_reason — why trade was closed">
-                          <span className="cursor-help border-b border-dashed border-text-1">Exit Reason</span>
-                        </Tooltip>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {results.tradesList.map((trade) => (
-                      <tr key={trade.id} className="border-b border-border hover:bg-bg-3 transition-colors">
-                        <td className="px-4 py-3 text-text-1">{trade.id}</td>
-                        <td className="px-4 py-3 text-text-0 font-medium">{trade.pair}</td>
-                        <td className="px-4 py-3">
-                          <span className={`px-2 py-1 rounded text-xs font-semibold ${trade.isShort ? "bg-red/20 text-red" : "bg-green/20 text-green"}`}>
-                            {trade.isShort ? "Short" : "Long"}
-                          </span>
-                        </td>
-                        <td className={`px-4 py-3 text-right font-semibold ${trade.profitPct >= 0 ? "text-green" : "text-red"}`}>
-                          {fmtPct(trade.profitPct)}
-                        </td>
-                        <td className={`px-4 py-3 text-right font-semibold ${trade.profitAbs >= 0 ? "text-green" : "text-red"}`}>
-                          {fmtUsd(trade.profitAbs)}
-                        </td>
-                        <td className="px-4 py-3 text-text-1 font-mono text-xs">{trade.openDate}</td>
-                        <td className="px-4 py-3 text-text-1 font-mono text-xs">{trade.closeDate}</td>
-                        <td className="px-4 py-3 text-text-2">{trade.duration}</td>
-                        <td className="px-4 py-3">
-                          <span className="px-2 py-1 bg-bg-3 rounded text-xs text-text-1">{trade.enterTag}</span>
-                        </td>
-                        <td className="px-4 py-3 text-text-2 text-xs">{trade.exitReason}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pagination */}
-              <div className="px-4 py-3 bg-bg-3 border-t border-border flex items-center justify-between text-xs text-text-2">
-                <span>Showing 1-10 of {results.trades}</span>
-                <div className="flex gap-2">
-                  <button
-                    disabled={currentPage === 1}
-                    className="px-3 py-1 bg-bg-2 border border-border rounded hover:bg-bg-3 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    Prev
-                  </button>
-                  <button className="px-3 py-1 bg-bg-2 border border-border rounded hover:bg-bg-3 transition-colors">
-                    Next
-                  </button>
-                </div>
-              </div>
-            </div>
+            <div className="text-[18px] font-bold text-text-0">2.14</div>
           </div>
         </div>
-      )}
+
+        {/* Equity Curve */}
+        <div className="mt-5 mb-0 relative" style={{ height: 200, background: "var(--bg-1)" }}>
+          <svg
+            style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}
+            viewBox="0 0 400 200"
+            preserveAspectRatio="none"
+          >
+            <defs>
+              <linearGradient id="equityGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#22c55e" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="#22c55e" stopOpacity={0.05} />
+              </linearGradient>
+            </defs>
+            <polyline
+              points="0,180 15,175 30,168 45,162 60,158 75,152 90,148 105,145 120,138 135,132 150,125 165,118 180,110 195,105 210,98 225,92 240,85 255,78 270,72 285,65 300,58 315,52 330,45 345,38 360,32 375,28 390,22 400,18"
+              style={{ fill: "url(#equityGrad)", stroke: "#22c55e", strokeWidth: 2, strokeLinejoin: "round" }}
+            />
+          </svg>
+        </div>
+        <div className="text-[10px] py-2 text-text-2">
+          Equity Growth: +12.5% (BTC/USDT:USDT)
+        </div>
+
+        {/* Trades Table */}
+        <div className="text-[10px] text-text-3 uppercase tracking-[0.5px] mb-2 font-semibold mt-5">
+          Recent Trades
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse" style={{ fontSize: "11px" }}>
+            <thead>
+              <tr>
+                <th className="py-2 px-[10px] text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">#</th>
+                <th className="py-2 px-[10px] text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">Pair</th>
+                <th className="py-2 px-[10px] text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">Side</th>
+                <th className="py-2 px-[10px] text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">Profit%</th>
+                <th className="py-2 px-[10px] text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">Profit$</th>
+                <th className="py-2 px-[10px] text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                  <Tooltip content="FT: open_date">
+                    <span className="border-b border-dotted border-text-3 cursor-help">Open</span>
+                  </Tooltip>
+                </th>
+                <th className="py-2 px-[10px] text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                  <Tooltip content="FT: close_date">
+                    <span className="border-b border-dotted border-text-3 cursor-help">Close</span>
+                  </Tooltip>
+                </th>
+                <th className="py-2 px-[10px] text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">Dur</th>
+                <th className="py-2 px-[10px] text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                  <Tooltip content="FT: enter_tag">
+                    <span className="border-b border-dotted border-text-3 cursor-help">Tag</span>
+                  </Tooltip>
+                </th>
+                <th className="py-2 px-[10px] text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                  <Tooltip content="FT: exit_reason">
+                    <span className="border-b border-dotted border-text-3 cursor-help">Exit Reason</span>
+                  </Tooltip>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {MOCK_TRADES.map((t) => (
+                <tr key={t.id} className="hover:bg-[rgba(99,102,241,0.03)]">
+                  <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-1">{t.id}</td>
+                  <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-1 font-semibold">{t.pair}</td>
+                  <td className="py-2 px-[10px] border-b border-border/50 text-[11px]">
+                    <span
+                      className={`inline-flex items-center px-2 py-[2px] rounded-full text-[10px] font-semibold uppercase tracking-[0.3px] ${
+                        t.side === "Long"
+                          ? "bg-[rgba(34,197,94,0.08)] text-green border border-[rgba(34,197,94,0.25)]"
+                          : "bg-[rgba(239,68,68,0.08)] text-red border border-[rgba(239,68,68,0.25)]"
+                      }`}
+                    >
+                      {t.side}
+                    </span>
+                  </td>
+                  <td className={`py-2 px-[10px] border-b border-border/50 text-[11px] ${t.green ? "text-green" : "text-red"}`}>{t.profitPct}</td>
+                  <td className={`py-2 px-[10px] border-b border-border/50 text-[11px] ${t.green ? "text-green" : "text-red"}`}>{t.profitAbs}</td>
+                  <td className="py-2 px-[10px] border-b border-border/50 text-[10px] text-text-1">{t.open}</td>
+                  <td className="py-2 px-[10px] border-b border-border/50 text-[10px] text-text-1">{t.close}</td>
+                  <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-1">{t.dur}</td>
+                  <td className="py-2 px-[10px] border-b border-border/50 text-[11px]">
+                    <span className="inline-flex items-center px-2 py-[2px] rounded-full text-[10px] font-semibold uppercase tracking-[0.3px] bg-[rgba(245,158,11,0.08)] text-amber border border-[rgba(245,158,11,0.25)]">
+                      {t.tag}
+                    </span>
+                  </td>
+                  <td className="py-2 px-[10px] border-b border-border/50 text-[11px] text-text-1">{t.exit}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        <div className="flex items-center justify-between py-2 text-[11px] text-text-2">
+          <span>Showing 1-10 of 156</span>
+          <div className="flex gap-2">
+            <button className="inline-flex items-center gap-[6px] py-1 px-[10px] rounded-btn text-[11px] font-medium cursor-pointer border border-border bg-bg-2 text-text-1 hover:border-[#2e2e48] hover:bg-bg-3 transition-all">
+              ← Prev
+            </button>
+            <button className="inline-flex items-center gap-[6px] py-1 px-[10px] rounded-btn text-[11px] font-medium cursor-pointer border border-border bg-bg-2 text-text-1 hover:border-[#2e2e48] hover:bg-bg-3 transition-all">
+              Next →
+            </button>
+          </div>
+        </div>
+
+        {/* Comparison Summary */}
+        <div className="mt-5">
+          <div className="text-[13px] font-semibold text-text-0 mb-3">📈 Recent Test Summaries</div>
+          <div className="grid grid-cols-3 gap-2" style={{ fontSize: "11px" }}>
+            {MOCK_COMPARISON.map((c, i) => (
+              <div key={i} className="bg-bg-3 p-2 rounded-btn">
+                <div className={`font-semibold mb-1 ${c.highlight ? "text-accent" : "text-text-2"}`}>{c.name}</div>
+                <div className="text-text-1">
+                  Profit: <span className={c.profit.startsWith("+") ? "text-green" : "text-red"}>{c.profit}</span>
+                </div>
+                <div className="text-text-1">Trades: {c.trades}</div>
+                <div className="text-text-1">
+                  DD: <span className="text-red">{c.dd}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

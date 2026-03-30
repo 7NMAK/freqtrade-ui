@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { getBots } from "@/lib/api";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
@@ -14,11 +15,6 @@ import { Button } from "@/components/ui/button";
    - Bot selector when multiple bots
    ══════════════════════════════════════ */
 
-const MOCK_BOTS = [
-  { id: 1, name: "bot-trend-01", status: "running" },
-  { id: 2, name: "bot-mean-rev", status: "running" },
-  { id: 3, name: "bot-scalp-hl", status: "stopped" },
-];
 
 interface ImportModalProps {
   onImport: (fileName: string) => void;
@@ -27,16 +23,26 @@ interface ImportModalProps {
 export function ImportStrategyModal({ onImport }: ImportModalProps) {
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [selectedBot, setSelectedBot] = useState(MOCK_BOTS[0].id);
+  const [bots, setBots] = useState<{ id: number; name: string; status: string }[]>([]);
+  const [selectedBot, setSelectedBot] = useState<number | "">("");
   const [dragging, setDragging] = useState(false);
   const [importing, setImporting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      getBots().then((res) => {
+        setBots(res);
+        if (res.length > 0) setSelectedBot(res[0].id);
+      }).catch(console.error);
+    }
+  }, [open]);
 
   const handleFile = useCallback((f: File) => {
     if (f.name.endsWith(".py")) {
       setFile(f);
     } else {
-      alert("Only .py files are accepted");
+      console.warn("Only .py files are accepted");
     }
   }, []);
 
@@ -50,12 +56,16 @@ export function ImportStrategyModal({ onImport }: ImportModalProps) {
   const handleImport = useCallback(async () => {
     if (!file) return;
     setImporting(true);
-    // Simulate upload delay
-    await new Promise((r) => setTimeout(r, 800));
-    onImport(file.name);
-    setImporting(false);
-    setFile(null);
-    setOpen(false);
+    try {
+      // Pass the selected bot alongside the file to the parent handler if needed
+      await onImport(file.name);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setImporting(false);
+      setFile(null);
+      setOpen(false);
+    }
   }, [file, onImport]);
 
   const reset = () => {
@@ -118,9 +128,13 @@ export function ImportStrategyModal({ onImport }: ImportModalProps) {
             onChange={(e) => setSelectedBot(Number(e.target.value))}
             className="w-full bg-accent/30 border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:border-primary transition-colors"
           >
-            {MOCK_BOTS.map((b) => (
-              <option key={b.id} value={b.id}>{b.name} ({b.status})</option>
-            ))}
+            {bots.length === 0 ? (
+              <option value="">No bots available</option>
+            ) : (
+              bots.map((b) => (
+                <option key={b.id} value={b.id}>{b.name} ({b.status})</option>
+              ))
+            )}
           </select>
         </div>
 

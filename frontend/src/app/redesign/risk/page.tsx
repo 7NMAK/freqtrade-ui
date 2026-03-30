@@ -7,6 +7,9 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { useApi } from "@/lib/useApi";
+import { getBots, getRiskEvents, softKillAll, hardKillAll, hardKill, softKill } from "@/lib/api";
+import { Bot, RiskEvent } from "@/types";
 
 /* ══════════════════════════════════════
    RISK — Live Risk Monitoring
@@ -20,21 +23,14 @@ import { Progress } from "@/components/ui/progress";
    ══════════════════════════════════════ */
 
 /* ── Kill Switch ── */
-const INITIAL_BOTS_KILL = [
-  { name: "bot-trend-01", originalStatus: "live" as const },
-  { name: "bot-mean-rev", originalStatus: "live" as const },
-  { name: "bot-scalp-hl", originalStatus: "live" as const },
-  { name: "bot-breakout-p", originalStatus: "paper" as const },
-  { name: "bot-freqai-exp", originalStatus: "paper" as const },
-];
-
 type BotStatus = "live" | "paper" | "stopped" | "killed";
 
-function KillSwitchCard({ botStatuses, onSoftKill, onHardKill, onToggleBot, onKillAll }: {
+function KillSwitchCard({ bots, botStatuses, onSoftKill, onHardKill, onToggleBot, onKillAll }: {
+  bots: Bot[];
   botStatuses: Record<string, BotStatus>;
   onSoftKill: () => void;
   onHardKill: () => void;
-  onToggleBot: (name: string) => void;
+  onToggleBot: (bot: Bot) => void;
   onKillAll: () => void;
 }) {
   return (
@@ -59,29 +55,41 @@ function KillSwitchCard({ botStatuses, onSoftKill, onHardKill, onToggleBot, onKi
             🛑 HARD KILL<br /><span className="text-2xs font-normal opacity-70">Force-exit ALL at MARKET. Irreversible.</span>
           </button>
         </div>
-        <div className="space-y-2">
-          {INITIAL_BOTS_KILL.map((b) => {
-            const status = botStatuses[b.name] || b.originalStatus;
-            const isActive = status === "live" || status === "paper";
+        <div className="space-y-2 max-h-[220px] overflow-y-auto pr-2">
+          {bots.length === 0 && <div className="text-xs text-muted-foreground">No active bots.</div>}
+          {bots.map((b) => {
+            const isLive = !b.is_dry_run;
+            const fallbackStatus: BotStatus = isLive ? "live" : "paper";
+            const recordedStatus = botStatuses[b.id];
+            
+            // if we have local killed override use it, else use FT state
+            let displayStatus: BotStatus = fallbackStatus;
+            if (recordedStatus) {
+              displayStatus = recordedStatus;
+            } else if (b.status === "stopped") {
+              displayStatus = "stopped";
+            }
+            
+            const isActive = displayStatus === "live" || displayStatus === "paper";
             return (
-              <div key={b.name} className="flex items-center justify-between py-2 px-3 bg-accent/20 rounded-btn">
+              <div key={b.id} className="flex items-center justify-between py-2 px-3 bg-accent/20 rounded-btn">
                 <div className="flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full ${
-                    status === "killed" ? "bg-ft-red" :
-                    status === "stopped" ? "bg-muted-foreground" :
-                    status === "live" ? "bg-ft-green" : "bg-ft-amber"
+                    displayStatus === "killed" ? "bg-ft-red" :
+                    displayStatus === "stopped" ? "bg-muted-foreground" :
+                    displayStatus === "live" ? "bg-ft-green" : "bg-ft-amber"
                   }`} />
                   <span className="text-xs font-semibold text-foreground">{b.name}</span>
                   <Badge variant="outline" className={`text-2xs ${
-                    status === "killed" ? "text-ft-red border-ft-red/20" :
-                    status === "stopped" ? "text-muted-foreground border-border" :
-                    status === "live" ? "text-ft-green border-ft-green/20" : "text-ft-amber border-ft-amber/20"
+                    displayStatus === "killed" ? "text-ft-red border-ft-red/20" :
+                    displayStatus === "stopped" ? "text-muted-foreground border-border" :
+                    displayStatus === "live" ? "text-ft-green border-ft-green/20" : "text-ft-amber border-ft-amber/20"
                   }`}>
-                    {status}
+                    {displayStatus}
                   </Badge>
                 </div>
                 <button
-                  onClick={() => onToggleBot(b.name)}
+                  onClick={() => onToggleBot(b)}
                   className={`text-2xs font-bold transition-colors px-2 py-1 rounded border ${
                     isActive
                       ? "text-ft-red/70 hover:text-ft-red border-ft-red/20 hover:border-ft-red/40"
@@ -106,31 +114,31 @@ function KillSwitchCard({ botStatuses, onSoftKill, onHardKill, onToggleBot, onKi
 }
 
 /* ── Heartbeat Monitor ── */
-const INITIAL_HEARTBEATS = [
-  { name: "bot-trend-01", lastCandle: "2m ago", lastTrade: "12m ago", tradesToday: 3 },
-  { name: "bot-mean-rev", lastCandle: "2m ago", lastTrade: "2h ago", tradesToday: 1 },
-  { name: "bot-scalp-hl", lastCandle: "2m ago", lastTrade: "48m ago", tradesToday: 8 },
-  { name: "bot-breakout-p", lastCandle: "2m ago", lastTrade: "3h ago", tradesToday: 0 },
-  { name: "bot-freqai-exp", lastCandle: "2m ago", lastTrade: "5h ago", tradesToday: 0 },
-];
+interface HeartbeatData {
+  name: string;
+  lastCandle: string;
+  lastTrade: string;
+  tradesToday: number;
+}
+const INITIAL_HEARTBEATS: HeartbeatData[] = [];
 
-function HeartbeatCard({ botStatuses }: { botStatuses: Record<string, BotStatus> }) {
+function HeartbeatCard({ bots, botStatuses }: { bots: Bot[], botStatuses: Record<string, BotStatus> }) {
   const [pings, setPings] = useState<Record<string, { ms: number; lastChecked: string }>>({});
 
   const updatePings = useCallback(() => {
     const now = new Date();
     const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`;
     const newPings: Record<string, { ms: number; lastChecked: string }> = {};
-    for (const h of INITIAL_HEARTBEATS) {
-      const status = botStatuses[h.name];
+    for (const b of bots) {
+      const status = botStatuses[b.id] || (b.status === "stopped" ? "stopped" : (b.is_dry_run ? "paper" : "live"));
       if (status === "killed" || status === "stopped") {
-        newPings[h.name] = { ms: -1, lastChecked: timeStr };
+        newPings[b.id] = { ms: -1, lastChecked: timeStr };
       } else {
-        newPings[h.name] = { ms: Math.floor(Math.random() * 50) + 5, lastChecked: timeStr };
+        newPings[b.id] = { ms: Math.floor(Math.random() * 50) + 5, lastChecked: timeStr };
       }
     }
     setPings(newPings);
-  }, [botStatuses]);
+  }, [botStatuses, bots]);
 
   useEffect(() => {
     updatePings();
@@ -160,20 +168,21 @@ function HeartbeatCard({ botStatuses }: { botStatuses: Record<string, BotStatus>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {INITIAL_HEARTBEATS.map((h) => {
-              const pingData = pings[h.name];
-              const status = botStatuses[h.name];
+            {bots.length === 0 && <TableRow><TableCell colSpan={7} className="text-xs text-center text-muted-foreground py-4">No active bots.</TableCell></TableRow>}
+            {bots.map((b) => {
+              const pingData = pings[b.id];
+              const status = botStatuses[b.id] || (b.status === "stopped" ? "stopped" : (b.is_dry_run ? "paper" : "live"));
               const isDead = status === "killed" || status === "stopped";
-              const isWarn = h.name === "bot-scalp-hl" && !isDead;
+              const isWarn = !b.is_healthy && !isDead;
               return (
-                <TableRow key={h.name}>
-                  <TableCell className="text-xs font-bold text-foreground">{h.name}</TableCell>
+                <TableRow key={b.id}>
+                  <TableCell className="text-xs font-bold text-foreground">{b.name}</TableCell>
                   <TableCell className={`text-xs font-mono-data ${isDead ? "text-ft-red" : "text-muted-foreground"}`}>
                     {isDead ? "TIMEOUT" : pingData ? `${pingData.ms}ms` : "..."}
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{isDead ? "—" : h.lastCandle}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{isDead ? "—" : h.lastTrade}</TableCell>
-                  <TableCell className="text-xs font-mono-data text-foreground">{isDead ? "—" : h.tradesToday}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{isDead ? "—" : "—"}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{isDead ? "—" : "—"}</TableCell>
+                  <TableCell className="text-xs font-mono-data text-foreground">{isDead ? "—" : "0"}</TableCell>
                   <TableCell>
                     <span className={`w-2.5 h-2.5 rounded-full inline-block ${
                       isDead
@@ -197,13 +206,16 @@ function HeartbeatCard({ botStatuses }: { botStatuses: Record<string, BotStatus>
 }
 
 /* ── FT Protections Status ── */
-const PROTECTIONS_STATUS = [
-  { bot: "bot-trend-01", guard: "Active", guardState: "ok", maxDd: "OK (1.2%)", maxDdState: "ok", cooldown: "OK", coolState: "ok" },
-  { bot: "bot-mean-rev", guard: "Active", guardState: "ok", maxDd: "OK (0.8%)", maxDdState: "ok", cooldown: "OK", coolState: "ok" },
-  { bot: "bot-scalp-hl", guard: "TRIGGERED (2/3 SL)", guardState: "warn", maxDd: "WARNING (4.1%)", maxDdState: "warn", cooldown: "Active", coolState: "warn" },
-  { bot: "bot-breakout-p", guard: "Active", guardState: "ok", maxDd: "OK (0.3%)", maxDdState: "ok", cooldown: "OK", coolState: "ok" },
-  { bot: "bot-freqai-exp", guard: "Active", guardState: "ok", maxDd: "OK (0.1%)", maxDdState: "ok", cooldown: "OK", coolState: "ok" },
-];
+interface ProtectionData {
+  bot: string;
+  guard: string;
+  guardState: string;
+  maxDd: string;
+  maxDdState: string;
+  cooldown: string;
+  coolState: string;
+}
+const PROTECTIONS_STATUS: ProtectionData[] = [];
 
 function ProtectionsCard() {
   return (
@@ -224,6 +236,7 @@ function ProtectionsCard() {
             </TableRow>
           </TableHeader>
           <TableBody>
+            {PROTECTIONS_STATUS.length === 0 && <TableRow><TableCell colSpan={4} className="text-xs text-center text-muted-foreground py-4">No active protections reported.</TableCell></TableRow>}
             {PROTECTIONS_STATUS.map((p) => (
               <TableRow key={p.bot}>
                 <TableCell className="text-xs font-bold text-foreground">{p.bot}</TableCell>
@@ -240,10 +253,15 @@ function ProtectionsCard() {
 }
 
 /* ── Pair Locks ── */
-const INITIAL_PAIR_LOCKS = [
-  { id: "PL-001", bot: "bot-scalp-hl", pair: "SOL/USDT", reason: "StoplossGuard: 3 SL in 1h", until: "16:45", active: true },
-  { id: "PL-002", bot: "bot-scalp-hl", pair: "SOL/USDT", reason: "CooldownPeriod: 5 candles", until: "15:25", active: false },
-];
+interface PairLockData {
+  id: string;
+  bot: string;
+  pair: string;
+  reason: string;
+  until: string;
+  active: boolean;
+}
+const INITIAL_PAIR_LOCKS: PairLockData[] = [];
 
 function PairLocksCard({ locks, onUnlock, onAddLock }: {
   locks: typeof INITIAL_PAIR_LOCKS;
@@ -318,8 +336,8 @@ function LockPairForm({ onClose, onSubmit }: {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!pair.trim()) { alert("Pair is required"); return; }
-    if (!reason.trim()) { alert("Reason is required"); return; }
+    if (!pair.trim()) return;
+    if (!reason.trim()) return;
     onSubmit({ pair: pair.trim(), reason: reason.trim(), duration });
   }
 
@@ -382,12 +400,13 @@ function LockPairForm({ onClose, onSubmit }: {
 }
 
 /* ── Portfolio Exposure ── */
-const EXPOSURE = [
-  { pair: "BTC/USDT", bots: 2, exposure: "$42,300", pct: 68 },
-  { pair: "ETH/USDT", bots: 1, exposure: "$12,100", pct: 19 },
-  { pair: "SOL/USDT", bots: 1, exposure: "$5,800", pct: 9 },
-  { pair: "DOGE/USDT", bots: 1, exposure: "$2,400", pct: 4 },
-];
+interface ExposureData {
+  pair: string;
+  bots: number;
+  exposure: string;
+  pct: number;
+}
+const EXPOSURE: ExposureData[] = [];
 
 function ExposureCard() {
   return (
@@ -414,31 +433,20 @@ function ExposureCard() {
 }
 
 /* ── Risk Events Log ── */
-const INITIAL_RISK_EVENTS = [
-  { time: "14:22", type: "trade" as const, text: "Trade #4821 closed — BTC/USDT +$312.40 (bot-trend-01)" },
-  { time: "13:45", type: "protection" as const, text: "StoplossGuard TRIGGERED — bot-scalp-hl locked SOL/USDT for 30m" },
-  { time: "13:30", type: "alert" as const, text: "Drawdown alert — bot-scalp-hl reached 4.1% (threshold: 5%)" },
-  { time: "12:08", type: "trade" as const, text: "Trade #4819 closed — SOL/USDT -$35.00 (bot-scalp-hl)" },
-  { time: "10:55", type: "trade" as const, text: "Trade #4818 closed — BTC/USDT +$87.50 (bot-trend-01)" },
-  { time: "09:30", type: "trade" as const, text: "Trade #4817 closed — DOGE/USDT +$18.00 (bot-breakout-p)" },
-  { time: "08:00", type: "system" as const, text: "All bots started — daily cycle initiated" },
-];
-
-const MORE_EVENTS = [
-  { time: "07:55", type: "system" as const, text: "Pre-market health check passed — all systems nominal" },
-  { time: "07:30", type: "system" as const, text: "Data download complete — 6 pairs updated" },
-  { time: "06:00", type: "system" as const, text: "Scheduled maintenance window ended" },
-  { time: "03:22", type: "trade" as const, text: "Trade #4816 closed — BTC/USDT +$145.20 (bot-trend-01)" },
-  { time: "01:10", type: "alert" as const, text: "Binance API rate limit warning — 980/1200 used" },
-];
+interface RiskEventData {
+  time: string;
+  type: "trade" | "protection" | "alert" | "system";
+  text: string;
+}
+const INITIAL_RISK_EVENTS: RiskEventData[] = [];
+const MORE_EVENTS: RiskEventData[] = [];
 
 const eventIcons = { trade: "📊", protection: "🛡️", alert: "⚠️", system: "🔧" };
 
-function RiskEventsCard() {
+function RiskEventsCard({ events }: { events: RiskEvent[] }) {
   const [visibleCount, setVisibleCount] = useState(7);
-  const allEvents = [...INITIAL_RISK_EVENTS, ...MORE_EVENTS];
-  const visibleEvents = allEvents.slice(0, visibleCount);
-  const hasMore = visibleCount < allEvents.length;
+  const visibleEvents = events.slice(0, visibleCount);
+  const hasMore = visibleCount < events.length;
 
   return (
     <Card>
@@ -449,11 +457,12 @@ function RiskEventsCard() {
       </CardHeader>
       <CardContent className="px-5 pb-5 pt-0">
         <div className="max-h-[300px] overflow-y-auto space-y-0">
+          {events.length === 0 && <div className="text-sm text-muted-foreground p-5 text-center italic">No risk events logged.</div>}
           {visibleEvents.map((e, i) => (
             <div key={i} className="flex gap-3 py-2.5 border-b border-border last:border-b-0">
-              <span className="text-xs font-mono-data text-muted-foreground/50 w-12 flex-shrink-0">{e.time}</span>
-              <span className="text-sm flex-shrink-0">{eventIcons[e.type]}</span>
-              <span className="text-xs text-muted-foreground leading-relaxed">{e.text}</span>
+              <span className="text-xs font-mono-data text-muted-foreground/50 w-32 flex-shrink-0">{new Date(e.created_at).toLocaleString()}</span>
+              <span className="text-sm flex-shrink-0">{eventIcons[e.trigger === "HEARTBEAT_FAILURE" ? "system" : e.trigger === "DRAWDOWN_LIMIT" ? "protection" : "alert"]}</span>
+              <span className="text-xs text-muted-foreground leading-relaxed">[{e.bot_instance_id ? `Bot #${e.bot_instance_id}` : "Global"}] {e.trigger} — {e.reason || "No reason"} by {e.triggered_by}</span>
             </div>
           ))}
         </div>
@@ -462,7 +471,7 @@ function RiskEventsCard() {
             onClick={() => setVisibleCount((prev) => prev + 5)}
             className="w-full mt-3 py-2 text-xs font-semibold text-primary border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors"
           >
-            Load More ({allEvents.length - visibleCount} remaining)
+            Load More ({events.length - visibleCount} remaining)
           </button>
         )}
       </CardContent>
@@ -474,69 +483,66 @@ function RiskEventsCard() {
    PAGE
    ══════════════════════════════════════ */
 export default function RiskPage() {
-  const [botStatuses, setBotStatuses] = useState<Record<string, BotStatus>>(() => {
-    const initial: Record<string, BotStatus> = {};
-    for (const b of INITIAL_BOTS_KILL) {
-      initial[b.name] = b.originalStatus;
-    }
-    return initial;
-  });
+  const [botStatuses, setBotStatuses] = useState<Record<string, BotStatus>>({});
+  const { data: botsList } = useApi(getBots, [], { refreshInterval: 10000 });
+  const { data: eventsList } = useApi(getRiskEvents, [], { refreshInterval: 15000 });
+  const bots = botsList || [];
+  const riskEvents = eventsList || [];
 
   const [pairLocks, setPairLocks] = useState(INITIAL_PAIR_LOCKS);
   const [showLockForm, setShowLockForm] = useState(false);
 
-  function handleSoftKill() {
+  async function handleSoftKill() {
     if (!confirm("SOFT KILL: This will stop all bots from opening new trades. Existing positions remain open. Continue?")) return;
-    console.log("SOFT KILL: POST /api/v1/stop per bot");
-    setBotStatuses((prev) => {
-      const next = { ...prev };
-      for (const key of Object.keys(next)) {
-        next[key] = "stopped";
-      }
-      return next;
-    });
+    try {
+      await softKillAll("Risk Page Soft Kill All Button");
+      setBotStatuses((prev) => {
+        const next = { ...prev };
+        for (const b of bots) next[b.id] = "stopped";
+        return next;
+      });
+    } catch (err) {
+      console.error(err);
+    }
   }
 
-  function handleHardKill() {
+  async function handleHardKill() {
     if (!confirm("HARD KILL: This will force-exit ALL positions at MARKET and stop ALL bots. This is IRREVERSIBLE. Continue?")) return;
-    console.log("HARD KILL: POST /api/v1/forceexit + POST /api/v1/stop per bot");
-    setBotStatuses((prev) => {
-      const next = { ...prev };
-      for (const key of Object.keys(next)) {
-        next[key] = "killed";
-      }
-      return next;
-    });
+    try {
+      await hardKillAll("Risk Page Hard Kill All Button");
+      setBotStatuses((prev) => {
+        const next = { ...prev };
+        for (const b of bots) next[b.id] = "killed";
+        return next;
+      });
+    } catch (err) {
+      console.error(err);
+    }
   }
 
-  function handleToggleBot(name: string) {
-    setBotStatuses((prev) => {
-      const current = prev[name];
-      if (current === "live" || current === "paper") {
-        console.log(`KILL BOT: POST /api/v1/forceexit + POST /api/v1/stop for ${name}`);
-        return { ...prev, [name]: "killed" };
-      } else {
-        const original = INITIAL_BOTS_KILL.find((b) => b.name === name)?.originalStatus || "live";
-        console.log(`START BOT: Starting ${name} as ${original}`);
-        return { ...prev, [name]: original };
+  async function handleToggleBot(b: Bot) {
+    const currentStatus = botStatuses[b.id] || (b.is_dry_run ? "paper" : "live");
+    const isActive = currentStatus === "live" || currentStatus === "paper";
+    
+    if (isActive) {
+      try {
+        await hardKill(b.id, "Risk Page Individual Bot Kill");
+        setBotStatuses((prev) => ({ ...prev, [b.id]: "killed" }));
+      } catch (err) {
+        console.error(err);
       }
-    });
+    } else {
+      console.log(`START BOT: Starting ${b.name}`);
+      setBotStatuses((prev) => ({ ...prev, [b.id]: b.is_dry_run ? "paper" : "live" }));
+    }
   }
 
-  function handleKillAll() {
-    if (!confirm("KILL ALL BOTS: This will force-exit ALL positions on ALL bots at MARKET. Continue?")) return;
-    console.log("KILL ALL: POST /api/v1/forceexit + POST /api/v1/stop for all bots");
-    setBotStatuses((prev) => {
-      const next = { ...prev };
-      for (const key of Object.keys(next)) {
-        next[key] = "killed";
-      }
-      return next;
-    });
+  async function handleKillAll() {
+    handleHardKill();
   }
 
   function handleUnlock(id: string) {
-    console.log(`UNLOCK: DELETE /api/v1/locks/${id}`);
+    console.info(`UNLOCK: DELETE /api/v1/locks/${id}`);
     setPairLocks((prev) => prev.filter((l) => l.id !== id));
   }
 
@@ -552,7 +558,7 @@ export default function RiskPage() {
       until,
       active: true,
     };
-    console.log(`LOCK PAIR: POST /api/v1/locks — ${data.pair} for ${data.duration}m`);
+    console.info(`LOCK PAIR: POST /api/v1/locks — ${data.pair} for ${data.duration}m`);
     setPairLocks((prev) => [newLock, ...prev]);
     setShowLockForm(false);
   }
@@ -566,13 +572,14 @@ export default function RiskPage() {
 
       <div className="grid grid-cols-[1fr_1.5fr] gap-4 mb-4">
         <KillSwitchCard
+          bots={bots}
           botStatuses={botStatuses}
           onSoftKill={handleSoftKill}
           onHardKill={handleHardKill}
           onToggleBot={handleToggleBot}
           onKillAll={handleKillAll}
         />
-        <HeartbeatCard botStatuses={botStatuses} />
+        <HeartbeatCard bots={bots} botStatuses={botStatuses} />
       </div>
 
       <div className="mb-4">
@@ -584,7 +591,7 @@ export default function RiskPage() {
         <ExposureCard />
       </div>
 
-      <RiskEventsCard />
+      <RiskEventsCard events={riskEvents} />
 
       {showLockForm && (
         <LockPairForm onClose={() => setShowLockForm(false)} onSubmit={handleAddLock} />

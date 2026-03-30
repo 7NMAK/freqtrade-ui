@@ -23,59 +23,7 @@ interface BotData { name: string; status: "live" | "paper"; strategy: string; pa
 interface Props { bot: BotData | null; onClose: () => void; }
 type Tab = "overview" | "trades" | "history" | "config" | "logs" | "actions";
 
-/* ── Mock Data ── */
-const OPEN_TRADES = [
-  { trade_id: 1, pair: "BTC/USDT:USDT", is_short: false, open_rate: 87234.50, stake_amount: 1000, leverage: 10, current_profit: 0.0075, current_profit_abs: 75.00, open_date: "2026-03-29 14:22", enter_tag: "ema_cross", stop_loss: 84517.00, current_rate: 87888.12 },
-  { trade_id: 2, pair: "BTC/USDT:USDT", is_short: false, open_rate: 86920.00, stake_amount: 1000, leverage: 10, current_profit: 0.0021, current_profit_abs: 21.00, open_date: "2026-03-29 09:15", enter_tag: "pullback_buy", stop_loss: 84152.00, current_rate: 87102.55 },
-];
-const CLOSED_TRADES = [
-  { trade_id: 101, pair: "BTC/USDT:USDT", is_short: false, open_rate: 86412, close_rate: 87128, stake_amount: 1000, leverage: 10, close_profit_abs: 312.40, close_profit: 0.0083, enter_tag: "ema_cross", exit_reason: "roi", open_date: "2026-03-28 10:30", close_date: "2026-03-28 14:12", fee_open: 0.001, fee_close: 0.001 },
-  { trade_id: 102, pair: "BTC/USDT:USDT", is_short: true, open_rate: 87800, close_rate: 87100, stake_amount: 500, leverage: 10, close_profit_abs: 66.50, close_profit: 0.008, enter_tag: "rsi_overbought", exit_reason: "trailing_stop", open_date: "2026-03-27 16:00", close_date: "2026-03-27 17:18", fee_open: 0.001, fee_close: 0.001 },
-  { trade_id: 103, pair: "BTC/USDT:USDT", is_short: false, open_rate: 85900, close_rate: 85500, stake_amount: 1000, leverage: 10, close_profit_abs: -35.00, close_profit: -0.0047, enter_tag: "macd_cross", exit_reason: "stoploss", open_date: "2026-03-27 08:00", close_date: "2026-03-27 08:22", fee_open: 0.001, fee_close: 0.001 },
-  { trade_id: 104, pair: "BTC/USDT:USDT", is_short: false, open_rate: 85938, close_rate: 86288, stake_amount: 1000, leverage: 10, close_profit_abs: 87.50, close_profit: 0.004, enter_tag: "ema_cross", exit_reason: "roi", open_date: "2026-03-26 14:00", close_date: "2026-03-26 19:10", fee_open: 0.001, fee_close: 0.001 },
-  { trade_id: 105, pair: "BTC/USDT:USDT", is_short: true, open_rate: 86100, close_rate: 85834, stake_amount: 500, leverage: 10, close_profit_abs: 18.00, close_profit: 0.0031, enter_tag: "rsi_overbought", exit_reason: "roi", open_date: "2026-03-26 09:00", close_date: "2026-03-26 11:05", fee_open: 0.001, fee_close: 0.001 },
-];
-const BT_RUNS = [
-  { id: "bt1", date: "Mar 10", range: "2024-01 \u2192 2026-03", profit: "+14.2%", profitAbs: "+$4,260", sharpe: "2.31", trades: 312, winRate: "67.9%", maxDd: "4.1%", duration: "3h 42m" },
-  { id: "bt2", date: "Mar 8", range: "2024-01 \u2192 2026-03", profit: "+9.8%", profitAbs: "+$2,940", sharpe: "1.72", trades: 298, winRate: "63.1%", maxDd: "5.6%", duration: "4h 10m" },
-  { id: "bt3", date: "Mar 5", range: "2023-06 \u2192 2026-03", profit: "+5.2%", profitAbs: "+$1,560", sharpe: "1.15", trades: 245, winRate: "58.4%", maxDd: "7.8%", duration: "5h 22m" },
-];
-const LOGS = [
-  { time: "10:05:32", level: "INFO", msg: "Bot started successfully" },
-  { time: "10:05:33", level: "INFO", msg: "Loading strategy TrendFollowerV3" },
-  { time: "10:06:01", level: "INFO", msg: "Analyzing candle 2026-03-29 10:00:00" },
-  { time: "10:06:02", level: "INFO", msg: "Entering trade: BTC/USDT LONG at 87234.50" },
-  { time: "10:08:15", level: "WARNING", msg: "Rate limiting detected, retrying in 2s" },
-  { time: "10:10:00", level: "INFO", msg: "Heartbeat OK - ping 12ms" },
-  { time: "10:15:01", level: "INFO", msg: "Analyzing candle 2026-03-29 10:15:00" },
-  { time: "10:15:02", level: "INFO", msg: "No new signals" },
-  { time: "10:20:01", level: "INFO", msg: "Analyzing candle 2026-03-29 10:20:00" },
-];
-const STATS = {
-  profit_factor: 2.14, total_trades: 312, winning: 212, losing: 100,
-  avg_duration: "3h 42m", best_pair: "BTC/USDT", max_dd: 4.1, max_dd_abs: 5352,
-  sharpe: 2.31, sortino: 3.12, calmar: 1.87,
-  consec_wins: 8, consec_losses: 3, rejected: 14,
-  volume: 312400, total_profit: 4821.30,
-};
 
-/* FreqUI-style daily profit data with cumulative */
-const RAW_DAILY = [
-  { date: "2026-03-11", profit: 0, trades: 0 }, { date: "2026-03-12", profit: 0, trades: 0 },
-  { date: "2026-03-13", profit: 0, trades: 0 }, { date: "2026-03-14", profit: 0, trades: 0 },
-  { date: "2026-03-15", profit: 0, trades: 0 }, { date: "2026-03-16", profit: 0, trades: 0 },
-  { date: "2026-03-17", profit: 0, trades: 0 }, { date: "2026-03-18", profit: 0, trades: 0 },
-  { date: "2026-03-19", profit: 0, trades: 0 }, { date: "2026-03-20", profit: 0, trades: 0 },
-  { date: "2026-03-21", profit: 0, trades: 0 }, { date: "2026-03-22", profit: 0, trades: 0 },
-  { date: "2026-03-23", profit: -15, trades: 1 }, { date: "2026-03-24", profit: -58, trades: 1 },
-  { date: "2026-03-25", profit: -35, trades: 2 }, { date: "2026-03-26", profit: 105, trades: 2 },
-  { date: "2026-03-27", profit: -8, trades: 2 }, { date: "2026-03-28", profit: 312, trades: 1 },
-  { date: "2026-03-29", profit: 96, trades: 2 },
-];
-const DAILY_PROFIT = (() => {
-  let cum = 0;
-  return RAW_DAILY.map(d => { cum += d.profit; return { ...d, cumulative: cum }; });
-})();
 
 export function BotDetailPanel({ bot, onClose }: Props) {
   const router = useRouter();
@@ -85,20 +33,33 @@ export function BotDetailPanel({ bot, onClose }: Props) {
   const [chartPeriod, setChartPeriod] = useState<"days" | "weeks" | "months">("days");
   const [chartMode, setChartMode] = useState<"abs" | "rel">("abs");
 
+  // State to be hydrated via API
+  const [openTrades] = useState<{ trade_id: number; pair: string; is_short: boolean; leverage: number; enter_tag: string; current_profit: number; current_profit_abs: number; open_rate: number; current_rate: number; stake_amount: number; stop_loss: number; open_date: string }[]>([]);
+  const [closedTrades] = useState<{ trade_id: number; pair: string; is_short: boolean; leverage: number; enter_tag: string; exit_reason: string; close_profit_abs: number; open_rate: number; close_rate: number; stake_amount: number; close_date: string; open_date: string }[]>([]);
+  const [btRuns] = useState<{ id: string; date: string; range: string; profit: string; profitAbs: string; sharpe: string; trades: string; winRate: string; maxDd: string; duration: string }[]>([]);
+  const [logs] = useState<{ time: string; level: string; msg: string }[]>([]);
+  const [stats] = useState({
+    profit_factor: 0, total_trades: 0, winning: 0, losing: 0,
+    avg_duration: "0", best_pair: "", max_dd: 0, max_dd_abs: 0,
+    sharpe: 0, sortino: 0, calmar: 0, consec_wins: 0, consec_losses: 0,
+    rejected: 0, volume: 0, total_profit: 0,
+  });
+  const [dailyProfit] = useState<{ date: string; profit: number; trades: number; cumulative: number }[]>([]);
+
   if (!bot) return null;
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "overview", label: "Overview" },
-    { key: "trades", label: `Trades (${OPEN_TRADES.length + CLOSED_TRADES.length})` },
-    { key: "history", label: `Backtests (${BT_RUNS.length})` },
+    { key: "trades", label: `Trades (${openTrades.length + closedTrades.length})` },
+    { key: "history", label: `Backtests (${btRuns.length})` },
     { key: "config", label: "Config" },
     { key: "logs", label: "Logs" },
     { key: "actions", label: "Actions" },
   ];
 
-  const allTrades = [...OPEN_TRADES.map(t => ({ ...t, _open: true as const })), ...CLOSED_TRADES.map(t => ({ ...t, _open: false as const }))];
+  const allTrades = [...openTrades.map(t => ({ ...t, _open: true as const })), ...closedTrades.map(t => ({ ...t, _open: false as const }))];
   const selectedTrade = allTrades.find(t => t.trade_id === selectedTradeId);
-  const wr = ((STATS.winning / STATS.total_trades) * 100).toFixed(1);
+  const wr = stats.total_trades > 0 ? ((stats.winning / stats.total_trades) * 100).toFixed(1) : "0.0";
 
   return (
     <Sheet open={!!bot} onOpenChange={(open) => { if (!open) { onClose(); setSelectedTradeId(null); } }}>
@@ -139,9 +100,9 @@ export function BotDetailPanel({ bot, onClose }: Props) {
               {/* Hero stats */}
               <div className="grid grid-cols-4 gap-3">
                 {[
-                  { label: "Total Profit", value: `+$${STATS.total_profit.toFixed(0)}`, sub: `${STATS.total_trades} trades`, color: "text-ft-green", bg: "from-ft-green/10 to-ft-green/5" },
-                  { label: "Win Rate", value: `${wr}%`, sub: `${STATS.winning}W / ${STATS.losing}L`, color: "text-foreground", bg: "from-primary/10 to-primary/5" },
-                  { label: "Max Drawdown", value: `${STATS.max_dd}%`, sub: `$${STATS.max_dd_abs.toLocaleString()}`, color: "text-ft-red", bg: "from-ft-red/10 to-ft-red/5" },
+                  { label: "Total Profit", value: `+$${stats.total_profit.toFixed(0)}`, sub: `${stats.total_trades} trades`, color: "text-ft-green", bg: "from-ft-green/10 to-ft-green/5" },
+                  { label: "Win Rate", value: `${wr}%`, sub: `${stats.winning}W / ${stats.losing}L`, color: "text-foreground", bg: "from-primary/10 to-primary/5" },
+                  { label: "Max Drawdown", value: `${stats.max_dd}%`, sub: `$${stats.max_dd_abs.toLocaleString()}`, color: "text-ft-red", bg: "from-ft-red/10 to-ft-red/5" },
                   { label: "Today P&L", value: bot.pnl, sub: `${bot.positions} open`, color: bot.pnlUp ? "text-ft-green" : "text-ft-red", bg: bot.pnlUp ? "from-ft-green/10 to-ft-green/5" : "from-ft-red/10 to-ft-red/5" },
                 ].map((s) => (
                   <div key={s.label} className={`bg-gradient-to-br ${s.bg} border border-border rounded-xl p-4`}>
@@ -180,7 +141,7 @@ export function BotDetailPanel({ bot, onClose }: Props) {
 
                 {/* Recharts */}
                 <ResponsiveContainer width="100%" height={200}>
-                  <ComposedChart data={DAILY_PROFIT} margin={{ top: 5, right: 30, left: 10, bottom: 0 }}>
+                  <ComposedChart data={dailyProfit} margin={{ top: 5, right: 30, left: 10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(240,5%,15%)" vertical={false} />
                     <XAxis
                       dataKey="date"
@@ -213,7 +174,7 @@ export function BotDetailPanel({ bot, onClose }: Props) {
                     <Bar yAxisId="trades" dataKey="trades" fill="hsl(240,5%,30%)" opacity={0.3} radius={[2, 2, 0, 0]} barSize={20} />
                     {/* Daily profit bars (green/red) */}
                     <Bar yAxisId="profit" dataKey="profit" radius={[3, 3, 0, 0]} barSize={14}>
-                      {DAILY_PROFIT.map((entry) => (
+                      {dailyProfit.map((entry) => (
                         <Cell key={entry.date} fill={entry.profit >= 0 ? "#22c55e" : "#ef4444"} opacity={0.85} />
                       ))}
                     </Bar>
@@ -236,12 +197,12 @@ export function BotDetailPanel({ bot, onClose }: Props) {
                 <h4 className="text-xs font-bold text-foreground mb-3">Performance Metrics</h4>
                 <div className="grid grid-cols-4 gap-2">
                   {[
-                    { l: "Profit Factor", v: String(STATS.profit_factor) }, { l: "Sharpe", v: String(STATS.sharpe) },
-                    { l: "Sortino", v: String(STATS.sortino) }, { l: "Calmar", v: String(STATS.calmar) },
-                    { l: "Avg Duration", v: STATS.avg_duration }, { l: "Best Pair", v: STATS.best_pair },
-                    { l: "Consec. Wins", v: String(STATS.consec_wins) }, { l: "Consec. Losses", v: String(STATS.consec_losses) },
-                    { l: "Rejected Signals", v: String(STATS.rejected) }, { l: "Volume", v: `$${STATS.volume.toLocaleString()}` },
-                    { l: "Winning Trades", v: String(STATS.winning) }, { l: "Losing Trades", v: String(STATS.losing) },
+                    { l: "Profit Factor", v: String(stats.profit_factor) }, { l: "Sharpe", v: String(stats.sharpe) },
+                    { l: "Sortino", v: String(stats.sortino) }, { l: "Calmar", v: String(stats.calmar) },
+                    { l: "Avg Duration", v: stats.avg_duration }, { l: "Best Pair", v: stats.best_pair },
+                    { l: "Consec. Wins", v: String(stats.consec_wins) }, { l: "Consec. Losses", v: String(stats.consec_losses) },
+                    { l: "Rejected Signals", v: String(stats.rejected) }, { l: "Volume", v: `$${stats.volume.toLocaleString()}` },
+                    { l: "Winning Trades", v: String(stats.winning) }, { l: "Losing Trades", v: String(stats.losing) },
                   ].map((s) => (
                     <div key={s.l} className="bg-accent/20 rounded-lg px-3 py-2">
                       <div className="text-2xs text-muted-foreground">{s.l}</div>
@@ -257,8 +218,8 @@ export function BotDetailPanel({ bot, onClose }: Props) {
           {tab === "trades" && !selectedTradeId && (
             <div className="space-y-5">
               <div>
-                <h4 className="text-xs font-bold text-foreground mb-3">Open Trades ({OPEN_TRADES.length})</h4>
-                {OPEN_TRADES.map((t) => (
+                <h4 className="text-xs font-bold text-foreground mb-3">Open Trades ({openTrades.length})</h4>
+                {openTrades.map((t) => (
                   <div key={t.trade_id} onClick={() => setSelectedTradeId(t.trade_id)}
                     className="bg-accent/20 border border-border rounded-xl p-4 mb-3 cursor-pointer hover:border-primary/30 transition-all">
                     <div className="flex items-center justify-between mb-2">
@@ -283,8 +244,8 @@ export function BotDetailPanel({ bot, onClose }: Props) {
               </div>
               <Separator />
               <div>
-                <h4 className="text-xs font-bold text-foreground mb-3">Closed Trades ({CLOSED_TRADES.length})</h4>
-                {CLOSED_TRADES.map((t) => (
+                <h4 className="text-xs font-bold text-foreground mb-3">Closed Trades ({closedTrades.length})</h4>
+                {closedTrades.map((t) => (
                   <div key={t.trade_id} onClick={() => setSelectedTradeId(t.trade_id)}
                     className="bg-accent/20 border border-border rounded-xl p-4 mb-3 cursor-pointer hover:border-primary/30 transition-all">
                     <div className="flex items-center justify-between mb-2">
@@ -341,7 +302,7 @@ export function BotDetailPanel({ bot, onClose }: Props) {
                 <h4 className="text-xs font-bold text-foreground">Backtest History</h4>
                 <Button variant="outline" className="text-xs" onClick={() => router.push("/redesign/backtesting")}>Run New Backtest</Button>
               </div>
-              {BT_RUNS.map((b) => (
+              {btRuns.map((b) => (
                 <div key={b.id} className="bg-accent/20 border border-border rounded-xl p-4">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-xs text-muted-foreground">{b.date} \u2014 {b.range}</span>
@@ -386,7 +347,7 @@ export function BotDetailPanel({ bot, onClose }: Props) {
             <div>
               <h4 className="text-xs font-bold text-foreground mb-3">Bot Logs</h4>
               <div className="bg-background rounded-xl p-4 font-mono-data text-2xs space-y-1.5 max-h-[500px] overflow-y-auto">
-                {LOGS.map((l) => (
+                {logs.map((l) => (
                   <div key={`${l.time}-${l.msg.slice(0,15)}`} className="flex gap-3">
                     <span className="text-muted-foreground/40 w-16 flex-shrink-0">{l.time}</span>
                     <span className={`w-16 flex-shrink-0 font-bold ${l.level === "WARNING" ? "text-ft-amber" : l.level === "ERROR" ? "text-ft-red" : "text-muted-foreground/60"}`}>{l.level}</span>

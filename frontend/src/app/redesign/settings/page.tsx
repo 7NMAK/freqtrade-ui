@@ -504,10 +504,23 @@ function AdvancedTab({ state, setState }: { state: typeof DEFAULTS; setState: (s
       <div>
         <Label className="text-xs font-bold mb-2 block">Export Configuration</Label>
         <div className="flex gap-3">
-          <Button variant="outline" className="text-xs" onClick={() => alert("Config JSON copied to clipboard (mock)")}>
+          <Button variant="outline" className="text-xs" onClick={() => {
+            navigator.clipboard.writeText(JSON.stringify(state, null, 2)).then(() => {
+              console.info("Config JSON copied to clipboard!");
+            });
+          }}>
             Export Config JSON
           </Button>
-          <Button variant="outline" className="text-xs" onClick={() => alert("Strategy template exported (mock)")}>
+          <Button variant="outline" className="text-xs" onClick={() => {
+            const template = `from freqtrade.strategy import IStrategy\nfrom pandas import DataFrame\n\nclass CustomStrategy(IStrategy):\n    INTERFACE_VERSION = 3\n    timeframe = '5m'\n\n    def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:\n        return dataframe\n\n    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:\n        return dataframe\n\n    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:\n        return dataframe\n`;
+            const blob = new Blob([template], { type: "text/x-python" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${state.bot_name || "custom_strategy"}.py`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}>
             Export Strategy Template
           </Button>
         </div>
@@ -526,7 +539,7 @@ export default function SettingsPage() {
   const handleReset = useCallback(() => {
     if (window.confirm("Reset all settings to default values? This cannot be undone.")) {
       setState({ ...DEFAULTS });
-      alert("All settings have been reset to defaults.");
+      console.info("All settings have been reset to defaults.");
     }
   }, []);
 
@@ -545,7 +558,7 @@ export default function SettingsPage() {
     const summary = changes.length > 0
       ? `Configuration saved!\n\nChanged fields:\n${changes.join("\n")}`
       : "Configuration saved! (no fields changed from defaults)";
-    alert(summary);
+    console.info(summary);
   }, [state]);
 
   return (

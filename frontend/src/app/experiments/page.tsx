@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import { useToast } from "@/components/ui/Toast";
@@ -13,500 +13,383 @@ import {
   type StrategyTestStatus,
   type StepState,
 } from "@/lib/experiments";
+import { getExperiments, type Experiment } from "@/lib/api";
 
-// ── Mock data: 5 strategies with varied pipeline states ─────────────────────
+// ── Types ───────────────────────────────────────────────────────────────
 
-const MOCK_EXPERIMENTS = [
-  {
-    id: 1,
-    strategyName: "BollingerBreak",
-    status: "Paper" as StrategyTestStatus,
-    testCount: 416,
-    lastTestType: "backtest",
-    lastTestDate: new Date(Date.now() - 86400000 * 12).toISOString(), // 12 days ago
-    bestProfit: 15.2,
-    maxDD: -8.4,
-    sharpe: 1.52,
-    pipelineSteps: {
-      backtest: "completed" as StepState,
-      hyperopt: "completed" as StepState,
-      freqai: "skipped" as StepState,
-      verify: "completed" as StepState,
-      ai_review: "skipped" as StepState,
-      paper: "active" as StepState,
-      live: "pending" as StepState,
-    },
-  },
-  {
-    id: 2,
-    strategyName: "SampleStrategy",
-    status: "Testing" as StrategyTestStatus,
-    testCount: 1,
-    lastTestType: "backtest",
-    lastTestDate: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-    bestProfit: 8.5,
-    maxDD: -12.3,
-    sharpe: 0.92,
-    pipelineSteps: {
-      backtest: "completed" as StepState,
-      hyperopt: "pending" as StepState,
-      freqai: "pending" as StepState,
-      verify: "pending" as StepState,
-      ai_review: "pending" as StepState,
-      paper: "pending" as StepState,
-      live: "pending" as StepState,
-    },
-  },
-  {
-    id: 3,
-    strategyName: "Diamond",
-    status: "Testing" as StrategyTestStatus,
-    testCount: 289,
-    lastTestType: "freqai",
-    lastTestDate: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
-    bestProfit: 12.1,
-    maxDD: -7.8,
-    sharpe: 1.38,
-    pipelineSteps: {
-      backtest: "completed" as StepState,
-      hyperopt: "completed" as StepState,
-      freqai: "active" as StepState,
-      verify: "pending" as StepState,
-      ai_review: "pending" as StepState,
-      paper: "pending" as StepState,
-      live: "pending" as StepState,
-    },
-  },
-  {
-    id: 4,
-    strategyName: "RSIMomentum",
-    status: "Live" as StrategyTestStatus,
-    testCount: 416,
-    lastTestType: "backtest",
-    lastTestDate: new Date(Date.now() - 86400000 * 25).toISOString(), // 25 days ago
-    bestProfit: 11.8,
-    maxDD: -6.2,
-    sharpe: 1.38,
-    pipelineSteps: {
-      backtest: "completed" as StepState,
-      hyperopt: "completed" as StepState,
-      freqai: "completed" as StepState,
-      verify: "completed" as StepState,
-      ai_review: "skipped" as StepState,
-      paper: "completed" as StepState,
-      live: "completed" as StepState,
-    },
-  },
-  {
-    id: 5,
-    strategyName: "EMAScalper",
-    status: "Draft" as StrategyTestStatus,
-    testCount: 0,
-    lastTestType: null,
-    lastTestDate: null,
-    bestProfit: null,
-    maxDD: null,
-    sharpe: null,
-    pipelineSteps: {
-      backtest: "pending" as StepState,
-      hyperopt: "pending" as StepState,
-      freqai: "pending" as StepState,
-      verify: "pending" as StepState,
-      ai_review: "pending" as StepState,
-      paper: "pending" as StepState,
-      live: "pending" as StepState,
-    },
-  },
-];
-
-// ── Status badge styling ──────────────────────────────────────────────────
-
-function getStatusBadgeClass(status: StrategyTestStatus): string {
-  switch (status) {
-    case "Draft":
-      return "bg-bg-3 text-text-2";
-    case "Testing":
-      return "bg-accent/20 text-accent";
-    case "Optimized":
-      return "bg-purple/20 text-purple";
-    case "Paper":
-      return "bg-amber/20 text-amber";
-    case "Live":
-      return "bg-green/20 text-green";
-    default:
-      return "bg-bg-3 text-text-2";
-  }
+interface UIExperiment {
+  id: number;
+  strategyName: string;
+  description: string;
+  status: StrategyTestStatus;
+  version: string;
+  pair: string;
+  timeframe: string;
+  testCount: number;
+  lastTestType: string | null;
+  lastTestDate: string | null;
+  bestProfit: number | null;
+  winRate: number | null;
+  maxDD: number | null;
+  sharpe: number | null;
+  pipelineSteps: Record<string, StepState>;
 }
 
-// ── Pipeline step visualization ───────────────────────────────────────────
+// ── Status badge ─────────────────────────────────────────────────────────
 
-interface PipelineVisualizerProps {
-  steps: Record<string, StepState>;
-}
-
-function PipelineVisualizer({ steps }: PipelineVisualizerProps) {
+function StatusBadge({ status }: { status: StrategyTestStatus }) {
+  const cls: Record<string, string> = {
+    Draft: "bg-bg-3 text-text-2",
+    Testing: "bg-amber/10 text-amber border border-amber/25",
+    Optimized: "bg-accent/10 text-accent border border-accent/30",
+    Paper: "bg-purple/10 text-purple border border-purple/25",
+    Live: "bg-green/10 text-green border border-green/25",
+  };
   return (
-    <div className="flex items-center gap-2">
-      {PIPELINE_STEPS.map((step) => {
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide ${cls[status] ?? cls.Draft}`}
+    >
+      {status}
+    </span>
+  );
+}
+
+// ── Mini Pipeline (dots + connectors) ────────────────────────────────────
+
+function MiniPipeline({ steps }: { steps: Record<string, StepState> }) {
+  return (
+    <div className="flex items-center gap-[3px]">
+      {PIPELINE_STEPS.map((step, idx) => {
         const state = steps[step.key];
-        let icon = "○";
-        let color = "text-text-3";
-        let className = "";
+        let dotClass = "w-[10px] h-[10px] rounded-full border-[1.5px]";
+        let connectorClass = "w-[6px] h-[1.5px]";
 
         if (state === "completed") {
-          icon = "✓";
-          color = "text-green";
+          dotClass += " bg-green border-green";
+          connectorClass += " bg-green";
         } else if (state === "active") {
-          icon = "●";
-          color = "text-accent";
-          className = "animate-pulse";
-        } else if (state === "pending") {
-          icon = "○";
-          color = "text-text-3";
+          dotClass += " bg-accent border-accent";
+          connectorClass += " bg-border";
         } else if (state === "skipped") {
-          icon = "⊘";
-          color = "text-text-3 opacity-40";
+          dotClass += " border-dashed border-text-3";
+          connectorClass += " bg-border";
+        } else {
+          dotClass += " border-border";
+          connectorClass += " bg-border";
         }
 
         return (
-          <Tooltip
-            key={step.key}
-            content={`${step.label}${"optional" in step && step.optional ? " (optional)" : ""}`}
-            position="bottom"
-          >
-            <span className={`text-sm font-medium ${color} ${className}`}>
-              {icon}
-            </span>
-          </Tooltip>
+          <div key={step.key} className="flex items-center gap-[3px]">
+            <Tooltip
+              content={`${step.label}${state === "completed" ? " ✓" : state === "active" ? " ●" : state === "skipped" ? " ⊘" : " ○"}`}
+              position="bottom"
+            >
+              <div className={dotClass} />
+            </Tooltip>
+            {idx < PIPELINE_STEPS.length - 1 && (
+              <div className={connectorClass} />
+            )}
+          </div>
         );
       })}
     </div>
   );
 }
 
-// ── Search & Filter Controls ──────────────────────────────────────────────
-
-interface SearchFilterBarProps {
-  searchTerm: string;
-  onSearchChange: (term: string) => void;
-  statusFilter: string;
-  onStatusFilterChange: (status: string) => void;
-  sortBy: string;
-  onSortChange: (sort: string) => void;
-}
-
-function SearchFilterBar({
-  searchTerm,
-  onSearchChange,
-  statusFilter,
-  onStatusFilterChange,
-  sortBy,
-  onSortChange,
-}: SearchFilterBarProps) {
-  return (
-    <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-      {/* Search input */}
-      <div className="flex-1 max-w-sm">
-        <input
-          type="text"
-          placeholder="Search strategies..."
-          value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full px-3 py-2 bg-bg-2 border border-border rounded-btn text-sm text-text-0 placeholder-text-3 focus:outline-none focus:border-accent transition-colors"
-        />
-      </div>
-
-      {/* Status filter */}
-      <select
-        value={statusFilter}
-        onChange={(e) => onStatusFilterChange(e.target.value)}
-        className="px-3 py-2 bg-bg-2 border border-border rounded-btn text-sm text-text-0 focus:outline-none focus:border-accent transition-colors cursor-pointer"
-      >
-        <option value="">All Statuses</option>
-        <option value="Draft">Draft</option>
-        <option value="Testing">Testing</option>
-        <option value="Optimized">Optimized</option>
-        <option value="Paper">Paper</option>
-        <option value="Live">Live</option>
-      </select>
-
-      {/* Sort dropdown */}
-      <select
-        value={sortBy}
-        onChange={(e) => onSortChange(e.target.value)}
-        className="px-3 py-2 bg-bg-2 border border-border rounded-btn text-sm text-text-0 focus:outline-none focus:border-accent transition-colors cursor-pointer"
-      >
-        <option value="name">Name</option>
-        <option value="status">Status</option>
-        <option value="tests">Test Count</option>
-        <option value="profit">Best Profit</option>
-        <option value="lastTest">Last Test</option>
-        <option value="sharpe">Sharpe Ratio</option>
-      </select>
-    </div>
-  );
-}
-
-// ── Strategy Row ──────────────────────────────────────────────────────────
-
-interface StrategyRowProps {
-  experiment: typeof MOCK_EXPERIMENTS[0];
-}
-
-function StrategyRow({ experiment }: StrategyRowProps) {
-  const _router = useRouter();
-
-  return (
-    <tr
-      className="border-b border-border last:border-b-0 hover:bg-bg-2 transition-colors cursor-pointer group"
-      onClick={() => _router.push(`/experiments/${encodeURIComponent(experiment.strategyName)}`)}
-    >
-        {/* Strategy Name */}
-        <td className="px-4 py-3 text-sm text-text-0 font-medium group-hover:text-accent transition-colors">
-          {experiment.strategyName}
-        </td>
-
-        {/* Status Badge */}
-        <td className="px-4 py-3">
-          <span
-            className={`inline-block px-2.5 py-1 rounded-btn text-xs font-semibold ${getStatusBadgeClass(experiment.status)}`}
-          >
-            {experiment.status}
-          </span>
-        </td>
-
-        {/* Number of Tests */}
-        <td className="px-4 py-3 text-sm text-text-1">
-          <Tooltip content="Total number of tests run for this strategy">
-            {experiment.testCount}
-          </Tooltip>
-        </td>
-
-        {/* Last Test */}
-        <td className="px-4 py-3 text-sm text-text-1">
-          {experiment.lastTestDate ? (
-            <Tooltip
-              content={`Type: ${experiment.lastTestType}`}
-              position="bottom"
-            >
-              {fmtDateTime(experiment.lastTestDate)}
-            </Tooltip>
-          ) : (
-            <span className="text-text-3">—</span>
-          )}
-        </td>
-
-        {/* Best Profit% */}
-        <td className="px-4 py-3 text-sm font-medium">
-          {experiment.bestProfit !== null ? (
-            <Tooltip content="Best profit percentage across all tests">
-              <span
-                className={
-                  experiment.bestProfit >= 0
-                    ? "text-green"
-                    : "text-red"
-                }
-              >
-                {fmtPct(experiment.bestProfit)}
-              </span>
-            </Tooltip>
-          ) : (
-            <span className="text-text-3">—</span>
-          )}
-        </td>
-
-        {/* Max DD */}
-        <td className="px-4 py-3 text-sm font-medium">
-          {experiment.maxDD !== null ? (
-            <Tooltip content="Maximum drawdown across all tests">
-              <span className="text-red">
-                {fmtPct(experiment.maxDD)}
-              </span>
-            </Tooltip>
-          ) : (
-            <span className="text-text-3">—</span>
-          )}
-        </td>
-
-        {/* Sharpe Ratio */}
-        <td className="px-4 py-3 text-sm text-text-1">
-          {experiment.sharpe !== null ? (
-            <Tooltip content="Sharpe ratio: risk-adjusted returns (higher is better)">
-              {fmtNum(experiment.sharpe, 2)}
-            </Tooltip>
-          ) : (
-            <span className="text-text-3">—</span>
-          )}
-        </td>
-
-        {/* Pipeline Progress */}
-        <td className="px-4 py-3">
-          <PipelineVisualizer steps={experiment.pipelineSteps} />
-        </td>
-      </tr>
-  );
-}
-
-// ── Main Page Component ───────────────────────────────────────────────────
+// ── Main Page ────────────────────────────────────────────────────────────
 
 export default function ExperimentsPage() {
+  const router = useRouter();
   const toast = useToast();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [sortBy, setSortBy] = useState("name");
+  const [sortBy, setSortBy] = useState("lastTest");
+  const [experiments, setExperiments] = useState<UIExperiment[]>([]);
 
-  // Filter and sort experiments
+  useEffect(() => {
+    getExperiments()
+      .then((res) => {
+        const data = (res as unknown as { items?: Experiment[] }).items || (res as unknown as Experiment[]);
+        if (Array.isArray(data)) {
+          const mapped: UIExperiment[] = data.map((exp: Experiment) => ({
+            id: exp.id,
+            strategyName: exp.strategy_name || exp.name || "Unknown",
+            description: "",
+            status: "Draft" as StrategyTestStatus,
+            version: "v0 (draft)",
+            pair: "BTC/USDT:USDT",
+            timeframe: "1h",
+            testCount: exp.run_count,
+            lastTestType: null,
+            lastTestDate: exp.created_at,
+            bestProfit: null,
+            winRate: null,
+            maxDD: null,
+            sharpe: null,
+            pipelineSteps: {
+              backtest: "pending",
+              hyperopt: "pending",
+              freqai: "pending",
+              verify: "pending",
+              ai_review: "pending",
+              paper: "pending",
+              live: "pending",
+            },
+          }));
+          setExperiments(mapped);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch experiments", err);
+      });
+  }, []);
+
+  // Filter and sort
   const filteredAndSorted = useMemo(() => {
-    let result = MOCK_EXPERIMENTS.slice();
+    let result = experiments.slice();
 
-    // Search by strategy name
     if (searchTerm) {
-      result = result.filter((exp) =>
-        exp.strategyName.toLowerCase().includes(searchTerm.toLowerCase())
+      const q = searchTerm.toLowerCase();
+      result = result.filter(
+        (e) =>
+          e.strategyName.toLowerCase().includes(q) ||
+          e.description.toLowerCase().includes(q)
       );
     }
-
-    // Filter by status
     if (statusFilter) {
-      result = result.filter((exp) => exp.status === statusFilter);
+      result = result.filter((e) => e.status === statusFilter);
     }
 
-    // Sort
     switch (sortBy) {
       case "name":
         result.sort((a, b) => a.strategyName.localeCompare(b.strategyName));
         break;
-      case "status":
-        result.sort((a, b) => a.status.localeCompare(b.status));
+      case "profit":
+        result.sort((a, b) => (b.bestProfit ?? -Infinity) - (a.bestProfit ?? -Infinity));
         break;
       case "tests":
         result.sort((a, b) => b.testCount - a.testCount);
         break;
-      case "profit":
-        result.sort((a, b) => {
-          const aProfit = a.bestProfit ?? -Infinity;
-          const bProfit = b.bestProfit ?? -Infinity;
-          return bProfit - aProfit;
-        });
-        break;
       case "lastTest":
-        result.sort((a, b) => {
-          const aDate = a.lastTestDate ? new Date(a.lastTestDate).getTime() : 0;
-          const bDate = b.lastTestDate ? new Date(b.lastTestDate).getTime() : 0;
-          return bDate - aDate;
-        });
-        break;
-      case "sharpe":
-        result.sort((a, b) => {
-          const aSharpe = a.sharpe ?? -Infinity;
-          const bSharpe = b.sharpe ?? -Infinity;
-          return bSharpe - aSharpe;
-        });
-        break;
       default:
+        result.sort((a, b) => {
+          const ad = a.lastTestDate ? new Date(a.lastTestDate).getTime() : 0;
+          const bd = b.lastTestDate ? new Date(b.lastTestDate).getTime() : 0;
+          return bd - ad;
+        });
         break;
     }
-
     return result;
-  }, [searchTerm, statusFilter, sortBy]);
+  }, [experiments, searchTerm, statusFilter, sortBy]);
 
   const handleNewExperiment = useCallback(() => {
-    // In real implementation, this would create a new draft experiment
     toast.success("New experiment created (mock)");
   }, [toast]);
 
   return (
     <AppShell title="Experiments">
-      <div className="space-y-6">
-        {/* Header with title and new button */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-text-0">Experiments</h1>
+      {/* ── Header ── */}
+      <div className="flex items-center gap-3 mb-5">
+        <h1 className="text-base font-semibold text-text-0">Experiments</h1>
+        <span className="text-[11px] text-text-3">
+          All strategies and their test pipelines
+        </span>
+        <div className="ml-auto">
           <button
             onClick={handleNewExperiment}
-            className="px-4 py-2 bg-accent hover:bg-accent-dim text-white text-sm font-semibold rounded-btn transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-accent hover:bg-[#5558e6] text-white text-xs font-medium rounded-btn transition-colors"
           >
-            New Experiment
+            + New Experiment
           </button>
         </div>
-
-        {/* Search, Filter, Sort Controls */}
-        <SearchFilterBar
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          sortBy={sortBy}
-          onSortChange={setSortBy}
-        />
-
-        {/* Strategy Table */}
-        {filteredAndSorted.length === 0 ? (
-          <div className="text-center py-12 text-text-2">
-            <p>No strategies found</p>
-          </div>
-        ) : (
-          <div className="bg-bg-1 border border-border rounded-card overflow-hidden">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-border bg-bg-2">
-                  <th className="px-4 py-3 text-left font-semibold text-text-1">
-                    Strategy Name
-                  </th>
-                  <th className="px-4 py-3 text-left font-semibold text-text-1">
-                    <Tooltip content="Current phase of strategy development">
-                      Status
-                    </Tooltip>
-                  </th>
-                  <th className="px-4 py-3 text-left font-semibold text-text-1">
-                    <Tooltip content="Total tests run (Hyperopt + FreqAI)">
-                      # Tests
-                    </Tooltip>
-                  </th>
-                  <th className="px-4 py-3 text-left font-semibold text-text-1">
-                    <Tooltip content="Date and time of last test execution">
-                      Last Test
-                    </Tooltip>
-                  </th>
-                  <th className="px-4 py-3 text-left font-semibold text-text-1">
-                    <Tooltip content="Highest profit% achieved in any test">
-                      Best Profit%
-                    </Tooltip>
-                  </th>
-                  <th className="px-4 py-3 text-left font-semibold text-text-1">
-                    <Tooltip content="Largest loss% across all tests">
-                      Max DD
-                    </Tooltip>
-                  </th>
-                  <th className="px-4 py-3 text-left font-semibold text-text-1">
-                    <Tooltip content="Sharpe ratio: return / volatility">
-                      Sharpe
-                    </Tooltip>
-                  </th>
-                  <th className="px-4 py-3 text-left font-semibold text-text-1">
-                    <Tooltip content="Pipeline: Backtest → Hyperopt → FreqAI → Verify → AI Review → Paper → Live">
-                      Pipeline
-                    </Tooltip>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAndSorted.map((exp) => (
-                  <StrategyRow key={exp.id} experiment={exp} />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Footer info */}
-        {filteredAndSorted.length > 0 && (
-          <div className="text-xs text-text-2 text-center">
-            Showing {filteredAndSorted.length} of {MOCK_EXPERIMENTS.length}{" "}
-            strategies. Click any row to view details.
-          </div>
-        )}
       </div>
+
+      {/* ── Filters Bar ── */}
+      <div className="flex items-center gap-2.5 mb-4">
+        <input
+          type="text"
+          placeholder="Search strategies..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-[240px] w-full px-3 py-2 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 placeholder-text-3 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all"
+        />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="max-w-[160px] w-full px-3 py-2 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent cursor-pointer appearance-none transition-all"
+        >
+          <option value="">All Status</option>
+          <option value="Draft">Draft</option>
+          <option value="Testing">Testing</option>
+          <option value="Optimized">Optimized</option>
+          <option value="Paper">Paper</option>
+          <option value="Live">Live</option>
+        </select>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="max-w-[160px] w-full px-3 py-2 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent cursor-pointer appearance-none transition-all"
+        >
+          <option value="lastTest">Sort: Last Activity</option>
+          <option value="name">Sort: Name A-Z</option>
+          <option value="profit">Sort: Profit ↓</option>
+          <option value="tests">Sort: Tests ↓</option>
+        </select>
+        <span className="ml-auto text-[11px] text-text-3">
+          {filteredAndSorted.length} strategies
+        </span>
+      </div>
+
+      {/* ── Strategy Table ── */}
+      {filteredAndSorted.length === 0 ? (
+        <div className="text-center py-12 text-text-2 text-xs">
+          No strategies found
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className="px-2.5 py-2 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                  Strategy
+                </th>
+                <th className="px-2.5 py-2 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                  Status
+                </th>
+                <th className="px-2.5 py-2 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                  Version
+                </th>
+                <th className="px-2.5 py-2 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                  Pair
+                </th>
+                <th className="px-2.5 py-2 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                  TF
+                </th>
+                <th className="px-2.5 py-2 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                  Tests
+                </th>
+                <th className="px-2.5 py-2 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                  Last Test
+                </th>
+                <th className="px-2.5 py-2 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                  Profit%
+                </th>
+                <th className="px-2.5 py-2 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                  Win Rate
+                </th>
+                <th className="px-2.5 py-2 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                  Max DD
+                </th>
+                <th className="px-2.5 py-2 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                  Sharpe
+                </th>
+                <th className="px-2.5 py-2 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                  Pipeline
+                </th>
+                <th className="px-2.5 py-2 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap" />
+              </tr>
+            </thead>
+            <tbody>
+              {filteredAndSorted.map((exp) => (
+                <tr
+                  key={exp.id}
+                  className="cursor-pointer hover:bg-[rgba(99,102,241,0.03)] transition-colors"
+                  onClick={() =>
+                    router.push(
+                      `/experiments/${encodeURIComponent(exp.strategyName)}`
+                    )
+                  }
+                >
+                  {/* Strategy (name + description) */}
+                  <td className="px-2.5 py-2 border-b border-border/50">
+                    <div className="font-semibold text-xs text-text-0">
+                      {exp.strategyName}
+                    </div>
+                    {exp.description && (
+                      <div className="text-[10px] text-text-3 mt-0.5">
+                        {exp.description}
+                      </div>
+                    )}
+                  </td>
+
+                  {/* Status */}
+                  <td className="px-2.5 py-2 border-b border-border/50">
+                    <StatusBadge status={exp.status} />
+                  </td>
+
+                  {/* Version */}
+                  <td className="px-2.5 py-2 border-b border-border/50 text-[11px] text-text-1">
+                    {exp.version}
+                  </td>
+
+                  {/* Pair */}
+                  <td className="px-2.5 py-2 border-b border-border/50 text-[11px] text-text-1">
+                    {exp.pair}
+                  </td>
+
+                  {/* Timeframe */}
+                  <td className="px-2.5 py-2 border-b border-border/50 text-[11px] text-text-1">
+                    {exp.timeframe}
+                  </td>
+
+                  {/* Tests */}
+                  <td className="px-2.5 py-2 border-b border-border/50 text-xs text-text-1">
+                    {exp.testCount}
+                  </td>
+
+                  {/* Last Test */}
+                  <td className="px-2.5 py-2 border-b border-border/50 text-[11px] text-text-1">
+                    {exp.lastTestDate
+                      ? `${exp.lastTestType ?? "Test"} · ${fmtDateTime(exp.lastTestDate)}`
+                      : "—"}
+                  </td>
+
+                  {/* Profit% */}
+                  <td
+                    className={`px-2.5 py-2 border-b border-border/50 text-xs ${
+                      (exp.bestProfit ?? 0) >= 0 ? "text-green" : "text-red"
+                    }`}
+                  >
+                    {exp.bestProfit !== null ? fmtPct(exp.bestProfit) : "—"}
+                  </td>
+
+                  {/* Win Rate */}
+                  <td
+                    className={`px-2.5 py-2 border-b border-border/50 text-xs ${
+                      (exp.winRate ?? 0) >= 50 ? "text-green" : "text-text-1"
+                    }`}
+                  >
+                    {exp.winRate !== null ? `${fmtNum(exp.winRate, 1)}%` : "—"}
+                  </td>
+
+                  {/* Max DD */}
+                  <td className="px-2.5 py-2 border-b border-border/50 text-xs text-red">
+                    {exp.maxDD !== null ? fmtPct(exp.maxDD) : "—"}
+                  </td>
+
+                  {/* Sharpe */}
+                  <td className="px-2.5 py-2 border-b border-border/50 text-xs text-text-1">
+                    {exp.sharpe !== null ? fmtNum(exp.sharpe, 2) : "—"}
+                  </td>
+
+                  {/* Pipeline */}
+                  <td className="px-2.5 py-2 border-b border-border/50">
+                    <MiniPipeline steps={exp.pipelineSteps} />
+                  </td>
+
+                  {/* Open button */}
+                  <td className="px-2.5 py-2 border-b border-border/50">
+                    <button className="inline-flex items-center gap-1.5 px-2.5 py-1 border border-border bg-bg-2 hover:bg-bg-3 hover:border-border-hover text-[11px] text-text-1 rounded-btn transition-all">
+                      Open →
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </AppShell>
   );
 }

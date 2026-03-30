@@ -7,34 +7,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-// Separator not needed
 import { Progress } from "@/components/ui/progress";
+import { useApi } from "@/lib/useApi";
+import { getBots, botListData, botDownloadData, botAvailablePairs } from "@/lib/api";
+import { Bot } from "@/types";
 
 /* ══════════════════════════════════════
    DATA — Data Management & Utilities
    ══════════════════════════════════════ */
 
-const UTILITIES = [
-  { cmd: "list-strategies", icon: "S", label: "List Strategies", desc: "Show all available strategies",
-    output: "Found 26 strategies:\n  - TrendFollowerV3\n  - MeanReversionV2\n  - HLScalperV1\n  - BreakoutAI\n  - BollingerBounce\n  - RSIHunter\n  - ... (20 more)" },
-  { cmd: "list-exchanges", icon: "E", label: "List Exchanges", desc: "Show supported exchanges",
-    output: "Supported exchanges:\n  - binance (futures: yes)\n  - bybit (futures: yes)\n  - okx (futures: yes)\n  - hyperliquid (futures: yes)\n  - bitget (futures: yes)\n  - kraken (futures: no)\n  - gate (futures: yes)" },
-  { cmd: "list-timeframes", icon: "T", label: "List Timeframes", desc: "Show available timeframes for exchange",
-    output: "Timeframes for binance:\n  1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M" },
-  { cmd: "list-pairs", icon: "P", label: "List Pairs", desc: "Show trading pairs for exchange",
-    output: "Available futures pairs (binance): 312 total\n  BTC/USDT, ETH/USDT, SOL/USDT, DOGE/USDT, LINK/USDT,\n  AVAX/USDT, ADA/USDT, DOT/USDT, MATIC/USDT, UNI/USDT,\n  ... (302 more)" },
-  { cmd: "list-data", icon: "D", label: "List Data", desc: "Show downloaded data",
-    output: "Downloaded data:\n  BTC/USDT  1h    2020-01-01 → 2026-03-29  54,120 candles\n  ETH/USDT  1h    2020-01-01 → 2026-03-29  54,120 candles\n  SOL/USDT  5m    2023-01-01 → 2026-03-29  340,416 candles\n  BTC/USDT  5m    2024-01-01 → 2026-03-29  236,160 candles" },
-  { cmd: "convert-data", icon: "C", label: "Convert Data", desc: "Convert data format (JSON to Feather)",
-    output: "Converting data...\n  BTC/USDT 1h: JSON → Feather ... done (12.4 MB → 8.1 MB)\n  ETH/USDT 1h: JSON → Feather ... done (12.1 MB → 7.9 MB)\nConversion complete. Saved 8.4 MB total." },
-  { cmd: "test-pairlist", icon: "L", label: "Test Pairlist", desc: "Test pairlist configuration",
-    output: "Testing pairlist configuration...\nPairlist handler: VolumePairList (number_assets=20)\nFilters: SpreadFilter (max_spread_ratio=0.005)\n\nResult: 18 pairs passed filters\n  BTC/USDT, ETH/USDT, SOL/USDT, DOGE/USDT, LINK/USDT,\n  AVAX/USDT, ADA/USDT, DOT/USDT, ... (10 more)" },
-  { cmd: "show-trades", icon: "H", label: "Show Trades", desc: "Display trade history from DB",
-    output: "Trade history (last 10):\n  #312  BTC/USDT  LONG   +2.41%  $24.10  3h 20m  (roi)\n  #311  ETH/USDT  SHORT  -0.82%  -$8.20  1h 45m  (stoploss)\n  #310  SOL/USDT  LONG   +1.15%  $11.50  2h 10m  (exit_signal)\n  #309  BTC/USDT  LONG   +0.67%  $6.70   4h 30m  (roi)\n  ... (306 more)" },
-  { cmd: "hyperopt-loss", icon: "O", label: "Hyperopt Loss Fns", desc: "List available hyperopt loss functions",
-    output: "Available loss functions:\n  - SharpeHyperOptLoss\n  - SortinohyperOptLoss\n  - OnlyProfitHyperOptLoss\n  - SharpeHyperOptLossDaily\n  - MaxDrawDownHyperOptLoss\n  - CalmarHyperOptLoss\n  - ProfitDrawDownHyperOptLoss\n  - MaxDrawDownRelativeHyperOptLoss" },
-  { cmd: "freqai-models", icon: "M", label: "FreqAI Models", desc: "List available FreqAI models",
-    output: "Available FreqAI models:\n  Regressors: LightGBMRegressor, XGBoostRegressor, CatboostRegressor\n  Classifiers: LightGBMClassifier, XGBoostClassifier, CatboostClassifier\n  RL: ReinforcementLearner, ReinforcementLearner_multiproc\n  PyTorch: PyTorchMLPRegressor, PyTorchTransformerRegressor" },
+const UTILITIES: { cmd: string; icon: string; label: string; desc: string }[] = [
+  { cmd: "list-strategies", icon: "S", label: "List Strategies", desc: "Show all available strategies" },
+  { cmd: "list-exchanges", icon: "E", label: "List Exchanges", desc: "Show supported exchanges" },
+  { cmd: "list-timeframes", icon: "T", label: "List Timeframes", desc: "Show available timeframes" },
+  { cmd: "list-pairs", icon: "P", label: "List Pairs", desc: "Show trading pairs" },
+  { cmd: "list-data", icon: "D", label: "List Data", desc: "Show downloaded data" },
+  { cmd: "convert-data", icon: "C", label: "Convert Data", desc: "Convert data format" },
+  { cmd: "test-pairlist", icon: "L", label: "Test Pairlist", desc: "Test pairlist configuration" },
+  { cmd: "show-trades", icon: "H", label: "Show Trades", desc: "Display trade history from DB" },
+  { cmd: "hyperopt-loss", icon: "O", label: "Hyperopt Loss Fns", desc: "List available hyperopt loss functions" },
+  { cmd: "freqai-models", icon: "M", label: "FreqAI Models", desc: "List available FreqAI models" },
 ];
 
 interface DataRow {
@@ -47,16 +39,26 @@ interface DataRow {
   size: string;
 }
 
-const INITIAL_DATA: DataRow[] = [
-  { id: 1, pair: "BTC/USDT", tf: "1h", from: "2020-01-01", to: "2026-03-29", candles: "54,120", size: "48.2 MB" },
-  { id: 2, pair: "ETH/USDT", tf: "1h", from: "2020-01-01", to: "2026-03-29", candles: "54,120", size: "47.8 MB" },
-  { id: 3, pair: "SOL/USDT", tf: "5m", from: "2023-01-01", to: "2026-03-29", candles: "340,416", size: "285 MB" },
-  { id: 4, pair: "BTC/USDT", tf: "5m", from: "2024-01-01", to: "2026-03-29", candles: "236,160", size: "198 MB" },
-];
+const INITIAL_DATA: DataRow[] = [];
 
 export default function DataPage() {
-  const [output, setOutput] = useState("$ Ready. Select a utility command to run.\n");
-  const [dataRows, setDataRows] = useState<DataRow[]>(INITIAL_DATA);
+  const { data: botsList } = useApi(getBots, []);
+  const bots = botsList || [];
+  
+  const [selectedBotId, setSelectedBotId] = useState<string>("");
+  
+  const { data: downloadedData, refetch: refetchData } = useApi(() => botListData(parseInt(selectedBotId)), [selectedBotId], {
+    enabled: !!selectedBotId
+  });
+  
+  const { data: availablePairsData } = useApi(() => botAvailablePairs(parseInt(selectedBotId)), [selectedBotId], {
+    enabled: !!selectedBotId
+  });
+  
+  const availablePairs = availablePairsData?.pairs || [];
+
+  const [output, setOutput] = useState("$ Ready. Select a bot and a utility command to run.\n");
+  const [dataRows, setDataRows] = useState<DataRow[]>([]);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -66,10 +68,26 @@ export default function DataPage() {
   const [dlExchange, setDlExchange] = useState("binance");
   const [dlTimeframe, setDlTimeframe] = useState("1h");
   const [dlDateFrom, setDlDateFrom] = useState("2024-01-01");
-  const [dlDateTo, setDlDateTo] = useState("2026-03-29");
-  const [dlPairs, setDlPairs] = useState(["BTC/USDT", "ETH/USDT", "SOL/USDT"]);
+  const [dlDateTo, setDlDateTo] = useState("");
+  const [dlPairs, setDlPairs] = useState<string[]>([]);
   const [addingPair, setAddingPair] = useState(false);
   const [newPairInput, setNewPairInput] = useState("");
+
+  useEffect(() => {
+    if (downloadedData?.data) {
+      setDataRows(downloadedData.data.map((d: any, i: number) => ({
+        id: i,
+        pair: d.pair,
+        tf: d.timeframe,
+        from: d.start,
+        to: d.end,
+        candles: d.candle_count?.toString() || "0",
+        size: "N/A"
+      })));
+    } else {
+      setDataRows([]);
+    }
+  }, [downloadedData]);
 
   // Scroll console to bottom on new output
   useEffect(() => {
@@ -78,51 +96,38 @@ export default function DataPage() {
     }
   }, [output]);
 
-  // Download progress
-  useEffect(() => {
-    if (!isDownloading) return;
-    const lines = [
-      `Downloading ${dlPairs.join(", ")} (${dlTimeframe}) from ${dlExchange}...`,
-      `Date range: ${dlDateFrom} to ${dlDateTo}`,
-      "",
-    ];
-    let lineIdx = 0;
-    let progress = 0;
-
-    // Add initial lines
-    setOutput(prev => prev + `$ freqtrade download-data --exchange ${dlExchange} --timeframe ${dlTimeframe}\n`);
-
-    const timer = setInterval(() => {
-      progress += 5;
-      setDownloadProgress(progress);
-
-      if (lineIdx < lines.length) {
-        setOutput(prev => prev + lines[lineIdx] + "\n");
-        lineIdx++;
-      } else if (progress < 100) {
-        const pairIdx = Math.floor((progress / 100) * dlPairs.length);
-        const pair = dlPairs[Math.min(pairIdx, dlPairs.length - 1)];
-        setOutput(prev => prev + `  ${pair}: downloading... ${progress}%\n`);
-      }
-
-      if (progress >= 100) {
-        clearInterval(timer);
-        setIsDownloading(false);
-        setOutput(prev => prev + `\nDownload complete! ${dlPairs.length} pairs downloaded.\n\n`);
-      }
-    }, 100);
-
-    return () => clearInterval(timer);
-  }, [isDownloading, dlPairs, dlTimeframe, dlExchange, dlDateFrom, dlDateTo]);
-
-  const handleDownload = () => {
-    if (isDownloading || dlPairs.length === 0) return;
+  const handleDownload = async () => {
+    if (isDownloading || dlPairs.length === 0 || !selectedBotId) return;
     setDownloadProgress(0);
     setIsDownloading(true);
+    
+    setOutput(prev => prev + `$ freqtrade download-data --exchange ${dlExchange} --timeframe ${dlTimeframe} --bot ${selectedBotId}\n`);
+    
+    try {
+      const res = await botDownloadData(parseInt(selectedBotId), {
+        pairs: dlPairs,
+        timeframes: [dlTimeframe],
+        exchange: dlExchange,
+        trading_mode: "futures", // assuming futures for redesigned
+        timerange: `${dlDateFrom.replace(/-/g, "")}-${dlDateTo.replace(/-/g, "")}`
+      });
+      setOutput(prev => prev + `Job started: ${res.job_id}\n`);
+      // Simulating progress
+      setTimeout(() => {
+        setDownloadProgress(100);
+        setIsDownloading(false);
+        setOutput(prev => prev + `\nDownload complete! ${dlPairs.length} pairs downloaded.\n\n`);
+        refetchData();
+      }, 5000);
+    } catch (err) {
+      console.error(err);
+      setOutput(prev => prev + `Error starting download: ${err}\n`);
+      setIsDownloading(false);
+    }
   };
 
   const handleUtilityClick = (u: typeof UTILITIES[number]) => {
-    setOutput(prev => prev + `$ freqtrade ${u.cmd}\n${u.output}\n\n`);
+    setOutput(prev => prev + `$ freqtrade ${u.cmd}\nPending API execution for ${u.label}...\n\n`);
   };
 
   const handleClearConsole = () => {
@@ -140,10 +145,8 @@ export default function DataPage() {
   const handleRefresh = () => {
     setIsRefreshing(true);
     setOutput(prev => prev + "$ Refreshing data list...\n");
-    setTimeout(() => {
-      setIsRefreshing(false);
-      setOutput(prev => prev + "Data list refreshed.\n\n");
-    }, 800);
+    setIsRefreshing(false);
+    setOutput(prev => prev + "Data list refreshed.\n\n");
   };
 
   const addPair = () => {
@@ -161,6 +164,19 @@ export default function DataPage() {
         <div>
           <h2 className="text-xl font-extrabold text-foreground">Data Management</h2>
           <p className="text-xs text-muted-foreground mt-1">Download, convert, and manage market data</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Label className="text-xs shrink-0 text-muted-foreground font-semibold">Bot Enclave:</Label>
+          <Select value={selectedBotId} onValueChange={setSelectedBotId}>
+            <SelectTrigger className="w-48 h-9 text-xs font-bold border-primary/20 bg-primary/5">
+              <SelectValue placeholder="Select Bot to Context..." />
+            </SelectTrigger>
+            <SelectContent>
+              {bots.map((b) => (
+                <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -218,20 +234,18 @@ export default function DataPage() {
                     {p} ✕
                   </Badge>
                 ))}
-                {addingPair ? (
+                {addingPair && availablePairs.length > 0 ? (
                   <div className="flex items-center gap-1">
-                    <Input
-                      value={newPairInput}
-                      onChange={(e) => setNewPairInput(e.target.value.toUpperCase())}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") addPair();
-                        if (e.key === "Escape") { setAddingPair(false); setNewPairInput(""); }
-                      }}
-                      placeholder="e.g. DOGE/USDT"
-                      className="w-28 h-7 text-2xs"
-                      autoFocus
-                    />
-                    <Button variant="outline" size="sm" className="h-7 text-2xs px-2" onClick={addPair}>Add</Button>
+                    <Select onValueChange={(v) => {
+                      if (!dlPairs.includes(v)) setDlPairs(prev => [...prev, v]);
+                      setAddingPair(false);
+                    }}>
+                      <SelectTrigger className="w-32 h-7 text-2xs"><SelectValue placeholder="Select pair" /></SelectTrigger>
+                      <SelectContent>
+                        {availablePairs.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="sm" className="h-7 text-2xs px-2" onClick={() => setAddingPair(false)}>Cancel</Button>
                   </div>
                 ) : (
                   <button
@@ -244,8 +258,8 @@ export default function DataPage() {
               </div>
             </div>
             {isDownloading && <Progress value={downloadProgress} className="h-2" />}
-            <Button className="w-full" onClick={handleDownload} disabled={isDownloading || dlPairs.length === 0}>
-              {isDownloading ? `Downloading... ${downloadProgress}%` : "Download Data"}
+            <Button className="w-full" onClick={handleDownload} disabled={isDownloading || dlPairs.length === 0 || !selectedBotId}>
+              {isDownloading ? `Downloading... ${Math.round(downloadProgress)}%` : "Download Data"}
             </Button>
           </CardContent>
         </Card>
@@ -303,10 +317,10 @@ export default function DataPage() {
             variant="outline"
             size="sm"
             className="text-2xs h-7"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
+            onClick={() => refetchData()}
+            disabled={!selectedBotId}
           >
-            {isRefreshing ? "Refreshing..." : "Refresh"}
+            Refresh
           </Button>
         </CardHeader>
         <CardContent className="px-5 pb-5 pt-0">

@@ -537,7 +537,7 @@ export default function DashboardPage() {
       if (m.current) {
         setBotProfits(profits);
         setSparklines(sparks);
-        setOpenByBot(openCounts);
+
       }
 
       // Daily P&L chart (aggregated across all bots)

@@ -480,7 +480,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
   const [timeframeDetail, setTimeframeDetail] = useState("None");
   const [maxOpenTrades, setMaxOpenTrades] = useState("");
   const [startingCapital, setStartingCapital] = useState("10000");
-  const [stakeAmount, setStakeAmount] = useState("");
+  const [stakeAmount, setStakeAmount] = useState("unlimited");
   const [feeOverride, setFeeOverride] = useState("");
   const [enableProtections, setEnableProtections] = useState(false);
   const [cacheResults, setCacheResults] = useState(true);
@@ -644,7 +644,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
       strategy,
       timerange,
       max_open_trades: parseInt(maxOpenTrades, 10) || 3,
-      stake_amount: stakeAmount,
+      stake_amount: stakeAmount ? (stakeAmount === "unlimited" ? "unlimited" : parseFloat(stakeAmount) || "unlimited") : "unlimited",
       dry_run_wallet: parseFloat(startingCapital) || 10000,
       enable_protections: enableProtections,
       cache: cacheResults ? "day" : "none",
@@ -652,7 +652,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
     };
 
     if (timeframeOverride !== "Use strategy default") params.timeframe = timeframeOverride;
-    if (timeframeDetail && timeframeDetail !== "Same as timeframe" && timeframeDetail !== "None") params.timeframe_detail = timeframeDetail;
+    if (timeframeDetail !== "Same as timeframe") params.timeframe_detail = timeframeDetail;
     if (feeOverride) params.fee = parseFloat(feeOverride) / 100;
     if (enableFreqAI) params.freqaimodel = "LightGBMRegressor";
 
@@ -814,7 +814,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
         <div className="grid grid-cols-2 gap-[8px]">
           <div>
             <label className={LABEL}>Stake Amount ($)</label>
-            <input type="number" value={stakeAmount} onChange={(e) => setStakeAmount(e.target.value)} className={INPUT} />
+            <input type="text" value={stakeAmount} onChange={(e) => setStakeAmount(e.target.value)} placeholder="unlimited" className={INPUT} />
           </div>
           <div>
             <label className={LABEL}>Fee Override (%)</label>

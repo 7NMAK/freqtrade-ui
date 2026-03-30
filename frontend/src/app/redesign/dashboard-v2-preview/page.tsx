@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { useApi } from "@/lib/useApi";
 import { getBots } from "@/lib/api";
 
@@ -103,6 +103,7 @@ function ActionButton({ label, type = "primary", onClick }: { label: string; typ
    Ovo je čistota koda i uniformnost koju tražimo.
    ================================================================== */
 export default function UltimateSimpleDashboardPreview() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data: botsList } = useApi(getBots, [], { refreshInterval: 15000 });
   
   // Dummy data (Same as before)

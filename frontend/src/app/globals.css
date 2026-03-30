@@ -29,13 +29,13 @@
 
   /* ── 1. Panels & Cards ── */
   .ft-card {
-    @apply bg-bg-1/90 backdrop-blur-sm border border-border rounded-card transition-all;
+    @apply bg-bg-1 backdrop-blur-sm border border-border rounded-card transition-all;
   }
   .ft-card-interactive {
     @apply hover:border-[#2e2e48] hover:shadow-[0_4px_24px_-8px_rgba(0,0,0,0.5)] cursor-pointer hover:-translate-y-[1px];
   }
   .ft-card-header {
-    @apply py-3.5 px-5 flex flex-row items-center justify-between border-b border-border/50;
+    @apply py-3.5 px-5 flex flex-row items-center justify-between border-b border-border;
   }
   .ft-card-title {
     @apply text-sm font-bold flex items-center gap-2 text-text-0 tracking-tight;
@@ -52,7 +52,7 @@
     @apply h-8 px-4 align-middle whitespace-nowrap;
   }
   .ft-table-row {
-    @apply border-b border-border/40 hover:bg-bg-2/50 transition-colors;
+    @apply border-b border-border hover:bg-bg-2 transition-colors;
   }
   .ft-table-td {
     @apply px-4 py-2.5 align-middle text-[12px] whitespace-nowrap;

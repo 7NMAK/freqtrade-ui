@@ -652,7 +652,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
     };
 
     if (timeframeOverride !== "Use strategy default") params.timeframe = timeframeOverride;
-    if (timeframeDetail !== "Same as timeframe") params.timeframe_detail = timeframeDetail;
+    if (timeframeDetail && timeframeDetail !== "Same as timeframe" && timeframeDetail !== "None") params.timeframe_detail = timeframeDetail;
     if (feeOverride) params.fee = parseFloat(feeOverride) / 100;
     if (enableFreqAI) params.freqaimodel = "LightGBMRegressor";
 

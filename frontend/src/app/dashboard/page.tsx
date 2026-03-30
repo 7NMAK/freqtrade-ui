@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { REFRESH_INTERVALS } from "@/lib/constants";
 import AppShell from "@/components/layout/AppShell";
-import { Card, CardBody, CardHeader } from "@/components/ui/Card";
+import { Card, CardBody, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import {
   SkeletonStat,
   SkeletonTable,
@@ -177,16 +177,18 @@ function StatCard({
   icon: string;
 }) {
   return (
-    <div className="bg-muted/50 border border-border rounded-card p-5">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{label}</span>
-        <span className="text-lg">{icon}</span>
-      </div>
-      <div className={`text-xl font-bold tracking-tight mb-1 ${valueColor ?? "text-foreground"}`}>
-        {value}
-      </div>
-      {sub && <div className="text-2xs text-muted-foreground">{sub}</div>}
-    </div>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <span className="text-xs font-semibold tracking-tight text-muted-foreground uppercase">{label}</span>
+        <span className="text-muted-foreground">{icon}</span>
+      </CardHeader>
+      <CardBody>
+        <div className={`text-2xl font-bold tracking-tight ${valueColor ?? "text-foreground"}`}>
+          {value}
+        </div>
+        {sub && <div className="text-xs text-muted-foreground mt-1 opacity-80">{sub}</div>}
+      </CardBody>
+    </Card>
   );
 }
 
@@ -209,68 +211,75 @@ function BotCard({
 }) {
   const isRunning = bot.status === "running";
   return (
-    <div
-      className={`bg-card border rounded-lg p-4 transition-all cursor-pointer hover:border-primary hover:translate-y-[-1px] hover:shadow-lg ${
+    <Card
+      className={`relative cursor-pointer transition-all hover:bg-muted/50 hover:-translate-y-[1px] ${
         bot.status === "error"
-          ? "border-rose-500/30"
+          ? "border-rose-500/50 shadow-[0_0_15px_-3px_rgba(244,63,94,0.1)]"
           : isRunning
-          ? "border-border"
-          : "border-border/50"
+          ? "hover:border-primary/50"
+          : "opacity-80 hover:opacity-100"
       }`}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="text-xs font-semibold text-foreground truncate">{bot.name}</div>
-          {bot.exchange_name && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-semibold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 whitespace-nowrap">
-              {bot.exchange_name}
-            </span>
-          )}
+      <CardBody className="p-4 flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="text-sm font-bold text-foreground truncate">{bot.name}</div>
+            {bot.exchange_name && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20 whitespace-nowrap">
+                {bot.exchange_name}
+              </span>
+            )}
+          </div>
+          <StatusBadge status={bot.status} isDryRun={bot.is_dry_run} />
         </div>
-        <StatusBadge status={bot.status} isDryRun={bot.is_dry_run} />
-      </div>
-      <div className="text-2xs text-muted-foreground mb-3 truncate">
-        {bot.strategy_name ?? "No strategy"}
-        {bot.strategy_version_id && <span className="text-zinc-500 ml-1">v{bot.strategy_version_id}</span>}
-      </div>
+        
+        <div className="text-xs text-muted-foreground truncate">
+          {bot.strategy_name ?? "No strategy"}
+          {bot.strategy_version_id && <span className="text-foreground/50 ml-1">v{bot.strategy_version_id}</span>}
+        </div>
 
-      <div className="grid grid-cols-3 gap-2 mb-3">
-        <div>
-          <div className="text-2xs text-muted-foreground mb-0.5">Close P&L</div>
-          <div className={`text-sm font-bold ${profitColor(profit?.profit_closed_coin)}`}>
-            {profit ? `${fmt(profit.profit_closed_coin)} USDT` : "\u2014"}
+        <div className="grid grid-cols-3 gap-2 py-1">
+          <div>
+            <div className="text-[10px] uppercase font-semibold text-muted-foreground mb-1">P&L</div>
+            <div className={`text-sm font-bold ${profitColor(profit?.profit_closed_coin)}`}>
+              {profit ? `${fmt(profit.profit_closed_coin)}` : "\u2014"}
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase font-semibold text-muted-foreground mb-1">Win Rate</div>
+            <div className="text-sm font-bold text-foreground">
+              {profit && ((profit.winning_trades ?? 0) + (profit.losing_trades ?? 0)) > 0
+                ? `${(((profit.winning_trades ?? 0) / ((profit.winning_trades ?? 0) + (profit.losing_trades ?? 0))) * 100).toFixed(1)}%`
+                : "\u2014"}
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase font-semibold text-muted-foreground mb-1">Trades</div>
+            <div className="text-sm font-bold text-foreground">{openCount}</div>
           </div>
         </div>
-        <div>
-          <div className="text-2xs text-muted-foreground mb-0.5">Win Rate</div>
-          <div className="text-sm font-bold text-foreground">
-            {profit && ((profit.winning_trades ?? 0) + (profit.losing_trades ?? 0)) > 0
-              ? `${(((profit.winning_trades ?? 0) / ((profit.winning_trades ?? 0) + (profit.losing_trades ?? 0))) * 100).toFixed(1)}%`
-              : "\u2014"}
+
+        {sparkData.length > 0 && (
+          <div className="mt-1 h-10 w-full opacity-80 mix-blend-screen">
+            <Sparkline data={sparkData} />
           </div>
-        </div>
-        <div>
-          <div className="text-2xs text-muted-foreground mb-0.5">Trades</div>
-          <div className="text-sm font-bold text-foreground">{openCount} open</div>
-        </div>
-      </div>
+        )}
 
-      {sparkData.length > 0 && <Sparkline data={sparkData} />}
-
-      {isRunning && onDrain && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDrain(bot.id);
-          }}
-          className="mt-2 w-full text-xs font-semibold px-2 py-1.5 rounded border border-amber-500-500/30 text-amber-500-500 bg-amber-500/10 hover:bg-amber/[0.18] transition-all"
-        >
-          Drain
-        </button>
-      )}
-    </div>
+        {isRunning && onDrain && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDrain(bot.id);
+            }}
+            className="mt-2 w-full text-xs font-bold px-3 py-2 rounded-md border border-amber-500/30 text-amber-500 bg-amber-500/10 hover:bg-amber-500/20 transition-all uppercase tracking-wider"
+          >
+            Drain Bot
+          </button>
+        )}
+      </CardBody>
+    </Card>
   );
 }
 
@@ -294,33 +303,38 @@ function ForceEntryDialog({
   if (!open) return null;
 
   return (
-    <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
-      <div
-        className="bg-muted/50 border border-border rounded-card p-6 w-full max-w-md"
+    <div role="dialog" aria-modal="true" className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm transition-all" onClick={onClose}>
+      <Card
+        className="w-[400px] shadow-2xl scale-100 animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-sm font-semibold text-foreground mb-4">Force Entry</h3>
-        <div className="space-y-3">
-          <div>
-            <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-1">Pair</label>
+        <CardHeader className="border-b border-border/10 pb-4">
+          <CardTitle>Force Entry</CardTitle>
+          <CardDescription>Manually trigger a trade on the active bot.</CardDescription>
+        </CardHeader>
+        <CardBody className="space-y-4 pt-4">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Trading Pair</label>
             <input
               type="text"
               value={pair}
               onChange={(e) => setPair(e.target.value)}
-              placeholder="BTC/USDT:USDT"
-              className="w-full bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
+              placeholder="e.g., BTC/USDT:USDT"
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              autoFocus
             />
           </div>
-          <div>
-            <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-1">Side</label>
-            <div className="flex gap-2">
+          
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Direction</label>
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setSide("long")}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded border cursor-pointer transition-all ${
+                className={`py-2 text-xs font-bold rounded-md border cursor-pointer transition-all uppercase tracking-wider ${
                   side === "long"
-                    ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/30"
-                    : "bg-card text-muted-foreground border-border"
+                    ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.1)]"
+                    : "bg-muted/30 text-muted-foreground border-border hover:bg-muted"
                 }`}
               >
                 Long
@@ -328,45 +342,56 @@ function ForceEntryDialog({
               <button
                 type="button"
                 onClick={() => setSide("short")}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded border cursor-pointer transition-all ${
+                className={`py-2 text-xs font-bold rounded-md border cursor-pointer transition-all uppercase tracking-wider ${
                   side === "short"
-                    ? "bg-rose-500/10 text-rose-500 border-rose-500/30"
-                    : "bg-card text-muted-foreground border-border"
+                    ? "bg-rose-500/15 text-rose-500 border-rose-500/50 shadow-[0_0_10px_rgba(244,63,94,0.1)]"
+                    : "bg-muted/30 text-muted-foreground border-border hover:bg-muted"
                 }`}
               >
                 Short
               </button>
             </div>
           </div>
-          <div>
-            <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-1">stake_amount (optional)</label>
+          
+          <div className="space-y-1.5 pt-2">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center justify-between">
+              Stake Amount <span className="opacity-50 font-normal normal-case">(Optional)</span>
+            </label>
             <input
               type="number"
               value={stake}
               onChange={(e) => setStake(e.target.value)}
-              placeholder="Use default"
-              className="w-full bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
+              placeholder="Leave blank for bot default"
+              step="0.001"
+              min="0"
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             />
           </div>
-        </div>
-        <div className="flex gap-2 mt-5">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 py-2 text-xs font-semibold rounded border border-border text-muted-foreground hover:bg-muted cursor-pointer transition-all"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            disabled={!pair.trim() || submitting}
-            onClick={() => onSubmit(pair.trim(), side, stake ? Number(stake) : undefined)}
-            className="flex-1 py-2 text-xs font-semibold rounded bg-primary text-white hover:brightness-110 disabled:opacity-50 cursor-pointer transition-all"
-          >
-            {submitting ? "Submitting..." : "Force Enter"}
-          </button>
-        </div>
-      </div>
+          
+          <div className="flex gap-2 pt-6 justify-end border-t border-border/10 mt-4">
+            <button
+              onClick={onClose}
+              disabled={submitting}
+              className="px-4 py-2 text-sm font-semibold rounded-md border border-border bg-card hover:bg-muted text-foreground transition-all cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                if (!pair) {
+                  return;
+                }
+                const st = parseFloat(stake);
+                onSubmit(pair, side, isNaN(st) || st <= 0 ? undefined : st);
+              }}
+              disabled={submitting || !pair}
+              className="px-4 py-2 text-sm font-semibold rounded-md border border-primary/50 bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_15px_rgba(99,102,241,0.2)] transition-all cursor-pointer disabled:opacity-50"
+            >
+              {submitting ? "Entering..." : "Execute Entry"}
+            </button>
+          </div>
+        </CardBody>
+      </Card>
     </div>
   );
 }
@@ -1084,306 +1109,318 @@ export default function DashboardPage() {
         submitting={forceEntrySubmitting}
       />
 
-      {/* ═══════════ STAT CARDS (always portfolio-level) ═══════════ */}
-      <div className="grid grid-cols-5 gap-4 mb-6">
-        {loading ? (
-          Array.from({ length: 5 }).map((_, i) => <SkeletonStat key={`skel-stat-${i}`} />)
-        ) : (
-          <>
-            <StatCard label="Total Balance" icon="💰"
-              value={totalEquity != null ? `$${totalEquity.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : "\u2014"}
-              sub={`${runningBotCards.length} running bot${runningBotCards.length !== 1 ? "s" : ""}`} />
-            <StatCard label="Total P&L" icon="📊"
-              value={totalPnl != null ? fmtMoney(totalPnl) : "\u2014"}
-              valueColor={profitColor(totalPnl)}
-              sub="Realized + unrealized, all bots" />
-            <StatCard label="Open Trades" icon="📋"
-              value={String(openTrades.length)}
-              sub={`Across ${runningBotCards.length} running bot${runningBotCards.length !== 1 ? "s" : ""}`} />
-            <StatCard label="Active Bots" icon="🤖"
-              value={`${runningBotCards.length}/${bots.length}`}
-              sub={runningBotCards.length === bots.length ? "All bots running" : `${bots.length - runningBotCards.length} stopped`} />
-            <StatCard label="Win Rate" icon="🎯"
-              value={totalWinRate != null ? `${fmt(totalWinRate, 1)}%` : "\u2014"}
-              valueColor={totalWinRate != null && totalWinRate >= 55 ? "text-emerald-500" : totalWinRate != null && totalWinRate < 45 ? "text-rose-500" : "text-amber-500-500"}
-              sub={`All ${bots.length} bots, all trades`} />
-          </>
+      {/* ═══════════ TOP LEVEL METRIC RIBBON ═══════════ */}
+      <div className="flex flex-col gap-4 mb-6 relative z-10">
+        <div className="grid grid-cols-5 gap-4">
+          {loading ? (
+            Array.from({ length: 5 }).map((_, i) => <SkeletonStat key={`skel-stat-${i}`} />)
+          ) : (
+            <>
+              <StatCard label="Total Balance" icon="💰"
+                value={totalEquity != null ? `$${totalEquity.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : "\u2014"}
+                sub={`${runningBotCards.length} running bot${runningBotCards.length !== 1 ? "s" : ""}`} />
+              <StatCard label="Total P&L" icon="📊"
+                value={totalPnl != null ? fmtMoney(totalPnl) : "\u2014"}
+                valueColor={profitColor(totalPnl)}
+                sub="Realized + unrealized, all bots" />
+              <StatCard label="Open Trades" icon="📋"
+                value={String(openTrades.length)}
+                sub={`Across ${runningBotCards.length} running bot${runningBotCards.length !== 1 ? "s" : ""}`} />
+              <StatCard label="Active Bots" icon="🤖"
+                value={`${runningBotCards.length}/${bots.length}`}
+                sub={runningBotCards.length === bots.length ? "All bots running" : `${bots.length - runningBotCards.length} stopped`} />
+              <StatCard label="Win Rate" icon="🎯"
+                value={totalWinRate != null ? `${fmt(totalWinRate, 1)}%` : "\u2014"}
+                valueColor={totalWinRate != null && totalWinRate >= 55 ? "text-emerald-500" : totalWinRate != null && totalWinRate < 45 ? "text-rose-500" : "text-amber-500-500"}
+                sub={`All ${bots.length} bots, all trades`} />
+            </>
+          )}
+        </div>
+
+        {/* AI Agreement Badge */}
+        {aiEnabled && aiAgreementPct !== null && (
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-btn border ${
+            aiStrongDisagree > 0 ? "bg-rose-500/10 border-rose-500/25" : "bg-primary/[0.08] border-primary/25"
+          }`}>
+            <span className="text-xl">{aiStrongDisagree > 0 ? "⚠️" : "🤖"}</span>
+            <div className="flex-1">
+              <span className={`text-xs font-semibold ${aiStrongDisagree > 0 ? "text-rose-500" : "text-primary"}`}>
+                AI Agreement (7d): <strong>{aiAgreementPct.toFixed(1)}%</strong> all-agree
+                {aiStrongDisagree > 0 && (
+                  <span className="text-rose-500">
+                    {" "}&middot; {aiStrongDisagree} strong disagreement{aiStrongDisagree > 1 ? "s" : ""}
+                  </span>
+                )}
+              </span>
+              {aiStrongDisagree > 0 && (
+                <p className="text-2xs text-muted-foreground mt-0.5">
+                  Claude and Grok both disagreed with FreqAI on {aiStrongDisagree} recent signal{aiStrongDisagree > 1 ? "s" : ""}. Review in AI Insights.
+                </p>
+              )}
+            </div>
+            <a href="/ai-insights" className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
+              View AI Insights →
+            </a>
+          </div>
         )}
       </div>
 
-      {/* AI Agreement Badge */}
-      {aiEnabled && aiAgreementPct !== null && (
-        <div className={`mb-4 flex items-center gap-3 px-4 py-3 rounded-btn border ${
-          aiStrongDisagree > 0 ? "bg-rose-500/10 border-rose-500/25" : "bg-primary/[0.08] border-primary/25"
-        }`}>
-          <span className="text-xl">{aiStrongDisagree > 0 ? "⚠️" : "🤖"}</span>
-          <div className="flex-1">
-            <span className={`text-xs font-semibold ${aiStrongDisagree > 0 ? "text-rose-500" : "text-primary"}`}>
-              AI Agreement (7d): <strong>{aiAgreementPct.toFixed(1)}%</strong> all-agree
-              {aiStrongDisagree > 0 && (
-                <span className="text-rose-500">
-                  {" "}&middot; {aiStrongDisagree} strong disagreement{aiStrongDisagree > 1 ? "s" : ""}
-                </span>
-              )}
-            </span>
-            {aiStrongDisagree > 0 && (
-              <p className="text-2xs text-muted-foreground mt-0.5">
-                Claude and Grok both disagreed with FreqAI on {aiStrongDisagree} recent signal{aiStrongDisagree > 1 ? "s" : ""}. Review in AI Insights.
-              </p>
-            )}
-          </div>
-          <a href="/ai-insights" className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
-            View AI Insights →
-          </a>
-        </div>
-      )}
-
       {/* ═══════════════════════════════════════════════════════════════ */}
-      {/* ALL BOTS VIEW (default when selectedBotId === null)            */}
+      {/* ALL BOTS VIEW (SMARTER LAYOUT GRID)                             */}
       {/* ═══════════════════════════════════════════════════════════════ */}
       {isAllBotsView && (
-        <>
-          {/* Empty state: no bots registered */}
-          {!loading && bots.length === 0 && (
-            <div className="mb-6">
-              <BotManagementTable bots={bots} botProfits={botProfits} onRefresh={() => loadPortfolioData(true)} />
-            </div>
-          )}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-6">
+          
+          {/* ════ LEFT COLUMN: DATA & PERFORMANCE (span 8) ════ */}
+          <div className="xl:col-span-8 flex flex-col gap-6 w-full min-w-0">
+            
+            {/* Daily P&L + Equity Curve (Side by Side) */}
+            <div className="grid grid-cols-2 gap-5">
+              <Card className="flex flex-col h-[280px]">
+                <CardHeader title="Daily P&L" icon="📊"
+                  action={
+                    <div className="flex gap-1 bg-muted/30 p-1 rounded-md border border-border/50">
+                      {([7, 14, 30] as const).map((p) => (
+                        <button key={p} type="button" onClick={() => setDailyPeriod(p)}
+                          className={`px-2.5 py-1 text-[10px] uppercase tracking-wider font-bold rounded-sm border cursor-pointer transition-all ${
+                            dailyPeriod === p 
+                              ? "bg-background text-foreground shadow-sm ring-1 ring-border border-transparent" 
+                              : "bg-transparent text-muted-foreground border-transparent hover:text-foreground hover:bg-foreground/5 opacity-80"
+                          }`}>{p}d</button>
+                      ))}
+                    </div>
+                  } />
+                {loading ? <SkeletonChart height={160} /> : (
+                  <CardBody className="flex-1 flex flex-col justify-end p-4 pt-1">
+                    <div className="flex items-end gap-1 h-32 w-full">
+                      {dailyData.slice(-dailyPeriod).map((item, i) => {
+                        const val = item.abs_profit;
+                        const max = Math.max(...dailyData.map((x) => Math.abs(x.abs_profit)), 0.01);
+                        const pct = Math.max(5, (Math.abs(val) / max) * 100);
+                        return (
+                          <div key={item.date ?? `day-${i}`} className="flex-1 flex flex-col items-center gap-0.5 group relative" title={`${item.date.slice(5)}: ${val >= 0 ? "+" : ""}${val.toFixed(2)} USDT`}>
+                            <div className={`w-full rounded-[2px] transition-all ${val >= 0 ? "bg-green/80 group-hover:bg-green" : "bg-red/80 group-hover:bg-red"}`} style={{ height: `${pct}%` }} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-border/40 flex justify-between items-center text-xs">
+                       <span className="text-muted-foreground uppercase tracking-wider font-semibold text-[10px]">Total Period Profit</span>
+                       <span className={`font-bold ${profitColor(totalClosedProfit)}`}>{fmtMoney(totalClosedProfit)}</span>
+                    </div>
+                  </CardBody>
+                )}
+              </Card>
 
-          {/* Bot Cards Grid — click to drill down */}
-          {!loading && bots.length > 0 && (
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold text-foreground">Bots</h2>
-                <div className="flex items-center gap-3">
-                  {/* Status filter chips */}
-                  <div className="flex items-center gap-1">
+              <Card className="flex flex-col h-[280px]">
+                <CardHeader title="Equity Curve (30d)" icon="📈" />
+                {loading ? <SkeletonChart height={160} /> : (
+                  <CardBody className="p-3 flex-1 flex flex-col">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
+                        <defs>
+                          <linearGradient id="equityGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#22c55e" stopOpacity={0.2} />
+                            <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <XAxis dataKey="date" tick={{ fontSize: 9, fill: "#55556a" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                        <YAxis tick={{ fontSize: 9, fill: "#55556a" }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `${v >= 0 ? "+" : ""}${v.toFixed(0)}`} />
+                        <Tooltip contentStyle={{ background: "#12121c", border: "1px solid #1e1e30", borderRadius: 6, fontSize: 11 }}
+                          formatter={(v: unknown) => { const n = Number(v); return [`${n >= 0 ? "+" : ""}${n.toFixed(2)} USDT`, "Cum. P&L"]; }} />
+                        <Area type="monotone" dataKey="value" stroke="#22c55e" strokeWidth={2} fill="url(#equityGrad)" dot={false} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </CardBody>
+                )}
+              </Card>
+            </div>
+
+            {/* Open Positions Table */}
+            <Card className="flex flex-col overflow-hidden">
+              <CardHeader title="Open Positions" icon="📍"
+                action={
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground font-medium">
+                      {openTrades.length} risk entities
+                    </span>
+                    <button type="button" onClick={() => loadPortfolioData(false)}
+                      className="inline-flex items-center justify-center rounded-md text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 h-7 px-3 cursor-pointer">
+                      ↻ Refresh
+                    </button>
+                  </div>
+                } />
+              {loading ? (
+                <SkeletonTable rows={5} cols={8} />
+              ) : bots.length > 0 && runningBotCards.length === 0 ? (
+                <CardBody><div className="py-8 text-center text-sm text-muted-foreground">No active systems.</div></CardBody>
+              ) : (
+                renderTradesTable(openTrades, true, "No active positions")
+              )}
+            </Card>
+
+            {/* Today's Closed Trades */}
+            <Card className="flex flex-col overflow-hidden">
+              <CardHeader title="Today's Closed Trades" icon="📋"
+                action={<span className="text-xs font-medium text-muted-foreground">{closedTrades.length} settled</span>} />
+              {loading ? <SkeletonTable rows={5} cols={6} /> : closedTrades.length === 0 ? (
+                <CardBody><div className="py-8 text-center text-sm text-muted-foreground">No trades settled today.</div></CardBody>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead className="bg-muted/30">
+                      <tr>
+                        {["Pair", "Bot", "Side", "open_rate", "close_rate", "close_profit_abs", "exit_reason", "Duration"].map((h) => (
+                          <th key={h} className="text-left px-4 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-border whitespace-nowrap">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {closedTrades.map((trade) => (
+                        <tr key={trade.trade_id} className="hover:bg-muted/40 transition-colors border-b border-border/50 last:border-0 group">
+                          <td className="px-4 py-2.5 text-xs font-bold text-foreground">{trade.pair}</td>
+                          <td className="px-4 py-2.5 text-xs text-muted-foreground group-hover:text-foreground transition-colors">{trade._bot_name ?? `Bot ${trade._bot_id}`}</td>
+                          <td className="px-4 py-2.5">
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide ${trade.is_short ? "bg-rose-500/10 text-rose-500" : "bg-emerald-500/10 text-emerald-500"}`}>
+                              {trade.is_short ? "Short" : "Long"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5 text-[11px] text-muted-foreground font-mono">{fmt(trade.open_rate, 4)}</td>
+                          <td className="px-4 py-2.5 text-[11px] text-muted-foreground font-mono">{fmt(trade.close_rate ?? 0, 4)}</td>
+                          <td className={`px-4 py-2.5 text-[11px] font-bold font-mono ${profitColor(trade.close_profit_abs)}`}>
+                            {trade.close_profit_abs != null ? `${trade.close_profit_abs >= 0 ? "+" : ""}${fmt(trade.close_profit_abs, 2)}` : "\u2014"}
+                          </td>
+                          <td className="px-4 py-2.5 text-xs text-muted-foreground truncate max-w-[120px]">{trade.exit_reason ?? "\u2014"}</td>
+                          <td className="px-4 py-2.5 text-xs text-muted-foreground">
+                            {trade.close_date && trade.open_date
+                              ? (() => { const ms = new Date(trade.close_date).getTime() - new Date(trade.open_date).getTime(); const h = Math.floor(ms / 3600000); const m = Math.floor((ms % 3600000) / 60000); return h > 0 ? `${h}h ${m}m` : `${m}m`; })()
+                              : "\u2014"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+
+          </div>
+
+          {/* ════ RIGHT COLUMN: COMMAND CENTER (span 4) ════ */}
+          <div className="xl:col-span-4 flex flex-col gap-6 w-full min-w-0">
+            
+            {/* Bots Control Panel */}
+            <Card className="flex flex-col flex-shrink-0" id="bot-control-panel">
+              <CardHeader className="pb-3 border-b border-border/50">
+                <div className="flex flex-col justify-between gap-3 w-full">
+                  <div className="flex items-center justify-between w-full">
+                    <CardTitle className="text-sm">Enclave Workers</CardTitle>
+                    <button type="button" onClick={() => setShowManagement(!showManagement)}
+                      className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
+                      {showManagement ? "Close Matrix" : "Matrix View →"}
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-1.5 w-full">
                     {(["all", "running", "stopped"] as const).map((f) => (
                       <button key={f} type="button" onClick={() => setBotStatusFilter(f)}
-                        className={`px-2 py-0.5 rounded text-2xs font-medium transition-colors ${
+                        className={`flex-1 rounded-md px-2 py-1.5 text-[10px] uppercase font-bold transition-all focus:outline-none cursor-pointer tracking-wider text-center ${
                           botStatusFilter === f
-                            ? "bg-primary text-bg-0"
-                            : "bg-muted text-muted-foreground hover:text-muted-foreground"
+                            ? "bg-secondary text-secondary-foreground shadow-sm border border-border/50"
+                            : "bg-transparent text-muted-foreground hover:bg-muted border border-transparent"
                         }`}>
-                        {f === "all" ? `All (${bots.length})` : f === "running" ? `Running (${runningBotCards.length})` : `Stopped (${bots.length - runningBotCards.length})`}
+                        {f === "all" ? `All (${bots.length})` : f === "running" ? `Run (${runningBotCards.length})` : `Stop (${bots.length - runningBotCards.length})`}
                       </button>
                     ))}
                   </div>
-                  <span className="text-2xs text-muted-foreground">
-                    Click a bot for details
-                  </span>
-                  <button type="button" onClick={() => setShowManagement(!showManagement)}
-                    className="text-2xs font-semibold text-primary hover:text-primary/80 cursor-pointer transition-colors">
-                    {showManagement ? "Hide Management" : "Manage Bots"}
-                  </button>
                 </div>
-              </div>
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3">
-                {bots.filter((bot) => !bot.is_utility && bot.ft_mode !== "webserver").filter((bot) => botStatusFilter === "all" || (botStatusFilter === "running" ? bot.status === "running" : bot.status !== "running")).map((bot) => (
-                  <BotCard
-                    key={bot.id}
-                    bot={bot}
-                    profit={botProfits[bot.id] ?? null}
-                    sparkData={sparklines[bot.id] ?? []}
-                    openCount={openByBot[bot.id] ?? 0}
-                    onClick={() => setSelectedBotId(bot.id)}
-                    onDrain={(botId) => handleDrainBot(botId)}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Bot Management Table (toggled) */}
-          {showManagement && (
-            <div className="mb-6">
-              <BotManagementTable bots={bots} botProfits={botProfits} onRefresh={() => loadPortfolioData(false)} />
-            </div>
-          )}
-
-          {/* Open Positions Table — ALL bots */}
-          <Card className="mb-6">
-            <CardHeader title="Open Positions" icon="📋"
-              action={
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-muted-foreground">
-                    {openTrades.length} positions across {runningBotCards.length} bots
-                  </span>
-                  <button type="button" onClick={() => loadPortfolioData(false)}
-                    className="text-xs text-primary hover:text-primary cursor-pointer font-medium">↻ Refresh</button>
-                </div>
-              } />
-            {loading ? (
-              <SkeletonTable rows={5} cols={8} />
-            ) : bots.length > 0 && runningBotCards.length === 0 ? (
-              <CardBody><div className="py-8 text-center text-sm text-muted-foreground">No running bots</div></CardBody>
-            ) : (
-              renderTradesTable(openTrades, true, "No open positions")
-            )}
-          </Card>
-
-          {/* Daily P&L + Equity Curve */}
-          <div className="grid grid-cols-2 gap-5 mb-6">
-            <Card>
-              <CardHeader title="Daily P&L" icon="📊"
-                action={
-                  <div className="flex gap-0.5">
-                    {([7, 14, 30] as const).map((p) => (
-                      <button key={p} type="button" onClick={() => setDailyPeriod(p)}
-                        className={`px-2 py-0.5 text-2xs rounded cursor-pointer font-medium transition-all ${
-                          dailyPeriod === p ? "bg-primary text-white" : "text-muted-foreground hover:text-muted-foreground"
-                        }`}>{p}d</button>
-                    ))}
-                  </div>
-                } />
-              {loading ? <SkeletonChart height={160} /> : (
-                <CardBody>
-                  <div className="flex items-end gap-1 h-28">
-                    {dailyData.slice(-dailyPeriod).map((item, i) => {
-                      const val = item.abs_profit;
-                      const max = Math.max(...dailyData.map((x) => Math.abs(x.abs_profit)), 0.01);
-                      const pct = Math.max(5, (Math.abs(val) / max) * 100);
-                      return (
-                        <div key={item.date ?? `day-${i}`} className="flex-1 flex flex-col items-center gap-0.5" title={`${item.date.slice(5)}: ${val >= 0 ? "+" : ""}${val.toFixed(2)} USDT`}>
-                          <div className={`w-full rounded-[2px] ${val >= 0 ? "bg-green" : "bg-red"} opacity-70`} style={{ height: `${pct}%` }} />
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="mt-2 text-right text-2xs text-muted-foreground">
-                    Total (all bots): <span className={`font-bold ${profitColor(totalClosedProfit)}`}>{fmtMoney(totalClosedProfit)}</span>
-                  </div>
-                </CardBody>
-              )}
-            </Card>
-
-            <Card>
-              <CardHeader title="Equity Curve (30d)" icon="📈" />
-              {loading ? <SkeletonChart height={160} /> : (
-                <CardBody className="p-3">
-                  <ResponsiveContainer width="100%" height={120}>
-                    <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
-                      <defs>
-                        <linearGradient id="equityGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#22c55e" stopOpacity={0.2} />
-                          <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <XAxis dataKey="date" tick={{ fontSize: 9, fill: "#55556a" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-                      <YAxis tick={{ fontSize: 9, fill: "#55556a" }} axisLine={false} tickLine={false} width={36} tickFormatter={(v: number) => `${v >= 0 ? "+" : ""}${v.toFixed(0)}`} />
-                      <Tooltip contentStyle={{ background: "#12121c", border: "1px solid #1e1e30", borderRadius: 6, fontSize: 11 }}
-                        formatter={(v: unknown) => { const n = Number(v); return [`${n >= 0 ? "+" : ""}${n.toFixed(2)} USDT`, "Cum. P&L"]; }} />
-                      <Area type="monotone" dataKey="value" stroke="#22c55e" strokeWidth={2} fill="url(#equityGrad)" dot={false} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </CardBody>
-              )}
-            </Card>
-          </div>
-
-          {/* Recent Alerts + System Health */}
-          <div className="grid grid-cols-2 gap-5 mb-6">
-            <Card>
-              <CardHeader title="Recent Alerts" icon="🔔"
-                action={<a href="/risk" className="text-xs text-primary hover:text-primary font-medium">View All →</a>} />
-              <CardBody className="p-0">
-                {riskEvents.length === 0 ? (
-                  <div className="py-6 text-center text-sm text-muted-foreground">No recent alerts</div>
-                ) : (
-                  riskEvents.map((ev) => (
-                    <div key={ev.id} className="flex items-start gap-3 px-4 py-3 border-b border-border/40 last:border-b-0 hover:bg-muted transition-colors">
-                      <div className={`w-2 h-2 rounded-full shrink-0 mt-1.5 ${ev.kill_type === "HARD_KILL" ? "bg-red" : "bg-amber"}`} />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium text-foreground truncate">{ev.reason ?? ev.trigger}</div>
-                        <div className="text-2xs text-muted-foreground mt-0.5">{new Date(ev.created_at).toLocaleString()} -- {ev.triggered_by}</div>
-                      </div>
-                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide shrink-0 ${
-                        ev.kill_type === "HARD_KILL" ? "bg-rose-500/10 text-rose-500" : "bg-amber-500/10 text-amber-500-500"
-                      }`}>{ev.kill_type.replace("_", " ")}</span>
-                    </div>
-                  ))
+              </CardHeader>
+              <CardBody className="p-0 flex flex-col max-h-[500px] overflow-y-auto custom-scrollbar">
+                {!loading && bots.length === 0 && (
+                  <div className="p-6 text-center text-sm text-muted-foreground">No workers found.</div>
                 )}
+                {bots.filter((bot) => !bot.is_utility && bot.ft_mode !== "webserver").filter((bot) => botStatusFilter === "all" || (botStatusFilter === "running" ? bot.status === "running" : bot.status !== "running")).map((bot) => (
+                  <div key={bot.id} className="border-b border-border/40 last:border-0 p-3 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => setSelectedBotId(bot.id)}>
+                    <div className="flex items-center justify-between mb-2">
+                       <span className="text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate pr-2">{bot.name}</span>
+                       <StatusBadge status={bot.status} isDryRun={bot.is_dry_run} />
+                    </div>
+                    <div className="flex justify-between items-end">
+                       <div className="flex flex-col">
+                         <span className="text-[10px] uppercase font-semibold text-muted-foreground mb-0.5">Today's Net</span>
+                         <span className={`text-xs font-bold font-mono ${botProfits[bot.id] && botProfits[bot.id].profit_closed_abs >= 0 ? "text-emerald-500" : botProfits[bot.id] && botProfits[bot.id].profit_closed_abs < 0 ? "text-rose-500" : "text-muted-foreground"}`}>
+                           {botProfits[bot.id] ? fmtMoney(botProfits[bot.id].profit_closed_abs) : "—"}
+                         </span>
+                       </div>
+                       <div className="w-20"><Sparkline data={sparklines[bot.id] ?? []} /></div>
+                    </div>
+                  </div>
+                ))}
               </CardBody>
             </Card>
 
-            <Card>
-              <CardHeader title="System Health" icon="❤️" />
-              <CardBody>
-                {loading ? <SkeletonTable rows={3} cols={3} /> : (
-                  <div className="grid grid-cols-1 gap-2">
-                    {bots.map((bot) => (
-                      <div key={bot.id}
-                        className="flex items-center gap-3 px-3 py-2 bg-card border border-border rounded-lg cursor-pointer hover:border-primary transition-colors"
-                        onClick={() => setSelectedBotId(bot.id)}>
-                        <div className={`w-2 h-2 rounded-full shrink-0 ${
-                          bot.status === "running" && bot.is_healthy ? "bg-green shadow-[0_0_6px_var(--color-green)]"
-                            : bot.status === "error" || !bot.is_healthy ? "bg-red animate-pulse" : "bg-amber"
-                        }`} />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs font-semibold text-foreground">{bot.name}</div>
-                          <div className="text-2xs text-muted-foreground">
-                            {bot.consecutive_failures > 0
-                              ? `${bot.consecutive_failures} failure${bot.consecutive_failures > 1 ? "s" : ""}`
-                              : bot.status}
+            {/* Matrix View Toggle */}
+            {showManagement && (
+               <div className="animate-in fade-in slide-in-from-top-4 duration-200">
+                  <BotManagementTable bots={bots} botProfits={botProfits} onRefresh={() => loadPortfolioData(false)} />
+               </div>
+            )}
+
+            {/* System Log / Health Combined Panel */}
+             <Card className="flex flex-col flex-1 min-h-[300px]">
+               <CardHeader className="border-b border-border/50 py-3" title="System Pulse" icon="❤️" />
+               <CardBody className="p-0 overflow-y-auto custom-scrollbar flex-1 flex flex-col">
+                  {/* Health Section */}
+                  <div className="p-3 border-b border-border/30 bg-muted/10">
+                    <h3 className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground mb-3">Health Status</h3>
+                    {loading ? <SkeletonTable rows={2} cols={2} /> : (
+                      <div className="flex flex-col gap-2">
+                        {bots.filter(b => b.status === "running").map((bot) => (
+                          <div key={bot.id} className="flex items-center gap-2" onClick={() => setSelectedBotId(bot.id)}>
+                            <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${bot.is_healthy ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]" : "bg-rose-500 animate-pulse"}`} />
+                            <span className="text-xs font-semibold text-foreground flex-1 truncate">{bot.name}</span>
+                            <span className="text-xs text-muted-foreground">{bot.is_healthy ? "OK" : "Err"}</span>
                           </div>
-                        </div>
-                        <StatusBadge status={bot.status} isDryRun={bot.is_dry_run} />
+                        ))}
+                        {bots.filter(b => b.status === "running").length === 0 && (
+                          <div className="text-xs text-muted-foreground">No active systems to monitor.</div>
+                        )}
                       </div>
-                    ))}
-                    {bots.length === 0 && (
-                      <div className="py-4 text-center text-sm text-muted-foreground">No bots registered</div>
                     )}
                   </div>
-                )}
-              </CardBody>
-            </Card>
+                  
+                  {/* Alerts Section */}
+                  <div className="p-3 flex-1 flex flex-col">
+                    <div className="flex items-center justify-between mb-3">
+                       <h3 className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Recent Events</h3>
+                       <a href="/risk" className="text-[10px] text-primary hover:underline font-bold">All →</a>
+                    </div>
+                    <div className="flex flex-col gap-3 flex-1">
+                      {riskEvents.length === 0 ? (
+                        <div className="text-xs text-muted-foreground h-full flex items-center justify-center">No recent security events</div>
+                      ) : (
+                        riskEvents.slice(0, 5).map((ev) => (
+                          <div key={ev.id} className="flex items-start gap-2.5">
+                            <div className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1.5 ${ev.kill_type === "HARD_KILL" ? "bg-rose-500" : "bg-amber-500-500"}`} />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs font-medium text-foreground leading-snug">{ev.reason ?? ev.trigger}</div>
+                              <div className="flex items-center justify-between mt-1">
+                                <span className="text-[9px] text-muted-foreground">{new Date(ev.created_at).toLocaleTimeString()} · {ev.triggered_by}</span>
+                                <span className={`text-[9px] font-bold px-1 rounded uppercase tracking-wider shrink-0 ${
+                                  ev.kill_type === "HARD_KILL" ? "bg-rose-500/10 text-rose-500" : "bg-amber-500/10 text-amber-500-500"
+                                }`}>{ev.kill_type.replace("_", "")}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+               </CardBody>
+             </Card>
+
           </div>
 
-          {/* Today's Closed Trades */}
-          <Card className="mb-6">
-            <CardHeader title="Today's Closed Trades" icon="✅"
-              action={<span className="text-xs text-muted-foreground">{closedTrades.length} trade{closedTrades.length !== 1 ? "s" : ""} closed today</span>} />
-            {loading ? <SkeletonTable rows={5} cols={6} /> : closedTrades.length === 0 ? (
-              <CardBody><div className="py-8 text-center text-sm text-muted-foreground">No trades closed today</div></CardBody>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr>
-                      {["Pair", "Bot", "Side", "open_rate", "close_rate", "close_profit_abs", "exit_reason", "Duration"].map((h) => (
-                        <th key={h} className="text-left px-4 py-3 text-2xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border whitespace-nowrap">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {closedTrades.map((trade) => (
-                      <tr key={trade.trade_id} className="hover:bg-muted transition-colors">
-                        <td className="px-4 py-3 text-xs font-semibold text-foreground">{trade.pair}</td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground">{trade._bot_name ?? `Bot ${trade._bot_id}`}</td>
-                        <td className="px-4 py-3">
-                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${trade.is_short ? "bg-rose-500/10 text-rose-500" : "bg-emerald-500/10 text-emerald-500"}`}>
-                            {trade.is_short ? "Short" : "Long"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground font-mono">{fmt(trade.open_rate, 4)}</td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground font-mono">{fmt(trade.close_rate ?? 0, 4)}</td>
-                        <td className={`px-4 py-3 text-xs font-bold ${profitColor(trade.close_profit_abs)}`}>
-                          {trade.close_profit_abs != null ? `${trade.close_profit_abs >= 0 ? "+" : ""}${fmt(trade.close_profit_abs, 2)} USDT` : "\u2014"}
-                        </td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground">{trade.exit_reason ?? "\u2014"}</td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground">
-                          {trade.close_date && trade.open_date
-                            ? (() => { const ms = new Date(trade.close_date).getTime() - new Date(trade.open_date).getTime(); const h = Math.floor(ms / 3600000); const m = Math.floor((ms % 3600000) / 60000); return h > 0 ? `${h}h ${m}m` : `${m}m`; })()
-                            : "\u2014"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </Card>
-        </>
+        </div>
       )}
 
       {/* ═══════════════════════════════════════════════════════════════ */}

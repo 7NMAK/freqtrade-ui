@@ -1258,8 +1258,8 @@ export default function DashboardPage() {
                     <div className="flex justify-between items-end">
                        <div className="flex flex-col">
                          <span className="text-[10px] uppercase font-semibold text-muted-foreground mb-0.5">Today&apos;s Net</span>
-                         <span className={`text-xs font-bold font-mono ${botProfits[bot.id] && botProfits[bot.id].profit_closed_abs >= 0 ? "text-emerald-500" : botProfits[bot.id] && botProfits[bot.id].profit_closed_abs < 0 ? "text-rose-500" : "text-muted-foreground"}`}>
-                           {botProfits[bot.id] ? fmtMoney(botProfits[bot.id].profit_closed_abs) : "—"}
+                         <span className={`text-xs font-bold font-mono ${botProfits[bot.id] && botProfits[bot.id].profit_closed_coin && botProfits[bot.id].profit_closed_coin! >= 0 ? "text-emerald-500" : botProfits[bot.id] && botProfits[bot.id].profit_closed_coin && botProfits[bot.id].profit_closed_coin! < 0 ? "text-rose-500" : "text-muted-foreground"}`}>
+                           {botProfits[bot.id] && typeof botProfits[bot.id].profit_closed_coin !== "undefined" ? fmtMoney(botProfits[bot.id].profit_closed_coin!) : "—"}
                          </span>
                        </div>
                        <div className="w-20"><Sparkline data={sparklines[bot.id] ?? []} /></div>

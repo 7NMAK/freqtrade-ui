@@ -284,7 +284,7 @@ export default function StrategiesPage() {
       }
 
       try {
-        botsList = await getBots();
+        botsList = await getBots(true);
         if (mountedRef.current) setBots(botsList);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Failed to load bots");

@@ -65,6 +65,10 @@ class BotRegisterRequest(BaseModel):
     # Path to this bot's config.json on host filesystem
     config_path: str | None = None
 
+    # Bot classification
+    is_utility: bool = False
+    ft_mode: str = "trade"
+
     @field_validator("api_url")
     @classmethod
     def validate_api_url(cls, v: str) -> str:
@@ -117,6 +121,10 @@ class BotUpdateRequest(BaseModel):
 
     # Config path
     config_path: str | None = None
+
+    # Bot classification
+    is_utility: bool | None = None
+    ft_mode: str | None = None
 
 
 class ForceEnterRequest(BaseModel):
@@ -179,10 +187,19 @@ class BotResponse(BaseModel):
 # ── Routes ───────────────────────────────────────────────────
 
 @router.get("/", response_model=list[BotResponse])
-async def list_bots(request: Request, db: AsyncSession = Depends(get_db)) -> list[BotResponse]:
-    """List all registered bots (excludes soft-deleted)."""
+async def list_bots(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    include_utility: bool = False,
+) -> list[BotResponse]:
+    """List registered bots (excludes soft-deleted).
+
+    By default, utility/backtest-only bots (is_utility=True or
+    ft_mode='webserver') are hidden.  Pass ?include_utility=true to
+    include them.
+    """
     manager = request.app.state.bot_manager
-    bots = await manager.get_all_bots(db)
+    bots = await manager.get_all_bots(db, include_utility=include_utility)
     return bots
 
 
@@ -225,6 +242,8 @@ async def register_bot(
             margin_mode=body.margin_mode,
             strategy_version_id=body.strategy_version_id,
             config_path=body.config_path,
+            is_utility=body.is_utility,
+            ft_mode=body.ft_mode,
         )
     except ValueError as e:
         raise HTTPException(409, str(e))
@@ -365,6 +384,14 @@ async def update_bot(
     if body.config_path is not None:
         changes["config_path"] = {"old": bot.config_path, "new": body.config_path}
         bot.config_path = body.config_path
+
+    if body.is_utility is not None:
+        changes["is_utility"] = {"old": bot.is_utility, "new": body.is_utility}
+        bot.is_utility = body.is_utility
+
+    if body.ft_mode is not None:
+        changes["ft_mode"] = {"old": bot.ft_mode, "new": body.ft_mode}
+        bot.ft_mode = body.ft_mode
 
     # L10: audit log for update_bot
     actor = auth_payload.get("sub", "user")

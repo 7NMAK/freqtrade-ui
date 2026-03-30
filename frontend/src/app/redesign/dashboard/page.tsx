@@ -91,8 +91,9 @@ interface BotData {
 function BotGrid({ selectedBotId, onSelectBot }: { selectedBotId: string | null; onSelectBot: (name: string) => void }) {
   const router = useRouter();
   const { data: botsList } = useApi(getBots, [], { refreshInterval: 15000 });
+  const tradingBots = (botsList || []).filter(b => !b.is_utility && b.ft_mode !== "webserver");
 
-  const displayBots: BotData[] = (botsList || []).map(b => ({
+  const displayBots: BotData[] = tradingBots.map(b => ({
     name: b.name,
     status: b.is_dry_run ? "paper" : "live",
     strategy: b.strategy_name || "Unknown",
@@ -569,7 +570,8 @@ export default function DashboardPage() {
   const [killSwitchOpen, setKillSwitchOpen] = useState(false);
   
   const { data: botsList } = useApi(getBots, [], { refreshInterval: 15000 });
-  const displayBots: BotData[] = (botsList || []).map(b => ({
+  const tradingBots = (botsList || []).filter(b => !b.is_utility && b.ft_mode !== "webserver");
+  const displayBots: BotData[] = tradingBots.map(b => ({
     name: b.name,
     status: b.is_dry_run ? "paper" : "live",
     strategy: b.strategy_name || "Unknown",

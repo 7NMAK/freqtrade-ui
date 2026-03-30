@@ -612,7 +612,7 @@ export default function BacktestingPage() {
   const [activeTab, setActiveTab] = useState("backtest");
   const [historyRuns, setHistoryRuns] = useState<HistoryRun[]>(INITIAL_RUNS);
   const [selectedHistoryIdx, setSelectedHistoryIdx] = useState<number | null>(null);
-  const { data: botsList } = useApi(getBots, []);
+  const { data: botsList } = useApi(() => getBots(true), []);
   const { data: strategiesList } = useApi(getStrategies, []);
   
   const bots = botsList || [];

@@ -1179,7 +1179,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3">
-                {bots.filter((bot) => botStatusFilter === "all" || (botStatusFilter === "running" ? bot.status === "running" : bot.status !== "running")).map((bot) => (
+                {bots.filter((bot) => !bot.is_utility && bot.ft_mode !== "webserver").filter((bot) => botStatusFilter === "all" || (botStatusFilter === "running" ? bot.status === "running" : bot.status !== "running")).map((bot) => (
                   <BotCard
                     key={bot.id}
                     bot={bot}

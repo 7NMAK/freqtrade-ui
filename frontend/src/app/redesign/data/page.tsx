@@ -39,7 +39,7 @@ interface DataRow {
 }
 
 export default function DataPage() {
-  const { data: botsList } = useApi(getBots, []);
+  const { data: botsList } = useApi(() => getBots(true), []);
   const bots = botsList || [];
   
   const [selectedBotId, setSelectedBotId] = useState<string>("");

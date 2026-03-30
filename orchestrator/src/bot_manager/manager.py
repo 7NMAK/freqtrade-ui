@@ -90,6 +90,8 @@ class BotManager:
         margin_mode: str = "isolated",
         strategy_version_id: int | None = None,
         config_path: str | None = None,
+        is_utility: bool = False,
+        ft_mode: str = "trade",
     ) -> BotInstance:
         """
         Register an existing FT bot container with the orchestrator.
@@ -140,6 +142,8 @@ class BotManager:
             margin_mode=margin_mode,
             strategy_version_id=strategy_version_id,
             config_path=config_path,
+            is_utility=is_utility,
+            ft_mode=ft_mode,
         )
         db.add(bot)
         await db.flush()
@@ -175,11 +179,22 @@ class BotManager:
         )
         return result.scalar_one_or_none()
 
-    async def get_all_bots(self, db: AsyncSession) -> list[BotInstance]:
-        """Get all active (non-deleted) bots."""
-        result = await db.execute(
-            select(BotInstance).where(BotInstance.is_deleted.is_(False))
-        )
+    async def get_all_bots(
+        self, db: AsyncSession, *, include_utility: bool = True
+    ) -> list[BotInstance]:
+        """Get all active (non-deleted) bots.
+
+        When *include_utility* is False, utility bots (is_utility=True)
+        and webserver-only bots (ft_mode='webserver') are excluded so the
+        dashboard only shows real trading bots.
+        """
+        stmt = select(BotInstance).where(BotInstance.is_deleted.is_(False))
+        if not include_utility:
+            stmt = stmt.where(
+                BotInstance.is_utility.is_(False),
+                BotInstance.ft_mode != "webserver",
+            )
+        result = await db.execute(stmt)
         return list(result.scalars().all())
 
     async def delete_bot(self, db: AsyncSession, bot_id: int) -> BotInstance | None:

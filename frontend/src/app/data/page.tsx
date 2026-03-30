@@ -298,7 +298,7 @@ export default function DataManagementPage() {
 
   // Load bots on mount
   useEffect(() => {
-    getBots()
+    getBots(true)
       .then((list) => {
         setBots(list);
         if (list.length > 0) setSelectedBotId(String(list[0].id));

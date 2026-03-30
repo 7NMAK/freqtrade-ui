@@ -11,38 +11,40 @@ function Card({
     <div
       data-slot="card"
       data-size={size}
-      className={cn("ft-card flex flex-col", className)}
+      className={cn(
+        "group/card flex flex-col gap-4 overflow-hidden rounded-xl bg-card py-4 text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        className
+      )}
       {...props}
     />
   )
 }
 
-function CardHeader({ className, title, icon, action, children, ...props }: React.ComponentProps<"div"> & { title?: string; icon?: string; action?: React.ReactNode }) {
-  // If legacy props (title/icon/action) are used, render them; otherwise render children
-  const hasLegacyProps = title || icon || action;
-  if (hasLegacyProps) {
+function CardHeader({ className, title, icon, action, ...props }: React.ComponentProps<"div"> & { title?: React.ReactNode; icon?: React.ReactNode; action?: React.ReactNode }) {
+  if (title || icon || action) {
     return (
       <div
         data-slot="card-header"
-        className={cn("flex items-center justify-between px-4 py-3", className)}
+        className={cn("group/card-header @container/card-header flex items-center justify-between px-4 py-3 border-b border-border mb-4", className)}
         {...props}
       >
         <div className="flex items-center gap-2">
           {icon && <span>{icon}</span>}
-          {title && <span className="text-sm font-bold">{title}</span>}
+          {title && <span className="text-sm font-bold text-foreground">{title}</span>}
         </div>
         {action}
       </div>
-    );
+    )
   }
   return (
     <div
       data-slot="card-header"
-      className={cn("ft-card-header", className)}
+      className={cn(
+        "group/card-header @container/card-header flex flex-col space-y-1.5 p-6",
+        className
+      )}
       {...props}
-    >
-      {children}
-    </div>
+    />
   )
 }
 
@@ -50,7 +52,10 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-title"
-      className={cn("ft-card-title", className)}
+      className={cn(
+        "font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm",
+        className
+      )}
       {...props}
     />
   )
@@ -83,7 +88,7 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-content"
-      className={cn("p-5 w-full flex-1", className)}
+      className={cn("px-4 group-data-[size=sm]/card:px-3", className)}
       {...props}
     />
   )

@@ -1,117 +1,85 @@
 import type { Config } from "tailwindcss";
-import tailwindcssAnimate from "tailwindcss-animate";
 
-const config: Config = {
+const config = {
+  darkMode: ["class"],
   content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
   ],
+  prefix: "",
   theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px",
+      },
+    },
     extend: {
+      fontFamily: {
+        sans: ["var(--font-sans)"],
+        heading: ["var(--font-sans)"],
+        mono: ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", "monospace"],
+      },
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        card: {
-          DEFAULT: "var(--card)",
-          foreground: "var(--card-foreground)",
-        },
-        popover: {
-          DEFAULT: "var(--popover)",
-          foreground: "var(--popover-foreground)",
-        },
+        border: "oklch(var(--border))",
+        input: "oklch(var(--input))",
+        ring: "oklch(var(--ring))",
+        background: "oklch(var(--background))",
+        foreground: "oklch(var(--foreground))",
         primary: {
-          DEFAULT: "var(--primary)",
-          foreground: "var(--primary-foreground)",
+          DEFAULT: "oklch(var(--primary))",
+          foreground: "oklch(var(--primary-foreground))",
         },
         secondary: {
-          DEFAULT: "var(--secondary)",
-          foreground: "var(--secondary-foreground)",
-        },
-        muted: {
-          DEFAULT: "var(--muted)",
-          foreground: "var(--muted-foreground)",
-        },
-        accentBase: {
-          DEFAULT: "var(--accent)",
-          foreground: "var(--accent-foreground)",
+          DEFAULT: "oklch(var(--secondary))",
+          foreground: "oklch(var(--secondary-foreground))",
         },
         destructive: {
-          DEFAULT: "var(--destructive)",
-          foreground: "var(--destructive-foreground)",
+          DEFAULT: "oklch(var(--destructive))",
+          foreground: "oklch(var(--destructive-foreground))",
         },
-        borderBase: "var(--border)",
-        input: "var(--input)",
-        ring: "var(--ring)",
-
-        // ─── V1 Backward Compatibility Map ───
-        bg: {
-          0: "var(--background)",
-          1: "var(--card)",
-          2: "var(--muted)",
-          3: "var(--popover)",
-        },
-        border: {
-          DEFAULT: "var(--border)",
-          hover: "var(--ring)",
-        },
-        text: {
-          0: "var(--foreground)",
-          1: "var(--foreground)",
-          2: "var(--muted-foreground)",
-          3: "var(--secondary-foreground)",
+        muted: {
+          DEFAULT: "oklch(var(--muted))",
+          foreground: "oklch(var(--muted-foreground))",
         },
         accent: {
-          DEFAULT: "var(--primary)",
-          dim: "var(--primary)",
-          glow: "rgba(99,102,241,0.12)",
+          DEFAULT: "oklch(var(--accent))",
+          foreground: "oklch(var(--accent-foreground))",
         },
-        green: {
-          DEFAULT: "#22c55e",
-          dim: "#166534",
-          bg: "rgba(34,197,94,0.08)",
+        popover: {
+          DEFAULT: "oklch(var(--popover))",
+          foreground: "oklch(var(--popover-foreground))",
         },
-        red: {
-          DEFAULT: "var(--destructive)",
-          dim: "#991b1b",
-          bg: "rgba(239,68,68,0.08)",
+        card: {
+          DEFAULT: "oklch(var(--card))",
+          foreground: "oklch(var(--card-foreground))",
         },
-        amber: {
-          DEFAULT: "#f59e0b",
-          dim: "#92400e",
-          bg: "rgba(245,158,11,0.08)",
-        },
-        cyan: "#06b6d4",
-        purple: "#a855f7",
-      },
-      fontFamily: {
-        sans: [
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "Inter",
-          "Segoe UI",
-          "sans-serif",
-        ],
-      },
-      fontSize: {
-        "2xs": "10px",
-        xs: "11px",
-        sm: "12px",
-        base: "13px",
-        md: "14px",
-        lg: "16px",
-        xl: "22px",
       },
       borderRadius: {
-        card: "var(--radius)",
-        btn: "calc(var(--radius) - 2px)",
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
-      spacing: {
-        sidebar: "240px",
-        header: "56px",
+      keyframes: {
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
       },
     },
   },
-  plugins: [tailwindcssAnimate],
-};
+  plugins: [require("tailwindcss-animate")],
+} satisfies Config;
+
 export default config;

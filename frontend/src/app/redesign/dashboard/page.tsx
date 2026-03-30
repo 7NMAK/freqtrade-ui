@@ -39,12 +39,12 @@ function StatCards({ bots }: { bots: BotData[] }) {
   return (
     <div className="grid grid-cols-5 gap-6 mb-6">
       {STATS.map((s) => (
-        <Card key={s.label} title={s.tooltip} className={`ft-card-interactive flex flex-col justify-center p-5 ${s.featured ? "bg-accent/10 border-accent/30" : ""}`}>
-          <div className="ft-label">{s.label}</div>
-          <div className={`ft-value text-[24px] ${s.featured ? "text-accent" : s.up ? "text-green" : "text-text-0"}`}>
+        <Card key={s.label} title={s.tooltip} className={`cursor-pointer hover:border-primary/50 transition-colors hover:-translate-y-[1px] shadow-sm flex flex-col justify-center p-5 ${s.featured ? "bg-primary/10 border-primary/30" : ""}`}>
+          <div className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground mb-1 block">{s.label}</div>
+          <div className={`text-base font-extrabold text-foreground tracking-tight text-[24px] ${s.featured ? "text-primary" : s.up ? "text-emerald-500" : "text-foreground"}`}>
             {s.value}
           </div>
-          <div className={`text-[11px] mt-1 font-semibold ${s.featured ? "text-accent" : s.up ? "text-green" : "text-text-2"}`}>
+          <div className={`text-[11px] mt-1 font-semibold ${s.featured ? "text-primary" : s.up ? "text-emerald-500" : "text-muted-foreground"}`}>
             {s.up && !s.featured && "▲ "}{s.change}
           </div>
         </Card>
@@ -73,37 +73,37 @@ function BotGrid({ selectedBotId, onSelectBot }: { selectedBotId: string | null;
     <Card className="mb-6">
       <CardHeader>
         <CardTitle><span>🤖</span> Active Bots</CardTitle>
-        <button onClick={() => router.push("/redesign/strategies")} className="text-[11px] font-semibold text-accent hover:underline">
+        <button onClick={() => router.push("/redesign/strategies")} className="text-[11px] font-semibold text-primary hover:underline">
           View all strategies →
         </button>
       </CardHeader>
       
       <CardContent className="grid grid-cols-5 gap-4">
-        {displayBots.length === 0 && <div className="text-xs text-text-2 col-span-5 text-center py-4">No active bots found.</div>}
+        {displayBots.length === 0 && <div className="text-xs text-muted-foreground col-span-5 text-center py-4">No active bots found.</div>}
         {displayBots.map((bot) => (
           <div
             key={bot.name}
             onClick={() => onSelectBot(bot.name)}
-            className={`bg-bg-2 border rounded-[10px] p-4 cursor-pointer hover:border-hover hover:-translate-y-[1px] transition-all ${
-              selectedBotId === bot.name ? "border-accent ring-1 ring-accent shadow-[0_0_15px_rgba(99,102,241,0.15)]" : "border-border"
+            className={`bg-muted/50 border rounded-[10px] p-4 cursor-pointer hover:border-border hover:border-ring hover:-translate-y-[1px] transition-all ${
+              selectedBotId === bot.name ? "border-primary ring-1 ring-primary shadow-[0_0_15px_rgba(99,102,241,0.15)]" : "border-border"
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[13px] font-bold text-text-0">{bot.name}</span>
-              <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-bold uppercase ${bot.status === "live" ? "bg-green-bg text-green border border-green" : "bg-amber-bg text-amber border border-amber"}`}>
+              <span className="text-[13px] font-bold text-foreground">{bot.name}</span>
+              <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-bold uppercase ${bot.status === "live" ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500" : "bg-amber-500/10 text-amber-500 border border-amber-500"}`}>
                 {bot.status === "live" ? "Live" : "Paper"}
               </span>
             </div>
-            <div className="text-[10px] text-text-2 mb-4 truncate">{bot.strategy} · {bot.pair}</div>
+            <div className="text-[10px] text-muted-foreground mb-4 truncate">{bot.strategy} · {bot.pair}</div>
             
             <div className="grid grid-cols-2 gap-2 mb-3">
               <div>
-                <div className="ft-label">Today P&L</div>
-                <div className={`text-[14px] font-bold font-mono ${bot.pnlUp ? "text-green" : "text-red"}`}>{bot.pnl}</div>
+                <div className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground mb-1 block">Today P&L</div>
+                <div className={`text-[14px] font-bold font-mono ${bot.pnlUp ? "text-emerald-500" : "text-rose-500"}`}>{bot.pnl}</div>
               </div>
               <div>
-                <div className="ft-label">Positions</div>
-                <div className="text-[14px] font-bold text-text-0 font-mono">{bot.positions}</div>
+                <div className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground mb-1 block">Positions</div>
+                <div className="text-[14px] font-bold text-foreground font-mono">{bot.positions}</div>
               </div>
             </div>
 
@@ -131,8 +131,8 @@ function PositionsTable() {
   return (
     <Card className="overflow-hidden">
       <CardHeader>
-        <CardTitle><span>📍</span> Open Positions <span className="text-[11px] font-normal text-text-2">(7 active)</span></CardTitle>
-        <button onClick={() => router.push("/redesign/analytics")} className="text-[11px] font-semibold text-accent hover:underline">View in Journal →</button>
+        <CardTitle><span>📍</span> Open Positions <span className="text-[11px] font-normal text-muted-foreground">(7 active)</span></CardTitle>
+        <button onClick={() => router.push("/redesign/analytics")} className="text-[11px] font-semibold text-primary hover:underline">View in Journal →</button>
       </CardHeader>
       <div className="overflow-x-auto">
         <Table>
@@ -145,31 +145,31 @@ function PositionsTable() {
           </TableHeader>
           <TableBody>
             {POSITIONS.length === 0 ? (
-               <TableRow><TableCell colSpan={9} className="text-center text-text-2">No positions.</TableCell></TableRow>
+               <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground">No positions.</TableCell></TableRow>
             ) : POSITIONS.map((p, i) => (
               <TableRow key={i} className="cursor-pointer" onClick={() => console.info(`Viewing trade details for ${p.pair}`)}>
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-full bg-bg-2 border border-border flex items-center justify-center text-[10px] font-extrabold text-text-0">{p.icon}</div>
+                    <div className="w-7 h-7 rounded-full bg-muted/50 border border-border flex items-center justify-center text-[10px] font-extrabold text-foreground">{p.icon}</div>
                     <div>
-                      <div className="text-[13px] font-bold text-text-0">{p.pair}</div>
-                      <div className="text-[10px] text-text-2">{p.tf}</div>
+                      <div className="text-[13px] font-bold text-foreground">{p.pair}</div>
+                      <div className="text-[10px] text-muted-foreground">{p.tf}</div>
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className={`${p.paper ? "italic text-text-2" : "text-text-0"}`}>{p.bot}</TableCell>
+                <TableCell className={`${p.paper ? "italic text-muted-foreground" : "text-foreground"}`}>{p.bot}</TableCell>
                 <TableCell>
-                  <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-bold uppercase border ${p.side === "long" ? "bg-green-bg text-green border-green/20" : "bg-red-bg text-red border-red/20"}`}>{p.side}</span>
+                  <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-bold uppercase border ${p.side === "long" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-rose-500/10 text-rose-500 border-rose-500/20"}`}>{p.side}</span>
                 </TableCell>
-                <TableCell><span className="px-2 py-0.5 rounded-[4px] bg-bg-2 border border-border text-[10px] font-bold">{p.lev}</span></TableCell>
+                <TableCell><span className="px-2 py-0.5 rounded-[4px] bg-muted/50 border border-border text-[10px] font-bold">{p.lev}</span></TableCell>
                 <TableCell className="font-mono">{p.entry}</TableCell>
                 <TableCell className="font-mono">{p.current}</TableCell>
                 <TableCell>
-                  <span className={`text-[13px] font-bold font-mono ${p.pnlUp ? "text-green" : "text-red"}`}>{p.pnl}</span>
-                  {p.paper && <span className="text-[10px] text-amber font-semibold ml-1">(paper)</span>}
+                  <span className={`text-[13px] font-bold font-mono ${p.pnlUp ? "text-emerald-500" : "text-rose-500"}`}>{p.pnl}</span>
+                  {p.paper && <span className="text-[10px] text-amber-500 font-semibold ml-1">(paper)</span>}
                 </TableCell>
-                <TableCell className="text-text-2">{p.duration}</TableCell>
-                <TableCell className="text-text-2 hover:text-text-0 text-center text-lg">⋮</TableCell>
+                <TableCell className="text-muted-foreground">{p.duration}</TableCell>
+                <TableCell className="text-muted-foreground hover:text-foreground text-center text-lg">⋮</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -191,8 +191,8 @@ function ClosedTradesTable() {
   return (
     <Card className="overflow-hidden">
       <CardHeader>
-        <CardTitle><span>📋</span> Today&apos;s Closed Trades <span className="text-[11px] font-normal text-text-2">(5 trades)</span></CardTitle>
-        <button onClick={() => router.push("/redesign/analytics")} className="text-[11px] font-semibold text-accent hover:underline">Full history →</button>
+        <CardTitle><span>📋</span> Today&apos;s Closed Trades <span className="text-[11px] font-normal text-muted-foreground">(5 trades)</span></CardTitle>
+        <button onClick={() => router.push("/redesign/analytics")} className="text-[11px] font-semibold text-primary hover:underline">Full history →</button>
       </CardHeader>
       <div className="overflow-x-auto">
         <Table>
@@ -205,21 +205,21 @@ function ClosedTradesTable() {
           </TableHeader>
           <TableBody>
             {CLOSED_TRADES.length === 0 ? (
-               <TableRow><TableCell colSpan={10} className="text-center text-text-2">No trades today.</TableCell></TableRow>
+               <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground">No trades today.</TableCell></TableRow>
             ) : CLOSED_TRADES.map((t) => (
               <TableRow key={t.id} className="cursor-pointer" onClick={() => console.info(`Viewing trade ${t.id}`)}>
-                <TableCell className="font-mono text-text-2">{t.id}</TableCell>
-                <TableCell className="font-bold text-text-0">{t.pair}</TableCell>
+                <TableCell className="font-mono text-muted-foreground">{t.id}</TableCell>
+                <TableCell className="font-bold text-foreground">{t.pair}</TableCell>
                 <TableCell className="text-[11px]">{t.bot}</TableCell>
                 <TableCell>
-                  <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-bold uppercase border ${t.side === "long" ? "bg-green-bg text-green border-green/20" : "bg-red-bg text-red border-red/20"}`}>{t.side}</span>
+                  <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-bold uppercase border ${t.side === "long" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-rose-500/10 text-rose-500 border-rose-500/20"}`}>{t.side}</span>
                 </TableCell>
-                <TableCell className="font-mono text-text-2">{t.entry}</TableCell>
-                <TableCell className="font-mono text-text-2">{t.exit}</TableCell>
-                <TableCell className={`font-mono ${t.pnlUp ? "text-green" : "text-red"}`}>{t.pnl}</TableCell>
-                <TableCell className="font-mono text-text-2">{t.fees}</TableCell>
-                <TableCell className="text-text-2">{t.duration}</TableCell>
-                <TableCell className="font-mono text-text-2">{t.closed}</TableCell>
+                <TableCell className="font-mono text-muted-foreground">{t.entry}</TableCell>
+                <TableCell className="font-mono text-muted-foreground">{t.exit}</TableCell>
+                <TableCell className={`font-mono ${t.pnlUp ? "text-emerald-500" : "text-rose-500"}`}>{t.pnl}</TableCell>
+                <TableCell className="font-mono text-muted-foreground">{t.fees}</TableCell>
+                <TableCell className="text-muted-foreground">{t.duration}</TableCell>
+                <TableCell className="font-mono text-muted-foreground">{t.closed}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -247,11 +247,11 @@ function QuickActions() {
           <button
             key={a.label}
             onClick={() => { if (a.href !== "#") router.push(a.href); }}
-            className="flex items-center gap-3 px-4 py-3 rounded-btn border border-border bg-bg-2 cursor-pointer hover:border-accent hover:bg-accent/10 hover:text-accent transition-all text-[13px] text-text-1 font-medium w-full text-left"
+            className="flex items-center gap-3 px-4 py-3 rounded-btn border border-border bg-muted/50 cursor-pointer hover:border-primary hover:bg-primary/10 hover:text-primary transition-all text-[13px] text-muted-foreground font-medium w-full text-left"
           >
             <span className="text-[16px] w-5 text-center">{a.icon}</span>
             {a.label}
-            <span className="ml-auto text-text-3">→</span>
+            <span className="ml-auto text-muted-foreground">→</span>
           </button>
         ))}
       </CardContent>
@@ -273,7 +273,7 @@ function EquityCurve() {
     <Card className="flex flex-col h-full">
       <CardHeader>
         <CardTitle><span>📈</span> Equity Curve (30d)</CardTitle>
-        <button onClick={() => router.push("/redesign/analytics")} className="text-[11px] font-semibold text-accent hover:underline">Full Analytics →</button>
+        <button onClick={() => router.push("/redesign/analytics")} className="text-[11px] font-semibold text-primary hover:underline">Full Analytics →</button>
       </CardHeader>
       <div className="p-5 pt-0 flex-1 w-full min-h-[160px]">
         <ResponsiveContainer width="100%" height="100%">
@@ -301,26 +301,26 @@ function EquityCurve() {
 /* ── 7. Alerts ── */
 interface AlertData { type: "success" | "warning" | "info" | "critical"; text: string; time: string; }
 const INITIAL_ALERTS: AlertData[] = [];
-const alertDotColors = { success: "bg-green", warning: "bg-amber", info: "bg-accent", critical: "bg-red shadow-[0_0_8px_rgba(239,68,68,0.5)]" };
+const alertDotColors = { success: "bg-green", warning: "bg-amber", info: "bg-primary", critical: "bg-red shadow-[0_0_8px_rgba(239,68,68,0.5)]" };
 
 function Alerts() {
   const [alerts, setAlerts] = useState(INITIAL_ALERTS);
   return (
     <Card className="flex flex-col h-full">
       <CardHeader>
-        <CardTitle><span>🔔</span> Recent Alerts {alerts.length > 0 && <span className="text-[11px] font-normal text-text-2">({alerts.length})</span>}</CardTitle>
-        <button className="text-[11px] font-semibold text-accent hover:underline">View all →</button>
+        <CardTitle><span>🔔</span> Recent Alerts {alerts.length > 0 && <span className="text-[11px] font-normal text-muted-foreground">({alerts.length})</span>}</CardTitle>
+        <button className="text-[11px] font-semibold text-primary hover:underline">View all →</button>
       </CardHeader>
       <div className="overflow-y-auto max-h-[160px] custom-scrollbar">
-        {alerts.length === 0 && <div className="text-[12px] text-text-2 text-center py-6">No active alerts.</div>}
+        {alerts.length === 0 && <div className="text-[12px] text-muted-foreground text-center py-6">No active alerts.</div>}
         {alerts.map((a, i) => (
-          <div key={i} className="flex gap-3 px-5 py-3 border-b border-border hover:bg-bg-2 transition-colors">
+          <div key={i} className="flex gap-3 px-5 py-3 border-b border-border hover:bg-muted/50 transition-colors">
             <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${alertDotColors[a.type]}`} />
             <div className="flex-1">
-              <div className="text-[12px] text-text-0 leading-snug">{a.text}</div>
-              <div className="text-[10px] text-text-2 mt-1">{a.time}</div>
+              <div className="text-[12px] text-foreground leading-snug">{a.text}</div>
+              <div className="text-[10px] text-muted-foreground mt-1">{a.time}</div>
             </div>
-            <button onClick={() => setAlerts(p => p.filter((_, idx) => idx !== i))} className="text-text-3 hover:text-text-0 text-[11px] font-bold">✕</button>
+            <button onClick={() => setAlerts(p => p.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-foreground text-[11px] font-bold">✕</button>
           </div>
         ))}
       </div>
@@ -341,16 +341,16 @@ function SystemHealth() {
     <Card className="flex flex-col h-full">
       <CardHeader>
         <CardTitle><span>💚</span> System Health</CardTitle>
-        <span className="text-[10px] text-text-2">Check: {timestamp}</span>
+        <span className="text-[10px] text-muted-foreground">Check: {timestamp}</span>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
-         {HEALTH.length === 0 && <div className="text-[12px] text-text-2 text-center py-6">Systems Operational</div>}
+         {HEALTH.length === 0 && <div className="text-[12px] text-muted-foreground text-center py-6">Systems Operational</div>}
          {HEALTH.map((h, i) => (
-           <div key={i} className="flex items-center gap-3 px-3 py-2 bg-bg-2 border border-border rounded-[8px]">
+           <div key={i} className="flex items-center gap-3 px-3 py-2 bg-muted/50 border border-border rounded-[8px]">
              <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${healthDotColors[h.status]}`} />
              <div>
-               <div className="text-[12px] font-bold text-text-0">{h.name}</div>
-               <div className="text-[10px] text-text-2">{h.detail}</div>
+               <div className="text-[12px] font-bold text-foreground">{h.name}</div>
+               <div className="text-[10px] text-muted-foreground">{h.detail}</div>
              </div>
            </div>
          ))}
@@ -379,8 +379,8 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-[26px] font-extrabold text-text-0 tracking-tight leading-tight">System Dashboard</h1>
-          <p className="text-[13px] text-text-2 mt-1">Live connection to Orchestrator Enclave.</p>
+          <h1 className="text-[26px] font-extrabold text-foreground tracking-tight leading-tight">System Dashboard</h1>
+          <p className="text-[13px] text-muted-foreground mt-1">Live connection to Orchestrator Enclave.</p>
         </div>
         <Button variant="destructive" onClick={() => setKillSwitchOpen(true)}>
           🚨 Kill Switch
@@ -391,9 +391,9 @@ export default function DashboardPage() {
       <BotGrid selectedBotId={selectedBotId} onSelectBot={(name) => setSelectedBotId(prev => prev === name ? null : name)} />
 
       {selectedBotId && (
-        <div className="mb-6 px-5 py-3 bg-accent/10 border border-accent/20 rounded-[8px] text-[13px] text-text-0 font-medium flex items-center justify-between">
-          <span>Filtering active display for enclave: <strong className="text-accent">{selectedBotId}</strong></span>
-          <button onClick={() => setSelectedBotId(null)} className="text-[12px] text-text-3 hover:text-text-0 hover:underline transition-colors">Clear Filter ✕</button>
+        <div className="mb-6 px-5 py-3 bg-primary/10 border border-primary/20 rounded-[8px] text-[13px] text-foreground font-medium flex items-center justify-between">
+          <span>Filtering active display for enclave: <strong className="text-primary">{selectedBotId}</strong></span>
+          <button onClick={() => setSelectedBotId(null)} className="text-[12px] text-muted-foreground hover:text-foreground hover:underline transition-colors">Clear Filter ✕</button>
         </div>
       )}
 

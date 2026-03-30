@@ -415,10 +415,9 @@ async def generate_config(
         raise HTTPException(404, "Bot not found")
 
     # Build base config from bot settings
-    # NOTE: margin_mode is NOT included — FT 2026.2 for Binance does not support
-    # explicit margin_mode in config.json. Let the existing config or FT defaults handle it.
     config = {
         "trading_mode": bot.trading_mode or "futures",
+        "margin_mode": bot.margin_mode or "isolated",
         "max_open_trades": bot.max_open_trades or 3,
         "stake_currency": bot.stake_currency or "USDT",
         "stake_amount": bot.stake_amount or "unlimited",

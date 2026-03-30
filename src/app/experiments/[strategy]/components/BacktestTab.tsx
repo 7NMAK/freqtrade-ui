@@ -480,7 +480,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
   const [timeframeDetail, setTimeframeDetail] = useState("None");
   const [maxOpenTrades, setMaxOpenTrades] = useState("");
   const [startingCapital, setStartingCapital] = useState("10000");
-  const [stakeAmount, setStakeAmount] = useState("");
+  const [stakeAmount, setStakeAmount] = useState("unlimited");
   const [feeOverride, setFeeOverride] = useState("");
   const [enableProtections, setEnableProtections] = useState(false);
   const [cacheResults, setCacheResults] = useState(true);
@@ -814,7 +814,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
         <div className="grid grid-cols-2 gap-[8px]">
           <div>
             <label className={LABEL}>Stake Amount ($)</label>
-            <input type="number" value={stakeAmount} onChange={(e) => setStakeAmount(e.target.value)} className={INPUT} />
+            <input type="text" value={stakeAmount} onChange={(e) => setStakeAmount(e.target.value)} placeholder="unlimited" className={INPUT} />
           </div>
           <div>
             <label className={LABEL}>Fee Override (%)</label>

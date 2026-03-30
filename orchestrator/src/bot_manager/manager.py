@@ -89,6 +89,7 @@ class BotManager:
         trading_mode: str = "futures",
         margin_mode: str = "isolated",
         strategy_version_id: int | None = None,
+        config_path: str | None = None,
     ) -> BotInstance:
         """
         Register an existing FT bot container with the orchestrator.
@@ -138,6 +139,7 @@ class BotManager:
             trading_mode=trading_mode,
             margin_mode=margin_mode,
             strategy_version_id=strategy_version_id,
+            config_path=config_path,
         )
         db.add(bot)
         await db.flush()

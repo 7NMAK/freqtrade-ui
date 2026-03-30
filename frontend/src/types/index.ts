@@ -37,6 +37,7 @@ export interface Bot {
   trading_mode?: string;
   margin_mode?: string;
   strategy_version_id?: number;
+  config_path?: string;
 }
 
 export type Lifecycle = "draft" | "backtest" | "ai_tested" | "deployable" | "paper" | "live" | "retired";

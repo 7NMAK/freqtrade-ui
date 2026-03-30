@@ -123,6 +123,11 @@ class BotInstance(Base, TimestampMixin):
     # Soft delete (never hard delete — safety rule #7)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
+    # Path to this bot's config.json on the host filesystem
+    # e.g. /opt/freqtrade/user_data/config.json
+    # Orchestrator writes generated config here before start/reload
+    config_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
     # Config overrides managed by orchestrator (e.g. freqai section)
     # Stored as JSON — applied to bot config.json on start/restart
     config_overrides: Mapped[dict | None] = mapped_column(JSON, nullable=True)

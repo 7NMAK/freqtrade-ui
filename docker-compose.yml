@@ -89,7 +89,7 @@ services:
       - "${DOCKER_GID:-988}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /opt/freqtrade/user_data:/opt/freqtrade/user_data:ro
+      - /opt/freqtrade/user_data:/opt/freqtrade/user_data
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8888/api/health || exit 1"]
       interval: 10s

@@ -62,6 +62,9 @@ class BotRegisterRequest(BaseModel):
     # NEW — strategy version reference (V2)
     strategy_version_id: int | None = None
 
+    # Path to this bot's config.json on host filesystem
+    config_path: str | None = None
+
     @field_validator("api_url")
     @classmethod
     def validate_api_url(cls, v: str) -> str:
@@ -111,6 +114,9 @@ class BotUpdateRequest(BaseModel):
 
     # NEW — strategy version
     strategy_version_id: int | None = None
+
+    # Config path
+    config_path: str | None = None
 
 
 class ForceEnterRequest(BaseModel):
@@ -165,6 +171,7 @@ class BotResponse(BaseModel):
     trading_mode: str = "futures"
     margin_mode: str = "isolated"
     strategy_version_id: int | None = None
+    config_path: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -217,6 +224,7 @@ async def register_bot(
             trading_mode=body.trading_mode,
             margin_mode=body.margin_mode,
             strategy_version_id=body.strategy_version_id,
+            config_path=body.config_path,
         )
     except ValueError as e:
         raise HTTPException(409, str(e))
@@ -354,6 +362,10 @@ async def update_bot(
         bot.strategy_version_id = body.strategy_version_id
         config_changed = True
 
+    if body.config_path is not None:
+        changes["config_path"] = {"old": bot.config_path, "new": body.config_path}
+        bot.config_path = body.config_path
+
     # L10: audit log for update_bot
     actor = auth_payload.get("sub", "user")
     db.add(AuditLog(
@@ -441,24 +453,131 @@ async def generate_config(
     if bot.exchange_subaccount:
         config["exchange"]["subaccount"] = bot.exchange_subaccount
 
-    # Merge strategy risk config if version exists
+    # Merge strategy risk config + FreqAI config if version exists
     if bot.strategy_version_id:
         try:
             version = await db.get(StrategyVersion, bot.strategy_version_id)
-            if version and version.risk_config:
-                risk = version.risk_config
-                config["stoploss"] = risk.get("stoploss", -0.1)
-                config["minimal_roi"] = risk.get("roi", {"60": 0.01, "30": 0.02, "0": 0.04})
-                if risk.get("trailing_stop"):
-                    config["trailing_stop"] = True
-                    for k in ["trailing_stop_positive", "trailing_stop_positive_offset", "trailing_only_offset_is_reached"]:
-                        if k in risk:
-                            config[k] = risk[k]
+            if version:
+                # Risk config (stoploss, ROI, trailing stop)
+                if version.risk_config:
+                    risk = version.risk_config
+                    config["stoploss"] = risk.get("stoploss", -0.1)
+                    config["minimal_roi"] = risk.get("roi", {"60": 0.01, "30": 0.02, "0": 0.04})
+                    if risk.get("trailing_stop"):
+                        config["trailing_stop"] = True
+                        for k in ["trailing_stop_positive", "trailing_stop_positive_offset", "trailing_only_offset_is_reached"]:
+                            if k in risk:
+                                config[k] = risk[k]
+                # FreqAI config from strategy version
+                if version.freqai_config:
+                    config["freqai"] = version.freqai_config
         except Exception as e:
-            # If strategy fetch fails, return base config with note
-            config["_warning"] = f"Could not load strategy risk config: {str(e)}"
+            config["_warning"] = f"Could not load strategy config: {str(e)}"
+
+    # Config overrides take precedence (e.g. FreqAI config saved from UI)
+    if bot.config_overrides:
+        for key, value in bot.config_overrides.items():
+            if key.startswith("_"):
+                continue  # skip internal keys
+            config[key] = value
 
     return config
+
+
+# ── Config Apply (write to disk + reload FT) ─────────────────
+
+async def _apply_config_to_bot(
+    bot: BotInstance,
+    config: dict[str, Any],
+    manager: Any,
+) -> dict[str, Any]:
+    """
+    Write generated config to the bot's config.json on disk, then reload FT.
+
+    This is the missing link: UI → DB → disk → FT bot.
+    Returns {"written": True/False, "reloaded": True/False, "path": str}.
+    """
+    import json as _json
+    from pathlib import Path
+
+    result: dict[str, Any] = {"written": False, "reloaded": False, "path": None}
+
+    if not bot.config_path:
+        result["error"] = "No config_path set on this bot. Register the bot with a config_path."
+        return result
+
+    config_file = Path(bot.config_path)
+    result["path"] = str(config_file)
+
+    # Read existing config to preserve sections we don't manage
+    existing: dict[str, Any] = {}
+    if config_file.exists():
+        try:
+            existing = _json.loads(config_file.read_text())
+        except Exception:
+            existing = {}
+
+    # Merge: our generated config overwrites managed sections,
+    # but preserves anything we don't generate (e.g. custom user settings)
+    merged = {**existing, **config}
+
+    # Remove internal keys (not valid FT config)
+    merged.pop("_warning", None)
+
+    # Write atomically: write to .tmp then rename
+    tmp_path = config_file.with_suffix(".json.tmp")
+    try:
+        config_file.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path.write_text(_json.dumps(merged, indent=2))
+        tmp_path.rename(config_file)
+        result["written"] = True
+    except Exception as e:
+        result["error"] = f"Failed to write config: {e}"
+        return result
+
+    # Reload FT config (only if bot is running)
+    if bot.status in (BotStatus.RUNNING, BotStatus.DRAINING):
+        try:
+            client = await manager.get_client(bot)
+            await client.reload_config()
+            result["reloaded"] = True
+        except FTClientError:
+            result["reloaded"] = False
+            result["reload_note"] = "Bot not reachable — config written but reload skipped. Will apply on next start."
+
+    return result
+
+
+@router.post("/{bot_id}/apply-config")
+async def apply_config(
+    bot_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """
+    Generate full config from bot settings + strategy + overrides,
+    write to disk, and reload the FT bot.
+
+    This is the endpoint that closes the loop:
+    UI → save to DB → generate config → write config.json → FT reload.
+    """
+    from ..models.strategy_version import StrategyVersion
+
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+
+    # Generate the full config (same logic as generate-config endpoint)
+    config = await generate_config(bot_id, request, db)
+
+    # Write to disk and reload
+    result = await _apply_config_to_bot(bot, config, manager)
+
+    if not result["written"] and "error" in result:
+        raise HTTPException(400, result["error"])
+
+    return result
 
 
 # ── NEW: Drain Endpoint (V2) ──────────────────────────────────
@@ -614,6 +733,17 @@ async def start_bot(bot_id: int, request: Request, db: AsyncSession = Depends(ge
         )
 
     manager = request.app.state.bot_manager
+
+    # Apply config to disk before starting (ensures FreqAI etc. are in config.json)
+    bot = await manager.get_bot(db, bot_id)
+    if bot and bot.config_path:
+        try:
+            config = await generate_config(bot_id, request, db)
+            await _apply_config_to_bot(bot, config, manager)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("Config apply before start failed: %s", e)
+
     try:
         result = await manager.start_bot(db, bot_id)
         return result
@@ -1069,11 +1199,9 @@ async def bot_config(bot_id: int, request: Request, db: AsyncSession = Depends(g
 @router.put("/{bot_id}/config")
 async def bot_save_config(bot_id: int, body: dict[str, Any], request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
     """
-    Save config sections to orchestrator DB and trigger FT config reload.
+    Save config sections to orchestrator DB, write to disk, and reload FT.
 
-    FT doesn't have a direct "write config" API endpoint.
-    We store config overrides (e.g. freqai section) in the bot_instances table
-    so they are persisted and can be applied when the bot starts/restarts.
+    Full flow: save overrides → generate full config → write config.json → FT reload.
     """
     manager = request.app.state.bot_manager
     bot = await manager.get_bot(db, bot_id)
@@ -1088,13 +1216,18 @@ async def bot_save_config(bot_id: int, body: dict[str, Any], request: Request, d
     flag_modified(bot, "config_overrides")
     await db.flush()
 
-    # Try to reload the FT bot config (best-effort — bot may be stopped)
-    client = await manager.get_client(bot)
+    # Generate full config and write to disk + reload FT
+    if bot.config_path:
+        config = await generate_config(bot_id, request, db)
+        apply_result = await _apply_config_to_bot(bot, config, manager)
+        return {"saved": True, **apply_result}
+
+    # Fallback: no config_path — try direct reload only (old behavior)
     try:
-        return await client.reload_config()
+        client = await manager.get_client(bot)
+        return {"saved": True, "reloaded": True, **(await client.reload_config())}
     except FTClientError:
-        # If reload fails (bot stopped), just return the saved config
-        return bot.config_overrides or {}
+        return {"saved": True, "reloaded": False, "note": "Config saved to DB. Set config_path on bot to enable disk writes."}
 
 
 @router.post("/{bot_id}/forceenter")

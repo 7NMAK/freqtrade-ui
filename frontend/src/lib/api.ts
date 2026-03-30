@@ -270,6 +270,9 @@ export const saveBotConfig = (id: number, config: Record<string, unknown>) =>
     body: JSON.stringify(config),
   });
 
+export const applyBotConfig = (id: number) =>
+  request(`/api/bots/${id}/apply-config`, { method: "POST" });
+
 export const botLogs = (id: number, limit = 50) =>
   request<import("@/types").FTLogsResponse>(`/api/bots/${id}/logs?limit=${limit}`);
 

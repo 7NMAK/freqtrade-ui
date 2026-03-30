@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreqTrade | OMEGA LINEAR EXPERIMENTS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['"JetBrains Mono"', 'monospace'] },
+        colors: {
+          base: "#0A0A0A", /* Pitch black/very dark gray */
+          panel: "#141414", /* Slightly lighter */
+          border: "rgba(255,255,255,0.08)",
+          muted: "#888888",
+          primary: "#EDEDED",
+          accent: "#FFFFFF",
+          brand: "#3b82f6", /* Linear Blue */
+          up: "#10b981", 
+          down: "#ef4444"
+        },
+        boxShadow: {
+            'glow': '0 0 20px rgba(59, 130, 246, 0.15)',
+            'card': '0 4px 24px -1px rgba(0, 0, 0, 0.5)'
+        }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Inter', sans-serif; background: var(--color-base); color: var(--color-primary); font-size: 13px; overflow: hidden; }
+  
+  /* Linear-style inputs */
+  .inp { width: 100%; padding: 8px 12px; font-size: 13px; background: rgba(255,255,255,0.03); border: 1px solid var(--color-border); color: var(--color-primary); border-radius: 6px; outline: none; transition: all 0.2s; }
+  .inp:focus { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); box-shadow: 0 0 0 2px rgba(255,255,255,0.05); }
+  select.inp { appearance: none; cursor: pointer; }
+  .lbl { display: block; font-size: 11px; font-weight: 500; color: var(--color-muted); margin-bottom: 6px; }
+  
+  /* Buttons */
+  .btn { display: inline-flex; items-center; justify-content: center; gap: 6px; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; transition: all 0.2s; cursor: pointer; }
+  .btn-ghost { background: transparent; color: var(--color-muted); }
+  .btn-ghost:hover { background: rgba(255,255,255,0.05); color: var(--color-primary); }
+  .btn-outline { background: rgba(255,255,255,0.03); border: 1px solid var(--color-border); color: var(--color-primary); }
+  .btn-outline:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
+  .btn-primary { background: var(--color-primary); color: var(--color-base); font-weight: 600; box-shadow: 0 2px 10px rgba(255,255,255,0.1); }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  
+  /* Datagrid */
+  table { width: 100%; border-collapse: separate; border-spacing: 0; }
+  th, td { padding: 10px 12px; border-bottom: 1px solid var(--color-border); }
+  th { font-weight: 500; color: var(--color-muted); text-align: left; font-size: 11px; position: sticky; top: 0; background: var(--color-panel); z-index: 10; cursor: pointer; }
+  th:hover { color: var(--color-primary); }
+  td { font-size: 13px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* Tab switching logic */
+  .tab-content { display: none; height: 100%; overflow: hidden; animation: fadeIn 0.3s ease; }
+  .tab-content.active { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+  
+  /* Toggle Switch */
+  .toggle-checkbox:checked { right: 0; border-color: #10b981; }
+  .toggle-checkbox:checked + .toggle-label { background-color: #10b981; }
+  
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+</style>
+</head>
+<body class="w-screen h-screen flex flex-col bg-base text-primary overflow-hidden">
+  
+  <!-- 1. HEADER (Linear Style) -->
+  <header class="h-14 border-b border-border bg-base/50 backdrop-blur-md flex items-center px-6 justify-between shrink-0 z-20">
+      <div class="flex items-center gap-4">
+          <button class="btn btn-ghost px-2 text-muted hover:text-primary">
+              <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          </button>
+          
+          <div class="flex flex-col">
+              <div class="flex items-center gap-2">
+                 <span class="text-sm font-semibold tracking-tight text-primary">AlphaTrend_V5</span>
+                 <span class="px-2 py-0.5 bg-brand/10 text-brand border border-brand/20 text-[10px] font-semibold rounded-full tracking-wide">TESTING</span>
+              </div>
+              <span class="text-[11px] text-muted font-mono">/experiments/AlphaTrend_V5</span>
+          </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+          <button class="btn btn-outline" onclick="alert('Opened All Tests Overlay')">
+             <i data-lucide="list" class="w-3.5 h-3.5"></i> All Tests <span class="bg-white/10 px-1.5 rounded-sm text-[10px]">142</span>
+          </button>
+          <button class="btn btn-outline" onclick="alert('Opened Compare Overlay')">
+             <i data-lucide="scale" class="w-3.5 h-3.5"></i> Compare
+          </button>
+          <button class="btn btn-outline" onclick="alert('Opened Analysis Overlay')">
+             <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i> Analysis
+          </button>
+          <div class="w-px h-6 bg-border mx-1"></div>
+          <button class="btn btn-primary">
+             <i data-lucide="plus" class="w-3.5 h-3.5"></i> New Test
+          </button>
+      </div>
+  </header>
+
+  <!-- 2. PIPELINE TRACKER (Linear Modern Flow) -->
+  <div class="h-12 border-b border-border bg-panel flex items-center px-6 shrink-0 overflow-x-auto">
+      <div class="flex items-center min-w-max">
+          <!-- Backtest -->
+          <div class="flex items-center gap-2 px-2">
+              <div class="w-5 h-5 rounded-full bg-up/10 text-up border border-up/30 flex items-center justify-center"><i data-lucide="check" class="w-3 h-3"></i></div>
+              <span class="text-xs font-semibold text-primary">Backtest</span>
+          </div>
+          <div class="w-8 h-[2px] bg-up/30 mx-2 rounded-full"></div>
+          
+          <!-- Hyperopt -->
+          <div class="flex items-center gap-2 px-2">
+              <div class="w-5 h-5 rounded-full bg-up/10 text-up border border-up/30 flex items-center justify-center"><i data-lucide="check" class="w-3 h-3"></i></div>
+              <span class="text-xs font-semibold text-primary">Hyperopt</span>
+          </div>
+          <div class="w-8 h-[2px] bg-up/30 mx-2 rounded-full"></div>
+          
+          <!-- FreqAI (Skipped) -->
+          <div class="flex items-center gap-2 px-2 opacity-50">
+              <div class="w-5 h-5 rounded-full border border-dashed border-muted text-muted flex items-center justify-center text-[10px]">⊘</div>
+              <span class="text-xs font-medium text-muted">FreqAI</span>
+          </div>
+          <div class="w-8 h-[2px] border-t border-dashed border-muted/30 mx-2"></div>
+          
+          <!-- Naš AI (Skipped) -->
+          <div class="flex items-center gap-2 px-2 opacity-50">
+              <div class="w-5 h-5 rounded-full border border-dashed border-muted text-muted flex items-center justify-center text-[10px]">⊘</div>
+              <span class="text-xs font-medium text-muted">Naš AI</span>
+          </div>
+          <div class="w-8 h-[2px] border-t border-dashed border-muted/30 mx-2"></div>
+          
+          <!-- Validation -->
+          <div class="flex items-center gap-2 px-2">
+              <div class="w-5 h-5 rounded-full bg-up/10 text-up border border-up/30 flex items-center justify-center"><i data-lucide="check" class="w-3 h-3"></i></div>
+              <span class="text-xs font-semibold text-primary">Validation</span>
+          </div>
+          <div class="w-8 h-[2px] bg-up/30 mx-2 rounded-full"></div>
+          
+          <!-- Paper (Active) -->
+          <div class="flex items-center gap-2 px-2 bg-brand/5 border border-brand/20 py-1 rounded-lg">
+              <div class="w-5 h-5 rounded-full bg-brand text-white shadow-[0_0_10px_#3b82f6] flex items-center justify-center animate-pulse"><div class="w-2 h-2 rounded-full bg-white"></div></div>
+              <span class="text-xs font-semibold text-brand">Paper <span class="bg-brand/20 text-brand px-1.5 py-0.5 rounded text-[10px] ml-1">Day 12/30</span></span>
+          </div>
+          <div class="w-8 h-[2px] bg-border mx-2 rounded-full"></div>
+          
+          <!-- Live (Pending) -->
+          <div class="flex items-center gap-2 px-2 opacity-50">
+              <div class="w-5 h-5 rounded-full border border-border text-muted flex items-center justify-center text-[10px]">○</div>
+              <span class="text-xs font-medium text-muted">Live</span>
+          </div>
+      </div>
+  </div>
+
+  <!-- 3. TABS BAR -->
+  <div class="h-12 border-b border-border bg-base flex px-4 gap-2 shrink-0">
+      <button onclick="switchTab('tab-backtest')" id="btn-tab-backtest" class="tab-btn h-full px-4 text-[13px] font-medium border-b-2 text-primary border-primary flex items-center gap-2 transition-all"><span class="w-5 h-5 rounded-md bg-white/10 flex items-center justify-center text-[11px] font-mono text-muted">1</span> Backtest</button>
+      <button onclick="switchTab('tab-hyperopt')" id="btn-tab-hyperopt" class="tab-btn h-full px-4 text-[13px] font-medium border-b-2 text-muted border-transparent hover:text-primary flex items-center gap-2 transition-all"><span class="w-5 h-5 rounded-md bg-white/5 flex items-center justify-center text-[11px] font-mono text-muted">2</span> Hyperopt</button>
+      <button onclick="switchTab('tab-freqai')" id="btn-tab-freqai" class="tab-btn h-full px-4 text-[13px] font-medium border-b-2 text-muted border-transparent hover:text-primary flex items-center gap-2 transition-all"><span class="w-5 h-5 rounded-md bg-white/5 flex items-center justify-center text-[11px] font-mono text-muted">3</span> FreqAI</button>
+      <button onclick="switchTab('tab-ai')" id="btn-tab-ai" class="tab-btn h-full px-4 text-[13px] font-medium border-b-2 text-muted border-transparent hover:text-primary flex items-center gap-2 transition-all"><span class="w-5 h-5 rounded-md bg-white/5 flex items-center justify-center text-[11px] font-mono text-muted">4</span> Naš AI <i data-lucide="sparkles" class="w-3 h-3 text-brand"></i></button>
+      <button onclick="switchTab('tab-validation')" id="btn-tab-validation" class="tab-btn h-full px-4 text-[13px] font-medium border-b-2 text-muted border-transparent hover:text-primary flex items-center gap-2 transition-all"><span class="w-5 h-5 rounded-md bg-white/5 flex items-center justify-center text-[11px] font-mono text-muted">5</span> Validation</button>
+  </div>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-1 overflow-hidden p-6 bg-base min-h-0 relative">
+
+      <!-- ============================================== -->
+      <!-- TAB 1: BACKTEST (Linear Edge Style) -->
+      <!-- ============================================== -->
+      <div id="tab-backtest" class="tab-content active h-full gap-6">
+          
+          <!-- Left: Configuration Form -->
+          <div class="w-[360px] bg-panel border border-border rounded-xl flex flex-col overflow-hidden shrink-0 shadow-card">
+              <div class="p-4 border-b border-border flex items-center gap-2 bg-white/[0.02]">
+                  <i data-lucide="settings-2" class="w-4 h-4 text-muted"></i>
+                  <h3 class="font-semibold text-sm">Test Configuration</h3>
+              </div>
+              <div class="flex-1 overflow-y-auto p-4 space-y-5">
+                  
+                  <div>
+                      <label class="lbl">Test Name</label>
+                      <input type="text" class="inp" value="AlphaTrend baseline 2026-03">
+                  </div>
+
+                  <div>
+                      <label class="lbl">Description (Auto)</label>
+                      <div class="inp bg-white/5 border-transparent text-muted pointer-events-none text-[12px]">AlphaTrend_V5 backtest · 2024-01-01 → 2025-01-01 · 1h · 3 max trades · $10000 capital · Protections ON</div>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-3">
+                     <div><label class="lbl">Start Date</label><input type="date" class="inp" value="2024-01-01"></div>
+                     <div><label class="lbl">End Date</label><input type="date" class="inp" value="2025-01-01"></div>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-3">
+                     <div><label class="lbl">Timeframe</label><select class="inp"><option>1h</option><option>4h</option><option>1d</option></select></div>
+                     <div><label class="lbl">Detail TF</label><select class="inp"><option>5m</option><option>15m</option></select></div>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-3">
+                     <div><label class="lbl">Capital ($)</label><input type="number" class="inp" value="10000"></div>
+                     <div><label class="lbl">Stake ($)</label><input type="number" class="inp" value="100"></div>
+                  </div>
+
+                  <!-- Linear style switches -->
+                  <div class="space-y-3 pt-2 border-t border-border">
+                      <div class="flex items-center justify-between">
+                          <label class="text-[13px] text-primary select-none cursor-pointer" for="t1">Enable Protections</label>
+                          <div class="relative inline-block w-10 h-5 align-middle select-none transition duration-200 ease-in">
+                              <input type="checkbox" name="toggle" id="t1" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 border-panel appearance-none cursor-pointer z-10 transition-transform duration-200 ease-in-out"/>
+                              <label for="t1" class="toggle-label block overflow-hidden h-5 rounded-full bg-muted cursor-pointer transition-colors duration-200 ease-in-out"></label>
+                          </div>
+                      </div>
+                      <div class="flex items-center justify-between">
+                          <label class="text-[13px] text-primary select-none cursor-pointer" for="t2">Cache Results</label>
+                          <div class="relative inline-block w-10 h-5 align-middle select-none transition duration-200 ease-in">
+                              <input type="checkbox" name="toggle" id="t2" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 border-panel appearance-none cursor-pointer z-10 transition-transform duration-200 ease-in-out"/>
+                              <label for="t2" class="toggle-label block overflow-hidden h-5 rounded-full bg-muted cursor-pointer transition-colors duration-200 ease-in-out"></label>
+                          </div>
+                      </div>
+                      <div class="flex items-center justify-between">
+                          <label class="text-[13px] text-primary select-none cursor-pointer" for="t3">Enable FreqAI</label>
+                          <div class="relative inline-block w-10 h-5 align-middle select-none transition duration-200 ease-in">
+                              <input type="checkbox" name="toggle" id="t3" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 border-panel appearance-none cursor-pointer z-10 transition-transform duration-200 ease-in-out"/>
+                              <label for="t3" class="toggle-label block overflow-hidden h-5 rounded-full bg-muted cursor-pointer transition-colors duration-200 ease-in-out"></label>
+                          </div>
+                      </div>
+                  </div>
+
+              </div>
+              
+              <!-- Actions & Mini Log -->
+              <div class="p-4 bg-white/[0.02] border-t border-border flex flex-col gap-3 shrink-0">
+                  <div class="flex gap-2">
+                      <button class="btn btn-primary flex-1 py-2 shadow-glow"><i data-lucide="play" class="w-4 h-4"></i> Start Backtest</button>
+                      <button class="btn btn-outline py-2 text-down hover:border-down hover:bg-down/10"><i data-lucide="square" class="w-4 h-4"></i></button>
+                  </div>
+                  <!-- Mini Terminal -->
+                  <div class="h-24 bg-black rounded-lg border border-border p-2 font-mono text-[10px] overflow-y-auto leading-relaxed shadow-inner">
+                      <div class="text-muted"><span class="text-white">21:14</span> [INFO] Loading pair data...</div>
+                      <div class="text-muted"><span class="text-white">21:14</span> [INFO] Executing AlphaTrend_V5</div>
+                      <div class="text-primary"><span class="text-up">21:14</span> [SUCCESS] Strategy backtest completed in 1.4s</div>
+                  </div>
+              </div>
+          </div>
+
+          <!-- Right: Results Panel -->
+          <div class="flex-1 bg-panel border border-border rounded-xl flex flex-col overflow-y-auto shadow-card">
+              
+              <!-- Header -->
+              <div class="p-6 border-b border-border flex justify-between items-start bg-white/[0.01]">
+                  <div>
+                      <h2 class="text-xl font-bold tracking-tight mb-1">AlphaTrend_V5 Results</h2>
+                      <div class="text-sm text-muted font-mono bg-white/5 inline-flex px-2 py-0.5 rounded-md border border-border">2024-01-01 → 2025-01-01 · 1h · 365 Days</div>
+                  </div>
+                  <div class="text-right">
+                      <div class="text-sm font-medium text-muted mb-1">Total Net Profit</div>
+                      <div class="text-3xl font-bold text-up tracking-tight">$4,212.50</div>
+                  </div>
+              </div>
+
+              <div class="p-6 space-y-8">
+                  <!-- Metric Cards -->
+                  <div class="grid grid-cols-4 gap-4">
+                      <!-- Card 1 -->
+                      <div class="bg-white/[0.02] border border-border rounded-lg p-4 transition-all hover:bg-white/[0.04]">
+                          <div class="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Trades Executed</div>
+                          <div class="text-2xl font-bold text-primary mb-1">142</div>
+                          <div class="text-xs text-muted font-mono"><span class="text-primary">80</span> Long / <span class="text-primary">62</span> Short</div>
+                      </div>
+                      <!-- Card 2 -->
+                      <div class="bg-white/[0.02] border border-border rounded-lg p-4 transition-all hover:bg-white/[0.04]">
+                          <div class="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Win Rate</div>
+                          <div class="text-2xl font-bold text-up mb-1">72.4%</div>
+                          <div class="text-xs text-muted font-mono"><span class="text-up">102W</span> <span class="text-down">40L</span> 0D</div>
+                      </div>
+                      <!-- Card 3 -->
+                      <div class="bg-white/[0.02] border border-border rounded-lg p-4 transition-all hover:bg-white/[0.04]">
+                          <div class="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Max Drawdown</div>
+                          <div class="text-2xl font-bold text-down mb-1">-$211.40</div>
+                          <div class="text-xs text-down font-mono">-2.11% from peak</div>
+                      </div>
+                      <!-- Card 4 -->
+                      <div class="bg-white/[0.02] border border-border rounded-lg p-4 transition-all hover:bg-white/[0.04]">
+                          <div class="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Profit Factor</div>
+                          <div class="text-2xl font-bold text-primary mb-1">1.85</div>
+                          <div class="text-xs text-muted font-mono">Gross W / Gross L</div>
+                      </div>
+                  </div>
+
+                  <!-- Small Ratios -->
+                  <div class="grid grid-cols-6 gap-3">
+                      <div class="px-4 py-2 bg-base rounded-lg border border-border"><div class="text-[10px] uppercase text-muted font-bold">Sharpe</div><div class="text-lg font-mono">3.92</div></div>
+                      <div class="px-4 py-2 bg-base rounded-lg border border-border"><div class="text-[10px] uppercase text-muted font-bold">Sortino</div><div class="text-lg font-mono">4.15</div></div>
+                      <div class="px-4 py-2 bg-base rounded-lg border border-border"><div class="text-[10px] uppercase text-muted font-bold">Calmar</div><div class="text-lg font-mono">2.11</div></div>
+                      <div class="px-4 py-2 bg-base rounded-lg border border-border"><div class="text-[10px] uppercase text-muted font-bold">SQN</div><div class="text-lg font-mono">2.44</div></div>
+                      <div class="px-4 py-2 bg-base rounded-lg border border-border"><div class="text-[10px] uppercase text-muted font-bold">Best Day</div><div class="text-lg font-mono text-up">+$140</div></div>
+                      <div class="px-4 py-2 bg-base rounded-lg border border-border"><div class="text-[10px] uppercase text-muted font-bold">Worst Day</div><div class="text-lg font-mono text-down">-$56</div></div>
+                  </div>
+
+                  <!-- Table Section -->
+                  <div class="border border-border rounded-xl overflow-hidden bg-base">
+                      <div class="px-4 py-3 border-b border-border bg-panel font-semibold text-sm">Results per Pair</div>
+                      <table>
+                          <thead><tr><th>Pair</th><th class="text-right">Trades</th><th class="text-right">Win Rate</th><th class="text-right">Avg Profit</th><th class="text-right">Net Profit</th></tr></thead>
+                          <tbody>
+                              <tr>
+                                  <td class="font-mono text-sm"><div class="flex items-center gap-2"><div class="w-6 h-6 rounded-full bg-white/10 flex flex-center text-[10px]">B</div> BTC/USDT</div></td>
+                                  <td class="text-right font-mono">45</td>
+                                  <td class="text-right font-mono text-up">82.1%</td>
+                                  <td class="text-right font-mono text-up">+1.2%</td>
+                                  <td class="text-right font-mono text-up font-bold">+$1,420.10</td>
+                              </tr>
+                              <tr>
+                                  <td class="font-mono text-sm"><div class="flex items-center gap-2"><div class="w-6 h-6 rounded-full bg-white/10 flex flex-center text-[10px]">E</div> ETH/USDT</div></td>
+                                  <td class="text-right font-mono">38</td>
+                                  <td class="text-right font-mono text-up">75.0%</td>
+                                  <td class="text-right font-mono text-up">+0.9%</td>
+                                  <td class="text-right font-mono text-up font-bold">+$1,120.40</td>
+                              </tr>
+                              <tr>
+                                  <td class="font-mono text-sm"><div class="flex items-center gap-2"><div class="w-6 h-6 rounded-full bg-white/10 flex flex-center text-[10px]">S</div> SOL/USDT</div></td>
+                                  <td class="text-right font-mono">20</td>
+                                  <td class="text-right font-mono text-down">40.5%</td>
+                                  <td class="text-right font-mono text-down">-0.5%</td>
+                                  <td class="text-right font-mono text-down font-bold">-$340.20</td>
+                              </tr>
+                          </tbody>
+                      </table>
+                  </div>
+
+                  <!-- History Accordion List -->
+                  <div>
+                      <h3 class="text-sm font-semibold mb-3">Backtest History</h3>
+                      <div class="space-y-2">
+                          <div class="border border-border bg-panel rounded-lg p-3 flex items-center justify-between cursor-pointer hover:bg-white/[0.02] transition-colors">
+                              <div class="flex items-center gap-4">
+                                  <div class="w-2 h-2 rounded-full bg-up"></div>
+                                  <div>
+                                      <div class="font-semibold text-sm">March 30, 2026 21:14</div>
+                                      <div class="text-xs text-muted font-mono mt-0.5">2024-01-01 → 2025-01-01 · 1h</div>
+                                  </div>
+                              </div>
+                              <button class="btn btn-outline text-xs">Load Result</button>
+                          </div>
+                          <div class="border border-border bg-panel rounded-lg p-3 flex items-center justify-between cursor-pointer hover:bg-white/[0.02] transition-colors opacity-70">
+                              <div class="flex items-center gap-4">
+                                  <div class="w-2 h-2 rounded-full bg-muted"></div>
+                                  <div>
+                                      <div class="font-semibold text-sm">March 28, 2026 14:20</div>
+                                      <div class="text-xs text-muted font-mono mt-0.5">2023-01-01 → 2024-01-01 · 4h</div>
+                                  </div>
+                              </div>
+                              <button class="btn btn-ghost text-xs">Load Result</button>
+                          </div>
+                      </div>
+                  </div>
+
+              </div>
+          </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 2: HYPEROPT (Linear Edge Form) -->
+      <!-- ============================================== -->
+      <div id="tab-hyperopt" class="tab-content h-full">
+         <div class="w-full h-full border border-border rounded-xl bg-panel flex flex-col items-center justify-center p-8 text-center shadow-card">
+              <div class="w-16 h-16 rounded-full bg-brand/10 text-brand flex items-center justify-center mb-4"><i data-lucide="zap" class="w-8 h-8"></i></div>
+              <h2 class="text-xl font-bold mb-2">Hyperopt Studio</h2>
+              <p class="text-muted max-w-sm mb-6 leading-relaxed">Hyperopt runs mathematical optimizations to find the best possible parameter combinations for your strategy on millions of data points.</p>
+              
+              <div class="p-6 bg-base border border-border rounded-xl text-left w-full max-w-2xl">
+                  <div class="grid grid-cols-2 gap-4 mb-4">
+                      <div><label class="lbl">Epochs</label><input type="number" class="inp" value="2000"></div>
+                      <div><label class="lbl">Spaces</label><select class="inp"><option>Buy, Sell, ROI, Stoploss</option></select></div>
+                      <div><label class="lbl">Loss Function</label><select class="inp"><option>SharpeHyperOptLoss</option><option>SortinoHyperOptLoss</option></select></div>
+                      <div><label class="lbl">Timerange</label><input type="date" class="inp" value="2024-01-01"></div>
+                  </div>
+                  <button class="btn btn-primary w-full py-3 shadow-glow mt-2"><i data-lucide="play" class="w-4 h-4"></i> Start Hyperopt Tuning (ETA: 45m)</button>
+              </div>
+         </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 3: FREQAI (Linear Edge Form) -->
+      <!-- ============================================== -->
+      <div id="tab-freqai" class="tab-content h-full gap-6">
+          <div class="w-[400px] bg-panel border border-border rounded-xl flex flex-col overflow-y-auto shrink-0 shadow-card">
+              <div class="p-4 border-b border-border flex items-center gap-2 bg-white/[0.02]">
+                  <i data-lucide="brain" class="w-4 h-4 text-brand"></i>
+                  <h3 class="font-semibold text-sm">FreqAI Matrix Configuration</h3>
+              </div>
+              <div class="p-6 space-y-6">
+                  <div>
+                      <label class="lbl">Training Timerange</label>
+                      <div class="grid grid-cols-2 gap-3"><input type="date" class="inp" value="2022-01-01"><input type="date" class="inp" value="2024-01-01"></div>
+                  </div>
+                  
+                  <div>
+                      <label class="lbl mb-2">ML Architectures</label>
+                      <div class="flex flex-wrap gap-2">
+                          <div class="px-3 py-1.5 rounded-lg bg-brand/10 border border-brand/30 text-brand text-xs font-medium cursor-pointer">LightGBM</div>
+                          <div class="px-3 py-1.5 rounded-lg bg-brand/10 border border-brand/30 text-brand text-xs font-medium cursor-pointer">XGBoost</div>
+                          <div class="px-3 py-1.5 rounded-lg bg-base border border-border text-muted text-xs font-medium cursor-pointer hover:border-muted">CatBoost</div>
+                      </div>
+                  </div>
+
+                  <div>
+                      <label class="lbl mb-2">Outlier Detection</label>
+                      <div class="flex flex-wrap gap-2">
+                          <div class="px-3 py-1.5 rounded-lg bg-brand/10 border border-brand/30 text-brand text-xs font-medium cursor-pointer">DBSCAN</div>
+                          <div class="px-3 py-1.5 rounded-lg bg-base border border-border text-muted text-xs font-medium cursor-pointer hover:border-muted">IsolationForest</div>
+                      </div>
+                  </div>
+
+                  <div class="border-t border-border pt-4 space-y-4 shadow-sm">
+                      <div class="flex items-center justify-between">
+                          <label class="text-[13px] text-primary" for="f1">Dimensionality Reduction (PCA)</label>
+                          <div class="relative inline-block w-10 h-5"><input type="checkbox" id="f1" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 border-panel appearance-none z-10"/><label for="f1" class="toggle-label block overflow-hidden h-5 rounded-full bg-muted"></label></div>
+                      </div>
+                      <div class="flex items-center justify-between">
+                          <label class="text-[13px] text-primary" for="f2">Anti-Overfit Noise Generation</label>
+                          <div class="relative inline-block w-10 h-5"><input type="checkbox" id="f2" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 border-panel appearance-none z-10"/><label for="f2" class="toggle-label block overflow-hidden h-5 rounded-full bg-muted"></label></div>
+                      </div>
+                      
+                      <div>
+                          <label class="flex justify-between text-[11px] font-medium text-muted mb-2">SVM Nu <span class="text-primary tracking-widest font-mono">0.15</span></label>
+                          <input type="range" class="w-full accent-brand" min="0.01" max="0.5" step="0.01" value="0.15">
+                      </div>
+                  </div>
+
+                  <div class="bg-brand/10 border border-brand/20 p-3 rounded-lg flex items-start gap-3">
+                      <i data-lucide="info" class="w-4 h-4 text-brand mt-0.5"></i>
+                      <div class="text-xs text-primary leading-relaxed">
+                          This matrix configuration will generate <strong class="text-brand">4 parallel models</strong> on the training data. Estimated completion time on RunPod RTX 4090: ~2.5 hours.
+                      </div>
+                  </div>
+
+                  <div class="flex gap-2">
+                      <button class="btn btn-primary flex-1 py-2 shadow-glow"><i data-lucide="play" class="w-4 h-4"></i> Run Matrix (4)</button>
+                  </div>
+              </div>
+          </div>
+
+          <div class="flex-1 border border-border rounded-xl bg-panel flex items-center justify-center p-8 shadow-card">
+              <div class="text-center">
+                  <div class="w-16 h-16 rounded-full bg-white/5 text-muted flex items-center justify-center mb-4 mx-auto"><i data-lucide="bar-chart" class="w-8 h-8"></i></div>
+                  <h3 class="text-lg font-semibold text-primary mb-1">No Matrix Results</h3>
+                  <p class="text-sm text-muted">Run the matrix configuration to see validation curves and cross-validation stats.</p>
+              </div>
+          </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 4 & 5 (Placeholders for routing) -->
+      <!-- ============================================== -->
+      <div id="tab-ai" class="tab-content h-full">
+         <div class="w-full h-full border border-border rounded-xl bg-panel flex flex-col items-center justify-center text-center">
+              <i data-lucide="sparkles" class="w-12 h-12 text-brand mb-4"></i>
+              <h2 class="text-xl font-bold mb-2">AI Strategy Review</h2>
+              <p class="text-muted max-w-sm mb-4">Connect Claude 3.5 Sonnet to perform deep semantic analysis on your strategy performance.</p>
+              <button class="btn btn-primary shadow-glow"><i data-lucide="zap" class="w-4 h-4"></i> Generate Report (~$0.03)</button>
+         </div>
+      </div>
+
+      <div id="tab-validation" class="tab-content h-full">
+         <div class="w-full h-full border border-border rounded-xl bg-panel flex flex-col items-center justify-center text-center">
+              <i data-lucide="shield-check" class="w-12 h-12 text-up mb-4"></i>
+              <h2 class="text-xl font-bold mb-2">Validation Studio</h2>
+              <p class="text-muted max-w-sm mb-4">Run Lookahead Analysis and Recursive Checks to ensure the mathematical validity of your trading signals before live deployment.</p>
+              <button class="btn btn-outline border-up text-up hover:bg-up/10"><i data-lucide="search" class="w-4 h-4"></i> Run Validations</button>
+         </div>
+      </div>
+
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('text-primary', 'border-primary');
+            btn.classList.add('text-muted', 'border-transparent');
+            btn.querySelector('span').classList.remove('bg-white/10');
+            btn.querySelector('span').classList.add('bg-white/5');
+        });
+        
+        const activeBtn = document.getElementById('btn-' + tabId);
+        activeBtn.classList.add('text-primary', 'border-primary');
+        activeBtn.classList.remove('text-muted', 'border-transparent');
+        activeBtn.querySelector('span').classList.add('bg-white/10');
+        activeBtn.querySelector('span').classList.remove('bg-white/5');
+    }
+
+    // Init tab 1
+    switchTab('tab-backtest');
+  </script>
+</body>
+</html>

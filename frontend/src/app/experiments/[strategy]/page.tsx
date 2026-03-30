@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import AppShell from "@/components/layout/AppShell";
 import { PIPELINE_STEPS, type PipelineStepKey, type StepState } from "@/lib/experiments";
-import { getExperiments } from "@/lib/api";
+import { getExperiments, getExperimentRuns, type ExperimentRun } from "@/lib/api";
 
 // ── Lazy-loaded tab components ────────────────────────────────────────────
 const BacktestTab = dynamic(() => import("./components/BacktestTab"), { ssr: false });
@@ -127,6 +127,27 @@ export default function StrategyWorkspacePage() {
   const [strategyData, setStrategyData] = useState<StrategyDataProps | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("backtest");
   const [openOverlay, setOpenOverlay] = useState<Overlay>(null);
+  const [experimentId, setExperimentId] = useState<number | undefined>(undefined);
+  const [miniRuns, setMiniRuns] = useState<ExperimentRun[]>([]);
+
+  // Tab number → tab key mapping for inter-tab navigation
+  const tabNumToKey: Record<number, Tab> = {
+    1: "backtest", 2: "hyperopt", 3: "freqai", 4: "ai_review", 5: "validation",
+  };
+  const handleNavigateToTab = (tabNum: number) => {
+    const key = tabNumToKey[tabNum];
+    if (key) {
+      setActiveTab(key);
+      setOpenOverlay(null); // Close any open overlay
+    }
+  };
+
+  // Escape key handler for overlays
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape' && openOverlay) setOpenOverlay(null); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [openOverlay]);
 
   useEffect(() => {
     getExperiments()
@@ -136,6 +157,7 @@ export default function StrategyWorkspacePage() {
           (e) => e.strategy_name === strategyName || e.name === strategyName
         );
         if (exp) {
+          setExperimentId(exp.id);
           setStrategyData({
             name: exp.strategy_name || exp.name || strategyName,
             status: "Testing",
@@ -173,6 +195,23 @@ export default function StrategyWorkspacePage() {
         });
       });
   }, [strategyName]);
+
+  // Fetch runs for mini comparison panel
+  useEffect(() => {
+    if (!experimentId) return;
+    getExperimentRuns(experimentId)
+      .then((runs) => {
+        if (Array.isArray(runs)) {
+          // Only show completed runs, sorted by most recent
+          const completed = runs
+            .filter((r) => r.status === 'completed')
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            .slice(0, 10); // Show last 10
+          setMiniRuns(completed);
+        }
+      })
+      .catch(() => { /* silent */ });
+  }, [experimentId]);
 
   if (!strategyData) return null;
 
@@ -265,11 +304,56 @@ export default function StrategyWorkspacePage() {
         {/* ── Tab Content (scrollable) ── */}
         <div className="flex-1 overflow-y-auto p-6">
           {activeTab === "backtest" && <BacktestTab strategy={strategyName} />}
-          {activeTab === "hyperopt" && <HyperoptTab strategy={strategyName} />}
+          {activeTab === "hyperopt" && <HyperoptTab strategy={strategyName} onNavigateToTab={handleNavigateToTab} />}
           {activeTab === "freqai" && <FreqAITab strategy={strategyName} />}
-          {activeTab === "ai_review" && <AiReviewTab strategy={strategyName} />}
-          {activeTab === "validation" && <ValidationTab strategy={strategyName} />}
+          {activeTab === "ai_review" && <AiReviewTab strategy={strategyName} experimentId={experimentId} onNavigateToTab={handleNavigateToTab} />}
+          {activeTab === "validation" && <ValidationTab strategy={strategyName} experimentId={experimentId} onNavigateToTab={handleNavigateToTab} />}
         </div>
+
+        {/* ── Mini Comparison Panel (§70-76 — always visible at bottom) ── */}
+        <details className="border-t border-border bg-card">
+          <summary className="px-6 py-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground select-none flex items-center gap-2">
+            <span>📊 Quick Compare — All Results ({miniRuns.length})</span>
+          </summary>
+          <div className="px-6 pb-3 overflow-x-auto">
+            <table className="w-full text-[10px] whitespace-nowrap">
+              <thead>
+                <tr className="text-muted-foreground">
+                  <th className="text-left px-2 py-1 font-semibold">#</th>
+                  <th className="text-left px-2 py-1 font-semibold">Type</th>
+                  <th className="text-left px-2 py-1 font-semibold">Sampler</th>
+                  <th className="text-left px-2 py-1 font-semibold">Date</th>
+                  <th className="text-right px-2 py-1 font-semibold">Trades</th>
+                  <th className="text-right px-2 py-1 font-semibold">Win%</th>
+                  <th className="text-right px-2 py-1 font-semibold">Profit%</th>
+                  <th className="text-right px-2 py-1 font-semibold">Max DD</th>
+                  <th className="text-right px-2 py-1 font-semibold">Sharpe</th>
+                </tr>
+              </thead>
+              <tbody>
+                {miniRuns.length === 0 ? (
+                  <tr className="border-t border-border/30 text-muted-foreground/50">
+                    <td colSpan={9} className="px-2 py-2 text-center italic">
+                      No completed tests yet — run a backtest to see results here
+                    </td>
+                  </tr>
+                ) : miniRuns.map((run) => (
+                  <tr key={run.id} className="border-t border-border/30 hover:bg-muted/20">
+                    <td className="px-2 py-1 tabular-nums text-muted-foreground">{run.id}</td>
+                    <td className="px-2 py-1"><span className={`uppercase font-semibold ${run.run_type === 'backtest' ? 'text-blue-400' : run.run_type === 'hyperopt' ? 'text-purple-400' : 'text-amber-400'}`}>{run.run_type}</span></td>
+                    <td className="px-2 py-1 text-muted-foreground">{run.sampler ?? '—'}</td>
+                    <td className="px-2 py-1 text-muted-foreground">{run.created_at ? new Date(run.created_at).toLocaleDateString() : '—'}</td>
+                    <td className="px-2 py-1 text-right tabular-nums">{run.total_trades ?? '—'}</td>
+                    <td className="px-2 py-1 text-right tabular-nums">{run.win_rate != null ? `${(run.win_rate * 100).toFixed(1)}%` : '—'}</td>
+                    <td className={`px-2 py-1 text-right tabular-nums font-medium ${(run.profit_pct ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{run.profit_pct != null ? `${run.profit_pct >= 0 ? '+' : ''}${run.profit_pct.toFixed(2)}%` : '—'}</td>
+                    <td className="px-2 py-1 text-right tabular-nums text-rose-400">{run.max_drawdown != null ? `-${Math.abs(run.max_drawdown).toFixed(2)}%` : '—'}</td>
+                    <td className="px-2 py-1 text-right tabular-nums">{run.sharpe_ratio?.toFixed(2) ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
       </div>
 
       {/* ── Overlays (matches prototype .overlay) ── */}
@@ -289,9 +373,9 @@ export default function StrategyWorkspacePage() {
             </button>
           </div>
           <div className="flex-1 overflow-y-auto p-6">
-            {openOverlay === "all_tests" && <AllTestsOverlay strategy={strategyName} onClose={() => setOpenOverlay(null)} />}
-            {openOverlay === "compare" && <CompareOverlay strategy={strategyName} onClose={() => setOpenOverlay(null)} />}
-            {openOverlay === "analysis" && <AnalysisOverlay strategy={strategyName} onClose={() => setOpenOverlay(null)} />}
+            {openOverlay === "all_tests" && <AllTestsOverlay strategy={strategyName} experimentId={experimentId} onClose={() => setOpenOverlay(null)} onNavigateToTab={handleNavigateToTab} onOpenOverlay={(o) => setOpenOverlay(o as Overlay)} />}
+            {openOverlay === "compare" && <CompareOverlay strategy={strategyName} experimentId={experimentId} onClose={() => setOpenOverlay(null)} onNavigateToTab={handleNavigateToTab} />}
+            {openOverlay === "analysis" && <AnalysisOverlay strategy={strategyName} experimentId={experimentId} onClose={() => setOpenOverlay(null)} />}
           </div>
         </div>
       )}

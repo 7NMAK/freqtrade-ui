@@ -897,6 +897,8 @@ export interface ExperimentRun {
   win_rate: number | null;
   profit_abs: number | null;
   profit_pct: number | null;
+  profit_mean: number | null;
+  profit_factor: number | null;
   max_drawdown: number | null;
   sharpe_ratio: number | null;
   sortino_ratio: number | null;

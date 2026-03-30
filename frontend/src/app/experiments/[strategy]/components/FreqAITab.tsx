@@ -1,32 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import Tooltip from "@/components/ui/Tooltip";
+import Toggle from "@/components/ui/Toggle";
+import { INPUT, SELECT, LABEL } from "@/lib/design";
 import { FREQAI_MODELS, OUTLIER_METHODS } from "@/lib/experiments";
+import { useToast } from "@/components/ui/Toast";
 
 interface FreqAITabProps {
   strategy: string;
+  botId?: number;
 }
 
-// ── Design System ────────────────────────────────────────────────────────
-const INPUT = "w-full h-[34px] py-0 px-3 bg-muted border border-border rounded-btn text-xs text-foreground placeholder-text-3 focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all";
-const SELECT = "w-full h-[34px] py-0 px-3 bg-muted border border-border rounded-btn text-xs text-foreground focus:outline-none focus:border-primary cursor-pointer appearance-none transition-all";
-const LABEL = "block text-xs font-semibold text-muted-foreground uppercase tracking-[0.5px] mb-[4px]";
-
-// ── Toggle switch ────────────────────────────────────────────────────────
-function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <label className="relative w-[36px] h-[20px] cursor-pointer inline-block flex-shrink-0">
-        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="hidden" />
-        <span className={`absolute inset-0 rounded-[10px] border transition-all ${checked ? "bg-[rgba(34,197,94,0.08)] border-emerald-500" : "bg-muted border-border"}`} />
-        <span className={`absolute w-[14px] h-[14px] bg-white rounded-full top-[3px] transition-all ${checked ? "left-[19px]" : "left-[3px]"}`} />
-      </label>
-    </div>
-  );
-}
-
-export default function FreqAITab({}: FreqAITabProps) {
+export default function FreqAITab({ strategy, botId = 2 }: FreqAITabProps) {
+  const toast = useToast();
   // Form state
   const [selectedHyperopt, setSelectedHyperopt] = useState(0);
   const [testNamePrefix, setTestNamePrefix] = useState(`freqai_${new Date().toISOString().split("T")[0]}`);
@@ -79,6 +66,38 @@ export default function FreqAITab({}: FreqAITabProps) {
     }
     setSelectedOutliers(s);
   };
+
+  // ── FreqAI Results Types & State ────────────────────────────────────
+  type FreqAIResult = {
+    id: number; model: string; outlier: string; pca: boolean; noise: boolean;
+    status: 'pending' | 'running' | 'completed' | 'failed';
+    trades: number; winRate: number; profitPct: number; maxDrawdown: number;
+    sharpe: number; sortino: number; startedAt: string; finishedAt: string;
+    trainingDuration: string; featureImportance: string[]; predictionAccuracy: number;
+  };
+  const [results, setResults] = useState<FreqAIResult[]>([]);
+  const [completedCount, setCompletedCount] = useState(0);
+  type SortKey = 'profitPct' | 'sharpe' | 'sortino' | 'winRate' | 'maxDrawdown' | 'trades';
+  const [sortBy, setSortBy] = useState<SortKey>('sharpe');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+
+  const sortedResults = useMemo(() => {
+    const copy = [...results.filter(r => r.status === 'completed')];
+    copy.sort((a, b) => sortDir === 'desc' ? (b[sortBy] ?? 0) - (a[sortBy] ?? 0) : (a[sortBy] ?? 0) - (b[sortBy] ?? 0));
+    return copy;
+  }, [results, sortBy, sortDir]);
+
+  const winner = useMemo(() => sortedResults.length > 0 ? sortedResults[0] : null, [sortedResults]);
+
+  const handleSort = (col: SortKey) => {
+    if (sortBy === col) setSortDir(d => d === 'desc' ? 'asc' : 'desc');
+    else { setSortBy(col); setSortDir('desc'); }
+  };
+  const SortArrow = ({ col }: { col: SortKey }) =>
+    sortBy === col ? <span className="ml-0.5 text-primary">{sortDir === 'desc' ? '↓' : '↑'}</span> : null;
+
+  // Suppress unused — these are wired to real API when FreqAI training endpoint is available
+  void setResults; void setCompletedCount;
 
   return (
     <div className="grid grid-cols-[380px_minmax(0,1fr)] gap-5">
@@ -148,18 +167,18 @@ export default function FreqAITab({}: FreqAITabProps) {
           <label className={LABEL}>ML Models ({FREQAI_MODELS.length})</label>
           <div className="flex flex-wrap gap-[6px]">
             {FREQAI_MODELS.map((model) => (
-              <button
-                key={model.value}
-                onClick={() => handleToggleModel(model.value)}
-                title={model.tip}
-                className={`inline-flex items-center h-[26px] px-2 rounded-btn text-xs font-medium cursor-pointer border transition-all ${
-                  selectedModels.has(model.value)
-                    ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-primary"
-                    : "bg-muted/50 border-border text-muted-foreground"
-                }`}
-              >
-                {model.label.replace("Regressor", "Reg").replace("Classifier", "Cls")}
-              </button>
+              <Tooltip key={model.value} content={model.tip}>
+                <button
+                  onClick={() => handleToggleModel(model.value)}
+                  className={`inline-flex items-center h-[26px] px-2 rounded-btn text-xs font-medium cursor-pointer border transition-all ${
+                    selectedModels.has(model.value)
+                      ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-primary"
+                      : "bg-muted/50 border-border text-muted-foreground"
+                  }`}
+                >
+                  {model.label.replace("Regressor", "Reg").replace("Classifier", "Cls")}
+                </button>
+              </Tooltip>
             ))}
           </div>
         </div>
@@ -169,18 +188,18 @@ export default function FreqAITab({}: FreqAITabProps) {
           <label className={LABEL}>Outlier Detection ({OUTLIER_METHODS.length})</label>
           <div className="flex flex-wrap gap-[6px]">
             {OUTLIER_METHODS.map((m) => (
-              <button
-                key={m.value}
-                onClick={() => handleToggleOutlier(m.value)}
-                title={m.tip}
-                className={`inline-flex items-center h-[26px] px-2 rounded-btn text-xs font-medium cursor-pointer border transition-all ${
-                  selectedOutliers.has(m.value)
-                    ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-primary"
-                    : "bg-muted/50 border-border text-muted-foreground"
-                }`}
-              >
-                {m.label}
-              </button>
+              <Tooltip key={m.value} content={m.tip}>
+                <button
+                  onClick={() => handleToggleOutlier(m.value)}
+                  className={`inline-flex items-center h-[26px] px-2 rounded-btn text-xs font-medium cursor-pointer border transition-all ${
+                    selectedOutliers.has(m.value)
+                      ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-primary"
+                      : "bg-muted/50 border-border text-muted-foreground"
+                  }`}
+                >
+                  {m.label}
+                </button>
+              </Tooltip>
             ))}
           </div>
         </div>
@@ -243,14 +262,20 @@ export default function FreqAITab({}: FreqAITabProps) {
         {/* Action Buttons */}
         <div className="flex gap-2">
           <button
-            onClick={() => { setIsRunning(true); }}
+            onClick={() => {
+              setIsRunning(true);
+              toast.info(`Starting FreqAI matrix: ${matrixTotal} combinations for ${strategy} (bot ${botId})`);
+            }}
             disabled={isRunning || selectedModels.size === 0}
             className="flex-1 h-[34px] rounded-btn text-xs font-medium bg-primary border border-primary text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             ▶ Run Matrix ({matrixTotal})
           </button>
           <button
-            onClick={() => { setIsRunning(true); }}
+            onClick={() => {
+              setIsRunning(true);
+              toast.info(`Starting selected FreqAI runs for ${strategy} (bot ${botId})`);
+            }}
             disabled={isRunning || selectedModels.size === 0}
             className="flex-1 h-[34px] rounded-btn text-xs font-medium border border-border bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
@@ -258,7 +283,7 @@ export default function FreqAITab({}: FreqAITabProps) {
           </button>
           {isRunning && (
             <button
-              onClick={() => setIsRunning(false)}
+              onClick={() => { setIsRunning(false); toast.info('FreqAI stopped'); }}
               className="h-[34px] px-3 rounded-btn text-xs font-medium bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.25)] text-rose-500 hover:bg-[rgba(239,68,68,0.15)] transition-all"
             >
               ⏹
@@ -273,15 +298,122 @@ export default function FreqAITab({}: FreqAITabProps) {
         </div>
       </div>
 
-      {/* RIGHT PANEL */}
-      <div>
-        <div className="bg-card border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[400px]">
-          <div className="text-[32px] mb-3 opacity-30">🧠</div>
-          <div className="text-sm font-semibold text-muted-foreground mb-1">No FreqAI results yet</div>
-          <div className="text-xs text-muted-foreground text-center max-w-[280px]">
-            Configure your ML models and click &quot;Run Matrix&quot; to start real FreqAI training runs.
+      {/* RIGHT PANEL — Results + Progress */}
+      <div className="space-y-4">
+
+        {/* Progress Display (§697-709) */}
+        {isRunning && (
+          <div className="bg-card border border-primary/30 rounded-[10px] p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-foreground">
+                FreqAI Batch: {completedCount}/{matrixTotal} completed ({matrixTotal > 0 ? Math.round((completedCount / matrixTotal) * 100) : 0}%)
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                Est. remaining: ~{Math.max(0, Math.round((matrixTotal - completedCount) * 15))}min
+              </span>
+            </div>
+            <div className="w-full h-2 bg-muted rounded-full overflow-hidden mb-3">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-500"
+                style={{ width: `${matrixTotal > 0 ? (completedCount / matrixTotal) * 100 : 0}%` }}
+              />
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Winner Banner */}
+        {winner && !isRunning && (
+          <div className="bg-[rgba(34,197,94,0.06)] border border-emerald-500/20 rounded-[10px] p-4 flex items-center gap-4">
+            <span className="text-2xl">🏆</span>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-semibold text-emerald-400 mb-0.5">Best FreqAI Result</div>
+              <div className="text-xs text-muted-foreground">
+                {winner.model} + {winner.outlier} + PCA {winner.pca ? 'On' : 'Off'} + Noise {winner.noise ? 'On' : 'Off'}
+              </div>
+            </div>
+            <div className="text-right">
+              <div className={`text-sm font-bold tabular-nums ${winner.profitPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {winner.profitPct >= 0 ? '+' : ''}{winner.profitPct.toFixed(2)}%
+              </div>
+              <div className="text-[10px] text-muted-foreground">
+                Sharpe {winner.sharpe.toFixed(2)} · WR {winner.winRate.toFixed(1)}%
+              </div>
+            </div>
+            <div className="flex gap-1.5 shrink-0">
+              <button className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-primary/40 text-primary hover:bg-primary/10 transition-all">→ Verify</button>
+              <button className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-all">Promote ★</button>
+              <button className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-border text-muted-foreground hover:bg-muted transition-all">→ Analysis</button>
+            </div>
+          </div>
+        )}
+
+        {/* Results Master Table (§711-736) */}
+        {sortedResults.length > 0 ? (
+          <div className="bg-card border border-border rounded-[10px] overflow-hidden">
+            <div className="px-4 py-3 border-b border-border">
+              <span className="text-xs font-semibold text-foreground">FreqAI Results ({sortedResults.length})</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs whitespace-nowrap">
+                <thead>
+                  <tr className="bg-muted/50 text-muted-foreground">
+                    <th className="text-left px-2 py-1.5 font-semibold">#</th>
+                    <th className="text-left px-2 py-1.5 font-semibold">Model</th>
+                    <th className="text-left px-2 py-1.5 font-semibold">Outlier</th>
+                    <th className="text-center px-2 py-1.5 font-semibold">PCA</th>
+                    <th className="text-center px-2 py-1.5 font-semibold">Noise</th>
+                    <th onClick={() => handleSort('trades')} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Trades<SortArrow col="trades" /></th>
+                    <th onClick={() => handleSort('winRate')} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Win Rate<SortArrow col="winRate" /></th>
+                    <th onClick={() => handleSort('profitPct')} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Profit%<SortArrow col="profitPct" /></th>
+                    <th onClick={() => handleSort('maxDrawdown')} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Max DD<SortArrow col="maxDrawdown" /></th>
+                    <th onClick={() => handleSort('sharpe')} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Sharpe<SortArrow col="sharpe" /></th>
+                    <th onClick={() => handleSort('sortino')} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Sortino<SortArrow col="sortino" /></th>
+                    <th className="text-left px-2 py-1.5 font-semibold">Top Features</th>
+                    <th className="text-right px-2 py-1.5 font-semibold">Acc%</th>
+                    <th className="text-right px-2 py-1.5 font-semibold">Duration</th>
+                    <th className="text-right px-2 py-1.5 font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedResults.map((r, idx) => (
+                    <tr key={r.id} className={`border-t border-border hover:bg-muted/20 ${idx === 0 ? 'bg-emerald-500/5' : ''}`}>
+                      <td className="px-2 py-1.5 tabular-nums text-muted-foreground">{idx === 0 ? '★' : ''}{r.id}</td>
+                      <td className="px-2 py-1.5 font-medium text-foreground">{r.model.replace('Regressor', 'Reg').replace('Classifier', 'Cls')}</td>
+                      <td className="px-2 py-1.5 text-muted-foreground">{r.outlier}</td>
+                      <td className="px-2 py-1.5 text-center">{r.pca ? <span className="text-emerald-400">On</span> : <span className="text-muted-foreground">Off</span>}</td>
+                      <td className="px-2 py-1.5 text-center">{r.noise ? <span className="text-amber-400">On</span> : <span className="text-muted-foreground">Off</span>}</td>
+                      <td className="px-2 py-1.5 text-right tabular-nums">{r.trades}</td>
+                      <td className="px-2 py-1.5 text-right tabular-nums">{r.winRate.toFixed(1)}%</td>
+                      <td className={`px-2 py-1.5 text-right tabular-nums font-medium ${r.profitPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {r.profitPct >= 0 ? '+' : ''}{r.profitPct.toFixed(2)}%
+                      </td>
+                      <td className="px-2 py-1.5 text-right tabular-nums text-rose-400">{r.maxDrawdown.toFixed(2)}%</td>
+                      <td className="px-2 py-1.5 text-right tabular-nums">{r.sharpe.toFixed(2)}</td>
+                      <td className="px-2 py-1.5 text-right tabular-nums">{r.sortino.toFixed(2)}</td>
+                      <td className="px-2 py-1.5 text-muted-foreground max-w-[120px] truncate">{r.featureImportance?.slice(0, 3).join(', ') || '—'}</td>
+                      <td className="px-2 py-1.5 text-right tabular-nums">{r.predictionAccuracy?.toFixed(1) ?? '—'}%</td>
+                      <td className="px-2 py-1.5 text-right text-muted-foreground">{r.trainingDuration || '—'}</td>
+                      <td className="px-2 py-1.5">
+                        <div className="flex gap-1 justify-end">
+                          <button className="px-1.5 py-0.5 text-[9px] border border-primary/30 text-primary rounded hover:bg-primary/10 transition">→ Verify</button>
+                          <button className="px-1.5 py-0.5 text-[9px] border border-amber-500/30 text-amber-400 rounded hover:bg-amber-500/10 transition">Promote</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-card border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[400px]">
+            <div className="text-[32px] mb-3 opacity-30">🧠</div>
+            <div className="text-sm font-semibold text-muted-foreground mb-1">No FreqAI results yet</div>
+            <div className="text-xs text-muted-foreground text-center max-w-[280px]">
+              Configure your ML models and click &quot;Run Matrix&quot; to start real FreqAI training runs.
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

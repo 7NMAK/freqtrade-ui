@@ -2,7 +2,10 @@
 
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import Tooltip from "@/components/ui/Tooltip";
+import Toggle from "@/components/ui/Toggle";
+import { INPUT, SELECT, LABEL, fmt$, fmtPctRatio, fmtNum, fmtTimestamp } from "@/lib/design";
 import { botLogs, botBacktestResults, botBacktestStart, botBacktestDelete, botBacktestHistory } from "@/lib/api";
+import { useToast } from "@/components/ui/Toast";
 
 interface BacktestTabProps {
   strategy: string;
@@ -63,6 +66,26 @@ interface FTStrategyResult {
   results_per_pair: Array<{ key: string; trades: number; profit_mean: number; profit_total: number; profit_total_abs: number }>;
   exit_reason_summary: Array<{ exit_reason: string; trades: number; profit_mean: number; profit_total: number; profit_total_abs: number; wins: number; losses: number }>;
   periodic_breakdown?: Record<string, Array<{ date: string; trades: number; profit_abs: number }>>;
+  trades?: FTTradeEntry[];
+}
+
+/** Individual trade in backtest results (exact FT field names per architecture doc) */
+interface FTTradeEntry {
+  trade_id: number;
+  pair: string;
+  is_short: boolean;
+  stake_amount: number;
+  open_rate: number;
+  close_rate: number;
+  fee_open: number;
+  fee_close: number;
+  close_profit: number;
+  close_profit_abs: number;
+  open_date: string;
+  close_date: string;
+  trade_duration: number; // minutes
+  enter_tag: string;
+  exit_reason: string;
 }
 
 interface HistoryEntry {
@@ -76,37 +99,17 @@ interface HistoryEntry {
   backtest_end_ts?: number;
 }
 
-// ── Toggle switch ────────────────────────────────────────────────────────
-function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <label className="relative w-[36px] h-[20px] cursor-pointer inline-block flex-shrink-0">
-        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="hidden" />
-        <span className={`absolute inset-0 rounded-[10px] border transition-all ${checked ? "bg-[rgba(34,197,94,0.08)] border-emerald-500" : "bg-muted border-border"}`} />
-        <span className={`absolute w-[14px] h-[14px] bg-white rounded-full top-[3px] transition-all ${checked ? "left-[19px]" : "left-[3px]"}`} />
-      </label>
-    </div>
-  );
-}
+// Toggle, INPUT, SELECT, LABEL, fmt$, fmtPctRatio, fmtNum, fmtTimestamp imported from shared modules
 
-// ── Design System ───────────────────────────────────────────────────
-const INPUT = "w-full h-[34px] py-0 px-3 bg-muted border border-border rounded-btn text-xs text-foreground placeholder-text-3 focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all";
-const SELECT = "w-full h-[34px] py-0 px-3 bg-muted border border-border rounded-btn text-xs text-foreground focus:outline-none focus:border-primary cursor-pointer appearance-none transition-all";
-const LABEL = "block text-xs font-semibold text-muted-foreground uppercase tracking-[0.5px] mb-[4px]";
-
-// ── Helpers ──────────────────────────────────────────────────────────
-function fmt$(v: number, decimals = 2): string {
-  const sign = v >= 0 ? "+" : "";
-  return `${sign}$${v.toFixed(decimals)}`;
-}
-function fmtPct(v: number): string {
-  const sign = v >= 0 ? "+" : "";
-  return `${sign}${(v * 100).toFixed(2)}%`;
-}
-function fmtNum(v: number, d = 2): string { return v.toFixed(d); }
-function fmtDate(ts: number): string {
-  return new Date(ts * 1000).toLocaleString("en-GB", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+/** Format duration in minutes → Xd Xh Xm */
+function fmtDuration(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours < 24) return `${hours}h ${mins}m`;
+  const days = Math.floor(hours / 24);
+  const rem = hours % 24;
+  return `${days}d ${rem}h`;
 }
 
 // ── Metric Card ─────────────────────────────────────────────────────
@@ -126,6 +129,41 @@ function MetricCard({ label, value, sub, positive }: { label: string; value: str
 // ══════════════════════════════════════════════════════════════════════════
 function ResultsPanel({ data }: { data: FTStrategyResult }) {
   const profitPositive = data.profit_total_abs >= 0;
+  const [tradesPage, setTradesPage] = useState(1);
+  const tradesPerPage = 20;
+  const trades = useMemo(() => data.trades || [], [data.trades]);
+
+  // Sort state for trade columns
+  type TradeSortKey = 'trade_id' | 'pair' | 'close_profit' | 'close_profit_abs' | 'open_date' | 'close_date' | 'trade_duration';
+  const [tradeSortBy, setTradeSortBy] = useState<TradeSortKey>('trade_id');
+  const [tradeSortDir, setTradeSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const handleTradeSort = (col: TradeSortKey) => {
+    if (tradeSortBy === col) {
+      setTradeSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setTradeSortBy(col);
+      setTradeSortDir('desc');
+    }
+    setTradesPage(1);
+  };
+  const TradeSortArrow = ({ col }: { col: TradeSortKey }) =>
+    tradeSortBy === col ? <span className="ml-0.5 text-primary">{tradeSortDir === 'desc' ? '↓' : '↑'}</span> : null;
+
+  const sortedTrades = useMemo(() => {
+    const copy = [...trades];
+    copy.sort((a, b) => {
+      const av = a[tradeSortBy] ?? 0;
+      const bv = b[tradeSortBy] ?? 0;
+      if (typeof av === 'string' && typeof bv === 'string') return tradeSortDir === 'desc' ? bv.localeCompare(av) : av.localeCompare(bv);
+      return tradeSortDir === 'desc' ? (Number(bv) - Number(av)) : (Number(av) - Number(bv));
+    });
+    return copy;
+  }, [trades, tradeSortBy, tradeSortDir]);
+
+  const totalPages = Math.ceil(sortedTrades.length / tradesPerPage);
+  const pagedTrades = sortedTrades.slice((tradesPage - 1) * tradesPerPage, tradesPage * tradesPerPage);
+
   return (
     <div className="flex flex-col gap-4">
       {/* Header */}
@@ -141,58 +179,133 @@ function ResultsPanel({ data }: { data: FTStrategyResult }) {
         </div>
       </div>
 
-      {/* Row 1: Core Metrics */}
-      <div className="grid grid-cols-4 gap-2">
-        <MetricCard
-          label="Total Profit"
-          value={fmt$(data.profit_total_abs)}
-          sub={fmtPct(data.profit_total)}
-          positive={profitPositive}
-        />
-        <MetricCard
-          label="Trades"
-          value={String(data.total_trades)}
-          sub={`${data.trade_count_long}L / ${data.trade_count_short}S`}
-        />
-        <MetricCard
-          label="Win Rate"
-          value={`${(data.winrate * 100).toFixed(1)}%`}
-          sub={`${data.wins}W ${data.losses}L ${data.draws}D`}
-          positive={data.winrate > 0.5 ? true : data.winrate < 0.4 ? false : null}
-        />
-        <MetricCard
-          label="Max Drawdown"
-          value={fmt$(data.max_drawdown_abs)}
-          sub={fmtPct(-data.max_drawdown_account)}
-          positive={false}
-        />
+      {/* Row 1: Core Metrics (6-grid per doc) */}
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+        <MetricCard label="Total Trades" value={String(data.total_trades)} sub={`${data.trade_count_long}L / ${data.trade_count_short}S`} />
+        <MetricCard label="Win Rate" value={`${(data.winrate * 100).toFixed(1)}%`} sub={`${data.wins}W ${data.losses}L ${data.draws}D`} positive={data.winrate > 0.6 ? true : data.winrate < 0.4 ? false : null} />
+        <MetricCard label="Total Profit" value={fmt$(data.profit_total_abs)} sub={fmtPctRatio(data.profit_total)} positive={profitPositive} />
+        <MetricCard label="Max Drawdown" value={`-${(data.max_drawdown_account * 100).toFixed(2)}%`} sub={fmt$(data.max_drawdown_abs)} positive={false} />
+        <MetricCard label="Sharpe" value={fmtNum(data.sharpe)} positive={data.sharpe > 1 ? true : data.sharpe < 0 ? false : null} />
+        <MetricCard label="Sortino" value={fmtNum(data.sortino)} positive={data.sortino > 1 ? true : data.sortino < 0 ? false : null} />
       </div>
 
       {/* Row 2: Risk/Return Ratios */}
       <div className="grid grid-cols-5 gap-2">
-        <MetricCard label="Sharpe" value={fmtNum(data.sharpe)} positive={data.sharpe > 1 ? true : data.sharpe < 0 ? false : null} />
-        <MetricCard label="Sortino" value={fmtNum(data.sortino)} positive={data.sortino > 1 ? true : data.sortino < 0 ? false : null} />
         <MetricCard label="Calmar" value={fmtNum(data.calmar)} positive={data.calmar > 1 ? true : data.calmar < 0 ? false : null} />
         <MetricCard label="Profit Factor" value={fmtNum(data.profit_factor)} positive={data.profit_factor > 1 ? true : data.profit_factor < 1 ? false : null} />
         <MetricCard label="SQN" value={fmtNum(data.sqn)} positive={data.sqn > 2 ? true : data.sqn < 0 ? false : null} />
+        <MetricCard label="Expectancy" value={fmt$(data.expectancy)} positive={data.expectancy > 0} />
+        <MetricCard label="CAGR" value={fmtPctRatio(data.cagr)} positive={data.cagr > 0} />
       </div>
 
       {/* Row 3: Balance + Extra Stats */}
       <div className="grid grid-cols-4 gap-2">
         <MetricCard label="Starting" value={`$${data.starting_balance.toLocaleString()}`} />
         <MetricCard label="Final" value={`$${data.final_balance.toLocaleString()}`} positive={data.final_balance > data.starting_balance} />
-        <MetricCard label="Best Day" value={fmt$(data.backtest_best_day_abs)} sub={fmtPct(data.backtest_best_day)} positive={true} />
-        <MetricCard label="Worst Day" value={fmt$(data.backtest_worst_day_abs)} sub={fmtPct(data.backtest_worst_day)} positive={false} />
+        <MetricCard label="Best Day" value={fmt$(data.backtest_best_day_abs)} sub={fmtPctRatio(data.backtest_best_day)} positive={true} />
+        <MetricCard label="Worst Day" value={fmt$(data.backtest_worst_day_abs)} sub={fmtPctRatio(data.backtest_worst_day)} positive={false} />
       </div>
 
       {/* Row 4: Extra */}
-      <div className="grid grid-cols-5 gap-2">
-        <MetricCard label="CAGR" value={fmtPct(data.cagr)} positive={data.cagr > 0} />
-        <MetricCard label="Expectancy" value={fmt$(data.expectancy)} positive={data.expectancy > 0} />
+      <div className="grid grid-cols-4 gap-2">
         <MetricCard label="Avg Duration" value={data.holding_avg || "-"} />
         <MetricCard label="Consec. Wins" value={String(data.max_consecutive_wins)} />
         <MetricCard label="Consec. Losses" value={String(data.max_consecutive_losses)} />
+        <MetricCard label="Win/Draw/Loss Days" value={`${data.winning_days}/${data.draw_days}/${data.losing_days}`} />
       </div>
+
+      {/* ── Equity Curve ── */}
+      <div>
+        <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Equity Curve</div>
+        <div className="border border-border rounded-lg p-3 bg-muted/20 min-h-[160px] flex items-center justify-center">
+          {data.periodic_breakdown && Object.keys(data.periodic_breakdown).length > 0 ? (
+            <EquityCurve breakdown={data.periodic_breakdown} startingBalance={data.starting_balance} />
+          ) : (
+            <span className="text-xs text-muted-foreground opacity-50">Equity curve requires periodic breakdown data (enable Month breakdown)</span>
+          )}
+        </div>
+      </div>
+
+      {/* ── Trades Table ── */}
+      {trades.length > 0 && (
+        <div>
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            Trades ({trades.length})
+          </div>
+          <div className="border border-border rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-muted/50 text-muted-foreground">
+                    <th onClick={() => handleTradeSort('trade_id')} className="text-left px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground transition-colors">#<TradeSortArrow col="trade_id" /></th>
+                    <th onClick={() => handleTradeSort('pair')} className="text-left px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground transition-colors">Pair<TradeSortArrow col="pair" /></th>
+                    <th className="text-left px-2 py-1.5 font-semibold">Side</th>
+                    <th onClick={() => handleTradeSort('close_profit')} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground transition-colors">Profit%<TradeSortArrow col="close_profit" /></th>
+                    <th onClick={() => handleTradeSort('close_profit_abs')} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground transition-colors">Profit$<TradeSortArrow col="close_profit_abs" /></th>
+                    <th onClick={() => handleTradeSort('open_date')} className="text-left px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground transition-colors">Open Date<TradeSortArrow col="open_date" /></th>
+                    <th onClick={() => handleTradeSort('close_date')} className="text-left px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground transition-colors">Close Date<TradeSortArrow col="close_date" /></th>
+                    <th onClick={() => handleTradeSort('trade_duration')} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground transition-colors">Duration<TradeSortArrow col="trade_duration" /></th>
+                    <th className="text-left px-2 py-1.5 font-semibold">Enter Tag</th>
+                    <th className="text-left px-2 py-1.5 font-semibold">Exit Reason</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagedTrades.map((t) => (
+                    <tr key={t.trade_id} className="border-t border-border hover:bg-muted/30">
+                      <td className="px-2 py-1.5 tabular-nums text-muted-foreground">{t.trade_id}</td>
+                      <td className="px-2 py-1.5 font-mono text-foreground">{t.pair}</td>
+                      <td className="px-2 py-1.5">
+                        <span className={t.is_short ? "text-rose-400" : "text-emerald-400"}>
+                          {t.is_short ? "Short" : "Long"}
+                        </span>
+                      </td>
+                      <td className={`px-2 py-1.5 text-right tabular-nums ${t.close_profit >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                        {fmtPctRatio(t.close_profit)}
+                      </td>
+                      <td className={`px-2 py-1.5 text-right tabular-nums ${t.close_profit_abs >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                        {fmt$(t.close_profit_abs)}
+                      </td>
+                      <td className="px-2 py-1.5 text-muted-foreground whitespace-nowrap">
+                        {t.open_date ? t.open_date.replace("T", " ").substring(0, 16) : "—"}
+                      </td>
+                      <td className="px-2 py-1.5 text-muted-foreground whitespace-nowrap">
+                        {t.close_date ? t.close_date.replace("T", " ").substring(0, 16) : "—"}
+                      </td>
+                      <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">{fmtDuration(t.trade_duration)}</td>
+                      <td className="px-2 py-1.5 text-muted-foreground">{t.enter_tag || "—"}</td>
+                      <td className="px-2 py-1.5 text-muted-foreground">{t.exit_reason || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-3 py-2 border-t border-border bg-muted/30">
+                <span className="text-xs text-muted-foreground">
+                  Showing {(tradesPage - 1) * tradesPerPage + 1}-{Math.min(tradesPage * tradesPerPage, trades.length)} of {trades.length}
+                </span>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setTradesPage(Math.max(1, tradesPage - 1))}
+                    disabled={tradesPage === 1}
+                    className="px-2 py-1 text-xs border border-border rounded-btn bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all"
+                  >
+                    ← Prev
+                  </button>
+                  <button
+                    onClick={() => setTradesPage(Math.min(totalPages, tradesPage + 1))}
+                    disabled={tradesPage === totalPages}
+                    className="px-2 py-1 text-xs border border-border rounded-btn bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all"
+                  >
+                    Next →
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Results per Pair ── */}
       {data.results_per_pair && data.results_per_pair.length > 0 && (
@@ -214,8 +327,8 @@ function ResultsPanel({ data }: { data: FTStrategyResult }) {
                   <tr key={pair.key} className="border-t border-border hover:bg-muted/30">
                     <td className="px-3 py-1.5 font-mono text-foreground">{pair.key}</td>
                     <td className="px-3 py-1.5 text-right tabular-nums">{pair.trades}</td>
-                    <td className={`px-3 py-1.5 text-right tabular-nums ${pair.profit_mean >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{fmtPct(pair.profit_mean)}</td>
-                    <td className={`px-3 py-1.5 text-right tabular-nums ${pair.profit_total >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{fmtPct(pair.profit_total)}</td>
+                    <td className={`px-3 py-1.5 text-right tabular-nums ${pair.profit_mean >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{fmtPctRatio(pair.profit_mean)}</td>
+                    <td className={`px-3 py-1.5 text-right tabular-nums ${pair.profit_total >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{fmtPctRatio(pair.profit_total)}</td>
                     <td className={`px-3 py-1.5 text-right tabular-nums font-medium ${pair.profit_total_abs >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{fmt$(pair.profit_total_abs)}</td>
                   </tr>
                 ))}
@@ -258,6 +371,65 @@ function ResultsPanel({ data }: { data: FTStrategyResult }) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
+// EQUITY CURVE (SVG)
+// ══════════════════════════════════════════════════════════════════════════
+function EquityCurve({ breakdown, startingBalance }: { breakdown: Record<string, Array<{ date: string; trades: number; profit_abs: number }>>; startingBalance: number }) {
+  // Use the first available breakdown (month, week, or day)
+  const key = Object.keys(breakdown)[0];
+  const data = breakdown[key] || [];
+  if (data.length === 0) return <span className="text-xs text-muted-foreground opacity-50">No breakdown data</span>;
+
+  // Build cumulative equity series
+  let balance = startingBalance;
+  const points = data.map((d) => {
+    balance += d.profit_abs;
+    return { date: d.date, value: balance };
+  });
+
+  const values = points.map((p) => p.value);
+  const minVal = Math.min(...values) * 0.98;
+  const maxVal = Math.max(...values) * 1.02;
+  const range = maxVal - minVal || 1;
+
+  const W = 600;
+  const H = 140;
+  const padX = 0;
+  const padY = 5;
+
+  const linePoints = points.map((p, i) => {
+    const x = padX + (i / Math.max(points.length - 1, 1)) * (W - 2 * padX);
+    const y = padY + (1 - (p.value - minVal) / range) * (H - 2 * padY);
+    return `${x},${y}`;
+  }).join(" ");
+
+  // Gradient fill area
+  const firstX = padX;
+  const lastX = padX + ((points.length - 1) / Math.max(points.length - 1, 1)) * (W - 2 * padX);
+  const areaPoints = `${firstX},${H} ${linePoints} ${lastX},${H}`;
+
+  const isPositive = (points[points.length - 1]?.value ?? startingBalance) >= startingBalance;
+  const strokeColor = isPositive ? "#22c55e" : "#ef4444";
+  const fillId = isPositive ? "eq-grad-green" : "eq-grad-red";
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[140px]" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="eq-grad-green" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#22c55e" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#22c55e" stopOpacity="0.02" />
+        </linearGradient>
+        <linearGradient id="eq-grad-red" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#ef4444" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#ef4444" stopOpacity="0.02" />
+        </linearGradient>
+      </defs>
+      <polygon points={areaPoints} fill={`url(#${fillId})`} />
+      <polyline points={linePoints} fill="none" stroke={strokeColor} strokeWidth="2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
 // HISTORY PANEL
 // ══════════════════════════════════════════════════════════════════════════
 function HistoryPanel({ entries, currentStrategy, onLoad }: { entries: HistoryEntry[]; currentStrategy: string; onLoad: (entry: HistoryEntry) => void }) {
@@ -283,7 +455,7 @@ function HistoryPanel({ entries, currentStrategy, onLoad }: { entries: HistoryEn
               onClick={() => onLoad(entry)}
               className="flex items-center gap-3 px-3 py-2 bg-muted/30 border border-border rounded-lg text-xs hover:bg-muted/60 hover:border-primary/30 transition-all text-left group"
             >
-              <span className="text-muted-foreground shrink-0">{fmtDate(entry.backtest_start_time)}</span>
+              <span className="text-muted-foreground shrink-0">{fmtTimestamp(entry.backtest_start_time)}</span>
               <span className="font-mono text-muted-foreground">{entry.timeframe || "?"}</span>
               <span className="text-muted-foreground truncate flex-1">{startTs} → {endTs}</span>
               <span className="text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0">Load →</span>
@@ -299,14 +471,16 @@ function HistoryPanel({ entries, currentStrategy, onLoad }: { entries: HistoryEn
 // MAIN COMPONENT
 // ══════════════════════════════════════════════════════════════════════════
 export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTabProps) {
+  const toast = useToast();
   const [testName, setTestName] = useState(`${strategy} baseline ${new Date().toISOString().split("T")[0]}`);
+  const [description, setDescription] = useState("");
   const [startDate, setStartDate] = useState("2024-01-01");
   const [endDate, setEndDate] = useState("2025-01-01");
   const [timeframeOverride, setTimeframeOverride] = useState("Use strategy default");
-  const [timeframeDetail, setTimeframeDetail] = useState("Same as timeframe");
-  const [maxOpenTrades, setMaxOpenTrades] = useState("3");
+  const [timeframeDetail, setTimeframeDetail] = useState("None");
+  const [maxOpenTrades, setMaxOpenTrades] = useState("");
   const [startingCapital, setStartingCapital] = useState("10000");
-  const [stakeAmount, setStakeAmount] = useState("100");
+  const [stakeAmount, setStakeAmount] = useState("");
   const [feeOverride, setFeeOverride] = useState("");
   const [enableProtections, setEnableProtections] = useState(false);
   const [cacheResults, setCacheResults] = useState(true);
@@ -429,14 +603,19 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [isRunning, backtestBotId, addLog, extractResult, fetchHistory]);
 
-  // Auto-generate description from current settings
+  // Timerange display (auto-generated from dates)
+  const timerangeDisplay = useMemo(() => {
+    return `${startDate.replace(/-/g, "")}-${endDate.replace(/-/g, "")}`;
+  }, [startDate, endDate]);
+
+  // Auto-generate description from current settings (used as placeholder)
   const autoDescription = useMemo(() => {
     const tf = timeframeOverride === "Use strategy default" ? "default TF" : timeframeOverride;
     const parts = [
       `${strategy} backtest`,
       `${startDate} → ${endDate}`,
       tf,
-      `${maxOpenTrades} max trades`,
+      maxOpenTrades ? `${maxOpenTrades} max trades` : null,
       `$${startingCapital} capital`,
       enableFreqAI ? "FreqAI ON" : null,
       enableProtections ? "Protections ON" : null,
@@ -449,6 +628,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
     setBtProgress("");
     setBtResult(null);
     addLog("INFO", `Starting backtest: ${strategy} — ${startDate} → ${endDate}`);
+    toast.info("Starting backtest...");
 
     const timerange = `${startDate.replace(/-/g, "")}-${endDate.replace(/-/g, "")}`;
     const params: Record<string, unknown> = {
@@ -477,10 +657,12 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
       addLog("INFO", `POST /api/bots/${backtestBotId}/backtest — timerange=${timerange}`);
       await botBacktestStart(backtestBotId, params);
       addLog("INFO", "Backtest job submitted — polling for results...");
+      toast.success("Backtest submitted — polling for results");
       setIsRunning(true);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       addLog("ERROR", `Failed to start backtest: ${msg}`);
+      toast.error(`Backtest failed: ${msg}`);
     }
   };
 
@@ -498,13 +680,14 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
 
   const handleReset = () => {
     setTestName(`${strategy} baseline ${new Date().toISOString().split("T")[0]}`);
+    setDescription("");
     setStartDate("2024-01-01");
     setEndDate("2025-01-01");
     setTimeframeOverride("Use strategy default");
-    setTimeframeDetail("Same as timeframe");
-    setMaxOpenTrades("3");
+    setTimeframeDetail("None");
+    setMaxOpenTrades("");
     setStartingCapital("10000");
-    setStakeAmount("100");
+    setStakeAmount("");
     setFeeOverride("");
     setEnableProtections(false);
     setCacheResults(true);
@@ -552,11 +735,8 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
         </div>
 
         <div>
-          <label className={LABEL}>Description</label>
-          <div className="w-full px-3 py-[7px] bg-muted/50 border border-border rounded-btn text-xs text-muted-foreground leading-[1.5]">
-            {autoDescription}
-          </div>
-          <div className="text-[9px] text-muted-foreground mt-[2px]">Auto-generated from settings</div>
+          <label className={LABEL}>Description (optional)</label>
+          <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={autoDescription} className={INPUT} />
         </div>
 
         <div>
@@ -575,6 +755,11 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
           </div>
         </div>
 
+        <div>
+          <label className={LABEL}>Timerange</label>
+          <input type="text" value={timerangeDisplay} readOnly className={`${INPUT} bg-muted/50 opacity-70 cursor-default font-mono`} />
+        </div>
+
         <div className="grid grid-cols-2 gap-[8px]">
           <div>
             <label className={LABEL}>Timeframe Override</label>
@@ -587,7 +772,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
           <div>
             <label className={LABEL}>Timeframe Detail</label>
             <select value={timeframeDetail} onChange={(e) => setTimeframeDetail(e.target.value)} className={SELECT}>
-              <option>Same as timeframe</option>
+              <option>None</option>
               <option>1m</option><option>5m</option>
             </select>
           </div>

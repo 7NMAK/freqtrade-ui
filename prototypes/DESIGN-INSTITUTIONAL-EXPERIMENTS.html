@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreqTrade | OMEGA INSTITUTIONAL EXPERIMENTS (100% Full Module)</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Geist+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Roboto', 'sans-serif'], mono: ['"Geist Mono"', 'monospace'] },
+        colors: { base: "#0b0c0a", panel: "#121411", border: "#242822", hover: "rgba(255,255,255,0.03)", muted: "#8c9488", primary: "#d1d6cc", accent: "#8b9474", up: "#22c55e", down: "#ef4444", link: "#5558e6" }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Roboto', sans-serif; background: var(--color-base); color: var(--color-primary); font-size: 11px; overflow: hidden; }
+  .border-quant { border: 1px solid var(--color-border); }
+  .border-quant-b { border-bottom: 1px solid var(--color-border); }
+  .border-quant-r { border-right: 1px solid var(--color-border); }
+  
+  /* Inputs */
+  .inp { width: 100%; padding: 4px 8px; font-size: 10px; background: var(--color-base); border: 1px solid var(--color-border); color: var(--color-primary); outline: none; }
+  .inp:focus { border-color: var(--color-accent); }
+  select.inp { appearance: none; cursor: pointer; }
+  .lbl { display: block; font-size: 9px; font-weight: bold; text-transform: uppercase; color: var(--color-muted); margin-bottom: 2px; }
+  
+  /* Data Grids */
+  table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+  th, td { padding: 4px 6px; border-bottom: 1px solid var(--color-border); border-right: 1px solid var(--color-border); }
+  th { font-weight: bold; color: var(--color-muted); background: var(--color-base); text-transform: uppercase; font-size: 9px; position: sticky; top: 0; z-index: 10; }
+  td { font-family: 'Geist Mono', monospace; font-size: 10px; }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb { background: #242822; }
+
+  /* Tab switching logic */
+  .tab-content { display: none; height: 100%; overflow: hidden; }
+  .tab-content.active { display: flex; flex-direction: column; }
+  
+  /* Overlay */
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(11, 12, 10, 0.95); z-index: 50; flex-direction: column; }
+  .overlay.active { display: flex; }
+</style>
+</head>
+<body class="w-screen h-screen flex flex-col bg-base text-primary overflow-hidden">
+  
+  <!-- 1. HEADER -->
+  <header class="h-10 border-quant-b bg-panel flex items-center px-4 justify-between shrink-0 shadow-sm z-20">
+      <div class="flex items-center gap-3">
+          <button class="flex items-center gap-1 bg-base border-quant px-2 py-0.5 text-[9px] text-muted hover:text-primary transition-colors cursor-pointer uppercase font-bold">
+              <i data-lucide="arrow-left" class="w-2.5 h-2.5"></i> Back
+          </button>
+          <div class="h-4 w-px bg-border mx-1"></div>
+          <span class="text-[12px] font-bold tracking-widest text-primary flex items-center gap-2">
+             <i data-lucide="beaker" class="w-3.5 h-3.5 text-accent"></i> AlphaTrend_V5
+          </span>
+          <span class="px-1.5 py-0.5 bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[9px] uppercase font-bold tracking-wider">Testing</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+          <button onclick="openOverlay('All Tests')" class="bg-base hover:bg-hover border-quant px-2 py-0.5 text-[10px] text-primary flex items-center gap-1">📋 All Tests <span class="text-muted">(142)</span></button>
+          <button onclick="openOverlay('Compare')" class="bg-base hover:bg-hover border-quant px-2 py-0.5 text-[10px] text-primary flex items-center gap-1">⚖️ Compare</button>
+          <button onclick="openOverlay('Analysis')" class="bg-base hover:bg-hover border-quant px-2 py-0.5 text-[10px] text-primary flex items-center gap-1">📊 Analysis</button>
+          <div class="h-4 w-px bg-border mx-1"></div>
+          <button class="bg-link hover:brightness-110 text-white px-3 py-0.5 text-[10px] font-bold rounded-sm">+ NEW TEST</button>
+      </div>
+  </header>
+
+  <!-- 2. PIPELINE TRACKER -->
+  <div class="h-8 border-quant-b bg-base flex items-center px-4 shrink-0 overflow-x-auto">
+      <div class="flex items-center gap-0">
+          <div class="flex items-center gap-1 px-2"><div class="w-3.5 h-3.5 rounded-full border border-up text-up flex items-center justify-center text-[8px]">✓</div><span class="text-up text-[10px] font-bold">Backtest</span></div><div class="w-6 h-px bg-up opacity-50"></div>
+          <div class="flex items-center gap-1 px-2"><div class="w-3.5 h-3.5 rounded-full border border-up text-up flex items-center justify-center text-[8px]">✓</div><span class="text-up text-[10px] font-bold">Hyperopt</span></div><div class="w-6 h-px bg-up opacity-50"></div>
+          <div class="flex items-center gap-1 px-2"><div class="w-3.5 h-3.5 rounded-full border-dashed border-muted text-muted flex items-center justify-center text-[8px]">⊘</div><span class="text-muted text-[10px]">FreqAI</span></div><div class="w-6 h-px border-t border-dashed opacity-30"></div>
+          <div class="flex items-center gap-1 px-2"><div class="w-3.5 h-3.5 rounded-full border-dashed border-muted text-muted flex items-center justify-center text-[8px]">⊘</div><span class="text-muted text-[10px]">Naš AI</span></div><div class="w-6 h-px border-t border-dashed opacity-30"></div>
+          <div class="flex items-center gap-1 px-2"><div class="w-3.5 h-3.5 rounded-full border border-up text-up flex items-center justify-center text-[8px]">✓</div><span class="text-up text-[10px] font-bold">Validation</span></div><div class="w-6 h-px bg-up opacity-50"></div>
+          <div class="flex items-center gap-1 px-2"><div class="w-3.5 h-3.5 rounded-full border border-primary bg-primary text-base flex flex-center text-[8px] animate-pulse">●</div><span class="text-primary text-[10px] font-bold">Paper <span class="text-muted font-normal ml-1">Day 12/30</span></span></div><div class="w-6 h-px bg-border"></div>
+          <div class="flex items-center gap-1 px-2"><div class="w-3.5 h-3.5 rounded-full border border-border text-muted flex items-center justify-center text-[8px]">○</div><span class="text-muted text-[10px]">Live</span></div>
+      </div>
+  </div>
+
+  <!-- 3. TABS BAR -->
+  <div class="h-8 border-quant-b bg-panel flex px-2 shrink-0">
+      <button onclick="switchTab('tab-backtest')" id="btn-tab-backtest" class="tab-btn px-4 text-[10px] font-bold uppercase tracking-wider border-b-2 text-primary border-accent transition-colors flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded-full bg-accent text-base flex items-center justify-center text-[8px]">1</span> Backtest</button>
+      <button onclick="switchTab('tab-hyperopt')" id="btn-tab-hyperopt" class="tab-btn px-4 text-[10px] font-bold uppercase tracking-wider border-b-2 text-muted border-transparent hover:text-primary transition-colors flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded-full bg-base border border-quant flex items-center justify-center text-[8px]">2</span> Hyperopt</button>
+      <button onclick="switchTab('tab-freqai')" id="btn-tab-freqai" class="tab-btn px-4 text-[10px] font-bold uppercase tracking-wider border-b-2 text-muted border-transparent hover:text-primary transition-colors flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded-full bg-base border border-quant flex items-center justify-center text-[8px]">3</span> FreqAI</button>
+      <button onclick="switchTab('tab-ai')" id="btn-tab-ai" class="tab-btn px-4 text-[10px] font-bold uppercase tracking-wider border-b-2 text-muted border-transparent hover:text-primary transition-colors flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded-full bg-base border border-quant flex items-center justify-center text-[8px]">4</span> Naš AI</button>
+      <button onclick="switchTab('tab-validation')" id="btn-tab-validation" class="tab-btn px-4 text-[10px] font-bold uppercase tracking-wider border-b-2 text-muted border-transparent hover:text-primary transition-colors flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded-full bg-base border border-quant flex items-center justify-center text-[8px]">5</span> Validation</button>
+  </div>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-1 overflow-hidden p-1 bg-base min-h-0 relative">
+
+      <!-- ============================================== -->
+      <!-- TAB 1: BACKTEST -->
+      <!-- ============================================== -->
+      <div id="tab-backtest" class="tab-content active gap-1">
+          <div class="flex gap-1 h-full">
+              <!-- Left: Configuration -->
+              <div class="w-[300px] bg-panel border-quant flex flex-col p-2 overflow-y-auto shrink-0">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-primary mb-2 border-b border-quant-b pb-1">⚙️ Test Configuration</span>
+                  
+                  <label class="lbl mt-1">Test Name</label>
+                  <input type="text" class="inp" value="AlphaTrend baseline 2026-03">
+                  
+                  <div class="flex gap-1 mt-2">
+                     <div class="flex-1"><label class="lbl">Start Date</label><input type="date" class="inp" value="2024-01-01"></div>
+                     <div class="flex-1"><label class="lbl">End Date</label><input type="date" class="inp" value="2025-01-01"></div>
+                  </div>
+
+                  <div class="flex gap-1 mt-2">
+                     <div class="flex-1"><label class="lbl">Timeframe</label><select class="inp"><option>1h</option><option>4h</option></select></div>
+                     <div class="flex-1"><label class="lbl">Detail TF</label><select class="inp"><option>5m</option></select></div>
+                  </div>
+
+                  <div class="flex gap-1 mt-2">
+                     <div class="flex-1"><label class="lbl">Capital ($)</label><input type="number" class="inp" value="10000"></div>
+                     <div class="flex-1"><label class="lbl">Stake ($)</label><input type="number" class="inp" value="100"></div>
+                  </div>
+
+                  <!-- Toggles -->
+                  <div class="flex flex-col gap-1 mt-3">
+                      <label class="flex justify-between text-[10px] text-muted"><input type="checkbox" checked class="accent-accent"> Enable Protections</label>
+                      <label class="flex justify-between text-[10px] text-muted"><input type="checkbox" checked class="accent-accent"> Cache Results</label>
+                      <label class="flex justify-between text-[10px] text-muted"><input type="checkbox" class="accent-accent"> Enable FreqAI</label>
+                  </div>
+                  
+                  <div class="flex gap-1 mt-4 border-t border-quant pt-2">
+                      <button class="bg-primary text-base font-bold text-[10px] px-2 py-1 flex-1 uppercase tracking-wider">▶ START BACKTEST</button>
+                      <button class="bg-base border-quant text-down font-bold text-[10px] px-2 py-1 uppercase tracking-wider">⏹ Stop</button>
+                  </div>
+
+                  <!-- CLI Log Window -->
+                  <div class="mt-2 flex-1 border-quant bg-base flex flex-col overflow-hidden">
+                      <div class="bg-black/40 text-[9px] uppercase font-bold text-muted p-1 border-quant-b shrink-0 flex justify-between">
+                          <span>Terminal Output</span><span class="text-up animate-pulse">Running...</span>
+                      </div>
+                      <div class="p-1 font-mono text-[9px] text-muted overflow-y-auto leading-tight">
+                          <div class="text-white">21:14:02 INFO  Loading data for 142 pairs...</div>
+                          <div class="text-white">21:14:05 INFO  Data loaded. Backtesting AlphaTrend_V5...</div>
+                          <div class="text-primary">21:14:10 INFO  Epoch 1/1 (100%) - Completed</div>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- Right: Results Panel -->
+              <div class="flex-1 bg-panel border-quant flex flex-col p-2 overflow-y-auto">
+                  
+                  <div class="flex justify-between items-start border-quant-b pb-2 mb-2">
+                      <div>
+                          <h2 class="text-[14px] font-bold text-white">AlphaTrend_V5</h2>
+                          <div class="text-[10px] font-mono text-muted">2024-01-01 → 2025-01-01 · 1h · 365 days</div>
+                      </div>
+                      <div class="text-[18px] font-bold text-up tabular-nums">+$4,212.50</div>
+                  </div>
+
+                  <div class="grid grid-cols-4 gap-1 mb-2">
+                      <div class="bg-base/50 p-2 border-quant"><div class="text-[9px] font-bold uppercase text-muted">Total Profit</div><div class="text-[12px] text-up font-bold font-mono">+$4,212.50</div><div class="text-[9px] text-muted">+42.12%</div></div>
+                      <div class="bg-base/50 p-2 border-quant"><div class="text-[9px] font-bold uppercase text-muted">Trades</div><div class="text-[12px] text-white font-bold font-mono">142</div><div class="text-[9px] text-muted">80L / 62S</div></div>
+                      <div class="bg-base/50 p-2 border-quant"><div class="text-[9px] font-bold uppercase text-muted">Win Rate</div><div class="text-[12px] text-up font-bold font-mono">72.4%</div><div class="text-[9px] text-muted">102W 40L 0D</div></div>
+                      <div class="bg-base/50 p-2 border-quant"><div class="text-[9px] font-bold uppercase text-muted">Max Drawdown</div><div class="text-[12px] text-down font-bold font-mono">-$211.40</div><div class="text-[9px] text-muted">-2.11%</div></div>
+                  </div>
+
+                  <div class="grid grid-cols-5 gap-1 mb-4">
+                      <div class="bg-base/50 p-1.5 border-quant"><div class="text-[8px] font-bold uppercase text-muted">Sharpe</div><div class="text-[11px] text-white font-mono">3.92</div></div>
+                      <div class="bg-base/50 p-1.5 border-quant"><div class="text-[8px] font-bold uppercase text-muted">Sortino</div><div class="text-[11px] text-white font-mono">4.15</div></div>
+                      <div class="bg-base/50 p-1.5 border-quant"><div class="text-[8px] font-bold uppercase text-muted">Calmar</div><div class="text-[11px] text-white font-mono">2.11</div></div>
+                      <div class="bg-base/50 p-1.5 border-quant"><div class="text-[8px] font-bold uppercase text-muted">Profit Factor</div><div class="text-[11px] text-white font-mono">1.85</div></div>
+                      <div class="bg-base/50 p-1.5 border-quant"><div class="text-[8px] font-bold uppercase text-muted">SQN</div><div class="text-[11px] text-white font-mono">2.44</div></div>
+                  </div>
+
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-primary mb-1">Results per Pair (Top 5)</span>
+                  <div class="border-quant mb-4">
+                      <table>
+                          <thead><tr><th>Pair</th><th class="text-right">Trades</th><th class="text-right">Avg Profit</th><th class="text-right">Profit ($)</th></tr></thead>
+                          <tbody>
+                              <tr><td>BTC/USDT</td><td class="text-right">45</td><td class="text-right text-up">+1.2%</td><td class="text-right text-up">+$1,420.10</td></tr>
+                              <tr><td>ETH/USDT</td><td class="text-right">38</td><td class="text-right text-up">+0.9%</td><td class="text-right text-up">+$1,120.40</td></tr>
+                              <tr><td>SOL/USDT</td><td class="text-right">20</td><td class="text-right text-down">-0.5%</td><td class="text-right text-down">-$340.20</td></tr>
+                          </tbody>
+                      </table>
+                  </div>
+
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-primary mb-1">Backtest History</span>
+                  <div class="border-quant">
+                      <table>
+                          <tbody>
+                              <tr class="cursor-pointer hover:bg-hover"><td class="text-muted">Mar 30 21:14</td><td>1h</td><td class="text-muted">2024-01-01 → 2025-01-01</td><td class="text-right text-link">Load</td></tr>
+                              <tr class="cursor-pointer hover:bg-hover"><td class="text-muted">Mar 29 14:20</td><td>4h</td><td class="text-muted">2023-01-01 → 2024-01-01</td><td class="text-right text-link">Load</td></tr>
+                          </tbody>
+                      </table>
+                  </div>
+
+              </div>
+          </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 2: HYPEROPT -->
+      <!-- ============================================== -->
+      <div id="tab-hyperopt" class="tab-content gap-1">
+          <!-- Top Metrics Row -->
+          <div class="h-[140px] flex gap-1 shrink-0">
+               <!-- Scatter Plot -->
+               <div class="flex-[2] bg-panel border-quant relative">
+                   <div class="absolute top-1 right-1 flex gap-1 z-10"><select class="inp text-[8px] w-auto px-1 py-0 h-4"><option>X: stoploss</option></select><select class="inp text-[8px] w-auto px-1 py-0 h-4"><option>Y: roi_1</option></select></div>
+                   <span class="absolute top-2 left-2 text-[9px] font-bold text-muted uppercase tracking-wider z-10">Objective Landscape</span>
+                   <div class="absolute inset-0 top-[20px] p-2 flex items-center justify-center bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMGwyMCAwaDB2MjBIMHoiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSsyNTUsMjU1LDI1NSwwLjAyKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9zdmc+')]">
+                       <!-- Pseudo plot -->
+                       <div class="relative w-full h-full opacity-60">
+                           <div class="absolute w-1.5 h-1.5 bg-up" style="top:20%; left:80%"></div>
+                           <div class="absolute w-1.5 h-1.5 bg-accent" style="top:40%; left:50%"></div>
+                           <div class="absolute w-1.5 h-1.5 bg-down" style="top:80%; left:20%"></div>
+                       </div>
+                   </div>
+               </div>
+               <div class="flex-[1] bg-panel border-quant relative p-2 flex flex-col justify-center font-mono">
+                   <div class="text-[9px] text-muted mb-1">BEST EPOCH</div>
+                   <div class="text-[16px] font-bold text-up border-quant-b pb-1 mb-1">#1024</div>
+                   <div class="flex justify-between text-[10px]"><span class="text-muted">WinRate:</span> <span class="text-white">72.4%</span></div>
+                   <div class="flex justify-between text-[10px]"><span class="text-muted">Total P&L:</span> <span class="text-up">+$4,212</span></div>
+               </div>
+          </div>
+          <!-- Grid -->
+          <div class="flex-1 bg-panel border-quant flex flex-col relative overflow-hidden shadow-sm">
+              <div class="h-6 bg-base border-quant-b flex justify-between items-center px-2 shrink-0">
+                 <span class="text-[9px] font-bold uppercase text-muted">Hyperopt Tuning Matrix (2,000 Epochs)</span>
+                 <input type="text" placeholder="Filter..." class="inp w-32 h-4 text-[8px] py-0">
+              </div>
+              <div class="flex-1 overflow-auto w-full">
+                  <table>
+                      <thead>
+                          <tr>
+                              <th class="w-8">Ep.</th><th>Status</th><th class="text-right text-accent border-quant-r border-r-2">Sharpe ▲</th>
+                              <th class="text-right">Total P&L</th><th class="text-right">Trades</th><th class="text-right">Obj. Loss</th>
+                              <th class="text-right text-orange-200">buy_rsi</th><th class="text-right text-orange-200">buy_macd</th><th class="text-right text-orange-200">sell_rsi</th>
+                              <th class="text-right text-blue-200">stoploss</th><th class="text-right text-blue-200">trail_rx</th>
+                              <th class="text-center">Action</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          <tr class="hover:bg-hover group bg-up/[0.05]">
+                              <td class="text-center bg-black/20 font-bold text-white">1024</td><td class="text-center"><span class="bg-up/20 text-up px-1 border border-up/30 text-[8px]">BEST</span></td>
+                              <td class="text-right text-up font-bold border-quant-r border-r-2">3.921</td><td class="text-right text-up">+$4,212</td><td class="text-right text-muted">142</td><td class="text-right font-bold">0.021</td>
+                              <td class="text-right text-orange-200/80">32</td><td class="text-right text-orange-200/80">-15.1</td><td class="text-right text-orange-200/80">75</td>
+                              <td class="text-right text-blue-200/80">-0.05</td><td class="text-right text-blue-200/80">0.02</td>
+                              <td class="text-center"><button class="bg-base border-quant px-1 rounded font-sans text-[8px] uppercase">Deploy</button></td>
+                          </tr>
+                          <!-- Extra row -->
+                          <tr class="hover:bg-hover group">
+                              <td class="text-center text-muted">1023</td><td class="text-center"><span class="text-muted text-[8px]">FIN</span></td>
+                              <td class="text-right text-primary border-quant-r border-r-2">3.810</td><td class="text-right text-up">+$3,910</td><td class="text-right text-muted">135</td><td class="text-right font-bold">0.040</td>
+                              <td class="text-right text-orange-200/80">35</td><td class="text-right text-orange-200/80">-14.0</td><td class="text-right text-orange-200/80">70</td>
+                              <td class="text-right text-blue-200/80">-0.06</td><td class="text-right text-blue-200/80">0.02</td>
+                              <td class="text-center"><button class="bg-base border-quant px-1 rounded font-sans text-[8px] uppercase">Deploy</button></td>
+                          </tr>
+                      </tbody>
+                  </table>
+              </div>
+          </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 3: FREQAI -->
+      <!-- ============================================== -->
+      <div id="tab-freqai" class="tab-content gap-1">
+          <div class="flex gap-1 h-full">
+              <div class="w-[340px] bg-panel border-quant flex flex-col p-2 overflow-y-auto shrink-0">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-primary mb-2 border-quant-b pb-1">🧠 FreqAI Configuration</span>
+                  <label class="lbl mt-1">Hyperopt Source</label><select class="inp"><option>0: No hyperopt results available</option></select>
+                  <label class="lbl mt-2">Training Timerange</label>
+                  <div class="flex gap-1"><input type="date" class="inp" value="2022-01-01"><input type="date" class="inp" value="2024-01-01"></div>
+                  <label class="lbl mt-2">Backtest Timerange</label>
+                  <div class="flex gap-1"><input type="date" class="inp" value="2024-01-01"><input type="date" class="inp" value="2025-01-01"></div>
+                  
+                  <span class="text-[9px] font-bold text-muted uppercase mt-4 mb-1 border-quant-b">ML Models (Matrix)</span>
+                  <div class="flex flex-wrap gap-1 mb-2">
+                      <button class="px-2 py-0.5 text-[9px] bg-link/10 border border-link/30 text-primary">LightGBMReg</button>
+                      <button class="px-2 py-0.5 text-[9px] bg-link/10 border border-link/30 text-primary">XGBoostReg</button>
+                      <button class="px-2 py-0.5 text-[9px] bg-base border-quant text-muted">CatBoostReg</button>
+                  </div>
+
+                  <span class="text-[9px] font-bold text-muted uppercase mt-2 mb-1 border-quant-b">Advanced Options</span>
+                  <div class="flex flex-col gap-1 mb-3">
+                      <label class="flex justify-between text-[10px] text-white">PCA <span>☑</span></label>
+                      <label class="flex justify-between text-[10px] text-white">Noise (Anti-Overfit) <span>☑</span></label>
+                      <label class="lbl mt-1">SVM Nu <span class="text-white ml-2">0.15</span></label>
+                      <input type="range" class="w-full accent-accent" min="0.01" max="0.5" step="0.01" value="0.15">
+                  </div>
+                  
+                  <div class="mt-auto flex gap-1 pt-2 border-quant-t">
+                      <button class="bg-primary text-base font-bold text-[10px] px-2 py-1 flex-1 uppercase tracking-wider">▶ RUN MATRIX (16)</button>
+                  </div>
+              </div>
+              <div class="flex-1 bg-base border-quant flex flex-col items-center justify-center p-4">
+                  <div class="text-[32px] opacity-20 mb-2">🧠</div>
+                  <div class="font-bold text-[12px] text-muted">No FreqAI results yet</div>
+                  <div class="text-[10px] text-muted text-center mt-1 max-w-[200px]">Configure ML models and click Run Matrix to start FreqAI training.</div>
+              </div>
+          </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 4: NAŠ AI -->
+      <!-- ============================================== -->
+      <div id="tab-ai" class="tab-content gap-1">
+          <div class="flex gap-1 h-full">
+              <div class="w-[300px] bg-panel border-quant flex flex-col p-2 shrink-0">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-primary mb-2 border-quant-b pb-1">AI Strategy Analyst</span>
+                  <label class="lbl mt-1">Scope</label>
+                  <select class="inp"><option>All tests (Svi testovi)</option><option>Backtest results only</option></select>
+                  <label class="lbl mt-3">AI Model</label>
+                  <select class="inp"><option>Claude 3.5 Sonnet (~$0.03)</option><option>GPT-4o</option></select>
+                  
+                  <button class="mt-4 bg-primary text-base font-bold text-[10px] px-2 py-2 flex items-center justify-center gap-2 uppercase tracking-wider">
+                      <i data-lucide="zap" class="w-3 h-3"></i> RUN AI ANALYSIS
+                  </button>
+              </div>
+              <div class="flex-1 bg-base border-quant flex flex-col items-center justify-center p-4">
+                  <div class="text-[32px] opacity-20 mb-2">🤖</div>
+                  <div class="font-bold text-[12px] text-muted">No AI analysis yet</div>
+                  <div class="text-[10px] text-muted text-center mt-1">Select a test and click Run Analysis.</div>
+              </div>
+          </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 5: VALIDATION -->
+      <!-- ============================================== -->
+      <div id="tab-validation" class="tab-content gap-1 overflow-y-auto">
+          <div class="max-w-[700px] mx-auto w-full flex flex-col gap-2 p-2">
+              
+              <!-- Verification -->
+              <div class="bg-panel border-quant p-3">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-primary border-quant-b pb-1 block mb-2">1. Verification Backtest</span>
+                  <div class="grid grid-cols-2 gap-2 mb-2">
+                      <div><label class="lbl">Source Test</label><select class="inp"><option>CmaEs · SortinoDaily · +15.2%</option></select></div>
+                      <div><label class="lbl">Verification Name</label><input type="text" class="inp" value="OOS 2025 verify"></div>
+                      <div><label class="lbl">Start Date</label><input type="date" class="inp" value="2025-01-01"></div>
+                      <div><label class="lbl">End Date</label><input type="date" class="inp" value="2026-01-01"></div>
+                  </div>
+                  <div class="bg-amber-500/10 border border-amber-500/30 p-2 text-[9px] text-muted mb-2">
+                      <strong class="text-amber-500">⚠ Use a DIFFERENT time period from training!</strong><br>
+                      Training period was 2022 to 2024. Use Out-Of-Sample data to verify.
+                  </div>
+                  <button class="w-full bg-primary text-base font-bold text-[10px] px-2 py-1.5 uppercase tracking-wider">▶ RUN VERIFICATION</button>
+              </div>
+
+              <!-- Lookahead -->
+              <div class="bg-panel border-quant p-3">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-primary border-quant-b pb-1 block mb-2">2. Lookahead Analysis (§21)</span>
+                  <p class="text-[10px] text-muted mb-2">Checks if strategy 'cheats' by using future data for decisions.</p>
+                  <button class="w-[200px] bg-primary text-base font-bold text-[10px] px-2 py-1.5 uppercase tracking-wider">▶ RUN LOOKAHEAD</button>
+              </div>
+
+              <!-- Recursive -->
+              <div class="bg-panel border-quant p-3">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-primary border-quant-b pb-1 block mb-2">3. Recursive Analysis (§22)</span>
+                  <p class="text-[10px] text-muted mb-2">Checks for circular indicator dependencies that cause feedback loops.</p>
+                  <button class="w-[200px] bg-primary text-base font-bold text-[10px] px-2 py-1.5 uppercase tracking-wider">▶ RUN RECURSIVE</button>
+              </div>
+
+          </div>
+      </div>
+
+  </main>
+
+  <!-- OVERLAYS (Hidden by default) -->
+  <div id="overlay-container" class="overlay p-4 justify-center items-center">
+      <div class="bg-panel border-quant w-[800px] h-[500px] flex flex-col">
+          <div class="h-8 border-quant-b flex justify-between items-center px-3 bg-base">
+              <span id="overlay-title" class="font-bold text-[12px] uppercase tracking-widest text-primary">TITLE</span>
+              <button onclick="closeOverlay()" class="text-muted hover:text-white">✕</button>
+          </div>
+          <div class="flex-1 p-4 text-[10px] text-muted flex items-center justify-center">
+              (Overlay content renders here...)
+          </div>
+      </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    function switchTab(tabId) {
+        // Hide all tabs
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        // Show target
+        document.getElementById(tabId).classList.add('active');
+        
+        // Update button styles
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('text-primary', 'border-accent');
+            btn.classList.add('text-muted', 'border-transparent');
+            btn.querySelector('span').classList.remove('bg-accent', 'text-base');
+            btn.querySelector('span').classList.add('bg-base', 'border', 'border-quant');
+        });
+        
+        // Activate current button
+        const activeBtn = document.getElementById('btn-' + tabId);
+        activeBtn.classList.add('text-primary', 'border-accent');
+        activeBtn.classList.remove('text-muted', 'border-transparent');
+        activeBtn.querySelector('span').classList.add('bg-accent', 'text-base');
+        activeBtn.querySelector('span').classList.remove('bg-base', 'border', 'border-quant');
+    }
+
+    function openOverlay(title) {
+        document.getElementById('overlay-title').innerText = title.toUpperCase();
+        document.getElementById('overlay-container').classList.add('active');
+    }
+
+    function closeOverlay() {
+        document.getElementById('overlay-container').classList.remove('active');
+    }
+
+    // Init tab 1
+    switchTab('tab-backtest');
+  </script>
+</body>
+</html>

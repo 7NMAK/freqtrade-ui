@@ -8,6 +8,11 @@ import {
   AiVerdict,
 } from '@/lib/experiments';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const INPUT = "w-full h-[34px] py-0 px-3 bg-bg-3 border border-border rounded-btn text-[12px] text-text-0 placeholder-text-3 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all";
+const SELECT = "w-full h-[34px] py-0 px-3 bg-bg-3 border border-border rounded-btn text-[12px] text-text-0 focus:outline-none focus:border-accent cursor-pointer appearance-none transition-all";
+const LABEL = "block text-[10px] font-semibold text-text-3 uppercase tracking-[0.5px] mb-[4px]";
+
 interface AnalysisResult {
   verdict: AiVerdict;
   scores: {
@@ -69,6 +74,20 @@ const mockAnalysisResult: AnalysisResult = {
   },
   timestamp: '2026-03-30T14:22:00Z',
 };
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-[12px] text-text-1">{label}</span>
+      <label className="relative w-[36px] h-[20px] cursor-pointer inline-block flex-shrink-0">
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="hidden" />
+        <span className={`absolute inset-0 rounded-[10px] border transition-all ${checked ? "bg-[rgba(34,197,94,0.08)] border-green" : "bg-bg-3 border-border"}`} />
+        <span className={`absolute w-[14px] h-[14px] bg-white rounded-full top-[3px] transition-all ${checked ? "left-[19px]" : "left-[3px]"}`} />
+      </label>
+    </div>
+  );
+}
 
 const ScoreCard: React.FC<{
   label: string;
@@ -189,7 +208,7 @@ const VerdictBanner: React.FC<{ verdict: AiVerdict; avgScore: number }> = ({
       <div className="flex items-center gap-3">
         <span className="text-[24px]">{cfg.emoji}</span>
         <div className="flex-1">
-          <div style={{ color: cfg.color }} className="font-semibold text-[13px]">
+          <div style={{ color: cfg.color }} className="font-semibold text-[12px]">
             {cfg.text}
           </div>
           <div className="text-[11px] text-text-1 mt-0.5">{cfg.desc}</div>
@@ -234,16 +253,16 @@ export default function AiReviewTab({ strategy: _strategy }: { strategy: string 
       {/* LEFT PANEL: FORM (380px) */}
       <div className="w-[380px] flex-shrink-0">
         <div className="bg-bg-1 border border-border rounded-card p-4">
-          <h3 className="text-[13px] font-semibold text-text-0 mb-4">AI Strategy Analyst</h3>
+          <h3 className="text-[12px] font-semibold text-text-0 mb-4">AI Strategy Analyst</h3>
 
           <div className="space-y-4">
             {/* Scope */}
             <div>
-              <label className="form-label">Scope</label>
+              <label className={LABEL}>Scope</label>
               <select
                 value={scope}
                 onChange={(e) => setScope(e.target.value as typeof scope)}
-                className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
+                className={SELECT}
               >
                 <option value="all">All tests (Svi testovi)</option>
                 <option value="selected">Selected test</option>
@@ -255,11 +274,11 @@ export default function AiReviewTab({ strategy: _strategy }: { strategy: string 
 
             {/* AI Model */}
             <div>
-              <label className="form-label">AI Model</label>
+              <label className={LABEL}>AI Model</label>
               <select
                 value={selectedModel}
                 onChange={(e) => setSelectedModel(e.target.value)}
-                className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
+                className={SELECT}
               >
                 {AI_MODELS.map((model) => (
                   <option key={model.value} value={model.value}>
@@ -276,7 +295,7 @@ export default function AiReviewTab({ strategy: _strategy }: { strategy: string 
             <button
               onClick={handleRunAnalysis}
               disabled={isRunning}
-              className="w-full inline-flex items-center justify-center gap-[6px] py-[8px] px-[14px] rounded-btn text-[12px] font-medium border bg-accent border-accent text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full h-[34px] inline-flex items-center justify-center gap-[6px] rounded-btn text-[12px] font-medium border bg-accent border-accent text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isRunning ? (
                 <>
@@ -377,25 +396,25 @@ export default function AiReviewTab({ strategy: _strategy }: { strategy: string 
             {/* Top 3 Concerns */}
             <div className="bg-bg-1 border border-border rounded-card overflow-hidden">
               <div className="bg-bg-1 border-b border-border px-4 py-2">
-                <div className="text-[13px] font-semibold text-text-0">Top 3 Concerns</div>
+                <div className="text-[12px] font-semibold text-text-0">Top 3 Concerns</div>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-[11px]">
                   <thead>
                     <tr className="border-b border-border">
-                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                      <th className={`py-2 px-3 text-left ${LABEL}`}>
                         Severity
                       </th>
-                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                      <th className={`py-2 px-3 text-left ${LABEL}`}>
                         Metric
                       </th>
-                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                      <th className={`py-2 px-3 text-left ${LABEL}`}>
                         Value
                       </th>
-                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                      <th className={`py-2 px-3 text-left ${LABEL}`}>
                         Threshold
                       </th>
-                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                      <th className={`py-2 px-3 text-left ${LABEL}`}>
                         Message
                       </th>
                     </tr>
@@ -445,7 +464,7 @@ export default function AiReviewTab({ strategy: _strategy }: { strategy: string 
                 border: '1px solid rgba(34, 197, 94, 0.25)',
               }}
             >
-              <div className="text-[13px] font-semibold text-text-0 mb-3">AI Recommendation</div>
+              <div className="text-[12px] font-semibold text-text-0 mb-3">AI Recommendation</div>
               <div className="space-y-3 text-[11px] text-text-1">
                 <div>
                   <strong>Best Hyperopt Run:</strong> {mockAnalysisResult.recommendation.hyperoptWinner}
@@ -453,14 +472,14 @@ export default function AiReviewTab({ strategy: _strategy }: { strategy: string 
                 <div>
                   <strong>Best FreqAI Run:</strong> {mockAnalysisResult.recommendation.freqaiWinner}
                 </div>
-                <div className="bg-bg-1 border border-border rounded-btn p-3 text-[10.5px]">
+                <div className="bg-bg-1 border border-border rounded-btn p-3 text-[10px]">
                   {mockAnalysisResult.recommendation.why}
                 </div>
                 <div className="flex gap-2 pt-2">
-                  <button className="flex-1 inline-flex items-center justify-center gap-1 py-2 px-3 rounded-btn text-[12px] font-medium bg-green-600 hover:bg-green-700 text-white border border-green-600 transition-colors">
+                  <button className="flex-1 h-[34px] inline-flex items-center justify-center gap-1 rounded-btn text-[12px] font-medium bg-green-600 hover:bg-green-700 text-white border border-green-600 transition-colors">
                     → Use This Recommendation
                   </button>
-                  <button className="flex-1 inline-flex items-center justify-center gap-1 py-2 px-3 rounded-btn text-[12px] font-medium bg-transparent border border-border text-text-0 hover:bg-bg-2 transition-colors">
+                  <button className="flex-1 h-[34px] inline-flex items-center justify-center gap-1 rounded-btn text-[12px] font-medium bg-transparent border border-border text-text-0 hover:bg-bg-2 transition-colors">
                     No, I&apos;ll choose myself
                   </button>
                 </div>
@@ -470,31 +489,31 @@ export default function AiReviewTab({ strategy: _strategy }: { strategy: string 
             {/* Analysis History */}
             <div className="bg-bg-1 border border-border rounded-card overflow-hidden">
               <div className="bg-bg-1 border-b border-border px-4 py-2">
-                <div className="text-[13px] font-semibold text-text-0">Analysis History</div>
+                <div className="text-[12px] font-semibold text-text-0">Analysis History</div>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-[11px]">
                   <thead>
                     <tr className="border-b border-border">
-                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                      <th className={`py-2 px-3 text-left ${LABEL}`}>
                         Date
                       </th>
-                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                      <th className={`py-2 px-3 text-left ${LABEL}`}>
                         Verdict
                       </th>
-                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                      <th className={`py-2 px-3 text-left ${LABEL}`}>
                         Scope
                       </th>
-                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                      <th className={`py-2 px-3 text-left ${LABEL}`}>
                         Overfitting
                       </th>
-                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                      <th className={`py-2 px-3 text-left ${LABEL}`}>
                         Consistency
                       </th>
-                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                      <th className={`py-2 px-3 text-left ${LABEL}`}>
                         Risk
                       </th>
-                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                      <th className={`py-2 px-3 text-left ${LABEL}`}>
                         Robustness
                       </th>
                     </tr>

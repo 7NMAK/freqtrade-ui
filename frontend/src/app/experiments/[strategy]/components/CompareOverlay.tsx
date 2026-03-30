@@ -5,6 +5,11 @@ import { Plus } from 'lucide-react';
 import Tooltip from '@/components/ui/Tooltip';
 import { fmtPct } from '@/lib/experiments';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const INPUT = "w-full h-[34px] py-0 px-3 bg-bg-3 border border-border rounded-btn text-[12px] text-text-0 placeholder-text-3 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all";
+const SELECT = "w-full h-[34px] py-0 px-3 bg-bg-3 border border-border rounded-btn text-[12px] text-text-0 focus:outline-none focus:border-accent cursor-pointer appearance-none transition-all";
+const LABEL = "block text-[10px] font-semibold text-text-3 uppercase tracking-[0.5px] mb-[4px]";
+
 interface ComparisonMetric {
   label: string;
   testA: string | number;
@@ -196,7 +201,7 @@ export default function CompareOverlay({ onClose }: { onClose: () => void; strat
       {/* Header */}
       <div className="border-b border-border px-6 py-5">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">⚖️ Compare Tests</h2>
+          <h2 className="text-[14px] font-semibold">⚖️ Compare Tests</h2>
           <button
             onClick={onClose}
             className="text-text-2 hover:text-text-0 transition text-lg"
@@ -208,13 +213,11 @@ export default function CompareOverlay({ onClose }: { onClose: () => void; strat
         {/* Test Selectors */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px]">
-              Test A (Baseline)
-            </label>
+            <label className={LABEL}>Test A (Baseline)</label>
             <select
               value={testAId}
               onChange={(e) => setTestAId(e.target.value)}
-              className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 cursor-pointer appearance-none"
+              className={SELECT}
             >
               {mockTests.map((test) => (
                 <option key={test.id} value={test.id}>
@@ -225,13 +228,11 @@ export default function CompareOverlay({ onClose }: { onClose: () => void; strat
           </div>
 
           <div>
-            <label className="block text-[10.5px] font-semibold text-text-2 uppercase tracking-[0.5px] mb-[5px]">
-              Test B (Comparison)
-            </label>
+            <label className={LABEL}>Test B (Comparison)</label>
             <select
               value={testBId}
               onChange={(e) => setTestBId(e.target.value)}
-              className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 cursor-pointer appearance-none"
+              className={SELECT}
             >
               {mockTests.map((test) => (
                 <option key={test.id} value={test.id}>
@@ -243,7 +244,7 @@ export default function CompareOverlay({ onClose }: { onClose: () => void; strat
         </div>
 
         {/* Run Comparison Button */}
-        <button className="w-full mt-4 py-2 px-4 bg-accent hover:bg-[#5558e3] text-white text-[12.5px] font-semibold rounded-btn transition">
+        <button className="w-full mt-4 h-[34px] px-4 bg-accent hover:bg-[#5558e3] text-white text-[12px] font-semibold rounded-btn transition">
           ⚖️ Run Comparison
         </button>
       </div>
@@ -340,11 +341,11 @@ export default function CompareOverlay({ onClose }: { onClose: () => void; strat
 
           {/* Action Buttons */}
           <div className="flex gap-2">
-            <button className="flex-1 py-2 px-4 bg-accent hover:bg-[#5558e3] text-white text-[12px] font-semibold rounded-btn transition">
+            <button className="flex-1 h-[34px] px-4 bg-accent hover:bg-[#5558e3] text-white text-[12px] font-semibold rounded-btn transition flex items-center justify-center gap-2">
               → Verify Winner (Test A)
             </button>
-            <button className="flex-1 py-2 px-4 bg-bg-2 border border-border hover:border-accent text-text-0 text-[12px] font-semibold rounded-btn transition flex items-center justify-center gap-2">
-              <Plus size={14} /> Add Another Test
+            <button className="flex-1 h-[34px] px-4 bg-bg-2 border border-border hover:border-accent text-text-0 text-[12px] font-semibold rounded-btn transition flex items-center justify-center gap-2">
+              <Plus size={14} /> Add Another
             </button>
           </div>
         </div>

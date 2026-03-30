@@ -3,6 +3,10 @@
 import React, { useState, useMemo } from 'react';
 import { fmtDateTime, fmtPct, profitColor } from '@/lib/experiments';
 
+const INPUT = "w-full h-[34px] py-0 px-3 bg-bg-3 border border-border rounded-btn text-[12px] text-text-0 placeholder-text-3 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all";
+const SELECT = "w-full h-[34px] py-0 px-3 bg-bg-3 border border-border rounded-btn text-[12px] text-text-0 focus:outline-none focus:border-accent cursor-pointer appearance-none transition-all";
+const LABEL = "block text-[10px] font-semibold text-text-3 uppercase tracking-[0.5px] mb-[4px]";
+
 interface Test {
   id: string;
   name: string;
@@ -411,6 +415,7 @@ export default function AllTestsOverlay({}: { onClose: () => void; strategy: str
       <div className="border-b border-border px-[16px] py-[12px] space-y-[12px]">
         <div className="flex gap-[12px] items-end flex-wrap">
           <div className="flex-1 min-w-[200px]">
+            <label className={LABEL}>Search</label>
             <input
               type="text"
               placeholder="Search tests..."
@@ -419,19 +424,22 @@ export default function AllTestsOverlay({}: { onClose: () => void; strategy: str
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full bg-bg-2 border border-border rounded-btn px-[12px] py-[8px] text-[12px] text-text-0 placeholder-text-3 focus:outline-none focus:border-accent"
+              className={INPUT}
             />
           </div>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortKey)}
-            className="bg-bg-2 border border-border rounded-btn px-[12px] py-[8px] text-[12px] text-text-0 focus:outline-none focus:border-accent"
-          >
-            <option value="date">Sort: Date</option>
-            <option value="profit">Sort: Profit</option>
-            <option value="sharpe">Sort: Sharpe</option>
-            <option value="type">Sort: Type</option>
-          </select>
+          <div>
+            <label className={LABEL}>Sort By</label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortKey)}
+              className={SELECT}
+            >
+              <option value="date">Date</option>
+              <option value="profit">Profit</option>
+              <option value="sharpe">Sharpe</option>
+              <option value="type">Type</option>
+            </select>
+          </div>
         </div>
 
         {/* Type filters */}
@@ -657,7 +665,7 @@ export default function AllTestsOverlay({}: { onClose: () => void; strategy: str
                   </span>
                 </td>
                 <td className="py-[8px] px-[10px] text-[11px] whitespace-nowrap">
-                  <button className="inline-flex items-center gap-[4px] px-[10px] py-[4px] bg-accent hover:bg-[#5558e6] text-white rounded-btn text-[11px] font-medium border border-accent transition">
+                  <button className="inline-flex items-center justify-center h-[30px] px-[12px] bg-accent hover:bg-[#5558e6] text-white rounded-btn text-[11px] font-medium border border-accent transition">
                     View
                   </button>
                 </td>
@@ -677,7 +685,7 @@ export default function AllTestsOverlay({}: { onClose: () => void; strategy: str
           <button
             onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
             disabled={currentPage === 1}
-            className="inline-flex items-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border border-border bg-bg-2 text-text-1 hover:text-text-0 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            className="inline-flex items-center justify-center h-[34px] px-[14px] rounded-btn text-[12px] font-medium border border-border bg-bg-2 text-text-1 hover:text-text-0 disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
             ← Prev
           </button>
@@ -688,7 +696,7 @@ export default function AllTestsOverlay({}: { onClose: () => void; strategy: str
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  className={`inline-flex items-center gap-[6px] py-[6px] px-[10px] rounded-btn text-[12px] font-medium border transition ${
+                  className={`inline-flex items-center justify-center h-[34px] w-[34px] rounded-btn text-[12px] font-medium border transition ${
                     page === currentPage
                       ? 'bg-accent border-accent text-white'
                       : 'border-border bg-bg-2 text-text-1 hover:text-text-0'
@@ -703,7 +711,7 @@ export default function AllTestsOverlay({}: { onClose: () => void; strategy: str
           <button
             onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
             disabled={currentPage === totalPages}
-            className="inline-flex items-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border border-border bg-bg-2 text-text-1 hover:text-text-0 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            className="inline-flex items-center justify-center h-[34px] px-[14px] rounded-btn text-[12px] font-medium border border-border bg-bg-2 text-text-1 hover:text-text-0 disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
             Next →
           </button>

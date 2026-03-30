@@ -4,6 +4,11 @@ import React, { useState } from 'react';
 import Tooltip from '@/components/ui/Tooltip';
 import { profitColor } from '@/lib/experiments';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const INPUT = "w-full h-[34px] py-0 px-3 bg-bg-3 border border-border rounded-btn text-[12px] text-text-0 placeholder-text-3 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all";
+const SELECT = "w-full h-[34px] py-0 px-3 bg-bg-3 border border-border rounded-btn text-[12px] text-text-0 focus:outline-none focus:border-accent cursor-pointer appearance-none transition-all";
+const LABEL = "block text-[10px] font-semibold text-text-3 uppercase tracking-[0.5px] mb-[4px]";
+
 type AnalysisTab = 'enterTags' | 'exitReasons' | 'tradingList' | 'rejectedSignals' | 'indicatorAnalysis' | 'signalAnalysis';
 
 interface EnterTagData {
@@ -60,7 +65,7 @@ export default function AnalysisOverlay({ onClose, strategy: _strategy }: { onCl
       {/* Header */}
       <div className="border-b border-border px-6 py-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[16px] font-semibold text-text-0 flex items-center gap-2">
+          <h2 className="text-[14px] font-semibold text-text-0 flex items-center gap-2">
             📊 Analysis — §30 Deep Dive
           </h2>
           <button
@@ -73,10 +78,8 @@ export default function AnalysisOverlay({ onClose, strategy: _strategy }: { onCl
 
         {/* Test Selector */}
         <div className="space-y-2">
-          <label className="text-[11px] uppercase tracking-[0.5px] font-semibold text-text-3">
-            Select Test
-          </label>
-          <select className="w-full bg-bg-2 border border-border rounded-btn px-3 py-2 text-[12px] text-text-0 focus:outline-none focus:border-accent">
+          <label className={LABEL}>Select Test</label>
+          <select className={SELECT}>
             <option>CmaEs · SortinoDaily Signals · Hyperopt · 2026-03-28 15:42 · +15.2%</option>
             <option>TPE · Sharpe Optimization · Hyperopt · 2026-03-29 22:41 · +12.1%</option>
             <option>LightGBM+DI Strategy · FreqAI · 2026-03-30 11:28 · +13.8%</option>
@@ -92,14 +95,14 @@ export default function AnalysisOverlay({ onClose, strategy: _strategy }: { onCl
           {['All', 'Hyperopt', 'FreqAI', 'Backtest', 'Verification'].map((chip) => (
             <button
               key={chip}
-              className="px-3 py-1.5 text-[11px] font-semibold text-text-1 bg-bg-2 border border-border rounded-btn hover:border-accent transition"
+              className="h-[30px] px-3 text-[11px] font-semibold text-text-1 bg-bg-2 border border-border rounded-btn hover:border-accent transition"
             >
               {chip}
             </button>
           ))}
         </div>
 
-        <button className="w-full px-3 py-2 text-[12px] font-semibold bg-accent text-white rounded-btn border border-accent hover:opacity-90 transition">
+        <button className="w-full h-[34px] px-3 text-[12px] font-semibold bg-accent text-white rounded-btn border border-accent hover:opacity-90 transition">
           ⭐ Analyze Promoted Test
         </button>
       </div>
@@ -169,33 +172,33 @@ export default function AnalysisOverlay({ onClose, strategy: _strategy }: { onCl
               <table className="w-full text-[11px]">
                 <thead className="bg-bg-2 border-b border-border">
                   <tr>
-                    <th className="py-2 px-[10px] text-left uppercase tracking-[0.5px] font-semibold text-text-3">
+                    <th className="py-2 px-[10px] text-left text-[10px] uppercase tracking-[0.5px] font-semibold text-text-3">
                       <Tooltip content="Label assigned to each entry signal to identify the trigger">
                         Enter Tag
                       </Tooltip>
                     </th>
-                    <th className="py-2 px-[10px] text-right uppercase tracking-[0.5px] font-semibold text-text-3">
+                    <th className="py-2 px-[10px] text-right text-[10px] uppercase tracking-[0.5px] font-semibold text-text-3">
                       Trades
                     </th>
-                    <th className="py-2 px-[10px] text-right uppercase tracking-[0.5px] font-semibold text-text-3">
+                    <th className="py-2 px-[10px] text-right text-[10px] uppercase tracking-[0.5px] font-semibold text-text-3">
                       <Tooltip content="Percentage of profitable trades for this signal type">
                         Win Rate
                       </Tooltip>
                     </th>
-                    <th className="py-2 px-[10px] text-right uppercase tracking-[0.5px] font-semibold text-text-3">
+                    <th className="py-2 px-[10px] text-right text-[10px] uppercase tracking-[0.5px] font-semibold text-text-3">
                       <Tooltip content="Average profit per trade using this signal">
                         Avg Profit%
                       </Tooltip>
                     </th>
-                    <th className="py-2 px-[10px] text-right uppercase tracking-[0.5px] font-semibold text-text-3">
+                    <th className="py-2 px-[10px] text-right text-[10px] uppercase tracking-[0.5px] font-semibold text-text-3">
                       Total Profit
                     </th>
-                    <th className="py-2 px-[10px] text-right uppercase tracking-[0.5px] font-semibold text-text-3">
+                    <th className="py-2 px-[10px] text-right text-[10px] uppercase tracking-[0.5px] font-semibold text-text-3">
                       <Tooltip content="Average time the position is held">
                         Avg Duration
                       </Tooltip>
                     </th>
-                    <th className="py-2 px-[10px] text-right uppercase tracking-[0.5px] font-semibold text-text-3">
+                    <th className="py-2 px-[10px] text-right text-[10px] uppercase tracking-[0.5px] font-semibold text-text-3">
                       <Tooltip content="Maximum drawdown from peak for this signal group">
                         Max DD
                       </Tooltip>
@@ -237,22 +240,22 @@ export default function AnalysisOverlay({ onClose, strategy: _strategy }: { onCl
               <table className="w-full text-[11px]">
                 <thead className="bg-bg-2 border-b border-border">
                   <tr>
-                    <th className="py-2 px-[10px] text-left uppercase tracking-[0.5px] font-semibold text-text-3">
+                    <th className="py-2 px-[10px] text-left text-[10px] uppercase tracking-[0.5px] font-semibold text-text-3">
                       Exit Reason
                     </th>
-                    <th className="py-2 px-[10px] text-right uppercase tracking-[0.5px] font-semibold text-text-3">
+                    <th className="py-2 px-[10px] text-right text-[10px] uppercase tracking-[0.5px] font-semibold text-text-3">
                       Trades
                     </th>
-                    <th className="py-2 px-[10px] text-right uppercase tracking-[0.5px] font-semibold text-text-3">
+                    <th className="py-2 px-[10px] text-right text-[10px] uppercase tracking-[0.5px] font-semibold text-text-3">
                       Win Rate
                     </th>
-                    <th className="py-2 px-[10px] text-right uppercase tracking-[0.5px] font-semibold text-text-3">
+                    <th className="py-2 px-[10px] text-right text-[10px] uppercase tracking-[0.5px] font-semibold text-text-3">
                       Avg Profit%
                     </th>
-                    <th className="py-2 px-[10px] text-right uppercase tracking-[0.5px] font-semibold text-text-3">
+                    <th className="py-2 px-[10px] text-right text-[10px] uppercase tracking-[0.5px] font-semibold text-text-3">
                       Total Profit
                     </th>
-                    <th className="py-2 px-[10px] text-right uppercase tracking-[0.5px] font-semibold text-text-3">
+                    <th className="py-2 px-[10px] text-right text-[10px] uppercase tracking-[0.5px] font-semibold text-text-3">
                       Avg Duration
                     </th>
                   </tr>

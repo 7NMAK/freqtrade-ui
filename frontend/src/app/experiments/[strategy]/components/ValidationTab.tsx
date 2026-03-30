@@ -3,6 +3,11 @@
 import { useState } from 'react';
 import Tooltip from '@/components/ui/Tooltip';
 
+// Design system constants
+const INPUT = "w-full h-[34px] py-0 px-3 bg-bg-3 border border-border rounded-btn text-[12px] text-text-0 placeholder-text-3 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all";
+const SELECT = "w-full h-[34px] py-0 px-3 bg-bg-3 border border-border rounded-btn text-[12px] text-text-0 focus:outline-none focus:border-accent cursor-pointer appearance-none transition-all";
+const LABEL = "block text-[10px] font-semibold text-text-3 uppercase tracking-[0.5px] mb-[4px]";
+
 // Mock data for source experiments
 const mockExperiments = [
   {
@@ -74,6 +79,21 @@ const recursiveIndicators = [
   { name: 'EMA(50)', depends: 'close only', status: 'PASS' },
 ];
 
+// Toggle component
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-[12px] text-text-1">{label}</span>
+      <label className="relative w-[36px] h-[20px] cursor-pointer inline-block flex-shrink-0">
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="hidden" />
+        <span className={`absolute inset-0 rounded-[10px] border transition-all ${checked ? "bg-[rgba(34,197,94,0.08)] border-green" : "bg-bg-3 border-border"}`} />
+        <span className={`absolute w-[14px] h-[14px] bg-white rounded-full top-[3px] transition-all ${checked ? "left-[19px]" : "left-[3px]"}`} />
+      </label>
+    </div>
+  );
+}
+
 export default function ValidationTab({}: { strategy?: string }) {
   const [sourceExperiment, setSourceExperiment] = useState('exp-001');
   const [verificationName, setVerificationName] = useState('OOS 2025 verify CmaEs');
@@ -116,17 +136,17 @@ export default function ValidationTab({}: { strategy?: string }) {
       {/* ===== SECTION 1: VERIFICATION BACKTEST ===== */}
       <div className="bg-bg-1 border border-border rounded-card p-4">
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-[13px] font-semibold text-text-0">1. Verification Backtest</span>
+          <span className="text-[12px] font-semibold text-text-0">1. Verification Backtest</span>
         </div>
 
         <div className="space-y-3 mb-4">
           {/* Source Test */}
           <div>
-            <label className="form-label">Source Test</label>
+            <label className={LABEL}>Source Test</label>
             <select
               value={sourceExperiment}
               onChange={(e) => setSourceExperiment(e.target.value)}
-              className="form-input w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
+              className={SELECT}
             >
               {mockExperiments.map((exp) => (
                 <option key={exp.id} value={exp.id}>
@@ -138,45 +158,45 @@ export default function ValidationTab({}: { strategy?: string }) {
 
           {/* Verification Name */}
           <div>
-            <label className="form-label">Verification Name</label>
+            <label className={LABEL}>Verification Name</label>
             <input
               type="text"
               value={verificationName}
               onChange={(e) => setVerificationName(e.target.value)}
-              className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
+              className={INPUT}
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="form-label">Description (Optional)</label>
+            <label className={LABEL}>Description (Optional)</label>
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add notes about this verification..."
-              className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 placeholder:text-text-3 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
+              className={INPUT}
             />
           </div>
 
           {/* Date Range */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="form-label">Start Date</label>
+              <label className={LABEL}>Start Date</label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
+                className={INPUT}
               />
             </div>
             <div>
-              <label className="form-label">End Date</label>
+              <label className={LABEL}>End Date</label>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
+                className={INPUT}
               />
             </div>
           </div>
@@ -202,7 +222,7 @@ export default function ValidationTab({}: { strategy?: string }) {
 
           {/* Optimized Parameters (Readonly) */}
           <div className="bg-bg-2 border border-border rounded-btn p-3">
-            <div className="text-[10px] text-text-3 uppercase tracking-[0.5px] font-semibold mb-2">
+            <div className={`${LABEL} mb-2`}>
               Optimized Parameters (Readonly)
             </div>
             {selectedExp && (
@@ -233,7 +253,7 @@ export default function ValidationTab({}: { strategy?: string }) {
           <button
             onClick={handleRunVerification}
             disabled={isRunning}
-            className="w-full inline-flex items-center justify-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-accent border-accent text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-[34px] inline-flex items-center justify-center gap-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-accent border-accent text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isRunning ? (
               <>
@@ -266,8 +286,8 @@ export default function ValidationTab({}: { strategy?: string }) {
 
             {/* PASS Criteria Box */}
             <div className="bg-bg-2 border border-border rounded-btn p-3">
-              <div className="text-[11px] font-semibold mb-2">PASS Criteria:</div>
-              <div className="text-[11px] text-text-2 space-y-1">
+              <div className="text-[12px] font-semibold mb-2">PASS Criteria:</div>
+              <div className="text-[12px] text-text-2 space-y-1">
                 <div>
                   ✓ Win Rate drop &lt; 15%{' '}
                   <Tooltip content="Strategy must maintain at least 85% of training win rate">
@@ -297,7 +317,7 @@ export default function ValidationTab({}: { strategy?: string }) {
 
             {/* Metrics Table */}
             <div className="overflow-x-auto">
-              <table className="w-full text-[11px]">
+              <table className="w-full text-[12px]">
                 <thead className="border-b border-border">
                   <tr>
                     <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">
@@ -330,7 +350,7 @@ export default function ValidationTab({}: { strategy?: string }) {
                       <td className="py-2 px-[10px] text-text-1">{metric.name}</td>
                       <td className="py-2 px-[10px] text-text-1 text-center">{metric.training}</td>
                       <td className="py-2 px-[10px] text-text-1 text-center">{metric.new}</td>
-                      <td className="py-2 px-[10px] text-text-2 text-center text-[10px]">{metric.diff}</td>
+                      <td className="py-2 px-[10px] text-text-2 text-center text-[12px]">{metric.diff}</td>
                       <td className="py-2 px-[10px] text-center">
                         {metric.badge === 'pass' && (
                           <span className="inline-flex items-center px-2 py-1 rounded-[50px] text-[10px] font-semibold bg-[rgba(34,197,94,0.08)] text-green border border-[rgba(34,197,94,0.25)]">
@@ -347,10 +367,10 @@ export default function ValidationTab({}: { strategy?: string }) {
 
             {/* Action Buttons */}
             <div className="flex gap-2">
-              <button className="flex-1 inline-flex items-center justify-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-[rgba(34,197,94,0.08)] border-[rgba(34,197,94,0.25)] text-green hover:bg-[rgba(34,197,94,0.15)]">
+              <button className="flex-1 h-[34px] inline-flex items-center justify-center gap-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-[rgba(34,197,94,0.08)] border-[rgba(34,197,94,0.25)] text-green hover:bg-[rgba(34,197,94,0.15)]">
                 ⭐ Promote to Version ★
               </button>
-              <button className="flex-1 inline-flex items-center justify-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-accent border-accent text-white hover:bg-[#5558e6]">
+              <button className="flex-1 h-[34px] inline-flex items-center justify-center gap-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-accent border-accent text-white hover:bg-[#5558e6]">
                 → Paper Trading
               </button>
             </div>
@@ -368,10 +388,10 @@ export default function ValidationTab({}: { strategy?: string }) {
       {/* ===== SECTION 2: LOOKAHEAD ANALYSIS ===== */}
       <div className="bg-bg-1 border border-border rounded-card p-4">
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-[13px] font-semibold text-text-0">
+          <span className="text-[12px] font-semibold text-text-0">
             2. Lookahead Analysis{' '}
             <Tooltip content="§21: Lookahead Bias Detection">
-              <span className="text-text-3 text-[11px] cursor-help">(§21)</span>
+              <span className="text-text-3 text-[10px] cursor-help">(§21)</span>
             </Tooltip>
           </span>
         </div>
@@ -383,7 +403,7 @@ export default function ValidationTab({}: { strategy?: string }) {
         <button
           onClick={handleRunLookahead}
           disabled={isRunning}
-          className="inline-flex items-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-accent border-accent text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed mb-3"
+          className="h-[34px] inline-flex items-center gap-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-accent border-accent text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed mb-3"
         >
           {isRunning ? (
             <>
@@ -407,7 +427,7 @@ export default function ValidationTab({}: { strategy?: string }) {
 
             {/* Lookahead Table */}
             <div className="overflow-x-auto">
-              <table className="w-full text-[11px]">
+              <table className="w-full text-[12px]">
                 <thead className="border-b border-border">
                   <tr>
                     <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">
@@ -434,7 +454,7 @@ export default function ValidationTab({}: { strategy?: string }) {
                           ✓ {signal.status}
                         </span>
                       </td>
-                      <td className="py-2 px-[10px] text-text-2 text-[10px]">{signal.details}</td>
+                      <td className="py-2 px-[10px] text-text-2 text-[12px]">{signal.details}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -447,10 +467,10 @@ export default function ValidationTab({}: { strategy?: string }) {
       {/* ===== SECTION 3: RECURSIVE ANALYSIS ===== */}
       <div className="bg-bg-1 border border-border rounded-card p-4">
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-[13px] font-semibold text-text-0">
+          <span className="text-[12px] font-semibold text-text-0">
             3. Recursive Analysis{' '}
             <Tooltip content="§22: Recursive Indicator Dependencies">
-              <span className="text-text-3 text-[11px] cursor-help">(§22)</span>
+              <span className="text-text-3 text-[10px] cursor-help">(§22)</span>
             </Tooltip>
           </span>
         </div>
@@ -462,7 +482,7 @@ export default function ValidationTab({}: { strategy?: string }) {
         <button
           onClick={handleRunRecursive}
           disabled={isRunning}
-          className="inline-flex items-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-accent border-accent text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed mb-3"
+          className="h-[34px] inline-flex items-center gap-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-accent border-accent text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed mb-3"
         >
           {isRunning ? (
             <>
@@ -488,7 +508,7 @@ export default function ValidationTab({}: { strategy?: string }) {
 
             {/* Recursive Table */}
             <div className="overflow-x-auto">
-              <table className="w-full text-[11px]">
+              <table className="w-full text-[12px]">
                 <thead className="border-b border-border">
                   <tr>
                     <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">
@@ -523,7 +543,7 @@ export default function ValidationTab({}: { strategy?: string }) {
             </div>
 
             {/* Info Box */}
-            <div className="bg-bg-2 border border-border rounded-btn px-3 py-2 text-[11px] text-text-2">
+            <div className="bg-bg-2 border border-border rounded-btn px-3 py-2 text-[12px] text-text-2">
               <strong>Recommended order:</strong>
               <br />
               1) Lookahead Analysis (fast, checks code) → 2) Recursive Analysis (fast, checks code) → 3)

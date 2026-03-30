@@ -111,27 +111,27 @@ function isToday(dateStr: string | null | undefined): boolean {
 function StatusBadge({ status, isDryRun }: { status: string; isDryRun: boolean }) {
   if (status === "draining") {
     return (
-      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-bg text-amber uppercase tracking-wide border border-amber/20 animate-pulse">
+      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500-500 uppercase tracking-wide border border-amber-500-500-500/20 animate-pulse">
         Draining
       </span>
     );
   }
   if (status !== "running") {
     return (
-      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-bg-3 text-text-3 uppercase tracking-wide border border-border">
+      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground uppercase tracking-wide border border-border">
         Stopped
       </span>
     );
   }
   if (isDryRun) {
     return (
-      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-bg text-amber uppercase tracking-wide border border-amber/20">
+      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500-500 uppercase tracking-wide border border-amber-500-500-500/20">
         Paper
       </span>
     );
   }
   return (
-    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-green-bg text-green uppercase tracking-wide border border-green/20">
+    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 uppercase tracking-wide border border-emerald-500/20">
       Live
     </span>
   );
@@ -177,15 +177,15 @@ function StatCard({
   icon: string;
 }) {
   return (
-    <div className="bg-bg-2 border border-border rounded-card p-5">
+    <div className="bg-muted/50 border border-border rounded-card p-5">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs text-text-3 font-medium uppercase tracking-wider">{label}</span>
+        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{label}</span>
         <span className="text-lg">{icon}</span>
       </div>
-      <div className={`text-xl font-bold tracking-tight mb-1 ${valueColor ?? "text-text-0"}`}>
+      <div className={`text-xl font-bold tracking-tight mb-1 ${valueColor ?? "text-foreground"}`}>
         {value}
       </div>
-      {sub && <div className="text-2xs text-text-3">{sub}</div>}
+      {sub && <div className="text-2xs text-muted-foreground">{sub}</div>}
     </div>
   );
 }
@@ -210,9 +210,9 @@ function BotCard({
   const isRunning = bot.status === "running";
   return (
     <div
-      className={`bg-bg-1 border rounded-lg p-4 transition-all cursor-pointer hover:border-accent hover:translate-y-[-1px] hover:shadow-lg ${
+      className={`bg-card border rounded-lg p-4 transition-all cursor-pointer hover:border-primary hover:translate-y-[-1px] hover:shadow-lg ${
         bot.status === "error"
-          ? "border-red/30"
+          ? "border-rose-500/30"
           : isRunning
           ? "border-border"
           : "border-border/50"
@@ -221,7 +221,7 @@ function BotCard({
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="text-xs font-semibold text-text-0 truncate">{bot.name}</div>
+          <div className="text-xs font-semibold text-foreground truncate">{bot.name}</div>
           {bot.exchange_name && (
             <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-semibold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 whitespace-nowrap">
               {bot.exchange_name}
@@ -230,29 +230,29 @@ function BotCard({
         </div>
         <StatusBadge status={bot.status} isDryRun={bot.is_dry_run} />
       </div>
-      <div className="text-2xs text-text-3 mb-3 truncate">
+      <div className="text-2xs text-muted-foreground mb-3 truncate">
         {bot.strategy_name ?? "No strategy"}
         {bot.strategy_version_id && <span className="text-zinc-500 ml-1">v{bot.strategy_version_id}</span>}
       </div>
 
       <div className="grid grid-cols-3 gap-2 mb-3">
         <div>
-          <div className="text-2xs text-text-3 mb-0.5">Close P&L</div>
+          <div className="text-2xs text-muted-foreground mb-0.5">Close P&L</div>
           <div className={`text-sm font-bold ${profitColor(profit?.profit_closed_coin)}`}>
             {profit ? `${fmt(profit.profit_closed_coin)} USDT` : "\u2014"}
           </div>
         </div>
         <div>
-          <div className="text-2xs text-text-3 mb-0.5">Win Rate</div>
-          <div className="text-sm font-bold text-text-0">
+          <div className="text-2xs text-muted-foreground mb-0.5">Win Rate</div>
+          <div className="text-sm font-bold text-foreground">
             {profit && ((profit.winning_trades ?? 0) + (profit.losing_trades ?? 0)) > 0
               ? `${(((profit.winning_trades ?? 0) / ((profit.winning_trades ?? 0) + (profit.losing_trades ?? 0))) * 100).toFixed(1)}%`
               : "\u2014"}
           </div>
         </div>
         <div>
-          <div className="text-2xs text-text-3 mb-0.5">Trades</div>
-          <div className="text-sm font-bold text-text-0">{openCount} open</div>
+          <div className="text-2xs text-muted-foreground mb-0.5">Trades</div>
+          <div className="text-sm font-bold text-foreground">{openCount} open</div>
         </div>
       </div>
 
@@ -265,7 +265,7 @@ function BotCard({
             e.stopPropagation();
             onDrain(bot.id);
           }}
-          className="mt-2 w-full text-[10px] font-semibold px-2 py-1.5 rounded border border-amber/30 text-amber bg-amber-bg hover:bg-amber/[0.18] transition-all"
+          className="mt-2 w-full text-xs font-semibold px-2 py-1.5 rounded border border-amber-500-500/30 text-amber-500-500 bg-amber-500/10 hover:bg-amber/[0.18] transition-all"
         >
           Drain
         </button>
@@ -296,31 +296,31 @@ function ForceEntryDialog({
   return (
     <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
       <div
-        className="bg-bg-2 border border-border rounded-card p-6 w-full max-w-md"
+        className="bg-muted/50 border border-border rounded-card p-6 w-full max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-sm font-semibold text-text-0 mb-4">Force Entry</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-4">Force Entry</h3>
         <div className="space-y-3">
           <div>
-            <label className="text-2xs text-text-3 uppercase tracking-wide block mb-1">Pair</label>
+            <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-1">Pair</label>
             <input
               type="text"
               value={pair}
               onChange={(e) => setPair(e.target.value)}
               placeholder="BTC/USDT:USDT"
-              className="w-full bg-bg-1 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+              className="w-full bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
             />
           </div>
           <div>
-            <label className="text-2xs text-text-3 uppercase tracking-wide block mb-1">Side</label>
+            <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-1">Side</label>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setSide("long")}
                 className={`flex-1 py-1.5 text-xs font-semibold rounded border cursor-pointer transition-all ${
                   side === "long"
-                    ? "bg-green-bg text-green border-green/30"
-                    : "bg-bg-1 text-text-3 border-border"
+                    ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/30"
+                    : "bg-card text-muted-foreground border-border"
                 }`}
               >
                 Long
@@ -330,8 +330,8 @@ function ForceEntryDialog({
                 onClick={() => setSide("short")}
                 className={`flex-1 py-1.5 text-xs font-semibold rounded border cursor-pointer transition-all ${
                   side === "short"
-                    ? "bg-red-bg text-red border-red/30"
-                    : "bg-bg-1 text-text-3 border-border"
+                    ? "bg-rose-500/10 text-rose-500 border-rose-500/30"
+                    : "bg-card text-muted-foreground border-border"
                 }`}
               >
                 Short
@@ -339,13 +339,13 @@ function ForceEntryDialog({
             </div>
           </div>
           <div>
-            <label className="text-2xs text-text-3 uppercase tracking-wide block mb-1">stake_amount (optional)</label>
+            <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-1">stake_amount (optional)</label>
             <input
               type="number"
               value={stake}
               onChange={(e) => setStake(e.target.value)}
               placeholder="Use default"
-              className="w-full bg-bg-1 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+              className="w-full bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
             />
           </div>
         </div>
@@ -353,7 +353,7 @@ function ForceEntryDialog({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2 text-xs font-semibold rounded border border-border text-text-2 hover:bg-bg-3 cursor-pointer transition-all"
+            className="flex-1 py-2 text-xs font-semibold rounded border border-border text-muted-foreground hover:bg-muted cursor-pointer transition-all"
           >
             Cancel
           </button>
@@ -361,7 +361,7 @@ function ForceEntryDialog({
             type="button"
             disabled={!pair.trim() || submitting}
             onClick={() => onSubmit(pair.trim(), side, stake ? Number(stake) : undefined)}
-            className="flex-1 py-2 text-xs font-semibold rounded bg-accent text-white hover:brightness-110 disabled:opacity-50 cursor-pointer transition-all"
+            className="flex-1 py-2 text-xs font-semibold rounded bg-primary text-white hover:brightness-110 disabled:opacity-50 cursor-pointer transition-all"
           >
             {submitting ? "Submitting..." : "Force Enter"}
           </button>
@@ -927,7 +927,7 @@ export default function DashboardPage() {
     if (trades.length === 0) {
       return (
         <CardBody>
-          <div className="py-8 text-center text-sm text-text-3">{emptyMsg}</div>
+          <div className="py-8 text-center text-sm text-muted-foreground">{emptyMsg}</div>
         </CardBody>
       );
     }
@@ -941,7 +941,7 @@ export default function DashboardPage() {
           <thead>
             <tr>
               {headers.map((h) => (
-                <th key={h} className="text-left px-4 py-3 text-2xs font-semibold text-text-3 uppercase tracking-wider border-b border-border whitespace-nowrap">
+                <th key={h} className="text-left px-4 py-3 text-2xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border whitespace-nowrap">
                   {h}
                 </th>
               ))}
@@ -959,48 +959,48 @@ export default function DashboardPage() {
               return (
                 <React.Fragment key={trade.trade_id}>
                   <tr
-                    className="hover:bg-bg-3 transition-colors cursor-pointer"
+                    className="hover:bg-muted transition-colors cursor-pointer"
                     onClick={() => setExpandedTradeId(isExpanded ? null : trade.trade_id)}
                   >
-                    <td className="px-4 py-3 text-xs font-semibold text-text-0 whitespace-nowrap">{trade.pair}</td>
+                    <td className="px-4 py-3 text-xs font-semibold text-foreground whitespace-nowrap">{trade.pair}</td>
                     {showBotColumn && (
-                      <td className="px-4 py-3 text-xs text-text-2 whitespace-nowrap">
+                      <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                         {trade._bot_name ?? `Bot ${trade._bot_id}`}
                       </td>
                     )}
                     <td className="px-4 py-3">
                       <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide ${
-                        trade.is_short ? "bg-red-bg text-red border border-red/20" : "bg-green-bg text-green border border-green/20"
+                        trade.is_short ? "bg-rose-500/10 text-rose-500 border border-rose-500/20" : "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
                       }`}>
                         {trade.is_short ? "Short" : "Long"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-text-2 font-mono whitespace-nowrap">{fmt(trade.open_rate, 4)}</td>
-                    <td className="px-4 py-3 text-xs text-text-1 font-mono whitespace-nowrap">{fmt(trade.current_rate, 4)}</td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground font-mono whitespace-nowrap">{fmt(trade.open_rate, 4)}</td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground font-mono whitespace-nowrap">{fmt(trade.current_rate, 4)}</td>
                     <td className={`px-4 py-3 text-xs font-bold whitespace-nowrap ${profitColor(pnl)}`}>
                       {pnl != null ? `${pnl >= 0 ? "+" : ""}${fmt(pnl, 2)}` : "\u2014"}
                       {pct != null && (
                         <span className="text-2xs font-normal ml-1 opacity-70">({(pct * 100).toFixed(2)}%)</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-xs text-text-3 whitespace-nowrap">{fmtDuration(trade.open_date)}</td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{fmtDuration(trade.open_date)}</td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                         <button type="button" onClick={() => handleForceExit(trade)} disabled={isExiting}
-                          className="text-[10px] font-semibold px-2 py-1 rounded border border-red/30 text-red bg-red-bg hover:bg-red/[0.18] hover:border-red transition-all disabled:opacity-50 cursor-pointer"
+                          className="text-xs font-semibold px-2 py-1 rounded border border-rose-500/30 text-rose-500 bg-rose-500/10 hover:bg-red/[0.18] hover:border-rose-500 transition-all disabled:opacity-50 cursor-pointer"
                           title="Force Exit at Market">
                           {isExiting ? "..." : "Exit"}
                         </button>
                         <button type="button" onClick={() => handleReloadTrade(trade)}
-                          className="text-[10px] font-semibold px-2 py-1 rounded border border-border text-text-2 bg-bg-1 hover:bg-bg-3 cursor-pointer transition-all"
+                          className="text-xs font-semibold px-2 py-1 rounded border border-border text-muted-foreground bg-card hover:bg-muted cursor-pointer transition-all"
                           title="Reload Trade from Exchange">Reload</button>
                         <button type="button"
                           onClick={() => toast.warning(`Delete trade #${trade.trade_id} (${trade.pair})?`, { action: { label: "DELETE", onClick: () => handleDeleteTrade(trade) } })}
-                          className="text-[10px] font-semibold px-2 py-1 rounded border border-red/20 text-red/70 bg-bg-1 hover:bg-red-bg hover:text-red cursor-pointer transition-all"
+                          className="text-xs font-semibold px-2 py-1 rounded border border-rose-500/20 text-rose-500/70 bg-card hover:bg-rose-500/10 hover:text-rose-500 cursor-pointer transition-all"
                           title="Delete Trade">Del</button>
                         {hasOpenOrder && (
                           <button type="button" onClick={() => handleCancelOpenOrder(trade)}
-                            className="text-[10px] font-semibold px-2 py-1 rounded border border-amber/30 text-amber bg-amber-bg hover:bg-amber/[0.18] cursor-pointer transition-all"
+                            className="text-xs font-semibold px-2 py-1 rounded border border-amber-500-500/30 text-amber-500-500 bg-amber-500/10 hover:bg-amber/[0.18] cursor-pointer transition-all"
                             title="Cancel Open Order">Cancel Ord</button>
                         )}
                       </div>
@@ -1009,40 +1009,40 @@ export default function DashboardPage() {
 
                   {isExpanded && (
                     <tr key={`exp-${trade.trade_id}`}>
-                      <td colSpan={colCount} className="bg-bg-1 border-b border-border px-4 py-3">
+                      <td colSpan={colCount} className="bg-card border-b border-border px-4 py-3">
                         <div className="grid grid-cols-4 gap-4 text-xs">
                           <div>
-                            <span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">Trade ID</span>
-                            <span className="font-mono text-text-1">#{trade.trade_id}</span>
+                            <span className="text-muted-foreground block text-2xs uppercase tracking-wide mb-0.5">Trade ID</span>
+                            <span className="font-mono text-muted-foreground">#{trade.trade_id}</span>
                           </div>
                           <div>
-                            <span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">stake_amount</span>
-                            <span className="font-mono text-text-1">{fmt(trade.stake_amount, 2)} USDT</span>
+                            <span className="text-muted-foreground block text-2xs uppercase tracking-wide mb-0.5">stake_amount</span>
+                            <span className="font-mono text-muted-foreground">{fmt(trade.stake_amount, 2)} USDT</span>
                           </div>
                           <div>
-                            <span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">fee_open</span>
-                            <span className="font-mono text-text-1">{fmt((trade.fee_open ?? 0) * 100, 3)}%</span>
+                            <span className="text-muted-foreground block text-2xs uppercase tracking-wide mb-0.5">fee_open</span>
+                            <span className="font-mono text-muted-foreground">{fmt((trade.fee_open ?? 0) * 100, 3)}%</span>
                           </div>
                           <div>
-                            <span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">fee_close</span>
-                            <span className="font-mono text-text-1">{fmt((trade.fee_close ?? 0) * 100, 3)}%</span>
+                            <span className="text-muted-foreground block text-2xs uppercase tracking-wide mb-0.5">fee_close</span>
+                            <span className="font-mono text-muted-foreground">{fmt((trade.fee_close ?? 0) * 100, 3)}%</span>
                           </div>
                           <div>
-                            <span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">open_date</span>
-                            <span className="font-mono text-text-1">{new Date(trade.open_date).toLocaleString()}</span>
+                            <span className="text-muted-foreground block text-2xs uppercase tracking-wide mb-0.5">open_date</span>
+                            <span className="font-mono text-muted-foreground">{new Date(trade.open_date).toLocaleString()}</span>
                           </div>
                           <div>
-                            <span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">enter_tag</span>
-                            <span className="font-mono text-text-1">{trade.enter_tag ?? "\u2014"}</span>
+                            <span className="text-muted-foreground block text-2xs uppercase tracking-wide mb-0.5">enter_tag</span>
+                            <span className="font-mono text-muted-foreground">{trade.enter_tag ?? "\u2014"}</span>
                           </div>
                           <div>
-                            <span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">leverage</span>
-                            <span className="font-mono text-text-1">{trade.leverage ?? 1}x</span>
+                            <span className="text-muted-foreground block text-2xs uppercase tracking-wide mb-0.5">leverage</span>
+                            <span className="font-mono text-muted-foreground">{trade.leverage ?? 1}x</span>
                           </div>
                           {trade.stop_loss && (
                             <div>
-                              <span className="text-text-3 block text-2xs uppercase tracking-wide mb-0.5">stop_loss</span>
-                              <span className="font-mono text-red">{fmt(trade.stop_loss, 4)}</span>
+                              <span className="text-muted-foreground block text-2xs uppercase tracking-wide mb-0.5">stop_loss</span>
+                              <span className="font-mono text-rose-500">{fmt(trade.stop_loss, 4)}</span>
                             </div>
                           )}
                         </div>
@@ -1067,12 +1067,12 @@ export default function DashboardPage() {
 
       {/* Stale data banner */}
       {staleWarning && (
-        <div className="mb-4 px-4 py-3 bg-amber-bg border border-amber/20 rounded-btn flex items-center justify-between">
-          <span className="text-xs text-amber font-medium">
+        <div className="mb-4 px-4 py-3 bg-amber-500/10 border border-amber-500-500-500/20 rounded-btn flex items-center justify-between">
+          <span className="text-xs text-amber-500-500 font-medium">
             Data may be stale -- last refresh failed {staleCount} times.
           </span>
           <button type="button" onClick={() => loadPortfolioData(true)}
-            className="text-xs text-amber underline cursor-pointer hover:no-underline">Retry now</button>
+            className="text-xs text-amber-500-500 underline cursor-pointer hover:no-underline">Retry now</button>
         </div>
       )}
 
@@ -1105,7 +1105,7 @@ export default function DashboardPage() {
               sub={runningBotCards.length === bots.length ? "All bots running" : `${bots.length - runningBotCards.length} stopped`} />
             <StatCard label="Win Rate" icon="🎯"
               value={totalWinRate != null ? `${fmt(totalWinRate, 1)}%` : "\u2014"}
-              valueColor={totalWinRate != null && totalWinRate >= 55 ? "text-green" : totalWinRate != null && totalWinRate < 45 ? "text-red" : "text-amber"}
+              valueColor={totalWinRate != null && totalWinRate >= 55 ? "text-emerald-500" : totalWinRate != null && totalWinRate < 45 ? "text-rose-500" : "text-amber-500-500"}
               sub={`All ${bots.length} bots, all trades`} />
           </>
         )}
@@ -1114,25 +1114,25 @@ export default function DashboardPage() {
       {/* AI Agreement Badge */}
       {aiEnabled && aiAgreementPct !== null && (
         <div className={`mb-4 flex items-center gap-3 px-4 py-3 rounded-btn border ${
-          aiStrongDisagree > 0 ? "bg-red-bg border-red/25" : "bg-accent/[0.08] border-accent/25"
+          aiStrongDisagree > 0 ? "bg-rose-500/10 border-rose-500/25" : "bg-primary/[0.08] border-primary/25"
         }`}>
           <span className="text-xl">{aiStrongDisagree > 0 ? "⚠️" : "🤖"}</span>
           <div className="flex-1">
-            <span className={`text-xs font-semibold ${aiStrongDisagree > 0 ? "text-red" : "text-accent"}`}>
+            <span className={`text-xs font-semibold ${aiStrongDisagree > 0 ? "text-rose-500" : "text-primary"}`}>
               AI Agreement (7d): <strong>{aiAgreementPct.toFixed(1)}%</strong> all-agree
               {aiStrongDisagree > 0 && (
-                <span className="text-red">
+                <span className="text-rose-500">
                   {" "}&middot; {aiStrongDisagree} strong disagreement{aiStrongDisagree > 1 ? "s" : ""}
                 </span>
               )}
             </span>
             {aiStrongDisagree > 0 && (
-              <p className="text-2xs text-text-3 mt-0.5">
+              <p className="text-2xs text-muted-foreground mt-0.5">
                 Claude and Grok both disagreed with FreqAI on {aiStrongDisagree} recent signal{aiStrongDisagree > 1 ? "s" : ""}. Review in AI Insights.
               </p>
             )}
           </div>
-          <a href="/ai-insights" className="text-xs font-semibold text-accent hover:text-accent/80 transition-colors">
+          <a href="/ai-insights" className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
             View AI Insights →
           </a>
         </div>
@@ -1154,7 +1154,7 @@ export default function DashboardPage() {
           {!loading && bots.length > 0 && (
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold text-text-0">Bots</h2>
+                <h2 className="text-sm font-semibold text-foreground">Bots</h2>
                 <div className="flex items-center gap-3">
                   {/* Status filter chips */}
                   <div className="flex items-center gap-1">
@@ -1162,18 +1162,18 @@ export default function DashboardPage() {
                       <button key={f} type="button" onClick={() => setBotStatusFilter(f)}
                         className={`px-2 py-0.5 rounded text-2xs font-medium transition-colors ${
                           botStatusFilter === f
-                            ? "bg-accent text-bg-0"
-                            : "bg-bg-3 text-text-3 hover:text-text-1"
+                            ? "bg-primary text-bg-0"
+                            : "bg-muted text-muted-foreground hover:text-muted-foreground"
                         }`}>
                         {f === "all" ? `All (${bots.length})` : f === "running" ? `Running (${runningBotCards.length})` : `Stopped (${bots.length - runningBotCards.length})`}
                       </button>
                     ))}
                   </div>
-                  <span className="text-2xs text-text-3">
+                  <span className="text-2xs text-muted-foreground">
                     Click a bot for details
                   </span>
                   <button type="button" onClick={() => setShowManagement(!showManagement)}
-                    className="text-2xs font-semibold text-accent hover:text-accent/80 cursor-pointer transition-colors">
+                    className="text-2xs font-semibold text-primary hover:text-primary/80 cursor-pointer transition-colors">
                     {showManagement ? "Hide Management" : "Manage Bots"}
                   </button>
                 </div>
@@ -1206,17 +1206,17 @@ export default function DashboardPage() {
             <CardHeader title="Open Positions" icon="📋"
               action={
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-text-3">
+                  <span className="text-xs text-muted-foreground">
                     {openTrades.length} positions across {runningBotCards.length} bots
                   </span>
                   <button type="button" onClick={() => loadPortfolioData(false)}
-                    className="text-xs text-accent hover:text-accent cursor-pointer font-medium">↻ Refresh</button>
+                    className="text-xs text-primary hover:text-primary cursor-pointer font-medium">↻ Refresh</button>
                 </div>
               } />
             {loading ? (
               <SkeletonTable rows={5} cols={8} />
             ) : bots.length > 0 && runningBotCards.length === 0 ? (
-              <CardBody><div className="py-8 text-center text-sm text-text-3">No running bots</div></CardBody>
+              <CardBody><div className="py-8 text-center text-sm text-muted-foreground">No running bots</div></CardBody>
             ) : (
               renderTradesTable(openTrades, true, "No open positions")
             )}
@@ -1231,7 +1231,7 @@ export default function DashboardPage() {
                     {([7, 14, 30] as const).map((p) => (
                       <button key={p} type="button" onClick={() => setDailyPeriod(p)}
                         className={`px-2 py-0.5 text-2xs rounded cursor-pointer font-medium transition-all ${
-                          dailyPeriod === p ? "bg-accent text-white" : "text-text-3 hover:text-text-1"
+                          dailyPeriod === p ? "bg-primary text-white" : "text-muted-foreground hover:text-muted-foreground"
                         }`}>{p}d</button>
                     ))}
                   </div>
@@ -1250,7 +1250,7 @@ export default function DashboardPage() {
                       );
                     })}
                   </div>
-                  <div className="mt-2 text-right text-2xs text-text-3">
+                  <div className="mt-2 text-right text-2xs text-muted-foreground">
                     Total (all bots): <span className={`font-bold ${profitColor(totalClosedProfit)}`}>{fmtMoney(totalClosedProfit)}</span>
                   </div>
                 </CardBody>
@@ -1285,20 +1285,20 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 gap-5 mb-6">
             <Card>
               <CardHeader title="Recent Alerts" icon="🔔"
-                action={<a href="/risk" className="text-xs text-accent hover:text-accent font-medium">View All →</a>} />
+                action={<a href="/risk" className="text-xs text-primary hover:text-primary font-medium">View All →</a>} />
               <CardBody className="p-0">
                 {riskEvents.length === 0 ? (
-                  <div className="py-6 text-center text-sm text-text-3">No recent alerts</div>
+                  <div className="py-6 text-center text-sm text-muted-foreground">No recent alerts</div>
                 ) : (
                   riskEvents.map((ev) => (
-                    <div key={ev.id} className="flex items-start gap-3 px-4 py-3 border-b border-border/40 last:border-b-0 hover:bg-bg-3 transition-colors">
+                    <div key={ev.id} className="flex items-start gap-3 px-4 py-3 border-b border-border/40 last:border-b-0 hover:bg-muted transition-colors">
                       <div className={`w-2 h-2 rounded-full shrink-0 mt-1.5 ${ev.kill_type === "HARD_KILL" ? "bg-red" : "bg-amber"}`} />
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium text-text-0 truncate">{ev.reason ?? ev.trigger}</div>
-                        <div className="text-2xs text-text-3 mt-0.5">{new Date(ev.created_at).toLocaleString()} -- {ev.triggered_by}</div>
+                        <div className="text-xs font-medium text-foreground truncate">{ev.reason ?? ev.trigger}</div>
+                        <div className="text-2xs text-muted-foreground mt-0.5">{new Date(ev.created_at).toLocaleString()} -- {ev.triggered_by}</div>
                       </div>
                       <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide shrink-0 ${
-                        ev.kill_type === "HARD_KILL" ? "bg-red-bg text-red" : "bg-amber-bg text-amber"
+                        ev.kill_type === "HARD_KILL" ? "bg-rose-500/10 text-rose-500" : "bg-amber-500/10 text-amber-500-500"
                       }`}>{ev.kill_type.replace("_", " ")}</span>
                     </div>
                   ))
@@ -1313,15 +1313,15 @@ export default function DashboardPage() {
                   <div className="grid grid-cols-1 gap-2">
                     {bots.map((bot) => (
                       <div key={bot.id}
-                        className="flex items-center gap-3 px-3 py-2 bg-bg-1 border border-border rounded-lg cursor-pointer hover:border-accent transition-colors"
+                        className="flex items-center gap-3 px-3 py-2 bg-card border border-border rounded-lg cursor-pointer hover:border-primary transition-colors"
                         onClick={() => setSelectedBotId(bot.id)}>
                         <div className={`w-2 h-2 rounded-full shrink-0 ${
                           bot.status === "running" && bot.is_healthy ? "bg-green shadow-[0_0_6px_var(--color-green)]"
                             : bot.status === "error" || !bot.is_healthy ? "bg-red animate-pulse" : "bg-amber"
                         }`} />
                         <div className="flex-1 min-w-0">
-                          <div className="text-xs font-semibold text-text-0">{bot.name}</div>
-                          <div className="text-2xs text-text-3">
+                          <div className="text-xs font-semibold text-foreground">{bot.name}</div>
+                          <div className="text-2xs text-muted-foreground">
                             {bot.consecutive_failures > 0
                               ? `${bot.consecutive_failures} failure${bot.consecutive_failures > 1 ? "s" : ""}`
                               : bot.status}
@@ -1331,7 +1331,7 @@ export default function DashboardPage() {
                       </div>
                     ))}
                     {bots.length === 0 && (
-                      <div className="py-4 text-center text-sm text-text-3">No bots registered</div>
+                      <div className="py-4 text-center text-sm text-muted-foreground">No bots registered</div>
                     )}
                   </div>
                 )}
@@ -1342,36 +1342,36 @@ export default function DashboardPage() {
           {/* Today's Closed Trades */}
           <Card className="mb-6">
             <CardHeader title="Today's Closed Trades" icon="✅"
-              action={<span className="text-xs text-text-3">{closedTrades.length} trade{closedTrades.length !== 1 ? "s" : ""} closed today</span>} />
+              action={<span className="text-xs text-muted-foreground">{closedTrades.length} trade{closedTrades.length !== 1 ? "s" : ""} closed today</span>} />
             {loading ? <SkeletonTable rows={5} cols={6} /> : closedTrades.length === 0 ? (
-              <CardBody><div className="py-8 text-center text-sm text-text-3">No trades closed today</div></CardBody>
+              <CardBody><div className="py-8 text-center text-sm text-muted-foreground">No trades closed today</div></CardBody>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
                     <tr>
                       {["Pair", "Bot", "Side", "open_rate", "close_rate", "close_profit_abs", "exit_reason", "Duration"].map((h) => (
-                        <th key={h} className="text-left px-4 py-3 text-2xs font-semibold text-text-3 uppercase tracking-wider border-b border-border whitespace-nowrap">{h}</th>
+                        <th key={h} className="text-left px-4 py-3 text-2xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border whitespace-nowrap">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {closedTrades.map((trade) => (
-                      <tr key={trade.trade_id} className="hover:bg-bg-3 transition-colors">
-                        <td className="px-4 py-3 text-xs font-semibold text-text-0">{trade.pair}</td>
-                        <td className="px-4 py-3 text-xs text-text-2">{trade._bot_name ?? `Bot ${trade._bot_id}`}</td>
+                      <tr key={trade.trade_id} className="hover:bg-muted transition-colors">
+                        <td className="px-4 py-3 text-xs font-semibold text-foreground">{trade.pair}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">{trade._bot_name ?? `Bot ${trade._bot_id}`}</td>
                         <td className="px-4 py-3">
-                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${trade.is_short ? "bg-red-bg text-red" : "bg-green-bg text-green"}`}>
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${trade.is_short ? "bg-rose-500/10 text-rose-500" : "bg-emerald-500/10 text-emerald-500"}`}>
                             {trade.is_short ? "Short" : "Long"}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-xs text-text-2 font-mono">{fmt(trade.open_rate, 4)}</td>
-                        <td className="px-4 py-3 text-xs text-text-2 font-mono">{fmt(trade.close_rate ?? 0, 4)}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground font-mono">{fmt(trade.open_rate, 4)}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground font-mono">{fmt(trade.close_rate ?? 0, 4)}</td>
                         <td className={`px-4 py-3 text-xs font-bold ${profitColor(trade.close_profit_abs)}`}>
                           {trade.close_profit_abs != null ? `${trade.close_profit_abs >= 0 ? "+" : ""}${fmt(trade.close_profit_abs, 2)} USDT` : "\u2014"}
                         </td>
-                        <td className="px-4 py-3 text-xs text-text-2">{trade.exit_reason ?? "\u2014"}</td>
-                        <td className="px-4 py-3 text-xs text-text-3">
+                        <td className="px-4 py-3 text-xs text-muted-foreground">{trade.exit_reason ?? "\u2014"}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">
                           {trade.close_date && trade.open_date
                             ? (() => { const ms = new Date(trade.close_date).getTime() - new Date(trade.open_date).getTime(); const h = Math.floor(ms / 3600000); const m = Math.floor((ms % 3600000) / 60000); return h > 0 ? `${h}h ${m}m` : `${m}m`; })()
                             : "\u2014"}

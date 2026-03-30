@@ -4,9 +4,9 @@ import { useState } from 'react';
 import Tooltip from '@/components/ui/Tooltip';
 
 // Design system constants
-const INPUT = "w-full h-[34px] py-0 px-3 bg-bg-3 border border-border rounded-btn text-[12px] text-text-0 placeholder-text-3 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all";
-const SELECT = "w-full h-[34px] py-0 px-3 bg-bg-3 border border-border rounded-btn text-[12px] text-text-0 focus:outline-none focus:border-accent cursor-pointer appearance-none transition-all";
-const LABEL = "block text-[10px] font-semibold text-text-3 uppercase tracking-[0.5px] mb-[4px]";
+const INPUT = "w-full h-[34px] py-0 px-3 bg-muted border border-border rounded-btn text-xs text-foreground placeholder-text-3 focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all";
+const SELECT = "w-full h-[34px] py-0 px-3 bg-muted border border-border rounded-btn text-xs text-foreground focus:outline-none focus:border-primary cursor-pointer appearance-none transition-all";
+const LABEL = "block text-xs font-semibold text-muted-foreground uppercase tracking-[0.5px] mb-[4px]";
 
 // Mock data for source experiments (kept for dropdown)
 const mockExperiments = [
@@ -92,9 +92,9 @@ export default function ValidationTab({}: { strategy?: string }) {
   return (
     <div className="space-y-4 pb-12">
       {/* ===== SECTION 1: VERIFICATION BACKTEST ===== */}
-      <div className="bg-bg-1 border border-border rounded-card p-4">
+      <div className="bg-card border border-border rounded-card p-4">
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-[12px] font-semibold text-text-0">1. Verification Backtest</span>
+          <span className="text-xs font-semibold text-foreground">1. Verification Backtest</span>
         </div>
 
         <div className="space-y-3 mb-4">
@@ -162,45 +162,45 @@ export default function ValidationTab({}: { strategy?: string }) {
           {/* Warning Box */}
           <div className="bg-[rgba(245,158,11,0.08)] border border-[rgba(245,158,11,0.25)] rounded-btn px-3 py-2">
             <div className="flex gap-2">
-              <span className="text-amber mt-0.5">⚠</span>
-              <div className="text-[11px] text-text-2 leading-relaxed">
-                <strong className="text-amber">Use a DIFFERENT time period from training!</strong>
+              <span className="text-amber-500 mt-0.5">⚠</span>
+              <div className="text-xs text-muted-foreground leading-relaxed">
+                <strong className="text-amber-500">Use a DIFFERENT time period from training!</strong>
                 <br />
                 <Tooltip content="Out-of-sample validation tests performance on data the strategy never saw during optimization. Must use a different date range.">
                   <span className="hover:underline cursor-help">Training period</span>
                 </Tooltip>
                 {' for selected test: '}
-                <span className="font-mono text-text-0">2022-01-01 to 2024-01-01</span>
+                <span className="font-mono text-foreground">2022-01-01 to 2024-01-01</span>
                 <br />
                 Recommended verification period:{' '}
-                <span className="font-mono text-green">2024-01-01 to 2025-01-01</span>
+                <span className="font-mono text-emerald-500">2024-01-01 to 2025-01-01</span>
               </div>
             </div>
           </div>
 
           {/* Optimized Parameters (Readonly) */}
-          <div className="bg-bg-2 border border-border rounded-btn p-3">
+          <div className="bg-muted/50 border border-border rounded-btn p-3">
             <div className={`${LABEL} mb-2`}>
               Optimized Parameters (Readonly)
             </div>
             {selectedExp && (
-              <table className="w-full text-[11px]">
+              <table className="w-full text-xs">
                 <tbody>
                   <tr>
                     <td className="py-1 px-2">sampler</td>
-                    <td className="py-1 px-2 text-right text-accent">{selectedExp.sampler}</td>
+                    <td className="py-1 px-2 text-right text-primary">{selectedExp.sampler}</td>
                   </tr>
                   <tr>
                     <td className="py-1 px-2">loss_function</td>
-                    <td className="py-1 px-2 text-right text-accent">{selectedExp.lossFunction}</td>
+                    <td className="py-1 px-2 text-right text-primary">{selectedExp.lossFunction}</td>
                   </tr>
                   <tr>
                     <td className="py-1 px-2">entry_signals</td>
-                    <td className="py-1 px-2 text-right text-accent">{selectedExp.entrySignals}</td>
+                    <td className="py-1 px-2 text-right text-primary">{selectedExp.entrySignals}</td>
                   </tr>
                   <tr>
                     <td className="py-1 px-2">exit_type</td>
-                    <td className="py-1 px-2 text-right text-accent">{selectedExp.exitType}</td>
+                    <td className="py-1 px-2 text-right text-primary">{selectedExp.exitType}</td>
                   </tr>
                 </tbody>
               </table>
@@ -211,7 +211,7 @@ export default function ValidationTab({}: { strategy?: string }) {
           <button
             onClick={handleRunVerification}
             disabled={isRunning}
-            className="w-full h-[34px] inline-flex items-center justify-center gap-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-accent border-accent text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-[34px] inline-flex items-center justify-center gap-[6px] px-[14px] rounded-btn text-xs font-medium border bg-primary border-primary text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isRunning ? (
               <>
@@ -229,40 +229,40 @@ export default function ValidationTab({}: { strategy?: string }) {
         {/* ===== VERIFICATION RESULTS ===== */}
         {!hasVerificationRun ? (
           <div className="border-t border-border pt-4 mt-4">
-            <div className="bg-bg-1 border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[300px]">
+            <div className="bg-card border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[300px]">
               <div className="text-[32px] mb-3 opacity-30">✓</div>
-              <div className="text-[13px] font-semibold text-text-2 mb-1">No verification yet</div>
-              <div className="text-[11px] text-text-3 text-center max-w-[280px]">
+              <div className="text-sm font-semibold text-muted-foreground mb-1">No verification yet</div>
+              <div className="text-xs text-muted-foreground text-center max-w-[280px]">
                 Click &quot;Run Verification Backtest&quot; to test strategy performance on new data.
               </div>
             </div>
           </div>
         ) : (
           <div className="border-t border-border pt-4 mt-4 space-y-4">
-            <p className="text-[12px] text-text-2">Verification results will appear here once complete.</p>
+            <p className="text-xs text-muted-foreground">Verification results will appear here once complete.</p>
           </div>
         )}
       </div>
 
       {/* ===== SECTION 2: LOOKAHEAD ANALYSIS ===== */}
-      <div className="bg-bg-1 border border-border rounded-card p-4">
+      <div className="bg-card border border-border rounded-card p-4">
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-[12px] font-semibold text-text-0">
+          <span className="text-xs font-semibold text-foreground">
             2. Lookahead Analysis{' '}
             <Tooltip content="§21: Lookahead Bias Detection">
-              <span className="text-text-3 text-[10px] cursor-help">(§21)</span>
+              <span className="text-muted-foreground text-xs cursor-help">(§21)</span>
             </Tooltip>
           </span>
         </div>
 
-        <p className="text-[12px] text-text-2 mb-3 leading-relaxed">
+        <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
           Checks if strategy &apos;cheats&apos; by using future data for decisions. Example: using tomorrow&apos;s price to decide what to buy today. This analysis scans all entry and exit signals to ensure they only use data available AT the moment of the signal.
         </p>
 
         <button
           onClick={handleRunLookahead}
           disabled={isRunning}
-          className="h-[34px] inline-flex items-center gap-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-accent border-accent text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed mb-3"
+          className="h-[34px] inline-flex items-center gap-[6px] px-[14px] rounded-btn text-xs font-medium border bg-primary border-primary text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed mb-3"
         >
           {isRunning ? (
             <>
@@ -275,39 +275,39 @@ export default function ValidationTab({}: { strategy?: string }) {
         </button>
 
         {!hasLookaheadRun ? (
-          <div className="bg-bg-1 border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[250px]">
+          <div className="bg-card border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[250px]">
             <div className="text-[32px] mb-3 opacity-30">⚡</div>
-            <div className="text-[13px] font-semibold text-text-2 mb-1">No lookahead analysis yet</div>
-            <div className="text-[11px] text-text-3 text-center max-w-[280px]">
+            <div className="text-sm font-semibold text-muted-foreground mb-1">No lookahead analysis yet</div>
+            <div className="text-xs text-muted-foreground text-center max-w-[280px]">
               Click &quot;Run Lookahead Analysis&quot; to check for future data leakage.
             </div>
           </div>
         ) : (
           <div className="space-y-3">
-            <p className="text-[12px] text-text-2">Lookahead analysis results will appear here once complete.</p>
+            <p className="text-xs text-muted-foreground">Lookahead analysis results will appear here once complete.</p>
           </div>
         )}
       </div>
 
       {/* ===== SECTION 3: RECURSIVE ANALYSIS ===== */}
-      <div className="bg-bg-1 border border-border rounded-card p-4">
+      <div className="bg-card border border-border rounded-card p-4">
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-[12px] font-semibold text-text-0">
+          <span className="text-xs font-semibold text-foreground">
             3. Recursive Analysis{' '}
             <Tooltip content="§22: Recursive Indicator Dependencies">
-              <span className="text-text-3 text-[10px] cursor-help">(§22)</span>
+              <span className="text-muted-foreground text-xs cursor-help">(§22)</span>
             </Tooltip>
           </span>
         </div>
 
-        <p className="text-[12px] text-text-2 mb-3 leading-relaxed">
+        <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
           Checks if indicators depend on each other in a loop — which creates unstable signals. Example: if indicator A depends on B and B depends on A, that&apos;s a cycle. This creates feedback loops that can break in live trading.
         </p>
 
         <button
           onClick={handleRunRecursive}
           disabled={isRunning}
-          className="h-[34px] inline-flex items-center gap-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-accent border-accent text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed mb-3"
+          className="h-[34px] inline-flex items-center gap-[6px] px-[14px] rounded-btn text-xs font-medium border bg-primary border-primary text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed mb-3"
         >
           {isRunning ? (
             <>
@@ -320,16 +320,16 @@ export default function ValidationTab({}: { strategy?: string }) {
         </button>
 
         {!hasRecursiveRun ? (
-          <div className="bg-bg-1 border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[250px]">
+          <div className="bg-card border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[250px]">
             <div className="text-[32px] mb-3 opacity-30">🔄</div>
-            <div className="text-[13px] font-semibold text-text-2 mb-1">No recursive analysis yet</div>
-            <div className="text-[11px] text-text-3 text-center max-w-[280px]">
+            <div className="text-sm font-semibold text-muted-foreground mb-1">No recursive analysis yet</div>
+            <div className="text-xs text-muted-foreground text-center max-w-[280px]">
               Click &quot;Run Recursive Analysis&quot; to check for circular indicator dependencies.
             </div>
           </div>
         ) : (
           <div className="space-y-3">
-            <p className="text-[12px] text-text-2">Recursive analysis results will appear here once complete.</p>
+            <p className="text-xs text-muted-foreground">Recursive analysis results will appear here once complete.</p>
           </div>
         )}
       </div>

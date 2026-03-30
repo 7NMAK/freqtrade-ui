@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 
-const SELECT = "w-full h-[34px] py-0 px-3 bg-bg-3 border border-border rounded-btn text-[12px] text-text-0 focus:outline-none focus:border-accent cursor-pointer appearance-none transition-all";
-const LABEL = "block text-[10px] font-semibold text-text-3 uppercase tracking-[0.5px] mb-[4px]";
+const SELECT = "w-full h-[34px] py-0 px-3 bg-muted border border-border rounded-btn text-xs text-foreground focus:outline-none focus:border-primary cursor-pointer appearance-none transition-all";
+const LABEL = "block text-xs font-semibold text-muted-foreground uppercase tracking-[0.5px] mb-[4px]";
 
 type AnalysisTab = 'enterTags' | 'exitReasons' | 'tradingList' | 'rejectedSignals' | 'indicatorAnalysis' | 'signalAnalysis';
 
@@ -25,14 +25,14 @@ export default function AnalysisOverlay({ onClose }: { onClose: () => void; stra
   const hasTests = tests.length > 0;
 
   return (
-    <div className="flex h-full flex-col bg-bg-0">
+    <div className="flex h-full flex-col bg-background">
       {/* Header */}
       <div className="border-b border-border px-6 py-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[14px] font-semibold text-text-0">Analysis</h2>
+          <h2 className="text-sm font-semibold text-foreground">Analysis</h2>
           <button
             onClick={onClose}
-            className="text-text-2 hover:text-text-0 transition text-[16px]"
+            className="text-muted-foreground hover:text-foreground transition text-[16px]"
           >
             ✕
           </button>
@@ -55,8 +55,8 @@ export default function AnalysisOverlay({ onClose }: { onClose: () => void; stra
       {/* Empty state */}
       {!hasTests && (
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
-          <div className="text-[14px] font-semibold text-text-1 mb-[8px]">No analysis data available</div>
-          <div className="text-[12px] text-text-2 max-w-xs text-center">
+          <div className="text-sm font-semibold text-muted-foreground mb-[8px]">No analysis data available</div>
+          <div className="text-xs text-muted-foreground max-w-xs text-center">
             Run a backtest with --export trades first.
           </div>
         </div>
@@ -71,10 +71,10 @@ export default function AnalysisOverlay({ onClose }: { onClose: () => void; stra
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-3 text-[12px] font-semibold whitespace-nowrap transition border-b-2 ${
+                className={`px-4 py-3 text-xs font-semibold whitespace-nowrap transition border-b-2 ${
                   activeTab === tab.id
-                    ? 'text-accent border-accent'
-                    : 'text-text-2 border-transparent hover:text-text-1'
+                    ? 'text-primary border-primary'
+                    : 'text-muted-foreground border-transparent hover:text-muted-foreground'
                 }`}
               >
                 {tab.label}
@@ -85,7 +85,7 @@ export default function AnalysisOverlay({ onClose }: { onClose: () => void; stra
           {/* Content Area */}
           <div className="flex-1 overflow-auto">
             <div className="px-6 py-4">
-              <div className="bg-bg-1 border border-border rounded-card p-3 text-center text-text-2 text-[12px]">
+              <div className="bg-card border border-border rounded-card p-3 text-center text-muted-foreground text-xs">
                 Analysis data will appear here
               </div>
             </div>

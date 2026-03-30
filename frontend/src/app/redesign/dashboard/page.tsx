@@ -90,7 +90,7 @@ function BotGrid({ selectedBotId, onSelectBot }: { selectedBotId: string | null;
           >
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-bold text-foreground">{bot.name}</span>
-              <span className={`px-2 py-0.5 rounded-[4px] text-xs font-bold uppercase ${bot.status === "live" ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500" : "bg-amber-500/10 text-amber-500-500 border border-amber-500-500"}`}>
+              <span className={`px-2 py-0.5 rounded-[4px] text-xs font-bold uppercase ${bot.status === "live" ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500" : "bg-amber-500/10 text-amber-500-500-500 border border-amber-500-500-500"}`}>
                 {bot.status === "live" ? "Live" : "Paper"}
               </span>
             </div>
@@ -166,7 +166,7 @@ function PositionsTable() {
                 <TableCell className="font-mono">{p.current}</TableCell>
                 <TableCell>
                   <span className={`text-sm font-bold font-mono ${p.pnlUp ? "text-emerald-500" : "text-rose-500"}`}>{p.pnl}</span>
-                  {p.paper && <span className="text-xs text-amber-500-500 font-semibold ml-1">(paper)</span>}
+                  {p.paper && <span className="text-xs text-amber-500-500-500 font-semibold ml-1">(paper)</span>}
                 </TableCell>
                 <TableCell className="text-muted-foreground">{p.duration}</TableCell>
                 <TableCell className="text-muted-foreground hover:text-foreground text-center text-lg">⋮</TableCell>

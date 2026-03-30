@@ -14,18 +14,18 @@ interface HyperoptTabProps {
 }
 
 // ── Design System ────────────────────────────────────────────────────────
-const INPUT = "w-full h-[34px] py-0 px-3 bg-bg-3 border border-border rounded-btn text-[12px] text-text-0 placeholder-text-3 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all";
-const SELECT = "w-full h-[34px] py-0 px-3 bg-bg-3 border border-border rounded-btn text-[12px] text-text-0 focus:outline-none focus:border-accent cursor-pointer appearance-none transition-all";
-const LABEL = "block text-[10px] font-semibold text-text-3 uppercase tracking-[0.5px] mb-[4px]";
+const INPUT = "w-full h-[34px] py-0 px-3 bg-muted border border-border rounded-btn text-xs text-foreground placeholder-text-3 focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all";
+const SELECT = "w-full h-[34px] py-0 px-3 bg-muted border border-border rounded-btn text-xs text-foreground focus:outline-none focus:border-primary cursor-pointer appearance-none transition-all";
+const LABEL = "block text-xs font-semibold text-muted-foreground uppercase tracking-[0.5px] mb-[4px]";
 
 // ── Toggle switch ────────────────────────────────────────────────────────
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-[12px] text-text-1">{label}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
       <label className="relative w-[36px] h-[20px] cursor-pointer inline-block flex-shrink-0">
         <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="hidden" />
-        <span className={`absolute inset-0 rounded-[10px] border transition-all ${checked ? "bg-[rgba(34,197,94,0.08)] border-green" : "bg-bg-3 border-border"}`} />
+        <span className={`absolute inset-0 rounded-[10px] border transition-all ${checked ? "bg-[rgba(34,197,94,0.08)] border-emerald-500" : "bg-muted border-border"}`} />
         <span className={`absolute w-[14px] h-[14px] bg-white rounded-full top-[3px] transition-all ${checked ? "left-[19px]" : "left-[3px]"}`} />
       </label>
     </div>
@@ -75,8 +75,8 @@ export default function HyperoptTab({ strategy }: HyperoptTabProps) {
       {/* LEFT PANEL — FORM */}
       <div className="space-y-4">
         {/* Optimization Config */}
-        <div className="bg-bg-1 border border-border rounded-[10px] p-4">
-          <div className="text-[12px] font-semibold text-text-0 mb-3 flex items-center gap-2">⚙️ Optimization Config</div>
+        <div className="bg-card border border-border rounded-[10px] p-4">
+          <div className="text-xs font-semibold text-foreground mb-3 flex items-center gap-2">⚙️ Optimization Config</div>
 
           {/* Test Name */}
           <div className="mb-3">
@@ -87,7 +87,7 @@ export default function HyperoptTab({ strategy }: HyperoptTabProps) {
           {/* Auto Description */}
           <div className="mb-3">
             <label className={LABEL}>Description (auto)</label>
-            <div className="w-full h-[34px] py-0 px-3 bg-bg-2 border border-border rounded-btn text-[11px] text-text-2 flex items-center truncate">
+            <div className="w-full h-[34px] py-0 px-3 bg-muted/50 border border-border rounded-btn text-xs text-muted-foreground flex items-center truncate">
               {autoDesc}
             </div>
           </div>
@@ -116,10 +116,10 @@ export default function HyperoptTab({ strategy }: HyperoptTabProps) {
                 <Tooltip key={space.value} content={space.tip}>
                   <button
                     onClick={() => toggleSpace(space.value)}
-                    className={`inline-flex items-center gap-1.5 h-[30px] px-2.5 rounded-btn text-[11px] cursor-pointer border transition-all ${
+                    className={`inline-flex items-center gap-1.5 h-[30px] px-2.5 rounded-btn text-xs cursor-pointer border transition-all ${
                       selectedSpaces.includes(space.value)
-                        ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-accent"
-                        : "bg-bg-2 border-border text-text-2"
+                        ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-primary"
+                        : "bg-muted/50 border-border text-muted-foreground"
                     }`}
                   >
                     <input type="checkbox" checked={selectedSpaces.includes(space.value)} readOnly className="w-3 h-3 accent-accent" />
@@ -132,17 +132,17 @@ export default function HyperoptTab({ strategy }: HyperoptTabProps) {
         </div>
 
         {/* Presets */}
-        <div className="bg-bg-1 border border-border rounded-[10px] p-4">
+        <div className="bg-card border border-border rounded-[10px] p-4">
           <label className={LABEL}>Presets</label>
           <div className="flex flex-wrap gap-2 mb-3">
             {SPACE_PRESETS.map((preset) => (
               <button
                 key={preset.key}
                 onClick={() => togglePreset(preset.key)}
-                className={`inline-flex items-center gap-[6px] h-[30px] px-3 rounded-btn text-[11px] font-medium cursor-pointer border transition-all ${
+                className={`inline-flex items-center gap-[6px] h-[30px] px-3 rounded-btn text-xs font-medium cursor-pointer border transition-all ${
                   selectedPresets.includes(preset.key)
-                    ? "bg-accent border-accent text-white hover:bg-[#5558e6]"
-                    : "border-border bg-bg-2 text-text-1 hover:border-[#2e2e48] hover:bg-bg-3"
+                    ? "bg-primary border-primary text-white hover:bg-[#5558e6]"
+                    : "border-border bg-muted/50 text-muted-foreground hover:border-[#2e2e48] hover:bg-muted"
                 }`}
               >
                 {preset.label}
@@ -151,26 +151,26 @@ export default function HyperoptTab({ strategy }: HyperoptTabProps) {
           </div>
 
           {/* Info Box */}
-          <div className="bg-[rgba(99,102,241,0.12)] border border-[rgba(99,102,241,0.3)] rounded-btn px-3 py-2 text-[11px] text-accent mb-3">
+          <div className="bg-[rgba(99,102,241,0.12)] border border-[rgba(99,102,241,0.3)] rounded-btn px-3 py-2 text-xs text-primary mb-3">
             ℹ️ Full Matrix: {selectedPresetCount || 4} preset{selectedPresetCount !== 1 ? "s" : ""} × {activeLosses.length} loss × {SAMPLERS.length} sampler = {totalRuns} runs. ~{estimatedHours}-{estimatedHours + 2}h
           </div>
 
           {/* Batch Builder — 2x2 Grid */}
-          <label className={LABEL}>Batch Presets <span className="font-normal text-text-3">(active)</span></label>
+          <label className={LABEL}>Batch Presets <span className="font-normal text-muted-foreground">(active)</span></label>
           <div className="grid grid-cols-2 gap-[6px] mb-2">
             {selectedPresets.length === 0 ? (
-              <div className="col-span-2 text-[10px] text-text-3 py-2">No presets selected</div>
+              <div className="col-span-2 text-xs text-muted-foreground py-2">No presets selected</div>
             ) : (
               SPACE_PRESETS.map((preset) =>
                 selectedPresets.includes(preset.key) && (
-                  <div key={preset.key} className="bg-bg-3 border border-accent rounded-btn p-2 relative">
-                    <div className="text-[11px] font-semibold text-text-0">
+                  <div key={preset.key} className="bg-muted border border-primary rounded-btn p-2 relative">
+                    <div className="text-xs font-semibold text-foreground">
                       {SPACE_PRESETS.findIndex((p) => p.key === preset.key) + 1}. {preset.label}
                     </div>
-                    <div className="text-[9px] text-text-3 mt-[2px]">{preset.desc} · {preset.epochs} ep</div>
-                    <div className="text-[9px] text-accent mt-[2px]">72 runs</div>
+                    <div className="text-[9px] text-muted-foreground mt-[2px]">{preset.desc} · {preset.epochs} ep</div>
+                    <div className="text-[9px] text-primary mt-[2px]">72 runs</div>
                     <span
-                      className="absolute top-1 right-[6px] text-[9px] cursor-pointer text-text-3 hover:text-text-1"
+                      className="absolute top-1 right-[6px] text-[9px] cursor-pointer text-muted-foreground hover:text-muted-foreground"
                       onClick={(e) => { e.stopPropagation(); togglePreset(preset.key); }}
                     >✕</span>
                   </div>
@@ -178,23 +178,23 @@ export default function HyperoptTab({ strategy }: HyperoptTabProps) {
               )
             )}
           </div>
-          <div className="text-[10px] text-text-3 text-right">
+          <div className="text-xs text-muted-foreground text-right">
             Total: {totalRuns} runs · Est: {estimatedHours}-{estimatedHours + 2}h
           </div>
         </div>
 
         {/* Loss Functions */}
-        <div className="bg-bg-1 border border-border rounded-[10px] p-4">
+        <div className="bg-card border border-border rounded-[10px] p-4">
           <label className={LABEL}>Loss Functions ({activeLosses.length})</label>
           <div className="flex flex-wrap gap-[6px]">
             {LOSS_FUNCTIONS.map((loss) => (
               <Tooltip key={loss.value} content={loss.tip}>
                 <button
                   onClick={() => toggleLoss(loss.value)}
-                  className={`inline-flex items-center gap-1 h-[26px] px-2 rounded-btn text-[10px] font-medium cursor-pointer border transition-all ${
+                  className={`inline-flex items-center gap-1 h-[26px] px-2 rounded-btn text-xs font-medium cursor-pointer border transition-all ${
                     activeLosses.includes(loss.value)
-                      ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-accent"
-                      : "bg-bg-2 border-border text-text-2 hover:text-text-1"
+                      ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-primary"
+                      : "bg-muted/50 border-border text-muted-foreground hover:text-muted-foreground"
                   }`}
                 >
                   {loss.label}
@@ -205,12 +205,12 @@ export default function HyperoptTab({ strategy }: HyperoptTabProps) {
         </div>
 
         {/* Samplers */}
-        <div className="bg-bg-1 border border-border rounded-[10px] p-4">
+        <div className="bg-card border border-border rounded-[10px] p-4">
           <label className={LABEL}>Samplers (always tested)</label>
           <div className="flex flex-wrap gap-[6px]">
             {SAMPLERS.map((sampler) => (
               <Tooltip key={sampler.value} content={sampler.tip}>
-                <div className="inline-flex items-center gap-1 h-[26px] px-2 rounded-btn text-[10px] font-medium bg-[rgba(99,102,241,0.12)] border border-[rgba(99,102,241,0.3)] text-accent">
+                <div className="inline-flex items-center gap-1 h-[26px] px-2 rounded-btn text-xs font-medium bg-[rgba(99,102,241,0.12)] border border-[rgba(99,102,241,0.3)] text-primary">
                   {sampler.label}
                 </div>
               </Tooltip>
@@ -219,8 +219,8 @@ export default function HyperoptTab({ strategy }: HyperoptTabProps) {
         </div>
 
         {/* Advanced Options — FLAT, no dropdown */}
-        <div className="bg-bg-1 border border-border rounded-[10px] p-4">
-          <div className="text-[12px] font-semibold text-text-0 mb-3">⚡ Advanced Options</div>
+        <div className="bg-card border border-border rounded-[10px] p-4">
+          <div className="text-xs font-semibold text-foreground mb-3">⚡ Advanced Options</div>
 
           <div className="grid grid-cols-2 gap-2 mb-3">
             <div>
@@ -253,7 +253,7 @@ export default function HyperoptTab({ strategy }: HyperoptTabProps) {
 
           <div className="mb-3">
             <label className={LABEL}>
-              Effort (Quality vs Speed) <span className="text-text-1 font-normal ml-1">{effort.toFixed(2)}x</span>
+              Effort (Quality vs Speed) <span className="text-muted-foreground font-normal ml-1">{effort.toFixed(2)}x</span>
             </label>
             <input type="range" min="0.5" max="2.0" step="0.1" value={effort} onChange={(e) => setEffort(Number(e.target.value))} className="w-full accent-accent" />
           </div>
@@ -263,23 +263,23 @@ export default function HyperoptTab({ strategy }: HyperoptTabProps) {
 
         {/* Action Buttons */}
         <div className="flex gap-2">
-          <button className="flex-1 inline-flex items-center justify-center gap-[6px] h-[34px] rounded-btn text-[12px] font-medium cursor-pointer bg-accent border border-accent text-white hover:bg-[#5558e6] transition-all">
+          <button className="flex-1 inline-flex items-center justify-center gap-[6px] h-[34px] rounded-btn text-xs font-medium cursor-pointer bg-primary border border-primary text-white hover:bg-[#5558e6] transition-all">
             ⚡ Run Batch
           </button>
-          <button className="flex-1 inline-flex items-center justify-center gap-[6px] h-[34px] rounded-btn text-[12px] font-medium cursor-pointer border border-border bg-bg-2 text-text-1 hover:border-[#2e2e48] hover:bg-bg-3 transition-all">
+          <button className="flex-1 inline-flex items-center justify-center gap-[6px] h-[34px] rounded-btn text-xs font-medium cursor-pointer border border-border bg-muted/50 text-muted-foreground hover:border-[#2e2e48] hover:bg-muted transition-all">
             ▶ Run Single
           </button>
-          <button className="h-[34px] px-3 rounded-btn text-[12px] font-medium cursor-pointer bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.25)] text-red hover:bg-[rgba(239,68,68,0.15)] transition-all">
+          <button className="h-[34px] px-3 rounded-btn text-xs font-medium cursor-pointer bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.25)] text-rose-500 hover:bg-[rgba(239,68,68,0.15)] transition-all">
             ⏹
           </button>
         </div>
       </div>
 
       {/* RIGHT PANEL — EMPTY STATE */}
-      <div className="bg-bg-1 border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[400px]">
+      <div className="bg-card border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[400px]">
         <div className="text-[32px] mb-3 opacity-30">⚡</div>
-        <div className="text-[13px] font-semibold text-text-2 mb-1">No hyperopt results yet</div>
-        <div className="text-[11px] text-text-3 text-center max-w-[280px]">
+        <div className="text-sm font-semibold text-muted-foreground mb-1">No hyperopt results yet</div>
+        <div className="text-xs text-muted-foreground text-center max-w-[280px]">
           Configure your optimization parameters and click &quot;Run Batch&quot; to start a real FreqTrade hyperopt run.
         </div>
       </div>

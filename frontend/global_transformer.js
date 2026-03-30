@@ -2,9 +2,9 @@ const fs = require('fs');
 const path = require('path');
 
 const TARGET_DIRS = [
-  path.join(__dirname, 'src/app/redesign'),
-  path.join(__dirname, 'src/components'),
-  path.join(__dirname, 'src/lib')
+  path.join(__dirname, 'src/app/dashboard'),
+  path.join(__dirname, 'src/app/(auth)'),
+  path.join(__dirname, 'src/app')
 ];
 
 function walkDir(dir, callback) {

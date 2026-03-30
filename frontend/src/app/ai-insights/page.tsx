@@ -69,27 +69,27 @@ function pctDirect(value: number): string {
 
 function directionBadge(dir: string) {
   if (dir === "long")
-    return <span className="text-green font-semibold">LONG</span>;
+    return <span className="text-emerald-500 font-semibold">LONG</span>;
   if (dir === "short")
-    return <span className="text-red font-semibold">SHORT</span>;
-  return <span className="text-text-3 font-semibold">NEUTRAL</span>;
+    return <span className="text-rose-500 font-semibold">SHORT</span>;
+  return <span className="text-muted-foreground font-semibold">NEUTRAL</span>;
 }
 
 function agreeBadge(allAgree: boolean, strongDisagree: boolean) {
   if (strongDisagree)
     return (
-      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red/10 text-red border border-red/20 uppercase">
+      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red/10 text-rose-500 border border-rose-500/20 uppercase">
         Disagree
       </span>
     );
   if (allAgree)
     return (
-      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green/10 text-green border border-green/20 uppercase">
+      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-green/10 text-emerald-500 border border-emerald-500/20 uppercase">
         All Agree
       </span>
     );
   return (
-    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber/10 text-amber border border-amber/20 uppercase">
+    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber/10 text-amber-500 border border-amber-500-500/20 uppercase">
       Partial
     </span>
   );
@@ -255,19 +255,19 @@ export default function AIInsightsPage() {
         <span
           className={`text-xs font-bold px-3 py-1.5 rounded-full border ${
             config?.enabled
-              ? "bg-green/10 text-green border-green/20"
-              : "bg-bg-3 text-text-3 border-border"
+              ? "bg-green/10 text-emerald-500 border-emerald-500/20"
+              : "bg-muted text-muted-foreground border-border"
           }`}
         >
           {config?.enabled ? "AI Validation Active" : "AI Validation Disabled"}
         </span>
         {!config?.api_key_configured && (
-          <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-amber/10 text-amber border border-amber/20">
+          <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-amber/10 text-amber-500 border border-amber-500-500/20">
             No OpenRouter API key configured
           </span>
         )}
         {disagreeCount > 0 && (
-          <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-red/10 text-red border border-red/20">
+          <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-red/10 text-rose-500 border border-rose-500/20">
             {disagreeCount} strong disagreement{disagreeCount > 1 ? "s" : ""} in last 50
           </span>
         )}
@@ -277,13 +277,13 @@ export default function AIInsightsPage() {
       <div className="grid grid-cols-4 gap-4 mb-6">
         <Card>
           <CardBody>
-            <div className="text-[10px] text-text-3 uppercase tracking-[0.4px] mb-1">
+            <div className="text-xs text-muted-foreground uppercase tracking-[0.4px] mb-1">
               Total Validations (30d)
             </div>
-            <div className="text-2xl font-bold text-text-0">
+            <div className="text-2xl font-bold text-foreground">
               {cost?.total_validations ?? 0}
             </div>
-            <div className="text-[10px] text-text-3 mt-0.5">
+            <div className="text-xs text-muted-foreground mt-0.5">
               ${(cost?.avg_cost_per_validation ?? 0).toFixed(4)} avg cost
             </div>
           </CardBody>
@@ -291,13 +291,13 @@ export default function AIInsightsPage() {
 
         <Card>
           <CardBody>
-            <div className="text-[10px] text-text-3 uppercase tracking-[0.4px] mb-1">
+            <div className="text-xs text-muted-foreground uppercase tracking-[0.4px] mb-1">
               Agreement Rate
             </div>
-            <div className="text-2xl font-bold text-green">
+            <div className="text-2xl font-bold text-emerald-500">
               {pctDirect(agreement?.all_agree_pct ?? 0)}
             </div>
-            <div className="text-[10px] text-text-3 mt-0.5">
+            <div className="text-xs text-muted-foreground mt-0.5">
               {agreement?.all_agree ?? 0} / {agreement?.total_validations ?? 0} all agree
             </div>
           </CardBody>
@@ -305,13 +305,13 @@ export default function AIInsightsPage() {
 
         <Card>
           <CardBody>
-            <div className="text-[10px] text-text-3 uppercase tracking-[0.4px] mb-1">
+            <div className="text-xs text-muted-foreground uppercase tracking-[0.4px] mb-1">
               Avg Confidence
             </div>
-            <div className="text-2xl font-bold text-accent">
+            <div className="text-2xl font-bold text-primary">
               {pct(avgConfidence)}
             </div>
-            <div className="text-[10px] text-text-3 mt-0.5">
+            <div className="text-xs text-muted-foreground mt-0.5">
               Combined score across advisors
             </div>
           </CardBody>
@@ -319,13 +319,13 @@ export default function AIInsightsPage() {
 
         <Card>
           <CardBody>
-            <div className="text-[10px] text-text-3 uppercase tracking-[0.4px] mb-1">
+            <div className="text-xs text-muted-foreground uppercase tracking-[0.4px] mb-1">
               30d API Cost
             </div>
-            <div className="text-2xl font-bold text-text-0">
+            <div className="text-2xl font-bold text-foreground">
               ${(cost?.total_cost_usd ?? 0).toFixed(4)}
             </div>
-            <div className="text-[10px] text-text-3 mt-0.5">
+            <div className="text-xs text-muted-foreground mt-0.5">
               ~${(cost?.projected_monthly_usd ?? 0).toFixed(2)}/mo projected
             </div>
           </CardBody>
@@ -340,12 +340,12 @@ export default function AIInsightsPage() {
             title="Accuracy History"
             icon="&#128200;"
             action={
-              <span className="text-[10px] text-text-3">Rolling 30d per advisor</span>
+              <span className="text-xs text-muted-foreground">Rolling 30d per advisor</span>
             }
           />
           <CardBody className="p-4">
             {chartData.length === 0 ? (
-              <div className="text-center py-8 text-text-3 text-xs">
+              <div className="text-center py-8 text-muted-foreground text-xs">
                 No accuracy data yet. Close some trades with AI validations.
               </div>
             ) : (
@@ -417,7 +417,7 @@ export default function AIInsightsPage() {
             title="Advisor Accuracy & Agreement"
             icon="&#127919;"
             action={
-              <span className="text-[10px] text-text-3">
+              <span className="text-xs text-muted-foreground">
                 {agreement?.total_validations ?? 0} validations
               </span>
             }
@@ -430,23 +430,23 @@ export default function AIInsightsPage() {
               const barColor =
                 p >= 70 ? "bg-green" : p >= 55 ? "bg-amber" : "bg-red";
               const textColor =
-                p >= 70 ? "text-green" : p >= 55 ? "text-amber" : "text-red";
+                p >= 70 ? "text-emerald-500" : p >= 55 ? "text-amber-500" : "text-rose-500";
               const label = advisor === "freqai" ? "FreqAI" : advisor === "claude" ? "Claude" : "Grok";
               return (
                 <div key={advisor}>
                   <div className="flex justify-between mb-1">
-                    <span className="text-xs text-text-2">{label}</span>
+                    <span className="text-xs text-muted-foreground">{label}</span>
                     <span className={`text-xs font-bold ${textColor}`}>
                       {p.toFixed(1)}%
                     </span>
                   </div>
-                  <div className="h-2 bg-bg-3 rounded-full overflow-hidden">
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${barColor}`}
                       style={{ width: `${p}%` }}
                     />
                   </div>
-                  <div className="text-[10px] text-text-3 mt-0.5">
+                  <div className="text-xs text-muted-foreground mt-0.5">
                     {stats?.correct ?? 0} / {stats?.total ?? 0} correct
                   </div>
                 </div>
@@ -455,21 +455,21 @@ export default function AIInsightsPage() {
 
             {/* Agreement breakdown */}
             <div className="border-t border-border pt-4 mt-3">
-              <div className="text-[10px] text-text-3 uppercase tracking-wider mb-2">
+              <div className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
                 Agreement Breakdown (30d)
               </div>
               {[
-                { label: "All Agree", count: agreement?.all_agree ?? 0, color: "bg-green", textColor: "text-green" },
-                { label: "Partial", count: agreement?.partial_agree ?? 0, color: "bg-amber", textColor: "text-amber" },
-                { label: "Strong Disagree", count: agreement?.strong_disagree ?? 0, color: "bg-red", textColor: "text-red" },
+                { label: "All Agree", count: agreement?.all_agree ?? 0, color: "bg-green", textColor: "text-emerald-500" },
+                { label: "Partial", count: agreement?.partial_agree ?? 0, color: "bg-amber", textColor: "text-amber-500" },
+                { label: "Strong Disagree", count: agreement?.strong_disagree ?? 0, color: "bg-red", textColor: "text-rose-500" },
               ].map((item) => {
                 const total = agreement?.total_validations || 1;
                 const widthPct = (item.count / total) * 100;
                 return (
                   <div key={item.label} className="flex items-center gap-2 mb-1.5">
                     <div className={`w-2 h-2 rounded-full ${item.color} shrink-0`} />
-                    <span className="text-xs text-text-2 w-28">{item.label}</span>
-                    <div className="flex-1 h-1.5 bg-bg-3 rounded-full overflow-hidden">
+                    <span className="text-xs text-muted-foreground w-28">{item.label}</span>
+                    <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full ${item.color}`}
                         style={{ width: `${widthPct}%` }}
@@ -488,7 +488,7 @@ export default function AIInsightsPage() {
 
       {/* -- AI-8: Strong Disagree Alerts ------------------------------------ */}
       {disagreeCount > 0 && (
-        <Card className="mb-6 border-red/20">
+        <Card className="mb-6 border-rose-500/20">
           <CardHeader title="Strong Disagreements" icon="&#9888;" />
           <CardBody className="p-0">
             <div className="divide-y divide-border/40">
@@ -500,16 +500,16 @@ export default function AIInsightsPage() {
                     key={`alert-${v.id}`}
                     className="flex items-center gap-4 px-6 py-3 bg-red/[0.03] hover:bg-red/[0.06] transition-colors text-xs"
                   >
-                    <span className="font-bold text-text-0 min-w-[90px]">{v.pair}</span>
-                    <span className="text-text-2">
+                    <span className="font-bold text-foreground min-w-[90px]">{v.pair}</span>
+                    <span className="text-muted-foreground">
                       FreqAI: {directionBadge(v.freqai_direction)} {" / "}
                       Claude: {directionBadge(v.claude_direction)} {" / "}
                       Grok: {directionBadge(v.grok_direction)}
                     </span>
-                    <span className="text-red font-semibold ml-auto">
+                    <span className="text-rose-500 font-semibold ml-auto">
                       Combined: {pct(v.combined_confidence)}
                     </span>
-                    <span className="text-text-3 whitespace-nowrap">
+                    <span className="text-muted-foreground whitespace-nowrap">
                       {new Date(v.created_at).toLocaleString()}
                     </span>
                   </div>
@@ -525,7 +525,7 @@ export default function AIInsightsPage() {
           title="AI Signal Feed"
           icon="&#128225;"
           action={
-            <label className="flex items-center gap-2 text-xs text-text-2 cursor-pointer select-none">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={showDisagreeOnly}
@@ -538,7 +538,7 @@ export default function AIInsightsPage() {
         />
         {displayed.length === 0 ? (
           <CardBody>
-            <div className="text-center py-8 text-text-3 text-xs">
+            <div className="text-center py-8 text-muted-foreground text-xs">
               {showDisagreeOnly
                 ? "No strong disagreements in recent validations."
                 : "No AI validations yet. Enable AI Validation and open trades."}
@@ -552,7 +552,7 @@ export default function AIInsightsPage() {
                   {["Status", "Trade", "Pair", "FreqAI", "Claude", "Grok", "Combined", "Agreement", "Cost", "Time"].map((h) => (
                     <th
                       key={h}
-                      className="text-left px-4 py-3 text-[10px] font-semibold text-text-3 uppercase tracking-wider border-b border-border whitespace-nowrap"
+                      className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border whitespace-nowrap"
                     >
                       {h}
                     </th>
@@ -563,7 +563,7 @@ export default function AIInsightsPage() {
                 {displayed.map((v) => (
                   <tr
                     key={`row-${v.id}`}
-                    className={`hover:bg-bg-3 transition-colors cursor-pointer border-b border-border/40 ${
+                    className={`hover:bg-muted transition-colors cursor-pointer border-b border-border/40 ${
                       v.strong_disagree ? "bg-red/[0.04]" : v.all_agree ? "bg-green/[0.02]" : ""
                     }`}
                     onClick={() => setExpandedRow(expandedRow === v.id ? null : v.id)}
@@ -571,22 +571,22 @@ export default function AIInsightsPage() {
                     <td className="px-4 py-3 text-xs">
                       {agreeBadge(v.all_agree, v.strong_disagree)}
                     </td>
-                    <td className="px-4 py-3 text-xs font-mono text-text-0">#{v.ft_trade_id}</td>
-                    <td className="px-4 py-3 text-xs font-semibold text-text-0">{v.pair}</td>
+                    <td className="px-4 py-3 text-xs font-mono text-foreground">#{v.ft_trade_id}</td>
+                    <td className="px-4 py-3 text-xs font-semibold text-foreground">{v.pair}</td>
                     <td className="px-4 py-3 text-xs">
                       {directionBadge(v.freqai_direction)}{" "}
-                      <span className="text-text-3 text-[10px]">{pct(v.freqai_confidence)}</span>
+                      <span className="text-muted-foreground text-xs">{pct(v.freqai_confidence)}</span>
                     </td>
                     <td className="px-4 py-3 text-xs">
                       {directionBadge(v.claude_direction)}{" "}
-                      <span className="text-text-3 text-[10px]">{pct(v.claude_confidence)}</span>
+                      <span className="text-muted-foreground text-xs">{pct(v.claude_confidence)}</span>
                     </td>
                     <td className="px-4 py-3 text-xs">
                       {directionBadge(v.grok_direction)}{" "}
-                      <span className="text-text-3 text-[10px]">{pct(v.grok_confidence)}</span>
+                      <span className="text-muted-foreground text-xs">{pct(v.grok_confidence)}</span>
                     </td>
                     <td className="px-4 py-3 text-xs">
-                      <div className="relative bg-bg-3 rounded h-[18px] w-[80px] overflow-hidden">
+                      <div className="relative bg-muted rounded h-[18px] w-[80px] overflow-hidden">
                         <div
                           className="h-full rounded transition-all duration-300"
                           style={{
@@ -599,18 +599,18 @@ export default function AIInsightsPage() {
                                 : "#ef4444",
                           }}
                         />
-                        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white drop-shadow-sm">
+                        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-sm">
                           {pct(v.combined_confidence)}
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-xs text-text-0">
+                    <td className="px-4 py-3 text-xs text-foreground">
                       {(v.agreement_pct * 100).toFixed(0)}%
                     </td>
-                    <td className="px-4 py-3 text-xs font-mono text-text-2">
+                    <td className="px-4 py-3 text-xs font-mono text-muted-foreground">
                       ${v.total_cost_usd.toFixed(4)}
                     </td>
-                    <td className="px-4 py-3 text-xs text-text-3 whitespace-nowrap">
+                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                       {new Date(v.created_at).toLocaleTimeString()}
                     </td>
                   </tr>
@@ -623,21 +623,21 @@ export default function AIInsightsPage() {
               const v = validations.find((val) => val.id === expandedRow);
               if (!v) return null;
               return (
-                <div className="border-t border-border bg-accent/[0.03] px-6 py-4 space-y-2">
+                <div className="border-t border-border bg-primary/[0.03] px-6 py-4 space-y-2">
                   {v.claude_reasoning && (
-                    <div className="text-xs text-text-2">
-                      <span className="font-bold text-text-0 mr-2">Claude:</span>
+                    <div className="text-xs text-muted-foreground">
+                      <span className="font-bold text-foreground mr-2">Claude:</span>
                       {v.claude_reasoning}
                     </div>
                   )}
                   {v.grok_reasoning && (
-                    <div className="text-xs text-text-2">
-                      <span className="font-bold text-text-0 mr-2">Grok:</span>
+                    <div className="text-xs text-muted-foreground">
+                      <span className="font-bold text-foreground mr-2">Grok:</span>
                       {v.grok_reasoning}
                     </div>
                   )}
                   {v.claude_sentiment && (
-                    <div className="text-[10px] text-text-3">
+                    <div className="text-xs text-muted-foreground">
                       Sentiment: Claude={v.claude_sentiment} / Grok={v.grok_sentiment ?? "n/a"}
                       {" | "}
                       Regime: Claude={v.claude_regime ?? "n/a"} / Grok={v.grok_regime ?? "n/a"}
@@ -657,37 +657,37 @@ export default function AIInsightsPage() {
           <CardHeader title="Cost Tracker" icon="&#128176;" />
           <CardBody className="space-y-3">
             <div className="flex justify-between items-baseline">
-              <span className="text-xs text-text-2">30d Total</span>
-              <span className="text-lg font-bold text-text-0">
+              <span className="text-xs text-muted-foreground">30d Total</span>
+              <span className="text-lg font-bold text-foreground">
                 ${(cost?.total_cost_usd ?? 0).toFixed(4)}
               </span>
             </div>
             <div className="flex justify-between items-baseline">
-              <span className="text-xs text-text-2">Projected Monthly</span>
-              <span className="text-sm font-semibold text-amber">
+              <span className="text-xs text-muted-foreground">Projected Monthly</span>
+              <span className="text-sm font-semibold text-amber-500">
                 ~${(cost?.projected_monthly_usd ?? 0).toFixed(2)}
               </span>
             </div>
             <hr className="border-border" />
             <div className="flex justify-between items-baseline">
-              <span className="text-xs text-text-2">Daily Budget</span>
-              <span className="text-sm font-semibold text-text-0">
+              <span className="text-xs text-muted-foreground">Daily Budget</span>
+              <span className="text-sm font-semibold text-foreground">
                 ${(config?.max_daily_cost_usd ?? 5).toFixed(2)}
               </span>
             </div>
             <hr className="border-border" />
-            <div className="text-[10px] text-text-3 uppercase tracking-wider mb-1">
+            <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
               Per-Advisor Tokens (30d)
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-text-2">Claude</span>
-              <span className="font-mono text-text-0">
+              <span className="text-muted-foreground">Claude</span>
+              <span className="font-mono text-foreground">
                 {((cost?.claude_tokens_used ?? 0) / 1000).toFixed(1)}k
               </span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-text-2">Grok</span>
-              <span className="font-mono text-text-0">
+              <span className="text-muted-foreground">Grok</span>
+              <span className="font-mono text-foreground">
                 {((cost?.grok_tokens_used ?? 0) / 1000).toFixed(1)}k
               </span>
             </div>
@@ -701,12 +701,12 @@ export default function AIInsightsPage() {
             {config ? (
               <>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-text-2">Enabled</span>
+                  <span className="text-xs text-muted-foreground">Enabled</span>
                   <button
                     type="button"
                     onClick={() => setConfigEnabled(!configEnabled)}
                     className={`relative w-11 h-6 rounded-full transition-colors ${
-                      configEnabled ? "bg-accent" : "bg-bg-3"
+                      configEnabled ? "bg-primary" : "bg-muted"
                     }`}
                   >
                     <span
@@ -718,14 +718,14 @@ export default function AIInsightsPage() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-text-2">Max Daily Cost</span>
+                  <span className="text-xs text-muted-foreground">Max Daily Cost</span>
                   <input
                     type="number"
                     value={maxCost}
                     min="0.01"
                     step="0.50"
                     onChange={(e) => setMaxCost(e.target.value)}
-                    className="w-24 py-1.5 px-2.5 rounded-btn border border-border bg-bg-3 text-text-0 text-xs outline-none focus:border-accent text-right"
+                    className="w-24 py-1.5 px-2.5 rounded-btn border border-border bg-muted text-foreground text-xs outline-none focus:border-primary text-right"
                   />
                 </div>
 
@@ -743,8 +743,8 @@ export default function AIInsightsPage() {
                     { label: "API Key", value: config.api_key_configured ? "Configured" : "Not set" },
                   ].map((row) => (
                     <div key={row.label} className="flex justify-between text-xs">
-                      <span className="text-text-3">{row.label}</span>
-                      <span className={`font-mono text-text-0 ${row.label === "API Key" && !config.api_key_configured ? "text-red" : ""}`}>
+                      <span className="text-muted-foreground">{row.label}</span>
+                      <span className={`font-mono text-foreground ${row.label === "API Key" && !config.api_key_configured ? "text-rose-500" : ""}`}>
                         {row.value}
                       </span>
                     </div>
@@ -755,13 +755,13 @@ export default function AIInsightsPage() {
                   type="button"
                   onClick={() => void handleSaveConfig()}
                   disabled={savingConfig}
-                  className="w-full py-2 px-4 rounded-btn bg-accent text-white text-xs font-semibold cursor-pointer transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-2 px-4 rounded-btn bg-primary text-white text-xs font-semibold cursor-pointer transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {savingConfig ? "Saving..." : "Save Changes"}
                 </button>
               </>
             ) : (
-              <div className="text-center py-4 text-text-3 text-xs">
+              <div className="text-center py-4 text-muted-foreground text-xs">
                 Config unavailable
               </div>
             )}
@@ -772,17 +772,17 @@ export default function AIInsightsPage() {
         <Card>
           <CardHeader title="Manual Validation" icon="&#9889;" />
           <CardBody className="space-y-3">
-            <div className="text-xs text-text-2 mb-2">
+            <div className="text-xs text-muted-foreground mb-2">
               Trigger AI validation for all open trades on a bot. Runs asynchronously.
             </div>
             <div>
-              <div className="text-[10px] text-text-3 uppercase tracking-wider mb-1">
+              <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
                 Select Bot
               </div>
               <select
                 value={triggerBotId}
                 onChange={(e) => setTriggerBotId(e.target.value)}
-                className="w-full py-2.5 px-3.5 rounded-btn border border-border bg-bg-3 text-text-0 text-xs outline-none focus:border-accent cursor-pointer"
+                className="w-full py-2.5 px-3.5 rounded-btn border border-border bg-muted text-foreground text-xs outline-none focus:border-primary cursor-pointer"
               >
                 {bots.length === 0 && <option value="">No bots available</option>}
                 {bots.map((b) => (
@@ -810,14 +810,14 @@ export default function AIInsightsPage() {
           title="Hyperopt AI Analyses"
           icon="&#128300;"
           action={
-            <span className="text-[10px] text-text-3">
+            <span className="text-xs text-muted-foreground">
               Recent pre/post hyperopt AI advisory sessions
             </span>
           }
         />
         {hyperoptAnalyses.length === 0 ? (
           <CardBody>
-            <div className="text-center py-8 text-text-3 text-xs">
+            <div className="text-center py-8 text-muted-foreground text-xs">
               No hyperopt analyses yet. Use &quot;AI Suggest&quot; on the Backtesting page.
             </div>
           </CardBody>
@@ -829,7 +829,7 @@ export default function AIInsightsPage() {
                   {["Type", "Strategy", "Pair", "TF", "Suggestion", "Claude", "Grok", "Cost", "Time"].map((h) => (
                     <th
                       key={h}
-                      className="text-left px-4 py-3 text-[10px] font-semibold text-text-3 uppercase tracking-wider border-b border-border whitespace-nowrap"
+                      className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border whitespace-nowrap"
                     >
                       {h}
                     </th>
@@ -840,7 +840,7 @@ export default function AIInsightsPage() {
                 {hyperoptAnalyses.map((a) => (
                   <React.Fragment key={`ho-${a.id}`}>
                   <tr
-                    className="hover:bg-bg-3 transition-colors border-b border-border/40 cursor-pointer"
+                    className="hover:bg-muted transition-colors border-b border-border/40 cursor-pointer"
                     onClick={async () => {
                       if (expandedAnalysisId === a.id) { setExpandedAnalysisId(null); setExpandedAnalysis(null); return; }
                       setExpandedAnalysisId(a.id);
@@ -850,62 +850,62 @@ export default function AIInsightsPage() {
                   >
                     <td className="px-4 py-3">
                       <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        className={`text-xs font-bold px-2 py-0.5 rounded ${
                           a.analysis_type === "pre_hyperopt"
-                            ? "bg-accent/10 text-accent"
-                            : "bg-amber/10 text-amber"
+                            ? "bg-primary/10 text-primary"
+                            : "bg-amber/10 text-amber-500"
                         }`}
                       >
                         {a.analysis_type === "pre_hyperopt" ? "PRE" : "POST"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs font-mono text-text-0">
+                    <td className="px-4 py-3 text-xs font-mono text-foreground">
                       {a.strategy_name}
                     </td>
-                    <td className="px-4 py-3 text-xs font-semibold text-text-0">
+                    <td className="px-4 py-3 text-xs font-semibold text-foreground">
                       {a.pair}
                     </td>
-                    <td className="px-4 py-3 text-xs text-text-2">{a.timeframe}</td>
-                    <td className="px-4 py-3 text-xs font-mono text-text-0">
+                    <td className="px-4 py-3 text-xs text-muted-foreground">{a.timeframe}</td>
+                    <td className="px-4 py-3 text-xs font-mono text-foreground">
                       {a.analysis_type === "pre_hyperopt"
                         ? a.suggested_loss_function ?? "\u2014"
                         : `Result #${(a.recommended_result_index ?? 0) + 1}`}
                     </td>
-                    <td className="px-4 py-3 text-xs text-text-0">
+                    <td className="px-4 py-3 text-xs text-foreground">
                       {a.claude_confidence != null ? pct(a.claude_confidence) : "\u2014"}
                     </td>
-                    <td className="px-4 py-3 text-xs text-text-0">
+                    <td className="px-4 py-3 text-xs text-foreground">
                       {a.grok_confidence != null ? pct(a.grok_confidence) : "\u2014"}
                     </td>
-                    <td className="px-4 py-3 text-xs font-mono text-text-2">
+                    <td className="px-4 py-3 text-xs font-mono text-muted-foreground">
                       ${a.total_cost_usd.toFixed(4)}
                     </td>
-                    <td className="px-4 py-3 text-xs text-text-3 whitespace-nowrap">
+                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                       {new Date(a.created_at).toLocaleString()}
                     </td>
                   </tr>
                   {expandedAnalysisId === a.id && expandedAnalysis && (
-                    <tr><td colSpan={9} className="bg-bg-1 border-b border-border px-4 py-3">
+                    <tr><td colSpan={9} className="bg-card border-b border-border px-4 py-3">
                       <div className="grid grid-cols-3 gap-3 text-xs">
-                        <div><span className="text-text-3 block text-2xs uppercase mb-0.5">Suggested Loss</span><span className="font-mono text-text-0">{expandedAnalysis.suggested_loss_function ?? "\u2014"}</span></div>
-                        <div><span className="text-text-3 block text-2xs uppercase mb-0.5">Suggested Sampler</span><span className="font-mono text-text-0">{expandedAnalysis.suggested_sampler ?? "\u2014"}</span></div>
-                        <div><span className="text-text-3 block text-2xs uppercase mb-0.5">Suggested Epochs</span><span className="font-mono text-text-0">{expandedAnalysis.suggested_epochs ?? "\u2014"}</span></div>
+                        <div><span className="text-muted-foreground block text-2xs uppercase mb-0.5">Suggested Loss</span><span className="font-mono text-foreground">{expandedAnalysis.suggested_loss_function ?? "\u2014"}</span></div>
+                        <div><span className="text-muted-foreground block text-2xs uppercase mb-0.5">Suggested Sampler</span><span className="font-mono text-foreground">{expandedAnalysis.suggested_sampler ?? "\u2014"}</span></div>
+                        <div><span className="text-muted-foreground block text-2xs uppercase mb-0.5">Suggested Epochs</span><span className="font-mono text-foreground">{expandedAnalysis.suggested_epochs ?? "\u2014"}</span></div>
                       </div>
                       {expandedAnalysis.overfitting_scores.length > 0 && (
                         <div className="mt-2">
-                          <span className="text-text-3 text-2xs uppercase">Overfitting Risk:</span>
+                          <span className="text-muted-foreground text-2xs uppercase">Overfitting Risk:</span>
                           <div className="flex gap-2 mt-1">
                             {expandedAnalysis.overfitting_scores.map((s, i) => (
-                              <span key={`of-${i}-${s.verdict}`} className={`text-[10px] px-2 py-0.5 rounded border ${
-                                s.verdict === "SAFE" ? "border-green/30 text-green bg-green-bg" :
-                                s.verdict === "CAUTION" ? "border-amber/30 text-amber bg-amber-bg" :
-                                "border-red/30 text-red bg-red-bg"
+                              <span key={`of-${i}-${s.verdict}`} className={`text-xs px-2 py-0.5 rounded border ${
+                                s.verdict === "SAFE" ? "border-emerald-500/30 text-emerald-500 bg-emerald-500/10" :
+                                s.verdict === "CAUTION" ? "border-amber-500/30 text-amber-500 bg-amber-500/10" :
+                                "border-rose-500/30 text-rose-500 bg-rose-500/10"
                               }`}>#{s.result_index ?? i}: {s.verdict} ({s.risk_score?.toFixed(2) ?? "?"})</span>
                             ))}
                           </div>
                         </div>
                       )}
-                      <div className="mt-2 text-2xs text-text-3">Baseline: profit {expandedAnalysis.baseline_profit != null ? `${(expandedAnalysis.baseline_profit * 100).toFixed(2)}%` : "\u2014"} | Sharpe {expandedAnalysis.baseline_sharpe?.toFixed(2) ?? "\u2014"} | Max DD {expandedAnalysis.baseline_max_drawdown != null ? `${(expandedAnalysis.baseline_max_drawdown * 100).toFixed(1)}%` : "\u2014"}</div>
+                      <div className="mt-2 text-2xs text-muted-foreground">Baseline: profit {expandedAnalysis.baseline_profit != null ? `${(expandedAnalysis.baseline_profit * 100).toFixed(2)}%` : "\u2014"} | Sharpe {expandedAnalysis.baseline_sharpe?.toFixed(2) ?? "\u2014"} | Max DD {expandedAnalysis.baseline_max_drawdown != null ? `${(expandedAnalysis.baseline_max_drawdown * 100).toFixed(1)}%` : "\u2014"}</div>
                     </td></tr>
                   )}
                   </React.Fragment>
@@ -919,27 +919,27 @@ export default function AIInsightsPage() {
       {/* AI-10: Hyperopt AI Performance */}
       <Card className="mb-6">
         <CardHeader title="Hyperopt AI Performance" icon="&#128202;"
-          action={<span className="text-[10px] text-text-3">Followed vs ignored AI recommendations</span>} />
+          action={<span className="text-xs text-muted-foreground">Followed vs ignored AI recommendations</span>} />
         <CardBody>
           {hyperoptStatsLoading ? (
-            <div className="py-6 text-center text-sm text-text-3 animate-pulse">Loading...</div>
+            <div className="py-6 text-center text-sm text-muted-foreground animate-pulse">Loading...</div>
           ) : hyperoptStats ? (
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-bg-1 border border-green/20 rounded-lg p-4">
-                <div className="text-2xs text-green uppercase tracking-wide mb-2 font-semibold">Followed AI</div>
-                <div className="text-lg font-bold text-text-0 mb-1">{hyperoptStats.followed_ai.count} times</div>
-                <div className="text-xs text-text-2">Avg paper result: <span className={`font-bold ${hyperoptStats.followed_ai.avg_paper_result != null && hyperoptStats.followed_ai.avg_paper_result >= 0 ? "text-green" : "text-red"}`}>{hyperoptStats.followed_ai.avg_paper_result != null ? `${(hyperoptStats.followed_ai.avg_paper_result * 100).toFixed(1)}%` : "\u2014"}</span></div>
-                <div className="text-xs text-text-2">Avg live result: <span className={`font-bold ${hyperoptStats.followed_ai.avg_live_result != null && hyperoptStats.followed_ai.avg_live_result >= 0 ? "text-green" : "text-red"}`}>{hyperoptStats.followed_ai.avg_live_result != null ? `${(hyperoptStats.followed_ai.avg_live_result * 100).toFixed(1)}%` : "\u2014"}</span></div>
+              <div className="bg-card border border-emerald-500/20 rounded-lg p-4">
+                <div className="text-2xs text-emerald-500 uppercase tracking-wide mb-2 font-semibold">Followed AI</div>
+                <div className="text-lg font-bold text-foreground mb-1">{hyperoptStats.followed_ai.count} times</div>
+                <div className="text-xs text-muted-foreground">Avg paper result: <span className={`font-bold ${hyperoptStats.followed_ai.avg_paper_result != null && hyperoptStats.followed_ai.avg_paper_result >= 0 ? "text-emerald-500" : "text-rose-500"}`}>{hyperoptStats.followed_ai.avg_paper_result != null ? `${(hyperoptStats.followed_ai.avg_paper_result * 100).toFixed(1)}%` : "\u2014"}</span></div>
+                <div className="text-xs text-muted-foreground">Avg live result: <span className={`font-bold ${hyperoptStats.followed_ai.avg_live_result != null && hyperoptStats.followed_ai.avg_live_result >= 0 ? "text-emerald-500" : "text-rose-500"}`}>{hyperoptStats.followed_ai.avg_live_result != null ? `${(hyperoptStats.followed_ai.avg_live_result * 100).toFixed(1)}%` : "\u2014"}</span></div>
               </div>
-              <div className="bg-bg-1 border border-red/20 rounded-lg p-4">
-                <div className="text-2xs text-red uppercase tracking-wide mb-2 font-semibold">Ignored AI</div>
-                <div className="text-lg font-bold text-text-0 mb-1">{hyperoptStats.ignored_ai.count} times</div>
-                <div className="text-xs text-text-2">Avg paper result: <span className={`font-bold ${hyperoptStats.ignored_ai.avg_paper_result != null && hyperoptStats.ignored_ai.avg_paper_result >= 0 ? "text-green" : "text-red"}`}>{hyperoptStats.ignored_ai.avg_paper_result != null ? `${(hyperoptStats.ignored_ai.avg_paper_result * 100).toFixed(1)}%` : "\u2014"}</span></div>
-                <div className="text-xs text-text-2">Avg live result: <span className={`font-bold ${hyperoptStats.ignored_ai.avg_live_result != null && hyperoptStats.ignored_ai.avg_live_result >= 0 ? "text-green" : "text-red"}`}>{hyperoptStats.ignored_ai.avg_live_result != null ? `${(hyperoptStats.ignored_ai.avg_live_result * 100).toFixed(1)}%` : "\u2014"}</span></div>
+              <div className="bg-card border border-rose-500/20 rounded-lg p-4">
+                <div className="text-2xs text-rose-500 uppercase tracking-wide mb-2 font-semibold">Ignored AI</div>
+                <div className="text-lg font-bold text-foreground mb-1">{hyperoptStats.ignored_ai.count} times</div>
+                <div className="text-xs text-muted-foreground">Avg paper result: <span className={`font-bold ${hyperoptStats.ignored_ai.avg_paper_result != null && hyperoptStats.ignored_ai.avg_paper_result >= 0 ? "text-emerald-500" : "text-rose-500"}`}>{hyperoptStats.ignored_ai.avg_paper_result != null ? `${(hyperoptStats.ignored_ai.avg_paper_result * 100).toFixed(1)}%` : "\u2014"}</span></div>
+                <div className="text-xs text-muted-foreground">Avg live result: <span className={`font-bold ${hyperoptStats.ignored_ai.avg_live_result != null && hyperoptStats.ignored_ai.avg_live_result >= 0 ? "text-emerald-500" : "text-rose-500"}`}>{hyperoptStats.ignored_ai.avg_live_result != null ? `${(hyperoptStats.ignored_ai.avg_live_result * 100).toFixed(1)}%` : "\u2014"}</span></div>
               </div>
             </div>
           ) : (
-            <div className="py-6 text-center text-sm text-text-3">No hyperopt AI performance data yet</div>
+            <div className="py-6 text-center text-sm text-muted-foreground">No hyperopt AI performance data yet</div>
           )}
         </CardBody>
       </Card>

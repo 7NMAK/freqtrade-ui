@@ -286,7 +286,7 @@ function ToggleSwitch({ enabled, onToggle, label }: { enabled: boolean; onToggle
     <div className="flex items-center gap-2">
       <div
         className={`w-9 h-5 rounded-full border cursor-pointer relative transition-all ${
-          enabled ? "bg-green-bg border-green/50" : "bg-bg-3 border-border"
+          enabled ? "bg-emerald-500/10 border-emerald-500/50" : "bg-muted border-border"
         }`}
         onClick={onToggle}
       >
@@ -296,7 +296,7 @@ function ToggleSwitch({ enabled, onToggle, label }: { enabled: boolean; onToggle
           }`}
         />
       </div>
-      {label && <div className="text-[11px] text-text-2">{label}</div>}
+      {label && <div className="text-xs text-muted-foreground">{label}</div>}
     </div>
   );
 }
@@ -312,15 +312,15 @@ function CollapsibleSection({ title, description, enabled, onToggle, children, d
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen ?? false);
   return (
-    <div className={`border rounded-lg transition-all ${enabled ? "border-accent/40 bg-accent/[.04]" : "border-border bg-bg-2"}`}>
+    <div className={`border rounded-lg transition-all ${enabled ? "border-primary/40 bg-primary/[.04]" : "border-border bg-muted/50"}`}>
       <div
         className="flex items-center gap-3 px-4 py-3 cursor-pointer select-none"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <div className={`text-[10px] transition-transform ${isOpen ? "rotate-90" : ""}`}>&#9654;</div>
+        <div className={`text-xs transition-transform ${isOpen ? "rotate-90" : ""}`}>&#9654;</div>
         <div className="flex-1 min-w-0">
-          <div className="text-xs font-semibold text-text-0 font-mono">{title}()</div>
-          <div className="text-[10px] text-text-3 leading-snug mt-0.5 truncate">{description}</div>
+          <div className="text-xs font-semibold text-foreground font-mono">{title}()</div>
+          <div className="text-xs text-muted-foreground leading-snug mt-0.5 truncate">{description}</div>
         </div>
         <div onClick={(e) => e.stopPropagation()}>
           <ToggleSwitch enabled={enabled} onToggle={onToggle} />
@@ -341,7 +341,7 @@ export default function BuilderPageWrapper() {
     <Suspense fallback={
       <AppShell title="Strategy Builder">
         <div className="flex items-center justify-center h-96">
-          <div className="text-sm text-text-3 animate-pulse">Loading...</div>
+          <div className="text-sm text-muted-foreground animate-pulse">Loading...</div>
         </div>
       </AppShell>
     }>
@@ -1054,14 +1054,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         {conditions.map((cond, i) => (
           <div key={`cond-${i}-${cond.indicator}`}>
             {i > 0 && (
-              <div className="text-[10px] font-semibold text-accent text-center py-1">AND</div>
+              <div className="text-xs font-semibold text-primary text-center py-1">AND</div>
             )}
-            <div className="flex items-center gap-2.5 p-3 px-4 bg-bg-2 border border-border rounded-lg flex-wrap">
-              <span className="text-[11px] text-text-3 min-w-[30px]">
+            <div className="flex items-center gap-2.5 p-3 px-4 bg-muted/50 border border-border rounded-lg flex-wrap">
+              <span className="text-xs text-muted-foreground min-w-[30px]">
                 {i === 0 ? labelPrefix : "AND"}
               </span>
               <select
-                className="px-3 py-2 rounded border border-border bg-bg-3 text-text-0 text-xs font-inherit outline-none focus:border-accent"
+                className="px-3 py-2 rounded border border-border bg-muted text-foreground text-xs font-inherit outline-none focus:border-primary"
                 value={cond.indicator}
                 onChange={(e) => updateCondition(setter, i, "indicator", e.target.value)}
               >
@@ -1070,7 +1070,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 ))}
               </select>
               <select
-                className="px-3 py-2 rounded border border-border bg-bg-3 text-text-0 text-xs font-inherit outline-none focus:border-accent"
+                className="px-3 py-2 rounded border border-border bg-muted text-foreground text-xs font-inherit outline-none focus:border-primary"
                 value={cond.operator}
                 onChange={(e) => updateCondition(setter, i, "operator", e.target.value)}
               >
@@ -1080,7 +1080,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               </select>
               {cond.compareType === "indicator" ? (
                 <select
-                  className="px-3 py-2 rounded border border-border bg-bg-3 text-text-0 text-xs font-inherit outline-none focus:border-accent"
+                  className="px-3 py-2 rounded border border-border bg-muted text-foreground text-xs font-inherit outline-none focus:border-primary"
                   value={cond.compareIndicator}
                   onChange={(e) => updateCondition(setter, i, "compareIndicator", e.target.value)}
                 >
@@ -1091,7 +1091,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               ) : (
                 <input
                   type="number"
-                  className="w-[70px] px-3 py-2 rounded border border-border bg-bg-3 text-text-0 text-xs font-mono outline-none focus:border-accent text-center"
+                  className="w-[70px] px-3 py-2 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center"
                   value={cond.compareValue}
                   onChange={(e) => updateCondition(setter, i, "compareValue", Number(e.target.value))}
                 />
@@ -1100,7 +1100,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
           </div>
         ))}
         <div
-          className="flex items-center gap-1.5 p-2 px-3.5 rounded-lg border border-dashed border-border text-text-3 text-xs cursor-pointer hover:border-accent hover:text-accent transition-colors mt-2"
+          className="flex items-center gap-1.5 p-2 px-3.5 rounded-lg border border-dashed border-border text-muted-foreground text-xs cursor-pointer hover:border-primary hover:text-primary transition-colors mt-2"
           onClick={() => addCondition(setter)}
         >
           + {addLabel}
@@ -1114,14 +1114,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
   function renderStakeParams() {
     return (
       <div className="space-y-2">
-        <div className="text-[10px] text-text-3 uppercase font-semibold mb-1">Preset</div>
+        <div className="text-xs text-muted-foreground uppercase font-semibold mb-1">Preset</div>
         <div className="flex gap-2">
           {(["fixed", "percent", "kelly"] as const).map((p) => (
             <button
               key={p}
               type="button"
-              className={`px-3 py-1.5 rounded text-[11px] border transition-all ${
-                stakePreset === p ? "border-accent bg-accent/[.12] text-accent" : "border-border bg-bg-3 text-text-2 hover:border-border-hover"
+              className={`px-3 py-1.5 rounded text-xs border transition-all ${
+                stakePreset === p ? "border-primary bg-primary/[.12] text-primary" : "border-border bg-muted text-muted-foreground hover:border-border-border hover:border-ring"
               }`}
               onClick={() => setStakePreset(p)}
             >
@@ -1131,20 +1131,20 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         </div>
         {stakePreset === "fixed" && (
           <div className="flex items-center gap-2 mt-2">
-            <span className="text-[10px] text-text-3">Amount:</span>
-            <input type="number" className="w-24 px-2 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs font-mono outline-none focus:border-accent text-center" value={stakeFixedAmount} onChange={(e) => setStakeFixedAmount(Number(e.target.value))} />
-            <span className="text-[10px] text-text-3">USDT</span>
+            <span className="text-xs text-muted-foreground">Amount:</span>
+            <input type="number" className="w-24 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center" value={stakeFixedAmount} onChange={(e) => setStakeFixedAmount(Number(e.target.value))} />
+            <span className="text-xs text-muted-foreground">USDT</span>
           </div>
         )}
         {stakePreset === "percent" && (
           <div className="flex items-center gap-2 mt-2">
-            <span className="text-[10px] text-text-3">Percent:</span>
-            <input type="number" className="w-20 px-2 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs font-mono outline-none focus:border-accent text-center" value={stakePercent} step={1} min={1} max={100} onChange={(e) => setStakePercent(Number(e.target.value))} />
-            <span className="text-[10px] text-text-3">%</span>
+            <span className="text-xs text-muted-foreground">Percent:</span>
+            <input type="number" className="w-20 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center" value={stakePercent} step={1} min={1} max={100} onChange={(e) => setStakePercent(Number(e.target.value))} />
+            <span className="text-xs text-muted-foreground">%</span>
           </div>
         )}
         {stakePreset === "kelly" && (
-          <div className="text-[10px] text-text-3 mt-2 leading-snug">Kelly criterion uses win rate and win/loss ratio to size positions. Default cap: 25% of balance.</div>
+          <div className="text-xs text-muted-foreground mt-2 leading-snug">Kelly criterion uses win rate and win/loss ratio to size positions. Default cap: 25% of balance.</div>
         )}
       </div>
     );
@@ -1153,14 +1153,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
   function renderStoplossPresetParams() {
     return (
       <div className="space-y-2">
-        <div className="text-[10px] text-text-3 uppercase font-semibold mb-1">Preset</div>
+        <div className="text-xs text-muted-foreground uppercase font-semibold mb-1">Preset</div>
         <div className="flex gap-2">
           {(["time_based", "profit_based", "atr_based"] as const).map((p) => (
             <button
               key={p}
               type="button"
-              className={`px-3 py-1.5 rounded text-[11px] border transition-all ${
-                stoplossPreset === p ? "border-accent bg-accent/[.12] text-accent" : "border-border bg-bg-3 text-text-2 hover:border-border-hover"
+              className={`px-3 py-1.5 rounded text-xs border transition-all ${
+                stoplossPreset === p ? "border-primary bg-primary/[.12] text-primary" : "border-border bg-muted text-muted-foreground hover:border-border-border hover:border-ring"
               }`}
               onClick={() => setStoplossPreset(p)}
             >
@@ -1168,7 +1168,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
             </button>
           ))}
         </div>
-        <div className="text-[10px] text-text-3 mt-2 leading-snug">
+        <div className="text-xs text-muted-foreground mt-2 leading-snug">
           {stoplossPreset === "time_based" && "Tightens stoploss over time: 5% initial -> 2% after 12h -> 1% after 24h."}
           {stoplossPreset === "profit_based" && "Locks in profit as it grows: 5% default, then 3% at 5% profit, then 2% at 10% profit."}
           {stoplossPreset === "atr_based" && "Uses ATR indicator to set stoploss at 2x ATR distance, capped at 10%."}
@@ -1180,9 +1180,9 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
   function renderOffsetParams(value: number, setter: (v: number) => void, label: string) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-[10px] text-text-3">{label}:</span>
-        <input type="number" className="w-24 px-2 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs font-mono outline-none focus:border-accent text-center" value={value} step={0.001} onChange={(e) => setter(Number(e.target.value))} />
-        <span className="text-[10px] text-text-3">({(value * 100).toFixed(1)}%)</span>
+        <span className="text-xs text-muted-foreground">{label}:</span>
+        <input type="number" className="w-24 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center" value={value} step={0.001} onChange={(e) => setter(Number(e.target.value))} />
+        <span className="text-xs text-muted-foreground">({(value * 100).toFixed(1)}%)</span>
       </div>
     );
   }
@@ -1190,9 +1190,9 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
   function renderTimeThresholdParams(value: number, setter: (v: number) => void) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-[10px] text-text-3">Cancel after:</span>
-        <input type="number" className="w-20 px-2 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs font-mono outline-none focus:border-accent text-center" value={value} step={5} min={1} onChange={(e) => setter(Number(e.target.value))} />
-        <span className="text-[10px] text-text-3">minutes</span>
+        <span className="text-xs text-muted-foreground">Cancel after:</span>
+        <input type="number" className="w-20 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center" value={value} step={5} min={1} onChange={(e) => setter(Number(e.target.value))} />
+        <span className="text-xs text-muted-foreground">minutes</span>
       </div>
     );
   }
@@ -1202,16 +1202,16 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
       <div className="space-y-2">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-text-3">DCA levels:</span>
-            <input type="number" className="w-16 px-2 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs font-mono outline-none focus:border-accent text-center" value={dcaLevels} min={1} max={10} onChange={(e) => setDcaLevels(Number(e.target.value))} />
+            <span className="text-xs text-muted-foreground">DCA levels:</span>
+            <input type="number" className="w-16 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center" value={dcaLevels} min={1} max={10} onChange={(e) => setDcaLevels(Number(e.target.value))} />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-text-3">Multiplier:</span>
-            <input type="number" className="w-16 px-2 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs font-mono outline-none focus:border-accent text-center" value={dcaMultiplier} step={0.1} min={1} onChange={(e) => setDcaMultiplier(Number(e.target.value))} />
-            <span className="text-[10px] text-text-3">x</span>
+            <span className="text-xs text-muted-foreground">Multiplier:</span>
+            <input type="number" className="w-16 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center" value={dcaMultiplier} step={0.1} min={1} onChange={(e) => setDcaMultiplier(Number(e.target.value))} />
+            <span className="text-xs text-muted-foreground">x</span>
           </div>
         </div>
-        <div className="text-[10px] text-text-3 leading-snug">
+        <div className="text-xs text-muted-foreground leading-snug">
           Adds to position when loss exceeds 5% per level. Each DCA order = stake_amount x {dcaMultiplier}x.
         </div>
       </div>
@@ -1226,8 +1226,8 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
             <button
               key={p}
               type="button"
-              className={`px-3 py-1.5 rounded text-[11px] border transition-all ${
-                leveragePreset === p ? "border-accent bg-accent/[.12] text-accent" : "border-border bg-bg-3 text-text-2 hover:border-border-hover"
+              className={`px-3 py-1.5 rounded text-xs border transition-all ${
+                leveragePreset === p ? "border-primary bg-primary/[.12] text-primary" : "border-border bg-muted text-muted-foreground hover:border-border-border hover:border-ring"
               }`}
               onClick={() => setLeveragePreset(p)}
             >
@@ -1237,13 +1237,13 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         </div>
         {leveragePreset === "fixed" && (
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-[10px] text-text-3">Leverage:</span>
-            <input type="number" className="w-16 px-2 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs font-mono outline-none focus:border-accent text-center" value={leverageFixedValue} min={1} max={125} onChange={(e) => setLeverageFixedValue(Number(e.target.value))} />
-            <span className="text-[10px] text-text-3">x</span>
+            <span className="text-xs text-muted-foreground">Leverage:</span>
+            <input type="number" className="w-16 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center" value={leverageFixedValue} min={1} max={125} onChange={(e) => setLeverageFixedValue(Number(e.target.value))} />
+            <span className="text-xs text-muted-foreground">x</span>
           </div>
         )}
         {leveragePreset === "dynamic" && (
-          <div className="text-[10px] text-text-3 mt-1 leading-snug">Reduces leverage in high-volatility conditions using ATR. High vol: 3x, medium: 5x, low: {leverageFixedValue}x.</div>
+          <div className="text-xs text-muted-foreground mt-1 leading-snug">Reduces leverage in high-volatility conditions using ATR. High vol: 3x, medium: 5x, low: {leverageFixedValue}x.</div>
         )}
       </div>
     );
@@ -1273,12 +1273,12 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         {/* Strategy Name */}
         <div>
           <Tooltip content={TOOLTIPS.strategy_name?.description ?? "Name for this strategy"} configKey="strategy_name">
-            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-              Strategy Name <span className="text-red text-[13px]">*</span>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+              Strategy Name <span className="text-rose-500 text-sm">*</span>
             </label>
           </Tooltip>
           <input
-            className="w-full px-3.5 py-2.5 rounded-md border border-border bg-bg-2 text-text-0 text-[13px] outline-none focus:border-accent placeholder:text-text-3"
+            className="w-full px-3.5 py-2.5 rounded-md border border-border bg-muted/50 text-foreground text-sm outline-none focus:border-primary placeholder:text-muted-foreground"
             type="text"
             placeholder="e.g. TrendFollowerV3"
             value={strategyName}
@@ -1289,12 +1289,12 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         {/* Description */}
         <div>
           <Tooltip content={"A brief description of what this strategy does and its approach"} configKey="description">
-            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
               Description
             </label>
           </Tooltip>
           <textarea
-            className="w-full px-3.5 py-2.5 rounded-md border border-border bg-bg-2 text-text-0 text-[13px] outline-none focus:border-accent placeholder:text-text-3 resize-y min-h-[60px]"
+            className="w-full px-3.5 py-2.5 rounded-md border border-border bg-muted/50 text-foreground text-sm outline-none focus:border-primary placeholder:text-muted-foreground resize-y min-h-[60px]"
             placeholder="What does this strategy do?"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -1305,12 +1305,12 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         <div className="grid grid-cols-2 gap-3.5">
           <div>
             <Tooltip content={TOOLTIPS.exchange_name?.description ?? "Exchange to trade on"} configKey="exchange.name">
-              <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                 Exchange
               </label>
             </Tooltip>
             <select
-              className="w-full px-3.5 py-2.5 rounded-md border border-border bg-bg-2 text-text-0 text-[13px] outline-none focus:border-accent cursor-pointer appearance-none"
+              className="w-full px-3.5 py-2.5 rounded-md border border-border bg-muted/50 text-foreground text-sm outline-none focus:border-primary cursor-pointer appearance-none"
               value={exchange}
               onChange={(e) => setExchange(e.target.value)}
             >
@@ -1321,12 +1321,12 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
           </div>
           <div>
             <Tooltip content={TOOLTIPS.timeframe?.description ?? "Candle timeframe for the strategy"} configKey="timeframe">
-              <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-                Timeframe <span className="text-red text-[13px]">*</span>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                Timeframe <span className="text-rose-500 text-sm">*</span>
               </label>
             </Tooltip>
             <select
-              className="w-full px-3.5 py-2.5 rounded-md border border-border bg-bg-2 text-text-0 text-[13px] outline-none focus:border-accent cursor-pointer appearance-none"
+              className="w-full px-3.5 py-2.5 rounded-md border border-border bg-muted/50 text-foreground text-sm outline-none focus:border-primary cursor-pointer appearance-none"
               value={timeframe}
               onChange={(e) => setTimeframe(e.target.value)}
             >
@@ -1340,9 +1340,9 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         {/* Trading Pairs */}
         <div>
           <Tooltip content={TOOLTIPS.exchange_pair_whitelist?.description ?? "Trading pairs for this strategy"} configKey="exchange.pair_whitelist">
-            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-              Trading Pairs <span className="text-red text-[13px]">*</span>{" "}
-              <span className="font-normal text-text-3 normal-case tracking-normal">&mdash; click to add</span>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+              Trading Pairs <span className="text-rose-500 text-sm">*</span>{" "}
+              <span className="font-normal text-muted-foreground normal-case tracking-normal">&mdash; click to add</span>
             </label>
           </Tooltip>
           <div className="flex flex-wrap gap-2">
@@ -1353,21 +1353,21 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                   key={tp.pair}
                   className={`px-3.5 py-2 rounded-lg border text-xs cursor-pointer transition-all flex items-center gap-1.5 ${
                     isSelected
-                      ? "border-accent bg-accent/[.12] text-accent"
-                      : "border-border bg-bg-2 text-text-1 hover:border-border-hover hover:bg-bg-3"
+                      ? "border-primary bg-primary/[.12] text-primary"
+                      : "border-border bg-muted/50 text-muted-foreground hover:border-border-border hover:border-ring hover:bg-muted"
                   }`}
                   onClick={() => togglePair(tp.pair)}
                 >
                   {tp.icon && <span className="text-sm">{tp.icon}</span>}
                   {tp.pair}
-                  {isSelected && <span className="text-red font-bold ml-1">&times;</span>}
+                  {isSelected && <span className="text-rose-500 font-bold ml-1">&times;</span>}
                 </div>
               );
             })}
             {showAddPairInput ? (
               <div className="flex items-center gap-1.5">
                 <input
-                  className="px-2.5 py-1.5 rounded border border-accent bg-bg-2 text-text-0 text-xs outline-none placeholder:text-text-3 w-[140px]"
+                  className="px-2.5 py-1.5 rounded border border-primary bg-muted/50 text-foreground text-xs outline-none placeholder:text-muted-foreground w-[140px]"
                   type="text"
                   placeholder="e.g. XRP/USDT:USDT"
                   value={addPairInput}
@@ -1380,14 +1380,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 />
                 <button
                   type="button"
-                  className="px-2.5 py-1.5 rounded bg-accent text-white text-xs font-medium cursor-pointer"
+                  className="px-2.5 py-1.5 rounded bg-primary text-white text-xs font-medium cursor-pointer"
                   onClick={handleAddPair}
                 >
                   Add
                 </button>
                 <button
                   type="button"
-                  className="px-2 py-1.5 rounded border border-border bg-bg-2 text-text-3 text-xs cursor-pointer"
+                  className="px-2 py-1.5 rounded border border-border bg-muted/50 text-muted-foreground text-xs cursor-pointer"
                   onClick={() => { setShowAddPairInput(false); setAddPairInput(""); }}
                 >
                   Cancel
@@ -1395,7 +1395,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               </div>
             ) : (
               <div
-                className="px-3.5 py-2 rounded-lg border border-dashed border-border text-xs text-text-3 cursor-pointer hover:border-accent hover:text-accent transition-colors"
+                className="px-3.5 py-2 rounded-lg border border-dashed border-border text-xs text-muted-foreground cursor-pointer hover:border-primary hover:text-primary transition-colors"
                 onClick={() => setShowAddPairInput(true)}
               >
                 + Add pair
@@ -1407,14 +1407,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         {/* Leverage/Futures Section (§10) */}
         <div>
           <Tooltip content={TOOLTIPS.trading_mode?.description ?? "Trading mode and leverage configuration"} configKey="trading_mode">
-            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
               Trading Mode &amp; Leverage{" "}
-              <span className="font-normal text-text-3 normal-case tracking-normal">&mdash; &sect;10 Leverage / Futures</span>
+              <span className="font-normal text-muted-foreground normal-case tracking-normal">&mdash; &sect;10 Leverage / Futures</span>
             </label>
           </Tooltip>
           <div className="grid grid-cols-3 gap-3.5">
             <div>
-              <div className="text-[10px] text-text-3 mb-1">
+              <div className="text-xs text-muted-foreground mb-1">
                 <Tooltip
                   content={TOOLTIPS.trading_mode?.description || "Trading mode"}
                   configKey={TOOLTIPS.trading_mode?.configKey}
@@ -1423,7 +1423,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 </Tooltip>
               </div>
               <select
-                className="w-full px-3.5 py-2.5 rounded-md border border-border bg-bg-2 text-text-0 text-[13px] outline-none focus:border-accent cursor-pointer appearance-none"
+                className="w-full px-3.5 py-2.5 rounded-md border border-border bg-muted/50 text-foreground text-sm outline-none focus:border-primary cursor-pointer appearance-none"
                 value={tradingMode}
                 onChange={(e) => setTradingMode(e.target.value)}
               >
@@ -1433,7 +1433,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               </select>
             </div>
             <div>
-              <div className="text-[10px] text-text-3 mb-1">
+              <div className="text-xs text-muted-foreground mb-1">
                 <Tooltip
                   content={TOOLTIPS.margin_mode?.description || "Margin mode"}
                   configKey={TOOLTIPS.margin_mode?.configKey}
@@ -1442,7 +1442,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 </Tooltip>
               </div>
               <select
-                className="w-full px-3.5 py-2.5 rounded-md border border-border bg-bg-2 text-text-0 text-[13px] outline-none focus:border-accent cursor-pointer appearance-none"
+                className="w-full px-3.5 py-2.5 rounded-md border border-border bg-muted/50 text-foreground text-sm outline-none focus:border-primary cursor-pointer appearance-none"
                 value={marginMode}
                 onChange={(e) => setMarginMode(e.target.value)}
                 disabled={tradingMode === "spot"}
@@ -1453,7 +1453,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               </select>
             </div>
             <div>
-              <div className="text-[10px] text-text-3 mb-1">
+              <div className="text-xs text-muted-foreground mb-1">
                 <Tooltip
                   content={TOOLTIPS.leverage?.description || "Leverage for futures trading"}
                   configKey={TOOLTIPS.leverage?.configKey}
@@ -1462,7 +1462,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 </Tooltip>
               </div>
               <select
-                className="w-full px-3.5 py-2.5 rounded-md border border-border bg-bg-2 text-text-0 text-[13px] outline-none focus:border-accent cursor-pointer appearance-none"
+                className="w-full px-3.5 py-2.5 rounded-md border border-border bg-muted/50 text-foreground text-sm outline-none focus:border-primary cursor-pointer appearance-none"
                 value={leverage}
                 onChange={(e) => setLeverage(e.target.value)}
                 disabled={tradingMode === "spot"}
@@ -1480,18 +1480,18 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                   content={TOOLTIPS.liquidation_buffer?.description || "Buffer to maintain before liquidation"}
                   configKey={TOOLTIPS.liquidation_buffer?.configKey}
                 >
-                  <div className="text-[10px] text-text-3">Liquidation Buffer</div>
+                  <div className="text-xs text-muted-foreground">Liquidation Buffer</div>
                 </Tooltip>
                 <input
                   type="number"
-                  className="w-20 px-2 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs font-mono outline-none focus:border-accent text-center"
+                  className="w-20 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center"
                   value={liquidationBuffer}
                   step={0.01}
                   min={0}
                   max={0.5}
                   onChange={(e) => setLiquidationBuffer(Number(e.target.value))}
                 />
-                <div className="text-[10px] text-text-3">({(liquidationBuffer * 100).toFixed(0)}% buffer before liquidation)</div>
+                <div className="text-xs text-muted-foreground">({(liquidationBuffer * 100).toFixed(0)}% buffer before liquidation)</div>
               </div>
             </div>
           )}
@@ -1504,15 +1504,15 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
     return (
       <div>
         <Tooltip content={"Technical indicators calculated in populate_indicators(). Select the ones your strategy will use for signals."} configKey="populate_indicators">
-          <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
             Select Indicators{" "}
-            <span className="font-normal text-text-3 normal-case tracking-normal">
+            <span className="font-normal text-muted-foreground normal-case tracking-normal">
               &mdash; these will be calculated in populate_indicators()
             </span>
           </label>
         </Tooltip>
         <input
-          className="w-full px-3.5 py-2.5 rounded-md border border-border bg-bg-2 text-text-0 text-[13px] outline-none focus:border-accent placeholder:text-text-3 mb-4"
+          className="w-full px-3.5 py-2.5 rounded-md border border-border bg-muted/50 text-foreground text-sm outline-none focus:border-primary placeholder:text-muted-foreground mb-4"
           type="text"
           placeholder="Search indicators... (EMA, RSI, Bollinger, MACD, ATR...)"
           value={indicatorSearch}
@@ -1528,7 +1528,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
           if (filteredItems.length === 0) return null;
           return (
             <div key={group.label} className="mb-4">
-              <div className="text-[10px] text-text-3 uppercase tracking-wide font-semibold mb-2">
+              <div className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-2">
                 {group.label}
               </div>
               <div className="flex flex-wrap gap-2">
@@ -1539,14 +1539,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                       key={item.name}
                       className={`px-3.5 py-2 rounded-lg border text-xs cursor-pointer transition-all flex items-center gap-1.5 ${
                         isSelected
-                          ? "border-accent bg-accent/[.12] text-accent"
-                          : "border-border bg-bg-2 text-text-1 hover:border-border-hover hover:bg-bg-3"
+                          ? "border-primary bg-primary/[.12] text-primary"
+                          : "border-border bg-muted/50 text-muted-foreground hover:border-border-border hover:border-ring hover:bg-muted"
                       }`}
                       onClick={() => toggleIndicator(item.name)}
                     >
                       <span className="text-sm">{item.icon}</span>
                       {item.name}
-                      {isSelected && <span className="text-red font-bold ml-1">&times;</span>}
+                      {isSelected && <span className="text-rose-500 font-bold ml-1">&times;</span>}
                     </div>
                   );
                 })}
@@ -1564,9 +1564,9 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         {/* Long Entry */}
         <div>
           <Tooltip content={"Conditions that trigger long (buy) entries in populate_entry_trend(). All conditions must be true simultaneously."} configKey="populate_entry_trend">
-            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
               Long Entry Conditions{" "}
-              <span className="font-normal text-text-3 normal-case tracking-normal">
+              <span className="font-normal text-muted-foreground normal-case tracking-normal">
                 &mdash; populate_entry_trend() buy signals
               </span>
             </label>
@@ -1577,9 +1577,9 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         {/* Short Entry */}
         <div>
           <Tooltip content={"Conditions that trigger short (sell) entries. Leave empty for long-only strategies. Requires futures trading mode."} configKey="populate_entry_trend">
-            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
               Short Entry Conditions{" "}
-              <span className="font-normal text-text-3 normal-case tracking-normal">
+              <span className="font-normal text-muted-foreground normal-case tracking-normal">
                 &mdash; optional, leave empty for long-only
               </span>
             </label>
@@ -1595,9 +1595,9 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
       <div className="space-y-5">
         <div>
           <Tooltip content={"Custom exit signals defined in populate_exit_trend(). Optional — trades can also exit via stoploss, trailing_stop, and minimal_roi."} configKey="populate_exit_trend">
-            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
               Custom Exit Conditions{" "}
-              <span className="font-normal text-text-3 normal-case tracking-normal">
+              <span className="font-normal text-muted-foreground normal-case tracking-normal">
                 &mdash; populate_exit_trend() signals (optional &mdash; stoploss/ROI also exits)
               </span>
             </label>
@@ -1606,11 +1606,11 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         </div>
 
         {/* Info box */}
-        <div className="bg-bg-2 border border-border rounded-lg p-4">
-          <div className="text-xs font-semibold text-text-0 mb-2 flex items-center gap-1.5">
+        <div className="bg-muted/50 border border-border rounded-lg p-4">
+          <div className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
             <span className="text-sm">&#128161;</span> Exit Strategy Note
           </div>
-          <div className="text-[11px] text-text-2 leading-relaxed">
+          <div className="text-xs text-muted-foreground leading-relaxed">
             FreqTrade exits trades through multiple mechanisms: custom exit signals (above), stoploss,
             trailing_stop, and minimal_roi (configured in Step 5: Risk). You don&apos;t need custom exit
             signals if your stoploss/ROI config handles exits well. Many profitable strategies rely only
@@ -1627,8 +1627,8 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         {/* Risk cards grid */}
         <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
           {/* stoploss */}
-          <div className="bg-bg-2 border border-border rounded-lg p-4">
-            <div className="text-xs font-semibold text-text-0 mb-1 flex items-center gap-1.5">
+          <div className="bg-muted/50 border border-border rounded-lg p-4">
+            <div className="text-xs font-semibold text-foreground mb-1 flex items-center gap-1.5">
               <span className="text-sm">&#128721;</span>
               <Tooltip
                 content={TOOLTIPS.stoploss?.description || "Maximum loss per trade"}
@@ -1637,24 +1637,24 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 Stoploss
               </Tooltip>
             </div>
-            <div className="text-[10px] text-text-3 mb-2.5 leading-snug">
+            <div className="text-xs text-muted-foreground mb-2.5 leading-snug">
               Maximum loss before FT closes the trade. Applied per trade.
             </div>
             <div className="flex items-center gap-2">
               <input
-                className="flex-1 px-2.5 py-2 rounded border border-border bg-bg-3 text-text-0 text-[13px] font-mono outline-none focus:border-accent text-center"
+                className="flex-1 px-2.5 py-2 rounded border border-border bg-muted text-foreground text-sm font-mono outline-none focus:border-primary text-center"
                 type="number"
                 value={stoploss}
                 step={0.005}
                 onChange={(e) => setStoploss(Number(e.target.value))}
               />
-              <div className="text-[11px] text-text-3 min-w-[20px]">({(stoploss * 100).toFixed(1)}%)</div>
+              <div className="text-xs text-muted-foreground min-w-[20px]">({(stoploss * 100).toFixed(1)}%)</div>
             </div>
           </div>
 
           {/* stake_amount */}
-          <div className="bg-bg-2 border border-border rounded-lg p-4">
-            <div className="text-xs font-semibold text-text-0 mb-1 flex items-center gap-1.5">
+          <div className="bg-muted/50 border border-border rounded-lg p-4">
+            <div className="text-xs font-semibold text-foreground mb-1 flex items-center gap-1.5">
               <span className="text-sm">&#128207;</span>
               <Tooltip
                 content={TOOLTIPS.stake_amount?.description || "Amount per trade"}
@@ -1663,24 +1663,24 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 Stake Amount
               </Tooltip>
             </div>
-            <div className="text-[10px] text-text-3 mb-2.5 leading-snug">
+            <div className="text-xs text-muted-foreground mb-2.5 leading-snug">
               Amount per trade in quote currency (USDT).
             </div>
             <div className="flex items-center gap-2">
               <input
-                className="flex-1 px-2.5 py-2 rounded border border-border bg-bg-3 text-text-0 text-[13px] font-mono outline-none focus:border-accent text-center"
+                className="flex-1 px-2.5 py-2 rounded border border-border bg-muted text-foreground text-sm font-mono outline-none focus:border-primary text-center"
                 type="number"
                 value={stakeAmount}
                 step={100}
                 onChange={(e) => setStakeAmount(Number(e.target.value))}
               />
-              <div className="text-[11px] text-text-3 min-w-[20px]">USDT</div>
+              <div className="text-xs text-muted-foreground min-w-[20px]">USDT</div>
             </div>
           </div>
 
           {/* max_open_trades */}
-          <div className="bg-bg-2 border border-border rounded-lg p-4">
-            <div className="text-xs font-semibold text-text-0 mb-1 flex items-center gap-1.5">
+          <div className="bg-muted/50 border border-border rounded-lg p-4">
+            <div className="text-xs font-semibold text-foreground mb-1 flex items-center gap-1.5">
               <span className="text-sm">&#128202;</span>
               <Tooltip
                 content={TOOLTIPS.max_open_trades?.description || "Maximum concurrent trades"}
@@ -1689,18 +1689,18 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 Max Open Trades
               </Tooltip>
             </div>
-            <div className="text-[10px] text-text-3 mb-2.5 leading-snug">
+            <div className="text-xs text-muted-foreground mb-2.5 leading-snug">
               Maximum concurrent open trades per bot.
             </div>
             <div className="flex items-center gap-2">
               <input
-                className="flex-1 px-2.5 py-2 rounded border border-border bg-bg-3 text-text-0 text-[13px] font-mono outline-none focus:border-accent text-center"
+                className="flex-1 px-2.5 py-2 rounded border border-border bg-muted text-foreground text-sm font-mono outline-none focus:border-primary text-center"
                 type="number"
                 value={maxOpenTrades}
                 step={1}
                 onChange={(e) => setMaxOpenTrades(Number(e.target.value))}
               />
-              <div className="text-[11px] text-text-3 min-w-[20px]">trades</div>
+              <div className="text-xs text-muted-foreground min-w-[20px]">trades</div>
             </div>
           </div>
         </div>
@@ -1708,9 +1708,9 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         {/* Stoploss Type Selector (§4) */}
         <div>
           <Tooltip content={TOOLTIPS.stoploss?.description ?? "Choose the stoploss mechanism: fixed, trailing, trailing with offset, custom callback, or on-exchange."} configKey="stoploss">
-            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
               Stoploss Type{" "}
-              <span className="font-normal text-text-3 normal-case tracking-normal">
+              <span className="font-normal text-muted-foreground normal-case tracking-normal">
                 &mdash; &sect;4: 6 stoploss types
               </span>
             </label>
@@ -1728,8 +1728,8 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 type="button"
                 className={`px-3.5 py-2 rounded-lg border text-xs transition-all ${
                   stoplossType === opt.value
-                    ? "border-accent bg-accent/[.12] text-accent font-semibold"
-                    : "border-border bg-bg-2 text-text-1 hover:border-border-hover"
+                    ? "border-primary bg-primary/[.12] text-primary font-semibold"
+                    : "border-border bg-muted/50 text-muted-foreground hover:border-border-border hover:border-ring"
                 }`}
                 onClick={() => setStoplossType(opt.value)}
               >
@@ -1740,9 +1740,9 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
 
           {/* Trailing stop params */}
           {(stoplossType === "trailing" || stoplossType === "trailing_offset") && (
-            <div className="bg-bg-2 border border-border rounded-lg p-4 space-y-3">
+            <div className="bg-muted/50 border border-border rounded-lg p-4 space-y-3">
               <div>
-                <div className="text-[10px] text-text-3 mb-1">
+                <div className="text-xs text-muted-foreground mb-1">
                   <Tooltip
                     content={TOOLTIPS.trailing_stop_positive?.description || "Profit stoploss distance"}
                     configKey={TOOLTIPS.trailing_stop_positive?.configKey}
@@ -1752,15 +1752,15 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 </div>
                 <div className="flex items-center gap-2">
                   <input
-                    className="flex-1 px-2.5 py-2 rounded border border-border bg-bg-3 text-text-0 text-[13px] font-mono outline-none focus:border-accent text-center"
+                    className="flex-1 px-2.5 py-2 rounded border border-border bg-muted text-foreground text-sm font-mono outline-none focus:border-primary text-center"
                     type="number" value={trailingStopPositive} step={0.005}
                     onChange={(e) => setTrailingStopPositive(Number(e.target.value))}
                   />
-                  <div className="text-[11px] text-text-3">({(trailingStopPositive * 100).toFixed(0)}%)</div>
+                  <div className="text-xs text-muted-foreground">({(trailingStopPositive * 100).toFixed(0)}%)</div>
                 </div>
               </div>
               <div>
-                <div className="text-[10px] text-text-3 mb-1">
+                <div className="text-xs text-muted-foreground mb-1">
                   <Tooltip
                     content={TOOLTIPS.trailing_stop_positive_offset?.description || "Offset for positive trailing stop"}
                     configKey={TOOLTIPS.trailing_stop_positive_offset?.configKey}
@@ -1770,11 +1770,11 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 </div>
                 <div className="flex items-center gap-2">
                   <input
-                    className="flex-1 px-2.5 py-2 rounded border border-border bg-bg-3 text-text-0 text-[13px] font-mono outline-none focus:border-accent text-center"
+                    className="flex-1 px-2.5 py-2 rounded border border-border bg-muted text-foreground text-sm font-mono outline-none focus:border-primary text-center"
                     type="number" value={trailingStopPositiveOffset} step={0.005}
                     onChange={(e) => setTrailingStopPositiveOffset(Number(e.target.value))}
                   />
-                  <div className="text-[11px] text-text-3">({(trailingStopPositiveOffset * 100).toFixed(0)}%)</div>
+                  <div className="text-xs text-muted-foreground">({(trailingStopPositiveOffset * 100).toFixed(0)}%)</div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -1793,15 +1793,15 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
 
           {/* Custom callback info */}
           {stoplossType === "custom_callback" && (
-            <div className="bg-bg-2 border border-border rounded-lg p-4">
-              <div className="text-[11px] text-text-2 leading-relaxed">
-                Uses the <span className="font-mono text-accent">custom_stoploss()</span> callback for dynamic stoploss logic.
+            <div className="bg-muted/50 border border-border rounded-lg p-4">
+              <div className="text-xs text-muted-foreground leading-relaxed">
+                Uses the <span className="font-mono text-primary">custom_stoploss()</span> callback for dynamic stoploss logic.
                 Enable it in Step 6: Callbacks and configure the preset there.
               </div>
               <div className="mt-3 flex items-center justify-between">
-                <div className="text-[10px] text-text-2">
+                <div className="text-xs text-muted-foreground">
                   {enabledCallbacks.custom_stoploss ? (
-                    <span className="text-green font-semibold">custom_stoploss callback is enabled</span>
+                    <span className="text-emerald-500 font-semibold">custom_stoploss callback is enabled</span>
                   ) : (
                     <span>custom_stoploss callback is disabled</span>
                   )}
@@ -1818,7 +1818,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
 
           {/* On Exchange stoploss */}
           {stoplossType === "on_exchange" && (
-            <div className="bg-bg-2 border border-border rounded-lg p-4 space-y-3">
+            <div className="bg-muted/50 border border-border rounded-lg p-4 space-y-3">
               <Tooltip
                 content={TOOLTIPS.stoploss_on_exchange?.description || "Place stoploss order on exchange"}
                 configKey={TOOLTIPS.stoploss_on_exchange?.configKey}
@@ -1831,7 +1831,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               {stoplossOnExchange && (
                 <>
                   <div>
-                    <div className="text-[10px] text-text-3 mb-1">
+                    <div className="text-xs text-muted-foreground mb-1">
                       <Tooltip
                         content={TOOLTIPS.stoploss_on_exchange_limit_ratio?.description || "Limit ratio for exchange stoploss"}
                         configKey={TOOLTIPS.stoploss_on_exchange_limit_ratio?.configKey}
@@ -1841,13 +1841,13 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                     </div>
                     <input
                       type="number"
-                      className="w-24 px-2 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs font-mono outline-none focus:border-accent text-center"
+                      className="w-24 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center"
                       value={stoplossOnExchangeLimitRatio} step={0.01} min={0.9} max={1}
                       onChange={(e) => setStoplossOnExchangeLimitRatio(Number(e.target.value))}
                     />
                   </div>
                   <div>
-                    <div className="text-[10px] text-text-3 mb-1">
+                    <div className="text-xs text-muted-foreground mb-1">
                       <Tooltip
                         content={TOOLTIPS.stoploss_on_exchange_interval?.description || "Update interval for exchange stoploss"}
                         configKey={TOOLTIPS.stoploss_on_exchange_interval?.configKey}
@@ -1857,13 +1857,13 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                     </div>
                     <input
                       type="number"
-                      className="w-24 px-2 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs font-mono outline-none focus:border-accent text-center"
+                      className="w-24 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center"
                       value={stoplossOnExchangeInterval} step={10} min={10}
                       onChange={(e) => setStoplossOnExchangeInterval(Number(e.target.value))}
                     />
                   </div>
                   <div>
-                    <div className="text-[10px] text-text-3 mb-1">
+                    <div className="text-xs text-muted-foreground mb-1">
                       <Tooltip
                         content={TOOLTIPS.stoploss_on_exchange_price_type?.description || "Price type for exchange stoploss"}
                         configKey={TOOLTIPS.stoploss_on_exchange_price_type?.configKey}
@@ -1872,7 +1872,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                       </Tooltip>
                     </div>
                     <select
-                      className="w-32 px-2 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs outline-none focus:border-accent"
+                      className="w-32 px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs outline-none focus:border-primary"
                       value={stoplossOnExchangePriceType}
                       onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                         const v = e.target.value;
@@ -1892,7 +1892,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
 
         {/* minimal_roi */}
         <div>
-          <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
             <Tooltip
               content={TOOLTIPS.minimal_roi?.description || "Target ROI at different time intervals"}
               configKey={TOOLTIPS.minimal_roi?.configKey}
@@ -1900,21 +1900,21 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               Minimal ROI
             </Tooltip>
             {" "}
-            <span className="font-normal text-text-3 normal-case tracking-normal">
+            <span className="font-normal text-muted-foreground normal-case tracking-normal">
               &mdash; Return targets at minutes elapsed
             </span>
           </label>
-          <div className="bg-bg-2 border border-border rounded-lg overflow-hidden">
+          <div className="bg-muted/50 border border-border rounded-lg overflow-hidden">
             <table className="w-full border-collapse">
               <thead>
                 <tr>
-                  <th className="text-left px-3 py-2 text-[10px] font-semibold text-text-3 uppercase border-b border-border">
+                  <th className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground uppercase border-b border-border">
                     Minutes
                   </th>
-                  <th className="text-left px-3 py-2 text-[10px] font-semibold text-text-3 uppercase border-b border-border">
+                  <th className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground uppercase border-b border-border">
                     Min ROI (%)
                   </th>
-                  <th className="text-left px-3 py-2 text-[10px] font-semibold text-text-3 uppercase border-b border-border" />
+                  <th className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground uppercase border-b border-border" />
                 </tr>
               </thead>
               <tbody>
@@ -1922,7 +1922,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                   <tr key={`roi-${row.minutes}-${i}`}>
                     <td className="px-3 py-2">
                       <input
-                        className="w-full px-2 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs font-mono outline-none focus:border-accent text-center"
+                        className="w-full px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center"
                         type="number"
                         value={row.minutes}
                         onChange={(e) => updateRoi(i, "minutes", Number(e.target.value))}
@@ -1930,14 +1930,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                     </td>
                     <td className="px-3 py-2">
                       <input
-                        className="w-full px-2 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs font-mono outline-none focus:border-accent text-center"
+                        className="w-full px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs font-mono outline-none focus:border-primary text-center"
                         type="number"
                         value={row.roi}
                         step={1}
                         onChange={(e) => updateRoi(i, "roi", Number(e.target.value))}
                       />
                     </td>
-                    <td className="px-3 py-2 text-text-3 text-[10px]">
+                    <td className="px-3 py-2 text-muted-foreground text-xs">
                       {row.minutes === 0
                         ? `At entry: ${row.roi}%`
                         : `After ${row.minutes >= 60 ? `${row.minutes / 60}h` : `${row.minutes}m`}: ${row.roi}%${row.roi === 0 ? " (any profit)" : ""}`}
@@ -1947,7 +1947,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               </tbody>
             </table>
             <div
-              className="px-3 py-2 text-[11px] text-accent cursor-pointer hover:bg-bg-3 transition-colors"
+              className="px-3 py-2 text-xs text-primary cursor-pointer hover:bg-muted transition-colors"
               onClick={addRoiRow}
             >
               + Add ROI level
@@ -1958,17 +1958,17 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         {/* Protections */}
         <div>
           <Tooltip content={"FreqTrade built-in protections (§7). Per-bot safety mechanisms that pause trading when conditions are met."} configKey="protections">
-            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
               FT Protections{" "}
-              <span className="font-normal text-text-3 normal-case tracking-normal">
+              <span className="font-normal text-muted-foreground normal-case tracking-normal">
                 &mdash; per-bot safety handled by FreqTrade
               </span>
             </label>
           </Tooltip>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
             {/* StoplossGuard */}
-            <div className="bg-bg-2 border border-border rounded-lg p-4">
-              <div className="text-xs font-semibold text-text-0 mb-2 flex items-center gap-1.5">
+            <div className="bg-muted/50 border border-border rounded-lg p-4">
+              <div className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
                 <Tooltip content={TOOLTIPS.protection_stoploss_guard?.description ?? "Pause trading after N stoploss events in a time period"} configKey="protections[].method: StoplossGuard">
                   StoplossGuard
                 </Tooltip>
@@ -1977,8 +1977,8 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
             </div>
 
             {/* MaxDrawdown */}
-            <div className="bg-bg-2 border border-border rounded-lg p-4">
-              <div className="text-xs font-semibold text-text-0 mb-2 flex items-center gap-1.5">
+            <div className="bg-muted/50 border border-border rounded-lg p-4">
+              <div className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
                 <Tooltip content={TOOLTIPS.protection_max_drawdown?.description ?? "Pause trading when portfolio drawdown exceeds a threshold"} configKey="protections[].method: MaxDrawdown">
                   MaxDrawdown
                 </Tooltip>
@@ -1987,8 +1987,8 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
             </div>
 
             {/* CooldownPeriod */}
-            <div className="bg-bg-2 border border-border rounded-lg p-4">
-              <div className="text-xs font-semibold text-text-0 mb-2 flex items-center gap-1.5">
+            <div className="bg-muted/50 border border-border rounded-lg p-4">
+              <div className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
                 <Tooltip content={TOOLTIPS.protection_cooldown_period?.description ?? "Cooldown period after a trade closes on a pair"} configKey="protections[].method: CooldownPeriod">
                   CooldownPeriod
                 </Tooltip>
@@ -2008,21 +2008,21 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         <div className="flex items-center justify-between mb-2">
           <div>
             <Tooltip content={"IStrategy callbacks (§3). Enable callbacks to add custom logic for trade entry, exit, stoploss, position sizing, and more."} configKey="IStrategy callbacks">
-              <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Strategy Callbacks{" "}
-                <span className="font-normal text-text-3 normal-case tracking-normal">
+                <span className="font-normal text-muted-foreground normal-case tracking-normal">
                   &mdash; &sect;3: 19 IStrategy callbacks
                 </span>
               </label>
             </Tooltip>
-            <div className="text-[10px] text-text-3 mt-1">
+            <div className="text-xs text-muted-foreground mt-1">
               {enabledCount} of 19 callbacks enabled. Each generates code in the strategy file.
             </div>
           </div>
           <div className="flex gap-2">
             <button
               type="button"
-              className="px-2.5 py-1 rounded border border-border bg-bg-2 text-text-3 text-[10px] cursor-pointer hover:text-text-1 transition-all"
+              className="px-2.5 py-1 rounded border border-border bg-muted/50 text-muted-foreground text-xs cursor-pointer hover:text-muted-foreground transition-all"
               onClick={() => {
                 const allOff: Record<string, boolean> = {};
                 callbackDefs.forEach((cb) => { allOff[cb.key] = false; });
@@ -2043,7 +2043,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
             onToggle={() => toggleCallback(cb.key)}
           >
             {cb.hasParams ? renderCallbackParams(cb) : (
-              <div className="text-[10px] text-text-3 leading-snug">{cb.description}</div>
+              <div className="text-xs text-muted-foreground leading-snug">{cb.description}</div>
             )}
           </CollapsibleSection>
         ))}
@@ -2057,9 +2057,9 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         {/* Strategy Interface (§2) */}
         <div>
           <Tooltip content={"IStrategy class attributes (§2). Core settings that define how the strategy behaves."} configKey="IStrategy">
-            <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
               Strategy Interface{" "}
-              <span className="font-normal text-text-3 normal-case tracking-normal">
+              <span className="font-normal text-muted-foreground normal-case tracking-normal">
                 &mdash; &sect;2 IStrategy class attributes
               </span>
             </label>
@@ -2067,8 +2067,8 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
 
           <div className="grid grid-cols-2 gap-4">
             {/* startup_candle_count */}
-            <div className="bg-bg-2 border border-border rounded-lg p-4">
-              <div className="text-xs font-semibold text-text-0 mb-1">
+            <div className="bg-muted/50 border border-border rounded-lg p-4">
+              <div className="text-xs font-semibold text-foreground mb-1">
                 <Tooltip
                   content={TOOLTIPS.startup_candle_count?.description || "Candles needed before strategy starts"}
                   configKey={TOOLTIPS.startup_candle_count?.configKey}
@@ -2076,20 +2076,20 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                   Startup Candle Count
                 </Tooltip>
               </div>
-              <div className="text-[10px] text-text-3 mb-2 leading-snug">
+              <div className="text-xs text-muted-foreground mb-2 leading-snug">
                 Number of candles needed before the strategy starts generating signals.
               </div>
               <input
                 type="number"
-                className="w-full px-2.5 py-2 rounded border border-border bg-bg-3 text-text-0 text-[13px] font-mono outline-none focus:border-accent text-center"
+                className="w-full px-2.5 py-2 rounded border border-border bg-muted text-foreground text-sm font-mono outline-none focus:border-primary text-center"
                 value={startupCandleCount} min={0} step={10}
                 onChange={(e) => setStartupCandleCount(Number(e.target.value))}
               />
             </div>
 
             {/* process_only_new_candles */}
-            <div className="bg-bg-2 border border-border rounded-lg p-4">
-              <div className="text-xs font-semibold text-text-0 mb-1">
+            <div className="bg-muted/50 border border-border rounded-lg p-4">
+              <div className="text-xs font-semibold text-foreground mb-1">
                 <Tooltip
                   content={TOOLTIPS.process_only_new_candles?.description || "Only process on new candles"}
                   configKey={TOOLTIPS.process_only_new_candles?.configKey}
@@ -2097,7 +2097,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                   Process Only New Candles
                 </Tooltip>
               </div>
-              <div className="text-[10px] text-text-3 mb-2 leading-snug">
+              <div className="text-xs text-muted-foreground mb-2 leading-snug">
                 Only process indicators/signals when a new candle appears. Recommended: True.
               </div>
               <Tooltip
@@ -2112,8 +2112,8 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
             </div>
 
             {/* version */}
-            <div className="bg-bg-2 border border-border rounded-lg p-4">
-              <div className="text-xs font-semibold text-text-0 mb-1">
+            <div className="bg-muted/50 border border-border rounded-lg p-4">
+              <div className="text-xs font-semibold text-foreground mb-1">
                 <Tooltip
                   content={TOOLTIPS.strategy_version?.description || "Strategy version identifier"}
                   configKey={TOOLTIPS.strategy_version?.configKey}
@@ -2121,12 +2121,12 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                   Strategy Version
                 </Tooltip>
               </div>
-              <div className="text-[10px] text-text-3 mb-2 leading-snug">
+              <div className="text-xs text-muted-foreground mb-2 leading-snug">
                 Strategy version string. Used for tracking strategy changes.
               </div>
               <input
                 type="text"
-                className="w-full px-2.5 py-2 rounded border border-border bg-bg-3 text-text-0 text-[13px] font-mono outline-none focus:border-accent"
+                className="w-full px-2.5 py-2 rounded border border-border bg-muted text-foreground text-sm font-mono outline-none focus:border-primary"
                 value={strategyVersion}
                 onChange={(e) => setStrategyVersion(e.target.value)}
                 placeholder="e.g. 1"
@@ -2137,7 +2137,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
 
         {/* Order Types (§2) */}
         <div>
-          <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
             <Tooltip
               content={TOOLTIPS.order_types?.description || "Order types for different order stages"}
               configKey={TOOLTIPS.order_types?.configKey}
@@ -2145,16 +2145,16 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               Order Types
             </Tooltip>
             {" "}
-            <span className="font-normal text-text-3 normal-case tracking-normal">
+            <span className="font-normal text-muted-foreground normal-case tracking-normal">
               &mdash; market or limit for each order type
             </span>
           </label>
-          <div className="bg-bg-2 border border-border rounded-lg overflow-hidden">
+          <div className="bg-muted/50 border border-border rounded-lg overflow-hidden">
             <table className="w-full border-collapse">
               <thead>
                 <tr>
-                  <th className="text-left px-3 py-2 text-[10px] font-semibold text-text-3 uppercase border-b border-border">Order Type</th>
-                  <th className="text-left px-3 py-2 text-[10px] font-semibold text-text-3 uppercase border-b border-border">Value</th>
+                  <th className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground uppercase border-b border-border">Order Type</th>
+                  <th className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground uppercase border-b border-border">Value</th>
                 </tr>
               </thead>
               <tbody>
@@ -2167,10 +2167,10 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                   { label: "stoploss", value: orderTypeStoploss, setter: setOrderTypeStoploss },
                 ] as const).map((row) => (
                   <tr key={row.label}>
-                    <td className="px-3 py-2 text-[11px] text-text-1 font-mono">{row.label}</td>
+                    <td className="px-3 py-2 text-xs text-muted-foreground font-mono">{row.label}</td>
                     <td className="px-3 py-2">
                       <select
-                        className="px-2 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs outline-none focus:border-accent"
+                        className="px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs outline-none focus:border-primary"
                         value={row.value}
                         onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                           const v = e.target.value;
@@ -2190,7 +2190,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
 
         {/* Order Time in Force */}
         <div>
-          <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
             <Tooltip
               content={TOOLTIPS.order_time_in_force?.description || "Time in force for orders"}
               configKey={TOOLTIPS.order_time_in_force?.configKey}
@@ -2198,15 +2198,15 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               Order Time in Force
             </Tooltip>
             {" "}
-            <span className="font-normal text-text-3 normal-case tracking-normal">
+            <span className="font-normal text-muted-foreground normal-case tracking-normal">
               &mdash; GTC / FOK / IOC / PO
             </span>
           </label>
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-bg-2 border border-border rounded-lg p-4">
-              <div className="text-[10px] text-text-3 mb-1">Entry</div>
+            <div className="bg-muted/50 border border-border rounded-lg p-4">
+              <div className="text-xs text-muted-foreground mb-1">Entry</div>
               <select
-                className="w-full px-2.5 py-2 rounded border border-border bg-bg-3 text-text-0 text-xs outline-none focus:border-accent"
+                className="w-full px-2.5 py-2 rounded border border-border bg-muted text-foreground text-xs outline-none focus:border-primary"
                 value={orderTifEntry}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                   const v = e.target.value;
@@ -2219,10 +2219,10 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 <option value="PO">PO (Post Only)</option>
               </select>
             </div>
-            <div className="bg-bg-2 border border-border rounded-lg p-4">
-              <div className="text-[10px] text-text-3 mb-1">Exit</div>
+            <div className="bg-muted/50 border border-border rounded-lg p-4">
+              <div className="text-xs text-muted-foreground mb-1">Exit</div>
               <select
-                className="w-full px-2.5 py-2 rounded border border-border bg-bg-3 text-text-0 text-xs outline-none focus:border-accent"
+                className="w-full px-2.5 py-2 rounded border border-border bg-muted text-foreground text-xs outline-none focus:border-primary"
                 value={orderTifExit}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                   const v = e.target.value;
@@ -2240,7 +2240,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
 
         {/* Informative Pairs */}
         <div>
-          <label className="block text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-2">
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
             <Tooltip
               content={TOOLTIPS.informative_pairs?.description || "Additional pairs and timeframes for analysis"}
               configKey={TOOLTIPS.informative_pairs?.configKey}
@@ -2248,21 +2248,21 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               Informative Pairs
             </Tooltip>
             {" "}
-            <span className="font-normal text-text-3 normal-case tracking-normal">
+            <span className="font-normal text-muted-foreground normal-case tracking-normal">
               &mdash; additional pairs/timeframes for multi-timeframe analysis
             </span>
           </label>
-          <div className="bg-bg-2 border border-border rounded-lg p-4">
+          <div className="bg-muted/50 border border-border rounded-lg p-4">
             {informativePairs.length > 0 && (
               <div className="space-y-1.5 mb-3">
                 {informativePairs.map((ip, i) => (
                   <div key={`info-${i}-${ip.pair}-${ip.timeframe}`} className="flex items-center gap-2 text-xs">
-                    <span className="font-mono text-text-1">{ip.pair}</span>
-                    <span className="text-text-3">/</span>
-                    <span className="font-mono text-accent">{ip.timeframe}</span>
+                    <span className="font-mono text-muted-foreground">{ip.pair}</span>
+                    <span className="text-muted-foreground">/</span>
+                    <span className="font-mono text-primary">{ip.timeframe}</span>
                     <button
                       type="button"
-                      className="ml-auto text-red text-[10px] cursor-pointer hover:underline"
+                      className="ml-auto text-rose-500 text-xs cursor-pointer hover:underline"
                       onClick={() => removeInformativePair(i)}
                     >
                       remove
@@ -2274,14 +2274,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
             <div className="flex items-center gap-2">
               <input
                 type="text"
-                className="flex-1 px-2.5 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs outline-none focus:border-accent placeholder:text-text-3"
+                className="flex-1 px-2.5 py-1.5 rounded border border-border bg-muted text-foreground text-xs outline-none focus:border-primary placeholder:text-muted-foreground"
                 placeholder="BTC/USDT:USDT"
                 value={infoPairInput}
                 onChange={(e) => setInfoPairInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") addInformativePair(); }}
               />
               <select
-                className="px-2 py-1.5 rounded border border-border bg-bg-3 text-text-0 text-xs outline-none focus:border-accent"
+                className="px-2 py-1.5 rounded border border-border bg-muted text-foreground text-xs outline-none focus:border-primary"
                 value={infoTfInput}
                 onChange={(e) => setInfoTfInput(e.target.value)}
               >
@@ -2291,14 +2291,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               </select>
               <button
                 type="button"
-                className="px-3 py-1.5 rounded bg-accent text-white text-xs font-medium cursor-pointer"
+                className="px-3 py-1.5 rounded bg-primary text-white text-xs font-medium cursor-pointer"
                 onClick={addInformativePair}
               >
                 Add
               </button>
             </div>
             {informativePairs.length === 0 && (
-              <div className="text-[10px] text-text-3 mt-2">
+              <div className="text-xs text-muted-foreground mt-2">
                 No informative pairs added. Add pairs here for multi-timeframe or cross-pair analysis.
               </div>
             )}
@@ -2319,11 +2319,11 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
     return (
       <div>
         {/* Success banner */}
-        <div className="bg-green-bg border border-green/20 rounded-lg px-4 py-3.5 mb-5 flex items-center gap-2.5">
+        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-4 py-3.5 mb-5 flex items-center gap-2.5">
           <span className="text-xl">&#9989;</span>
           <div>
-            <div className="text-[13px] font-semibold text-green">Strategy ready to save</div>
-            <div className="text-[11px] text-text-2">
+            <div className="text-sm font-semibold text-emerald-500">Strategy ready to save</div>
+            <div className="text-xs text-muted-foreground">
               Review your configuration below. You can Save as Draft or Save &amp; Backtest immediately.
             </div>
           </div>
@@ -2332,8 +2332,8 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         {/* Review grid */}
         <div className="grid grid-cols-2 gap-3.5">
           {/* Basics */}
-          <div className="bg-bg-2 border border-border rounded-lg p-4">
-            <h4 className="text-xs font-semibold text-text-0 mb-2.5 flex items-center gap-1.5">Basics</h4>
+          <div className="bg-muted/50 border border-border rounded-lg p-4">
+            <h4 className="text-xs font-semibold text-foreground mb-2.5 flex items-center gap-1.5">Basics</h4>
             <div className="space-y-1">
               <ReviewRow label="Name" value={strategyName} />
               <ReviewRow label="Exchange" value={exchange} />
@@ -2347,8 +2347,8 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
           </div>
 
           {/* Indicators */}
-          <div className="bg-bg-2 border border-border rounded-lg p-4">
-            <h4 className="text-xs font-semibold text-text-0 mb-2.5 flex items-center gap-1.5">
+          <div className="bg-muted/50 border border-border rounded-lg p-4">
+            <h4 className="text-xs font-semibold text-foreground mb-2.5 flex items-center gap-1.5">
               Indicators ({selectedIndicators.length})
             </h4>
             <div className="space-y-1">
@@ -2367,11 +2367,11 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
           </div>
 
           {/* Entry */}
-          <div className="bg-bg-2 border border-border rounded-lg p-4">
-            <h4 className="text-xs font-semibold text-text-0 mb-2.5 flex items-center gap-1.5">Entry (Long)</h4>
+          <div className="bg-muted/50 border border-border rounded-lg p-4">
+            <h4 className="text-xs font-semibold text-foreground mb-2.5 flex items-center gap-1.5">Entry (Long)</h4>
             <div className="space-y-1">
               {longConditions.map((c, i) => (
-                <div key={`long-${i}-${c.indicator}`} className="text-[11px] text-text-1 font-mono py-0.5">
+                <div key={`long-${i}-${c.indicator}`} className="text-xs text-muted-foreground font-mono py-0.5">
                   {i > 0 && "AND "}
                   {c.indicator} {c.operator}{" "}
                   {c.compareType === "indicator" ? c.compareIndicator : c.compareValue}
@@ -2381,10 +2381,10 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
           </div>
 
           {/* Risk */}
-          <div className="bg-bg-2 border border-border rounded-lg p-4">
-            <h4 className="text-xs font-semibold text-text-0 mb-2.5 flex items-center gap-1.5">Risk</h4>
+          <div className="bg-muted/50 border border-border rounded-lg p-4">
+            <h4 className="text-xs font-semibold text-foreground mb-2.5 flex items-center gap-1.5">Risk</h4>
             <div className="space-y-1">
-              <ReviewRow label="stoploss" value={`${(stoploss * 100).toFixed(1)}%`} valueColor="text-red" />
+              <ReviewRow label="stoploss" value={`${(stoploss * 100).toFixed(1)}%`} valueColor="text-rose-500" />
               <ReviewRow label="stoploss_type" value={stoplossType} />
               <ReviewRow label="stake_amount" value={`$${stakeAmount.toLocaleString()}`} />
               <ReviewRow label="max_open_trades" value={String(maxOpenTrades)} />
@@ -2396,24 +2396,24 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
           </div>
 
           {/* Callbacks */}
-          <div className="bg-bg-2 border border-border rounded-lg p-4">
-            <h4 className="text-xs font-semibold text-text-0 mb-2.5 flex items-center gap-1.5">
+          <div className="bg-muted/50 border border-border rounded-lg p-4">
+            <h4 className="text-xs font-semibold text-foreground mb-2.5 flex items-center gap-1.5">
               Callbacks ({enabledCallbackNames.length})
             </h4>
             <div className="space-y-1">
               {enabledCallbackNames.length === 0 ? (
-                <div className="text-[11px] text-text-3">None enabled</div>
+                <div className="text-xs text-muted-foreground">None enabled</div>
               ) : (
                 enabledCallbackNames.map((name) => (
-                  <div key={name} className="text-[11px] text-text-1 font-mono py-0.5">{name}()</div>
+                  <div key={name} className="text-xs text-muted-foreground font-mono py-0.5">{name}()</div>
                 ))
               )}
             </div>
           </div>
 
           {/* Config */}
-          <div className="bg-bg-2 border border-border rounded-lg p-4">
-            <h4 className="text-xs font-semibold text-text-0 mb-2.5 flex items-center gap-1.5">Config</h4>
+          <div className="bg-muted/50 border border-border rounded-lg p-4">
+            <h4 className="text-xs font-semibold text-foreground mb-2.5 flex items-center gap-1.5">Config</h4>
             <div className="space-y-1">
               <ReviewRow label="startup_candle_count" value={String(startupCandleCount)} />
               <ReviewRow label="process_only_new_candles" value={processOnlyNewCandles ? "True" : "False"} />
@@ -2444,7 +2444,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
     return (
       <AppShell title="Strategy Builder">
         <div className="flex items-center justify-center h-96">
-          <div className="text-sm text-text-3 animate-pulse">Loading strategy...</div>
+          <div className="text-sm text-muted-foreground animate-pulse">Loading strategy...</div>
         </div>
       </AppShell>
     );
@@ -2456,26 +2456,26 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         {/* Left: Wizard */}
         <div className="flex-1 flex flex-col overflow-hidden border-r border-border">
           {/* Steps bar */}
-          <div className="flex px-6 py-4 border-b border-border bg-bg-1 gap-1 flex-shrink-0 items-center overflow-x-auto">
+          <div className="flex px-6 py-4 border-b border-border bg-card gap-1 flex-shrink-0 items-center overflow-x-auto">
             {steps.map((step, i) => (
               <div key={step.num} className="flex items-center gap-1">
                 {i > 0 && <div className="w-4 h-px bg-border flex-shrink-0" />}
                 <div
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-[11px] font-medium cursor-pointer transition-all whitespace-nowrap ${
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-medium cursor-pointer transition-all whitespace-nowrap ${
                     step.num === currentStep
-                      ? "bg-accent/[.12] text-accent font-semibold"
+                      ? "bg-primary/[.12] text-primary font-semibold"
                       : step.num < currentStep
-                      ? "text-green"
-                      : "text-text-3 hover:text-text-2 hover:bg-bg-3"
+                      ? "text-emerald-500"
+                      : "text-muted-foreground hover:text-muted-foreground hover:bg-muted"
                   }`}
                   onClick={() => goStep(step.num)}
                 >
                   <div
-                    className={`w-5 h-5 rounded-full border-[1.5px] flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+                    className={`w-5 h-5 rounded-full border-[1.5px] flex items-center justify-center text-xs font-bold flex-shrink-0 ${
                       step.num === currentStep
-                        ? "border-accent bg-accent text-white"
+                        ? "border-primary bg-primary text-white"
                         : step.num < currentStep
-                        ? "border-green bg-green-bg text-green"
+                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-500"
                         : "border-border"
                     }`}
                   >
@@ -2491,21 +2491,21 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
           <div className="flex-1 overflow-y-auto p-7">{stepPanels[currentStep]()}</div>
 
           {/* Wizard footer */}
-          <div className="px-6 py-3.5 border-t border-border bg-bg-1 flex-col flex-shrink-0">
+          <div className="px-6 py-3.5 border-t border-border bg-card flex-col flex-shrink-0">
             {/* Version selector and changelog */}
             {savedStrategyId && versions.length > 0 && (
               <div className="mb-3 flex items-center gap-4 pb-3 border-b border-border">
                 <div className="flex items-center gap-2">
-                  <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">Versions:</label>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Versions:</label>
                   <div className="flex gap-1">
                     {versions.map(v => (
                       <button
                         key={v.version_number}
                         type="button"
-                        className={`px-2.5 py-1 rounded text-[11px] font-medium transition-all ${
+                        className={`px-2.5 py-1 rounded text-xs font-medium transition-all ${
                           currentVersion === v.version_number
-                            ? "bg-accent text-white"
-                            : "bg-bg-3 text-text-2 hover:bg-bg-2 border border-border"
+                            ? "bg-primary text-white"
+                            : "bg-muted text-muted-foreground hover:bg-muted/50 border border-border"
                         }`}
                         onClick={() => setCurrentVersion(v.version_number)}
                       >
@@ -2514,7 +2514,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                     ))}
                   </div>
                   {currentVersion && currentVersion < versions[versions.length - 1]?.version_number && (
-                    <span className="text-[10px] text-orange ml-2">Warning: editing old version will create new version</span>
+                    <span className="text-xs text-orange ml-2">Warning: editing old version will create new version</span>
                   )}
                 </div>
               </div>
@@ -2526,7 +2526,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 <button
                   type="button"
                   onClick={() => setShowChangelogInput(true)}
-                  className="text-[11px] text-text-3 hover:text-accent transition-colors"
+                  className="text-xs text-muted-foreground hover:text-primary transition-colors"
                 >
                   + Add changelog before save
                 </button>
@@ -2535,9 +2535,9 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
 
             {showChangelogInput && (
               <div className="mb-3 pb-3 border-b border-border">
-                <label className="text-[11px] font-semibold text-text-2 uppercase tracking-wide mb-1 block">What changed?</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 block">What changed?</label>
                 <textarea
-                  className="w-full px-2.5 py-1.5 rounded border border-border bg-bg-2 text-text-0 text-[12px] outline-none focus:border-accent resize-none"
+                  className="w-full px-2.5 py-1.5 rounded border border-border bg-muted/50 text-foreground text-xs outline-none focus:border-primary resize-none"
                   placeholder="e.g., Adjusted stoploss from -10% to -5%"
                   value={changelog}
                   onChange={(e) => setChangelog(e.target.value)}
@@ -2547,7 +2547,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                   <button
                     type="button"
                     onClick={() => setShowChangelogInput(false)}
-                    className="text-[10px] text-text-3 hover:text-text-1"
+                    className="text-xs text-muted-foreground hover:text-muted-foreground"
                   >
                     Cancel
                   </button>
@@ -2558,7 +2558,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
             <div className="flex justify-between items-center">
             <button
               type="button"
-              className={`px-3.5 py-2 rounded-md border border-border bg-bg-2 text-text-1 text-xs font-medium cursor-pointer hover:border-border-hover hover:bg-bg-3 transition-all flex items-center gap-1.5 ${
+              className={`px-3.5 py-2 rounded-md border border-border bg-muted/50 text-muted-foreground text-xs font-medium cursor-pointer hover:border-border-border hover:border-ring hover:bg-muted transition-all flex items-center gap-1.5 ${
                 currentStep === 1 ? "invisible" : ""
               }`}
               onClick={prevStep}
@@ -2568,7 +2568,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
             <div className="flex gap-2">
               <button
                 type="button"
-                className="px-3.5 py-2 rounded-md border border-border bg-bg-2 text-text-1 text-xs font-medium cursor-pointer hover:border-border-hover hover:bg-bg-3 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                className="px-3.5 py-2 rounded-md border border-border bg-muted/50 text-muted-foreground text-xs font-medium cursor-pointer hover:border-border-border hover:border-ring hover:bg-muted transition-all flex items-center gap-1.5 disabled:opacity-50"
                 disabled={saving}
                 onClick={handleSaveStrategy}
               >
@@ -2576,7 +2576,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               </button>
               <button
                 type="button"
-                className="px-3.5 py-2 rounded-md border border-accent/30 bg-accent/10 text-accent text-xs font-semibold cursor-pointer hover:bg-accent/20 transition-all flex items-center gap-1.5"
+                className="px-3.5 py-2 rounded-md border border-primary/30 bg-primary/10 text-primary text-xs font-semibold cursor-pointer hover:bg-primary/20 transition-all flex items-center gap-1.5"
                 onClick={async () => {
                   if (!savedStrategyId) {
                     await handleSaveStrategy();
@@ -2589,7 +2589,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
               {currentStep < steps.length ? (
                 <button
                   type="button"
-                  className="px-4 py-2 rounded-md bg-accent text-white text-xs font-semibold cursor-pointer hover:bg-accent-dim hover:-translate-y-px transition-all flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-md bg-primary text-white text-xs font-semibold cursor-pointer hover:bg-primary-dim hover:-translate-y-px transition-all flex items-center gap-1.5"
                   onClick={nextStep}
                 >
                   {nextLabels[currentStep]}
@@ -2610,14 +2610,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         </div>
 
         {/* Right: Code Panel (Visual preview / Monaco editor) */}
-        <div className="w-[420px] flex flex-col bg-bg-1 flex-shrink-0">
+        <div className="w-[420px] flex flex-col bg-card flex-shrink-0">
           <div className="px-4 py-3 border-b border-border flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="flex bg-bg-3 rounded p-0.5">
+              <div className="flex bg-muted rounded p-0.5">
                 <button type="button"
                   onClick={() => setEditorMode("visual")}
-                  className={`px-2.5 py-1 text-[10px] font-semibold rounded cursor-pointer transition-all ${
-                    editorMode === "visual" ? "bg-bg-2 text-text-0 shadow-sm" : "text-text-3 hover:text-text-1"
+                  className={`px-2.5 py-1 text-xs font-semibold rounded cursor-pointer transition-all ${
+                    editorMode === "visual" ? "bg-muted/50 text-foreground shadow-sm" : "text-muted-foreground hover:text-muted-foreground"
                   }`}>
                   Preview
                 </button>
@@ -2628,17 +2628,17 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                     }
                     setEditorMode("code");
                   }}
-                  className={`px-2.5 py-1 text-[10px] font-semibold rounded cursor-pointer transition-all ${
-                    editorMode === "code" ? "bg-bg-2 text-text-0 shadow-sm" : "text-text-3 hover:text-text-1"
+                  className={`px-2.5 py-1 text-xs font-semibold rounded cursor-pointer transition-all ${
+                    editorMode === "code" ? "bg-muted/50 text-foreground shadow-sm" : "text-muted-foreground hover:text-muted-foreground"
                   }`}>
                   Editor
                 </button>
               </div>
-              <span className="text-xs font-semibold text-text-0">{strategyName}.py</span>
+              <span className="text-xs font-semibold text-foreground">{strategyName}.py</span>
             </div>
             <div className="flex gap-1.5">
               <button type="button"
-                className="px-2.5 py-1 rounded border border-border bg-bg-2 text-text-2 text-[10px] cursor-pointer hover:border-border-hover hover:text-text-1 transition-all"
+                className="px-2.5 py-1 rounded border border-border bg-muted/50 text-muted-foreground text-xs cursor-pointer hover:border-border-border hover:border-ring hover:text-muted-foreground transition-all"
                 onClick={() => {
                   const code = editorMode === "code" && manualCodeEdit ? editableCode : generateStrategyCode;
                   navigator.clipboard.writeText(code);
@@ -2647,7 +2647,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
                 Copy
               </button>
               <button type="button"
-                className="px-2.5 py-1 rounded border border-border bg-bg-2 text-text-2 text-[10px] cursor-pointer hover:border-border-hover hover:text-text-1 transition-all"
+                className="px-2.5 py-1 rounded border border-border bg-muted/50 text-muted-foreground text-xs cursor-pointer hover:border-border-border hover:border-ring hover:text-muted-foreground transition-all"
                 onClick={() => {
                   const code = editorMode === "code" && manualCodeEdit ? editableCode : generateStrategyCode;
                   const blob = new Blob([code], { type: "text/plain" });
@@ -2664,14 +2664,14 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
           </div>
 
           {manualCodeEdit && editorMode === "visual" && (
-            <div className="px-4 py-2 bg-amber-bg border-b border-amber/20">
-              <span className="text-2xs text-amber">Code was edited manually. Preview may not reflect all changes.</span>
+            <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500-500/20">
+              <span className="text-2xs text-amber-500">Code was edited manually. Preview may not reflect all changes.</span>
             </div>
           )}
 
           {editorMode === "visual" ? (
             <div className="flex-1 overflow-auto p-5 px-6">
-              <pre className="font-mono text-[11.5px] leading-[1.7] text-text-1 whitespace-pre tab-size-4">
+              <pre className="font-mono text-[11.5px] leading-[1.7] text-muted-foreground whitespace-pre tab-size-4">
                 {generateStrategyCode}
               </pre>
             </div>
@@ -2726,9 +2726,9 @@ function ReviewRow({
   valueColor?: string;
 }) {
   return (
-    <div className="flex justify-between py-0.5 text-[11px]">
-      <span className="text-text-3">{label}</span>
-      <span className={`font-medium font-mono ${valueColor || "text-text-0"}`}>{value}</span>
+    <div className="flex justify-between py-0.5 text-xs">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={`font-medium font-mono ${valueColor || "text-foreground"}`}>{value}</span>
     </div>
   );
 }

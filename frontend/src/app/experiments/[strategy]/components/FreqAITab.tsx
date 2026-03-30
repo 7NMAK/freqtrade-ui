@@ -8,18 +8,18 @@ interface FreqAITabProps {
 }
 
 // ── Design System ────────────────────────────────────────────────────────
-const INPUT = "w-full h-[34px] py-0 px-3 bg-bg-3 border border-border rounded-btn text-[12px] text-text-0 placeholder-text-3 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all";
-const SELECT = "w-full h-[34px] py-0 px-3 bg-bg-3 border border-border rounded-btn text-[12px] text-text-0 focus:outline-none focus:border-accent cursor-pointer appearance-none transition-all";
-const LABEL = "block text-[10px] font-semibold text-text-3 uppercase tracking-[0.5px] mb-[4px]";
+const INPUT = "w-full h-[34px] py-0 px-3 bg-muted border border-border rounded-btn text-xs text-foreground placeholder-text-3 focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all";
+const SELECT = "w-full h-[34px] py-0 px-3 bg-muted border border-border rounded-btn text-xs text-foreground focus:outline-none focus:border-primary cursor-pointer appearance-none transition-all";
+const LABEL = "block text-xs font-semibold text-muted-foreground uppercase tracking-[0.5px] mb-[4px]";
 
 // ── Toggle switch ────────────────────────────────────────────────────────
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-[12px] text-text-1">{label}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
       <label className="relative w-[36px] h-[20px] cursor-pointer inline-block flex-shrink-0">
         <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="hidden" />
-        <span className={`absolute inset-0 rounded-[10px] border transition-all ${checked ? "bg-[rgba(34,197,94,0.08)] border-green" : "bg-bg-3 border-border"}`} />
+        <span className={`absolute inset-0 rounded-[10px] border transition-all ${checked ? "bg-[rgba(34,197,94,0.08)] border-emerald-500" : "bg-muted border-border"}`} />
         <span className={`absolute w-[14px] h-[14px] bg-white rounded-full top-[3px] transition-all ${checked ? "left-[19px]" : "left-[3px]"}`} />
       </label>
     </div>
@@ -85,8 +85,8 @@ export default function FreqAITab({}: FreqAITabProps) {
       {/* LEFT PANEL */}
       <div className="space-y-4">
         {/* FreqAI Config */}
-        <div className="bg-bg-1 border border-border rounded-[10px] p-4">
-          <div className="text-[12px] font-semibold text-text-0 mb-3">🧠 FreqAI Configuration</div>
+        <div className="bg-card border border-border rounded-[10px] p-4">
+          <div className="text-xs font-semibold text-foreground mb-3">🧠 FreqAI Configuration</div>
 
           <div className="mb-3">
             <label className={LABEL}>Hyperopt Source</label>
@@ -102,7 +102,7 @@ export default function FreqAITab({}: FreqAITabProps) {
 
           <div className="mb-3">
             <label className={LABEL}>Description (auto)</label>
-            <div className="w-full h-[34px] py-0 px-3 bg-bg-2 border border-border rounded-btn text-[11px] text-text-2 flex items-center truncate">
+            <div className="w-full h-[34px] py-0 px-3 bg-muted/50 border border-border rounded-btn text-xs text-muted-foreground flex items-center truncate">
               {selectedModels.size} models × {selectedOutliers.size} outliers × PCA({pcaEnabled ? "on" : "off"}) × Noise({noiseEnabled ? "on" : "off"}) = {matrixTotal} tests
             </div>
           </div>
@@ -139,12 +139,12 @@ export default function FreqAITab({}: FreqAITabProps) {
         </div>
 
         {/* Matrix Info */}
-        <div className="bg-[rgba(99,102,241,0.12)] border border-[rgba(99,102,241,0.3)] rounded-btn px-3 py-2 text-[11px] text-accent">
+        <div className="bg-[rgba(99,102,241,0.12)] border border-[rgba(99,102,241,0.3)] rounded-btn px-3 py-2 text-xs text-primary">
           ℹ️ {selectedModels.size} models × {selectedOutliers.size} outlier × 2 PCA × 2 noise = {matrixTotal} tests
         </div>
 
         {/* ML Models */}
-        <div className="bg-bg-1 border border-border rounded-[10px] p-4">
+        <div className="bg-card border border-border rounded-[10px] p-4">
           <label className={LABEL}>ML Models ({FREQAI_MODELS.length})</label>
           <div className="flex flex-wrap gap-[6px]">
             {FREQAI_MODELS.map((model) => (
@@ -152,10 +152,10 @@ export default function FreqAITab({}: FreqAITabProps) {
                 key={model.value}
                 onClick={() => handleToggleModel(model.value)}
                 title={model.tip}
-                className={`inline-flex items-center h-[26px] px-2 rounded-btn text-[10px] font-medium cursor-pointer border transition-all ${
+                className={`inline-flex items-center h-[26px] px-2 rounded-btn text-xs font-medium cursor-pointer border transition-all ${
                   selectedModels.has(model.value)
-                    ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-accent"
-                    : "bg-bg-2 border-border text-text-2"
+                    ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-primary"
+                    : "bg-muted/50 border-border text-muted-foreground"
                 }`}
               >
                 {model.label.replace("Regressor", "Reg").replace("Classifier", "Cls")}
@@ -165,7 +165,7 @@ export default function FreqAITab({}: FreqAITabProps) {
         </div>
 
         {/* Outlier Detection */}
-        <div className="bg-bg-1 border border-border rounded-[10px] p-4">
+        <div className="bg-card border border-border rounded-[10px] p-4">
           <label className={LABEL}>Outlier Detection ({OUTLIER_METHODS.length})</label>
           <div className="flex flex-wrap gap-[6px]">
             {OUTLIER_METHODS.map((m) => (
@@ -173,10 +173,10 @@ export default function FreqAITab({}: FreqAITabProps) {
                 key={m.value}
                 onClick={() => handleToggleOutlier(m.value)}
                 title={m.tip}
-                className={`inline-flex items-center h-[26px] px-2 rounded-btn text-[10px] font-medium cursor-pointer border transition-all ${
+                className={`inline-flex items-center h-[26px] px-2 rounded-btn text-xs font-medium cursor-pointer border transition-all ${
                   selectedOutliers.has(m.value)
-                    ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-accent"
-                    : "bg-bg-2 border-border text-text-2"
+                    ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-primary"
+                    : "bg-muted/50 border-border text-muted-foreground"
                 }`}
               >
                 {m.label}
@@ -186,33 +186,33 @@ export default function FreqAITab({}: FreqAITabProps) {
         </div>
 
         {/* PCA + Noise toggles */}
-        <div className="bg-bg-1 border border-border rounded-[10px] p-4 space-y-3">
+        <div className="bg-card border border-border rounded-[10px] p-4 space-y-3">
           <Toggle checked={pcaEnabled} onChange={setPcaEnabled} label="PCA (Dimensionality Reduction)" />
           <Toggle checked={noiseEnabled} onChange={setNoiseEnabled} label="Anti-Overfitting (Noise)" />
         </div>
 
         {/* Advanced Options — FLAT, no dropdown */}
-        <div className="bg-bg-1 border border-border rounded-[10px] p-4">
-          <div className="text-[12px] font-semibold text-text-0 mb-3">⚡ Advanced Options</div>
+        <div className="bg-card border border-border rounded-[10px] p-4">
+          <div className="text-xs font-semibold text-foreground mb-3">⚡ Advanced Options</div>
 
           <div className="grid grid-cols-2 gap-2 mb-3">
             <div>
-              <label className={LABEL}>DI Threshold <span className="font-normal text-text-3 ml-1">{diThreshold.toFixed(1)}</span></label>
+              <label className={LABEL}>DI Threshold <span className="font-normal text-muted-foreground ml-1">{diThreshold.toFixed(1)}</span></label>
               <input type="range" min="0" max="2" step="0.1" value={diThreshold} onChange={(e) => setDiThreshold(Number(e.target.value))} className="w-full accent-accent" />
             </div>
             <div>
-              <label className={LABEL}>SVM Nu <span className="font-normal text-text-3 ml-1">{svmNu.toFixed(2)}</span></label>
+              <label className={LABEL}>SVM Nu <span className="font-normal text-muted-foreground ml-1">{svmNu.toFixed(2)}</span></label>
               <input type="range" min="0.01" max="0.5" step="0.01" value={svmNu} onChange={(e) => setSvmNu(Number(e.target.value))} className="w-full accent-accent" />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2 mb-3">
             <div>
-              <label className={LABEL}>Weight Factor <span className="font-normal text-text-3 ml-1">{weightFactor.toFixed(1)}</span></label>
+              <label className={LABEL}>Weight Factor <span className="font-normal text-muted-foreground ml-1">{weightFactor.toFixed(1)}</span></label>
               <input type="range" min="0.1" max="5" step="0.1" value={weightFactor} onChange={(e) => setWeightFactor(Number(e.target.value))} className="w-full accent-accent" />
             </div>
             <div>
-              <label className={LABEL}>Noise Std Dev <span className="font-normal text-text-3 ml-1">{noiseStdDev.toFixed(2)}</span></label>
+              <label className={LABEL}>Noise Std Dev <span className="font-normal text-muted-foreground ml-1">{noiseStdDev.toFixed(2)}</span></label>
               <input type="range" min="0" max="0.5" step="0.01" value={noiseStdDev} onChange={(e) => setNoiseStdDev(Number(e.target.value))} className="w-full accent-accent" />
             </div>
           </div>
@@ -245,21 +245,21 @@ export default function FreqAITab({}: FreqAITabProps) {
           <button
             onClick={() => { setIsRunning(true); }}
             disabled={isRunning || selectedModels.size === 0}
-            className="flex-1 h-[34px] rounded-btn text-[12px] font-medium bg-accent border border-accent text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="flex-1 h-[34px] rounded-btn text-xs font-medium bg-primary border border-primary text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             ▶ Run Matrix ({matrixTotal})
           </button>
           <button
             onClick={() => { setIsRunning(true); }}
             disabled={isRunning || selectedModels.size === 0}
-            className="flex-1 h-[34px] rounded-btn text-[12px] font-medium border border-border bg-bg-2 text-text-1 hover:bg-bg-3 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="flex-1 h-[34px] rounded-btn text-xs font-medium border border-border bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             Run Selected
           </button>
           {isRunning && (
             <button
               onClick={() => setIsRunning(false)}
-              className="h-[34px] px-3 rounded-btn text-[12px] font-medium bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.25)] text-red hover:bg-[rgba(239,68,68,0.15)] transition-all"
+              className="h-[34px] px-3 rounded-btn text-xs font-medium bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.25)] text-rose-500 hover:bg-[rgba(239,68,68,0.15)] transition-all"
             >
               ⏹
             </button>
@@ -267,18 +267,18 @@ export default function FreqAITab({}: FreqAITabProps) {
         </div>
 
         {/* GPU Info */}
-        <div className="bg-bg-1 border border-border rounded-[10px] px-3 py-2">
-          <div className="text-[11px] text-accent font-semibold">RunPod RTX 4090</div>
-          <div className="text-[10px] text-text-3">~3-6h for {matrixTotal} tests</div>
+        <div className="bg-card border border-border rounded-[10px] px-3 py-2">
+          <div className="text-xs text-primary font-semibold">RunPod RTX 4090</div>
+          <div className="text-xs text-muted-foreground">~3-6h for {matrixTotal} tests</div>
         </div>
       </div>
 
       {/* RIGHT PANEL */}
       <div>
-        <div className="bg-bg-1 border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[400px]">
+        <div className="bg-card border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[400px]">
           <div className="text-[32px] mb-3 opacity-30">🧠</div>
-          <div className="text-[13px] font-semibold text-text-2 mb-1">No FreqAI results yet</div>
-          <div className="text-[11px] text-text-3 text-center max-w-[280px]">
+          <div className="text-sm font-semibold text-muted-foreground mb-1">No FreqAI results yet</div>
+          <div className="text-xs text-muted-foreground text-center max-w-[280px]">
             Configure your ML models and click &quot;Run Matrix&quot; to start real FreqAI training runs.
           </div>
         </div>

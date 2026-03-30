@@ -118,7 +118,7 @@ function highlight(text: string, query: string): React.ReactNode {
   while (idx !== -1) {
     if (idx > cursor) parts.push(text.slice(cursor, idx));
     parts.push(
-      <mark key={`match-${idx}`} className="bg-accent/25 text-accent rounded px-0.5">
+      <mark key={`match-${idx}`} className="bg-primary/25 text-primary rounded px-0.5">
         {text.slice(idx, idx + query.length)}
       </mark>
     );
@@ -186,10 +186,10 @@ export default function DocsPage() {
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-text-0 mb-1">
+          <h1 className="text-2xl font-bold text-foreground mb-1">
             FreqTrade Parameter Reference
           </h1>
-          <p className="text-sm text-text-2">
+          <p className="text-sm text-muted-foreground">
             {ALL_ENTRIES.length} parameters across {CATEGORY_ORDER.length} categories.
             Every entry maps to a real FreqTrade config key or strategy property.
           </p>
@@ -198,7 +198,7 @@ export default function DocsPage() {
         {/* Search */}
         <div className="relative">
           <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-3"
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -215,12 +215,12 @@ export default function DocsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search parameters, config keys, or descriptions..."
-            className="w-full bg-bg-1 border border-border rounded-md pl-9 pr-3 py-2 text-sm text-text-0 placeholder:text-text-3 focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent"
+            className="w-full bg-card border border-border rounded-md pl-9 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
           />
           {search && (
             <button
               onClick={() => setSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-3 hover:text-text-1 text-xs"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground text-xs"
             >
               Clear
             </button>
@@ -229,14 +229,14 @@ export default function DocsPage() {
 
         {/* Results count when searching */}
         {search.trim() && (
-          <p className="text-xs text-text-3">
+          <p className="text-xs text-muted-foreground">
             {filtered.length} result{filtered.length !== 1 ? "s" : ""} for &ldquo;{search}&rdquo;
           </p>
         )}
 
         {/* Category sections */}
         {grouped.length === 0 && (
-          <div className="bg-bg-2 border border-border rounded-[10px] p-8 text-center text-text-3 text-sm">
+          <div className="bg-muted/50 border border-border rounded-[10px] p-8 text-center text-muted-foreground text-sm">
             No parameters match your search.
           </div>
         )}
@@ -250,29 +250,29 @@ export default function DocsPage() {
           return (
             <div
               key={category}
-              className="bg-bg-2 border border-border rounded-[10px] overflow-hidden"
+              className="bg-muted/50 border border-border rounded-[10px] overflow-hidden"
             >
               {/* Section header */}
               <button
                 onClick={() => toggle(category)}
-                className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-bg-3 transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-muted transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <ChevronIcon open={open} />
-                  <span className="font-semibold text-text-0 text-sm">
+                  <span className="font-semibold text-foreground text-sm">
                     {category}
                   </span>
-                  <span className="text-2xs text-text-3 bg-bg-1 px-2 py-0.5 rounded-full">
+                  <span className="text-2xs text-muted-foreground bg-card px-2 py-0.5 rounded-full">
                     {entries.length} param{entries.length !== 1 ? "s" : ""}
                   </span>
-                  <span className="text-2xs text-text-3">
+                  <span className="text-2xs text-muted-foreground">
                     {section}
                   </span>
                 </div>
                 <Link
                   href={samplePage}
                   onClick={(e) => e.stopPropagation()}
-                  className="text-xs text-accent hover:underline"
+                  className="text-xs text-primary hover:underline"
                 >
                   Go to {samplePageLabel}
                 </Link>
@@ -284,30 +284,30 @@ export default function DocsPage() {
                   {entries.map((entry) => (
                     <div
                       key={entry.key}
-                      className="px-5 py-3 hover:bg-bg-1/50 transition-colors"
+                      className="px-5 py-3 hover:bg-card/50 transition-colors"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0 flex-1">
                           {/* Parameter name */}
                           <div className="flex items-center gap-2 flex-wrap">
-                            <code className="text-sm font-mono font-semibold text-accent">
+                            <code className="text-sm font-mono font-semibold text-primary">
                               {highlight(entry.key, search)}
                             </code>
                             {entry.configKey !== entry.key && (
-                              <span className="text-2xs text-text-3 bg-bg-1 px-1.5 py-0.5 rounded font-mono">
+                              <span className="text-2xs text-muted-foreground bg-card px-1.5 py-0.5 rounded font-mono">
                                 {highlight(entry.configKey, search)}
                               </span>
                             )}
                           </div>
                           {/* Description */}
-                          <p className="text-sm text-text-2 mt-1 leading-relaxed">
+                          <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
                             {highlight(entry.description, search)}
                           </p>
                         </div>
                         {/* Page link */}
                         <Link
                           href={entry.page}
-                          className="text-2xs text-accent hover:underline whitespace-nowrap shrink-0 mt-0.5"
+                          className="text-2xs text-primary hover:underline whitespace-nowrap shrink-0 mt-0.5"
                         >
                           {entry.pageLabel}
                         </Link>

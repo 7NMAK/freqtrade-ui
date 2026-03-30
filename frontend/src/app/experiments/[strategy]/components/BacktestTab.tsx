@@ -19,10 +19,10 @@ interface LogEntry {
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-[12px] text-text-1">{label}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
       <label className="relative w-[36px] h-[20px] cursor-pointer inline-block flex-shrink-0">
         <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="hidden" />
-        <span className={`absolute inset-0 rounded-[10px] border transition-all ${checked ? "bg-[rgba(34,197,94,0.08)] border-green" : "bg-bg-3 border-border"}`} />
+        <span className={`absolute inset-0 rounded-[10px] border transition-all ${checked ? "bg-[rgba(34,197,94,0.08)] border-emerald-500" : "bg-muted border-border"}`} />
         <span className={`absolute w-[14px] h-[14px] bg-white rounded-full top-[3px] transition-all ${checked ? "left-[19px]" : "left-[3px]"}`} />
       </label>
     </div>
@@ -30,9 +30,9 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
 }
 
 // ── Design System ───────────────────────────────────────────────────
-const INPUT = "w-full h-[34px] py-0 px-3 bg-bg-3 border border-border rounded-btn text-[12px] text-text-0 placeholder-text-3 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all";
-const SELECT = "w-full h-[34px] py-0 px-3 bg-bg-3 border border-border rounded-btn text-[12px] text-text-0 focus:outline-none focus:border-accent cursor-pointer appearance-none transition-all";
-const LABEL = "block text-[10px] font-semibold text-text-3 uppercase tracking-[0.5px] mb-[4px]";
+const INPUT = "w-full h-[34px] py-0 px-3 bg-muted border border-border rounded-btn text-xs text-foreground placeholder-text-3 focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all";
+const SELECT = "w-full h-[34px] py-0 px-3 bg-muted border border-border rounded-btn text-xs text-foreground focus:outline-none focus:border-primary cursor-pointer appearance-none transition-all";
+const LABEL = "block text-xs font-semibold text-muted-foreground uppercase tracking-[0.5px] mb-[4px]";
 
 // ══════════════════════════════════════════════════════════════════════════
 export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTabProps) {
@@ -171,8 +171,8 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
     <div className="grid grid-cols-[360px_minmax(0,1fr)] gap-4 min-h-0 max-w-full">
 
       {/* ═══════════ LEFT PANEL: FORM ═══════════ */}
-      <div className="bg-bg-1 border border-border rounded-[10px] p-4 overflow-y-auto flex flex-col gap-[10px]">
-        <div className="text-[13px] font-semibold text-text-0 flex items-center gap-2">⚙️ Test Configuration</div>
+      <div className="bg-card border border-border rounded-[10px] p-4 overflow-y-auto flex flex-col gap-[10px]">
+        <div className="text-sm font-semibold text-foreground flex items-center gap-2">⚙️ Test Configuration</div>
 
         {/* Test Name */}
         <div>
@@ -183,16 +183,16 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
         {/* Description (auto-generated) */}
         <div>
           <label className={LABEL}>Description</label>
-          <div className="w-full px-3 py-[7px] bg-bg-2 border border-border rounded-btn text-[11px] text-text-2 leading-[1.5]">
+          <div className="w-full px-3 py-[7px] bg-muted/50 border border-border rounded-btn text-xs text-muted-foreground leading-[1.5]">
             {autoDescription}
           </div>
-          <div className="text-[9px] text-text-3 mt-[2px]">Auto-generated from settings</div>
+          <div className="text-[9px] text-muted-foreground mt-[2px]">Auto-generated from settings</div>
         </div>
 
         {/* Strategy (readonly) */}
         <div>
           <label className={LABEL}>Strategy</label>
-          <input type="text" value={strategy} readOnly className={`${INPUT} bg-bg-2 opacity-70 cursor-default`} />
+          <input type="text" value={strategy} readOnly className={`${INPUT} bg-muted/50 opacity-70 cursor-default`} />
         </div>
 
         {/* Start/End Date row */}
@@ -268,7 +268,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
           <label className={LABEL}>Export</label>
           <div className="flex gap-[6px]">
             {["none", "trades", "signals"].map((val) => (
-              <label key={val} className={`inline-flex items-center gap-[4px] py-[4px] px-[10px] rounded-btn text-[11px] cursor-pointer border transition-all select-none ${exportType === val ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-accent" : "bg-bg-2 border-border text-text-2 hover:border-[#2e2e48]"}`}>
+              <label key={val} className={`inline-flex items-center gap-[4px] py-[4px] px-[10px] rounded-btn text-xs cursor-pointer border transition-all select-none ${exportType === val ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-primary" : "bg-muted/50 border-border text-muted-foreground hover:border-[#2e2e48]"}`}>
                 <input type="radio" name="export" value={val} checked={exportType === val} onChange={(e) => setExportType(e.target.value)} className="hidden" />
                 {val.charAt(0).toUpperCase() + val.slice(1)}
               </label>
@@ -285,7 +285,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
               { label: "Week", checked: breakdownWeek, set: setBreakdownWeek },
               { label: "Month", checked: breakdownMonth, set: setBreakdownMonth },
             ] as const).map((item) => (
-              <span key={item.label} onClick={() => item.set(!item.checked)} className={`inline-flex items-center gap-[4px] py-[4px] px-[10px] rounded-btn text-[11px] cursor-pointer border transition-all select-none ${item.checked ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-accent" : "bg-bg-2 border-border text-text-2 hover:border-[#2e2e48]"}`}>
+              <span key={item.label} onClick={() => item.set(!item.checked)} className={`inline-flex items-center gap-[4px] py-[4px] px-[10px] rounded-btn text-xs cursor-pointer border transition-all select-none ${item.checked ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-primary" : "bg-muted/50 border-border text-muted-foreground hover:border-[#2e2e48]"}`}>
                 {item.label}
               </span>
             ))}
@@ -294,13 +294,13 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
 
         {/* Action Buttons */}
         <div className="flex gap-[6px] mt-1">
-          <button onClick={handleStart} disabled={isRunning} className="flex-1 h-[32px] rounded-btn text-[12px] font-semibold border bg-accent border-accent text-white hover:bg-[#5558e6] transition-all disabled:opacity-50">
+          <button onClick={handleStart} disabled={isRunning} className="flex-1 h-[32px] rounded-btn text-xs font-semibold border bg-primary border-primary text-white hover:bg-[#5558e6] transition-all disabled:opacity-50">
             {isRunning ? "⏳ Running..." : "▶ Start Backtest"}
           </button>
-          <button onClick={handleStop} disabled={!isRunning} className="h-[32px] px-3 rounded-btn text-[12px] font-semibold border bg-[rgba(239,68,68,0.08)] border-[rgba(239,68,68,0.25)] text-red hover:bg-[rgba(239,68,68,0.15)] transition-all disabled:opacity-50">
+          <button onClick={handleStop} disabled={!isRunning} className="h-[32px] px-3 rounded-btn text-xs font-semibold border bg-[rgba(239,68,68,0.08)] border-[rgba(239,68,68,0.25)] text-rose-500 hover:bg-[rgba(239,68,68,0.15)] transition-all disabled:opacity-50">
             ⏹ Stop
           </button>
-          <button onClick={handleReset} className="h-[32px] px-3 rounded-btn text-[12px] font-semibold border border-border bg-bg-2 text-text-1 hover:bg-bg-3 transition-all">
+          <button onClick={handleReset} className="h-[32px] px-3 rounded-btn text-xs font-semibold border border-border bg-muted/50 text-muted-foreground hover:bg-muted transition-all">
             ↻
           </button>
         </div>
@@ -308,10 +308,10 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
         {/* ═══════════ LOG WINDOW ═══════════ */}
         <div className="flex flex-col mt-1 flex-1 min-h-[120px]">
           <div className="flex items-center justify-between mb-[4px]">
-            <span className="text-[10px] font-semibold text-text-3 uppercase tracking-[0.5px]">Log</span>
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.5px]">Log</span>
             <div className="flex items-center gap-2">
               {btProgress && (
-                <span className="text-[10px] text-accent font-medium">{btProgress}</span>
+                <span className="text-xs text-primary font-medium">{btProgress}</span>
               )}
               {isRunning && (
                 <span className="w-[6px] h-[6px] rounded-full bg-green animate-pulse" />
@@ -319,28 +319,28 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
               {logs.length > 0 && (
                 <button
                   onClick={() => { setLogs([]); setBtProgress(""); }}
-                  className="text-[9px] text-text-3 hover:text-text-1 transition-colors"
+                  className="text-[9px] text-muted-foreground hover:text-muted-foreground transition-colors"
                 >
                   Clear
                 </button>
               )}
             </div>
           </div>
-          <div className="flex-1 bg-[#0d0d14] border border-border rounded-btn p-2 overflow-y-auto font-mono text-[10px] leading-[1.6] min-h-[100px] max-h-[220px]">
+          <div className="flex-1 bg-[#0d0d14] border border-border rounded-btn p-2 overflow-y-auto font-mono text-xs leading-[1.6] min-h-[100px] max-h-[220px]">
             {logs.length === 0 ? (
-              <div className="text-text-3 text-[10px] opacity-50 select-none">
+              <div className="text-muted-foreground text-xs opacity-50 select-none">
                 Logs will appear here when backtest starts...
               </div>
             ) : (
               logs.map((entry, i) => (
                 <div key={i} className="flex gap-[6px]">
-                  <span className="text-text-3 shrink-0">{entry.ts}</span>
+                  <span className="text-muted-foreground shrink-0">{entry.ts}</span>
                   <span className={`shrink-0 w-[38px] ${
-                    entry.level === "ERROR" ? "text-red" :
+                    entry.level === "ERROR" ? "text-rose-500" :
                     entry.level === "WARNING" ? "text-[#f59e0b]" :
-                    "text-text-3"
+                    "text-muted-foreground"
                   }`}>{entry.level.substring(0, 4)}</span>
-                  <span className="text-text-1 break-all">{entry.msg}</span>
+                  <span className="text-muted-foreground break-all">{entry.msg}</span>
                 </div>
               ))
             )}
@@ -350,10 +350,10 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
       </div>
 
       {/* ═══════════ RIGHT PANEL: RESULTS (empty state) ═══════════ */}
-      <div className="bg-bg-1 border border-border rounded-[10px] p-4 overflow-y-auto flex flex-col items-center justify-center min-h-[400px]">
+      <div className="bg-card border border-border rounded-[10px] p-4 overflow-y-auto flex flex-col items-center justify-center min-h-[400px]">
         <div className="text-[32px] mb-3 opacity-30">📊</div>
-        <div className="text-[13px] font-semibold text-text-2 mb-1">No backtest results yet</div>
-        <div className="text-[11px] text-text-3 text-center max-w-[280px]">
+        <div className="text-sm font-semibold text-muted-foreground mb-1">No backtest results yet</div>
+        <div className="text-xs text-muted-foreground text-center max-w-[280px]">
           Configure your test parameters and click &quot;Start Backtest&quot; to run a real FreqTrade backtest on the server.
         </div>
       </div>

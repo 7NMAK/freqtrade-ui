@@ -192,96 +192,7 @@ function StatCard({
   );
 }
 
-// ── Bot Card (clickable) ─────────────────────────────────────────────────
 
-function BotCard({
-  bot,
-  profit,
-  sparkData,
-  openCount,
-  onClick,
-  onDrain,
-}: {
-  bot: Bot;
-  profit: Partial<FTProfit> | null;
-  sparkData: number[];
-  openCount: number;
-  onClick: () => void;
-  onDrain?: (botId: number) => void;
-}) {
-  const isRunning = bot.status === "running";
-  return (
-    <Card
-      className={`relative cursor-pointer transition-all hover:bg-muted/50 hover:-translate-y-[1px] ${
-        bot.status === "error"
-          ? "border-rose-500/50 shadow-[0_0_15px_-3px_rgba(244,63,94,0.1)]"
-          : isRunning
-          ? "hover:border-primary/50"
-          : "opacity-80 hover:opacity-100"
-      }`}
-      onClick={onClick}
-    >
-      <CardBody className="p-4 flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="text-sm font-bold text-foreground truncate">{bot.name}</div>
-            {bot.exchange_name && (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20 whitespace-nowrap">
-                {bot.exchange_name}
-              </span>
-            )}
-          </div>
-          <StatusBadge status={bot.status} isDryRun={bot.is_dry_run} />
-        </div>
-        
-        <div className="text-xs text-muted-foreground truncate">
-          {bot.strategy_name ?? "No strategy"}
-          {bot.strategy_version_id && <span className="text-foreground/50 ml-1">v{bot.strategy_version_id}</span>}
-        </div>
-
-        <div className="grid grid-cols-3 gap-2 py-1">
-          <div>
-            <div className="text-[10px] uppercase font-semibold text-muted-foreground mb-1">P&L</div>
-            <div className={`text-sm font-bold ${profitColor(profit?.profit_closed_coin)}`}>
-              {profit ? `${fmt(profit.profit_closed_coin)}` : "\u2014"}
-            </div>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase font-semibold text-muted-foreground mb-1">Win Rate</div>
-            <div className="text-sm font-bold text-foreground">
-              {profit && ((profit.winning_trades ?? 0) + (profit.losing_trades ?? 0)) > 0
-                ? `${(((profit.winning_trades ?? 0) / ((profit.winning_trades ?? 0) + (profit.losing_trades ?? 0))) * 100).toFixed(1)}%`
-                : "\u2014"}
-            </div>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase font-semibold text-muted-foreground mb-1">Trades</div>
-            <div className="text-sm font-bold text-foreground">{openCount}</div>
-          </div>
-        </div>
-
-        {sparkData.length > 0 && (
-          <div className="mt-1 h-10 w-full opacity-80 mix-blend-screen">
-            <Sparkline data={sparkData} />
-          </div>
-        )}
-
-        {isRunning && onDrain && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDrain(bot.id);
-            }}
-            className="mt-2 w-full text-xs font-bold px-3 py-2 rounded-md border border-amber-500/30 text-amber-500 bg-amber-500/10 hover:bg-amber-500/20 transition-all uppercase tracking-wider"
-          >
-            Drain Bot
-          </button>
-        )}
-      </CardBody>
-    </Card>
-  );
-}
 
 // ── Force Entry Dialog ───────────────────────────────────────────────────
 
@@ -421,7 +332,7 @@ export default function DashboardPage() {
   const [closedTrades, setClosedTrades] = useState<FTTrade[]>([]);
   const [botProfits, setBotProfits] = useState<Record<number, Partial<FTProfit>>>({});
   const [sparklines, setSparklines] = useState<Record<number, number[]>>({});
-  const [openByBot, setOpenByBot] = useState<Record<number, number>>({});
+
   const [dailyData, setDailyData] = useState<FTDailyItem[]>([]);
   const [riskEvents, setRiskEvents] = useState<RiskEvent[]>([]);
 
@@ -1346,7 +1257,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex justify-between items-end">
                        <div className="flex flex-col">
-                         <span className="text-[10px] uppercase font-semibold text-muted-foreground mb-0.5">Today's Net</span>
+                         <span className="text-[10px] uppercase font-semibold text-muted-foreground mb-0.5">Today&apos;s Net</span>
                          <span className={`text-xs font-bold font-mono ${botProfits[bot.id] && botProfits[bot.id].profit_closed_abs >= 0 ? "text-emerald-500" : botProfits[bot.id] && botProfits[bot.id].profit_closed_abs < 0 ? "text-rose-500" : "text-muted-foreground"}`}>
                            {botProfits[bot.id] ? fmtMoney(botProfits[bot.id].profit_closed_abs) : "—"}
                          </span>

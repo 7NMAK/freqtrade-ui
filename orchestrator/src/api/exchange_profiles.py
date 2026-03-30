@@ -223,8 +223,6 @@ async def create_exchange_profile(
         details=f"Created exchange profile for {profile.exchange_name}",
     )
 
-    await db.commit()
-
     return ExchangeProfileResponse(**_format_profile_response(profile))
 
 
@@ -301,8 +299,6 @@ async def update_exchange_profile(
             details=f"Updated fields: {', '.join(updates)}",
         )
 
-    await db.commit()
-
     return ExchangeProfileResponse(**_format_profile_response(profile))
 
 
@@ -331,8 +327,6 @@ async def delete_exchange_profile(
         target_name=profile.name,
         details="Soft-deleted exchange profile",
     )
-
-    await db.commit()
 
 
 @router.get("/{profile_id}/bots", response_model=list[dict])

@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
  * checks for the presence of the auth cookie set by the login page.
  */
 
-const PUBLIC_PATHS = ["/login", "/_next", "/favicon.ico"];
+const PUBLIC_PATHS = ["/login", "/_next", "/favicon.ico", "/redesign"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

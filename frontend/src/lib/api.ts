@@ -266,7 +266,7 @@ export const botConfig = (id: number) =>
 
 export const saveBotConfig = (id: number, config: Record<string, unknown>) =>
   request(`/api/bots/${id}/config`, {
-    method: "PATCH",
+    method: "PUT",
     body: JSON.stringify(config),
   });
 
@@ -394,7 +394,17 @@ export const botHyperoptStart = (id: number, params: Record<string, unknown>) =>
   });
 
 export const botHyperoptStatus = (botId: number, jobId: string) =>
-  request<{ job_id: string; status: string; exit_code: number | null; output: string }>(`/api/bots/${botId}/hyperopt/status/${jobId}`);
+  request<{
+    job_id: string;
+    status: string;
+    exit_code: number | null;
+    output: string;
+    cmd: string;
+    sampler: string;
+    original_strategy: string;
+    parsed: Record<string, unknown> | null;
+    saved_to_db: boolean;
+  }>(`/api/bots/${botId}/hyperopt/status/${jobId}`);
 
 export const botLookaheadAnalysis = (id: number, params: Record<string, unknown>) =>
   request(`/api/bots/${id}/lookahead-analysis`, {
@@ -859,3 +869,102 @@ export const importBot = (data: {
     method: "POST",
     body: JSON.stringify(data),
   });
+
+
+// ── Experiments ──────────────────────────────────────────────────────
+
+export interface ExperimentRun {
+  id: number;
+  experiment_id: number;
+  parent_run_id: number | null;
+  run_type: string;
+  status: string;
+  backtest_result_id: number | null;
+  strategy_version_id: number | null;
+  ai_analysis_id: number | null;
+  sampler: string | null;
+  loss_function: string | null;
+  epochs: number | null;
+  spaces: string[] | null;
+  hyperopt_duration_seconds: number | null;
+  total_trades: number | null;
+  win_rate: number | null;
+  profit_abs: number | null;
+  profit_pct: number | null;
+  max_drawdown: number | null;
+  sharpe_ratio: number | null;
+  sortino_ratio: number | null;
+  calmar_ratio: number | null;
+  avg_duration: string | null;
+  raw_output: string | null;
+  error_message: string | null;
+  created_at: string;
+}
+
+export interface Experiment {
+  id: number;
+  strategy_id: number;
+  strategy_name: string | null;
+  name: string;
+  pair: string;
+  timeframe: string;
+  timerange_start: string | null;
+  timerange_end: string | null;
+  baseline_backtest_id: number | null;
+  best_version_id: number | null;
+  notes: string | null;
+  run_count: number;
+  created_at: string;
+}
+
+export interface ExperimentDetail extends Experiment {
+  runs: ExperimentRun[];
+}
+
+export interface ExperimentListResponse {
+  total: number;
+  items: Experiment[];
+}
+
+export const getExperiments = (filters?: {
+  strategy_id?: number;
+  pair?: string;
+  skip?: number;
+  limit?: number;
+}) => {
+  const params = new URLSearchParams();
+  if (filters?.strategy_id) params.set("strategy_id", String(filters.strategy_id));
+  if (filters?.pair) params.set("pair", filters.pair);
+  if (filters?.skip) params.set("skip", String(filters.skip));
+  if (filters?.limit) params.set("limit", String(filters.limit));
+  const qs = params.toString();
+  return request<ExperimentListResponse>(`/api/experiments/${qs ? `?${qs}` : ""}`);
+};
+
+export const getExperiment = (id: number) =>
+  request<ExperimentDetail>(`/api/experiments/${id}`);
+
+export const deleteExperiment = (id: number) =>
+  request<void>(`/api/experiments/${id}`, { method: "DELETE" });
+
+export const getExperimentRuns = (experimentId: number, filters?: {
+  run_type?: string;
+  status?: string;
+}) => {
+  const params = new URLSearchParams();
+  if (filters?.run_type) params.set("run_type", filters.run_type);
+  if (filters?.status) params.set("status", filters.status);
+  const qs = params.toString();
+  return request<ExperimentRun[]>(`/api/experiments/${experimentId}/runs${qs ? `?${qs}` : ""}`);
+};
+
+export const deleteExperimentRun = (runId: number) =>
+  request<void>(`/api/experiments/runs/${runId}`, { method: "DELETE" });
+
+// getStrategyVersions already defined above (line 763)
+
+export const activateStrategyVersion = (strategyId: number, versionId: number) =>
+  request<{ message: string; version_id: number; version_number: number }>(
+    `/api/experiments/strategies/${strategyId}/versions/${versionId}/activate`,
+    { method: "POST" }
+  );

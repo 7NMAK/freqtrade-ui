@@ -49,7 +49,6 @@ Every method maps to exactly one FT API endpoint:
 """
 import asyncio
 import logging
-import socket
 from typing import Callable, Awaitable
 
 import httpx

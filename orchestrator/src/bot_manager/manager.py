@@ -16,7 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import settings
-from ..crypto import encrypt
+from ..crypto import decrypt, encrypt
 from ..ft_client import FTClient, FTClientError
 from ..models.bot_instance import BotInstance, BotStatus
 from ..models.audit_log import AuditLog
@@ -46,7 +46,7 @@ class BotManager:
                 self._clients[bot.id] = FTClient(
                     api_url=url,
                     username=bot.api_username,
-                    password=bot.api_password,
+                    password=decrypt(bot.api_password) or "",
                 )
             return self._clients[bot.id]
 
@@ -114,7 +114,7 @@ class BotManager:
             api_url=api_url,
             api_port=api_port,
             api_username=api_username,
-            api_password=api_password,
+            api_password=encrypt(api_password) or "",
             strategy_name=strategy_name,
             is_dry_run=is_dry_run,
             status=BotStatus.STOPPED,
@@ -125,7 +125,7 @@ class BotManager:
             exchange_name=exchange_name,
             exchange_key_enc=encrypt(exchange_key) if exchange_key else None,
             exchange_secret_enc=encrypt(exchange_secret) if exchange_secret else None,
-            exchange_password=exchange_password,
+            exchange_password=encrypt(exchange_password) if exchange_password else None,
             exchange_uid=exchange_uid,
             exchange_subaccount=exchange_subaccount,
             exchange_profile_id=exchange_profile_id,

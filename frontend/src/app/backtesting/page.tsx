@@ -110,15 +110,12 @@ const lossFunctions = [
 ];
 
 const samplers = [
-  { value: "tpe", label: "TPE (Tree-structured Parzen Estimator)", desc: "Bayesian optimization using kernel density estimators. Good default for most strategies." },
-  { value: "nsga2", label: "NSGA-II (Multi-objective evolutionary)", desc: "Multi-objective evolutionary algorithm. Best when optimizing multiple conflicting objectives." },
-  { value: "gp", label: "GP (Gaussian Process)", desc: "Gaussian Process-based optimization. Works well with small parameter spaces." },
-  { value: "cmaes", label: "CMA-ES (Covariance Matrix Adaptation)", desc: "Covariance Matrix Adaptation Evolution Strategy. Good for continuous parameter optimization." },
-  { value: "random", label: "Random (Uniform random sampling)", desc: "Uniform random sampling across the parameter space. Useful as a baseline." },
-  { value: "qmc", label: "QMC (Quasi-Monte Carlo)", desc: "Quasi-Monte Carlo sampling. Better space coverage than pure random sampling." },
-  { value: "motpe", label: "MOTPE (Multi-Objective TPE)", desc: "Multi-Objective Tree-structured Parzen Estimator. Extension of TPE for multi-objective optimization." },
-  { value: "nsgaiii", label: "NSGA-III (Reference-point NSGA)", desc: "Reference-point based NSGA. Better for many-objective optimization than NSGA-II." },
-  { value: "auto", label: "AutoSampler (Automatic selection)", desc: "Automatically selects the best sampler based on search space characteristics." },
+  { value: "TPESampler", label: "TPE (Tree-structured Parzen Estimator)", desc: "Bayesian optimization using kernel density estimators. Good default for most strategies." },
+  { value: "GPSampler", label: "GP (Gaussian Process)", desc: "Gaussian Process-based optimization. Works well with small parameter spaces." },
+  { value: "CmaEsSampler", label: "CMA-ES (Covariance Matrix Adaptation)", desc: "Covariance Matrix Adaptation Evolution Strategy. Good for continuous parameter optimization." },
+  { value: "NSGAIISampler", label: "NSGA-II (Multi-objective evolutionary)", desc: "Multi-objective evolutionary algorithm. Best when optimizing multiple conflicting objectives." },
+  { value: "NSGAIIISampler", label: "NSGA-III (Reference-point NSGA)", desc: "FT default sampler. Reference-point based NSGA for many-objective optimization." },
+  { value: "QMCSampler", label: "QMC (Quasi-Monte Carlo)", desc: "Quasi-Monte Carlo sampling. Better space coverage than pure random sampling." },
 ];
 
 const freqaiModels = [
@@ -361,8 +358,7 @@ function BacktestingInner() {
   const [selectedSpaces, setSelectedSpaces] = useState(new Set(["buy", "sell", "roi", "stoploss"]));
   const [analyzePerEpoch, setAnalyzePerEpoch] = useState(false);
   const [disableParamExport, setDisableParamExport] = useState(false);
-  const [sampler, setSampler] = useState("tpe");
-  const [effort, setEffort] = useState(50);
+  const [sampler, setSampler] = useState("NSGAIIISampler");
   const [analysisTab, setAnalysisTab] = useState(0);
   const [breakdownTab, setBreakdownTab] = useState<"day" | "month">("day");
   const [showRejected, setShowRejected] = useState(false);
@@ -634,12 +630,12 @@ function BacktestingInner() {
         epochs: parseInt(hoEpochs, 10) || 500,
         spaces: Array.from(selectedSpaces),
         sampler,
-        effort,
         min_trades: parseInt(hoMinTrades, 10) || 20,
         jobs: parseInt(hoWorkers, 10) || -1,
         hyperopt_loss: selectedLoss,
         timerange,
         timeframe: btTimeframe,
+        disable_param_export: disableParamExport,
       });
       const jobId = startRes.job_id;
       toast.update(id, { message: `Hyperopt running — ${selectedStrategy} (${hoEpochs} epochs)...`, type: "loading" });
@@ -881,8 +877,7 @@ function BacktestingInner() {
     setHoEpochs("500");
     setSelectedSpaces(new Set(["buy", "sell", "roi", "stoploss"]));
     setSelectedLoss("MaxDrawDownRelativeHyperOptLoss");
-    setSampler("tpe");
-    setEffort(50);
+    setSampler("NSGAIIISampler");
     setHoMinTrades("20");
     setHoWorkers("-1");
     setAnalyzePerEpoch(false);
@@ -1268,26 +1263,6 @@ function BacktestingInner() {
                       <option value="2">2</option>
                       <option value="4">4</option>
                     </FormSelect>
-                  </div>
-                </div>
-
-                {/* Search Effort Slider */}
-                <div className="mb-3.5">
-                  <Tooltip content={TOOLTIPS.ho_effort?.description ?? "Search effort level"} configKey="--effort">
-                    <FormLabel label="Search Effort" />
-                  </Tooltip>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      value={effort}
-                      onChange={(e) => setEffort(Number(e.target.value))}
-                      className="flex-1 appearance-none h-1 bg-bg-3 rounded outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-bg-0"
-                    />
-                    <span className="text-xs font-semibold text-text-0 min-w-[32px] text-center font-mono">
-                      {effort}%
-                    </span>
                   </div>
                 </div>
 

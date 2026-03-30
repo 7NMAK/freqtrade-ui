@@ -316,11 +316,31 @@ async def import_strategy(
 
 # ── Main CRUD Routes
 
-@router.get("/", response_model=list[StrategyResponse])
-async def list_strategies(db: AsyncSession = Depends(get_db)) -> list[StrategyResponse]:
-    """List all strategies (excludes soft-deleted)."""
+class StrategyListResponse(BaseModel):
+    """Paginated strategy list response."""
+    total: int
+    items: list[StrategyResponse]
+
+
+@router.get("/", response_model=StrategyListResponse)
+async def list_strategies(
+    db: AsyncSession = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+) -> StrategyListResponse:
+    """List all strategies (excludes soft-deleted) with pagination."""
+    # Count total
+    count_result = await db.execute(
+        select(func.count(Strategy.id)).where(Strategy.is_deleted.is_(False))
+    )
+    total = count_result.scalar() or 0
+
+    # Fetch paginated
     result = await db.execute(
-        select(Strategy).where(Strategy.is_deleted.is_(False))
+        select(Strategy)
+        .where(Strategy.is_deleted.is_(False))
+        .offset(skip)
+        .limit(limit)
     )
     strategies = result.scalars().all()
 
@@ -352,7 +372,7 @@ async def list_strategies(db: AsyncSession = Depends(get_db)) -> list[StrategyRe
             timeframe=s.timeframe,  # DEPRECATED
         ))
 
-    return responses
+    return StrategyListResponse(total=total, items=responses)
 
 
 @router.post("/", response_model=StrategyResponse, status_code=201)

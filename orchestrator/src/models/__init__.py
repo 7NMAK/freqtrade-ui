@@ -5,6 +5,8 @@ from .strategy import Strategy, StrategyLifecycle
 from .strategy_version import StrategyVersion
 from .exchange_profile import ExchangeProfile
 from .backtest_result import BacktestResult
+from .experiment import Experiment
+from .experiment_run import ExperimentRun
 from .risk_event import RiskEvent, KillType, KillTrigger
 from .audit_log import AuditLog
 
@@ -15,6 +17,8 @@ __all__ = [
     "StrategyVersion",
     "ExchangeProfile",
     "BacktestResult",
+    "Experiment",
+    "ExperimentRun",
     "RiskEvent", "KillType", "KillTrigger",
     "AuditLog",
 ]

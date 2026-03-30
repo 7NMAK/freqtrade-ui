@@ -11,6 +11,7 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -288,7 +289,7 @@ async def update_bot(
 
     if body.exchange_password is not None:
         changes["exchange_password"] = {"old": "***", "new": "***"}
-        bot.exchange_password = body.exchange_password
+        bot.exchange_password = encrypt(body.exchange_password) if body.exchange_password else None
         config_changed = True
 
     if body.exchange_uid is not None:
@@ -424,7 +425,7 @@ async def generate_config(
             "listen_ip_address": "0.0.0.0",
             "listen_port": bot.api_port,
             "username": bot.api_username,
-            "password": bot.api_password,
+            "password": decrypt(bot.api_password) or "",
             "CORS_origins": ["*"],
         },
         "initial_state": "running",
@@ -434,7 +435,7 @@ async def generate_config(
 
     # Add exchange-specific fields if present
     if bot.exchange_password:
-        config["exchange"]["password"] = bot.exchange_password
+        config["exchange"]["password"] = decrypt(bot.exchange_password) or ""
     if bot.exchange_uid:
         config["exchange"]["uid"] = bot.exchange_uid
     if bot.exchange_subaccount:
@@ -1429,7 +1430,8 @@ async def bot_backtest_history_delete(bot_id: int, result_id: str, request: Requ
 
 # ── Data management (CLI commands — not native FT REST API) ──────────
 
-import threading
+import asyncio as _asyncio
+import time as _time
 import uuid as _uuid
 
 # In-memory store for background download jobs
@@ -1464,8 +1466,14 @@ async def bot_download_data(bot_id: int, body: dict[str, Any], request: Request,
     if body.get("trading_mode"):
         cmd += ["--trading-mode", body["trading_mode"]]
 
+    # Evict oldest entries if dict grows too large
+    if len(_download_jobs) > 100:
+        oldest = sorted(_download_jobs, key=lambda k: _download_jobs[k].get("started", 0))
+        for key in oldest[:50]:
+            del _download_jobs[key]
+
     job_id = str(_uuid.uuid4())[:8]
-    _download_jobs[job_id] = {"status": "running", "exit_code": None, "output": "", "cmd": " ".join(cmd)}
+    _download_jobs[job_id] = {"status": "running", "exit_code": None, "output": "", "cmd": " ".join(cmd), "started": _time.time()}
 
     def _run_download():
         try:
@@ -1486,7 +1494,7 @@ async def bot_download_data(bot_id: int, body: dict[str, Any], request: Request,
                 "cmd": " ".join(cmd),
             }
 
-    threading.Thread(target=_run_download, daemon=True).start()
+    _asyncio.get_event_loop().run_in_executor(None, _run_download)
     return {"job_id": job_id, "status": "running", "message": "Download started in background. Poll /download-data/status/{job_id} for progress."}
 
 
@@ -1519,6 +1527,116 @@ async def bot_convert_data(bot_id: int, body: dict[str, Any], request: Request, 
         return {"exit_code": result.exit_code, "output": result.output.decode("utf-8", errors="replace")[-2000:]}
     except Exception as e:
         raise HTTPException(502, f"Convert-data failed: {e}")
+
+
+@router.post("/{bot_id}/convert-trade-data")
+async def bot_convert_trade_data(bot_id: int, body: dict[str, Any], request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
+    """Trigger freqtrade convert-trade-data via Docker exec on the bot container."""
+    import docker
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    try:
+        dk = docker.from_env()
+        container = dk.containers.get(bot.container_id or bot.name)
+        cmd = ["freqtrade", "convert-trade-data"]
+        if body.get("format_from"):
+            cmd += ["--format-from", body["format_from"]]
+        if body.get("format_to"):
+            cmd += ["--format-to", body["format_to"]]
+        if body.get("pairs"):
+            cmd += ["--pairs"] + body["pairs"]
+        result = container.exec_run(cmd, detach=False)
+        return {"exit_code": result.exit_code, "output": result.output.decode("utf-8", errors="replace")[-2000:]}
+    except Exception as e:
+        raise HTTPException(502, f"Convert-trade-data failed: {e}")
+
+
+@router.post("/{bot_id}/trades-to-ohlcv")
+async def bot_trades_to_ohlcv(bot_id: int, body: dict[str, Any], request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
+    """Trigger freqtrade trades-to-ohlcv via Docker exec on the bot container."""
+    import docker
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    try:
+        dk = docker.from_env()
+        container = dk.containers.get(bot.container_id or bot.name)
+        cmd = ["freqtrade", "trades-to-ohlcv"]
+        if body.get("pairs"):
+            cmd += ["--pairs"] + body["pairs"]
+        if body.get("timeframes"):
+            cmd += ["--timeframes"] + body["timeframes"]
+        result = container.exec_run(cmd, detach=False)
+        return {"exit_code": result.exit_code, "output": result.output.decode("utf-8", errors="replace")[-2000:]}
+    except Exception as e:
+        raise HTTPException(502, f"Trades-to-ohlcv failed: {e}")
+
+
+@router.post("/{bot_id}/hyperopt-list")
+async def bot_hyperopt_list(bot_id: int, body: dict[str, Any], request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
+    """Run freqtrade hyperopt-list via Docker exec. Returns parsed results."""
+    import docker
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    try:
+        dk = docker.from_env()
+        container = dk.containers.get(bot.container_id or bot.name)
+        cmd = ["freqtrade", "hyperopt-list"]
+        if body.get("profitable"):
+            cmd += ["--profitable"]
+        if body.get("min_trades"):
+            cmd += ["--min-trades", str(body["min_trades"])]
+        if body.get("no_details"):
+            cmd += ["--no-details"]
+        result = container.exec_run(cmd, detach=False)
+        raw = result.output.decode("utf-8", errors="replace")
+        # Parse FT hyperopt-list tabular output
+        results: list[dict[str, Any]] = []
+        for line in raw.split("\n"):
+            line = line.strip()
+            if not line.startswith("│") or "───" in line:
+                continue
+            cols = [c.strip() for c in line.split("│") if c.strip()]
+            if len(cols) >= 6 and cols[0].lower() not in ("best", "epoch"):
+                try:
+                    results.append({
+                        "epoch": int(cols[0]) if cols[0].replace("*", "").strip().isdigit() else cols[0],
+                        "trades": cols[1] if len(cols) > 1 else "",
+                        "avg_profit": cols[2] if len(cols) > 2 else "",
+                        "total_profit": cols[3] if len(cols) > 3 else "",
+                        "avg_duration": cols[4] if len(cols) > 4 else "",
+                        "objective": cols[5] if len(cols) > 5 else "",
+                    })
+                except (ValueError, IndexError):
+                    continue
+        return {"results": results, "raw": raw[-4000:], "exit_code": result.exit_code}
+    except Exception as e:
+        raise HTTPException(502, f"Hyperopt-list failed: {e}")
+
+
+@router.get("/{bot_id}/hyperopt-show")
+async def bot_hyperopt_show(bot_id: int, request: Request, db: AsyncSession = Depends(get_db), epoch: int = 0) -> dict[str, Any]:
+    """Run freqtrade hyperopt-show for a specific epoch via Docker exec."""
+    import docker
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    try:
+        dk = docker.from_env()
+        container = dk.containers.get(bot.container_id or bot.name)
+        cmd = ["freqtrade", "hyperopt-show"]
+        if epoch > 0:
+            cmd += ["--best-n", str(epoch)]
+        result = container.exec_run(cmd, detach=False)
+        return {"exit_code": result.exit_code, "output": result.output.decode("utf-8", errors="replace")[-4000:]}
+    except Exception as e:
+        raise HTTPException(502, f"Hyperopt-show failed: {e}")
 
 
 @router.get("/{bot_id}/list-data")
@@ -1602,10 +1720,62 @@ async def bot_hyperopt_start(bot_id: int, body: dict[str, Any], request: Request
         cmd += ["--timeframe", body["timeframe"]]
     # Always add --ignore-missing-spaces so strategies without all spaces don't error
     cmd += ["--ignore-missing-spaces"]
-    # Note: --effort and --sampler are NOT valid FT 2026.2 CLI args — ignored
+    # If user toggled "Disable param export", prevent FT from writing StrategyName.json
+    if body.get("disable_param_export"):
+        cmd += ["--disable-param-export"]
+
+    # ── Sampler injection via temp strategy wrapper ──
+    # FT reads sampler from strategy's generate_estimator() method, not a CLI flag.
+    # If user picked a non-default sampler, create a thin wrapper strategy that
+    # inherits from the real strategy and overrides generate_estimator().
+    VALID_SAMPLERS = {"TPESampler", "GPSampler", "CmaEsSampler", "NSGAIISampler", "NSGAIIISampler", "QMCSampler"}
+    FT_DEFAULT_SAMPLER = "NSGAIIISampler"
+    requested_sampler = body.get("sampler", "")
+    original_strategy = body.get("strategy", "")
+    # Validate strategy name is a valid Python identifier (required for wrapper import)
+    if original_strategy and not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', original_strategy):
+        raise HTTPException(400, f"Strategy name must be a valid Python identifier: {original_strategy}")
+    use_sampler_wrapper = (
+        requested_sampler in VALID_SAMPLERS
+        and requested_sampler != FT_DEFAULT_SAMPLER
+        and original_strategy
+    )
+    wrapper_strategy_name = f"_HO_{original_strategy}" if use_sampler_wrapper else ""
+
+    if use_sampler_wrapper:
+        # Build wrapper .py content
+        wrapper_code = (
+            f"from {original_strategy} import {original_strategy}\n\n"
+            f"class {wrapper_strategy_name}({original_strategy}):\n"
+            f'    \"\"\"\n'
+            f"    Auto-generated wrapper to override sampler for hyperopt.\n"
+            f"    Original strategy: {original_strategy}\n"
+            f"    Requested sampler: {requested_sampler}\n"
+            f'    \"\"\"\n\n'
+            f"    @staticmethod\n"
+            f"    def generate_estimator(dimensions, **kwargs):\n"
+            f'        return "{requested_sampler}"\n'
+        )
+        # Replace --strategy arg in cmd to use the wrapper
+        for i, arg in enumerate(cmd):
+            if arg == "--strategy" and i + 1 < len(cmd):
+                cmd[i + 1] = wrapper_strategy_name
+                break
+
+    # Evict oldest entries if dict grows too large
+    if len(_hyperopt_jobs) > 100:
+        oldest = sorted(_hyperopt_jobs, key=lambda k: _hyperopt_jobs[k].get("started", 0))
+        for key in oldest[:50]:
+            del _hyperopt_jobs[key]
 
     job_id = str(_uuid.uuid4())[:8]
-    _hyperopt_jobs[job_id] = {"status": "running", "exit_code": None, "output": "", "cmd": " ".join(cmd)}
+    _hyperopt_jobs[job_id] = {
+        "status": "running", "exit_code": None, "output": "",
+        "cmd": " ".join(cmd),
+        "sampler": requested_sampler,
+        "original_strategy": original_strategy,
+        "started": _time.time(),
+    }
 
     def _run_hyperopt():
         try:
@@ -1613,32 +1783,232 @@ async def bot_hyperopt_start(bot_id: int, body: dict[str, Any], request: Request
             c = dk2.containers.get(container_name)
             # Clean stale lock file from any previous crashed run
             c.exec_run(["rm", "-f", "/freqtrade/user_data/hyperopt.lock"])
+
+            # If using sampler wrapper, write the temp strategy file into the container
+            if use_sampler_wrapper:
+                import tarfile, io
+                tar_stream = io.BytesIO()
+                with tarfile.open(fileobj=tar_stream, mode="w") as tar:
+                    data = wrapper_code.encode("utf-8")
+                    info = tarfile.TarInfo(name=f"{wrapper_strategy_name}.py")
+                    info.size = len(data)
+                    tar.addfile(info, io.BytesIO(data))
+                tar_stream.seek(0)
+                c.put_archive("/freqtrade/user_data/strategies", tar_stream)
+
             result = c.exec_run(cmd, detach=False)
+            output_text = result.output.decode("utf-8", errors="replace")[-8000:]
+
+            # Clean up: delete temp wrapper strategy file
+            if use_sampler_wrapper:
+                c.exec_run(["rm", "-f", f"/freqtrade/user_data/strategies/{wrapper_strategy_name}.py"])
+                # If FT created a params .json for the wrapper, rename it to original strategy
+                rename_check = c.exec_run(["test", "-f", f"/freqtrade/user_data/strategies/{wrapper_strategy_name}.json"])
+                if rename_check.exit_code == 0:
+                    c.exec_run([
+                        "mv",
+                        f"/freqtrade/user_data/strategies/{wrapper_strategy_name}.json",
+                        f"/freqtrade/user_data/strategies/{original_strategy}.json",
+                    ])
+
+            # Parse hyperopt output for metrics
+            parsed = {}
+            if result.exit_code == 0:
+                try:
+                    from ..services.hyperopt_parser import parse_hyperopt_output
+                    parsed = parse_hyperopt_output(output_text)
+                except Exception as parse_exc:
+                    parsed = {"parse_error": str(parse_exc)}
+
             _hyperopt_jobs[job_id] = {
                 "status": "completed" if result.exit_code == 0 else "error",
                 "exit_code": result.exit_code,
-                "output": result.output.decode("utf-8", errors="replace")[-8000:],
+                "output": output_text,
                 "cmd": " ".join(cmd),
+                "sampler": requested_sampler,
+                "original_strategy": original_strategy,
+                "parsed": parsed,
+                "saved_to_db": False,
             }
         except Exception as exc:
+            # Attempt cleanup even on failure
+            try:
+                if use_sampler_wrapper:
+                    dk3 = docker.from_env()
+                    c3 = dk3.containers.get(container_name)
+                    c3.exec_run(["rm", "-f", f"/freqtrade/user_data/strategies/{wrapper_strategy_name}.py"])
+            except Exception:
+                pass
             _hyperopt_jobs[job_id] = {
                 "status": "error",
                 "exit_code": -1,
                 "output": str(exc),
                 "cmd": " ".join(cmd),
+                "sampler": requested_sampler,
+                "original_strategy": original_strategy,
             }
 
-    threading.Thread(target=_run_hyperopt, daemon=True).start()
+    _asyncio.get_event_loop().run_in_executor(None, _run_hyperopt)
     return {"job_id": job_id, "status": "running", "message": "Hyperopt started in background."}
 
 
 @router.get("/{bot_id}/hyperopt/status/{job_id}")
-async def bot_hyperopt_status(bot_id: int, job_id: str) -> dict[str, Any]:
-    """Poll status of a background hyperopt job."""
+async def bot_hyperopt_status(
+    bot_id: int,
+    job_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Poll status of a background hyperopt job. On first poll after completion, saves to DB."""
     job = _hyperopt_jobs.get(job_id)
     if not job:
         raise HTTPException(404, "Job not found")
+
+    # Auto-save to experiments DB on first poll after successful completion
+    # Set flag BEFORE await to prevent duplicate saves from concurrent polls
+    if job.get("status") == "completed" and not job.get("saved_to_db") and job.get("parsed"):
+        job["saved_to_db"] = True  # Claim immediately to prevent race
+        try:
+            await _save_hyperopt_to_experiments(db, bot_id, job, request)
+        except Exception as save_exc:
+            job["saved_to_db"] = False  # Reset on failure so next poll retries
+            import logging
+            logging.getLogger(__name__).warning("Failed to save hyperopt to experiments: %s", save_exc)
+
     return {"job_id": job_id, **job}
+
+
+async def _save_hyperopt_to_experiments(
+    db: AsyncSession, bot_id: int, job: dict, request: Request
+) -> None:
+    """Save completed hyperopt results to experiments DB."""
+    from ..models.experiment import Experiment
+    from ..models.experiment_run import ExperimentRun
+    from decimal import Decimal
+
+    parsed = job.get("parsed", {})
+    strategy_name = job.get("original_strategy", "")
+    sampler = job.get("sampler", "")
+
+    if not strategy_name or not parsed.get("total_trades"):
+        return  # Nothing useful to save
+
+    # Find strategy in DB
+    from ..models.strategy import Strategy
+    result = await db.execute(
+        select(Strategy).where(Strategy.name == strategy_name).limit(1)
+    )
+    strategy = result.scalar_one_or_none()
+    if not strategy:
+        return  # Strategy not in DB yet — skip
+
+    # Extract timerange/pair/timeframe from cmd
+    cmd_str = job.get("cmd", "")
+    pair = "unknown"  # Updated below if found
+    timeframe = "1h"
+    timerange_start = None
+    timerange_end = None
+
+    import re as _re
+
+    # Try to get pair from config_backtest.json inside the container
+    try:
+        import docker as _dk
+        from ..models.bot_instance import BotInstance as _BotInst
+        bot_q = await db.execute(select(_BotInst).limit(1))
+        _bot = bot_q.scalar_one_or_none()
+        if _bot:
+            _c = _dk.from_env().containers.get(_bot.container_id or _bot.name)
+            _cfg_result = _c.exec_run(["cat", "/freqtrade/user_data/config_backtest.json"])
+            if _cfg_result.exit_code == 0:
+                import json as _json2
+                _cfg = _json2.loads(_cfg_result.output.decode("utf-8", errors="replace"))
+                _pairs = _cfg.get("exchange", {}).get("pair_whitelist", [])
+                if _pairs:
+                    pair = _pairs[0] if len(_pairs) == 1 else ",".join(_pairs[:3])
+    except Exception:
+        pass  # Fall back to "unknown"
+
+    tr_match = _re.search(r"--timerange\s+(\d{8})?-(\d{8})?", cmd_str)
+    if tr_match:
+        from datetime import datetime as _dt
+        try:
+            if tr_match.group(1):
+                timerange_start = _dt.strptime(tr_match.group(1), "%Y%m%d").date()
+            if tr_match.group(2):
+                timerange_end = _dt.strptime(tr_match.group(2), "%Y%m%d").date()
+        except ValueError:
+            pass
+
+    tf_match = _re.search(r"--timeframe\s+(\S+)", cmd_str)
+    if tf_match:
+        timeframe = tf_match.group(1)
+
+    # Find or create experiment
+    exp_query = select(Experiment).where(
+        Experiment.strategy_id == strategy.id,
+        Experiment.pair == pair,
+        Experiment.timeframe == timeframe,
+        Experiment.is_deleted == False,  # noqa: E712
+    )
+    if timerange_start:
+        exp_query = exp_query.where(Experiment.timerange_start == timerange_start)
+    if timerange_end:
+        exp_query = exp_query.where(Experiment.timerange_end == timerange_end)
+
+    exp_result = await db.execute(exp_query.limit(1))
+    experiment = exp_result.scalar_one_or_none()
+
+    if not experiment:
+        tr_label = ""
+        if timerange_start and timerange_end:
+            tr_label = f" {timerange_start.year}-{timerange_end.year}"
+        experiment = Experiment(
+            strategy_id=strategy.id,
+            name=f"{strategy_name} — {pair}{tr_label}",
+            pair=pair,
+            timeframe=timeframe,
+            timerange_start=timerange_start,
+            timerange_end=timerange_end,
+        )
+        db.add(experiment)
+        await db.flush()
+
+    # Extract loss function from cmd
+    loss_match = _re.search(r"--hyperopt-loss\s+(\S+)", cmd_str)
+    loss_function = loss_match.group(1) if loss_match else None
+
+    # Extract epochs from cmd
+    epochs_match = _re.search(r"--epochs\s+(\d+)", cmd_str)
+    epochs = int(epochs_match.group(1)) if epochs_match else parsed.get("total_epochs")
+
+    # Extract spaces from cmd
+    spaces_match = _re.search(r"--spaces\s+((?:\S+\s*)+?)(?:--|$)", cmd_str)
+    spaces = spaces_match.group(1).strip().split() if spaces_match else None
+
+    # Create experiment run
+    run = ExperimentRun(
+        experiment_id=experiment.id,
+        run_type="hyperopt",
+        status="completed",
+        sampler=sampler or None,
+        loss_function=loss_function,
+        epochs=epochs,
+        spaces=spaces,
+        total_trades=parsed.get("total_trades"),
+        win_rate=Decimal(str(parsed["win_rate"])) if parsed.get("win_rate") is not None else None,
+        profit_abs=Decimal(str(parsed["profit_abs"])) if parsed.get("profit_abs") is not None else None,
+        profit_pct=Decimal(str(parsed["profit_pct"])) if parsed.get("profit_pct") is not None else None,
+        max_drawdown=Decimal(str(parsed["max_drawdown"])) if parsed.get("max_drawdown") is not None else None,
+        avg_duration=parsed.get("avg_duration"),
+        raw_output=job.get("output", "")[-8000:],
+    )
+    db.add(run)
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
 
 
 @router.post("/{bot_id}/lookahead-analysis")

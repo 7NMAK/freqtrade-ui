@@ -85,8 +85,8 @@ class PortfolioAggregator:
         for bot, profit in results:
             if profit is not None:
                 per_bot[bot.name] = profit
-                # Cache it
-                asyncio.create_task(self._update_cache(db, bot.id, profit=profit))
+                # Cache it (inline await ensures cache is written before response)
+                await self._update_cache(db, bot.id, profit=profit)
                 self._accumulate_profit(combined, profit)
             elif bot.cached_profit:
                 # API failed but we have cache
@@ -145,8 +145,8 @@ class PortfolioAggregator:
             if balance is not None:
                 per_bot[bot.name] = balance
                 total_value += float(balance.get("total", 0))
-                # Cache it
-                asyncio.create_task(self._update_cache(db, bot.id, balance=balance))
+                # Cache it (inline await ensures cache is written before response)
+                await self._update_cache(db, bot.id, balance=balance)
 
         return {
             "bots": per_bot,

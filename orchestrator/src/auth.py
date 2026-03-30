@@ -21,8 +21,14 @@ security = HTTPBearer(auto_error=False)
 ALGORITHM = "HS256"
 
 ADMIN_USERNAME = os.environ.get("ORCH_ADMIN_USERNAME", "admin")
-_admin_pw = os.environ.get("ORCH_ADMIN_PASSWORD", "admin")
-ADMIN_PASSWORD_HASH = pwd_context.hash(_admin_pw)
+_admin_hash = os.environ.get("ORCH_ADMIN_PASSWORD_HASH", "")
+if not _admin_hash:
+    # Fallback: hash the password if only ORCH_ADMIN_PASSWORD is set
+    _admin_pw = os.environ.get("ORCH_ADMIN_PASSWORD", "")
+    if not _admin_pw:
+        raise RuntimeError("ORCH_ADMIN_PASSWORD or ORCH_ADMIN_PASSWORD_HASH must be set")
+    _admin_hash = pwd_context.hash(_admin_pw)
+ADMIN_PASSWORD_HASH = _admin_hash
 
 
 class TokenResponse(BaseModel):

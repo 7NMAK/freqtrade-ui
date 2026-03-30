@@ -299,8 +299,6 @@ async def create_backtest_result(
         details=f"Created backtest result: {len(req.pairs)} pairs, {req.timeframe} on {req.exchange_data}",
     )
 
-    await db.commit()
-
     return BacktestResultResponse(**_format_result_response(backtest))
 
 
@@ -422,11 +420,14 @@ async def get_results_by_strategy(
         )
     )
 
-    # Count total
+    # Count total (must match main query: join + both where clauses)
     count_result = await db.execute(
-        select(func.count(BacktestResult.id)).where(BacktestResult.is_deleted == False)  # noqa: E712
+        select(func.count(BacktestResult.id))
         .join(StrategyVersion)
-        .where(StrategyVersion.strategy_id == strategy_id)
+        .where(
+            StrategyVersion.strategy_id == strategy_id,
+            BacktestResult.is_deleted == False,  # noqa: E712
+        )
     )
     total = count_result.scalar() or 0
 
@@ -567,8 +568,6 @@ async def update_backtest_result(
             details=f"Updated fields: {', '.join(updates)}",
         )
 
-    await db.commit()
-
     return BacktestResultResponse(**_format_result_response(backtest))
 
 
@@ -593,5 +592,3 @@ async def delete_backtest_result(
         target_name=f"Backtest {backtest.id}",
         details="Soft-deleted backtest result",
     )
-
-    await db.commit()

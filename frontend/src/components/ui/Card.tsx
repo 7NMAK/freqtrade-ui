@@ -1,42 +1,125 @@
-"use client";
+import * as React from "react"
 
-import clsx from "clsx";
+import { cn } from "@/lib/utils"
 
-interface CardProps {
-  children: React.ReactNode;
-  className?: string;
+function Card({
+  className,
+  size = "default",
+  ...props
+}: React.ComponentProps<"div"> & { size?: "default" | "sm" }) {
+  return (
+    <div
+      data-slot="card"
+      data-size={size}
+      className={cn(
+        "group/card flex flex-col gap-4 overflow-hidden rounded-xl bg-card py-4 text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        className
+      )}
+      {...props}
+    />
+  )
 }
 
-export function Card({ children, className }: CardProps) {
+function CardHeader({ className, title, icon, action, children, ...props }: React.ComponentProps<"div"> & { title?: string; icon?: string; action?: React.ReactNode }) {
+  // If legacy props (title/icon/action) are used, render them; otherwise render children
+  const hasLegacyProps = title || icon || action;
+  if (hasLegacyProps) {
+    return (
+      <div
+        data-slot="card-header"
+        className={cn("flex items-center justify-between px-4 py-3", className)}
+        {...props}
+      >
+        <div className="flex items-center gap-2">
+          {icon && <span>{icon}</span>}
+          {title && <span className="text-sm font-bold">{title}</span>}
+        </div>
+        {action}
+      </div>
+    );
+  }
   return (
-    <div className={clsx("bg-bg-2 border border-border rounded-card overflow-hidden", className)}>
+    <div
+      data-slot="card-header"
+      className={cn(
+        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-4 group-data-[size=sm]/card:px-3 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-4 group-data-[size=sm]/card:[.border-b]:pb-3",
+        className
+      )}
+      {...props}
+    >
       {children}
     </div>
-  );
+  )
 }
 
-interface CardHeaderProps {
-  title: string;
-  icon?: string;
-  action?: React.ReactNode;
-}
-
-export function CardHeader({ title, icon, action }: CardHeaderProps) {
+function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
-    <div className="px-6 py-4 flex items-center justify-between border-b border-border">
-      <h3 className="text-sm font-semibold text-text-0 flex items-center gap-2">
-        {icon && <span className="text-md">{icon}</span>}
-        {title}
-      </h3>
-      {action}
-    </div>
-  );
+    <div
+      data-slot="card-title"
+      className={cn(
+        "font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm",
+        className
+      )}
+      {...props}
+    />
+  )
 }
 
-export function CardBody({ children, className }: CardProps) {
+function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
-    <div className={clsx("p-6", className)}>
-      {children}
-    </div>
-  );
+    <div
+      data-slot="card-description"
+      className={cn("text-sm text-muted-foreground", className)}
+      {...props}
+    />
+  )
+}
+
+function CardAction({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-action"
+      className={cn(
+        "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function CardContent({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-content"
+      className={cn("px-4 group-data-[size=sm]/card:px-3", className)}
+      {...props}
+    />
+  )
+}
+
+function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-footer"
+      className={cn(
+        "flex items-center rounded-b-xl border-t bg-muted/50 p-4 group-data-[size=sm]/card:p-3",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+const CardBody = CardContent;
+
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardAction,
+  CardDescription,
+  CardContent,
+  CardBody,
 }

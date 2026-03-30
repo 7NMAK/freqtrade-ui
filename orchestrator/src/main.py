@@ -139,7 +139,7 @@ app = FastAPI(
 # CORS for Next.js frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
@@ -153,6 +153,7 @@ from .api.strategies import router as strategies_router
 from .api.logs import router as logs_router
 from .api.exchange_profiles import router as exchange_profiles_router
 from .api.backtest_results import router as backtest_results_router
+from .api.experiments import router as experiments_router
 
 from .auth import require_auth as _auth_dep
 
@@ -163,6 +164,7 @@ app.include_router(strategies_router, prefix="/api/strategies", tags=["strategie
 app.include_router(logs_router, prefix="/api/logs", tags=["logs"], dependencies=[Depends(_auth_dep)])
 app.include_router(exchange_profiles_router, prefix="/api/exchange-profiles", tags=["exchange-profiles"], dependencies=[Depends(_auth_dep)])
 app.include_router(backtest_results_router, prefix="/api/backtest-results", tags=["backtest-results"], dependencies=[Depends(_auth_dep)])
+app.include_router(experiments_router, prefix="/api/experiments", tags=["experiments"], dependencies=[Depends(_auth_dep)])
 
 # AI Validation Layer routes
 from .api.ai import router as ai_router

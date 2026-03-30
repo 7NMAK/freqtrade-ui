@@ -51,7 +51,7 @@ class BotInstance(Base, TimestampMixin):
     # FT API connection (how orchestrator talks to this bot)
     api_url: Mapped[str] = mapped_column(String(200), nullable=False)  # e.g. http://127.0.0.1:8080
     api_username: Mapped[str] = mapped_column(String(100), nullable=False)
-    api_password: Mapped[str] = mapped_column(String(100), nullable=False)
+    api_password: Mapped[str] = mapped_column(Text, nullable=False)  # Fernet-encrypted
     api_port: Mapped[int] = mapped_column(Integer, nullable=False)
 
     # ===== NEW: Exchange Configuration (V2) =====
@@ -63,7 +63,7 @@ class BotInstance(Base, TimestampMixin):
     exchange_secret_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Additional exchange fields (some exchanges need these)
-    exchange_password: Mapped[str | None] = mapped_column(Text, nullable=True)
+    exchange_password: Mapped[str | None] = mapped_column(Text, nullable=True)  # Fernet-encrypted
     exchange_uid: Mapped[str | None] = mapped_column(String(100), nullable=True)
     exchange_subaccount: Mapped[str | None] = mapped_column(String(100), nullable=True)
 

@@ -23,6 +23,7 @@ from .scorer import ScoreCalculator
 from .tracker import AccuracyTracker
 from .telegram_notifier import send_telegram_alert, format_strong_disagree_alert
 from ..config import settings
+from ..crypto import decrypt
 from ..database import async_session
 from ..models.bot_instance import BotInstance, BotStatus
 
@@ -178,7 +179,7 @@ class AIValidationScheduler:
         if bot.id not in self._collectors:
             from ..ft_client import FTClient
             ft_url = f"{bot.api_url.rstrip('/')}:{bot.api_port}" if bot.api_port else bot.api_url
-            ft = FTClient(ft_url, bot.api_username, bot.api_password)
+            ft = FTClient(ft_url, bot.api_username, decrypt(bot.api_password) or "")
             self._collectors[bot.id] = SignalCollector(ft)
 
         collector = self._collectors[bot.id]

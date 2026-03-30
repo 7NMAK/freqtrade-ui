@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth import require_auth
 from ..config import settings
+from ..crypto import decrypt
 from ..database import get_db
 from ..ai_validator.models import AIHyperoptAnalysis, AIHyperoptOutcome
 
@@ -125,7 +126,7 @@ async def pre_analyze(
         raise HTTPException(status_code=404, detail=f"Bot {body.bot_id} not found")
 
     ft_url = f"{bot.api_url.rstrip('/')}:{bot.api_port}" if bot.api_port else bot.api_url
-    ft = FTClient(ft_url, bot.api_username, bot.api_password)
+    ft = FTClient(ft_url, bot.api_username, decrypt(bot.api_password) or "")
     gateway = LLMGateway()
     advisor = HyperoptAdvisor(gateway=gateway, ft_client=ft, db_session=db)
 
@@ -177,7 +178,7 @@ async def post_analyze(
         raise HTTPException(status_code=404, detail=f"Bot {body.bot_id} not found")
 
     ft_url = f"{bot.api_url.rstrip('/')}:{bot.api_port}" if bot.api_port else bot.api_url
-    ft = FTClient(ft_url, bot.api_username, bot.api_password)
+    ft = FTClient(ft_url, bot.api_username, decrypt(bot.api_password) or "")
     gateway = LLMGateway()
     advisor = HyperoptAdvisor(gateway=gateway, ft_client=ft, db_session=db)
 

@@ -1,8 +1,6 @@
 import type { Config } from "tailwindcss";
-import tailwindAnimate from "tailwindcss-animate";
 
 const config: Config = {
-  darkMode: ["class"],
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -10,132 +8,74 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      /* ── shadcn CSS variable colors (Claude Dark palette) ── */
       colors: {
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+        bg: {
+          0: "#06060b",
+          1: "#0c0c14",
+          2: "#12121c",
+          3: "#1a1a28",
         },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+        border: {
+          DEFAULT: "#1e1e30",
+          hover: "#2e2e48",
         },
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+        text: {
+          0: "#f0f0f5",
+          1: "#c0c0d0",
+          2: "#808098",
+          3: "#55556a",
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: "#6366f1",
+          dim: "#4f46e5",
+          glow: "rgba(99,102,241,0.12)",
         },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+        green: {
+          DEFAULT: "#22c55e",
+          dim: "#166534",
+          bg: "rgba(34,197,94,0.08)",
         },
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        chart: {
-          1: "hsl(var(--chart-1))",
-          2: "hsl(var(--chart-2))",
-          3: "hsl(var(--chart-3))",
-          4: "hsl(var(--chart-4))",
-          5: "hsl(var(--chart-5))",
+        red: {
+          DEFAULT: "#ef4444",
+          dim: "#991b1b",
+          bg: "rgba(239,68,68,0.08)",
         },
-        sidebar: {
-          DEFAULT: "hsl(var(--sidebar-background))",
-          foreground: "hsl(var(--sidebar-foreground))",
-          primary: "hsl(var(--sidebar-primary))",
-          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
-          accent: "hsl(var(--sidebar-accent))",
-          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
-          border: "hsl(var(--sidebar-border))",
-          ring: "hsl(var(--sidebar-ring))",
+        amber: {
+          DEFAULT: "#f59e0b",
+          dim: "#92400e",
+          bg: "rgba(245,158,11,0.08)",
         },
-
-        /* Trading-specific semantic tokens */
-        ft: {
-          green: "hsl(var(--ft-green))",
-          red: "hsl(var(--ft-red))",
-          amber: "hsl(var(--ft-amber))",
-          cyan: "hsl(var(--ft-cyan))",
-          purple: "hsl(var(--ft-purple))",
-        },
+        cyan: "#06b6d4",
+        purple: "#a855f7",
       },
-
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
-        card: "12px",
-        btn: "8px",
-      },
-
       fontFamily: {
         sans: [
-          "Inter",
           "-apple-system",
           "BlinkMacSystemFont",
+          "Inter",
           "Segoe UI",
           "sans-serif",
         ],
-        mono: [
-          "IBM Plex Mono",
-          "SF Mono",
-          "Fira Code",
-          "ui-monospace",
-          "monospace",
-        ],
       },
-
       fontSize: {
-        "2xs": ["10px", { lineHeight: "14px" }],
-        xs: ["11px", { lineHeight: "16px" }],
-        sm: ["12px", { lineHeight: "16px" }],
-        base: ["13px", { lineHeight: "20px" }],
-        md: ["14px", { lineHeight: "20px" }],
-        lg: ["16px", { lineHeight: "24px" }],
-        xl: ["18px", { lineHeight: "28px" }],
-        "2xl": ["22px", { lineHeight: "28px" }],
-        "3xl": ["28px", { lineHeight: "36px" }],
+        "2xs": "10px",
+        xs: "11px",
+        sm: "12px",
+        base: "13px",
+        md: "14px",
+        lg: "16px",
+        xl: "22px",
       },
-
+      borderRadius: {
+        card: "10px",
+        btn: "6px",
+      },
       spacing: {
-        sidebar: "260px",
+        sidebar: "240px",
         header: "56px",
-      },
-
-      keyframes: {
-        "pulse-green": {
-          "0%, 100%": { boxShadow: "0 0 0 0 hsla(97, 75%, 33%, 0.4)" },
-          "50%": { boxShadow: "0 0 0 6px hsla(97, 75%, 33%, 0)" },
-        },
-        "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
-        },
-        "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
-        },
-      },
-      animation: {
-        "pulse-green": "pulse-green 2s ease-in-out infinite",
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
       },
     },
   },
-  plugins: [tailwindAnimate],
+  plugins: [],
 };
 export default config;

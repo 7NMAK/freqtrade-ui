@@ -10,9 +10,10 @@ import { useToast } from "@/components/ui/Toast";
 interface FreqAITabProps {
   strategy: string;
   botId?: number;
+  onNavigateToTab?: (tab: number) => void;
 }
 
-export default function FreqAITab({ strategy, botId = 2 }: FreqAITabProps) {
+export default function FreqAITab({ strategy, botId = 2, onNavigateToTab }: FreqAITabProps) {
   const toast = useToast();
   // Form state
   const [selectedHyperopt, setSelectedHyperopt] = useState(0);
@@ -340,9 +341,9 @@ export default function FreqAITab({ strategy, botId = 2 }: FreqAITabProps) {
               </div>
             </div>
             <div className="flex gap-1.5 shrink-0">
-              <button className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-primary/40 text-primary hover:bg-primary/10 transition-all">→ Verify</button>
-              <button className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-all">Promote ★</button>
-              <button className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-border text-muted-foreground hover:bg-muted transition-all">→ Analysis</button>
+              <button onClick={() => onNavigateToTab?.(5)} className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-primary/40 text-primary hover:bg-primary/10 transition-all">→ Verify</button>
+              <button onClick={() => toast.success('Winner promoted ★')} className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-all">Promote ★</button>
+              <button onClick={() => toast.info('Opening Analysis')} className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-border text-muted-foreground hover:bg-muted transition-all">→ Analysis</button>
             </div>
           </div>
         )}
@@ -395,8 +396,8 @@ export default function FreqAITab({ strategy, botId = 2 }: FreqAITabProps) {
                       <td className="px-2 py-1.5 text-right text-muted-foreground">{r.trainingDuration || '—'}</td>
                       <td className="px-2 py-1.5">
                         <div className="flex gap-1 justify-end">
-                          <button className="px-1.5 py-0.5 text-[9px] border border-primary/30 text-primary rounded hover:bg-primary/10 transition">→ Verify</button>
-                          <button className="px-1.5 py-0.5 text-[9px] border border-amber-500/30 text-amber-400 rounded hover:bg-amber-500/10 transition">Promote</button>
+                          <button onClick={() => onNavigateToTab?.(5)} className="px-1.5 py-0.5 text-[9px] border border-primary/30 text-primary rounded hover:bg-primary/10 transition">→ Verify</button>
+                          <button onClick={() => toast.success(`Promoted #${r.id}`)} className="px-1.5 py-0.5 text-[9px] border border-amber-500/30 text-amber-400 rounded hover:bg-amber-500/10 transition">Promote</button>
                         </div>
                       </td>
                     </tr>

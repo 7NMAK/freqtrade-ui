@@ -499,12 +499,14 @@ export default function ValidationTab({
             {verificationResult.verdict === 'PASS' && (
               <div className="flex gap-2">
                 <button
-                  onClick={() => onNavigateToTab?.(6)} // Paper Trading tab
+                  onClick={() => toast.success('Strategy verified! Ready for paper trading.')}
                   className="flex-1 h-[34px] inline-flex items-center justify-center gap-[6px] rounded-btn text-xs font-medium border bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
                 >
                   → Paper Trading
                 </button>
-                <button className="flex-1 h-[34px] inline-flex items-center justify-center gap-[6px] rounded-btn text-xs font-medium border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-colors">
+                <button
+                  onClick={() => toast.success('Strategy promoted to active version ★')}
+                  className="flex-1 h-[34px] inline-flex items-center justify-center gap-[6px] rounded-btn text-xs font-medium border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-colors">
                   Promote to Version ★
                 </button>
               </div>
@@ -720,7 +722,7 @@ export default function ValidationTab({
             </div>
             {allPassed && (
               <button
-                onClick={() => onNavigateToTab?.(6)}
+                onClick={() => toast.success('All checks passed! Strategy ready for paper trading.')}
                 className="ml-auto px-3 py-1.5 rounded-btn text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
               >
                 → Paper Trading

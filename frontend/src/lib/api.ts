@@ -499,6 +499,9 @@ export const botBacktestHistory = async (id: number) => {
   return { results: Array.isArray(raw) ? raw : (raw.results ?? []) };
 };
 
+export const botBacktestHistoryResult = (id: number, filename: string) =>
+  request<Record<string, unknown>>(`/api/bots/${id}/backtest/history/result?id=${encodeURIComponent(filename)}`);
+
 export const botListData = (id: number) =>
   request<{ data: Array<{ pair: string; timeframe: string; candle_type?: string; start: string; end: string; candle_count: number; format?: string }>; output?: string }>(
     `/api/bots/${id}/list-data`

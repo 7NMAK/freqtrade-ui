@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import Tooltip from "@/components/ui/Tooltip";
 import Toggle from "@/components/ui/Toggle";
 import { INPUT, SELECT, LABEL, fmt$, fmtPctRatio, fmtNum, fmtTimestamp } from "@/lib/design";
-import { botLogs, botBacktestResults, botBacktestStart, botBacktestDelete, botBacktestHistory } from "@/lib/api";
+import { botLogs, botBacktestResults, botBacktestStart, botBacktestDelete, botBacktestHistory, botBacktestHistoryResult } from "@/lib/api";
 import { useToast } from "@/components/ui/Toast";
 
 interface BacktestTabProps {
@@ -541,6 +541,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
       return;
     }
     let lastLogCount = -1; // -1 = skip initial batch (startup logs)
+    let notStartedCount = 0; // Track consecutive not_started polls
     const poll = async () => {
       try {
         const logRes = await botLogs(backtestBotId, 50);
@@ -587,7 +588,15 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
             setBtProgress("\u2717 Error");
             addLog("ERROR", ftStatus || "Backtest failed");
             setIsRunning(false);
+          } else if (raw.status === "not_started" && ftRunning === false) {
+            notStartedCount++;
+            if (notStartedCount >= 5) {
+              addLog("ERROR", `Backtest stuck at 'not_started' for ${notStartedCount * 3}s. The FT bot may not have the strategy "${strategy}" loaded, or the backtest config is invalid. Check: (1) strategy file exists in the bot's container, (2) data is downloaded for the requested timerange.`);
+              setBtProgress("\u2717 Failed to start");
+              setIsRunning(false);
+            }
           } else if (step) {
+            notStartedCount = 0; // Reset — backtest is making progress
             const pct = progress != null ? ` (${(progress * 100).toFixed(0)}%)` : "";
             setBtProgress(`${step}${pct}`);
           }
@@ -601,7 +610,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
     poll();
     pollRef.current = setInterval(poll, 3000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [isRunning, backtestBotId, addLog, extractResult, fetchHistory]);
+  }, [isRunning, backtestBotId, strategy, addLog, extractResult, fetchHistory]);
 
   // Timerange display (auto-generated from dates)
   const timerangeDisplay = useMemo(() => {
@@ -702,23 +711,36 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
   const handleLoadHistory = async (entry: HistoryEntry) => {
     addLog("INFO", `Loading result: ${entry.filename}...`);
     try {
-      // FT's GET /api/v1/backtest returns the last run result.
-      // To load a specific history entry, we use the history result endpoint.
-      const res = await botBacktestResults(backtestBotId);
+      // Use the specific history result endpoint with the filename
+      const res = await botBacktestHistoryResult(backtestBotId, entry.filename);
       if (res) {
-        const raw = res as unknown as Record<string, unknown>;
-        if (raw.backtest_result) {
-          const result = extractResult(raw.backtest_result as Record<string, unknown>);
+        const raw = res as Record<string, unknown>;
+        // FT returns the result wrapped in backtest_result or directly
+        const backtestData = (raw.backtest_result ?? raw) as Record<string, unknown>;
+        // If the response has a 'strategy' key, it's the standard FT format
+        if (backtestData.strategy) {
+          const result = extractResult(backtestData);
           if (result) {
             setBtResult(result);
             addLog("INFO", `Loaded: ${result.strategy_name} — ${result.total_trades} trades`);
             return;
           }
         }
+        // Try treating the whole response as the strategy result directly
+        const stratKeys = Object.keys(backtestData);
+        if (stratKeys.length > 0) {
+          const firstVal = backtestData[stratKeys[0]];
+          if (firstVal && typeof firstVal === 'object' && 'total_trades' in (firstVal as object)) {
+            setBtResult(firstVal as unknown as FTStrategyResult);
+            addLog("INFO", `Loaded: ${stratKeys[0]} — ${(firstVal as { total_trades: number }).total_trades} trades`);
+            return;
+          }
+        }
       }
-      addLog("WARNING", "Could not load result — run a new backtest to see results");
-    } catch {
-      addLog("ERROR", "Failed to load history result");
+      addLog("WARNING", "Could not parse result — the backtest data format was unexpected");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      addLog("ERROR", `Failed to load history result: ${msg}`);
     }
   };
 

@@ -413,6 +413,9 @@ export default function AiReviewTab({ strategy, botId = 2, experimentId, onNavig
                     <span className="text-3xl">{cfg.icon}</span>
                     <div>
                       <div className={`text-lg font-bold ${cfg.color}`}>{cfg.label}</div>
+                      {result.verdictReason && (
+                        <div className="text-xs text-foreground/80 mt-0.5">{result.verdictReason}</div>
+                      )}
                       <div className="text-xs text-muted-foreground mt-0.5">
                         {result.model} · {new Date(result.timestamp).toLocaleString()} · Cost: ${result.cost.toFixed(4)}
                       </div>

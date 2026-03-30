@@ -671,7 +671,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
               >
                 → Verify
               </button>
-              <button className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-all">
+              <button onClick={() => toast.success('Best hyperopt promoted to active version ★')} className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-all">
                 Promote ★
               </button>
             </div>

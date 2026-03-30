@@ -265,7 +265,7 @@ export default function StrategyWorkspacePage() {
             >
               📊 Analysis
             </button>
-            <button className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-primary hover:bg-[#5558e6] text-white text-xs font-medium rounded-btn transition-colors">
+            <button onClick={() => { setActiveTab("backtest"); setOpenOverlay(null); }} className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-primary hover:bg-[#5558e6] text-white text-xs font-medium rounded-btn transition-colors">
               + New Test
             </button>
           </div>
@@ -305,7 +305,7 @@ export default function StrategyWorkspacePage() {
         <div className="flex-1 overflow-y-auto p-6">
           {activeTab === "backtest" && <BacktestTab strategy={strategyName} />}
           {activeTab === "hyperopt" && <HyperoptTab strategy={strategyName} onNavigateToTab={handleNavigateToTab} />}
-          {activeTab === "freqai" && <FreqAITab strategy={strategyName} />}
+          {activeTab === "freqai" && <FreqAITab strategy={strategyName} onNavigateToTab={handleNavigateToTab} />}
           {activeTab === "ai_review" && <AiReviewTab strategy={strategyName} experimentId={experimentId} onNavigateToTab={handleNavigateToTab} />}
           {activeTab === "validation" && <ValidationTab strategy={strategyName} experimentId={experimentId} onNavigateToTab={handleNavigateToTab} />}
         </div>

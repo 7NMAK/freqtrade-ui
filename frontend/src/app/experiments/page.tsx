@@ -381,7 +381,7 @@ export default function ExperimentsPage() {
 
                   {/* Open button */}
                   <td className="px-2.5 py-2 border-b border-border/50">
-                    <button className="inline-flex items-center gap-1.5 px-2.5 py-1 border border-border bg-muted/50 hover:bg-muted hover:border-border-border hover:border-ring text-xs text-muted-foreground rounded-btn transition-all">
+                    <button onClick={(e) => { e.stopPropagation(); router.push(`/experiments/${encodeURIComponent(exp.strategyName)}`); }} className="inline-flex items-center gap-1.5 px-2.5 py-1 border border-border bg-muted/50 hover:bg-muted hover:border-border-border hover:border-ring text-xs text-muted-foreground rounded-btn transition-all">
                       Open →
                     </button>
                   </td>

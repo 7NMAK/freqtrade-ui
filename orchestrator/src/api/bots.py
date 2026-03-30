@@ -93,6 +93,8 @@ class BotRegisterRequest(BaseModel):
 class BotUpdateRequest(BaseModel):
     # Existing fields (optional for partial update)
     name: str | None = None
+    api_username: str | None = None
+    api_password: str | None = None
     strategy_name: str | None = None
     is_dry_run: bool | None = None
     description: str | None = None
@@ -286,6 +288,12 @@ async def update_bot(
     if body.name is not None:
         changes["name"] = {"old": bot.name, "new": body.name}
         bot.name = body.name
+    if body.api_username is not None:
+        changes["api_username"] = {"old": "***", "new": "***"}
+        bot.api_username = body.api_username
+    if body.api_password is not None:
+        changes["api_password"] = {"old": "***", "new": "***"}
+        bot.api_password = encrypt(body.api_password) or ""
     if body.description is not None:
         changes["description"] = {"old": bot.description, "new": body.description}
         bot.description = body.description

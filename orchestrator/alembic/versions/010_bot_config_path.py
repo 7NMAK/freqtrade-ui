@@ -14,8 +14,8 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision: str = "009_bot_config_path"
-down_revision: Union[str, None] = "008_backtest_is_deleted"
+revision: str = "010_bot_config_path"
+down_revision: Union[str, None] = "009_experiments"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

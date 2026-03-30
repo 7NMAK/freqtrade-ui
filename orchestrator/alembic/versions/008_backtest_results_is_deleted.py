@@ -20,10 +20,17 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "backtest_results",
-        sa.Column("is_deleted", sa.Boolean(), nullable=False, server_default="false"),
-    )
+    # Check if column already exists (007 may have created it on fresh DB)
+    conn = op.get_bind()
+    result = conn.execute(sa.text(
+        "SELECT 1 FROM information_schema.columns "
+        "WHERE table_name='backtest_results' AND column_name='is_deleted'"
+    ))
+    if result.fetchone() is None:
+        op.add_column(
+            "backtest_results",
+            sa.Column("is_deleted", sa.Boolean(), nullable=False, server_default="false"),
+        )
 
 
 def downgrade() -> None:

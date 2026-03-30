@@ -35,7 +35,7 @@ export function BotDetailPanel({ bot, onClose }: Props) {
 
   // State to be hydrated via API
   const [openTrades] = useState<{ trade_id: number; pair: string; is_short: boolean; leverage: number; enter_tag: string; current_profit: number; current_profit_abs: number; open_rate: number; current_rate: number; stake_amount: number; stop_loss: number; open_date: string }[]>([]);
-  const [closedTrades] = useState<{ trade_id: number; pair: string; is_short: boolean; leverage: number; enter_tag: string; exit_reason: string; close_profit_abs: number; open_rate: number; close_rate: number; stake_amount: number; close_date: string; open_date: string }[]>([]);
+  const [closedTrades] = useState<{ trade_id: number; pair: string; is_short: boolean; leverage: number; enter_tag: string; exit_reason: string; close_profit_abs: number; open_rate: number; close_rate: number; stake_amount: number; close_date: string; open_date: string; fee_open: number; fee_close: number }[]>([]);
   const [btRuns] = useState<{ id: string; date: string; range: string; profit: string; profitAbs: string; sharpe: string; trades: string; winRate: string; maxDd: string; duration: string }[]>([]);
   const [logs] = useState<{ time: string; level: string; msg: string }[]>([]);
   const [stats] = useState({

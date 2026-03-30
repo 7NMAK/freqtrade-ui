@@ -22,7 +22,6 @@ const NAV_STATIC = [
   ]},
   // MONITOR
   { label: "MONITOR", items: [
-    { name: "Backtesting", href: "/backtesting", icon: "⚡" },
     { name: "Experiments", href: "/experiments", icon: "🧪" },
     { name: "Analytics", href: "/analytics", icon: "📈", dotKey: "anyRunning" },
     { name: "AI Insights", href: "/ai-insights", icon: "🤖", dotKey: "anyRunning" },

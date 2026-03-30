@@ -8,7 +8,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useApi } from "@/lib/useApi";
-import { getBots, getRiskEvents, softKillAll, hardKillAll, hardKill, softKill } from "@/lib/api";
+import { getBots, getRiskEvents, softKillAll, hardKillAll, hardKill } from "@/lib/api";
 import { Bot, RiskEvent } from "@/types";
 
 /* ══════════════════════════════════════
@@ -114,14 +114,6 @@ function KillSwitchCard({ bots, botStatuses, onSoftKill, onHardKill, onToggleBot
 }
 
 /* ── Heartbeat Monitor ── */
-interface HeartbeatData {
-  name: string;
-  lastCandle: string;
-  lastTrade: string;
-  tradesToday: number;
-}
-const INITIAL_HEARTBEATS: HeartbeatData[] = [];
-
 function HeartbeatCard({ bots, botStatuses }: { bots: Bot[], botStatuses: Record<string, BotStatus> }) {
   const [pings, setPings] = useState<Record<string, { ms: number; lastChecked: string }>>({});
 
@@ -433,14 +425,6 @@ function ExposureCard() {
 }
 
 /* ── Risk Events Log ── */
-interface RiskEventData {
-  time: string;
-  type: "trade" | "protection" | "alert" | "system";
-  text: string;
-}
-const INITIAL_RISK_EVENTS: RiskEventData[] = [];
-const MORE_EVENTS: RiskEventData[] = [];
-
 const eventIcons = { trade: "📊", protection: "🛡️", alert: "⚠️", system: "🔧" };
 
 function RiskEventsCard({ events }: { events: RiskEvent[] }) {

@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from "react";
 import { FREQAI_MODELS, OUTLIER_METHODS, fmtDateTime, fmtPct, profitColor } from "@/lib/experiments";
-import Tooltip from "@/components/ui/Tooltip";
 import { ChevronDown } from "lucide-react";
 
 interface FreqAITabProps {
@@ -93,7 +92,7 @@ export default function FreqAITab({}: FreqAITabProps) {
   // Left panel form state
   const [selectedHyperopt, setSelectedHyperopt] = useState(0);
   const [testNamePrefix, setTestNamePrefix] = useState(`freqai_${new Date().toISOString().split("T")[0]}`);
-  const [description, setDescription] = useState("Auto-generated from settings. Click to edit.");
+  const [description] = useState("Auto-generated from settings. Click to edit.");
   const [trainStartDate, setTrainStartDate] = useState("2022-01-01");
   const [trainEndDate, setTrainEndDate] = useState("2024-01-01");
   const [backTestStartDate, setBackTestStartDate] = useState("2024-01-01");
@@ -110,7 +109,6 @@ export default function FreqAITab({}: FreqAITabProps) {
   );
   const [pcaEnabled, setPcaEnabled] = useState(true);
   const [noiseEnabled, setNoiseEnabled] = useState(true);
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Advanced options
   const [diThreshold, setDiThreshold] = useState(1.0);
@@ -126,7 +124,7 @@ export default function FreqAITab({}: FreqAITabProps) {
 
   // Right panel results state
   const [isRunning, setIsRunning] = useState(false);
-  const [results, setResults] = useState<FreqAIResult[]>(MOCK_RESULTS);
+  const [results] = useState<FreqAIResult[]>(MOCK_RESULTS);
   const [currentlyRunning, setCurrentlyRunning] = useState<CurrentlyRunning[]>([
     { model: "LightGBMRegressor", outlier: "DI", pcaEnabled: true, noiseEnabled: true, progress: 75, status: "running" },
     { model: "XGBoostRegressor", outlier: "SVM", pcaEnabled: true, noiseEnabled: false, progress: 50, status: "running" },
@@ -135,7 +133,6 @@ export default function FreqAITab({}: FreqAITabProps) {
   ]);
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [chartPeriod, setChartPeriod] = useState<"day" | "week" | "month">("month");
 
   const testsPerPage = 20;
 
@@ -909,7 +906,7 @@ export default function FreqAITab({}: FreqAITabProps) {
           </div>
         ) : (
           <div className="flex items-center justify-center py-12 text-text-2 flex-1">
-            <div className="text-[11px]">No results yet. Click "Run Full Matrix" to start.</div>
+            <div className="text-[11px]">No results yet. Click &quot;Run Full Matrix&quot; to start.</div>
           </div>
         )}
       </div>

@@ -1,33 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import Tooltip from '@/components/ui/Tooltip';
 import {
   AI_MODELS,
-  fmtDateTime,
   AiVerdict,
 } from '@/lib/experiments';
-
-interface ScoreCardProps {
-  title: string;
-  score: number;
-  description: string;
-  tooltip: string;
-  details: {
-    label: string;
-    value: string | number;
-    color?: 'green' | 'amber' | 'text-1';
-  }[];
-}
-
-interface Concern {
-  severity: 'critical' | 'warning' | 'info';
-  problem: string;
-  measured: string;
-  shouldBe: string;
-  meaning: string;
-}
 
 interface AnalysisResult {
   verdict: AiVerdict;
@@ -37,7 +16,13 @@ interface AnalysisResult {
     risk: number;
     robustness: number;
   };
-  concerns: Concern[];
+  concerns: Array<{
+    severity: 'critical' | 'warning' | 'info';
+    metric: string;
+    value: string;
+    threshold: string;
+    message: string;
+  }>;
   recommendation: {
     hyperoptWinner: string;
     freqaiWinner: string;
@@ -49,96 +34,99 @@ interface AnalysisResult {
 const mockAnalysisResult: AnalysisResult = {
   verdict: 'READY',
   scores: {
-    overfitting: 82,
-    consistency: 75,
-    risk: 71,
-    robustness: 78,
+    overfitting: 18,
+    consistency: 85,
+    risk: 42,
+    robustness: 79,
   },
   concerns: [
     {
-      severity: 'critical',
-      problem: 'Large drawdown',
-      measured: '8.4%',
-      shouldBe: 'below 7%',
-      meaning: 'Portfolio dropped 8.4% at worst — borderline',
-    },
-    {
       severity: 'warning',
-      problem: 'Inconsistent win rate',
-      measured: '±3.2pp',
-      shouldBe: 'below 2pp',
-      meaning: 'Win rate varies between tests — not fully stable',
+      metric: 'Max Drawdown',
+      value: '18.5%',
+      threshold: '< 15%',
+      message: 'DD exceeds target — consider reducing leverage',
     },
     {
       severity: 'info',
-      problem: 'Low trade count',
-      measured: '156',
-      shouldBe: 'above 200',
-      meaning: 'Not enough trades for fully reliable statistics',
+      metric: 'Sortino Ratio',
+      value: '1.89',
+      threshold: '> 2.0',
+      message: 'Just below optimal — small sample effect',
+    },
+    {
+      severity: 'info',
+      metric: 'Win Rate Variance',
+      value: '47-54% across splits',
+      threshold: '±2%',
+      message: 'Slight variance in win rate — monitor in live',
     },
   ],
   recommendation: {
-    hyperoptWinner: 'CmaEs · SortinoDaily · Signals Only',
-    freqaiWinner: 'LightGBMRegressor · DI · PCA On',
-    why: 'CmaEs sampler with SortinoDaily loss gives the best risk-adjusted returns',
+    hyperoptWinner: 'CmaEs · SortinoDaily · +15.2% (Epochs: 500, Best Profit: 15.2%, Max DD: 16.2%)',
+    freqaiWinner: 'LightGBMClassifier · DI · PCA ON · Noise ON (Trades: 312, Win Rate: 52.6%, Sharpe: 2.03)',
+    why: 'Use Hyperopt results (CmaEs). Production-level performance with proven Out-of-Sample consistency. FreqAI adds marginal value (+0.8%) but adds complexity.',
   },
   timestamp: '2026-03-30T14:22:00Z',
 };
 
-const ScoreCard: React.FC<ScoreCardProps & { expanded: boolean; onToggle: () => void }> = ({
-  title,
+const ScoreCard: React.FC<{
+  label: string;
+  score: number;
+  description: string;
+  tooltip: string;
+  scoreColor: string;
+  expanded: boolean;
+  onToggle: () => void;
+  details: { label: string; value: string; color?: string }[];
+}> = ({
+  label,
   score,
   description,
   tooltip,
-  details,
+  scoreColor,
   expanded,
   onToggle,
+  details,
 }) => {
-  const scoreColor = score >= 80 ? '#22c55e' : score >= 70 ? '#f59e0b' : '#ef4444';
+  const barWidth = `${score}%`;
 
   return (
     <div
-      className="bg-bg-2 border border-[#1e1e30] rounded-lg p-4 cursor-pointer hover:bg-bg-3 transition-colors"
+      className="bg-bg-2 border border-border rounded-card p-4 cursor-pointer hover:bg-bg-3 transition-colors"
       onClick={onToggle}
     >
-      <div className="flex items-start justify-between mb-2">
+      <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
           <Tooltip content={tooltip}>
-            <h3 className="text-sm font-semibold text-text-0 mb-1">{title}</h3>
+            <div className="text-[12px] font-semibold text-text-0 mb-1">{label}</div>
           </Tooltip>
-          <p className="text-2xs text-text-2">{description}</p>
+          <div className="text-[11px] text-text-1">{description}</div>
         </div>
-        <div className="flex items-center gap-3 ml-4">
-          <div className="text-right">
-            <div
-              className="text-2xl font-bold"
-              style={{ color: scoreColor }}
-            >
-              {score}
-            </div>
-            <div className="text-2xs text-text-3">/100</div>
-          </div>
-          <div className="text-text-2">
-            {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+        <div className="ml-3 text-right flex-shrink-0">
+          <div className="text-[20px] font-bold" style={{ color: scoreColor }}>
+            {score}
           </div>
         </div>
       </div>
 
+      {/* Score bar */}
+      <div className="mb-3 h-1.5 bg-bg-3 rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-300"
+          style={{ width: barWidth, backgroundColor: scoreColor }}
+        />
+      </div>
+
+      {/* Expanded details */}
       {expanded && (
-        <div className="mt-4 pt-4 border-t border-[#1e1e30] space-y-3">
+        <div className="mt-4 pt-4 border-t border-border space-y-2">
           {details.map((detail, idx) => (
             <div key={idx} className="flex items-center justify-between">
-              <span className="text-2xs text-text-2">{detail.label}</span>
+              <span className="text-[11px] text-text-1">{detail.label}</span>
               <span
-                className="text-2xs font-semibold"
-                style={{
-                  color:
-                    detail.color === 'green'
-                      ? '#22c55e'
-                      : detail.color === 'amber'
-                        ? '#f59e0b'
-                        : 'inherit',
-                }}
+                className="text-[11px] font-semibold"
+                style={{ color: detail.color || '#c0c0d0' }}
               >
                 {detail.value}
               </span>
@@ -150,139 +138,61 @@ const ScoreCard: React.FC<ScoreCardProps & { expanded: boolean; onToggle: () => 
   );
 };
 
-const ConcernsTable: React.FC<{ concerns: Concern[] }> = ({ concerns }) => {
-  const severityIcon = {
-    critical: '🔴',
-    warning: '⚠️',
-    info: 'ℹ️',
-  };
-
-  return (
-    <div className="bg-bg-2 border border-[#1e1e30] rounded-lg overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-2xs">
-          <thead className="bg-bg-3 border-b border-[#1e1e30]">
-            <tr>
-              <th className="px-4 py-2 text-left text-text-2 font-semibold">Severity</th>
-              <th className="px-4 py-2 text-left text-text-2 font-semibold">Problem</th>
-              <th className="px-4 py-2 text-left text-text-2 font-semibold">Measured</th>
-              <th className="px-4 py-2 text-left text-text-2 font-semibold">Should be</th>
-              <th className="px-4 py-2 text-left text-text-2 font-semibold">What it means</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#1e1e30]">
-            {concerns.map((concern, idx) => (
-              <tr key={idx} className="hover:bg-bg-3 transition-colors">
-                <td className="px-4 py-3 text-center">{severityIcon[concern.severity]}</td>
-                <td className="px-4 py-3 text-text-0">{concern.problem}</td>
-                <td className="px-4 py-3 text-accent font-semibold">{concern.measured}</td>
-                <td className="px-4 py-3 text-text-1">{concern.shouldBe}</td>
-                <td className="px-4 py-3 text-text-2 max-w-xs">{concern.meaning}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
-
 const VerdictBanner: React.FC<{ verdict: AiVerdict; avgScore: number }> = ({
   verdict,
-  avgScore,
 }) => {
-  const verdictConfig = {
+  const config = {
     READY: {
-      icon: '🟢',
+      emoji: '🟢',
       text: 'READY',
-      description: 'Strategy is ready for Paper Trading',
-      bgColor: 'bg-[#062b1b]',
-      borderColor: 'border-[#22c55e]/30',
-      textColor: 'text-[#22c55e]',
+      desc: 'Strategy meets all quality thresholds — can proceed to Paper Trading',
+      bg: 'rgba(34, 197, 94, 0.08)',
+      border: 'rgba(34, 197, 94, 0.25)',
+      color: '#22c55e',
     },
     NEEDS_WORK: {
-      icon: '🟡',
+      emoji: '🟡',
       text: 'NEEDS_WORK',
-      description: 'Strategy works but has some risks',
-      bgColor: 'bg-[#2b2006]',
-      borderColor: 'border-[#f59e0b]/30',
-      textColor: 'text-[#f59e0b]',
+      desc: 'Strategy works but has some risks',
+      bg: 'rgba(245, 158, 11, 0.08)',
+      border: 'rgba(245, 158, 11, 0.25)',
+      color: '#f59e0b',
     },
     HIGH_RISK: {
-      icon: '🔴',
+      emoji: '🔴',
       text: 'HIGH_RISK',
-      description: 'Strategy needs improvement',
-      bgColor: 'bg-[#2b0606]',
-      borderColor: 'border-[#ef4444]/30',
-      textColor: 'text-[#ef4444]',
+      desc: 'Strategy needs improvement',
+      bg: 'rgba(239, 68, 68, 0.08)',
+      border: 'rgba(239, 68, 68, 0.25)',
+      color: '#ef4444',
     },
     INSUFFICIENT_DATA: {
-      icon: '⚫',
+      emoji: '⚫',
       text: 'INSUFFICIENT_DATA',
-      description: 'Not enough data to make a verdict',
-      bgColor: 'bg-[#1a1a2e]',
-      borderColor: 'border-[#6b7280]/30',
-      textColor: 'text-[#6b7280]',
+      desc: 'Not enough data to make a verdict',
+      bg: 'rgba(107, 114, 128, 0.08)',
+      border: 'rgba(107, 114, 128, 0.25)',
+      color: '#6b7280',
     },
   };
 
-  const config = verdictConfig[verdict];
+  const cfg = config[verdict];
 
   return (
     <div
-      className={`${config.bgColor} border ${config.borderColor} rounded-lg p-6 mb-6`}
+      style={{
+        background: cfg.bg,
+        border: `1px solid ${cfg.border}`,
+      }}
+      className="rounded-card p-4 mb-6"
     >
-      <div className="flex items-center gap-4">
-        <div className="text-4xl">{config.icon}</div>
+      <div className="flex items-center gap-3">
+        <span className="text-[24px]">{cfg.emoji}</span>
         <div className="flex-1">
-          <div className={`text-lg font-bold ${config.textColor}`}>
-            {config.text}
+          <div style={{ color: cfg.color }} className="font-semibold text-[13px]">
+            {cfg.text}
           </div>
-          <div className="text-sm text-text-1 mt-1">{config.description}</div>
-        </div>
-        <div className="text-right">
-          <div
-            className="text-3xl font-bold"
-            style={{ color: config.textColor.replace('text-', '') }}
-          >
-            {avgScore}
-          </div>
-          <div className="text-2xs text-text-2">/100</div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const HistoryItem: React.FC<{
-  date: string;
-  model: string;
-  verdict: AiVerdict;
-  scores: Record<string, number>;
-}> = ({ date, model, verdict, scores }) => {
-  const avgScore = Math.round(Object.values(scores).reduce((a, b) => a + b, 0) / Object.keys(scores).length);
-
-  const verdictColors = {
-    READY: 'text-[#22c55e]',
-    NEEDS_WORK: 'text-[#f59e0b]',
-    HIGH_RISK: 'text-[#ef4444]',
-    INSUFFICIENT_DATA: 'text-[#6b7280]',
-  };
-
-  return (
-    <div className="bg-bg-3 border border-[#1e1e30] rounded-lg p-4 mb-3">
-      <div className="flex items-center justify-between mb-2">
-        <div>
-          <div className="text-2xs text-text-2">{fmtDateTime(date)}</div>
-          <div className="text-xs text-text-1 mt-1">{model}</div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className={`font-semibold text-sm ${verdictColors[verdict]}`}>
-            {verdict}
-          </div>
-          <div className="text-right">
-            <div className="text-xs font-bold text-text-0">{avgScore}/100</div>
-          </div>
+          <div className="text-[11px] text-text-1 mt-0.5">{cfg.desc}</div>
         </div>
       </div>
     </div>
@@ -291,19 +201,18 @@ const HistoryItem: React.FC<{
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default function AiReviewTab({ strategy: _strategy }: { strategy: string }) {
-  const [scope, setScope] = useState<'all' | 'hyperopt' | 'freqai' | 'specific'>('all');
+  const [scope, setScope] = useState<'all' | 'selected' | 'backtest' | 'hyperopt' | 'freqai'>('all');
   const [selectedModel, setSelectedModel] = useState<string>(AI_MODELS[0].value);
-  const [expandedCard, setExpandedCard] = useState<number | null>(null);
+  const [expandedScore, setExpandedScore] = useState<number | null>(0);
   const [isRunning, setIsRunning] = useState(false);
-  const [hasRun, setHasRun] = useState(true); // Set true to show mock results
-
-  const selectedModelObj = AI_MODELS.find((m) => m.value === selectedModel)!;
+  const [hasRun, setHasRun] = useState(true);
 
   const handleRunAnalysis = () => {
     setIsRunning(true);
-    // Placeholder pending backend integration
-    setIsRunning(false);
-    setHasRun(true);
+    setTimeout(() => {
+      setIsRunning(false);
+      setHasRun(true);
+    }, 2000);
   };
 
   const avgScore = Math.round(
@@ -314,248 +223,323 @@ export default function AiReviewTab({ strategy: _strategy }: { strategy: string 
       4
   );
 
+  const getScoreColor = (score: number): string => {
+    if (score >= 70) return '#22c55e';
+    if (score >= 40) return '#f59e0b';
+    return '#ef4444';
+  };
+
   return (
-    <div className="space-y-6 pb-12">
-      {/* Form Section */}
-      <div className="bg-bg-2 border border-[#1e1e30] rounded-lg p-6">
-        <h3 className="text-sm font-semibold text-text-0 mb-6">AI Analysis Settings</h3>
+    <div className="flex gap-6 pb-12">
+      {/* LEFT PANEL: FORM (380px) */}
+      <div className="w-[380px] flex-shrink-0">
+        <div className="bg-bg-1 border border-border rounded-card p-4">
+          <h3 className="text-[13px] font-semibold text-text-0 mb-4">AI Strategy Analyst</h3>
 
-        <div className="space-y-5">
-          {/* Scope Select */}
-          <div>
-            <label className="block text-2xs font-semibold text-text-1 mb-2">Scope</label>
-            <select
-              value={scope}
-              onChange={(e) => setScope(e.target.value as typeof scope)}
-              className="w-full px-3 py-2 bg-bg-3 border border-[#1e1e30] rounded-md text-2xs text-text-0 placeholder-text-3 focus:outline-none focus:border-accent transition-colors"
-            >
-              <option value="all">All tests (Hyperopt + FreqAI)</option>
-              <option value="hyperopt">Hyperopt only</option>
-              <option value="freqai">FreqAI only</option>
-              <option value="specific">Specific test</option>
-            </select>
-          </div>
-
-          {/* AI Model Select */}
-          <div>
-            <label className="block text-2xs font-semibold text-text-1 mb-2">AI Model</label>
-            <select
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
-              className="w-full px-3 py-2 bg-bg-3 border border-[#1e1e30] rounded-md text-2xs text-text-0 placeholder-text-3 focus:outline-none focus:border-accent transition-colors"
-            >
-              {AI_MODELS.map((model) => (
-                <option key={model.value} value={model.value}>
-                  {model.label} — {model.cost} estimated cost
-                </option>
-              ))}
-            </select>
-            <p className="text-2xs text-text-3 mt-2">
-              Using {selectedModelObj.label} • {selectedModelObj.cost} estimated cost
-            </p>
-          </div>
-
-          {/* Run Button */}
-          <button
-            onClick={handleRunAnalysis}
-            disabled={isRunning}
-            className="w-full px-4 py-3 bg-accent hover:bg-[#5558e3] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2"
-          >
-            {isRunning ? (
-              <>
-                <div className="animate-spin">
-                  <Zap size={14} />
-                </div>
-                Running AI Analysis...
-              </>
-            ) : (
-              <>
-                <Zap size={14} />
-                Run AI Analysis
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Results Section */}
-      {hasRun && (
-        <>
-          {/* Verdict Banner */}
-          <VerdictBanner verdict={mockAnalysisResult.verdict} avgScore={avgScore} />
-
-          {/* Score Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <ScoreCard
-              title="Is it overfitted? (Overfitting)"
-              score={mockAnalysisResult.scores.overfitting}
-              description="Compares how strategy performs on training data vs new unseen data"
-              tooltip="If strategy works great on old data but poorly on new — it's overfitted. Like a student who memorizes answers but doesn't understand the material."
-              details={[
-                { label: 'Training profit', value: '+15.2%' },
-                { label: 'New data profit', value: '+11.3%' },
-                { label: 'Difference', value: '-25.7%', color: 'green' },
-                { label: 'Max DD increase', value: '+18.5%', color: 'green' },
-                { label: 'Win rate drop', value: '-4.2pp', color: 'green' },
-              ]}
-              expanded={expandedCard === 0}
-              onToggle={() => setExpandedCard(expandedCard === 0 ? null : 0)}
-            />
-
-            <ScoreCard
-              title="Is it consistent? (Consistency)"
-              score={mockAnalysisResult.scores.consistency}
-              description="Checks if strategy gives similar results regardless of testing method"
-              tooltip="If strategy only works with one setting but fails with all others — it's not reliable. Good strategy works well with most settings."
-              details={[
-                { label: 'Profitable samplers', value: '5/6' },
-                { label: 'Profitable loss functions', value: '10/12' },
-                { label: 'Best-worst profit gap', value: '12.1%' },
-                { label: 'Win rate std', value: '±3.2pp' },
-              ]}
-              expanded={expandedCard === 1}
-              onToggle={() => setExpandedCard(expandedCard === 1 ? null : 1)}
-            />
-
-            <ScoreCard
-              title="How risky? (Risk)"
-              score={mockAnalysisResult.scores.risk}
-              description="Measures worst-case losses — max drawdown, worst trade, loss streaks"
-              tooltip="Even a profitable strategy can be dangerous if it has big drawdowns."
-              details={[
-                { label: 'Max Drawdown', value: '-8.4%' },
-                { label: 'Worst single trade', value: '-4.2%' },
-                { label: 'Max consecutive losses', value: '5' },
-                { label: 'Risk/Reward ratio', value: '1.8:1' },
-              ]}
-              expanded={expandedCard === 2}
-              onToggle={() => setExpandedCard(expandedCard === 2 ? null : 2)}
-            />
-
-            <ScoreCard
-              title="How robust? (Robustness)"
-              score={mockAnalysisResult.scores.robustness}
-              description="Checks if strategy profits with MOST settings, not just one lucky combination"
-              tooltip="If only 10 of 288 Hyperopt tests profit — strategy depends on luck. If 250 of 288 profit — strategy is robust."
-              details={[
-                { label: 'Profitable Hyperopt tests', value: '231/288 (80%)' },
-                { label: 'Profitable FreqAI tests', value: '98/128 (77%)' },
-                { label: 'Profitable samplers', value: '5/6' },
-                { label: 'Profitable ML models', value: '7/8' },
-              ]}
-              expanded={expandedCard === 3}
-              onToggle={() => setExpandedCard(expandedCard === 3 ? null : 3)}
-            />
-          </div>
-
-          {/* Concerns Table */}
-          <div>
-            <h3 className="text-sm font-semibold text-text-0 mb-3">Top 3 Concerns</h3>
-            <ConcernsTable concerns={mockAnalysisResult.concerns} />
-          </div>
-
-          {/* Recommendation Section */}
-          <div className="bg-bg-3 border border-[#1e1e30] rounded-lg p-6">
-            <h3 className="text-sm font-semibold text-text-0 mb-4">
-              Recommendation
-            </h3>
-
-            <p className="text-2xs text-text-2 mb-4">
-              Based on all tests, the best combination is:
-            </p>
-
-            <div className="space-y-3 mb-6">
-              <div className="bg-bg-2 border border-[#1e1e30] rounded-lg p-4">
-                <div className="text-2xs text-text-2 mb-1">Hyperopt winner</div>
-                <button className="text-sm font-semibold text-accent hover:text-[#5558e3] transition-colors">
-                  {mockAnalysisResult.recommendation.hyperoptWinner}
-                </button>
-              </div>
-
-              <div className="bg-bg-2 border border-[#1e1e30] rounded-lg p-4">
-                <div className="text-2xs text-text-2 mb-1">FreqAI winner</div>
-                <button className="text-sm font-semibold text-accent hover:text-[#5558e3] transition-colors">
-                  {mockAnalysisResult.recommendation.freqaiWinner}
-                </button>
-              </div>
+          <div className="space-y-4">
+            {/* Scope */}
+            <div>
+              <label className="form-label">Scope</label>
+              <select
+                value={scope}
+                onChange={(e) => setScope(e.target.value as typeof scope)}
+                className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
+              >
+                <option value="all">All tests (Svi testovi)</option>
+                <option value="selected">Selected test</option>
+                <option value="backtest">Backtest results only</option>
+                <option value="hyperopt">Hyperopt results only</option>
+                <option value="freqai">FreqAI results only</option>
+              </select>
             </div>
 
-            <div className="bg-bg-2 border border-[#1e1e30] rounded-lg p-4 mb-6">
-              <p className="text-2xs text-text-2">
-                <span className="text-text-1 font-semibold">Why:</span> {mockAnalysisResult.recommendation.why}
+            {/* AI Model */}
+            <div>
+              <label className="form-label">AI Model</label>
+              <select
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
+              >
+                {AI_MODELS.map((model) => (
+                  <option key={model.value} value={model.value}>
+                    {model.label} ({model.cost})
+                  </option>
+                ))}
+              </select>
+              <p className="text-[10px] text-text-3 mt-2 font-medium">
+                Estimated cost: <strong>~$0.03</strong>
               </p>
             </div>
 
-            <div className="flex gap-3">
-              <button className="flex-1 px-4 py-3 bg-accent hover:bg-[#5558e3] text-white font-semibold text-xs rounded-lg transition-colors">
-                Use this recommendation →
-              </button>
-              <button className="flex-1 px-4 py-3 bg-3 border border-[#1e1e30] hover:bg-bg-2 text-text-0 font-semibold text-xs rounded-lg transition-colors">
-                I disagree, I&apos;ll choose myself
-              </button>
-            </div>
+            {/* Run Button */}
+            <button
+              onClick={handleRunAnalysis}
+              disabled={isRunning}
+              className="w-full inline-flex items-center justify-center gap-[6px] py-[8px] px-[14px] rounded-btn text-[12px] font-medium border bg-accent border-accent text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isRunning ? (
+                <>
+                  <div className="animate-spin">
+                    <Zap size={14} />
+                  </div>
+                  Running Analysis...
+                </>
+              ) : (
+                <>
+                  <span>▶</span>
+                  Run AI Analysis
+                </>
+              )}
+            </button>
           </div>
+        </div>
+      </div>
 
-          {/* Verdict Thresholds Info */}
-          <div className="bg-bg-2 border border-[#1e1e30] rounded-lg p-4">
-            <h4 className="text-2xs font-semibold text-text-1 mb-3">Verdict Thresholds</h4>
-            <div className="space-y-2 text-2xs text-text-2">
-              <div className="flex justify-between">
-                <span>READY (≥ 75 avg score)</span>
-                <span className="text-[#22c55e] font-semibold">Overfitting &lt; 50%, Consistency ≥ 70%</span>
-              </div>
-              <div className="flex justify-between">
-                <span>CAUTION (60-74 avg score)</span>
-                <span className="text-[#f59e0b] font-semibold">Overfitting 50-75%, Consistency 50-70%</span>
-              </div>
-              <div className="flex justify-between">
-                <span>REJECTED (&lt; 60 avg score)</span>
-                <span className="text-[#ef4444] font-semibold">Any critical issue or low robustness</span>
-              </div>
-            </div>
-          </div>
+      {/* RIGHT PANEL: RESULTS (flex) */}
+      <div className="flex-1 space-y-6 min-w-0">
+        {hasRun && (
+          <>
+            {/* Verdict Banner */}
+            <VerdictBanner verdict={mockAnalysisResult.verdict} avgScore={avgScore} />
 
-          {/* History Section */}
-          <div>
-            <h3 className="text-sm font-semibold text-text-0 mb-3">Analysis History</h3>
-            <div className="space-y-2">
-              <HistoryItem
-                date="2026-03-30T14:22:00Z"
-                model="Claude 3.5 Sonnet"
-                verdict="READY"
-                scores={{
-                  overfitting: 82,
-                  consistency: 75,
-                  risk: 71,
-                  robustness: 78,
-                }}
+            {/* Score Cards Grid (2x2) */}
+            <div className="grid grid-cols-2 gap-4">
+              <ScoreCard
+                label="Overfitting Risk"
+                score={mockAnalysisResult.scores.overfitting}
+                description="Is the strategy learning noise instead of signal? Lower is better."
+                tooltip="Is the strategy learning noise instead of signal? Lower is better."
+                scoreColor={getScoreColor(100 - mockAnalysisResult.scores.overfitting)}
+                expanded={expandedScore === 0}
+                onToggle={() => setExpandedScore(expandedScore === 0 ? null : 0)}
+                details={[
+                  { label: 'Training Sharpe', value: '2.14' },
+                  { label: 'Testing Sharpe', value: '2.11' },
+                  { label: 'Divergence', value: '1.4% (excellent)' },
+                  { label: '✓ Max DD stable across periods', value: '' },
+                  { label: '✓ Win rate consistent (±2.1%)', value: '' },
+                ]}
               />
-              <HistoryItem
-                date="2026-03-29T09:15:00Z"
-                model="GPT-4o"
-                verdict="NEEDS_WORK"
-                scores={{
-                  overfitting: 72,
-                  consistency: 68,
-                  risk: 64,
-                  robustness: 71,
-                }}
+
+              <ScoreCard
+                label="Consistency"
+                score={mockAnalysisResult.scores.consistency}
+                description="Does it perform similarly across different market conditions?"
+                tooltip="Does it perform similarly across different market conditions?"
+                scoreColor={getScoreColor(mockAnalysisResult.scores.consistency)}
+                expanded={expandedScore === 1}
+                onToggle={() => setExpandedScore(expandedScore === 1 ? null : 1)}
+                details={[
+                  { label: 'Bull market Sharpe', value: '2.18' },
+                  { label: 'Bear market Sharpe', value: '1.98' },
+                  { label: 'Sideways Sharpe', value: '2.06' },
+                  { label: '✓ Profit factor stable', value: '' },
+                  { label: '✓ Risk metrics aligned', value: '' },
+                ]}
               />
-              <HistoryItem
-                date="2026-03-27T16:45:00Z"
-                model="Llama 3.1 405B"
-                verdict="HIGH_RISK"
-                scores={{
-                  overfitting: 55,
-                  consistency: 58,
-                  risk: 52,
-                  robustness: 60,
-                }}
+
+              <ScoreCard
+                label="Risk Level"
+                score={mockAnalysisResult.scores.risk}
+                description="What's the worst-case loss scenario?"
+                tooltip="What's the worst-case loss scenario?"
+                scoreColor={getScoreColor(100 - mockAnalysisResult.scores.risk)}
+                expanded={expandedScore === 2}
+                onToggle={() => setExpandedScore(expandedScore === 2 ? null : 2)}
+                details={[
+                  { label: 'Max Drawdown', value: '18.5%' },
+                  { label: 'Avg Loss', value: '-0.32%' },
+                  { label: 'Max Consecutive Losses', value: '5 trades' },
+                  { label: 'Risk/Reward Ratio', value: '1:3.2' },
+                  { label: '⚠️ Recommend 2% risk per trade max', value: '' },
+                ]}
+              />
+
+              <ScoreCard
+                label="Robustness"
+                score={mockAnalysisResult.scores.robustness}
+                description="Will it work with slight parameter changes?"
+                tooltip="Will it work with slight parameter changes?"
+                scoreColor={getScoreColor(mockAnalysisResult.scores.robustness)}
+                expanded={expandedScore === 3}
+                onToggle={() => setExpandedScore(expandedScore === 3 ? null : 3)}
+                details={[
+                  { label: 'Best variant', value: '+15.2%' },
+                  { label: 'Worst variant', value: '+8.7%' },
+                  { label: 'Median', value: '+11.4%' },
+                  { label: '✓ Works across timeframes', value: '' },
+                  { label: '✓ Parameter sensitivity low', value: '' },
+                ]}
               />
             </div>
-          </div>
-        </>
-      )}
+
+            {/* Top 3 Concerns */}
+            <div className="bg-bg-1 border border-border rounded-card overflow-hidden">
+              <div className="bg-bg-1 border-b border-border px-4 py-2">
+                <div className="text-[13px] font-semibold text-text-0">Top 3 Concerns</div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-[11px]">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                        Severity
+                      </th>
+                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                        Metric
+                      </th>
+                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                        Value
+                      </th>
+                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                        Threshold
+                      </th>
+                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                        Message
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mockAnalysisResult.concerns.map((concern, idx) => {
+                      const severityStyles = {
+                        critical: { emoji: '🔴', bg: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' },
+                        warning: { emoji: '⚠️', bg: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b' },
+                        info: { emoji: 'ℹ️', bg: 'rgba(100, 150, 255, 0.2)', color: '#6b9aff' },
+                      };
+                      const style = severityStyles[concern.severity];
+                      return (
+                        <tr key={idx} className="border-b border-border/50 hover:bg-bg-2 transition-colors">
+                          <td className="py-2 px-3">
+                            <span
+                              style={{
+                                background: style.bg,
+                                color: style.color,
+                                padding: '2px 6px',
+                                borderRadius: '3px',
+                                fontSize: '10px',
+                              }}
+                            >
+                              {style.emoji}
+                            </span>
+                          </td>
+                          <td className="py-2 px-3 text-text-1">{concern.metric}</td>
+                          <td className="py-2 px-3 font-semibold" style={{ color: style.color }}>
+                            {concern.value}
+                          </td>
+                          <td className="py-2 px-3 text-text-1">{concern.threshold}</td>
+                          <td className="py-2 px-3 text-text-1 max-w-xs">{concern.message}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* AI Recommendation */}
+            <div
+              className="bg-bg-1 border rounded-card p-4"
+              style={{
+                background: 'rgba(34, 197, 94, 0.05)',
+                border: '1px solid rgba(34, 197, 94, 0.25)',
+              }}
+            >
+              <div className="text-[13px] font-semibold text-text-0 mb-3">AI Recommendation</div>
+              <div className="space-y-3 text-[11px] text-text-1">
+                <div>
+                  <strong>Best Hyperopt Run:</strong> {mockAnalysisResult.recommendation.hyperoptWinner}
+                </div>
+                <div>
+                  <strong>Best FreqAI Run:</strong> {mockAnalysisResult.recommendation.freqaiWinner}
+                </div>
+                <div className="bg-bg-1 border border-border rounded-btn p-3 text-[10.5px]">
+                  {mockAnalysisResult.recommendation.why}
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <button className="flex-1 inline-flex items-center justify-center gap-1 py-2 px-3 rounded-btn text-[12px] font-medium bg-green-600 hover:bg-green-700 text-white border border-green-600 transition-colors">
+                    → Use This Recommendation
+                  </button>
+                  <button className="flex-1 inline-flex items-center justify-center gap-1 py-2 px-3 rounded-btn text-[12px] font-medium bg-transparent border border-border text-text-0 hover:bg-bg-2 transition-colors">
+                    No, I&apos;ll choose myself
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Analysis History */}
+            <div className="bg-bg-1 border border-border rounded-card overflow-hidden">
+              <div className="bg-bg-1 border-b border-border px-4 py-2">
+                <div className="text-[13px] font-semibold text-text-0">Analysis History</div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-[11px]">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                        Date
+                      </th>
+                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                        Verdict
+                      </th>
+                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                        Scope
+                      </th>
+                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                        Overfitting
+                      </th>
+                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                        Consistency
+                      </th>
+                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                        Risk
+                      </th>
+                      <th className="py-2 px-3 text-left text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold">
+                        Robustness
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-border/50 hover:bg-bg-2">
+                      <td className="py-2 px-3 text-text-1">2026-03-30 15:42</td>
+                      <td className="py-2 px-3">
+                        <span style={{ color: '#22c55e' }}>🟢 READY</span>
+                      </td>
+                      <td className="py-2 px-3 text-text-1">All tests</td>
+                      <td className="py-2 px-3 text-text-1">18</td>
+                      <td className="py-2 px-3 text-text-1">85</td>
+                      <td className="py-2 px-3 text-text-1">42</td>
+                      <td className="py-2 px-3 text-text-1">79</td>
+                    </tr>
+                    <tr className="border-b border-border/50 hover:bg-bg-2">
+                      <td className="py-2 px-3 text-text-1">2026-03-29 12:15</td>
+                      <td className="py-2 px-3">
+                        <span style={{ color: '#f59e0b' }}>🟡 NEEDS_WORK</span>
+                      </td>
+                      <td className="py-2 px-3 text-text-1">Backtest only</td>
+                      <td className="py-2 px-3 text-text-1">22</td>
+                      <td className="py-2 px-3 text-text-1">71</td>
+                      <td className="py-2 px-3 text-text-1">55</td>
+                      <td className="py-2 px-3 text-text-1">68</td>
+                    </tr>
+                    <tr className="hover:bg-bg-2">
+                      <td className="py-2 px-3 text-text-1">2026-03-28 09:30</td>
+                      <td className="py-2 px-3">
+                        <span style={{ color: '#ef4444' }}>🔴 HIGH_RISK</span>
+                      </td>
+                      <td className="py-2 px-3 text-text-1">Hyperopt only</td>
+                      <td className="py-2 px-3 text-text-1">38</td>
+                      <td className="py-2 px-3 text-text-1">45</td>
+                      <td className="py-2 px-3 text-text-1">68</td>
+                      <td className="py-2 px-3 text-text-1">52</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

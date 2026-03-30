@@ -1,180 +1,330 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Star, Search, ArrowUpDown } from 'lucide-react';
 import { fmtDateTime, fmtPct, profitColor } from '@/lib/experiments';
 
 interface Test {
   id: string;
   name: string;
   type: 'Backtest' | 'Hyperopt' | 'FreqAI' | 'Verification' | 'AI Review';
+  sampler?: string;
+  lossFn?: string;
+  spaces?: string;
   date: Date;
-  timerange: string;
   trades: number;
   profit: number;
   maxDD: number;
   sharpe: number;
-  status: 'running' | 'completed' | 'promoted' | 'failed';
+  sortino: number;
+  winRate: number;
+  status: 'running' | 'completed' | 'failed';
   isPromoted?: boolean;
 }
 
 const mockTests: Test[] = [
   {
     id: 'test-1',
-    name: 'BollingerBreak Base BTC/USDT 2022-2024',
-    type: 'Backtest',
-    date: new Date('2026-03-28'),
-    timerange: '2022-01-01 - 2024-12-31',
-    trades: 156,
-    profit: 5.2,
-    maxDD: 9.8,
-    sharpe: 0.98,
-    status: 'completed',
-  },
-  {
-    id: 'test-2',
     name: 'CmaEs SortinoDaily Signals',
     type: 'Hyperopt',
-    date: new Date('2026-03-27'),
-    timerange: '2022-01-01 - 2024-12-31',
-    trades: 163,
+    sampler: 'CmaEs',
+    lossFn: 'SortinoDaily',
+    spaces: 'buy, sell, roi, stoploss',
+    date: new Date('2026-03-28T15:42:16'),
+    trades: 156,
     profit: 15.2,
     maxDD: 8.4,
     sharpe: 1.52,
+    sortino: 1.68,
+    winRate: 64.1,
     status: 'completed',
     isPromoted: true,
   },
   {
-    id: 'test-3',
-    name: 'LightGBMReg DI PCA',
-    type: 'FreqAI',
-    date: new Date('2026-03-26'),
-    timerange: '2022-01-01 - 2024-12-31',
-    trades: 142,
-    profit: 13.8,
-    maxDD: 8.2,
-    sharpe: 1.41,
+    id: 'test-2',
+    name: 'Base RSI Backtest',
+    type: 'Backtest',
+    date: new Date('2026-03-27T09:15:00'),
+    trades: 124,
+    profit: 8.9,
+    maxDD: 12.3,
+    sharpe: 0.94,
+    sortino: 1.04,
+    winRate: 58.3,
     status: 'completed',
   },
   {
-    id: 'test-4',
-    name: 'XGBoost StandardScaler',
+    id: 'test-3',
+    name: 'LightGBM+DI Strategy',
     type: 'FreqAI',
-    date: new Date('2026-03-25'),
-    timerange: '2022-01-01 - 2024-12-31',
-    trades: 148,
-    profit: 12.4,
-    maxDD: 9.1,
-    sharpe: 1.28,
+    sampler: 'LightGBM',
+    lossFn: 'DI',
+    spaces: 'features, outlier',
+    date: new Date('2026-03-30T11:28:00'),
+    trades: 178,
+    profit: 13.8,
+    maxDD: 9.2,
+    sharpe: 1.41,
+    sortino: 1.55,
+    winRate: 61.8,
+    status: 'running',
+  },
+  {
+    id: 'test-4',
+    name: 'TPE Sharpe Optimization',
+    type: 'Hyperopt',
+    sampler: 'TPE',
+    lossFn: 'Sharpe',
+    spaces: 'buy, sell',
+    date: new Date('2026-03-29T22:41:00'),
+    trades: 149,
+    profit: 12.1,
+    maxDD: 10.5,
+    sharpe: 1.38,
+    sortino: 1.48,
+    winRate: 59.7,
     status: 'completed',
   },
   {
     id: 'test-5',
-    name: 'Out-of-Sample Verification 2024-2025',
+    name: 'OOS 2025 CmaEs Verify',
     type: 'Verification',
-    date: new Date('2026-03-24'),
-    timerange: '2024-01-01 - 2025-12-31',
-    trades: 98,
+    sampler: 'CmaEs',
+    lossFn: 'SortinoDaily',
+    spaces: 'all',
+    date: new Date('2026-03-28T14:32:00'),
+    trades: 142,
     profit: 11.3,
-    maxDD: 7.6,
-    sharpe: 1.35,
+    maxDD: 9.8,
+    sharpe: 1.28,
+    sortino: 1.42,
+    winRate: 63.4,
     status: 'completed',
   },
   {
     id: 'test-6',
-    name: 'AI Review Score 78/100',
-    type: 'AI Review',
-    date: new Date('2026-03-23'),
-    timerange: 'All tests',
-    trades: 0,
-    profit: 0,
-    maxDD: 0,
-    sharpe: 0,
+    name: 'PSO Calmar Test',
+    type: 'Hyperopt',
+    sampler: 'PSO',
+    lossFn: 'Calmar',
+    spaces: 'roi, stoploss, trailing',
+    date: new Date('2026-03-27T18:15:00'),
+    trades: 135,
+    profit: 11.9,
+    maxDD: 11.2,
+    sharpe: 1.31,
+    sortino: 1.44,
+    winRate: 60.2,
     status: 'completed',
   },
   {
     id: 'test-7',
-    name: 'Population-based CmaEs',
+    name: 'SKOPT Profit Factor',
     type: 'Hyperopt',
-    date: new Date('2026-03-22'),
-    timerange: '2022-01-01 - 2024-12-31',
-    trades: 171,
-    profit: 14.8,
+    sampler: 'SKOPT',
+    lossFn: 'OnlyProfit',
+    spaces: 'buy, sell, roi',
+    date: new Date('2026-03-26T12:08:00'),
+    trades: 167,
+    profit: 14.2,
     maxDD: 8.9,
-    sharpe: 1.48,
+    sharpe: 1.49,
+    sortino: 1.63,
+    winRate: 65.3,
     status: 'completed',
   },
   {
     id: 'test-8',
-    name: 'RandomSearch Baseline',
-    type: 'Hyperopt',
-    date: new Date('2026-03-21'),
-    timerange: '2022-01-01 - 2024-12-31',
-    trades: 159,
+    name: 'BB Squeeze Manual Test',
+    type: 'Backtest',
+    date: new Date('2026-03-25T07:42:00'),
+    trades: 98,
     profit: 6.4,
-    maxDD: 11.2,
-    sharpe: 0.76,
+    maxDD: 15.3,
+    sharpe: 0.81,
+    sortino: 0.92,
+    winRate: 54.1,
     status: 'completed',
   },
   {
     id: 'test-9',
-    name: 'DI Feature Engineering',
-    type: 'FreqAI',
-    date: new Date('2026-03-20'),
-    timerange: '2022-01-01 - 2024-12-31',
-    trades: 154,
-    profit: 12.1,
-    maxDD: 8.7,
-    sharpe: 1.32,
+    name: 'EMA Cross Test',
+    type: 'Backtest',
+    date: new Date('2026-03-24T21:19:00'),
+    trades: 112,
+    profit: 7.8,
+    maxDD: 13.6,
+    sharpe: 0.92,
+    sortino: 1.03,
+    winRate: 56.8,
     status: 'completed',
   },
   {
     id: 'test-10',
-    name: 'Running Hyperopt Session',
-    type: 'Hyperopt',
-    date: new Date('2026-03-29T14:32:00'),
-    timerange: '2022-01-01 - 2024-12-31',
-    trades: 0,
-    profit: 0,
-    maxDD: 0,
-    sharpe: 0,
-    status: 'running',
+    name: 'CNN Features Analysis',
+    type: 'FreqAI',
+    sampler: 'CNN',
+    lossFn: 'features',
+    spaces: 'neural',
+    date: new Date('2026-03-24T16:55:00'),
+    trades: 191,
+    profit: 9.7,
+    maxDD: 11.1,
+    sharpe: 1.15,
+    sortino: 1.26,
+    winRate: 57.9,
+    status: 'completed',
   },
   {
     id: 'test-11',
     name: 'Ensemble LightGBM + XGBoost',
     type: 'FreqAI',
-    date: new Date('2026-03-19'),
-    timerange: '2022-01-01 - 2024-12-31',
-    trades: 167,
-    profit: 14.2,
+    sampler: 'Ensemble',
+    lossFn: 'Weighted',
+    spaces: 'features, ensemble',
+    date: new Date('2026-03-23T14:22:00'),
+    trades: 189,
+    profit: 14.5,
     maxDD: 7.9,
     sharpe: 1.58,
+    sortino: 1.72,
+    winRate: 66.2,
     status: 'completed',
   },
   {
     id: 'test-12',
-    name: 'Failed Backtest - Data Error',
-    type: 'Backtest',
-    date: new Date('2026-03-18'),
-    timerange: '2022-01-01 - 2024-12-31',
+    name: 'XGBoost StandardScaler',
+    type: 'FreqAI',
+    sampler: 'XGBoost',
+    lossFn: 'Regression',
+    spaces: 'features',
+    date: new Date('2026-03-22T10:11:00'),
+    trades: 155,
+    profit: 12.8,
+    maxDD: 10.2,
+    sharpe: 1.42,
+    sortino: 1.56,
+    winRate: 62.5,
+    status: 'completed',
+  },
+  {
+    id: 'test-13',
+    name: 'Population-based CmaEs',
+    type: 'Hyperopt',
+    sampler: 'CmaEs',
+    lossFn: 'MultiMetric',
+    spaces: 'buy, sell, roi, stoploss, trailing',
+    date: new Date('2026-03-21T08:45:00'),
+    trades: 171,
+    profit: 14.8,
+    maxDD: 8.9,
+    sharpe: 1.48,
+    sortino: 1.61,
+    winRate: 65.8,
+    status: 'completed',
+  },
+  {
+    id: 'test-14',
+    name: 'RandomSearch Baseline',
+    type: 'Hyperopt',
+    sampler: 'Random',
+    lossFn: 'SharpeDaily',
+    spaces: 'buy, sell',
+    date: new Date('2026-03-20T20:30:00'),
+    trades: 159,
+    profit: 6.4,
+    maxDD: 11.2,
+    sharpe: 0.76,
+    sortino: 0.84,
+    winRate: 51.3,
+    status: 'completed',
+  },
+  {
+    id: 'test-15',
+    name: 'DI Feature Engineering',
+    type: 'FreqAI',
+    sampler: 'LightGBM',
+    lossFn: 'DI+PCA',
+    spaces: 'features, pca',
+    date: new Date('2026-03-19T15:05:00'),
+    trades: 154,
+    profit: 12.1,
+    maxDD: 8.7,
+    sharpe: 1.32,
+    sortino: 1.45,
+    winRate: 60.9,
+    status: 'completed',
+  },
+  {
+    id: 'test-16',
+    name: 'Running Hyperopt Session',
+    type: 'Hyperopt',
+    sampler: 'TPE',
+    lossFn: 'Sortino',
+    spaces: 'buy, sell, roi',
+    date: new Date('2026-03-30T10:00:00'),
     trades: 0,
     profit: 0,
     maxDD: 0,
     sharpe: 0,
+    sortino: 0,
+    winRate: 0,
+    status: 'running',
+  },
+  {
+    id: 'test-17',
+    name: 'NSGAII Multi-Objective',
+    type: 'Hyperopt',
+    sampler: 'NSGAII',
+    lossFn: 'ProfitDrawDown',
+    spaces: 'buy, sell, roi, stoploss',
+    date: new Date('2026-03-18T12:30:00'),
+    trades: 143,
+    profit: 10.6,
+    maxDD: 9.5,
+    sharpe: 1.25,
+    sortino: 1.38,
+    winRate: 59.1,
+    status: 'completed',
+  },
+  {
+    id: 'test-18',
+    name: 'QMC Exploration Run',
+    type: 'Hyperopt',
+    sampler: 'QMC',
+    lossFn: 'Calmar',
+    spaces: 'all',
+    date: new Date('2026-03-17T09:15:00'),
+    trades: 168,
+    profit: 13.4,
+    maxDD: 9.1,
+    sharpe: 1.45,
+    sortino: 1.59,
+    winRate: 64.6,
+    status: 'completed',
+  },
+  {
+    id: 'test-19',
+    name: 'Failed Backtest - Data Error',
+    type: 'Backtest',
+    date: new Date('2026-03-16T05:22:00'),
+    trades: 0,
+    profit: 0,
+    maxDD: 0,
+    sharpe: 0,
+    sortino: 0,
+    winRate: 0,
     status: 'failed',
   },
 ];
 
 type SortKey = 'date' | 'profit' | 'sharpe' | 'type';
-type TestType = Test['type'] | 'All';
+type StatusFilter = 'All' | 'Running' | 'Done' | 'Failed';
+type TestType = Test['type'] | 'All Types';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function AllTestsOverlay({ onClose, strategy: _strategy }: { onClose: () => void; strategy: string }) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+export default function AllTestsOverlay({}: { onClose: () => void; strategy: string }) {
   const [sortBy, setSortBy] = useState<SortKey>('date');
-  const [sortAsc, setSortAsc] = useState(false);
-  const [filterType, setFilterType] = useState<TestType>('All');
+  const [filterType, setFilterType] = useState<TestType>('All Types');
+  const [filterStatus, setFilterStatus] = useState<StatusFilter>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
@@ -182,8 +332,18 @@ export default function AllTestsOverlay({ onClose, strategy: _strategy }: { onCl
   const filtered = useMemo(() => {
     let result = mockTests;
 
-    if (filterType !== 'All') {
+    if (filterType !== 'All Types') {
       result = result.filter((t) => t.type === filterType);
+    }
+
+    if (filterStatus !== 'All') {
+      if (filterStatus === 'Running') {
+        result = result.filter((t) => t.status === 'running');
+      } else if (filterStatus === 'Done') {
+        result = result.filter((t) => t.status === 'completed');
+      } else if (filterStatus === 'Failed') {
+        result = result.filter((t) => t.status === 'failed');
+      }
     }
 
     if (searchQuery) {
@@ -192,7 +352,7 @@ export default function AllTestsOverlay({ onClose, strategy: _strategy }: { onCl
     }
 
     return result;
-  }, [filterType, searchQuery]);
+  }, [filterType, filterStatus, searchQuery]);
 
   const sorted = useMemo(() => {
     const copy = [...filtered];
@@ -205,12 +365,13 @@ export default function AllTestsOverlay({ onClose, strategy: _strategy }: { onCl
         bVal = b.date.getTime();
       }
 
-      if (aVal < bVal) return sortAsc ? -1 : 1;
-      if (aVal > bVal) return sortAsc ? 1 : -1;
+      if (aVal < bVal) return -1;
+      if (aVal > bVal) return 1;
       return 0;
     });
-    return copy;
-  }, [filtered, sortBy, sortAsc]);
+    // Most recent first
+    return copy.reverse();
+  }, [filtered, sortBy]);
 
   const totalPages = Math.ceil(sorted.length / itemsPerPage);
   const start = (currentPage - 1) * itemsPerPage;
@@ -218,418 +379,335 @@ export default function AllTestsOverlay({ onClose, strategy: _strategy }: { onCl
 
   const promotedTest = mockTests.find((t) => t.isPromoted);
 
-  const typeColor = (type: Test['type']): string => {
+  const typeClass = (type: Test['type']): string => {
     switch (type) {
       case 'Backtest':
-        return 'bg-blue-500/20 text-blue-400';
+        return 'bg-[rgba(59,130,246,0.08)] text-[#3b82f6] border-[rgba(59,130,246,0.25)]';
       case 'Hyperopt':
-        return 'bg-purple-500/20 text-purple-400';
+        return 'bg-[rgba(168,85,247,0.08)] text-[#a855f7] border-[rgba(168,85,247,0.25)]';
       case 'FreqAI':
-        return 'bg-cyan-500/20 text-cyan-400';
+        return 'bg-[rgba(34,211,238,0.08)] text-[#22d3ee] border-[rgba(34,211,238,0.25)]';
       case 'Verification':
-        return 'bg-green-500/20 text-green-400';
+        return 'bg-[rgba(34,197,94,0.08)] text-[#22c55e] border-[rgba(34,197,94,0.25)]';
       case 'AI Review':
-        return 'bg-amber-500/20 text-amber-400';
+        return 'bg-[rgba(245,158,11,0.08)] text-[#f59e0b] border-[rgba(245,158,11,0.25)]';
     }
   };
 
-  const statusColor = (status: Test['status']): string => {
+  const statusClass = (status: Test['status']): string => {
     switch (status) {
       case 'running':
-        return 'bg-blue-500/20 text-blue-400';
+        return 'bg-[rgba(99,102,241,0.12)] text-[#6366f1] border-[rgba(99,102,241,0.3)] animate-pulse';
       case 'completed':
-        return 'bg-green-500/20 text-green-400';
-      case 'promoted':
-        return 'bg-amber-500/20 text-amber-400';
+        return 'bg-[rgba(34,197,94,0.08)] text-[#22c55e] border-[rgba(34,197,94,0.25)]';
       case 'failed':
-        return 'bg-red-500/20 text-red-400';
+        return 'bg-[rgba(239,68,68,0.08)] text-[#ef4444] border-[rgba(239,68,68,0.25)]';
     }
   };
 
   return (
-    <div className="flex h-full gap-4 bg-gradient-to-b from-[#06060b] to-[#0c0c14] text-[#f0f0f5]">
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="border-b border-[#1e1e30] p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold">All Tests</h2>
-            <button
-              onClick={onClose}
-              className="text-[#808098] hover:text-[#f0f0f5] transition"
-            >
-              ✕
-            </button>
+    <div className="flex flex-col h-full bg-bg-0 text-text-0">
+      {/* Filter bar */}
+      <div className="border-b border-border px-[16px] py-[12px] space-y-[12px]">
+        <div className="flex gap-[12px] items-end flex-wrap">
+          <div className="flex-1 min-w-[200px]">
+            <input
+              type="text"
+              placeholder="Search tests..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full bg-bg-2 border border-border rounded-btn px-[12px] py-[8px] text-[12px] text-text-0 placeholder-text-3 focus:outline-none focus:border-accent"
+            />
           </div>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortKey)}
+            className="bg-bg-2 border border-border rounded-btn px-[12px] py-[8px] text-[12px] text-text-0 focus:outline-none focus:border-accent"
+          >
+            <option value="date">Sort: Date</option>
+            <option value="profit">Sort: Profit</option>
+            <option value="sharpe">Sort: Sharpe</option>
+            <option value="type">Sort: Type</option>
+          </select>
+        </div>
 
-          {/* Controls */}
-          <div className="grid grid-cols-3 gap-3">
-            {/* Sort */}
-            <div>
-              <label className="block text-xs font-semibold text-[#808098] mb-2">
-                Sort
-              </label>
-              <div className="flex gap-2">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortKey)}
-                  className="flex-1 bg-[#12121c] border border-[#1e1e30] rounded px-3 py-2 text-sm text-[#f0f0f5] focus:outline-none focus:border-[#6366f1]"
-                >
-                  <option value="date">Date</option>
-                  <option value="profit">Profit</option>
-                  <option value="sharpe">Sharpe</option>
-                  <option value="type">Type</option>
-                </select>
-                <button
-                  onClick={() => setSortAsc(!sortAsc)}
-                  className="bg-[#12121c] border border-[#1e1e30] rounded px-3 py-2 text-[#808098] hover:text-[#f0f0f5] transition"
-                >
-                  <ArrowUpDown size={16} />
-                </button>
-              </div>
-            </div>
-
-            {/* Filter */}
-            <div>
-              <label className="block text-xs font-semibold text-[#808098] mb-2">
-                Filter
-              </label>
-              <select
-                value={filterType}
-                onChange={(e) => {
-                  setFilterType(e.target.value as TestType);
+        {/* Type filters */}
+        <div className="flex gap-[8px] flex-wrap">
+          <button
+            onClick={() => {
+              setFilterType('All Types');
+              setCurrentPage(1);
+            }}
+            className={`px-[12px] py-[4px] rounded-full text-[11px] font-semibold uppercase tracking-[0.5px] border transition ${
+              filterType === 'All Types'
+                ? 'bg-accent border-accent text-white'
+                : 'bg-transparent border-border text-text-2 hover:text-text-1'
+            }`}
+          >
+            All Types ({filtered.length})
+          </button>
+          {['Backtest', 'Hyperopt', 'FreqAI', 'Verification', 'AI Review'].map((type) => {
+            const count = mockTests.filter((t) => t.type === type as Test['type']).length;
+            return (
+              <button
+                key={type}
+                onClick={() => {
+                  setFilterType(type as TestType);
                   setCurrentPage(1);
                 }}
-                className="w-full bg-[#12121c] border border-[#1e1e30] rounded px-3 py-2 text-sm text-[#f0f0f5] focus:outline-none focus:border-[#6366f1]"
+                className={`px-[12px] py-[4px] rounded-full text-[11px] font-semibold uppercase tracking-[0.5px] border transition ${
+                  filterType === type
+                    ? 'bg-accent border-accent text-white'
+                    : 'bg-transparent border-border text-text-2 hover:text-text-1'
+                }`}
               >
-                <option value="All">All Types</option>
-                <option value="Backtest">Backtest</option>
-                <option value="Hyperopt">Hyperopt</option>
-                <option value="FreqAI">FreqAI</option>
-                <option value="Verification">Verification</option>
-                <option value="AI Review">AI Review</option>
-              </select>
-            </div>
-
-            {/* Search */}
-            <div>
-              <label className="block text-xs font-semibold text-[#808098] mb-2">
-                Search
-              </label>
-              <div className="relative">
-                <Search
-                  size={16}
-                  className="absolute left-3 top-2.5 text-[#808098]"
-                />
-                <input
-                  type="text"
-                  placeholder="Test name..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full bg-[#12121c] border border-[#1e1e30] rounded pl-9 pr-3 py-2 text-sm text-[#f0f0f5] placeholder-[#55556a] focus:outline-none focus:border-[#6366f1]"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Results count */}
-          <div className="text-xs text-[#808098] mt-3">
-            {sorted.length} test{sorted.length !== 1 ? 's' : ''} •{' '}
-            {paged.length === 0 ? 'No results' : `Page ${currentPage} of ${totalPages}`}
-          </div>
+                {type} ({count})
+              </button>
+            );
+          })}
         </div>
 
-        {/* Table */}
-        <div className="flex-1 overflow-auto">
-          <table className="w-full text-sm border-collapse">
-            <thead className="sticky top-0 bg-[#0c0c14] border-b border-[#1e1e30]">
-              <tr>
-                <th className="w-8 px-4 py-3 text-left text-[#808098] font-semibold">
-                  ★
-                </th>
-                <th className="px-4 py-3 text-left text-[#808098] font-semibold">
-                  Name
-                </th>
-                <th className="px-4 py-3 text-left text-[#808098] font-semibold">
-                  Type
-                </th>
-                <th className="px-4 py-3 text-left text-[#808098] font-semibold">
-                  Date
-                </th>
-                <th className="px-4 py-3 text-left text-[#808098] font-semibold">
-                  Timerange
-                </th>
-                <th className="px-4 py-3 text-right text-[#808098] font-semibold">
-                  Trades
-                </th>
-                <th className="px-4 py-3 text-right text-[#808098] font-semibold">
-                  Profit%
-                </th>
-                <th className="px-4 py-3 text-right text-[#808098] font-semibold">
-                  Max DD
-                </th>
-                <th className="px-4 py-3 text-right text-[#808098] font-semibold">
-                  Sharpe
-                </th>
-                <th className="px-4 py-3 text-left text-[#808098] font-semibold">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {paged.map((test) => (
-                <React.Fragment key={test.id}>
-                  <tr
-                    className="border-b border-[#1e1e30] hover:bg-[#12121c] cursor-pointer transition"
-                    onClick={() =>
-                      setExpandedId(
-                        expandedId === test.id ? null : test.id
-                      )
-                    }
-                  >
-                    <td className="w-8 px-4 py-3">
-                      {test.isPromoted && (
-                        <Star size={16} className="text-amber-400 fill-amber-400" />
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-[#f0f0f5] font-medium truncate max-w-xs">
-                      {test.name}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-block px-2 py-1 rounded text-xs font-semibold ${typeColor(
-                          test.type
-                        )}`}
-                      >
-                        {test.type}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-[#c0c0d0]">
-                      {fmtDateTime(test.date.toISOString())}
-                    </td>
-                    <td className="px-4 py-3 text-[#c0c0d0]">
-                      {test.timerange}
-                    </td>
-                    <td className="px-4 py-3 text-right text-[#c0c0d0]">
-                      {test.trades}
-                    </td>
-                    <td className={`px-4 py-3 text-right font-semibold`}>
-                      <span className={profitColor(test.profit)}>
-                        {fmtPct(test.profit)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right text-red-400">
-                      {fmtPct(-test.maxDD)}
-                    </td>
-                    <td className="px-4 py-3 text-right text-[#c0c0d0]">
-                      {test.sharpe.toFixed(2)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-block px-2 py-1 rounded text-xs font-semibold ${statusColor(
-                          test.status
-                        )}`}
-                      >
-                        {test.status === 'running' && (
-                          <>
-                            <span className="inline-block w-2 h-2 bg-blue-400 rounded-full animate-pulse mr-1" />
-                            Running
-                          </>
-                        )}
-                        {test.status === 'completed' && 'Completed'}
-                        {test.status === 'promoted' && 'Promoted'}
-                        {test.status === 'failed' && 'Failed'}
-                      </span>
-                    </td>
-                  </tr>
+        {/* Status filters */}
+        <div className="flex gap-[8px]">
+          {(['All', 'Running', 'Done', 'Failed'] as const).map((status) => {
+            let count = mockTests.length;
+            if (status === 'Running') count = mockTests.filter((t) => t.status === 'running').length;
+            else if (status === 'Done') count = mockTests.filter((t) => t.status === 'completed').length;
+            else if (status === 'Failed') count = mockTests.filter((t) => t.status === 'failed').length;
 
-                  {/* Expanded Row */}
-                  {expandedId === test.id && (
-                    <tr className="border-b border-[#1e1e30] bg-[#1a1a28]">
-                      <td colSpan={10} className="px-4 py-4">
-                        <div className="flex gap-3">
-                          <button className="px-3 py-1.5 bg-[#6366f1] hover:bg-[#5558e3] text-white text-xs font-semibold rounded transition">
-                            → Verify
-                          </button>
-                          <button className="px-3 py-1.5 bg-[#f59e0b] hover:bg-[#d97706] text-white text-xs font-semibold rounded transition">
-                            Promote ★
-                          </button>
-                          <button className="px-3 py-1.5 bg-[#12121c] border border-[#1e1e30] hover:border-[#6366f1] text-[#c0c0d0] hover:text-[#f0f0f5] text-xs font-semibold rounded transition">
-                            Compare
-                          </button>
-                          <button className="px-3 py-1.5 bg-[#12121c] border border-[#1e1e30] hover:border-[#6366f1] text-[#c0c0d0] hover:text-[#f0f0f5] text-xs font-semibold rounded transition">
-                            → Analysis
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
+            return (
+              <button
+                key={status}
+                onClick={() => {
+                  setFilterStatus(status as StatusFilter);
+                  setCurrentPage(1);
+                }}
+                className={`px-[12px] py-[4px] rounded-full text-[11px] font-semibold uppercase tracking-[0.5px] border transition ${
+                  filterStatus === status
+                    ? 'bg-accent border-accent text-white'
+                    : 'bg-transparent border-border text-text-2 hover:text-text-1'
+                }`}
+              >
+                {status === 'All' ? `All (${count})` : `${status} (${count})`}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Pagination */}
-        <div className="border-t border-[#1e1e30] px-6 py-4 flex items-center justify-between">
-          <div className="text-xs text-[#808098]">
-            Showing {start + 1} to {Math.min(start + itemsPerPage, sorted.length)} of{' '}
-            {sorted.length}
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-1.5 bg-[#12121c] border border-[#1e1e30] rounded text-[#c0c0d0] hover:text-[#f0f0f5] disabled:opacity-50 disabled:cursor-not-allowed transition text-xs font-semibold"
-            >
-              Previous
-            </button>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
-                const page = i + 1;
-                return (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-2.5 py-1.5 rounded text-xs font-semibold transition ${
-                      page === currentPage
-                        ? 'bg-[#6366f1] text-white'
-                        : 'bg-[#12121c] border border-[#1e1e30] text-[#c0c0d0] hover:text-[#f0f0f5]'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                );
-              })}
-              {totalPages > 5 && (
-                <span className="text-[#808098]">...</span>
-              )}
-            </div>
-            <button
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1.5 bg-[#12121c] border border-[#1e1e30] rounded text-[#c0c0d0] hover:text-[#f0f0f5] disabled:opacity-50 disabled:cursor-not-allowed transition text-xs font-semibold"
-            >
-              Next
-            </button>
-          </div>
+        {/* Count label */}
+        <div className="text-[11px] text-text-3 font-semibold">
+          {sorted.length} test{sorted.length !== 1 ? 's' : ''} for BollingerBreak
         </div>
       </div>
 
-      {/* Active Version Panel */}
-      <div className="w-72 border-l border-[#1e1e30] bg-gradient-to-b from-[#12121c] to-[#0c0c14] p-6 overflow-auto flex flex-col gap-6">
-        <div>
-          <h3 className="text-xs font-semibold text-[#808098] uppercase tracking-wide mb-4">
-            Active Version
-          </h3>
-          {promotedTest ? (
-            <div className="space-y-4">
-              {/* Version Info */}
-              <div className="bg-[#1a1a28] border border-[#1e1e30] rounded p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Star size={16} className="text-amber-400 fill-amber-400" />
-                  <span className="text-sm font-semibold text-[#f0f0f5]">
-                    v1.0
-                  </span>
-                </div>
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-[#808098]">Promoted</span>
-                    <span className="text-[#c0c0d0] font-medium">
-                      {fmtDateTime(promotedTest.date.toISOString())}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[#808098]">Source</span>
-                    <span className="text-[#c0c0d0] font-medium">
-                      {promotedTest.type}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Key Metrics */}
-              <div className="space-y-3">
-                <div className="bg-[#1a1a28] border border-[#1e1e30] rounded p-3">
-                  <div className="text-[#808098] text-xs mb-1">Total Profit</div>
-                  <div className={`text-lg font-bold ${profitColor(promotedTest.profit)}`}>
-                    {fmtPct(promotedTest.profit)}
-                  </div>
-                </div>
-
-                <div className="bg-[#1a1a28] border border-[#1e1e30] rounded p-3">
-                  <div className="text-[#808098] text-xs mb-1">Win Rate</div>
-                  <div className="text-lg font-bold text-green-400">64.1%</div>
-                </div>
-
-                <div className="bg-[#1a1a28] border border-[#1e1e30] rounded p-3">
-                  <div className="text-[#808098] text-xs mb-1">Max Drawdown</div>
-                  <div className="text-lg font-bold text-red-400">
-                    {fmtPct(-promotedTest.maxDD)}
-                  </div>
-                </div>
-
-                <div className="bg-[#1a1a28] border border-[#1e1e30] rounded p-3">
-                  <div className="text-[#808098] text-xs mb-1">Sharpe Ratio</div>
-                  <div className="text-lg font-bold text-[#6366f1]">
-                    {promotedTest.sharpe.toFixed(2)}
-                  </div>
-                </div>
-              </div>
-
-              {/* Status */}
-              <div className="bg-[#1a1a28] border border-green-500/30 rounded p-3">
-                <div className="text-xs text-green-400 font-semibold">
-                  ✓ Paper Trading · Day 12/30
-                </div>
-              </div>
+      {/* Active version card */}
+      {promotedTest && (
+        <div className="border-b border-border px-[16px] py-[12px]">
+          <div className="bg-[rgba(99,102,241,0.08)] border border-[rgba(99,102,241,0.25)] rounded-[6px] p-[12px]">
+            <div className="text-[10px] uppercase tracking-[0.5px] text-accent font-semibold mb-[8px]">
+              Active Version
             </div>
-          ) : (
-            <div className="text-[#808098] text-sm">No promoted version</div>
-          )}
-        </div>
-
-        {/* Pipeline Status */}
-        <div>
-          <h3 className="text-xs font-semibold text-[#808098] uppercase tracking-wide mb-4">
-            Pipeline Status
-          </h3>
-          <div className="space-y-3 text-xs">
-            <div className="bg-[#1a1a28] border border-[#1e1e30] rounded p-3">
-              <div className="font-semibold text-[#f0f0f5] mb-2">
-                BollingerBreak
+            <div className="text-[13px] font-semibold text-accent mb-[8px]">
+              v1.0 · CmaEs SortinoDaily params
+            </div>
+            <div className="text-[10px] text-text-2 mb-[12px]">
+              Promoted {fmtDateTime(promotedTest.date.toISOString())}
+            </div>
+            <div className="grid grid-cols-2 gap-[8px] text-[11px]">
+              <div>
+                <span className="text-text-3">Profit:</span>{' '}
+                <span className="text-green">{fmtPct(promotedTest.profit)}</span>
               </div>
-              <div className="space-y-2 text-[#c0c0d0]">
-                <div>
-                  ├── <span className="text-green-400">Backtest:</span> 5.2% profit
-                </div>
-                <div>
-                  ├── <span className="text-purple-400">Hyperopt:</span> Best 15.2%
-                </div>
-                <div>
-                  ├── <span className="text-cyan-400">FreqAI:</span> Best 13.8%
-                </div>
-                <div>
-                  ├── <span className="text-amber-400">AI Review:</span> 78/100
-                </div>
-                <div>
-                  ├── <span className="text-green-400">Verification:</span> PASS ✓
-                </div>
-                <div>
-                  └── <span className="text-amber-400">ACTIVE:</span> v1.0
-                </div>
+              <div>
+                <span className="text-text-3">Sharpe:</span>{' '}
+                <span className="text-accent">{promotedTest.sharpe.toFixed(2)}</span>
+              </div>
+              <div>
+                <span className="text-text-3">Win Rate:</span>{' '}
+                <span className="text-green">{promotedTest.winRate.toFixed(1)}%</span>
+              </div>
+              <div>
+                <span className="text-text-3">Max DD:</span>{' '}
+                <span className="text-red">{fmtPct(-promotedTest.maxDD)}</span>
               </div>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Version History Toggle */}
-        <button className="w-full px-4 py-2 bg-[#12121c] border border-[#1e1e30] hover:border-[#6366f1] rounded text-sm font-semibold text-[#c0c0d0] hover:text-[#f0f0f5] transition">
-          Version History
-        </button>
+      {/* Table */}
+      <div className="flex-1 overflow-auto">
+        <table className="w-full border-collapse">
+          <thead className="sticky top-0 bg-bg-1">
+            <tr>
+              <th className="w-[30px] py-[8px] px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                ★
+              </th>
+              <th className="py-[8px] px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap text-left">
+                Name
+              </th>
+              <th className="py-[8px] px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                Type
+              </th>
+              <th className="py-[8px] px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                Sampler
+              </th>
+              <th className="py-[8px] px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                Loss Fn
+              </th>
+              <th className="py-[8px] px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                Spaces
+              </th>
+              <th className="py-[8px] px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                Started
+              </th>
+              <th className="py-[8px] px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap text-right">
+                Trades
+              </th>
+              <th className="py-[8px] px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap text-right">
+                Win%
+              </th>
+              <th className="py-[8px] px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap text-right">
+                Profit%
+              </th>
+              <th className="py-[8px] px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap text-right">
+                Max DD
+              </th>
+              <th className="py-[8px] px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap text-right">
+                Sharpe
+              </th>
+              <th className="py-[8px] px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap text-right">
+                Sortino
+              </th>
+              <th className="py-[8px] px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                Status
+              </th>
+              <th className="py-[8px] px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold border-b border-border whitespace-nowrap">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {paged.map((test) => (
+              <tr key={test.id} className="border-b border-border/50 hover:bg-bg-2 transition">
+                <td className="py-[8px] px-[10px] text-[11px] text-text-1 whitespace-nowrap text-center">
+                  {test.isPromoted && <span className="text-green">⭐</span>}
+                </td>
+                <td className="py-[8px] px-[10px] text-[11px] text-text-1 whitespace-nowrap max-w-xs truncate font-semibold">
+                  {test.name}
+                </td>
+                <td className="py-[8px] px-[10px] text-[11px] whitespace-nowrap">
+                  <span
+                    className={`inline-flex items-center px-[8px] py-[2px] rounded-full text-[10px] font-semibold uppercase tracking-[0.5px] border ${typeClass(
+                      test.type
+                    )}`}
+                  >
+                    {test.type}
+                  </span>
+                </td>
+                <td className="py-[8px] px-[10px] text-[11px] text-text-1 whitespace-nowrap">
+                  {test.sampler || '—'}
+                </td>
+                <td className="py-[8px] px-[10px] text-[11px] text-text-1 whitespace-nowrap">
+                  {test.lossFn || '—'}
+                </td>
+                <td className="py-[8px] px-[10px] text-[11px] text-text-2 whitespace-nowrap text-xs">
+                  {test.spaces ? test.spaces.split(',').slice(0, 2).join(', ') : '—'}
+                </td>
+                <td className="py-[8px] px-[10px] text-[11px] text-text-1 whitespace-nowrap font-mono text-[10px]">
+                  {fmtDateTime(test.date.toISOString()).split(' ').join('\n')}
+                </td>
+                <td className="py-[8px] px-[10px] text-[11px] text-text-1 whitespace-nowrap text-right font-mono">
+                  {test.trades}
+                </td>
+                <td className="py-[8px] px-[10px] text-[11px] text-text-1 whitespace-nowrap text-right font-mono">
+                  {test.winRate > 0 ? `${test.winRate.toFixed(1)}%` : '—'}
+                </td>
+                <td className="py-[8px] px-[10px] text-[11px] whitespace-nowrap text-right font-semibold">
+                  <span className={profitColor(test.profit)}>
+                    {fmtPct(test.profit)}
+                  </span>
+                </td>
+                <td className="py-[8px] px-[10px] text-[11px] text-red whitespace-nowrap text-right font-mono">
+                  {fmtPct(-test.maxDD)}
+                </td>
+                <td className="py-[8px] px-[10px] text-[11px] text-accent whitespace-nowrap text-right font-mono">
+                  {test.sharpe > 0 ? test.sharpe.toFixed(2) : '—'}
+                </td>
+                <td className="py-[8px] px-[10px] text-[11px] text-text-1 whitespace-nowrap text-right font-mono">
+                  {test.sortino > 0 ? test.sortino.toFixed(2) : '—'}
+                </td>
+                <td className="py-[8px] px-[10px] text-[11px] whitespace-nowrap">
+                  <span
+                    className={`inline-flex items-center px-[8px] py-[2px] rounded-full text-[10px] font-semibold uppercase tracking-[0.5px] border ${statusClass(
+                      test.status
+                    )}`}
+                  >
+                    {test.status === 'running' && (
+                      <>
+                        <span className="inline-block w-[6px] h-[6px] bg-accent rounded-full animate-pulse mr-[4px]" />
+                        Running
+                      </>
+                    )}
+                    {test.status === 'completed' && 'Completed'}
+                    {test.status === 'failed' && 'Failed'}
+                  </span>
+                </td>
+                <td className="py-[8px] px-[10px] text-[11px] whitespace-nowrap">
+                  <button className="inline-flex items-center gap-[4px] px-[10px] py-[4px] bg-accent hover:bg-[#5558e6] text-white rounded-btn text-[11px] font-medium border border-accent transition">
+                    View
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="border-t border-border px-[16px] py-[12px] flex items-center justify-between">
+        <div className="text-[11px] text-text-2">
+          Showing {start + 1} to {Math.min(start + itemsPerPage, sorted.length)} of{' '}
+          {sorted.length}
+        </div>
+        <div className="flex gap-[8px] items-center">
+          <button
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+            className="inline-flex items-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border border-border bg-bg-2 text-text-1 hover:text-text-0 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          >
+            ← Prev
+          </button>
+          <div className="flex gap-[4px] items-center">
+            {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+              const page = i + 1;
+              return (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`inline-flex items-center gap-[6px] py-[6px] px-[10px] rounded-btn text-[12px] font-medium border transition ${
+                    page === currentPage
+                      ? 'bg-accent border-accent text-white'
+                      : 'border-border bg-bg-2 text-text-1 hover:text-text-0'
+                  }`}
+                >
+                  {page}
+                </button>
+              );
+            })}
+            {totalPages > 5 && <span className="text-[12px] text-text-3">...</span>}
+          </div>
+          <button
+            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+            disabled={currentPage === totalPages}
+            className="inline-flex items-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border border-border bg-bg-2 text-text-1 hover:text-text-0 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          >
+            Next →
+          </button>
+        </div>
       </div>
     </div>
   );

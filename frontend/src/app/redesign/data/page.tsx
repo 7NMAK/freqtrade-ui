@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useApi } from "@/lib/useApi";
 import { getBots, botListData, botDownloadData, botAvailablePairs } from "@/lib/api";
-import { Bot } from "@/types";
 
 /* ══════════════════════════════════════
    DATA — Data Management & Utilities
@@ -39,8 +38,6 @@ interface DataRow {
   size: string;
 }
 
-const INITIAL_DATA: DataRow[] = [];
-
 export default function DataPage() {
   const { data: botsList } = useApi(getBots, []);
   const bots = botsList || [];
@@ -61,7 +58,6 @@ export default function DataPage() {
   const [dataRows, setDataRows] = useState<DataRow[]>([]);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const consoleRef = useRef<HTMLDivElement>(null);
 
   // Download form state
@@ -71,11 +67,10 @@ export default function DataPage() {
   const [dlDateTo, setDlDateTo] = useState("");
   const [dlPairs, setDlPairs] = useState<string[]>([]);
   const [addingPair, setAddingPair] = useState(false);
-  const [newPairInput, setNewPairInput] = useState("");
 
   useEffect(() => {
     if (downloadedData?.data) {
-      setDataRows(downloadedData.data.map((d: any, i: number) => ({
+      setDataRows(downloadedData.data.map((d: { pair: string; timeframe: string; start: string; end: string; candle_count?: number }, i: number) => ({
         id: i,
         pair: d.pair,
         tf: d.timeframe,
@@ -142,21 +137,6 @@ export default function DataPage() {
     }
   };
 
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    setOutput(prev => prev + "$ Refreshing data list...\n");
-    setIsRefreshing(false);
-    setOutput(prev => prev + "Data list refreshed.\n\n");
-  };
-
-  const addPair = () => {
-    const pair = newPairInput.trim().toUpperCase();
-    if (pair && !dlPairs.includes(pair)) {
-      setDlPairs(prev => [...prev, pair]);
-    }
-    setNewPairInput("");
-    setAddingPair(false);
-  };
 
   return (
     <>

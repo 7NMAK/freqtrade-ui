@@ -17,17 +17,16 @@ import {
 } from "@/components/ui/table";
 import { useApi } from "@/lib/useApi";
 import { getBots, getStrategies, botBacktestHistory, botBacktestStart, botAvailablePairs } from "@/lib/api";
-import { Bot, Strategy } from "@/types";
+import { Strategy } from "@/types";
 
 /* ══════════════════════════════════════
    BACKTESTING — Backtest / Hyperopt / Validation
    ══════════════════════════════════════ */
 
 /* ── Backtest Config Tab ── */
-function BacktestConfig({ state, setState, bots, strategies, availablePairs }: {
+function BacktestConfig({ state, setState, strategies, availablePairs }: {
   state: BacktestState;
   setState: React.Dispatch<React.SetStateAction<BacktestState>>;
-  bots: Bot[];
   strategies: Strategy[];
   availablePairs: string[];
 }) {
@@ -649,7 +648,7 @@ export default function BacktestingPage() {
 
   useEffect(() => {
     if (backtestHistoryData?.results) {
-      const runs = backtestHistoryData.results.map((r: any) => ({
+      const runs = backtestHistoryData.results.map((r: { backtest_start_time: number; strategy: string; notes?: string }) => ({
         time: new Date(r.backtest_start_time * 1000).toLocaleString(),
         strategy: r.strategy,
         result: r.notes || "Completed",
@@ -768,7 +767,7 @@ export default function BacktestingPage() {
                 </div>
               </CardHeader>
               <CardContent className="p-5">
-                <TabsContent value="backtest" className="mt-0"><BacktestConfig state={btState} setState={setBtState} bots={bots} strategies={strategies} availablePairs={availablePairs} /></TabsContent>
+                <TabsContent value="backtest" className="mt-0"><BacktestConfig state={btState} setState={setBtState} strategies={strategies} availablePairs={availablePairs} /></TabsContent>
                 <TabsContent value="hyperopt" className="mt-0"><HyperoptConfig state={hoState} setState={setHoState} /></TabsContent>
                 <TabsContent value="validation" className="mt-0"><ValidationConfig /></TabsContent>
               </CardContent>

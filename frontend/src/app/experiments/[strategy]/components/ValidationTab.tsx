@@ -1,524 +1,536 @@
 'use client';
 
 import { useState } from 'react';
-import { AlertCircle, CheckCircle, Zap } from 'lucide-react';
 import Tooltip from '@/components/ui/Tooltip';
 
-interface ExperimentSource {
-  id: string;
-  name: string;
-  description: string;
-  profit: number;
-}
-
-interface VerificationResult {
-  status: 'PASSED' | 'FAILED' | 'WARNING';
-  metrics: {
-    name: string;
-    trainingValue: string | number;
-    newDataValue: string | number;
-    difference: string;
-    grade: 'pass' | 'warning' | 'fail';
-  }[];
-}
-
-interface LookaheadResult {
-  status: 'PASS' | 'FAIL';
-  checks: {
-    name: string;
-    result: 'YES' | 'NO';
-    explanation: string;
-  }[];
-}
-
-interface RecursiveResult {
-  status: 'PASS' | 'FAIL';
-  message: string;
-}
-
-const mockExperiments: ExperimentSource[] = [
+// Mock data for source experiments
+const mockExperiments = [
   {
     id: 'exp-001',
-    name: 'CmaEs SortinoDaily — Signals Only',
-    description: 'Best hyperparameter combination',
-    profit: 15.2,
+    name: 'CmaEs · SortinoDaily · +15.2%',
+    sampler: 'CmaEs',
+    lossFunction: 'SortinoDaily',
+    entrySignals: 'Signals Only',
+    exitType: 'Market Close',
   },
   {
     id: 'exp-002',
-    name: 'TPE Sharpe',
-    description: 'Alternative with good consistency',
-    profit: 12.1,
+    name: 'TPE · Sharpe · +12.1%',
+    sampler: 'TPE',
+    lossFunction: 'Sharpe',
+    entrySignals: 'Signals Only',
+    exitType: 'Market Close',
   },
   {
     id: 'exp-003',
-    name: 'LightGBMReg DI PCA',
-    description: 'Machine learning model variant',
-    profit: 13.8,
+    name: 'LightGBM+DI · +13.8%',
+    sampler: 'CmaEs',
+    lossFunction: 'MultiMetric',
+    entrySignals: 'Signals Only',
+    exitType: 'Market Close',
+  },
+  {
+    id: 'exp-004',
+    name: 'PSO · Calmar · +11.9%',
+    sampler: 'PSO',
+    lossFunction: 'Calmar',
+    entrySignals: 'Signals Only',
+    exitType: 'Market Close',
+  },
+  {
+    id: 'exp-005',
+    name: 'SKOPT · Profit Factor · +14.2%',
+    sampler: 'SKOPT',
+    lossFunction: 'ProfitDrawDown',
+    entrySignals: 'Signals Only',
+    exitType: 'Market Close',
   },
 ];
 
-const mockVerificationResult: VerificationResult = {
-  status: 'PASSED',
-  metrics: [
-    { name: 'Total Trades', trainingValue: 156, newDataValue: 142, difference: '-9.0%', grade: 'pass' },
-    { name: 'Win Rate', trainingValue: '64.1%', newDataValue: '61.8%', difference: '-2.3pp', grade: 'pass' },
-    { name: 'Profit%', trainingValue: '15.2%', newDataValue: '11.3%', difference: '-25.7%', grade: 'pass' },
-    { name: 'Max Drawdown', trainingValue: '8.4%', newDataValue: '9.8%', difference: '+16.7%', grade: 'pass' },
-    { name: 'Sharpe', trainingValue: '1.52', newDataValue: '1.28', difference: '-15.8%', grade: 'pass' },
-    { name: 'Sortino', trainingValue: '2.14', newDataValue: '1.76', difference: '-17.8%', grade: 'pass' },
-    { name: 'Avg Duration', trainingValue: '2.1d', newDataValue: '2.4d', difference: '+14.3%', grade: 'warning' },
-  ],
-};
+// Verification metrics with pass verdict
+const verificationMetrics = [
+  { name: 'Trades', training: '156', new: '142', diff: '-14 (-9.0%)', badge: 'pass' },
+  { name: 'Win Rate', training: '64.1%', new: '59.8%', diff: '-4.3pp', badge: 'pass', badge_text: '✓ <15pp' },
+  { name: 'Profit%', training: '15.2%', new: '11.3%', diff: '-25.7% drop', badge: 'pass', badge_text: '✓ <50%' },
+  { name: 'Max DD', training: '-8.4%', new: '-9.8%', diff: '+16.7% increase', badge: 'pass', badge_text: '✓ <30%' },
+  { name: 'Sharpe Ratio', training: '1.52', new: '1.28', diff: '-0.24', badge: 'pass' },
+  { name: 'Sortino Ratio', training: '2.14', new: '1.76', diff: '-0.38', badge: 'pass' },
+  { name: 'Avg Duration', training: '2d 4h', new: '2d 8h', diff: '+4h', badge: 'info' },
+];
 
-const mockLookaheadResult: LookaheadResult = {
-  status: 'PASS',
-  checks: [
-    {
-      name: 'Looks ahead?',
-      result: 'NO',
-      explanation: 'Strategy does not use future data',
-    },
-    {
-      name: 'Problem entry signals',
-      result: 'NO',
-      explanation: 'No entry signals use future data',
-    },
-    {
-      name: 'Problem exit signals',
-      result: 'NO',
-      explanation: 'No exit signals use future data',
-    },
-    {
-      name: 'Problem indicators',
-      result: 'NO',
-      explanation: 'No indicators use future data',
-    },
-  ],
-};
+// Lookahead signal types
+const lookaheadSignals = [
+  { name: 'enter_long', status: 'PASS', details: 'Uses close[0], rsi[0], bb_bands[0] only' },
+  { name: 'enter_short', status: 'PASS', details: 'Uses close[0], macd[0] only' },
+  { name: 'exit_long', status: 'PASS', details: 'Uses current stoploss + roi levels' },
+  { name: 'exit_short', status: 'PASS', details: 'No lookahead detected' },
+];
 
-const mockRecursiveResult: RecursiveResult = {
-  status: 'PASS',
-  message: 'No recursive dependencies — indicators are independent',
-};
-
-const VerdictBanner: React.FC<{ status: 'PASSED' | 'FAILED' | 'WARNING' }> = ({ status }) => {
-  const config = {
-    PASSED: {
-      icon: '✅',
-      text: 'PASSED',
-      description: 'Strategy performs well on new data — ready for Paper Trading',
-      bgColor: 'bg-[#062b1b]',
-      borderColor: 'border-[#22c55e]/30',
-      textColor: 'text-[#22c55e]',
-    },
-    FAILED: {
-      icon: '❌',
-      text: 'FAILED',
-      description: 'Strategy performance degraded significantly on new data',
-      bgColor: 'bg-[#2b0606]',
-      borderColor: 'border-[#ef4444]/30',
-      textColor: 'text-[#ef4444]',
-    },
-    WARNING: {
-      icon: '⚠️',
-      text: 'WARNING',
-      description: 'Strategy passed but with some concerns',
-      bgColor: 'bg-[#2b2006]',
-      borderColor: 'border-[#f59e0b]/30',
-      textColor: 'text-[#f59e0b]',
-    },
-  };
-
-  const cfg = config[status];
-
-  return (
-    <div className={`${cfg.bgColor} border ${cfg.borderColor} rounded-lg p-6 mb-6`}>
-      <div className="flex items-center gap-4">
-        <div className="text-4xl">{cfg.icon}</div>
-        <div className="flex-1">
-          <div className={`text-lg font-bold ${cfg.textColor}`}>{cfg.text}</div>
-          <div className="text-sm text-text-1 mt-1">{cfg.description}</div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const MetricsTable: React.FC<{ metrics: VerificationResult['metrics'] }> = ({ metrics }) => {
-  const gradeIcon = {
-    pass: '✓',
-    warning: '⚠',
-    fail: '✗',
-  };
-
-  const gradeColor = {
-    pass: 'text-[#22c55e]',
-    warning: 'text-[#f59e0b]',
-    fail: 'text-[#ef4444]',
-  };
-
-  return (
-    <div className="bg-bg-2 border border-[#1e1e30] rounded-lg overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-2xs">
-          <thead className="bg-bg-3 border-b border-[#1e1e30]">
-            <tr>
-              <th className="px-4 py-3 text-left text-text-2 font-semibold">Metric</th>
-              <th className="px-4 py-3 text-center text-text-2 font-semibold">
-                <Tooltip content="Data strategy was trained and optimized on">
-                  <span>Training Data</span>
-                </Tooltip>
-              </th>
-              <th className="px-4 py-3 text-center text-text-2 font-semibold">
-                <Tooltip content="Data strategy has never seen — the real test">
-                  <span>New Data</span>
-                </Tooltip>
-              </th>
-              <th className="px-4 py-3 text-center text-text-2 font-semibold">Difference</th>
-              <th className="px-4 py-3 text-center text-text-2 font-semibold">Grade</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#1e1e30]">
-            {metrics.map((metric, idx) => (
-              <tr key={idx} className="hover:bg-bg-3 transition-colors">
-                <td className="px-4 py-3 text-text-0 font-semibold">{metric.name}</td>
-                <td className="px-4 py-3 text-center text-text-1">{metric.trainingValue}</td>
-                <td className="px-4 py-3 text-center text-accent font-semibold">{metric.newDataValue}</td>
-                <td className="px-4 py-3 text-center text-text-2">{metric.difference}</td>
-                <td className={`px-4 py-3 text-center font-bold ${gradeColor[metric.grade]}`}>
-                  {gradeIcon[metric.grade]}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
-
-const LookaheadTable: React.FC<{ checks: LookaheadResult['checks'] }> = ({ checks }) => {
-  return (
-    <div className="bg-bg-2 border border-[#1e1e30] rounded-lg overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-2xs">
-          <thead className="bg-bg-3 border-b border-[#1e1e30]">
-            <tr>
-              <th className="px-4 py-3 text-left text-text-2 font-semibold">Check</th>
-              <th className="px-4 py-3 text-left text-text-2 font-semibold">Result</th>
-              <th className="px-4 py-3 text-left text-text-2 font-semibold">Explanation</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#1e1e30]">
-            {checks.map((check, idx) => (
-              <tr key={idx} className="hover:bg-bg-3 transition-colors">
-                <td className="px-4 py-3 text-text-0 font-semibold">{check.name}</td>
-                <td className="px-4 py-3">
-                  <span className="inline-block px-2 py-1 bg-[#062b1b] border border-[#22c55e]/30 rounded text-[#22c55e] font-semibold">
-                    {check.result === 'NO' ? '✅ NO' : '❌ YES'}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-text-2">{check.explanation}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
+// Recursive analysis indicators
+const recursiveIndicators = [
+  { name: 'RSI(14)', depends: 'close only', status: 'PASS' },
+  { name: 'BB(20, 2)', depends: 'close only', status: 'PASS' },
+  { name: 'MACD(12, 26, 9)', depends: 'close only', status: 'PASS' },
+  { name: 'EMA(50)', depends: 'close only', status: 'PASS' },
+];
 
 export default function ValidationTab({}: { strategy?: string }) {
-  const [sourceExperiment, setSourceExperiment] = useState(mockExperiments[0].id);
+  const [sourceExperiment, setSourceExperiment] = useState('exp-001');
   const [verificationName, setVerificationName] = useState('OOS 2025 verify CmaEs');
   const [description, setDescription] = useState('');
-  const [startDate, setStartDate] = useState('2024-01-01T00:00:00Z');
-  const [endDate, setEndDate] = useState('2025-01-01T00:00:00Z');
+  const [startDate, setStartDate] = useState('2025-01-01');
+  const [endDate, setEndDate] = useState('2026-01-01');
   const [isRunning, setIsRunning] = useState(false);
-  const [hasRun, setHasRun] = useState(true); // Set true to show mock results
+  const [hasRun, setHasRun] = useState(true);
   const [lookaheadRun, setLookaheadRun] = useState(true);
   const [recursiveRun, setRecursiveRun] = useState(true);
 
-  const selectedExperiment = mockExperiments.find((e) => e.id === sourceExperiment)!;
+  const selectedExp = mockExperiments.find((e) => e.id === sourceExperiment);
 
   const handleRunVerification = () => {
     setIsRunning(true);
-    // Placeholder pending backend integration
-    setIsRunning(false);
-    setHasRun(true);
+    setTimeout(() => {
+      setIsRunning(false);
+      setHasRun(true);
+    }, 500);
   };
 
   const handleRunLookahead = () => {
     setIsRunning(true);
-    // Placeholder pending backend integration
-    setIsRunning(false);
-    setLookaheadRun(true);
+    setTimeout(() => {
+      setIsRunning(false);
+      setLookaheadRun(true);
+    }, 500);
   };
 
   const handleRunRecursive = () => {
     setIsRunning(true);
-    // Placeholder pending backend integration
-    setIsRunning(false);
-    setRecursiveRun(true);
+    setTimeout(() => {
+      setIsRunning(false);
+      setRecursiveRun(true);
+    }, 500);
   };
 
   return (
-    <div className="space-y-8 pb-12">
-      {/* SECTION 1: Verification Backtest */}
-      <section>
-        <h2 className="text-base font-bold text-text-0 mb-6">Verification Backtest</h2>
+    <div className="space-y-4 pb-12">
+      {/* ===== SECTION 1: VERIFICATION BACKTEST ===== */}
+      <div className="bg-bg-1 border border-border rounded-card p-4">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-[13px] font-semibold text-text-0">1. Verification Backtest</span>
+        </div>
 
-        <div className="space-y-5 mb-6">
-          {/* Source Experiment */}
+        <div className="space-y-3 mb-4">
+          {/* Source Test */}
           <div>
-            <label className="block text-2xs font-semibold text-text-1 mb-2">Source Experiment</label>
+            <label className="form-label">Source Test</label>
             <select
               value={sourceExperiment}
               onChange={(e) => setSourceExperiment(e.target.value)}
-              className="w-full px-3 py-2 bg-bg-3 border border-[#1e1e30] rounded-md text-2xs text-text-0 placeholder-text-3 focus:outline-none focus:border-accent transition-colors"
+              className="form-input w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
             >
               {mockExperiments.map((exp) => (
                 <option key={exp.id} value={exp.id}>
-                  {exp.name} — {exp.profit > 0 ? '+' : ''}{exp.profit.toFixed(1)}% profit
+                  {exp.name}
                 </option>
               ))}
             </select>
-            <p className="text-2xs text-text-3 mt-2">{selectedExperiment.description}</p>
           </div>
 
           {/* Verification Name */}
           <div>
-            <label className="block text-2xs font-semibold text-text-1 mb-2">Verification Name</label>
+            <label className="form-label">Verification Name</label>
             <input
               type="text"
               value={verificationName}
               onChange={(e) => setVerificationName(e.target.value)}
-              className="w-full px-3 py-2 bg-bg-3 border border-[#1e1e30] rounded-md text-2xs text-text-0 placeholder-text-3 focus:outline-none focus:border-accent transition-colors"
-              placeholder="e.g., OOS 2025 verify CmaEs"
+              className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-2xs font-semibold text-text-1 mb-2">Description (optional)</label>
-            <textarea
+            <label className="form-label">Description (Optional)</label>
+            <input
+              type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 bg-bg-3 border border-[#1e1e30] rounded-md text-2xs text-text-0 placeholder-text-3 focus:outline-none focus:border-accent transition-colors resize-none"
-              rows={2}
-              placeholder="Add notes about this verification test"
+              placeholder="Add notes about this verification..."
+              className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 placeholder:text-text-3 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
             />
           </div>
 
           {/* Date Range */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-2xs font-semibold text-text-1 mb-2">Start Date</label>
+              <label className="form-label">Start Date</label>
               <input
-                type="datetime-local"
-                value={startDate.slice(0, 16)}
-                onChange={(e) => setStartDate(e.target.value + 'Z')}
-                className="w-full px-3 py-2 bg-bg-3 border border-[#1e1e30] rounded-md text-2xs text-text-0 focus:outline-none focus:border-accent transition-colors"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
               />
             </div>
             <div>
-              <label className="block text-2xs font-semibold text-text-1 mb-2">End Date</label>
+              <label className="form-label">End Date</label>
               <input
-                type="datetime-local"
-                value={endDate.slice(0, 16)}
-                onChange={(e) => setEndDate(e.target.value + 'Z')}
-                className="w-full px-3 py-2 bg-bg-3 border border-[#1e1e30] rounded-md text-2xs text-text-0 focus:outline-none focus:border-accent transition-colors"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full py-2 px-3 bg-bg-3 border border-border rounded-btn text-[12.5px] text-text-0 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
               />
             </div>
           </div>
 
           {/* Warning Box */}
-          <div className="bg-[#2b2006] border border-[#f59e0b]/30 rounded-lg p-4 flex gap-3">
-            <AlertCircle size={18} className="text-[#f59e0b] flex-shrink-0 mt-0.5" />
-            <div className="text-2xs text-text-2">
-              <p className="font-semibold text-[#f59e0b] mb-1">Use a DIFFERENT time period from training!</p>
-              <p>
-                Training period for selected test: <span className="text-text-0 font-semibold">2022-01-01 → 2024-01-01</span>
-              </p>
-              <p className="mt-1">
+          <div className="bg-[rgba(245,158,11,0.08)] border border-[rgba(245,158,11,0.25)] rounded-btn px-3 py-2">
+            <div className="flex gap-2">
+              <span className="text-amber mt-0.5">⚠</span>
+              <div className="text-[11px] text-text-2 leading-relaxed">
+                <strong className="text-amber">Use a DIFFERENT time period from training!</strong>
+                <br />
+                <Tooltip content="Out-of-sample validation tests performance on data the strategy never saw during optimization. Must use a different date range.">
+                  <span className="hover:underline cursor-help">Training period</span>
+                </Tooltip>
+                {' for selected test: '}
+                <span className="font-mono text-text-0">2022-01-01 to 2024-01-01</span>
+                <br />
                 Recommended verification period:{' '}
-                <span className="text-accent font-semibold">2024-01-01 → 2025-01-01</span>
-              </p>
-              <Tooltip content="If you test on the same data strategy was trained on, verification is meaningless — like asking a student answers to the same test they already solved">
-                <button className="text-accent hover:text-[#5558e3] mt-2 text-2xs font-semibold">
-                  Why does this matter?
-                </button>
-              </Tooltip>
+                <span className="font-mono text-green">2024-01-01 to 2025-01-01</span>
+              </div>
             </div>
           </div>
 
-          {/* Readonly Optimized Parameters */}
-          <div className="bg-bg-3 border border-[#1e1e30] rounded-lg p-4">
-            <h4 className="text-2xs font-semibold text-text-1 mb-3">Optimized Parameters (from selected source)</h4>
-            <div className="grid grid-cols-2 gap-4 text-2xs">
-              <div className="bg-bg-2 border border-[#1e1e30] rounded p-3">
-                <span className="text-text-2">Sampler:</span>
-                <p className="text-text-0 font-semibold mt-1">CmaEs</p>
-              </div>
-              <div className="bg-bg-2 border border-[#1e1e30] rounded p-3">
-                <span className="text-text-2">Loss Function:</span>
-                <p className="text-text-0 font-semibold mt-1">SortinoDaily</p>
-              </div>
-              <div className="bg-bg-2 border border-[#1e1e30] rounded p-3">
-                <span className="text-text-2">Entry Signals:</span>
-                <p className="text-text-0 font-semibold mt-1">Signals Only</p>
-              </div>
-              <div className="bg-bg-2 border border-[#1e1e30] rounded p-3">
-                <span className="text-text-2">Exit Type:</span>
-                <p className="text-text-0 font-semibold mt-1">Market Close</p>
-              </div>
+          {/* Optimized Parameters (Readonly) */}
+          <div className="bg-bg-2 border border-border rounded-btn p-3">
+            <div className="text-[10px] text-text-3 uppercase tracking-[0.5px] font-semibold mb-2">
+              Optimized Parameters (Readonly)
             </div>
+            {selectedExp && (
+              <table className="w-full text-[11px]">
+                <tbody>
+                  <tr>
+                    <td className="py-1 px-2">sampler</td>
+                    <td className="py-1 px-2 text-right text-accent">{selectedExp.sampler}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-1 px-2">loss_function</td>
+                    <td className="py-1 px-2 text-right text-accent">{selectedExp.lossFunction}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-1 px-2">entry_signals</td>
+                    <td className="py-1 px-2 text-right text-accent">{selectedExp.entrySignals}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-1 px-2">exit_type</td>
+                    <td className="py-1 px-2 text-right text-accent">{selectedExp.exitType}</td>
+                  </tr>
+                </tbody>
+              </table>
+            )}
           </div>
 
           {/* Run Button */}
           <button
             onClick={handleRunVerification}
             disabled={isRunning}
-            className="w-full px-4 py-3 bg-accent hover:bg-[#5558e3] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2"
+            className="w-full inline-flex items-center justify-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-accent border-accent text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isRunning ? (
               <>
-                <div className="animate-spin">
-                  <Zap size={14} />
-                </div>
+                <div className="animate-spin text-sm">⟳</div>
                 Running Verification Backtest...
               </>
             ) : (
               <>
-                <Zap size={14} />
-                Run Verification Backtest
+                ▶ Run Verification Backtest
               </>
             )}
           </button>
         </div>
 
-        {/* Results */}
+        {/* ===== VERIFICATION RESULTS ===== */}
         {hasRun && (
-          <div className="space-y-6">
-            <VerdictBanner status={mockVerificationResult.status} />
-
-            <div>
-              <h4 className="text-sm font-semibold text-text-0 mb-3">Comparison: Training vs New Data</h4>
-              <MetricsTable metrics={mockVerificationResult.metrics} />
+          <div className="border-t border-border pt-4 mt-4 space-y-4">
+            {/* PASS Verdict */}
+            <div className="bg-[rgba(34,197,94,0.08)] border border-[rgba(34,197,94,0.25)] rounded-card p-4">
+              <div className="flex items-start gap-3">
+                <span className="text-[24px]">✅</span>
+                <div>
+                  <strong className="text-green text-[14px]">PROŠLA</strong>
+                  <div className="text-[11px] text-text-2 mt-1">
+                    Strategija radi dobro i na novim podacima — spremna za Paper Trading
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="flex gap-3">
-              <button className="flex-1 px-4 py-3 bg-accent hover:bg-[#5558e3] text-white font-semibold text-xs rounded-lg transition-colors">
-                Promote to Version ★
+            {/* PASS Criteria Box */}
+            <div className="bg-bg-2 border border-border rounded-btn p-3">
+              <div className="text-[11px] font-semibold mb-2">PASS Criteria:</div>
+              <div className="text-[11px] text-text-2 space-y-1">
+                <div>
+                  ✓ Win Rate drop &lt; 15%{' '}
+                  <Tooltip content="Strategy must maintain at least 85% of training win rate">
+                    <span className="cursor-help hover:text-text-1">(baseline 64.1% → new 59.8% = -4.3pp)</span>
+                  </Tooltip>
+                </div>
+                <div>
+                  ✓ Profit drop &lt; 50%{' '}
+                  <Tooltip content="Total profit can decline but must stay above 50% of training">
+                    <span className="cursor-help hover:text-text-1">(baseline 15.2% → new 11.3% = -25.7%)</span>
+                  </Tooltip>
+                </div>
+                <div>
+                  ✓ Max Drawdown increase &lt; 30%{' '}
+                  <Tooltip content="Risk can increase slightly but not double">
+                    <span className="cursor-help hover:text-text-1">(baseline -8.4% → new -9.8% = +16.7%)</span>
+                  </Tooltip>
+                </div>
+                <div>
+                  ✓ Sharpe &amp; Sortino decline acceptable{' '}
+                  <Tooltip content="Risk-adjusted returns should degrade gracefully">
+                    <span className="cursor-help hover:text-text-1">(Sharpe: 1.52 → 1.28 = -0.24)</span>
+                  </Tooltip>
+                </div>
+              </div>
+            </div>
+
+            {/* Metrics Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-[11px]">
+                <thead className="border-b border-border">
+                  <tr>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">
+                      Metric
+                    </th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-center">
+                      <Tooltip content="Performance on the training/optimization period (2022-01-01 to 2024-01-01)">
+                        <span className="cursor-help">Training Data</span>
+                      </Tooltip>
+                    </th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-center">
+                      <Tooltip content="Performance on the verification period (unseen by optimizer, 2025-01-01 to 2026-01-01)">
+                        <span className="cursor-help">New Data</span>
+                      </Tooltip>
+                    </th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-center">
+                      Difference
+                    </th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-center">
+                      Grade
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {verificationMetrics.map((metric, idx) => (
+                    <tr
+                      key={idx}
+                      className="border-b border-border/50 hover:bg-bg-2/50 transition-colors"
+                    >
+                      <td className="py-2 px-[10px] text-text-1">{metric.name}</td>
+                      <td className="py-2 px-[10px] text-text-1 text-center">{metric.training}</td>
+                      <td className="py-2 px-[10px] text-text-1 text-center">{metric.new}</td>
+                      <td className="py-2 px-[10px] text-text-2 text-center text-[10px]">{metric.diff}</td>
+                      <td className="py-2 px-[10px] text-center">
+                        {metric.badge === 'pass' && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-[50px] text-[10px] font-semibold bg-[rgba(34,197,94,0.08)] text-green border border-[rgba(34,197,94,0.25)]">
+                            {metric.badge_text || '✓'}
+                          </span>
+                        )}
+                        {metric.badge === 'info' && <span className="text-[12px]">ℹ</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              <button className="flex-1 inline-flex items-center justify-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-[rgba(34,197,94,0.08)] border-[rgba(34,197,94,0.25)] text-green hover:bg-[rgba(34,197,94,0.15)]">
+                ⭐ Promote to Version ★
               </button>
-              <button className="flex-1 px-4 py-3 bg-[#22c55e] hover:bg-[#16a34a] text-[#0c0c14] font-bold text-xs rounded-lg transition-colors flex items-center justify-center gap-2">
-                <CheckCircle size={14} />
+              <button className="flex-1 inline-flex items-center justify-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-accent border-accent text-white hover:bg-[#5558e6]">
                 → Paper Trading
               </button>
             </div>
 
-            <div className="bg-[#062b1b] border border-[#22c55e]/20 rounded-lg p-4 text-2xs text-text-2">
-              <p className="text-[#22c55e] font-semibold mb-1">Note on Paper Trading</p>
-              <p>
-                The <span className="text-[#22c55e] font-semibold">→ Paper Trading</span> button appears ONLY here, after PASS verdict. This is the only path to Paper Trading in the entire application.
-              </p>
+            {/* Info Box */}
+            <div className="bg-bg-2 border border-border rounded-btn px-3 py-2 text-[11px] text-text-2">
+              <strong>→ Paper Trading button appears ONLY here</strong>
+              <br />
+              This is the only gateway to Paper Trading. It can only be reached after a successful (PASS) Verification Backtest.
             </div>
           </div>
         )}
-      </section>
+      </div>
 
-      {/* SECTION 2: Lookahead Analysis */}
-      <section className="border-t border-[#1e1e30] pt-8">
-        <h2 className="text-base font-bold text-text-0 mb-3">Lookahead Analysis (§21)</h2>
-        <p className="text-2xs text-text-2 mb-6">
-          <span className="text-text-1 font-semibold">Checks if strategy &apos;cheats&apos;:</span> Does it accidentally use future data for decisions? E.g., does it use tomorrow&apos;s price to decide what to buy today — which is impossible in real trading.
+      {/* ===== SECTION 2: LOOKAHEAD ANALYSIS ===== */}
+      <div className="bg-bg-1 border border-border rounded-card p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[13px] font-semibold text-text-0">
+            2. Lookahead Analysis{' '}
+            <Tooltip content="§21: Lookahead Bias Detection">
+              <span className="text-text-3 text-[11px] cursor-help">(§21)</span>
+            </Tooltip>
+          </span>
+        </div>
+
+        <p className="text-[12px] text-text-2 mb-3 leading-relaxed">
+          Checks if strategy &apos;cheats&apos; by using future data for decisions. Example: using tomorrow&apos;s price to decide what to buy today. This analysis scans all entry and exit signals to ensure they only use data available AT the moment of the signal.
         </p>
 
         <button
           onClick={handleRunLookahead}
           disabled={isRunning}
-          className="w-full px-4 py-3 bg-bg-3 border border-[#1e1e30] hover:bg-bg-2 text-text-0 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 mb-6"
+          className="inline-flex items-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-accent border-accent text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed mb-3"
         >
           {isRunning ? (
             <>
-              <div className="animate-spin">
-                <Zap size={14} />
-              </div>
+              <div className="animate-spin text-sm">⟳</div>
               Running Lookahead Analysis...
             </>
           ) : (
-            <>
-              <Zap size={14} />
-              Run Lookahead Analysis
-            </>
+            <>▶ Run Lookahead Analysis</>
           )}
         </button>
 
         {lookaheadRun && (
-          <div className="space-y-4">
-            <div className="bg-[#062b1b] border border-[#22c55e]/30 rounded-lg p-4 mb-4">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">✅</span>
-                <div>
-                  <div className="text-sm font-bold text-[#22c55e]">PASS</div>
-                  <div className="text-2xs text-text-2">Strategy does not use future data — all clear</div>
-                </div>
+          <div className="space-y-3">
+            {/* PASS Verdict */}
+            <div className="bg-[rgba(34,197,94,0.08)] border border-[rgba(34,197,94,0.25)] rounded-card p-4">
+              <div className="flex items-center gap-3">
+                <span className="text-[24px]">✅</span>
+                <div className="text-[11px] text-text-2">Strategy does not use future data — all clear</div>
               </div>
             </div>
 
-            <LookaheadTable checks={mockLookaheadResult.checks} />
+            {/* Lookahead Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-[11px]">
+                <thead className="border-b border-border">
+                  <tr>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">
+                      Signal Type
+                    </th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">
+                      Status
+                    </th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">
+                      Details
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lookaheadSignals.map((signal, idx) => (
+                    <tr key={idx} className="border-b border-border/50 hover:bg-bg-2/50">
+                      <td className="py-2 px-[10px] text-text-1">
+                        <Tooltip content={`${signal.name} signals`}>
+                          <span className="cursor-help font-mono">{signal.name}</span>
+                        </Tooltip>
+                      </td>
+                      <td className="py-2 px-[10px] text-left">
+                        <span className="inline-flex items-center px-2 py-1 rounded-[50px] text-[10px] font-semibold bg-[rgba(34,197,94,0.08)] text-green border border-[rgba(34,197,94,0.25)]">
+                          ✓ {signal.status}
+                        </span>
+                      </td>
+                      <td className="py-2 px-[10px] text-text-2 text-[10px]">{signal.details}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
-      </section>
+      </div>
 
-      {/* SECTION 3: Recursive Analysis */}
-      <section className="border-t border-[#1e1e30] pt-8">
-        <h2 className="text-base font-bold text-text-0 mb-3">Recursive Analysis (§22)</h2>
-        <p className="text-2xs text-text-2 mb-6">
-          <span className="text-text-1 font-semibold">Checks for circular dependencies:</span> Do indicators depend on each other in a loop — which can create unstable signals?
+      {/* ===== SECTION 3: RECURSIVE ANALYSIS ===== */}
+      <div className="bg-bg-1 border border-border rounded-card p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[13px] font-semibold text-text-0">
+            3. Recursive Analysis{' '}
+            <Tooltip content="§22: Recursive Indicator Dependencies">
+              <span className="text-text-3 text-[11px] cursor-help">(§22)</span>
+            </Tooltip>
+          </span>
+        </div>
+
+        <p className="text-[12px] text-text-2 mb-3 leading-relaxed">
+          Checks if indicators depend on each other in a loop — which creates unstable signals. Example: if indicator A depends on B and B depends on A, that&apos;s a cycle. This creates feedback loops that can break in live trading.
         </p>
 
         <button
           onClick={handleRunRecursive}
           disabled={isRunning}
-          className="w-full px-4 py-3 bg-bg-3 border border-[#1e1e30] hover:bg-bg-2 text-text-0 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 mb-6"
+          className="inline-flex items-center gap-[6px] py-[6px] px-[14px] rounded-btn text-[12px] font-medium border bg-accent border-accent text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed mb-3"
         >
           {isRunning ? (
             <>
-              <div className="animate-spin">
-                <Zap size={14} />
-              </div>
+              <div className="animate-spin text-sm">⟳</div>
               Running Recursive Analysis...
             </>
           ) : (
-            <>
-              <Zap size={14} />
-              Run Recursive Analysis
-            </>
+            <>▶ Run Recursive Analysis</>
           )}
         </button>
 
         {recursiveRun && (
-          <div className="bg-[#062b1b] border border-[#22c55e]/30 rounded-lg p-6">
-            <div className="flex items-start gap-4">
-              <span className="text-3xl">✅</span>
-              <div className="flex-1">
-                <div className="text-sm font-bold text-[#22c55e] mb-1">PASS</div>
-                <div className="text-2xs text-text-2">{mockRecursiveResult.message}</div>
+          <div className="space-y-3">
+            {/* PASS Verdict */}
+            <div className="bg-[rgba(34,197,94,0.08)] border border-[rgba(34,197,94,0.25)] rounded-card p-4">
+              <div className="flex items-center gap-3">
+                <span className="text-[24px]">✅</span>
+                <div className="text-[11px] text-text-2">
+                  No recursive dependencies — indicators are independent
+                </div>
               </div>
+            </div>
+
+            {/* Recursive Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-[11px]">
+                <thead className="border-b border-border">
+                  <tr>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">
+                      Indicator
+                    </th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">
+                      Depends On
+                    </th>
+                    <th className="py-2 px-[10px] text-[10px] uppercase tracking-[0.5px] text-text-3 font-semibold text-left">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recursiveIndicators.map((indicator, idx) => (
+                    <tr key={idx} className="border-b border-border/50 hover:bg-bg-2/50">
+                      <td className="py-2 px-[10px] text-text-1">
+                        <Tooltip content={indicator.name}>
+                          <span className="cursor-help font-mono">{indicator.name}</span>
+                        </Tooltip>
+                      </td>
+                      <td className="py-2 px-[10px] text-text-2">{indicator.depends}</td>
+                      <td className="py-2 px-[10px]">
+                        <span className="inline-flex items-center px-2 py-1 rounded-[50px] text-[10px] font-semibold bg-[rgba(34,197,94,0.08)] text-green border border-[rgba(34,197,94,0.25)]">
+                          ✓ {indicator.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Info Box */}
+            <div className="bg-bg-2 border border-border rounded-btn px-3 py-2 text-[11px] text-text-2">
+              <strong>Recommended order:</strong>
+              <br />
+              1) Lookahead Analysis (fast, checks code) → 2) Recursive Analysis (fast, checks code) → 3)
+              Verification Backtest (slower, checks performance)
             </div>
           </div>
         )}
-      </section>
-
-      {/* Recommended Order Note */}
-      <div className="border-t border-[#1e1e30] pt-8 bg-bg-3 border border-[#1e1e30] rounded-lg p-4">
-        <h4 className="text-2xs font-semibold text-text-1 mb-2">Recommended Order</h4>
-        <p className="text-2xs text-text-2">
-          <span className="text-text-0 font-semibold">1)</span> Lookahead Analysis (fast) →{' '}
-          <span className="text-text-0 font-semibold">2)</span> Recursive Analysis (fast) →{' '}
-          <span className="text-text-0 font-semibold">3)</span> Verification Backtest (slower)
-        </p>
       </div>
     </div>
   );

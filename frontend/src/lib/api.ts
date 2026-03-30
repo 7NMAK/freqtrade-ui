@@ -553,8 +553,11 @@ export const portfolioDaily = () =>
 
 // ── Strategies (Orchestrator DB) ──────────────────────────────────────────
 
-export const getStrategies = () =>
-  request<import("@/types").Strategy[]>("/api/strategies/");
+export const getStrategies = async (): Promise<import("@/types").Strategy[]> => {
+  const res = await request<{ total: number; items: import("@/types").Strategy[] } | import("@/types").Strategy[]>("/api/strategies/");
+  if (Array.isArray(res)) return res;
+  return res.items;
+};
 
 export const getStrategy = (id: number) =>
   request<import("@/types").Strategy>(`/api/strategies/${id}`);

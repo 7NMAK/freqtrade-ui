@@ -644,7 +644,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
       strategy,
       timerange,
       max_open_trades: parseInt(maxOpenTrades, 10) || 3,
-      stake_amount: stakeAmount,
+      stake_amount: stakeAmount ? (stakeAmount === "unlimited" ? "unlimited" : parseFloat(stakeAmount) || "unlimited") : "unlimited",
       dry_run_wallet: parseFloat(startingCapital) || 10000,
       enable_protections: enableProtections,
       cache: cacheResults ? "day" : "none",

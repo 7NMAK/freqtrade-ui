@@ -170,7 +170,114 @@ async def _format_experiment(db: AsyncSession, exp: Experiment, include_runs: bo
     return data
 
 
+# ── Create / Seed Schemas ────────────────────────────
+
+class ExperimentCreate(BaseModel):
+    """Create a new experiment."""
+    strategy_id: int
+    name: str | None = None
+    pair: str = "BTC/USDT:USDT"
+    timeframe: str = "1h"
+    timerange_start: str | None = None
+    timerange_end: str | None = None
+    notes: str | None = None
+
+
 # ── Routes ──────────────────────────────────────────
+
+@router.post("/", status_code=201)
+async def create_experiment(
+    body: ExperimentCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(require_auth),
+) -> ExperimentResponse:
+    """Create a new experiment for a strategy."""
+    # Verify strategy exists
+    strat_result = await db.execute(select(Strategy).where(Strategy.id == body.strategy_id))
+    strategy = strat_result.scalar_one_or_none()
+    if not strategy:
+        raise HTTPException(404, f"Strategy {body.strategy_id} not found")
+
+    # Auto-generate name if not provided
+    name = body.name or f"{strategy.name} — {body.pair} experiment"
+
+    exp = Experiment(
+        strategy_id=body.strategy_id,
+        name=name,
+        pair=body.pair,
+        timeframe=body.timeframe,
+        timerange_start=datetime.strptime(body.timerange_start, "%Y-%m-%d").date() if body.timerange_start else None,
+        timerange_end=datetime.strptime(body.timerange_end, "%Y-%m-%d").date() if body.timerange_end else None,
+        notes=body.notes,
+    )
+    db.add(exp)
+    await db.flush()
+
+    await log_activity(
+        db,
+        action="experiment.create",
+        level="info",
+        actor=current_user.get("username", "unknown"),
+        target_type="experiment",
+        target_id=exp.id,
+        target_name=exp.name,
+        details=f"Created experiment for {strategy.name}",
+    )
+
+    await db.commit()
+    data = await _format_experiment(db, exp)
+    return ExperimentResponse(**data)
+
+
+@router.post("/seed", status_code=201)
+async def seed_experiments(
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(require_auth),
+) -> dict:
+    """
+    Auto-create one experiment per strategy that doesn't already have one.
+    Returns count of created experiments.
+    """
+    # Get all strategies
+    strats_result = await db.execute(select(Strategy))
+    strategies = strats_result.scalars().all()
+
+    # Get existing experiment strategy_ids
+    existing_result = await db.execute(
+        select(Experiment.strategy_id).where(Experiment.is_deleted == False)  # noqa: E712
+    )
+    existing_ids = {row[0] for row in existing_result.all()}
+
+    created = 0
+    for strat in strategies:
+        if strat.id in existing_ids:
+            continue
+
+        exp = Experiment(
+            strategy_id=strat.id,
+            name=f"{strat.name} — BTC/USDT:USDT experiment",
+            pair="BTC/USDT:USDT",
+            timeframe="1h",
+        )
+        db.add(exp)
+        created += 1
+
+    if created > 0:
+        await db.flush()
+        await log_activity(
+            db,
+            action="experiment.seed",
+            level="info",
+            actor=current_user.get("username", "unknown"),
+            target_type="experiment",
+            target_id=0,
+            target_name="bulk_seed",
+            details=f"Seeded {created} experiments from {len(strategies)} strategies",
+        )
+        await db.commit()
+
+    return {"created": created, "total_strategies": len(strategies), "already_existed": len(existing_ids)}
+
 
 @router.get("/")
 async def list_experiments(

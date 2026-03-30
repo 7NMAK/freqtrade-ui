@@ -191,7 +191,7 @@ function ClosedTradesTable() {
   return (
     <Card className="overflow-hidden">
       <CardHeader>
-        <CardTitle><span>📋</span> Today's Closed Trades <span className="text-[11px] font-normal text-text-2">(5 trades)</span></CardTitle>
+        <CardTitle><span>📋</span> Today&apos;s Closed Trades <span className="text-[11px] font-normal text-text-2">(5 trades)</span></CardTitle>
         <button onClick={() => router.push("/redesign/analytics")} className="text-[11px] font-semibold text-accent hover:underline">Full history →</button>
       </CardHeader>
       <div className="overflow-x-auto">
@@ -287,7 +287,7 @@ function EquityCurve() {
             <Tooltip
               contentStyle={{ backgroundColor: "#0c0c14", borderColor: "#1e1e30", borderRadius: "10px", fontSize: "12px", color: "#f0f0f5" }}
               itemStyle={{ color: "#22c55e", fontWeight: "bold" }}
-              formatter={(val: any) => [`$${Number(val).toLocaleString()}`, "Equity"]}
+              formatter={(value: unknown) => [`$${Number(value).toLocaleString()}`, "Equity"]}
               labelStyle={{ color: "#808098", marginBottom: "4px" }}
             />
             <Area type="monotone" dataKey="eq" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#eqColor)" />

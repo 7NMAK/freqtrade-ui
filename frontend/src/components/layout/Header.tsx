@@ -140,9 +140,9 @@ export default function Header({ title }: HeaderProps) {
 
   return (
     <>
-      <header className="h-header bg-bg-1 border-b border-border flex items-center px-6 gap-4 shrink-0 relative">
+      <header className="h-header bg-card border-b border-border flex items-center px-6 gap-4 shrink-0 relative">
         {/* H-1: Page Title */}
-        <h1 className="text-lg font-bold text-text-0">{title}</h1>
+        <h1 className="text-lg font-bold text-foreground">{title}</h1>
 
         {/* Aggregate Bot Health */}
         {bots.length > 0 && (
@@ -158,13 +158,13 @@ export default function Header({ title }: HeaderProps) {
                   : "bg-text-3"
               }`}
             />
-            <span className="text-xs text-text-2">
-              <span className="text-green font-semibold">{runningBots.length}</span>
-              <span className="text-text-3 mx-0.5">/</span>
-              <span className="text-text-3">{bots.length} bots</span>
+            <span className="text-xs text-muted-foreground">
+              <span className="text-emerald-500 font-semibold">{runningBots.length}</span>
+              <span className="text-muted-foreground mx-0.5">/</span>
+              <span className="text-muted-foreground">{bots.length} bots</span>
             </span>
             {unhealthyBots.length > 0 && (
-              <span className="text-[10px] font-medium text-red">
+              <span className="text-xs font-medium text-rose-500">
                 {unhealthyBots.length} unhealthy
               </span>
             )}
@@ -180,7 +180,7 @@ export default function Header({ title }: HeaderProps) {
             <button
               type="button"
               onClick={() => setShowNotifs(!showNotifs)}
-              className="relative bg-bg-2 border border-border rounded-btn p-1.5 text-md text-text-2 hover:border-border-hover hover:text-text-1 transition-all cursor-pointer"
+              className="relative bg-muted/50 border border-border rounded-btn p-1.5 text-md text-muted-foreground hover:border-border-border hover:border-ring hover:text-muted-foreground transition-all cursor-pointer"
               aria-label="Notifications"
             >
               🔔
@@ -191,27 +191,27 @@ export default function Header({ title }: HeaderProps) {
 
             {/* Notification dropdown */}
             {showNotifs && (
-              <div className="absolute top-full right-0 mt-2 w-80 bg-bg-2 border border-border rounded-card shadow-2xl z-50 overflow-hidden">
+              <div className="absolute top-full right-0 mt-2 w-80 bg-muted/50 border border-border rounded-card shadow-2xl z-50 overflow-hidden">
                 <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-                  <span className="text-xs font-semibold text-text-0">Recent Events</span>
+                  <span className="text-xs font-semibold text-foreground">Recent Events</span>
                   <button
                     type="button"
                     onClick={() => setShowNotifs(false)}
-                    className="text-text-3 hover:text-text-1 text-xs cursor-pointer"
+                    className="text-muted-foreground hover:text-muted-foreground text-xs cursor-pointer"
                   >
                     ✕
                   </button>
                 </div>
                 <div className="max-h-64 overflow-y-auto">
                   {riskEvents.length === 0 ? (
-                    <div className="px-4 py-6 text-center text-xs text-text-3">
+                    <div className="px-4 py-6 text-center text-xs text-muted-foreground">
                       No recent events
                     </div>
                   ) : (
                     riskEvents.map((ev) => (
                       <div
                         key={ev.id}
-                        className="px-4 py-3 border-b border-border/40 hover:bg-bg-3 cursor-pointer transition-colors"
+                        className="px-4 py-3 border-b border-border/40 hover:bg-muted cursor-pointer transition-colors"
                         onClick={() => {
                           setShowNotifs(false);
                           window.location.href = "/risk";
@@ -221,17 +221,17 @@ export default function Header({ title }: HeaderProps) {
                           <span
                             className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide ${
                               ev.kill_type === "HARD_KILL"
-                                ? "bg-red-bg text-red"
-                                : "bg-amber-bg text-amber"
+                                ? "bg-rose-500/10 text-rose-500"
+                                : "bg-amber-500/10 text-amber-500"
                             }`}
                           >
                             {ev.kill_type.replace("_", " ")}
                           </span>
-                          <span className="text-[10px] text-text-3">
+                          <span className="text-xs text-muted-foreground">
                             {formatEventTime(ev.created_at)}
                           </span>
                         </div>
-                        <div className="text-xs text-text-1 truncate">
+                        <div className="text-xs text-muted-foreground truncate">
                           {ev.reason ?? ev.trigger}
                         </div>
                       </div>
@@ -247,7 +247,7 @@ export default function Header({ title }: HeaderProps) {
             type="button"
             aria-label="Emergency kill switch — stop all bots"
             onClick={() => setShowKillConfirm(true)}
-            className="bg-red-bg border border-red/25 rounded-btn px-3.5 py-1.5 text-xs font-semibold text-red tracking-wide flex items-center gap-1.5 hover:bg-red/[0.18] hover:border-red transition-all cursor-pointer"
+            className="bg-rose-500/10 border border-rose-500/25 rounded-btn px-3.5 py-1.5 text-xs font-semibold text-rose-500 tracking-wide flex items-center gap-1.5 hover:bg-red/[0.18] hover:border-rose-500 transition-all cursor-pointer"
           >
             <span className="text-base">🚨</span>
             KILL SWITCH
@@ -276,17 +276,17 @@ export default function Header({ title }: HeaderProps) {
             if (e.target === e.currentTarget) setShowKillConfirm(false);
           }}
         >
-          <div className="bg-bg-2 border border-red/30 rounded-card p-8 max-w-md w-full mx-4 text-center">
+          <div className="bg-muted/50 border border-rose-500/30 rounded-card p-8 max-w-md w-full mx-4 text-center">
             <div className="text-5xl mb-4">🚨</div>
-            <h2 className="text-lg font-bold text-text-0 mb-2">
+            <h2 className="text-lg font-bold text-foreground mb-2">
               Emergency Kill All Bots
             </h2>
-            <p className="text-sm text-text-2 mb-2">
+            <p className="text-sm text-muted-foreground mb-2">
               This will force-exit{" "}
-              <strong className="text-red">ALL positions at MARKET price</strong>{" "}
-              and stop <strong className="text-red">ALL bots</strong>.
+              <strong className="text-rose-500">ALL positions at MARKET price</strong>{" "}
+              and stop <strong className="text-rose-500">ALL bots</strong>.
             </p>
-            <p className="text-xs text-text-3 mb-6">
+            <p className="text-xs text-muted-foreground mb-6">
               This action is logged in the immutable audit trail and cannot be undone.
             </p>
             <div className="flex gap-3">
@@ -294,7 +294,7 @@ export default function Header({ title }: HeaderProps) {
               <button
                 type="button"
                 onClick={() => setShowKillConfirm(false)}
-                className="flex-1 bg-bg-3 border border-border rounded-btn py-2.5 text-sm font-medium text-text-1 hover:border-border-hover transition-colors cursor-pointer"
+                className="flex-1 bg-muted border border-border rounded-btn py-2.5 text-sm font-medium text-muted-foreground hover:border-border-border hover:border-ring transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -303,7 +303,7 @@ export default function Header({ title }: HeaderProps) {
                 type="button"
                 onClick={handleKillAll}
                 disabled={killing}
-                className="flex-1 bg-red border border-red rounded-btn py-2.5 text-sm font-bold text-white hover:bg-red-dim transition-colors disabled:opacity-50 cursor-pointer"
+                className="flex-1 bg-red border border-rose-500 rounded-btn py-2.5 text-sm font-bold text-white hover:bg-red-dim transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {killing ? "Killing..." : "KILL ALL BOTS"}
               </button>

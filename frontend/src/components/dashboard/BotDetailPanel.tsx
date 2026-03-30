@@ -53,27 +53,27 @@ interface BotDetailPanelProps {
 function StatusBadge({ status, isDryRun }: { status: string; isDryRun: boolean }) {
   if (status === "draining") {
     return (
-      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-bg text-amber uppercase tracking-wide border border-amber/20 animate-pulse">
+      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 uppercase tracking-wide border border-amber-500-500/20 animate-pulse">
         Draining
       </span>
     );
   }
   if (status !== "running") {
     return (
-      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-bg-3 text-text-3 uppercase tracking-wide border border-border">
+      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground uppercase tracking-wide border border-border">
         Stopped
       </span>
     );
   }
   if (isDryRun) {
     return (
-      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-bg text-amber uppercase tracking-wide border border-amber/20">
+      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 uppercase tracking-wide border border-amber-500-500/20">
         Paper
       </span>
     );
   }
   return (
-    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-green-bg text-green uppercase tracking-wide border border-green/20">
+    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 uppercase tracking-wide border border-emerald-500/20">
       Live
     </span>
   );
@@ -125,7 +125,7 @@ export default function BotDetailPanel({
 
       {/* Panel */}
       <div
-        className={`fixed top-0 h-screen w-[560px] max-w-[90vw] bg-bg-1 border-l border-border z-[501] transition-[right] duration-300 ease-out flex flex-col overflow-hidden ${
+        className={`fixed top-0 h-screen w-[560px] max-w-[90vw] bg-card border-l border-border z-[501] transition-[right] duration-300 ease-out flex flex-col overflow-hidden ${
           isOpen ? "right-0" : "-right-[560px]"
         }`}
       >
@@ -134,11 +134,11 @@ export default function BotDetailPanel({
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-lg border border-border bg-bg-2 flex items-center justify-center text-text-2 text-base transition-all hover:bg-bg-3 hover:text-text-0 cursor-pointer"
+            className="w-8 h-8 rounded-lg border border-border bg-muted/50 flex items-center justify-center text-muted-foreground text-base transition-all hover:bg-muted hover:text-foreground cursor-pointer"
           >
             &times;
           </button>
-          <div className="text-base font-bold text-text-0 flex-1 truncate">
+          <div className="text-base font-bold text-foreground flex-1 truncate">
             {bot.name}
           </div>
           <StatusBadge status={bot.status} isDryRun={bot.is_dry_run} />
@@ -147,14 +147,14 @@ export default function BotDetailPanel({
             <button
               type="button"
               onClick={onEdit}
-              className="px-3 py-1.5 rounded-md border border-border bg-bg-2 text-text-1 text-[11px] font-medium hover:border-border hover:bg-bg-3 transition-all cursor-pointer"
+              className="px-3 py-1.5 rounded-md border border-border bg-muted/50 text-muted-foreground text-xs font-medium hover:border-border hover:bg-muted transition-all cursor-pointer"
             >
               Edit
             </button>
             <button
               type="button"
               onClick={onDuplicate}
-              className="px-3 py-1.5 rounded-md border border-border bg-bg-2 text-text-1 text-[11px] font-medium hover:border-border hover:bg-bg-3 transition-all cursor-pointer"
+              className="px-3 py-1.5 rounded-md border border-border bg-muted/50 text-muted-foreground text-xs font-medium hover:border-border hover:bg-muted transition-all cursor-pointer"
             >
               Duplicate
             </button>
@@ -162,7 +162,7 @@ export default function BotDetailPanel({
               <button
                 type="button"
                 onClick={onStart}
-                className="px-3 py-1.5 rounded-md border border-green/20 bg-green-bg text-green text-[11px] font-semibold hover:border-green/40 transition-all cursor-pointer"
+                className="px-3 py-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 text-emerald-500 text-xs font-semibold hover:border-emerald-500/40 transition-all cursor-pointer"
               >
                 Start
               </button>
@@ -171,7 +171,7 @@ export default function BotDetailPanel({
               <button
                 type="button"
                 onClick={onStop}
-                className="px-3 py-1.5 rounded-md border border-red/20 bg-red-bg text-red text-[11px] font-semibold hover:border-red/40 transition-all cursor-pointer"
+                className="px-3 py-1.5 rounded-md border border-rose-500/20 bg-rose-500/10 text-rose-500 text-xs font-semibold hover:border-rose-500/40 transition-all cursor-pointer"
               >
                 Stop
               </button>
@@ -180,7 +180,7 @@ export default function BotDetailPanel({
               <button
                 type="button"
                 onClick={onDrain}
-                className="px-3 py-1.5 rounded-md border border-amber/20 bg-amber-bg text-amber text-[11px] font-semibold hover:border-amber/40 transition-all cursor-pointer"
+                className="px-3 py-1.5 rounded-md border border-amber-500-500/20 bg-amber-500/10 text-amber-500 text-xs font-semibold hover:border-amber-500/40 transition-all cursor-pointer"
               >
                 Drain
               </button>
@@ -188,7 +188,7 @@ export default function BotDetailPanel({
             <button
               type="button"
               onClick={onDelete}
-              className="px-3 py-1.5 rounded-md border border-red/20 bg-red-bg text-red text-[11px] font-semibold hover:border-red/40 transition-all cursor-pointer"
+              className="px-3 py-1.5 rounded-md border border-rose-500/20 bg-rose-500/10 text-rose-500 text-xs font-semibold hover:border-rose-500/40 transition-all cursor-pointer"
             >
               Delete
             </button>
@@ -210,10 +210,10 @@ export default function BotDetailPanel({
               key={tab.key}
               type="button"
               onClick={() => setDetailTab(tab.key)}
-              className={`px-3 py-2 text-[11px] font-medium rounded-md transition-all whitespace-nowrap cursor-pointer ${
+              className={`px-3 py-2 text-xs font-medium rounded-md transition-all whitespace-nowrap cursor-pointer ${
                 detailTab === tab.key
-                  ? "bg-accent/10 text-accent"
-                  : "text-text-3 hover:text-text-1 hover:bg-bg-3"
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:text-muted-foreground hover:bg-muted"
               }`}
             >
               {tab.label}
@@ -224,7 +224,7 @@ export default function BotDetailPanel({
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
           {loading ? (
-            <div className="flex items-center justify-center h-32 text-text-3 text-sm">
+            <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
               Loading details...
             </div>
           ) : (
@@ -253,14 +253,14 @@ export default function BotDetailPanel({
           <button
             type="button"
             onClick={onEdit}
-            className="flex-1 py-2.5 rounded-md border border-border bg-bg-2 text-text-1 text-xs font-medium text-center transition-all hover:bg-bg-3 hover:border-border cursor-pointer"
+            className="flex-1 py-2.5 rounded-md border border-border bg-muted/50 text-muted-foreground text-xs font-medium text-center transition-all hover:bg-muted hover:border-border cursor-pointer"
           >
             Edit Bot Settings
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-md border-none bg-accent text-white text-xs font-semibold text-center transition-all hover:bg-accent-dim cursor-pointer"
+            className="flex-1 py-2.5 rounded-md border-none bg-primary text-white text-xs font-semibold text-center transition-all hover:bg-primary-dim cursor-pointer"
           >
             Close Panel
           </button>
@@ -307,10 +307,10 @@ function DetailContent({
   balanceData: FTBalance | null;
   healthData: FTHealth | null;
 }) {
-  const sectionTitle = "text-[11px] font-semibold text-text-3 uppercase tracking-wider mb-3";
+  const sectionTitle = "text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3";
   const row = "flex justify-between py-2 border-b border-border/40 last:border-b-0";
-  const key = "text-xs text-text-2";
-  const val = "text-xs font-semibold text-text-0 text-right";
+  const key = "text-xs text-muted-foreground";
+  const val = "text-xs font-semibold text-foreground text-right";
 
   switch (tab) {
     /* ─── Overview ─── */
@@ -371,25 +371,25 @@ function DetailContent({
             <div>
               <div className={sectionTitle}>P&L Summary</div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-bg-2 border border-border rounded-lg p-3">
-                  <div className="text-[10px] text-text-3 mb-1">Closed Profit</div>
+                <div className="bg-muted/50 border border-border rounded-lg p-3">
+                  <div className="text-xs text-muted-foreground mb-1">Closed Profit</div>
                   <div className={`text-sm font-bold ${profitColor(profit.profit_closed_coin)}`}>
                     {fmtMoney(profit.profit_closed_coin)}
                   </div>
                 </div>
-                <div className="bg-bg-2 border border-border rounded-lg p-3">
-                  <div className="text-[10px] text-text-3 mb-1">Total Profit</div>
+                <div className="bg-muted/50 border border-border rounded-lg p-3">
+                  <div className="text-xs text-muted-foreground mb-1">Total Profit</div>
                   <div className={`text-sm font-bold ${profitColor(profit.profit_all_coin)}`}>
                     {fmtMoney(profit.profit_all_coin)}
                   </div>
                 </div>
-                <div className="bg-bg-2 border border-border rounded-lg p-3">
-                  <div className="text-[10px] text-text-3 mb-1">Trade Count</div>
-                  <div className="text-sm font-bold text-text-0">{profit.trade_count}</div>
+                <div className="bg-muted/50 border border-border rounded-lg p-3">
+                  <div className="text-xs text-muted-foreground mb-1">Trade Count</div>
+                  <div className="text-sm font-bold text-foreground">{profit.trade_count}</div>
                 </div>
-                <div className="bg-bg-2 border border-border rounded-lg p-3">
-                  <div className="text-[10px] text-text-3 mb-1">Win Rate</div>
-                  <div className="text-sm font-bold text-text-0">
+                <div className="bg-muted/50 border border-border rounded-lg p-3">
+                  <div className="text-xs text-muted-foreground mb-1">Win Rate</div>
+                  <div className="text-sm font-bold text-foreground">
                     {(profit.winning_trades ?? 0) + (profit.losing_trades ?? 0) > 0
                       ? (((profit.winning_trades ?? 0) / ((profit.winning_trades ?? 0) + (profit.losing_trades ?? 0))) * 100).toFixed(1) + "%"
                       : "—"}
@@ -409,7 +409,7 @@ function DetailContent({
               </div>
               <div className={row}>
                 <span className={key}>Max Drawdown</span>
-                <span className={`${val} text-red`}>
+                <span className={`${val} text-rose-500`}>
                   {statsData.max_drawdown != null ? fmt(statsData.max_drawdown * 100, 1) + "%" : "—"}
                 </span>
               </div>
@@ -440,7 +440,7 @@ function DetailContent({
                   </div>
                 ))
               ) : (
-                <div className="text-center py-6 text-text-3 text-xs">No balance data</div>
+                <div className="text-center py-6 text-muted-foreground text-xs">No balance data</div>
               )}
             </div>
           )}
@@ -456,12 +456,12 @@ function DetailContent({
           <div>
             <div className={sectionTitle}>Open Positions ({openTrades.length})</div>
             {openTrades.length === 0 ? (
-              <div className="text-center py-6 text-text-3 text-xs">No open trades</div>
+              <div className="text-center py-6 text-muted-foreground text-xs">No open trades</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="text-text-3 border-b border-border">
+                    <tr className="text-muted-foreground border-b border-border">
                       <th className="text-left py-2 font-medium">Pair</th>
                       <th className="text-left py-2 font-medium">Side</th>
                       <th className="text-right py-2 font-medium">Entry</th>
@@ -474,14 +474,14 @@ function DetailContent({
                       const pnl = t.current_profit_abs ?? 0;
                       return (
                         <tr key={t.trade_id} className="border-b border-border/30">
-                          <td className="py-2 text-text-0 font-medium">{t.pair}</td>
+                          <td className="py-2 text-foreground font-medium">{t.pair}</td>
                           <td className="py-2">
-                            <span className={t.is_short ? "text-red" : "text-green"}>
+                            <span className={t.is_short ? "text-rose-500" : "text-emerald-500"}>
                               {t.is_short ? "SHORT" : "LONG"}
                             </span>
                           </td>
-                          <td className="py-2 text-right text-text-0">{fmt(t.open_rate, 4)}</td>
-                          <td className="py-2 text-right text-text-0">{fmt(t.current_rate, 4)}</td>
+                          <td className="py-2 text-right text-foreground">{fmt(t.open_rate, 4)}</td>
+                          <td className="py-2 text-right text-foreground">{fmt(t.current_rate, 4)}</td>
                           <td className={`py-2 text-right font-semibold ${profitColor(pnl)}`}>
                             {fmtMoney(pnl)}
                           </td>
@@ -498,12 +498,12 @@ function DetailContent({
           <div>
             <div className={sectionTitle}>Closed Trades (Last 10)</div>
             {closedTrades.length === 0 ? (
-              <div className="text-center py-6 text-text-3 text-xs">No closed trades</div>
+              <div className="text-center py-6 text-muted-foreground text-xs">No closed trades</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="text-text-3 border-b border-border">
+                    <tr className="text-muted-foreground border-b border-border">
                       <th className="text-left py-2 font-medium">Pair</th>
                       <th className="text-left py-2 font-medium">Side</th>
                       <th className="text-right py-2 font-medium">Entry</th>
@@ -516,14 +516,14 @@ function DetailContent({
                       const pnl = t.close_profit_abs ?? 0;
                       return (
                         <tr key={t.trade_id} className="border-b border-border/30">
-                          <td className="py-2 text-text-0 font-medium">{t.pair}</td>
+                          <td className="py-2 text-foreground font-medium">{t.pair}</td>
                           <td className="py-2">
-                            <span className={t.is_short ? "text-red" : "text-green"}>
+                            <span className={t.is_short ? "text-rose-500" : "text-emerald-500"}>
                               {t.is_short ? "SHORT" : "LONG"}
                             </span>
                           </td>
-                          <td className="py-2 text-right text-text-0">{fmt(t.open_rate, 4)}</td>
-                          <td className="py-2 text-right text-text-0">{fmt(t.close_rate, 4)}</td>
+                          <td className="py-2 text-right text-foreground">{fmt(t.open_rate, 4)}</td>
+                          <td className="py-2 text-right text-foreground">{fmt(t.close_rate, 4)}</td>
                           <td className={`py-2 text-right font-semibold ${profitColor(pnl)}`}>
                             {fmtMoney(pnl)}
                           </td>
@@ -549,7 +549,7 @@ function DetailContent({
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="text-text-3 border-b border-border">
+                    <tr className="text-muted-foreground border-b border-border">
                       <th className="text-left py-2 font-medium">Pair</th>
                       <th className="text-right py-2 font-medium">Trades</th>
                       <th className="text-right py-2 font-medium">Profit</th>
@@ -558,8 +558,8 @@ function DetailContent({
                   <tbody>
                     {perfData.map((p) => (
                       <tr key={p.pair} className="border-b border-border/30">
-                        <td className="py-2 text-text-0 font-medium">{p.pair}</td>
-                        <td className="py-2 text-right text-text-1">{p.count}</td>
+                        <td className="py-2 text-foreground font-medium">{p.pair}</td>
+                        <td className="py-2 text-right text-muted-foreground">{p.count}</td>
                         <td className={`py-2 text-right font-semibold ${profitColor(p.profit)}`}>
                           {fmtMoney(p.profit)}
                         </td>
@@ -570,7 +570,7 @@ function DetailContent({
               </div>
             </div>
           ) : (
-            <div className="text-center py-6 text-text-3 text-xs">No performance data</div>
+            <div className="text-center py-6 text-muted-foreground text-xs">No performance data</div>
           )}
 
           {entryData && entryData.length > 0 && (
@@ -579,7 +579,7 @@ function DetailContent({
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="text-text-3 border-b border-border">
+                    <tr className="text-muted-foreground border-b border-border">
                       <th className="text-left py-2 font-medium">Tag</th>
                       <th className="text-right py-2 font-medium">Trades</th>
                       <th className="text-right py-2 font-medium">Profit</th>
@@ -588,8 +588,8 @@ function DetailContent({
                   <tbody>
                     {entryData.slice(0, 5).map((e) => (
                       <tr key={e.enter_tag ?? "untagged"} className="border-b border-border/30">
-                        <td className="py-2 text-text-0 font-medium">{e.enter_tag ?? "untagged"}</td>
-                        <td className="py-2 text-right text-text-1">{e.entries}</td>
+                        <td className="py-2 text-foreground font-medium">{e.enter_tag ?? "untagged"}</td>
+                        <td className="py-2 text-right text-muted-foreground">{e.entries}</td>
                         <td className={`py-2 text-right font-semibold ${profitColor(e.profit_abs)}`}>
                           {fmtMoney(e.profit_abs)}
                         </td>
@@ -607,7 +607,7 @@ function DetailContent({
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="text-text-3 border-b border-border">
+                    <tr className="text-muted-foreground border-b border-border">
                       <th className="text-left py-2 font-medium">Reason</th>
                       <th className="text-right py-2 font-medium">Trades</th>
                       <th className="text-right py-2 font-medium">Profit</th>
@@ -616,8 +616,8 @@ function DetailContent({
                   <tbody>
                     {exitData.slice(0, 5).map((e) => (
                       <tr key={e.exit_reason ?? "untagged"} className="border-b border-border/30">
-                        <td className="py-2 text-text-0 font-medium">{e.exit_reason ?? "untagged"}</td>
-                        <td className="py-2 text-right text-text-1">{e.exits}</td>
+                        <td className="py-2 text-foreground font-medium">{e.exit_reason ?? "untagged"}</td>
+                        <td className="py-2 text-right text-muted-foreground">{e.exits}</td>
                         <td className={`py-2 text-right font-semibold ${profitColor(e.profit_abs)}`}>
                           {fmtMoney(e.profit_abs)}
                         </td>
@@ -677,7 +677,7 @@ function DetailContent({
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="text-text-3 border-b border-border">
+                        <tr className="text-muted-foreground border-b border-border">
                           <th className="text-left py-2 font-medium">Pair</th>
                           <th className="text-left py-2 font-medium">Reason</th>
                         </tr>
@@ -685,8 +685,8 @@ function DetailContent({
                       <tbody>
                         {locksData.locks.map((l) => (
                           <tr key={l.pair} className="border-b border-border/30">
-                            <td className="py-2 text-text-0 font-medium">{l.pair}</td>
-                            <td className="py-2 text-text-2">{l.reason ?? "—"}</td>
+                            <td className="py-2 text-foreground font-medium">{l.pair}</td>
+                            <td className="py-2 text-muted-foreground">{l.reason ?? "—"}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -696,7 +696,7 @@ function DetailContent({
               )}
             </>
           ) : (
-            <div className="text-center py-6 text-text-3 text-xs">No config data</div>
+            <div className="text-center py-6 text-muted-foreground text-xs">No config data</div>
           )}
         </div>
       );
@@ -733,8 +733,8 @@ function DetailContent({
           {logsData && logsData.logs && logsData.logs.length > 0 && (
             <div>
               <div className={sectionTitle}>Recent Logs</div>
-              <div className="bg-bg-2 border border-border rounded p-2 max-h-40 overflow-y-auto">
-                <div className="font-mono text-[9px] text-text-2 space-y-0.5">
+              <div className="bg-muted/50 border border-border rounded p-2 max-h-40 overflow-y-auto">
+                <div className="font-mono text-[9px] text-muted-foreground space-y-0.5">
                   {logsData.logs.slice(0, 20).map((log, idx) => (
                     <div key={idx}>{typeof log === "string" ? log : JSON.stringify(log)}</div>
                   ))}

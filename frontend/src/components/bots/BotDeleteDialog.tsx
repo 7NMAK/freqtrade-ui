@@ -43,27 +43,27 @@ export default function BotDeleteDialog({ open, bot, onClose, onSuccess }: BotDe
 
   return (
     <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
-      <div className="bg-bg-2 border border-border rounded-card p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-sm font-semibold text-red mb-2">Delete Bot</h3>
-        <p className="text-xs text-text-2 mb-4">
-          You are about to delete <strong className="text-text-0">{bot.name}</strong>.
+      <div className="bg-muted/50 border border-border rounded-card p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-sm font-semibold text-rose-500 mb-2">Delete Bot</h3>
+        <p className="text-xs text-muted-foreground mb-4">
+          You are about to delete <strong className="text-foreground">{bot.name}</strong>.
           This will remove the bot registration and all associated metadata. This action cannot be undone.
         </p>
         <div className="mb-4">
-          <label className="text-2xs text-text-3 uppercase tracking-wide block mb-1">
-            Type <strong className="text-text-0">{bot.name}</strong> to confirm
+          <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-1">
+            Type <strong className="text-foreground">{bot.name}</strong> to confirm
           </label>
           <input
             type="text"
             value={confirmName}
             onChange={(e) => setConfirmName(e.target.value)}
             placeholder={bot.name}
-            className="w-full bg-bg-1 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-red"
+            className="w-full bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-rose-500"
           />
         </div>
         <div className="flex gap-2">
           <button type="button" onClick={onClose}
-            className="flex-1 py-2 text-xs font-semibold rounded border border-border text-text-2 hover:bg-bg-3 cursor-pointer transition-all">
+            className="flex-1 py-2 text-xs font-semibold rounded border border-border text-muted-foreground hover:bg-muted cursor-pointer transition-all">
             Cancel
           </button>
           <button type="button" onClick={handleDelete} disabled={!canDelete || deleting}

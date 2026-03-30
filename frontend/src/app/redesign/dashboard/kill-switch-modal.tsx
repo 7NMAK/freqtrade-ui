@@ -263,7 +263,7 @@ export function KillSwitchModal({ open: controlledOpen, onOpenChange }: KillSwit
                     className={`flex items-center justify-between py-3 px-4 rounded-lg border ${
                       isKilled
                         ? "border-ft-red/30 bg-ft-red/5"
-                        : "border-border bg-accent/20"
+                        : "border-border bg-primary/20"
                     }`}
                   >
                     <div className="flex items-center gap-3">

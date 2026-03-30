@@ -53,19 +53,19 @@ const ICONS: Record<ToastType, string> = {
 };
 
 const STYLES: Record<ToastType, string> = {
-  error: "bg-red-bg border-red/30 text-red",
-  warning: "bg-amber-bg border-amber/30 text-amber",
-  info: "bg-bg-2 border-border text-text-2",
-  success: "bg-green-bg border-green/30 text-green",
-  loading: "bg-bg-2 border-border text-text-2",
+  error: "bg-rose-500/10 border-rose-500/30 text-rose-500",
+  warning: "bg-amber-500/10 border-amber-500/30 text-amber-500",
+  info: "bg-muted/50 border-border text-muted-foreground",
+  success: "bg-emerald-500/10 border-emerald-500/30 text-emerald-500",
+  loading: "bg-muted/50 border-border text-muted-foreground",
 };
 
 const ICON_STYLES: Record<ToastType, string> = {
   error: "bg-red text-white",
   warning: "bg-amber text-black",
-  info: "bg-accent text-white",
+  info: "bg-primary text-white",
   success: "bg-green text-white",
-  loading: "bg-bg-3 text-text-2",
+  loading: "bg-muted text-muted-foreground",
 };
 
 // ── Provider ──────────────────────────────────────────────────────────────
@@ -214,12 +214,12 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
 
       {/* Message + action */}
       <div className="flex-1 min-w-0">
-        <div className="text-xs font-medium text-text-0 leading-snug break-words">{toast.message}</div>
+        <div className="text-xs font-medium text-foreground leading-snug break-words">{toast.message}</div>
         {toast.action && (
           <button
             type="button"
             onClick={() => { toast.action!.onClick(); onDismiss(toast.id); }}
-            className="text-[10px] font-semibold mt-1.5 underline cursor-pointer hover:no-underline"
+            className="text-xs font-semibold mt-1.5 underline cursor-pointer hover:no-underline"
           >
             {toast.action.label}
           </button>
@@ -231,7 +231,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
         <button
           type="button"
           onClick={() => onDismiss(toast.id)}
-          className="text-text-3 hover:text-text-1 transition-colors text-xs shrink-0 mt-0.5 cursor-pointer"
+          className="text-muted-foreground hover:text-muted-foreground transition-colors text-xs shrink-0 mt-0.5 cursor-pointer"
         >
           ✕
         </button>

@@ -213,27 +213,27 @@ export default function SystemSettingsTab() {
 
   return (
     <div>
-      <h2 className="text-lg font-bold text-text-0 mb-2">System Settings</h2>
-      <p className="text-xs text-text-2 mb-7">Manage exchange credentials and system-wide configuration</p>
+      <h2 className="text-lg font-bold text-foreground mb-2">System Settings</h2>
+      <p className="text-xs text-muted-foreground mb-7">Manage exchange credentials and system-wide configuration</p>
 
       {/* Exchange Profiles Section */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-text-0 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
             <span>🔌</span> Exchange Profiles
           </h3>
           <button
             onClick={openAddModal}
-            className="px-3 py-1.5 text-xs bg-accent text-white rounded-btn font-semibold hover:bg-accent-dim transition"
+            className="px-3 py-1.5 text-xs bg-primary text-white rounded-btn font-semibold hover:bg-primary-dim transition"
           >
             + Add Profile
           </button>
         </div>
 
         {loading ? (
-          <div className="text-center py-8 text-text-2">Loading profiles...</div>
+          <div className="text-center py-8 text-muted-foreground">Loading profiles...</div>
         ) : profiles.length === 0 ? (
-          <div className="text-center py-8 text-text-2">
+          <div className="text-center py-8 text-muted-foreground">
             <p className="mb-3">No exchange profiles yet.</p>
             <p className="text-xs">Create a profile to store reusable API credentials.</p>
           </div>
@@ -241,20 +241,20 @@ export default function SystemSettingsTab() {
           <div className="border border-border rounded-btn overflow-hidden">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-border bg-bg-3">
-                  <th className="px-4 py-2.5 text-left font-semibold text-text-1">
+                <tr className="border-b border-border bg-muted">
+                  <th className="px-4 py-2.5 text-left font-semibold text-muted-foreground">
                     Name
                   </th>
-                  <th className="px-4 py-2.5 text-left font-semibold text-text-1">
+                  <th className="px-4 py-2.5 text-left font-semibold text-muted-foreground">
                     Exchange
                   </th>
-                  <th className="px-4 py-2.5 text-left font-semibold text-text-1">
+                  <th className="px-4 py-2.5 text-left font-semibold text-muted-foreground">
                     API Key
                   </th>
-                  <th className="px-4 py-2.5 text-left font-semibold text-text-1">
+                  <th className="px-4 py-2.5 text-left font-semibold text-muted-foreground">
                     Created
                   </th>
-                  <th className="px-4 py-2.5 text-right font-semibold text-text-1">
+                  <th className="px-4 py-2.5 text-right font-semibold text-muted-foreground">
                     Actions
                   </th>
                 </tr>
@@ -263,34 +263,34 @@ export default function SystemSettingsTab() {
                 {profiles.map((profile) => (
                   <tr
                     key={profile.id}
-                    className="border-b border-border/50 hover:bg-bg-3/30 transition"
+                    className="border-b border-border/50 hover:bg-muted/30 transition"
                   >
-                    <td className="px-4 py-2.5 text-text-0 font-medium">
+                    <td className="px-4 py-2.5 text-foreground font-medium">
                       {profile.name}
                     </td>
-                    <td className="px-4 py-2.5 text-text-1">
-                      <span className="px-2 py-0.5 bg-bg-3 rounded text-xs font-mono uppercase">
+                    <td className="px-4 py-2.5 text-muted-foreground">
+                      <span className="px-2 py-0.5 bg-muted rounded text-xs font-mono uppercase">
                         {profile.exchange_name}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 text-text-2">
-                      <span className="font-mono text-[11px]">
+                    <td className="px-4 py-2.5 text-muted-foreground">
+                      <span className="font-mono text-xs">
                         {profile.has_api_key ? "••••••••" : "–"}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 text-text-2 text-[11px]">
+                    <td className="px-4 py-2.5 text-muted-foreground text-xs">
                       {new Date(profile.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-2.5 text-right space-x-1.5 flex justify-end">
                       <button
                         onClick={() => openEditModal(profile)}
-                        className="px-2 py-1 text-[11px] bg-bg-3 hover:bg-bg-3/80 text-text-1 rounded transition"
+                        className="px-2 py-1 text-xs bg-muted hover:bg-muted/80 text-muted-foreground rounded transition"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => setDeleteConfirming(profile.id)}
-                        className="px-2 py-1 text-[11px] bg-red/10 hover:bg-red/20 text-red rounded transition"
+                        className="px-2 py-1 text-xs bg-red/10 hover:bg-red/20 text-rose-500 rounded transition"
                       >
                         Delete
                       </button>
@@ -306,14 +306,14 @@ export default function SystemSettingsTab() {
       {/* Edit/Add Modal */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-bg-2 border border-border rounded-card overflow-hidden w-full max-w-md mx-4">
+          <div className="bg-muted/50 border border-border rounded-card overflow-hidden w-full max-w-md mx-4">
             <div className="px-6 py-4 flex items-center justify-between border-b border-border">
-              <h3 className="text-sm font-semibold text-text-0">
+              <h3 className="text-sm font-semibold text-foreground">
                 {editingId ? "Edit Profile" : "New Exchange Profile"}
               </h3>
               <button
                 onClick={closeModal}
-                className="text-text-2 hover:text-text-0 text-xl"
+                className="text-muted-foreground hover:text-foreground text-xl"
               >
                 ×
               </button>
@@ -322,7 +322,7 @@ export default function SystemSettingsTab() {
             <div className="p-6 space-y-4">
               {/* Name */}
               <div>
-                <label className="block text-xs font-semibold text-text-2 uppercase tracking-wide mb-1.5">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
                   Profile Name
                 </label>
                 <input
@@ -332,13 +332,13 @@ export default function SystemSettingsTab() {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   placeholder="e.g., Main Binance, Backup Kraken"
-                  className="w-full px-3.5 py-2.5 bg-bg-2 border border-border rounded-btn text-xs text-text-0 outline-none transition-colors focus:border-accent placeholder:text-text-3"
+                  className="w-full px-3.5 py-2.5 bg-muted/50 border border-border rounded-btn text-xs text-foreground outline-none transition-colors focus:border-primary placeholder:text-muted-foreground"
                 />
               </div>
 
               {/* Exchange */}
               <div>
-                <label className="block text-xs font-semibold text-text-2 uppercase tracking-wide mb-1.5">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
                   Exchange
                 </label>
                 <select
@@ -349,7 +349,7 @@ export default function SystemSettingsTab() {
                       exchange_name: e.target.value,
                     })
                   }
-                  className="w-full px-3.5 py-2.5 bg-bg-2 border border-border rounded-btn text-xs text-text-0 outline-none transition-colors focus:border-accent cursor-pointer appearance-none bg-no-repeat bg-[right_12px_center] pr-8"
+                  className="w-full px-3.5 py-2.5 bg-muted/50 border border-border rounded-btn text-xs text-foreground outline-none transition-colors focus:border-primary cursor-pointer appearance-none bg-no-repeat bg-[right_12px_center] pr-8"
                   style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23808098'/%3E%3C/svg%3E")` }}
                 >
                   {SUPPORTED_EXCHANGES.map((ex) => (
@@ -363,7 +363,7 @@ export default function SystemSettingsTab() {
               {/* API Key */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-semibold text-text-2 uppercase tracking-wide">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     API Key
                   </label>
                   {editingId && (
@@ -371,14 +371,14 @@ export default function SystemSettingsTab() {
                       onClick={() =>
                         setShowApiKeyChange(!showApiKeyChange)
                       }
-                      className="text-xs text-accent hover:text-accent-dim font-semibold"
+                      className="text-xs text-primary hover:text-primary-dim font-semibold"
                     >
                       {showApiKeyChange ? "Cancel" : "Change"}
                     </button>
                   )}
                 </div>
                 {editingId && !showApiKeyChange ? (
-                  <div className="px-3.5 py-2.5 bg-bg-2 border border-border rounded-btn text-text-2 text-xs font-mono">
+                  <div className="px-3.5 py-2.5 bg-muted/50 border border-border rounded-btn text-muted-foreground text-xs font-mono">
                     ••••••••
                   </div>
                 ) : (
@@ -389,18 +389,18 @@ export default function SystemSettingsTab() {
                       setFormData({ ...formData, api_key: e.target.value })
                     }
                     placeholder="Enter API key"
-                    className="w-full px-3.5 py-2.5 bg-bg-2 border border-border rounded-btn text-xs text-text-0 outline-none transition-colors focus:border-accent placeholder:text-text-3"
+                    className="w-full px-3.5 py-2.5 bg-muted/50 border border-border rounded-btn text-xs text-foreground outline-none transition-colors focus:border-primary placeholder:text-muted-foreground"
                   />
                 )}
               </div>
 
               {/* API Secret */}
               <div>
-                <label className="block text-xs font-semibold text-text-2 uppercase tracking-wide mb-1.5">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
                   API Secret
                 </label>
                 {editingId && !showApiKeyChange ? (
-                  <div className="px-3.5 py-2.5 bg-bg-2 border border-border rounded-btn text-text-2 text-xs font-mono">
+                  <div className="px-3.5 py-2.5 bg-muted/50 border border-border rounded-btn text-muted-foreground text-xs font-mono">
                     ••••••••
                   </div>
                 ) : (
@@ -414,16 +414,16 @@ export default function SystemSettingsTab() {
                       })
                     }
                     placeholder="Enter API secret"
-                    className="w-full px-3.5 py-2.5 bg-bg-2 border border-border rounded-btn text-xs text-text-0 outline-none transition-colors focus:border-accent placeholder:text-text-3"
+                    className="w-full px-3.5 py-2.5 bg-muted/50 border border-border rounded-btn text-xs text-foreground outline-none transition-colors focus:border-primary placeholder:text-muted-foreground"
                   />
                 )}
               </div>
 
               {/* API Password (optional) */}
               <div>
-                <label className="block text-xs font-semibold text-text-2 uppercase tracking-wide mb-1.5">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
                   API Password{" "}
-                  <span className="text-text-3 font-normal">(optional)</span>
+                  <span className="text-muted-foreground font-normal">(optional)</span>
                 </label>
                 <input
                   type="password"
@@ -435,14 +435,14 @@ export default function SystemSettingsTab() {
                     })
                   }
                   placeholder="Leave blank if not needed"
-                  className="w-full px-3.5 py-2.5 bg-bg-2 border border-border rounded-btn text-xs text-text-0 outline-none transition-colors focus:border-accent placeholder:text-text-3"
+                  className="w-full px-3.5 py-2.5 bg-muted/50 border border-border rounded-btn text-xs text-foreground outline-none transition-colors focus:border-primary placeholder:text-muted-foreground"
                 />
               </div>
 
               {/* UID (optional) */}
               <div>
-                <label className="block text-xs font-semibold text-text-2 uppercase tracking-wide mb-1.5">
-                  UID <span className="text-text-3 font-normal">(optional)</span>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
+                  UID <span className="text-muted-foreground font-normal">(optional)</span>
                 </label>
                 <input
                   type="text"
@@ -451,15 +451,15 @@ export default function SystemSettingsTab() {
                     setFormData({ ...formData, uid: e.target.value })
                   }
                   placeholder="Leave blank if not needed"
-                  className="w-full px-3.5 py-2.5 bg-bg-2 border border-border rounded-btn text-xs text-text-0 outline-none transition-colors focus:border-accent placeholder:text-text-3"
+                  className="w-full px-3.5 py-2.5 bg-muted/50 border border-border rounded-btn text-xs text-foreground outline-none transition-colors focus:border-primary placeholder:text-muted-foreground"
                 />
               </div>
 
               {/* Subaccount (optional) */}
               <div>
-                <label className="block text-xs font-semibold text-text-2 uppercase tracking-wide mb-1.5">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
                   Subaccount{" "}
-                  <span className="text-text-3 font-normal">(optional)</span>
+                  <span className="text-muted-foreground font-normal">(optional)</span>
                 </label>
                 <input
                   type="text"
@@ -471,7 +471,7 @@ export default function SystemSettingsTab() {
                     })
                   }
                   placeholder="Leave blank if not needed"
-                  className="w-full px-3.5 py-2.5 bg-bg-2 border border-border rounded-btn text-xs text-text-0 outline-none transition-colors focus:border-accent placeholder:text-text-3"
+                  className="w-full px-3.5 py-2.5 bg-muted/50 border border-border rounded-btn text-xs text-foreground outline-none transition-colors focus:border-primary placeholder:text-muted-foreground"
                 />
               </div>
 
@@ -479,14 +479,14 @@ export default function SystemSettingsTab() {
               <div className="flex gap-2 pt-4 border-t border-border">
                 <button
                   onClick={closeModal}
-                  className="flex-1 px-3.5 py-2.5 bg-bg-3 hover:bg-bg-3/80 text-text-1 rounded-btn text-xs font-semibold transition"
+                  className="flex-1 px-3.5 py-2.5 bg-muted hover:bg-muted/80 text-muted-foreground rounded-btn text-xs font-semibold transition"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveProfile}
                   disabled={submitting}
-                  className="flex-1 px-3.5 py-2.5 bg-accent hover:bg-accent-dim text-white rounded-btn text-xs font-semibold transition disabled:opacity-50"
+                  className="flex-1 px-3.5 py-2.5 bg-primary hover:bg-primary-dim text-white rounded-btn text-xs font-semibold transition disabled:opacity-50"
                 >
                   {submitting ? "Saving..." : "Save Profile"}
                 </button>
@@ -499,24 +499,24 @@ export default function SystemSettingsTab() {
       {/* Delete Confirmation Modal */}
       {deleteConfirming !== null && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-bg-2 border border-border rounded-card overflow-hidden w-full max-w-sm mx-4">
+          <div className="bg-muted/50 border border-border rounded-card overflow-hidden w-full max-w-sm mx-4">
             <div className="px-6 py-4 flex items-center justify-between border-b border-border">
-              <h3 className="text-sm font-semibold text-text-0">Confirm Delete</h3>
+              <h3 className="text-sm font-semibold text-foreground">Confirm Delete</h3>
               <button
                 onClick={() => setDeleteConfirming(null)}
-                className="text-text-2 hover:text-text-0 text-xl"
+                className="text-muted-foreground hover:text-foreground text-xl"
               >
                 ×
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <p className="text-xs text-text-1">
+              <p className="text-xs text-muted-foreground">
                 Are you sure you want to delete this exchange profile? This action is permanent.
               </p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setDeleteConfirming(null)}
-                  className="flex-1 px-3.5 py-2.5 bg-bg-3 hover:bg-bg-3/80 text-text-1 rounded-btn text-xs font-semibold transition"
+                  className="flex-1 px-3.5 py-2.5 bg-muted hover:bg-muted/80 text-muted-foreground rounded-btn text-xs font-semibold transition"
                 >
                   Cancel
                 </button>

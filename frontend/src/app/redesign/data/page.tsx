@@ -208,7 +208,7 @@ export default function DataPage() {
                   <Badge
                     key={p}
                     variant="outline"
-                    className="text-2xs cursor-pointer hover:bg-red-500/10 hover:text-red-500"
+                    className="text-2xs cursor-pointer hover:bg-red-500/10 hover:text-rose-500-500"
                     onClick={() => setDlPairs(prev => prev.filter(x => x !== p))}
                   >
                     {p} ✕
@@ -276,7 +276,7 @@ export default function DataPage() {
               <button
                 key={u.cmd}
                 onClick={() => handleUtilityClick(u)}
-                className="flex flex-col items-center gap-2 py-4 px-3 rounded-lg border border-border bg-accent/20 cursor-pointer hover:border-primary/30 hover:bg-primary/5 transition-all text-center"
+                className="flex flex-col items-center gap-2 py-4 px-3 rounded-lg border border-border bg-primary/20 cursor-pointer hover:border-primary/30 hover:bg-primary/5 transition-all text-center"
               >
                 <span className="text-xl w-8 h-8 flex items-center justify-center rounded-md bg-primary/10 text-primary font-bold text-sm">{u.icon}</span>
                 <span className="text-2xs font-bold text-foreground">{u.label}</span>
@@ -309,15 +309,15 @@ export default function DataPage() {
           ) : (
             <div className="space-y-2">
               {dataRows.map((d) => (
-                <div key={d.id} className="flex items-center justify-between py-2.5 px-4 bg-accent/20 rounded-btn">
+                <div key={d.id} className="flex items-center justify-between py-2.5 px-4 bg-primary/20 rounded-btn">
                   <div className="flex items-center gap-4">
                     <span className="text-xs font-bold text-foreground">{d.pair}</span>
                     <Badge variant="outline" className="text-2xs">{d.tf}</Badge>
                   </div>
                   <div className="flex items-center gap-6 text-xs text-muted-foreground">
                     <span>{d.from} &rarr; {d.to}</span>
-                    <span className="font-mono-data">{d.candles} candles</span>
-                    <span className="font-mono-data font-semibold text-foreground">{d.size}</span>
+                    <span className="font-mono">{d.candles} candles</span>
+                    <span className="font-mono font-semibold text-foreground">{d.size}</span>
                     <button
                       onClick={() => handleDeleteRow(d.id)}
                       className="text-2xs text-ft-red/70 hover:text-ft-red font-semibold"

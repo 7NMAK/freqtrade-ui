@@ -110,7 +110,7 @@ export function StrategyDetailPanel({ strategy, onClose, onAction }: StrategyPan
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                 activeTab === t.key
                   ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent/30"
+                  : "text-muted-foreground hover:text-foreground hover:bg-primary/30"
               }`}
             >
               {t.label}
@@ -131,20 +131,20 @@ export function StrategyDetailPanel({ strategy, onClose, onAction }: StrategyPan
                   { label: "Trades", value: String(strategy.trades) },
                   { label: "Avg Duration", value: strategy.avgDuration },
                 ].map((stat) => (
-                  <div key={stat.label} className="bg-accent/30 border border-border rounded-lg p-3">
+                  <div key={stat.label} className="bg-primary/30 border border-border rounded-lg p-3">
                     <div className="text-2xs text-muted-foreground uppercase">{stat.label}</div>
-                    <div className={`text-sm font-bold font-mono-data ${stat.color || "text-foreground"}`}>{stat.value}</div>
+                    <div className={`text-sm font-bold font-mono ${stat.color || "text-foreground"}`}>{stat.value}</div>
                   </div>
                 ))}
               </div>
 
               {/* Config summary */}
               <div className="flex gap-2 flex-wrap text-2xs">
-                <span className="bg-accent/40 px-2 py-1 rounded">{strategy.pair}</span>
-                <span className="bg-accent/40 px-2 py-1 rounded">{strategy.tf}</span>
-                <span className="bg-accent/40 px-2 py-1 rounded">{strategy.leverage}</span>
+                <span className="bg-primary/40 px-2 py-1 rounded">{strategy.pair}</span>
+                <span className="bg-primary/40 px-2 py-1 rounded">{strategy.tf}</span>
+                <span className="bg-primary/40 px-2 py-1 rounded">{strategy.leverage}</span>
                 {strategy.botName && (
-                  <span className="bg-accent/40 px-2 py-1 rounded flex items-center gap-1">
+                  <span className="bg-primary/40 px-2 py-1 rounded flex items-center gap-1">
                     <span className={`w-1.5 h-1.5 rounded-full ${strategy.botRunning ? "bg-ft-green" : "bg-muted-foreground"}`} />
                     {strategy.botName}
                   </span>
@@ -173,8 +173,8 @@ export function StrategyDetailPanel({ strategy, onClose, onAction }: StrategyPan
                         <tr key={t.trade_id} className="border-b border-border/30">
                           <td className="py-2 text-foreground font-medium">{t.pair}</td>
                           <td className="py-2"><span className={t.is_short ? "text-ft-red" : "text-ft-green"}>{t.is_short ? "SHORT" : "LONG"}</span></td>
-                          <td className="py-2 text-right font-mono-data">{t.open_rate.toFixed(2)}</td>
-                          <td className={`py-2 text-right font-bold font-mono-data ${t.current_profit >= 0 ? "text-ft-green" : "text-ft-red"}`}>
+                          <td className="py-2 text-right font-mono">{t.open_rate.toFixed(2)}</td>
+                          <td className={`py-2 text-right font-bold font-mono ${t.current_profit >= 0 ? "text-ft-green" : "text-ft-red"}`}>
                             {(t.current_profit * 100).toFixed(2)}%
                           </td>
                           <td className="py-2 text-muted-foreground">{t.enter_tag}</td>
@@ -205,7 +205,7 @@ export function StrategyDetailPanel({ strategy, onClose, onAction }: StrategyPan
                         <tr key={t.trade_id} className="border-b border-border/30">
                           <td className="py-2 text-foreground font-medium">{t.pair}</td>
                           <td className="py-2"><span className={t.is_short ? "text-ft-red" : "text-ft-green"}>{t.is_short ? "SHORT" : "LONG"}</span></td>
-                          <td className={`py-2 text-right font-bold font-mono-data ${t.close_profit_abs >= 0 ? "text-ft-green" : "text-ft-red"}`}>
+                          <td className={`py-2 text-right font-bold font-mono ${t.close_profit_abs >= 0 ? "text-ft-green" : "text-ft-red"}`}>
                             {t.close_profit_abs >= 0 ? "+" : ""}{t.close_profit_abs.toFixed(2)}
                           </td>
                           <td className="py-2 text-muted-foreground">{t.exit_reason}</td>
@@ -223,10 +223,10 @@ export function StrategyDetailPanel({ strategy, onClose, onAction }: StrategyPan
             <div className="space-y-3">
               <h4 className="text-xs font-bold text-foreground mb-2">Backtest History ({backtestRuns.length} runs)</h4>
               {backtestRuns.map((b) => (
-                <div key={b.run_id} className="bg-accent/30 border border-border rounded-lg p-3">
+                <div key={b.run_id} className="bg-primary/30 border border-border rounded-lg p-3">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-2xs text-muted-foreground">{b.date}</span>
-                    <span className="text-sm font-bold text-ft-green font-mono-data">{b.profit}</span>
+                    <span className="text-sm font-bold text-ft-green font-mono">{b.profit}</span>
                   </div>
                   <div className="grid grid-cols-4 gap-2">
                     {[
@@ -237,7 +237,7 @@ export function StrategyDetailPanel({ strategy, onClose, onAction }: StrategyPan
                     ].map((m) => (
                       <div key={m.label}>
                         <div className="text-2xs text-muted-foreground">{m.label}</div>
-                        <div className="text-xs font-bold text-foreground font-mono-data">{m.val}</div>
+                        <div className="text-xs font-bold text-foreground font-mono">{m.val}</div>
                       </div>
                     ))}
                   </div>
@@ -264,7 +264,7 @@ export function StrategyDetailPanel({ strategy, onClose, onAction }: StrategyPan
               ].map((c) => (
                 <div key={c.key} className="flex justify-between items-baseline py-1.5 border-b border-border/30 last:border-b-0">
                   <span className="text-xs text-muted-foreground">{c.key}</span>
-                  <span className={`text-xs font-semibold ${c.color || "text-foreground"} ${c.accent ? "text-primary font-mono-data" : ""}`}>
+                  <span className={`text-xs font-semibold ${c.color || "text-foreground"} ${c.accent ? "text-primary font-mono" : ""}`}>
                     {c.val}
                   </span>
                 </div>
@@ -273,7 +273,7 @@ export function StrategyDetailPanel({ strategy, onClose, onAction }: StrategyPan
               <Separator className="my-3" />
 
               <h4 className="text-xs font-bold text-foreground mb-2">FT Protections (active)</h4>
-              {protections.length === 0 && <div className="text-xs text-muted-foreground py-2 italic font-mono-data">No active protections.</div>}
+              {protections.length === 0 && <div className="text-xs text-muted-foreground py-2 italic font-mono">No active protections.</div>}
               {protections.map((p) => (
                 <div key={p.name} className="flex justify-between items-baseline py-1.5 border-b border-border/30 last:border-b-0">
                   <span className="text-xs text-muted-foreground">{p.name}</span>

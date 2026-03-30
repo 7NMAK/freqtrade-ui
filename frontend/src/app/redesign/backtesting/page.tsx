@@ -68,7 +68,7 @@ function BacktestConfig({ state, setState, strategies, availablePairs }: {
             <Badge
               key={s}
               variant="outline"
-              className="text-2xs bg-primary/10 text-primary border-primary/20 cursor-pointer hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20"
+              className="text-2xs bg-primary/10 text-primary border-primary/20 cursor-pointer hover:bg-red-500/10 hover:text-rose-500-500 hover:border-rose-500-500/20"
               onClick={() => setState(prev => ({ ...prev, compareStrategies: prev.compareStrategies.filter(x => x !== s) }))}
             >
               {s} ✕
@@ -142,19 +142,19 @@ function BacktestConfig({ state, setState, strategies, availablePairs }: {
       <div className="grid grid-cols-4 gap-4">
         <div>
           <Label className="text-2xs text-muted-foreground">Starting Balance</Label>
-          <Input value={state.startingBalance} onChange={(e) => setState(prev => ({ ...prev, startingBalance: e.target.value }))} className="mt-1 font-mono-data" />
+          <Input value={state.startingBalance} onChange={(e) => setState(prev => ({ ...prev, startingBalance: e.target.value }))} className="mt-1 font-mono" />
         </div>
         <div>
           <Label className="text-2xs text-muted-foreground">stake_amount</Label>
-          <Input value={state.stakeAmount} onChange={(e) => setState(prev => ({ ...prev, stakeAmount: e.target.value }))} className="mt-1 font-mono-data" />
+          <Input value={state.stakeAmount} onChange={(e) => setState(prev => ({ ...prev, stakeAmount: e.target.value }))} className="mt-1 font-mono" />
         </div>
         <div>
           <Label className="text-2xs text-muted-foreground">max_open_trades</Label>
-          <Input value={state.maxOpenTrades} onChange={(e) => setState(prev => ({ ...prev, maxOpenTrades: e.target.value }))} className="mt-1 font-mono-data" />
+          <Input value={state.maxOpenTrades} onChange={(e) => setState(prev => ({ ...prev, maxOpenTrades: e.target.value }))} className="mt-1 font-mono" />
         </div>
         <div>
           <Label className="text-2xs text-muted-foreground">Fee (%)</Label>
-          <Input value={state.fee} onChange={(e) => setState(prev => ({ ...prev, fee: e.target.value }))} className="mt-1 font-mono-data" />
+          <Input value={state.fee} onChange={(e) => setState(prev => ({ ...prev, fee: e.target.value }))} className="mt-1 font-mono" />
         </div>
       </div>
 
@@ -174,7 +174,7 @@ function BacktestConfig({ state, setState, strategies, availablePairs }: {
             <Badge
               key={p}
               variant="outline"
-              className="text-2xs cursor-pointer hover:bg-red-500/10 hover:text-red-500"
+              className="text-2xs cursor-pointer hover:bg-red-500/10 hover:text-rose-500-500"
               onClick={() => setState(prev => ({ ...prev, pairOverride: prev.pairOverride.filter(x => x !== p) }))}
             >
               {p} ✕
@@ -258,7 +258,7 @@ function HyperoptConfig({ state, setState }: { state: HyperoptState; setState: R
       <div className="grid grid-cols-3 gap-4">
         <div>
           <Label className="text-xs">Epochs</Label>
-          <Input value={state.epochs} onChange={(e) => setState(prev => ({ ...prev, epochs: e.target.value }))} className="mt-1 font-mono-data" />
+          <Input value={state.epochs} onChange={(e) => setState(prev => ({ ...prev, epochs: e.target.value }))} className="mt-1 font-mono" />
         </div>
         <div>
           <Label className="text-xs">Loss Function</Label>
@@ -306,31 +306,31 @@ function HyperoptConfig({ state, setState }: { state: HyperoptState; setState: R
       <div className="grid grid-cols-3 gap-4">
         <div>
           <Label className="text-2xs text-muted-foreground">Min Trades</Label>
-          <Input value={state.minTrades} onChange={(e) => setState(prev => ({ ...prev, minTrades: e.target.value }))} className="mt-1 font-mono-data" />
+          <Input value={state.minTrades} onChange={(e) => setState(prev => ({ ...prev, minTrades: e.target.value }))} className="mt-1 font-mono" />
         </div>
         <div>
           <Label className="text-2xs text-muted-foreground">Random State</Label>
-          <Input value={state.randomState} onChange={(e) => setState(prev => ({ ...prev, randomState: e.target.value }))} className="mt-1 font-mono-data" />
+          <Input value={state.randomState} onChange={(e) => setState(prev => ({ ...prev, randomState: e.target.value }))} className="mt-1 font-mono" />
         </div>
         <div>
           <Label className="text-2xs text-muted-foreground">Workers</Label>
-          <Input value={state.workers} onChange={(e) => setState(prev => ({ ...prev, workers: e.target.value }))} className="mt-1 font-mono-data" />
+          <Input value={state.workers} onChange={(e) => setState(prev => ({ ...prev, workers: e.target.value }))} className="mt-1 font-mono" />
         </div>
       </div>
 
       <div>
-        <Label className="text-xs mb-2 block">Effort: <span className="text-primary font-mono-data">{EFFORT_LABELS[state.effort] || "Medium"}</span></Label>
+        <Label className="text-xs mb-2 block">Effort: <span className="text-primary font-mono">{EFFORT_LABELS[state.effort] || "Medium"}</span></Label>
         <Slider value={[state.effort]} onValueChange={(v) => setState(prev => ({ ...prev, effort: v[0] }))} max={100} step={10} className="w-full" />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label className="text-2xs text-muted-foreground">Early Stop (epochs)</Label>
-          <Input value={state.earlyStop} onChange={(e) => setState(prev => ({ ...prev, earlyStop: e.target.value }))} className="mt-1 font-mono-data" />
+          <Input value={state.earlyStop} onChange={(e) => setState(prev => ({ ...prev, earlyStop: e.target.value }))} className="mt-1 font-mono" />
         </div>
         <div>
           <Label className="text-2xs text-muted-foreground">Max Trades</Label>
-          <Input value={state.maxTrades} onChange={(e) => setState(prev => ({ ...prev, maxTrades: e.target.value }))} className="mt-1 font-mono-data" placeholder="0 = unlimited" />
+          <Input value={state.maxTrades} onChange={(e) => setState(prev => ({ ...prev, maxTrades: e.target.value }))} className="mt-1 font-mono" placeholder="0 = unlimited" />
         </div>
       </div>
 
@@ -467,9 +467,9 @@ function ResultsPanel({ visible, selectedPair, setSelectedPair }: { visible: boo
         {/* 7 Metric cards */}
         <div className="grid grid-cols-7 gap-3 mb-5">
           {METRICS.map(m => (
-            <div key={m.label} className="bg-accent/30 rounded-lg p-3 text-center">
+            <div key={m.label} className="bg-primary/30 rounded-lg p-3 text-center">
               <div className="text-2xs text-muted-foreground uppercase">{m.label}</div>
-              <div className={`text-md font-extrabold font-mono-data mt-1 ${m.good ? "text-ft-green" : "text-ft-amber"}`}>
+              <div className={`text-md font-extrabold font-mono mt-1 ${m.good ? "text-ft-green" : "text-ft-amber"}`}>
                 {m.value}
               </div>
             </div>
@@ -479,7 +479,7 @@ function ResultsPanel({ visible, selectedPair, setSelectedPair }: { visible: boo
         {/* Pair results table */}
         <Table className="mb-4">
           <TableHeader>
-            <TableRow className="bg-accent/20 hover:bg-accent/20">
+            <TableRow className="bg-primary/20 hover:bg-primary/20">
               <TableHead className="text-2xs">Pair</TableHead>
               <TableHead className="text-2xs">Trades</TableHead>
               <TableHead className="text-2xs">Win Rate</TableHead>
@@ -492,14 +492,14 @@ function ResultsPanel({ visible, selectedPair, setSelectedPair }: { visible: boo
             {PAIR_RESULTS.map(p => (
               <TableRow
                 key={p.pair}
-                className={`cursor-pointer transition-colors ${selectedPair === p.pair ? "bg-primary/10" : "hover:bg-accent/30"}`}
+                className={`cursor-pointer transition-colors ${selectedPair === p.pair ? "bg-primary/10" : "hover:bg-primary/30"}`}
                 onClick={() => setSelectedPair(selectedPair === p.pair ? null : p.pair)}
               >
                 <TableCell className="text-xs font-bold text-foreground">{p.pair}</TableCell>
-                <TableCell className="text-xs font-mono-data">{p.trades}</TableCell>
-                <TableCell className="text-xs font-mono-data">{p.winRate}</TableCell>
-                <TableCell className="text-xs font-mono-data text-ft-green">{p.avgProfit}</TableCell>
-                <TableCell className="text-xs font-bold font-mono-data text-ft-green">{p.totalProfit}</TableCell>
+                <TableCell className="text-xs font-mono">{p.trades}</TableCell>
+                <TableCell className="text-xs font-mono">{p.winRate}</TableCell>
+                <TableCell className="text-xs font-mono text-ft-green">{p.avgProfit}</TableCell>
+                <TableCell className="text-xs font-bold font-mono text-ft-green">{p.totalProfit}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{p.avgDuration}</TableCell>
               </TableRow>
             ))}
@@ -508,14 +508,14 @@ function ResultsPanel({ visible, selectedPair, setSelectedPair }: { visible: boo
 
         {/* 6 Analysis tabs */}
         <Tabs defaultValue="by enter_tag">
-          <TabsList className="w-full justify-start bg-accent/20 rounded-lg p-1">
+          <TabsList className="w-full justify-start bg-primary/20 rounded-lg p-1">
             {ANALYSIS_TABS.map(t => (
               <TabsTrigger key={t} value={t} className="text-2xs">{t}</TabsTrigger>
             ))}
           </TabsList>
           {ANALYSIS_TABS.map(t => (
             <TabsContent key={t} value={t} className="mt-3">
-              <div className="bg-accent/20 rounded-lg p-6 text-center text-xs text-muted-foreground">
+              <div className="bg-primary/20 rounded-lg p-6 text-center text-xs text-muted-foreground">
                 Analysis data for &quot;{t}&quot; will appear here after backtest run
               </div>
             </TabsContent>
@@ -525,7 +525,7 @@ function ResultsPanel({ visible, selectedPair, setSelectedPair }: { visible: boo
         {/* Breakdown tabs (day/month) */}
         <div className="mt-4">
           <Tabs defaultValue="day">
-            <TabsList className="bg-accent/20 rounded-lg p-1">
+            <TabsList className="bg-primary/20 rounded-lg p-1">
               <TabsTrigger value="day" className="text-2xs">Day</TabsTrigger>
               <TabsTrigger value="month" className="text-2xs">Month</TabsTrigger>
             </TabsList>
@@ -560,7 +560,7 @@ function HistoryPanel({ runs, selectedIdx, onSelect }: { runs: HistoryRun[]; sel
             key={i}
             onClick={() => onSelect(i)}
             className={`flex items-center justify-between py-2 px-3 rounded-btn cursor-pointer transition-colors ${
-              selectedIdx === i ? "bg-primary/10 border border-primary/20" : "bg-accent/20 hover:bg-accent/40"
+              selectedIdx === i ? "bg-primary/10 border border-primary/20" : "bg-primary/20 hover:bg-primary/40"
             }`}
           >
             <div>
@@ -568,8 +568,8 @@ function HistoryPanel({ runs, selectedIdx, onSelect }: { runs: HistoryRun[]; sel
               <span className="text-2xs text-muted-foreground ml-2">{r.time}</span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-xs font-mono-data text-muted-foreground">{r.trades} trades</span>
-              <span className="text-xs font-bold font-mono-data text-ft-green">{r.result}</span>
+              <span className="text-xs font-mono text-muted-foreground">{r.trades} trades</span>
+              <span className="text-xs font-bold font-mono text-ft-green">{r.result}</span>
             </div>
           </div>
         ))}
@@ -778,7 +778,7 @@ export default function BacktestingPage() {
               <Progress value={progress} className="h-2 mb-2" />
               <div className="flex justify-between">
                 <span className="text-2xs text-muted-foreground">{statusText}</span>
-                <span className="text-2xs font-mono-data text-muted-foreground">{Math.round(progress)}%</span>
+                <span className="text-2xs font-mono text-muted-foreground">{Math.round(progress)}%</span>
               </div>
             </div>
 

@@ -35,13 +35,13 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       return (
         <div className="flex flex-col items-center justify-center min-h-[200px] p-8 text-center">
           <div className="text-4xl mb-4">⚠️</div>
-          <div className="text-sm font-semibold text-text-0 mb-2">Something went wrong</div>
-          <div className="text-xs text-text-3 mb-5 max-w-sm font-mono">
+          <div className="text-sm font-semibold text-foreground mb-2">Something went wrong</div>
+          <div className="text-xs text-muted-foreground mb-5 max-w-sm font-mono">
             {this.state.error?.message ?? "An unexpected error occurred."}
           </div>
           <button
             type="button"
-            className="px-4 py-2 bg-accent text-white text-xs font-semibold rounded-btn hover:bg-accent-dim transition-colors cursor-pointer"
+            className="px-4 py-2 bg-primary text-white text-xs font-semibold rounded-btn hover:bg-primary-dim transition-colors cursor-pointer"
             onClick={() => {
               this.setState({ hasError: false, error: null });
               window.location.reload();

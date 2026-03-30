@@ -70,7 +70,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside
       className={clsx(
-        "bg-bg-1 border-r border-border flex flex-col shrink-0 overflow-y-auto transition-[width] duration-200",
+        "bg-card border-r border-border flex flex-col shrink-0 overflow-y-auto transition-[width] duration-200",
         collapsed ? "w-[60px]" : "w-sidebar"
       )}
     >
@@ -79,7 +79,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <Link
           href="/dashboard"
           className={clsx(
-            "flex items-center gap-2.5 hover:bg-bg-2 transition-colors flex-1",
+            "flex items-center gap-2.5 hover:bg-muted/50 transition-colors flex-1",
             collapsed ? "px-3 py-[18px] justify-center" : "px-5 py-[18px]"
           )}
         >
@@ -88,8 +88,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           </div>
           {!collapsed && (
             <div>
-              <div className="text-md font-bold text-text-0 tracking-tight">FreqTrade</div>
-              <div className="text-2xs text-text-3 font-medium">Trading Platform</div>
+              <div className="text-md font-bold text-foreground tracking-tight">FreqTrade</div>
+              <div className="text-2xs text-muted-foreground font-medium">Trading Platform</div>
             </div>
           )}
         </Link>
@@ -97,8 +97,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           type="button"
           onClick={onToggle}
           className={clsx(
-            "text-text-3 hover:text-text-1 hover:bg-bg-2 transition-all cursor-pointer shrink-0",
-            collapsed ? "absolute top-[18px] left-[60px] z-10 bg-bg-1 border border-border rounded-r-md px-1 py-1.5 text-[10px]" : "px-2 py-3 text-xs"
+            "text-muted-foreground hover:text-muted-foreground hover:bg-muted/50 transition-all cursor-pointer shrink-0",
+            collapsed ? "absolute top-[18px] left-[60px] z-10 bg-card border border-border rounded-r-md px-1 py-1.5 text-xs" : "px-2 py-3 text-xs"
           )}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
@@ -111,7 +111,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {NAV_STATIC.map((section) => (
           <div key={section.label} className="mb-4">
             {!collapsed && (
-              <div className="text-2xs font-semibold text-text-3 uppercase tracking-wider px-3 py-1.5 mb-0.5">
+              <div className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-1.5 mb-0.5">
                 {section.label}
               </div>
             )}
@@ -142,8 +142,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     "flex items-center rounded-btn text-sm font-medium transition-all duration-150 relative",
                     collapsed ? "justify-center px-0 py-2.5 my-0.5" : "gap-2.5 px-3 py-2",
                     active
-                      ? "bg-accent-glow text-accent"
-                      : "text-text-2 hover:bg-bg-3 hover:text-text-1"
+                      ? "bg-primary-glow text-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-muted-foreground"
                   )}
                 >
                   <span className={clsx("text-center text-md shrink-0", collapsed ? "w-full" : "w-[18px]")}>
@@ -154,7 +154,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     <span
                       className={clsx(
                         "text-2xs font-semibold px-1.5 py-px rounded-full",
-                        active ? "bg-accent-glow text-accent" : "bg-bg-3 text-text-2"
+                        active ? "bg-primary-glow text-primary" : "bg-muted text-muted-foreground"
                       )}
                     >
                       {badge}
@@ -177,7 +177,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
       {/* S-3: Footer Status */}
       <div className={clsx(
-        "border-t border-border text-xs text-text-3",
+        "border-t border-border text-xs text-muted-foreground",
         collapsed ? "px-2 py-3 text-center" : "px-4 py-3.5"
       )}>
         {collapsed ? (

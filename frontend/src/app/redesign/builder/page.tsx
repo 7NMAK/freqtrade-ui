@@ -105,7 +105,7 @@ function StepIndicator({ current, completedSteps }: { current: number; completed
           <div className={`w-7 h-7 rounded-full flex items-center justify-center text-2xs font-bold transition-all ${
             completedSteps[i] && i !== current ? "bg-ft-green text-white" :
             i === current ? "bg-primary text-white" :
-            "bg-accent/50 text-muted-foreground"
+            "bg-primary/50 text-muted-foreground"
           }`}>
             {completedSteps[i] && i !== current ? "✓" : i + 1}
           </div>
@@ -132,11 +132,11 @@ function StepBasics({ form, setForm }: { form: FormState; setForm: React.Dispatc
         <Label className="text-xs">Strategy Name</Label>
         <Input
           placeholder="e.g. TrendFollowerV3"
-          className={`mt-1 ${hasError ? "border-red-500" : ""}`}
+          className={`mt-1 ${hasError ? "border-rose-500-500" : ""}`}
           value={form.strategyName}
           onChange={(e) => setForm(prev => ({ ...prev, strategyName: e.target.value }))}
         />
-        {hasError && <p className="text-2xs text-red-500 mt-1">Strategy name is required</p>}
+        {hasError && <p className="text-2xs text-rose-500-500 mt-1">Strategy name is required</p>}
       </div>
       <div>
         <Label className="text-xs">Description</Label>
@@ -195,7 +195,7 @@ function StepBasics({ form, setForm }: { form: FormState; setForm: React.Dispatc
             <button
               key={p}
               onClick={() => setForm(prev => ({ ...prev, selectedPairs: prev.selectedPairs.filter(x => x !== p) }))}
-              className="px-3 py-1.5 rounded-full text-2xs font-semibold border border-primary/30 bg-primary/10 text-primary hover:bg-red-500/20 hover:border-red-500/30 hover:text-red-500 transition-colors"
+              className="px-3 py-1.5 rounded-full text-2xs font-semibold border border-primary/30 bg-primary/10 text-primary hover:bg-red-500/20 hover:border-rose-500-500/30 hover:text-rose-500-500 transition-colors"
             >
               {p} ✕
             </button>
@@ -287,7 +287,7 @@ function StepIndicators({ form, setForm }: { form: FormState; setForm: React.Dis
                     className={`px-3 py-1.5 rounded-full text-2xs font-semibold border transition-all ${
                       isSelected
                         ? "border-primary bg-primary/20 text-primary"
-                        : "border-border bg-accent/30 text-muted-foreground hover:border-primary/30 hover:text-primary hover:bg-primary/10"
+                        : "border-border bg-primary/30 text-muted-foreground hover:border-primary/30 hover:text-primary hover:bg-primary/10"
                     }`}
                   >
                     {isSelected && "✓ "}{ind}
@@ -337,7 +337,7 @@ function ConditionRow({ condition, onChange, onRemove, label, showRemove }: {
         className="w-20"
       />
       {showRemove && (
-        <button onClick={onRemove} className="text-2xs text-red-500 hover:text-red-400 font-semibold ml-1">✕</button>
+        <button onClick={onRemove} className="text-2xs text-rose-500-500 hover:text-rose-500-400 font-semibold ml-1">✕</button>
       )}
     </div>
   );
@@ -492,7 +492,7 @@ function StepRisk({ form, setForm }: { form: FormState; setForm: React.Dispatch<
           <Input
             value={form.stoploss}
             onChange={(e) => setForm(prev => ({ ...prev, stoploss: e.target.value }))}
-            className="mt-1 font-mono-data"
+            className="mt-1 font-mono"
           />
         </div>
         <div>
@@ -500,7 +500,7 @@ function StepRisk({ form, setForm }: { form: FormState; setForm: React.Dispatch<
           <Input
             value={form.stakeAmount}
             onChange={(e) => setForm(prev => ({ ...prev, stakeAmount: e.target.value }))}
-            className="mt-1 font-mono-data"
+            className="mt-1 font-mono"
           />
         </div>
         <div>
@@ -508,7 +508,7 @@ function StepRisk({ form, setForm }: { form: FormState; setForm: React.Dispatch<
           <Input
             value={form.maxOpenTrades}
             onChange={(e) => setForm(prev => ({ ...prev, maxOpenTrades: e.target.value }))}
-            className="mt-1 font-mono-data"
+            className="mt-1 font-mono"
           />
         </div>
       </div>
@@ -530,7 +530,7 @@ function StepRisk({ form, setForm }: { form: FormState; setForm: React.Dispatch<
               <Input
                 value={form.trailingStopPositive}
                 onChange={(e) => setForm(prev => ({ ...prev, trailingStopPositive: e.target.value }))}
-                className="mt-1 font-mono-data"
+                className="mt-1 font-mono"
               />
             </div>
             <div>
@@ -538,7 +538,7 @@ function StepRisk({ form, setForm }: { form: FormState; setForm: React.Dispatch<
               <Input
                 value={form.trailingStopPositiveOffset}
                 onChange={(e) => setForm(prev => ({ ...prev, trailingStopPositiveOffset: e.target.value }))}
-                className="mt-1 font-mono-data"
+                className="mt-1 font-mono"
               />
             </div>
           </div>
@@ -555,18 +555,18 @@ function StepRisk({ form, setForm }: { form: FormState; setForm: React.Dispatch<
               <Input
                 value={r.time}
                 onChange={(e) => updateRoiRow(i, "time", e.target.value)}
-                className="w-20 font-mono-data"
+                className="w-20 font-mono"
                 placeholder="min"
               />
               <span className="text-2xs text-muted-foreground">-&gt;</span>
               <Input
                 value={r.roi}
                 onChange={(e) => updateRoiRow(i, "roi", e.target.value)}
-                className="w-20 font-mono-data"
+                className="w-20 font-mono"
                 placeholder="ROI"
               />
               {form.roiRows.length > 1 && (
-                <button onClick={() => removeRoiRow(i)} className="text-2xs text-red-500 hover:text-red-400 font-semibold">✕</button>
+                <button onClick={() => removeRoiRow(i)} className="text-2xs text-rose-500-500 hover:text-rose-500-400 font-semibold">✕</button>
               )}
             </div>
           ))}
@@ -584,7 +584,7 @@ function StepRisk({ form, setForm }: { form: FormState; setForm: React.Dispatch<
             { name: "MaxDrawdown", desc: "Lock after max drawdown in period" },
             { name: "CooldownPeriod", desc: "Wait N candles after trade" },
           ].map(p => (
-            <div key={p.name} className="flex items-center justify-between py-2 px-3 bg-accent/20 rounded-btn">
+            <div key={p.name} className="flex items-center justify-between py-2 px-3 bg-primary/20 rounded-btn">
               <div>
                 <div className="text-xs font-semibold text-foreground">{p.name}</div>
                 <div className="text-2xs text-muted-foreground">{p.desc}</div>
@@ -886,9 +886,9 @@ export default function BuilderPage() {
                 </summary>
                 <div className="grid grid-cols-2 gap-2">
                   {CALLBACKS.map(cb => (
-                    <div key={cb.name} className="flex items-center justify-between py-2 px-3 bg-accent/20 rounded-btn">
+                    <div key={cb.name} className="flex items-center justify-between py-2 px-3 bg-primary/20 rounded-btn">
                       <div>
-                        <div className="text-xs font-mono-data font-semibold text-primary">{cb.name}</div>
+                        <div className="text-xs font-mono font-semibold text-primary">{cb.name}</div>
                         <div className="text-2xs text-muted-foreground">{cb.desc}</div>
                       </div>
                       <Switch

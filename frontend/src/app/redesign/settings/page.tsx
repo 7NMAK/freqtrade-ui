@@ -101,7 +101,7 @@ function GeneralTab({ state, setState }: { state: typeof DEFAULTS; setState: (s:
         </div>
         <div>
           <Label className="text-xs">db_url</Label>
-          <Input value={state.db_url} onChange={e => set("db_url", e.target.value)} className="mt-1 font-mono-data text-2xs" />
+          <Input value={state.db_url} onChange={e => set("db_url", e.target.value)} className="mt-1 font-mono text-2xs" />
         </div>
       </div>
       <div className="flex items-center gap-3">
@@ -112,11 +112,11 @@ function GeneralTab({ state, setState }: { state: typeof DEFAULTS; setState: (s:
       <div className="grid grid-cols-3 gap-4">
         <div>
           <Label className="text-2xs text-muted-foreground">process_throttle_secs</Label>
-          <Input value={state.process_throttle_secs} onChange={e => set("process_throttle_secs", e.target.value)} className="mt-1 font-mono-data" />
+          <Input value={state.process_throttle_secs} onChange={e => set("process_throttle_secs", e.target.value)} className="mt-1 font-mono" />
         </div>
         <div>
           <Label className="text-2xs text-muted-foreground">heartbeat_interval</Label>
-          <Input value={state.heartbeat_interval} onChange={e => set("heartbeat_interval", e.target.value)} className="mt-1 font-mono-data" />
+          <Input value={state.heartbeat_interval} onChange={e => set("heartbeat_interval", e.target.value)} className="mt-1 font-mono" />
         </div>
         <div>
           <Label className="text-2xs text-muted-foreground">sd_notify (systemd)</Label>
@@ -126,11 +126,11 @@ function GeneralTab({ state, setState }: { state: typeof DEFAULTS; setState: (s:
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label className="text-2xs text-muted-foreground">internals.process_throttle_secs</Label>
-          <Input value={state.internals_process_throttle} onChange={e => set("internals_process_throttle", e.target.value)} className="mt-1 font-mono-data" />
+          <Input value={state.internals_process_throttle} onChange={e => set("internals_process_throttle", e.target.value)} className="mt-1 font-mono" />
         </div>
         <div>
           <Label className="text-2xs text-muted-foreground">internals.heartbeat_interval</Label>
-          <Input value={state.internals_heartbeat} onChange={e => set("internals_heartbeat", e.target.value)} className="mt-1 font-mono-data" />
+          <Input value={state.internals_heartbeat} onChange={e => set("internals_heartbeat", e.target.value)} className="mt-1 font-mono" />
         </div>
       </div>
     </div>
@@ -176,7 +176,7 @@ function PairlistsTab({ state, setState }: { state: typeof DEFAULTS; setState: (
       <div className="space-y-2">
         {state.pairlist_handlers.map((h, i) => (
           <div key={`${h.name}-${i}`}>
-            <div className="flex items-center gap-3 py-3 px-4 bg-accent/20 rounded-lg border border-border">
+            <div className="flex items-center gap-3 py-3 px-4 bg-primary/20 rounded-lg border border-border">
               <div className="flex flex-col gap-0.5">
                 <button
                   className="text-muted-foreground/60 hover:text-foreground text-xs leading-none disabled:opacity-20"
@@ -196,7 +196,7 @@ function PairlistsTab({ state, setState }: { state: typeof DEFAULTS; setState: (
               <span className="text-xs font-bold text-foreground w-6">{i + 1}.</span>
               <div className="flex-1">
                 <div className="text-xs font-bold text-primary">{h.name}</div>
-                <div className="text-2xs text-muted-foreground font-mono-data">{h.config}</div>
+                <div className="text-2xs text-muted-foreground font-mono">{h.config}</div>
               </div>
               <button className="text-2xs text-muted-foreground hover:text-foreground" onClick={() => toggleSettings(i)}>
                 {h.showSettings ? "✕ Close" : "⚙️"}
@@ -204,7 +204,7 @@ function PairlistsTab({ state, setState }: { state: typeof DEFAULTS; setState: (
               <button className="text-2xs text-ft-red/70 hover:text-ft-red" onClick={() => removeHandler(i)}>✕</button>
             </div>
             {h.showSettings && (
-              <div className="ml-8 mt-1 mb-2 p-3 bg-accent/10 rounded-lg border border-border/50">
+              <div className="ml-8 mt-1 mb-2 p-3 bg-primary/10 rounded-lg border border-border/50">
                 <Label className="text-2xs text-muted-foreground mb-1 block">Configuration for {h.name}</Label>
                 <Input
                   value={h.config}
@@ -214,7 +214,7 @@ function PairlistsTab({ state, setState }: { state: typeof DEFAULTS; setState: (
                     );
                     setState({ ...state, pairlist_handlers: updated });
                   }}
-                  className="font-mono-data text-2xs"
+                  className="font-mono text-2xs"
                 />
               </div>
             )}
@@ -233,7 +233,7 @@ function PairlistsTab({ state, setState }: { state: typeof DEFAULTS; setState: (
               availableToAdd.map(name => (
                 <button
                   key={name}
-                  className="w-full text-left text-xs px-3 py-2 rounded hover:bg-accent/30 transition-colors"
+                  className="w-full text-left text-xs px-3 py-2 rounded hover:bg-primary/30 transition-colors"
                   onClick={() => addHandler(name)}
                 >
                   {name}
@@ -266,27 +266,27 @@ function ExchangeTab({ state, setState }: { state: typeof DEFAULTS; setState: (s
         </div>
         <div>
           <Label className="text-xs">Markets Refresh Period</Label>
-          <Input value={state.markets_refresh} onChange={e => set("markets_refresh", e.target.value)} className="mt-1 font-mono-data" />
+          <Input value={state.markets_refresh} onChange={e => set("markets_refresh", e.target.value)} className="mt-1 font-mono" />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label className="text-xs">API Key</Label>
-          <Input type="password" value={state.api_key} onChange={e => set("api_key", e.target.value)} placeholder="Enter API key" className="mt-1 font-mono-data" />
+          <Input type="password" value={state.api_key} onChange={e => set("api_key", e.target.value)} placeholder="Enter API key" className="mt-1 font-mono" />
         </div>
         <div>
           <Label className="text-xs">API Secret</Label>
-          <Input type="password" value={state.api_secret} onChange={e => set("api_secret", e.target.value)} placeholder="Enter API secret" className="mt-1 font-mono-data" />
+          <Input type="password" value={state.api_secret} onChange={e => set("api_secret", e.target.value)} placeholder="Enter API secret" className="mt-1 font-mono" />
         </div>
       </div>
       <Separator />
       <div>
         <Label className="text-xs font-bold mb-2 block">ccxt_config (advanced)</Label>
-        <Textarea value={state.ccxt_config} onChange={e => set("ccxt_config", e.target.value)} className="font-mono-data text-xs h-20" />
+        <Textarea value={state.ccxt_config} onChange={e => set("ccxt_config", e.target.value)} className="font-mono text-xs h-20" />
       </div>
       <div>
         <Label className="text-xs font-bold mb-2 block">ccxt_sync_config</Label>
-        <Textarea value={state.ccxt_sync_config} onChange={e => set("ccxt_sync_config", e.target.value)} className="font-mono-data text-xs h-16" />
+        <Textarea value={state.ccxt_sync_config} onChange={e => set("ccxt_sync_config", e.target.value)} className="font-mono text-xs h-16" />
       </div>
       <div className="flex items-center gap-3">
         <Switch checked={state.rate_limiting} onCheckedChange={v => set("rate_limiting", v)} />
@@ -312,11 +312,11 @@ function TelegramTab({ state, setState }: { state: typeof DEFAULTS; setState: (s
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label className="text-xs">Bot Token</Label>
-          <Input type="password" value={state.tg_token} onChange={e => set("tg_token", e.target.value)} placeholder="Enter bot token" className="mt-1 font-mono-data" />
+          <Input type="password" value={state.tg_token} onChange={e => set("tg_token", e.target.value)} placeholder="Enter bot token" className="mt-1 font-mono" />
         </div>
         <div>
           <Label className="text-xs">Chat ID</Label>
-          <Input value={state.tg_chat_id} onChange={e => set("tg_chat_id", e.target.value)} className="mt-1 font-mono-data" />
+          <Input value={state.tg_chat_id} onChange={e => set("tg_chat_id", e.target.value)} className="mt-1 font-mono" />
         </div>
       </div>
       <Separator />
@@ -334,11 +334,11 @@ function TelegramTab({ state, setState }: { state: typeof DEFAULTS; setState: (s
       <Separator />
       <div>
         <Label className="text-2xs text-muted-foreground">balance_dust_level</Label>
-        <Input value={state.tg_balance_dust} onChange={e => set("tg_balance_dust", e.target.value)} className="mt-1 w-32 font-mono-data" />
+        <Input value={state.tg_balance_dust} onChange={e => set("tg_balance_dust", e.target.value)} className="mt-1 w-32 font-mono" />
       </div>
       <div>
         <Label className="text-xs font-bold mb-2 block">Keyboard Layout</Label>
-        <div className="bg-accent/20 rounded-lg p-3 text-xs font-mono-data text-muted-foreground">
+        <div className="bg-primary/20 rounded-lg p-3 text-xs font-mono text-muted-foreground">
           [[&quot;/daily&quot;, &quot;/profit&quot;, &quot;/balance&quot;], [&quot;/status&quot;, &quot;/status table&quot;, &quot;/performance&quot;], [&quot;/count&quot;, &quot;/start&quot;, &quot;/stop&quot;]]
         </div>
       </div>
@@ -366,7 +366,7 @@ function WebhooksTab({ state, setState }: { state: typeof DEFAULTS; setState: (s
             value={state.wh_urls[ev] ?? ""}
             onChange={e => setUrl(ev, e.target.value)}
             placeholder={`https://hooks.example.com/${ev}`}
-            className="font-mono-data text-2xs"
+            className="font-mono text-2xs"
           />
         </div>
       ))}
@@ -385,7 +385,7 @@ function WebhooksTab({ state, setState }: { state: typeof DEFAULTS; setState: (s
         </div>
         <div>
           <Label className="text-xs">Retry Count</Label>
-          <Input value={state.wh_retries} onChange={e => set("wh_retries", e.target.value)} className="mt-1 font-mono-data" />
+          <Input value={state.wh_retries} onChange={e => set("wh_retries", e.target.value)} className="mt-1 font-mono" />
         </div>
       </div>
     </div>
@@ -427,10 +427,10 @@ function ProducerConsumerTab({ state, setState }: { state: typeof DEFAULTS; setS
         <Label className="text-xs font-bold mb-2 block">Producers</Label>
         <div className="space-y-2">
           {state.pc_producers.map((p, i) => (
-            <div key={`${p.name}-${i}`} className="flex items-center gap-3 py-3 px-4 bg-accent/20 rounded-btn">
+            <div key={`${p.name}-${i}`} className="flex items-center gap-3 py-3 px-4 bg-primary/20 rounded-btn">
               <div className="flex-1">
                 <div className="text-xs font-bold text-foreground">{p.name}</div>
-                <div className="text-2xs text-muted-foreground font-mono-data">{p.url}</div>
+                <div className="text-2xs text-muted-foreground font-mono">{p.url}</div>
               </div>
               <Badge className={`text-2xs ${p.status === "Connected" ? "bg-ft-green/15 text-ft-green" : "bg-ft-red/15 text-ft-red"}`}>
                 {p.status}
@@ -444,11 +444,11 @@ function ProducerConsumerTab({ state, setState }: { state: typeof DEFAULTS; setS
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label className="text-2xs text-muted-foreground">API Server Port</Label>
-          <Input value={state.pc_api_port} onChange={e => set("pc_api_port", e.target.value)} className="mt-1 font-mono-data" />
+          <Input value={state.pc_api_port} onChange={e => set("pc_api_port", e.target.value)} className="mt-1 font-mono" />
         </div>
         <div>
           <Label className="text-2xs text-muted-foreground">WS Token</Label>
-          <Input type="password" value={state.pc_ws_token} onChange={e => set("pc_ws_token", e.target.value)} placeholder="Enter token" className="mt-1 font-mono-data" />
+          <Input type="password" value={state.pc_ws_token} onChange={e => set("pc_ws_token", e.target.value)} placeholder="Enter token" className="mt-1 font-mono" />
         </div>
       </div>
     </div>
@@ -498,7 +498,7 @@ function AdvancedTab({ state, setState }: { state: typeof DEFAULTS; setState: (s
       </div>
       <div>
         <Label className="text-xs font-bold mb-2 block">Custom User Commands</Label>
-        <Textarea value={state.custom_commands} onChange={e => set("custom_commands", e.target.value)} placeholder="Enter custom commands..." className="h-20 font-mono-data text-xs" />
+        <Textarea value={state.custom_commands} onChange={e => set("custom_commands", e.target.value)} placeholder="Enter custom commands..." className="h-20 font-mono text-xs" />
       </div>
       <Separator />
       <div>

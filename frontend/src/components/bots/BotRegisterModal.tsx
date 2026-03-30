@@ -235,7 +235,7 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
       onClick={onClose}
     >
       <div
-        className="bg-bg-2 border border-border rounded-card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-muted/50 border border-border rounded-card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Step Indicator */}
@@ -245,8 +245,8 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                   step <= currentStep
-                    ? "bg-accent text-white"
-                    : "bg-bg-3 text-text-3"
+                    ? "bg-primary text-white"
+                    : "bg-muted text-muted-foreground"
                 }`}
               >
                 {step}
@@ -254,7 +254,7 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
               {step < 4 && (
                 <div
                   className={`flex-1 h-1 mx-2 transition-all ${
-                    step < currentStep ? "bg-accent" : "bg-bg-3"
+                    step < currentStep ? "bg-primary" : "bg-muted"
                   }`}
                 />
               )}
@@ -263,7 +263,7 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
         </div>
 
         <div className="flex justify-between mb-4">
-          <h3 className="text-sm font-semibold text-text-0">
+          <h3 className="text-sm font-semibold text-foreground">
             {currentStep === 1 && "Bot Name & Exchange"}
             {currentStep === 2 && "Trading Configuration"}
             {currentStep === 3 && "Stake & Limits"}
@@ -279,11 +279,11 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
               <Field label="Description" value={description} onChange={setDescription} placeholder="Optional description" />
 
               <div>
-                <label className="text-2xs text-text-3 uppercase tracking-wide block mb-2">Exchange *</label>
+                <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-2">Exchange *</label>
                 <select
                   value={exchange}
                   onChange={(e) => setExchange(e.target.value)}
-                  className="w-full bg-bg-1 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+                  className="w-full bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
                 >
                   {EXCHANGES.map((ex) => (
                     <option key={ex} value={ex}>
@@ -294,11 +294,11 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
               </div>
 
               <div>
-                <label className="text-2xs text-text-3 uppercase tracking-wide block mb-2">Use Exchange Profile</label>
+                <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-2">Use Exchange Profile</label>
                 <select
                   value={useProfile ?? ""}
                   onChange={(e) => setUseProfile(e.target.value ? parseInt(e.target.value, 10) : null)}
-                  className="w-full bg-bg-1 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+                  className="w-full bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
                 >
                   <option value="">-- Enter manually --</option>
                   {profiles
@@ -326,7 +326,7 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
           {currentStep === 2 && (
             <>
               <div>
-                <label className="text-2xs text-text-3 uppercase tracking-wide block mb-2">Trading Pairs *</label>
+                <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-2">Trading Pairs *</label>
                 <div className="flex gap-2 mb-3">
                   <input
                     type="text"
@@ -334,12 +334,12 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
                     onChange={(e) => setPairInput(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), handleAddPair())}
                     placeholder="BTC/USDT"
-                    className="flex-1 bg-bg-1 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+                    className="flex-1 bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
                   />
                   <button
                     type="button"
                     onClick={handleAddPair}
-                    className="px-4 py-2 text-xs font-semibold bg-accent text-white rounded hover:brightness-110 transition-all"
+                    className="px-4 py-2 text-xs font-semibold bg-primary text-white rounded hover:brightness-110 transition-all"
                   >
                     Add
                   </button>
@@ -349,13 +349,13 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
                     {pairWhitelist.map((pair) => (
                       <div
                         key={pair}
-                        className="flex items-center gap-2 px-3 py-1 bg-accent/20 border border-accent rounded text-xs text-text-0"
+                        className="flex items-center gap-2 px-3 py-1 bg-primary/20 border border-primary rounded text-xs text-foreground"
                       >
                         {pair}
                         <button
                           type="button"
                           onClick={() => handleRemovePair(pair)}
-                          className="text-text-2 hover:text-text-0 transition-all"
+                          className="text-muted-foreground hover:text-foreground transition-all"
                         >
                           ×
                         </button>
@@ -366,11 +366,11 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
               </div>
 
               <div>
-                <label className="text-2xs text-text-3 uppercase tracking-wide block mb-2">Timeframe *</label>
+                <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-2">Timeframe *</label>
                 <select
                   value={timeframe}
                   onChange={(e) => setTimeframe(e.target.value)}
-                  className="w-full bg-bg-1 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+                  className="w-full bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
                 >
                   {TIMEFRAMES.map((tf) => (
                     <option key={tf} value={tf}>
@@ -381,7 +381,7 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
               </div>
 
               <div>
-                <label className="text-2xs text-text-3 uppercase tracking-wide block mb-2">Trading Mode *</label>
+                <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-2">Trading Mode *</label>
                 <div className="flex gap-4">
                   {["Spot", "Futures"].map((mode) => (
                     <label key={mode} className="flex items-center gap-2 cursor-pointer">
@@ -393,7 +393,7 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
                         onChange={(e) => setTradingMode(e.target.value as "Spot" | "Futures")}
                         className="w-4 h-4"
                       />
-                      <span className="text-xs text-text-0">{mode}</span>
+                      <span className="text-xs text-foreground">{mode}</span>
                     </label>
                   ))}
                 </div>
@@ -401,7 +401,7 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
 
               {tradingMode === "Futures" && (
                 <div>
-                  <label className="text-2xs text-text-3 uppercase tracking-wide block mb-2">Margin Mode *</label>
+                  <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-2">Margin Mode *</label>
                   <div className="flex gap-4">
                     {["Isolated", "Cross"].map((mode) => (
                       <label key={mode} className="flex items-center gap-2 cursor-pointer">
@@ -413,7 +413,7 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
                           onChange={(e) => setMarginMode(e.target.value as "Isolated" | "Cross")}
                           className="w-4 h-4"
                         />
-                        <span className="text-xs text-text-0">{mode}</span>
+                        <span className="text-xs text-foreground">{mode}</span>
                       </label>
                     ))}
                   </div>
@@ -426,11 +426,11 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
           {currentStep === 3 && (
             <>
               <div>
-                <label className="text-2xs text-text-3 uppercase tracking-wide block mb-2">Stake Currency *</label>
+                <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-2">Stake Currency *</label>
                 <select
                   value={stakeCurrency}
                   onChange={(e) => setStakeCurrency(e.target.value)}
-                  className="w-full bg-bg-1 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+                  className="w-full bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
                 >
                   {STAKE_CURRENCIES.map((curr) => (
                     <option key={curr} value={curr}>
@@ -441,7 +441,7 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
               </div>
 
               <div>
-                <label className="text-2xs text-text-3 uppercase tracking-wide block mb-2">Stake Amount</label>
+                <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-2">Stake Amount</label>
                 <div className="flex items-center gap-3">
                   <input
                     type="checkbox"
@@ -449,7 +449,7 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
                     onChange={(e) => setUnlimitedStake(e.target.checked)}
                     className="w-4 h-4"
                   />
-                  <span className="text-xs text-text-2">Unlimited</span>
+                  <span className="text-xs text-muted-foreground">Unlimited</span>
                 </div>
                 {!unlimitedStake && (
                   <input
@@ -457,7 +457,7 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
                     value={stakeAmount}
                     onChange={(e) => setStakeAmount(e.target.value)}
                     placeholder="100"
-                    className="w-full mt-2 bg-bg-1 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+                    className="w-full mt-2 bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
                   />
                 )}
               </div>
@@ -471,7 +471,7 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
               />
 
               <div className="flex items-center gap-3 py-1">
-                <label className="text-2xs text-text-3 uppercase tracking-wide">Trading Mode</label>
+                <label className="text-2xs text-muted-foreground uppercase tracking-wide">Trading Mode</label>
                 <button
                   type="button"
                   onClick={() => setDryRun(!dryRun)}
@@ -485,13 +485,13 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
                     }`}
                   />
                 </button>
-                <span className={`text-xs font-semibold ${dryRun ? "text-amber" : "text-red-500"}`}>
+                <span className={`text-xs font-semibold ${dryRun ? "text-amber-500" : "text-rose-500-500"}`}>
                   {dryRun ? "Paper" : "Live"}
                 </span>
               </div>
 
               {!dryRun && (
-                <div className="p-3 bg-red-500/10 border border-red-500/30 rounded text-xs text-red-400">
+                <div className="p-3 bg-red-500/10 border border-rose-500-500/30 rounded text-xs text-rose-500-400">
                   ⚠ Warning: This will enable REAL MONEY TRADING. Be cautious!
                 </div>
               )}
@@ -511,14 +511,14 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
               </div>
 
               <div>
-                <label className="text-2xs text-text-3 uppercase tracking-wide block mb-2">Strategy *</label>
+                <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-2">Strategy *</label>
                 {strategiesLoading ? (
-                  <div className="text-xs text-text-3">Loading strategies...</div>
+                  <div className="text-xs text-muted-foreground">Loading strategies...</div>
                 ) : (
                   <select
                     value={selectedStrategyId ?? ""}
                     onChange={(e) => setSelectedStrategyId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                    className="w-full bg-bg-1 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+                    className="w-full bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
                   >
                     <option value="">-- Select a strategy --</option>
                     {strategies.map((s) => (
@@ -531,32 +531,32 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
               </div>
 
               {/* Review Summary */}
-              <div className="mt-6 p-4 bg-bg-3 border border-border rounded space-y-2">
-                <div className="text-xs font-semibold text-text-0 mb-2">Configuration Summary</div>
-                <div className="text-2xs text-text-2 space-y-1">
+              <div className="mt-6 p-4 bg-muted border border-border rounded space-y-2">
+                <div className="text-xs font-semibold text-foreground mb-2">Configuration Summary</div>
+                <div className="text-2xs text-muted-foreground space-y-1">
                   <div>
-                    <span className="text-text-3">Bot:</span> {name}
+                    <span className="text-muted-foreground">Bot:</span> {name}
                   </div>
                   <div>
-                    <span className="text-text-3">Exchange:</span> {exchange}
+                    <span className="text-muted-foreground">Exchange:</span> {exchange}
                   </div>
                   <div>
-                    <span className="text-text-3">Pairs:</span> {pairWhitelist.join(", ")}
+                    <span className="text-muted-foreground">Pairs:</span> {pairWhitelist.join(", ")}
                   </div>
                   <div>
-                    <span className="text-text-3">Timeframe:</span> {timeframe}
+                    <span className="text-muted-foreground">Timeframe:</span> {timeframe}
                   </div>
                   <div>
-                    <span className="text-text-3">Mode:</span> {tradingMode} {tradingMode === "Futures" ? `(${marginMode})` : ""}
+                    <span className="text-muted-foreground">Mode:</span> {tradingMode} {tradingMode === "Futures" ? `(${marginMode})` : ""}
                   </div>
                   <div>
-                    <span className="text-text-3">Stake:</span> {unlimitedStake ? "Unlimited" : stakeAmount} {stakeCurrency}
+                    <span className="text-muted-foreground">Stake:</span> {unlimitedStake ? "Unlimited" : stakeAmount} {stakeCurrency}
                   </div>
                   <div>
-                    <span className="text-text-3">Max Trades:</span> {maxOpenTrades}
+                    <span className="text-muted-foreground">Max Trades:</span> {maxOpenTrades}
                   </div>
                   <div>
-                    <span className="text-text-3">Status:</span> {dryRun ? "Paper" : "LIVE"}
+                    <span className="text-muted-foreground">Status:</span> {dryRun ? "Paper" : "LIVE"}
                   </div>
                 </div>
               </div>
@@ -568,7 +568,7 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
             <button
               type="button"
               onClick={currentStep === 1 ? onClose : handlePrevStep}
-              className="flex-1 py-2 text-xs font-semibold rounded border border-border text-text-2 hover:bg-bg-3 cursor-pointer transition-all"
+              className="flex-1 py-2 text-xs font-semibold rounded border border-border text-muted-foreground hover:bg-muted cursor-pointer transition-all"
             >
               {currentStep === 1 ? "Cancel" : "Back"}
             </button>
@@ -576,7 +576,7 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
               <button
                 type="button"
                 onClick={handleNextStep}
-                className="flex-1 py-2 text-xs font-semibold rounded bg-accent text-white hover:brightness-110 cursor-pointer transition-all"
+                className="flex-1 py-2 text-xs font-semibold rounded bg-primary text-white hover:brightness-110 cursor-pointer transition-all"
               >
                 Next
               </button>
@@ -584,7 +584,7 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 py-2 text-xs font-semibold rounded bg-accent text-white hover:brightness-110 disabled:opacity-50 cursor-pointer transition-all"
+                className="flex-1 py-2 text-xs font-semibold rounded bg-primary text-white hover:brightness-110 disabled:opacity-50 cursor-pointer transition-all"
               >
                 {submitting ? "Creating..." : "Create Bot"}
               </button>
@@ -611,13 +611,13 @@ function Field({
 }) {
   return (
     <div>
-      <label className="text-2xs text-text-3 uppercase tracking-wide block mb-1">{label}</label>
+      <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-1">{label}</label>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-bg-1 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+        className="w-full bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
       />
     </div>
   );

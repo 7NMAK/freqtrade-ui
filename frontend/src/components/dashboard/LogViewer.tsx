@@ -8,16 +8,16 @@ import type { ActivityLog, LogLevel, Bot } from "@/types";
 // ── Level badge colors ────────────────────────────────────────────────
 
 const LEVEL_STYLES: Record<LogLevel, string> = {
-  info: "bg-accent/10 text-accent border-accent/20",
-  warning: "bg-amber-bg text-amber border-amber/20",
-  error: "bg-red-bg text-red border-red/20",
-  critical: "bg-red-bg text-red border-red/40 font-bold",
+  info: "bg-primary/10 text-primary border-primary/20",
+  warning: "bg-amber-500/10 text-amber-500 border-amber-500-500/20",
+  error: "bg-rose-500/10 text-rose-500 border-rose-500/20",
+  critical: "bg-rose-500/10 text-rose-500 border-rose-500/40 font-bold",
 };
 
 function LevelBadge({ level }: { level: LogLevel }) {
   return (
     <span
-      className={`text-[10px] px-1.5 py-0.5 rounded border uppercase tracking-wider ${LEVEL_STYLES[level] || LEVEL_STYLES.info}`}
+      className={`text-xs px-1.5 py-0.5 rounded border uppercase tracking-wider ${LEVEL_STYLES[level] || LEVEL_STYLES.info}`}
     >
       {level}
     </span>
@@ -47,20 +47,20 @@ function LogDetails({ details }: { details: string | null }) {
     <div className="mt-1">
       <button type="button"
         onClick={() => setExpanded(!expanded)}
-        className="text-[10px] text-text-3 hover:text-text-2 underline"
+        className="text-xs text-muted-foreground hover:text-muted-foreground underline"
       >
         {expanded ? "Hide details" : "Show details"}
       </button>
       {expanded && (
-        <div className="mt-1 text-xs text-text-3 bg-bg-2 rounded p-2 border border-border">
+        <div className="mt-1 text-xs text-muted-foreground bg-muted/50 rounded p-2 border border-border">
           {diagnosis && (
-            <div className="mb-2 p-2 bg-red-bg border border-red/20 rounded text-red">
-              <span className="font-semibold text-red">Diagnosis: </span>
+            <div className="mb-2 p-2 bg-rose-500/10 border border-rose-500/20 rounded text-rose-500">
+              <span className="font-semibold text-rose-500">Diagnosis: </span>
               {diagnosis}
             </div>
           )}
           {rest && Object.keys(rest).length > 0 && (
-            <pre className="whitespace-pre-wrap break-all text-[11px]">
+            <pre className="whitespace-pre-wrap break-all text-xs">
               {JSON.stringify(rest, null, 2)}
             </pre>
           )}
@@ -167,20 +167,20 @@ export default function LogViewer({ bots, defaultBotId, collapsed = true }: LogV
   }, [defaultBotId]);
 
   return (
-    <div className="border border-border rounded-lg bg-bg-1 overflow-hidden">
+    <div className="border border-border rounded-lg bg-card overflow-hidden">
       {/* Header / toggle */}
       <button type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-4 py-2.5 bg-bg-2 hover:bg-bg-3 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-2.5 bg-muted/50 hover:bg-muted transition-colors"
       >
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-text-1">Activity Log</span>
-          <span className="text-[10px] text-text-3 bg-bg-1 px-2 py-0.5 rounded-full border border-border">
+          <span className="text-sm font-semibold text-muted-foreground">Activity Log</span>
+          <span className="text-xs text-muted-foreground bg-card px-2 py-0.5 rounded-full border border-border">
             {total} entries
           </span>
         </div>
         <svg
-          className={`w-4 h-4 text-text-3 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -200,8 +200,8 @@ export default function LogViewer({ bots, defaultBotId, collapsed = true }: LogV
                   onClick={() => setTab(t)}
                   className={`text-xs px-3 py-1 rounded-md transition-colors ${
                     tab === t
-                      ? "bg-accent text-white"
-                      : "text-text-3 hover:text-text-2 hover:bg-bg-2"
+                      ? "bg-primary text-white"
+                      : "text-muted-foreground hover:text-muted-foreground hover:bg-muted/50"
                   }`}
                 >
                   {t === "system" ? "System Log" : t === "bot" ? "Bot Log" : "Errors"}
@@ -215,7 +215,7 @@ export default function LogViewer({ bots, defaultBotId, collapsed = true }: LogV
                 <select
                   value={levelFilter}
                   onChange={(e) => setLevelFilter(e.target.value)}
-                  className="text-xs bg-bg-2 text-text-2 border border-border rounded px-2 py-1"
+                  className="text-xs bg-muted/50 text-muted-foreground border border-border rounded px-2 py-1"
                 >
                   <option value="">All levels</option>
                   <option value="info">Info</option>
@@ -231,7 +231,7 @@ export default function LogViewer({ bots, defaultBotId, collapsed = true }: LogV
                   onChange={(e) =>
                     setSelectedBotId(e.target.value ? Number(e.target.value) : undefined)
                   }
-                  className="text-xs bg-bg-2 text-text-2 border border-border rounded px-2 py-1"
+                  className="text-xs bg-muted/50 text-muted-foreground border border-border rounded px-2 py-1"
                 >
                   <option value="">All bots</option>
                   {bots.map((b) => (
@@ -248,14 +248,14 @@ export default function LogViewer({ bots, defaultBotId, collapsed = true }: LogV
                   placeholder="Filter action..."
                   value={actionFilter}
                   onChange={(e) => setActionFilter(e.target.value)}
-                  className="text-xs bg-bg-2 text-text-2 border border-border rounded px-2 py-1 w-32"
+                  className="text-xs bg-muted/50 text-muted-foreground border border-border rounded px-2 py-1 w-32"
                 />
               )}
 
               <button type="button"
                 onClick={fetchLogs}
                 disabled={loading}
-                className="text-xs text-text-3 hover:text-text-2 px-2 py-1 rounded border border-border hover:bg-bg-2"
+                className="text-xs text-muted-foreground hover:text-muted-foreground px-2 py-1 rounded border border-border hover:bg-muted/50"
               >
                 {loading ? "..." : "Refresh"}
               </button>
@@ -265,8 +265,8 @@ export default function LogViewer({ bots, defaultBotId, collapsed = true }: LogV
           {/* Log table */}
           <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
             <table className="w-full text-xs">
-              <thead className="sticky top-0 bg-bg-2 z-10">
-                <tr className="text-text-3 border-b border-border">
+              <thead className="sticky top-0 bg-muted/50 z-10">
+                <tr className="text-muted-foreground border-b border-border">
                   <th className="text-left px-2 py-1.5 w-28">Time</th>
                   <th className="text-left px-2 py-1.5 w-16">Level</th>
                   <th className="text-left px-2 py-1.5 w-40">Action</th>
@@ -277,7 +277,7 @@ export default function LogViewer({ bots, defaultBotId, collapsed = true }: LogV
               <tbody>
                 {logs.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="text-center text-text-3 py-6">
+                    <td colSpan={5} className="text-center text-muted-foreground py-6">
                       {loading ? "Loading..." : "No log entries found"}
                     </td>
                   </tr>
@@ -285,26 +285,26 @@ export default function LogViewer({ bots, defaultBotId, collapsed = true }: LogV
                 {logs.map((log) => (
                   <tr
                     key={log.id}
-                    className={`border-b border-border/50 hover:bg-bg-2 transition-colors ${
+                    className={`border-b border-border/50 hover:bg-muted/50 transition-colors ${
                       log.level === "error" || log.level === "critical"
-                        ? "bg-red-bg"
+                        ? "bg-rose-500/10"
                         : ""
                     }`}
                   >
-                    <td className="px-2 py-1.5 text-text-3 whitespace-nowrap">
+                    <td className="px-2 py-1.5 text-muted-foreground whitespace-nowrap">
                       {fmtTime(log.created_at)}
                     </td>
                     <td className="px-2 py-1.5">
                       <LevelBadge level={log.level} />
                     </td>
-                    <td className="px-2 py-1.5 text-text-2 font-mono">{log.action}</td>
-                    <td className="px-2 py-1.5 text-text-3">
+                    <td className="px-2 py-1.5 text-muted-foreground font-mono">{log.action}</td>
+                    <td className="px-2 py-1.5 text-muted-foreground">
                       {log.bot_name || (log.bot_id ? `#${log.bot_id}` : "\u2014")}
                     </td>
-                    <td className="px-2 py-1.5 text-text-3">
+                    <td className="px-2 py-1.5 text-muted-foreground">
                       <LogDetails details={log.details} />
                       {!log.details && log.target_name && (
-                        <span className="text-text-3">{log.target_name}</span>
+                        <span className="text-muted-foreground">{log.target_name}</span>
                       )}
                     </td>
                   </tr>
@@ -315,7 +315,7 @@ export default function LogViewer({ bots, defaultBotId, collapsed = true }: LogV
 
           {/* Footer */}
           {total > logs.length && (
-            <div className="text-center text-[10px] text-text-3 mt-2 pt-2 border-t border-border">
+            <div className="text-center text-xs text-muted-foreground mt-2 pt-2 border-t border-border">
               Showing {logs.length} of {total} entries
             </div>
           )}

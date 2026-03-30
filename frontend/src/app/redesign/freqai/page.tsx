@@ -171,7 +171,7 @@ export default function FreqAIPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4 bg-accent/20 p-1">
+        <TabsList className="mb-4 bg-primary/20 p-1">
           <TabsTrigger value="model" className="text-xs">Model</TabsTrigger>
           <TabsTrigger value="features" className="text-xs">Features</TabsTrigger>
           <TabsTrigger value="training" className="text-xs">Training</TabsTrigger>
@@ -192,7 +192,7 @@ export default function FreqAIPage() {
                     <Label className="text-2xs uppercase tracking-wider text-muted-foreground mb-2 block">{group}</Label>
                     <div className="space-y-1">
                       {models.map(m => (
-                        <label key={m} className="flex items-center gap-2 py-2 px-3 rounded-btn cursor-pointer hover:bg-accent/30 transition-colors">
+                        <label key={m} className="flex items-center gap-2 py-2 px-3 rounded-btn cursor-pointer hover:bg-primary/30 transition-colors">
                           <input
                             type="radio"
                             name="model"
@@ -200,7 +200,7 @@ export default function FreqAIPage() {
                             onChange={() => setSelectedModel(m)}
                             className="accent-[hsl(262,83%,58%)]"
                           />
-                          <span className="text-xs font-mono-data text-foreground">{m}</span>
+                          <span className="text-xs font-mono text-foreground">{m}</span>
                         </label>
                       ))}
                     </div>
@@ -217,19 +217,19 @@ export default function FreqAIPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-2xs text-muted-foreground">n_estimators</Label>
-                    <Input value={nEstimators} onChange={e => setNEstimators(e.target.value)} className="mt-1 font-mono-data" />
+                    <Input value={nEstimators} onChange={e => setNEstimators(e.target.value)} className="mt-1 font-mono" />
                   </div>
                   <div>
                     <Label className="text-2xs text-muted-foreground">learning_rate</Label>
-                    <Input value={learningRate} onChange={e => setLearningRate(e.target.value)} className="mt-1 font-mono-data" />
+                    <Input value={learningRate} onChange={e => setLearningRate(e.target.value)} className="mt-1 font-mono" />
                   </div>
                   <div>
                     <Label className="text-2xs text-muted-foreground">max_depth</Label>
-                    <Input value={maxDepth} onChange={e => setMaxDepth(e.target.value)} className="mt-1 font-mono-data" />
+                    <Input value={maxDepth} onChange={e => setMaxDepth(e.target.value)} className="mt-1 font-mono" />
                   </div>
                   <div>
                     <Label className="text-2xs text-muted-foreground">num_leaves</Label>
-                    <Input value={numLeaves} onChange={e => setNumLeaves(e.target.value)} className="mt-1 font-mono-data" />
+                    <Input value={numLeaves} onChange={e => setNumLeaves(e.target.value)} className="mt-1 font-mono" />
                   </div>
                 </div>
 
@@ -240,11 +240,11 @@ export default function FreqAIPage() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <Label className="text-xs">noise_standard_deviation</Label>
-                      <Input value={noiseStdDev} onChange={e => setNoiseStdDev(e.target.value)} className="w-24 font-mono-data" />
+                      <Input value={noiseStdDev} onChange={e => setNoiseStdDev(e.target.value)} className="w-24 font-mono" />
                     </div>
                     <div className="flex items-center justify-between">
                       <Label className="text-xs">DI threshold</Label>
-                      <Input value={diThreshold} onChange={e => setDiThreshold(e.target.value)} className="w-24 font-mono-data" />
+                      <Input value={diThreshold} onChange={e => setDiThreshold(e.target.value)} className="w-24 font-mono" />
                     </div>
                     <div className="flex items-center gap-3">
                       <Switch id="conv-width" checked={convolutionFilter} onCheckedChange={setConvolutionFilter} />
@@ -290,10 +290,10 @@ export default function FreqAIPage() {
                 </div>
                 <div>
                   <Label className="text-xs">indicator_periods_candles</Label>
-                  <Input value={indicatorPeriods} onChange={e => setIndicatorPeriods(e.target.value)} className="mt-1 font-mono-data" placeholder="JSON array" />
+                  <Input value={indicatorPeriods} onChange={e => setIndicatorPeriods(e.target.value)} className="mt-1 font-mono" placeholder="JSON array" />
                 </div>
                 <div>
-                  <Label className="text-xs mb-2 block">label_period_candles: <span className="text-primary font-mono-data">{labelPeriod}</span></Label>
+                  <Label className="text-xs mb-2 block">label_period_candles: <span className="text-primary font-mono">{labelPeriod}</span></Label>
                   <Slider value={[labelPeriod]} onValueChange={v => setLabelPeriod(v[0])} max={100} step={1} />
                 </div>
                 <div className="flex items-center gap-3">
@@ -313,9 +313,9 @@ export default function FreqAIPage() {
               </CardHeader>
               <CardContent className="px-5 pb-5 pt-0 space-y-3">
                 {FEATURE_METHODS.map(m => (
-                  <div key={m.name} className="flex items-center justify-between py-3 px-3 bg-accent/20 rounded-btn">
+                  <div key={m.name} className="flex items-center justify-between py-3 px-3 bg-primary/20 rounded-btn">
                     <div>
-                      <div className="text-xs font-mono-data font-semibold text-ft-purple">{m.name}</div>
+                      <div className="text-xs font-mono font-semibold text-ft-purple">{m.name}</div>
                       <div className="text-2xs text-muted-foreground">{m.desc}</div>
                     </div>
                     <Switch
@@ -336,19 +336,19 @@ export default function FreqAIPage() {
               <div className="grid grid-cols-4 gap-4">
                 <div>
                   <Label className="text-xs">train_period_days</Label>
-                  <Input value={trainPeriod} onChange={e => setTrainPeriod(e.target.value)} className="mt-1 font-mono-data" />
+                  <Input value={trainPeriod} onChange={e => setTrainPeriod(e.target.value)} className="mt-1 font-mono" />
                 </div>
                 <div>
                   <Label className="text-xs">backtest_period_days</Label>
-                  <Input value={backtestPeriod} onChange={e => setBacktestPeriod(e.target.value)} className="mt-1 font-mono-data" />
+                  <Input value={backtestPeriod} onChange={e => setBacktestPeriod(e.target.value)} className="mt-1 font-mono" />
                 </div>
                 <div>
                   <Label className="text-xs">purge_old_models</Label>
-                  <Input value={purgeOldModels} onChange={e => setPurgeOldModels(e.target.value)} className="mt-1 font-mono-data" />
+                  <Input value={purgeOldModels} onChange={e => setPurgeOldModels(e.target.value)} className="mt-1 font-mono" />
                 </div>
                 <div>
                   <Label className="text-xs">prediction_offset</Label>
-                  <Input value={predictionOffset} onChange={e => setPredictionOffset(e.target.value)} className="mt-1 font-mono-data" />
+                  <Input value={predictionOffset} onChange={e => setPredictionOffset(e.target.value)} className="mt-1 font-mono" />
                 </div>
               </div>
 
@@ -369,9 +369,9 @@ export default function FreqAIPage() {
                 <Label className="text-xs font-bold mb-2 block">Callback Hooks</Label>
                 <div className="space-y-2">
                   {CALLBACK_HOOKS.map(cb => (
-                    <div key={cb.name} className="flex items-center justify-between py-2 px-3 bg-accent/20 rounded-btn">
+                    <div key={cb.name} className="flex items-center justify-between py-2 px-3 bg-primary/20 rounded-btn">
                       <div>
-                        <div className="text-xs font-mono-data font-semibold text-ft-purple">{cb.name}</div>
+                        <div className="text-xs font-mono font-semibold text-ft-purple">{cb.name}</div>
                         <div className="text-2xs text-muted-foreground">{cb.desc}</div>
                       </div>
                       <Switch
@@ -393,23 +393,23 @@ export default function FreqAIPage() {
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label className="text-xs">reward_nadir_slippage</Label>
-                  <Input value={rewardNadirSlippage} onChange={e => setRewardNadirSlippage(e.target.value)} className="mt-1 font-mono-data" />
+                  <Input value={rewardNadirSlippage} onChange={e => setRewardNadirSlippage(e.target.value)} className="mt-1 font-mono" />
                 </div>
                 <div>
                   <Label className="text-xs">reward_profit_factor</Label>
-                  <Input value={rewardProfitFactor} onChange={e => setRewardProfitFactor(e.target.value)} className="mt-1 font-mono-data" />
+                  <Input value={rewardProfitFactor} onChange={e => setRewardProfitFactor(e.target.value)} className="mt-1 font-mono" />
                 </div>
                 <div>
                   <Label className="text-xs">reward_hold_penalty</Label>
-                  <Input value={rewardHoldPenalty} onChange={e => setRewardHoldPenalty(e.target.value)} className="mt-1 font-mono-data" />
+                  <Input value={rewardHoldPenalty} onChange={e => setRewardHoldPenalty(e.target.value)} className="mt-1 font-mono" />
                 </div>
                 <div>
                   <Label className="text-xs">reward_drawdown_weight</Label>
-                  <Input value={rewardDrawdownWeight} onChange={e => setRewardDrawdownWeight(e.target.value)} className="mt-1 font-mono-data" />
+                  <Input value={rewardDrawdownWeight} onChange={e => setRewardDrawdownWeight(e.target.value)} className="mt-1 font-mono" />
                 </div>
                 <div>
                   <Label className="text-xs">max_trade_duration_candles</Label>
-                  <Input value={maxTradeDuration} onChange={e => setMaxTradeDuration(e.target.value)} className="mt-1 font-mono-data" />
+                  <Input value={maxTradeDuration} onChange={e => setMaxTradeDuration(e.target.value)} className="mt-1 font-mono" />
                 </div>
                 <div>
                   <Label className="text-xs">add_state_info</Label>
@@ -444,7 +444,7 @@ export default function FreqAIPage() {
                     <span className="w-3 h-3 rounded-full bg-ft-green animate-pulse" />
                     <span className="text-sm font-bold text-foreground">No training in progress</span>
                   </div>
-                  <div className="bg-accent/20 rounded-lg p-8 text-center">
+                  <div className="bg-primary/20 rounded-lg p-8 text-center">
                     <div className="text-3xl mb-3">🤖</div>
                     <div className="text-sm text-muted-foreground">Start a training job to see real-time progress, loss curves, and feature importance here.</div>
                     <Button className="mt-4 bg-ft-purple hover:bg-ft-purple/90" onClick={startTraining}>
@@ -461,22 +461,22 @@ export default function FreqAIPage() {
                     <span className="text-sm font-bold text-foreground">Training in progress... {trainingProgress}%</span>
                   </div>
                   <div className="space-y-3">
-                    <div className="w-full bg-accent/30 rounded-full h-3 overflow-hidden">
+                    <div className="w-full bg-primary/30 rounded-full h-3 overflow-hidden">
                       <div
                         className="h-full bg-ft-purple rounded-full transition-all duration-100"
                         style={{ width: `${trainingProgress}%` }}
                       />
                     </div>
                     <div className="grid grid-cols-3 gap-3 text-center">
-                      <div className="bg-accent/20 rounded-lg p-3">
+                      <div className="bg-primary/20 rounded-lg p-3">
                         <div className="text-2xs text-muted-foreground">Model</div>
                         <div className="text-xs font-bold text-foreground">{selectedModel}</div>
                       </div>
-                      <div className="bg-accent/20 rounded-lg p-3">
+                      <div className="bg-primary/20 rounded-lg p-3">
                         <div className="text-2xs text-muted-foreground">Epoch</div>
                         <div className="text-xs font-bold text-foreground">{Math.floor(trainingProgress / 10)}/10</div>
                       </div>
-                      <div className="bg-accent/20 rounded-lg p-3">
+                      <div className="bg-primary/20 rounded-lg p-3">
                         <div className="text-2xs text-muted-foreground">Loss</div>
                         <div className="text-xs font-bold text-ft-yellow">{(0.85 - trainingProgress * 0.006).toFixed(4)}</div>
                       </div>
@@ -496,19 +496,19 @@ export default function FreqAIPage() {
                   </div>
                   <div className="space-y-4">
                     <div className="grid grid-cols-4 gap-3">
-                      <div className="bg-accent/20 rounded-lg p-3 text-center">
+                      <div className="bg-primary/20 rounded-lg p-3 text-center">
                         <div className="text-2xs text-muted-foreground">Accuracy</div>
                         <div className="text-lg font-bold text-ft-green">87.3%</div>
                       </div>
-                      <div className="bg-accent/20 rounded-lg p-3 text-center">
+                      <div className="bg-primary/20 rounded-lg p-3 text-center">
                         <div className="text-2xs text-muted-foreground">Final Loss</div>
                         <div className="text-lg font-bold text-foreground">0.2481</div>
                       </div>
-                      <div className="bg-accent/20 rounded-lg p-3 text-center">
+                      <div className="bg-primary/20 rounded-lg p-3 text-center">
                         <div className="text-2xs text-muted-foreground">Val Loss</div>
                         <div className="text-lg font-bold text-foreground">0.2794</div>
                       </div>
-                      <div className="bg-accent/20 rounded-lg p-3 text-center">
+                      <div className="bg-primary/20 rounded-lg p-3 text-center">
                         <div className="text-2xs text-muted-foreground">Epochs</div>
                         <div className="text-lg font-bold text-foreground">10</div>
                       </div>
@@ -516,7 +516,7 @@ export default function FreqAIPage() {
 
                     <div>
                       <Label className="text-xs font-bold mb-2 block">Loss Curve</Label>
-                      <div className="bg-accent/20 rounded-lg p-3 flex items-end gap-1 h-24">
+                      <div className="bg-primary/20 rounded-lg p-3 flex items-end gap-1 h-24">
                         {lossCurve.map((v, i) => (
                           <div
                             key={i}
@@ -533,11 +533,11 @@ export default function FreqAIPage() {
                       <div className="space-y-1.5">
                         {featureImportance.map(f => (
                           <div key={f.name} className="flex items-center gap-2">
-                            <span className="text-2xs font-mono-data text-muted-foreground w-32 truncate">{f.name}</span>
-                            <div className="flex-1 bg-accent/30 rounded-full h-2 overflow-hidden">
+                            <span className="text-2xs font-mono text-muted-foreground w-32 truncate">{f.name}</span>
+                            <div className="flex-1 bg-primary/30 rounded-full h-2 overflow-hidden">
                               <div className="h-full bg-ft-purple rounded-full" style={{ width: `${f.imp * 100 / 0.18 * 100}%` }} />
                             </div>
-                            <span className="text-2xs font-mono-data text-foreground w-10 text-right">{(f.imp * 100).toFixed(1)}%</span>
+                            <span className="text-2xs font-mono text-foreground w-10 text-right">{(f.imp * 100).toFixed(1)}%</span>
                           </div>
                         ))}
                       </div>

@@ -266,10 +266,10 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
       onClick={onClose}
     >
       <div
-        className="bg-bg-2 border border-border rounded-card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-muted/50 border border-border rounded-card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-sm font-semibold text-text-0 mb-6">Edit Bot: {bot.name}</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-6">Edit Bot: {bot.name}</h3>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* General Section */}
@@ -289,11 +289,11 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
             onToggle={() => toggleSection("exchange")}
           >
             <div>
-              <label className="text-2xs text-text-3 uppercase tracking-wide block mb-2">Exchange *</label>
+              <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-2">Exchange *</label>
               <select
                 value={exchange}
                 onChange={(e) => setExchange(e.target.value)}
-                className="w-full bg-bg-1 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+                className="w-full bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
               >
                 {EXCHANGES.map((ex) => (
                   <option key={ex} value={ex}>
@@ -304,12 +304,12 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
             </div>
 
             <div>
-              <label className="text-2xs text-text-3 uppercase tracking-wide block mb-2">API Credentials</label>
+              <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-2">API Credentials</label>
               {!showApiKeyInput ? (
                 <button
                   type="button"
                   onClick={() => setShowApiKeyInput(true)}
-                  className="px-3 py-2 text-xs font-semibold bg-bg-3 border border-border rounded hover:bg-bg-3 transition-all cursor-pointer"
+                  className="px-3 py-2 text-xs font-semibold bg-muted border border-border rounded hover:bg-muted transition-all cursor-pointer"
                 >
                   Change API Keys
                 </button>
@@ -322,11 +322,11 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
             </div>
 
             <div>
-              <label className="text-2xs text-text-3 uppercase tracking-wide block mb-2">Use Exchange Profile</label>
+              <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-2">Use Exchange Profile</label>
               <select
                 value={useProfile ?? ""}
                 onChange={(e) => setUseProfile(e.target.value ? parseInt(e.target.value, 10) : null)}
-                className="w-full bg-bg-1 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+                className="w-full bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
               >
                 <option value="">-- None --</option>
                 {profiles
@@ -349,7 +349,7 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
             onToggle={() => toggleSection("trading")}
           >
             <div>
-              <label className="text-2xs text-text-3 uppercase tracking-wide block mb-2">Trading Pairs *</label>
+              <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-2">Trading Pairs *</label>
               <div className="flex gap-2 mb-3">
                 <input
                   type="text"
@@ -357,12 +357,12 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
                   onChange={(e) => setPairInput(e.target.value)}
                   onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), handleAddPair())}
                   placeholder="BTC/USDT"
-                  className="flex-1 bg-bg-1 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+                  className="flex-1 bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
                 />
                 <button
                   type="button"
                   onClick={handleAddPair}
-                  className="px-4 py-2 text-xs font-semibold bg-accent text-white rounded hover:brightness-110 transition-all"
+                  className="px-4 py-2 text-xs font-semibold bg-primary text-white rounded hover:brightness-110 transition-all"
                 >
                   Add
                 </button>
@@ -372,13 +372,13 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
                   {pairWhitelist.map((pair) => (
                     <div
                       key={pair}
-                      className="flex items-center gap-2 px-3 py-1 bg-accent/20 border border-accent rounded text-xs text-text-0"
+                      className="flex items-center gap-2 px-3 py-1 bg-primary/20 border border-primary rounded text-xs text-foreground"
                     >
                       {pair}
                       <button
                         type="button"
                         onClick={() => handleRemovePair(pair)}
-                        className="text-text-2 hover:text-text-0 transition-all"
+                        className="text-muted-foreground hover:text-foreground transition-all"
                       >
                         ×
                       </button>
@@ -389,11 +389,11 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
             </div>
 
             <div>
-              <label className="text-2xs text-text-3 uppercase tracking-wide block mb-2">Timeframe *</label>
+              <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-2">Timeframe *</label>
               <select
                 value={timeframe}
                 onChange={(e) => setTimeframe(e.target.value)}
-                className="w-full bg-bg-1 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+                className="w-full bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
               >
                 {TIMEFRAMES.map((tf) => (
                   <option key={tf} value={tf}>
@@ -404,7 +404,7 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
             </div>
 
             <div>
-              <label className="text-2xs text-text-3 uppercase tracking-wide block mb-2">Trading Mode *</label>
+              <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-2">Trading Mode *</label>
               <div className="flex gap-4">
                 {["spot", "futures"].map((mode) => (
                   <label key={mode} className="flex items-center gap-2 cursor-pointer">
@@ -416,7 +416,7 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
                       onChange={(e) => setTradingMode(e.target.value)}
                       className="w-4 h-4"
                     />
-                    <span className="text-xs text-text-0">{mode.charAt(0).toUpperCase() + mode.slice(1)}</span>
+                    <span className="text-xs text-foreground">{mode.charAt(0).toUpperCase() + mode.slice(1)}</span>
                   </label>
                 ))}
               </div>
@@ -424,7 +424,7 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
 
             {tradingMode === "futures" && (
               <div>
-                <label className="text-2xs text-text-3 uppercase tracking-wide block mb-2">Margin Mode *</label>
+                <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-2">Margin Mode *</label>
                 <div className="flex gap-4">
                   {["isolated", "cross"].map((mode) => (
                     <label key={mode} className="flex items-center gap-2 cursor-pointer">
@@ -436,7 +436,7 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
                         onChange={(e) => setMarginMode(e.target.value)}
                         className="w-4 h-4"
                       />
-                      <span className="text-xs text-text-0">{mode.charAt(0).toUpperCase() + mode.slice(1)}</span>
+                      <span className="text-xs text-foreground">{mode.charAt(0).toUpperCase() + mode.slice(1)}</span>
                     </label>
                   ))}
                 </div>
@@ -444,11 +444,11 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
             )}
 
             <div>
-              <label className="text-2xs text-text-3 uppercase tracking-wide block mb-2">Stake Currency *</label>
+              <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-2">Stake Currency *</label>
               <select
                 value={stakeCurrency}
                 onChange={(e) => setStakeCurrency(e.target.value)}
-                className="w-full bg-bg-1 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+                className="w-full bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
               >
                 {STAKE_CURRENCIES.map((curr) => (
                   <option key={curr} value={curr}>
@@ -459,7 +459,7 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
             </div>
 
             <div>
-              <label className="text-2xs text-text-3 uppercase tracking-wide block mb-2">Stake Amount</label>
+              <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-2">Stake Amount</label>
               <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
@@ -467,7 +467,7 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
                   onChange={(e) => setUnlimitedStake(e.target.checked)}
                   className="w-4 h-4"
                 />
-                <span className="text-xs text-text-2">Unlimited</span>
+                <span className="text-xs text-muted-foreground">Unlimited</span>
               </div>
               {!unlimitedStake && (
                 <input
@@ -475,7 +475,7 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
                   value={stakeAmount}
                   onChange={(e) => setStakeAmount(e.target.value)}
                   placeholder="100"
-                  className="w-full mt-2 bg-bg-1 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+                  className="w-full mt-2 bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
                 />
               )}
             </div>
@@ -489,7 +489,7 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
             />
 
             <div className="flex items-center gap-3 py-1">
-              <label className="text-2xs text-text-3 uppercase tracking-wide">Trading Mode</label>
+              <label className="text-2xs text-muted-foreground uppercase tracking-wide">Trading Mode</label>
               <button
                 type="button"
                 onClick={() => setDryRun(!dryRun)}
@@ -503,13 +503,13 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
                   }`}
                 />
               </button>
-              <span className={`text-xs font-semibold ${dryRun ? "text-amber" : "text-red-500"}`}>
+              <span className={`text-xs font-semibold ${dryRun ? "text-amber-500" : "text-rose-500-500"}`}>
                 {dryRun ? "Paper" : "Live"}
               </span>
             </div>
 
             {!dryRun && (
-              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded text-xs text-red-400">
+              <div className="p-3 bg-red-500/10 border border-rose-500-500/30 rounded text-xs text-rose-500-400">
                 ⚠ LIVE TRADING: Real money trading is enabled. Be cautious!
               </div>
             )}
@@ -531,14 +531,14 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
             </div>
 
             <div>
-              <label className="text-2xs text-text-3 uppercase tracking-wide block mb-2">Strategy</label>
+              <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-2">Strategy</label>
               {strategiesLoading ? (
-                <div className="text-xs text-text-3">Loading strategies...</div>
+                <div className="text-xs text-muted-foreground">Loading strategies...</div>
               ) : (
                 <select
                   value={selectedStrategyId ?? ""}
                   onChange={(e) => setSelectedStrategyId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                  className="w-full bg-bg-1 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+                  className="w-full bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
                 >
                   <option value="">-- No change --</option>
                   {strategies.map((s) => (
@@ -552,7 +552,7 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
           </CollapsibleSection>
 
           {requiresRestart() && (
-            <div className="p-3 bg-amber/10 border border-amber/30 rounded text-xs text-amber">
+            <div className="p-3 bg-amber/10 border border-amber-500/30 rounded text-xs text-amber-500">
               Note: Changes require bot restart.
             </div>
           )}
@@ -562,14 +562,14 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2 text-xs font-semibold rounded border border-border text-text-2 hover:bg-bg-3 cursor-pointer transition-all"
+              className="flex-1 py-2 text-xs font-semibold rounded border border-border text-muted-foreground hover:bg-muted cursor-pointer transition-all"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 py-2 text-xs font-semibold rounded bg-accent text-white hover:brightness-110 disabled:opacity-50 cursor-pointer transition-all"
+              className="flex-1 py-2 text-xs font-semibold rounded bg-primary text-white hover:brightness-110 disabled:opacity-50 cursor-pointer transition-all"
             >
               {submitting ? "Saving..." : "Save Changes"}
             </button>
@@ -595,13 +595,13 @@ function Field({
 }) {
   return (
     <div>
-      <label className="text-2xs text-text-3 uppercase tracking-wide block mb-1">{label}</label>
+      <label className="text-2xs text-muted-foreground uppercase tracking-wide block mb-1">{label}</label>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-bg-1 border border-border rounded px-3 py-2 text-xs text-text-0 focus:outline-none focus:border-accent"
+        className="w-full bg-card border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
       />
     </div>
   );
@@ -623,10 +623,10 @@ function CollapsibleSection({
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 py-3 bg-bg-3 hover:bg-bg-3 transition-all cursor-pointer"
+        className="w-full flex items-center justify-between px-4 py-3 bg-muted hover:bg-muted transition-all cursor-pointer"
       >
-        <span className="text-xs font-semibold text-text-0">{title}</span>
-        <span className={`text-text-2 transition-transform ${expanded ? "rotate-180" : ""}`}>▼</span>
+        <span className="text-xs font-semibold text-foreground">{title}</span>
+        <span className={`text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`}>▼</span>
       </button>
       {expanded && <div className="p-4 space-y-4">{children}</div>}
     </div>

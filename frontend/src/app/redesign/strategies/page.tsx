@@ -187,7 +187,7 @@ export default function StrategiesPage() {
             className={`px-4 py-2 rounded-btn text-xs font-semibold border transition-all capitalize ${
               activeFilter === f
                 ? "bg-primary/10 text-primary border-primary/20"
-                : "bg-accent/30 text-muted-foreground border-border hover:border-primary/30 hover:text-foreground"
+                : "bg-primary/30 text-muted-foreground border-border hover:border-primary/30 hover:text-foreground"
             }`}
           >
             {f === "all" ? "All" : f}
@@ -257,9 +257,9 @@ function StrategyCard({
       <CardContent className="px-5 pb-4 pt-0">
         {/* Config tags */}
         <div className="flex gap-2 mb-3 text-2xs text-muted-foreground flex-wrap">
-          <span className="bg-accent/40 px-2 py-0.5 rounded">{s.pair}</span>
-          <span className="bg-accent/40 px-2 py-0.5 rounded">{s.tf}</span>
-          <span className="bg-accent/40 px-2 py-0.5 rounded">{s.leverage}</span>
+          <span className="bg-primary/40 px-2 py-0.5 rounded">{s.pair}</span>
+          <span className="bg-primary/40 px-2 py-0.5 rounded">{s.tf}</span>
+          <span className="bg-primary/40 px-2 py-0.5 rounded">{s.leverage}</span>
         </div>
 
         {/* Bot status */}
@@ -274,27 +274,27 @@ function StrategyCard({
         <div className="grid grid-cols-3 gap-x-4 gap-y-2 mb-3">
           <div>
             <div className="text-2xs text-muted-foreground uppercase">Total P&L</div>
-            <div className={`text-sm font-bold font-mono-data ${s.pnlUp ? "text-ft-green" : "text-ft-red"}`}>{s.totalPnl}</div>
+            <div className={`text-sm font-bold font-mono ${s.pnlUp ? "text-ft-green" : "text-ft-red"}`}>{s.totalPnl}</div>
           </div>
           <div>
             <div className="text-2xs text-muted-foreground uppercase">Win Rate</div>
-            <div className="text-sm font-bold font-mono-data text-foreground">{s.winRate}</div>
+            <div className="text-sm font-bold font-mono text-foreground">{s.winRate}</div>
           </div>
           <div>
             <div className="text-2xs text-muted-foreground uppercase">Sharpe</div>
-            <div className="text-sm font-bold font-mono-data text-foreground">{s.sharpe}</div>
+            <div className="text-sm font-bold font-mono text-foreground">{s.sharpe}</div>
           </div>
           <div>
             <div className="text-2xs text-muted-foreground uppercase">Trades</div>
-            <div className="text-sm font-bold font-mono-data text-foreground">{s.trades || "—"}</div>
+            <div className="text-sm font-bold font-mono text-foreground">{s.trades || "—"}</div>
           </div>
           <div>
             <div className="text-2xs text-muted-foreground uppercase">Max DD</div>
-            <div className="text-sm font-bold font-mono-data text-foreground">{s.maxDd}</div>
+            <div className="text-sm font-bold font-mono text-foreground">{s.maxDd}</div>
           </div>
           <div>
             <div className="text-2xs text-muted-foreground uppercase">Avg Duration</div>
-            <div className="text-sm font-bold font-mono-data text-foreground">{s.avgDuration}</div>
+            <div className="text-sm font-bold font-mono text-foreground">{s.avgDuration}</div>
           </div>
         </div>
 
@@ -315,7 +315,7 @@ function StrategyCard({
             <button
               key={a.label}
               onClick={() => onAction(a.action)}
-              className="flex-1 text-2xs font-semibold py-2 rounded-btn border border-border bg-accent/20 text-muted-foreground hover:border-primary/30 hover:text-primary transition-colors"
+              className="flex-1 text-2xs font-semibold py-2 rounded-btn border border-border bg-primary/20 text-muted-foreground hover:border-primary/30 hover:text-primary transition-colors"
             >
               {a.icon} {a.label}
             </button>

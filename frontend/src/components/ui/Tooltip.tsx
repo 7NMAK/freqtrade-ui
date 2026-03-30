@@ -116,7 +116,7 @@ export default function Tooltip({
         height="12"
         viewBox="0 0 16 16"
         fill="none"
-        className="text-text-3 flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity"
+        className="text-muted-foreground flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity"
       >
         <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
         <text
@@ -138,8 +138,8 @@ export default function Tooltip({
           style={{ top: coords.top, left: coords.left }}
           className={[
             "fixed z-[9999] max-w-[280px] px-3 py-2.5 rounded-lg",
-            "bg-bg-3 border border-border shadow-lg shadow-black/40",
-            "text-[11px] leading-relaxed text-text-1",
+            "bg-muted border border-border shadow-lg shadow-black/40",
+            "text-xs leading-relaxed text-muted-foreground",
             "animate-in fade-in duration-150",
             "pointer-events-none",
           ].join(" ")}

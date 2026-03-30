@@ -30,6 +30,6 @@ export function fmtMoney(n: number | null | undefined): string {
 
 /** Return a Tailwind text color class based on profit sign */
 export function profitColor(n: number | null | undefined): string {
-  if (n == null) return "text-text-2";
-  return n >= 0 ? "text-green" : "text-red";
+  if (n == null) return "text-muted-foreground";
+  return n >= 0 ? "text-emerald-500" : "text-rose-500";
 }

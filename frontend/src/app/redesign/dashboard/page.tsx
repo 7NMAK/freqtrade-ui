@@ -40,11 +40,11 @@ function StatCards({ bots }: { bots: BotData[] }) {
     <div className="grid grid-cols-5 gap-6 mb-6">
       {STATS.map((s) => (
         <Card key={s.label} title={s.tooltip} className={`cursor-pointer hover:border-primary/50 transition-colors hover:-translate-y-[1px] shadow-sm flex flex-col justify-center p-5 ${s.featured ? "bg-primary/10 border-primary/30" : ""}`}>
-          <div className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground mb-1 block">{s.label}</div>
+          <div className="text-xs uppercase font-bold tracking-wider text-muted-foreground mb-1 block">{s.label}</div>
           <div className={`text-base font-extrabold text-foreground tracking-tight text-[24px] ${s.featured ? "text-primary" : s.up ? "text-emerald-500" : "text-foreground"}`}>
             {s.value}
           </div>
-          <div className={`text-[11px] mt-1 font-semibold ${s.featured ? "text-primary" : s.up ? "text-emerald-500" : "text-muted-foreground"}`}>
+          <div className={`text-xs mt-1 font-semibold ${s.featured ? "text-primary" : s.up ? "text-emerald-500" : "text-muted-foreground"}`}>
             {s.up && !s.featured && "▲ "}{s.change}
           </div>
         </Card>
@@ -73,7 +73,7 @@ function BotGrid({ selectedBotId, onSelectBot }: { selectedBotId: string | null;
     <Card className="mb-6">
       <CardHeader>
         <CardTitle><span>🤖</span> Active Bots</CardTitle>
-        <button onClick={() => router.push("/redesign/strategies")} className="text-[11px] font-semibold text-primary hover:underline">
+        <button onClick={() => router.push("/redesign/strategies")} className="text-xs font-semibold text-primary hover:underline">
           View all strategies →
         </button>
       </CardHeader>
@@ -89,21 +89,21 @@ function BotGrid({ selectedBotId, onSelectBot }: { selectedBotId: string | null;
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[13px] font-bold text-foreground">{bot.name}</span>
-              <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-bold uppercase ${bot.status === "live" ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500" : "bg-amber-500/10 text-amber-500 border border-amber-500"}`}>
+              <span className="text-sm font-bold text-foreground">{bot.name}</span>
+              <span className={`px-2 py-0.5 rounded-[4px] text-xs font-bold uppercase ${bot.status === "live" ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500" : "bg-amber-500/10 text-amber-500-500 border border-amber-500-500"}`}>
                 {bot.status === "live" ? "Live" : "Paper"}
               </span>
             </div>
-            <div className="text-[10px] text-muted-foreground mb-4 truncate">{bot.strategy} · {bot.pair}</div>
+            <div className="text-xs text-muted-foreground mb-4 truncate">{bot.strategy} · {bot.pair}</div>
             
             <div className="grid grid-cols-2 gap-2 mb-3">
               <div>
-                <div className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground mb-1 block">Today P&L</div>
-                <div className={`text-[14px] font-bold font-mono ${bot.pnlUp ? "text-emerald-500" : "text-rose-500"}`}>{bot.pnl}</div>
+                <div className="text-xs uppercase font-bold tracking-wider text-muted-foreground mb-1 block">Today P&L</div>
+                <div className={`text-sm font-bold font-mono ${bot.pnlUp ? "text-emerald-500" : "text-rose-500"}`}>{bot.pnl}</div>
               </div>
               <div>
-                <div className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground mb-1 block">Positions</div>
-                <div className="text-[14px] font-bold text-foreground font-mono">{bot.positions}</div>
+                <div className="text-xs uppercase font-bold tracking-wider text-muted-foreground mb-1 block">Positions</div>
+                <div className="text-sm font-bold text-foreground font-mono">{bot.positions}</div>
               </div>
             </div>
 
@@ -131,8 +131,8 @@ function PositionsTable() {
   return (
     <Card className="overflow-hidden">
       <CardHeader>
-        <CardTitle><span>📍</span> Open Positions <span className="text-[11px] font-normal text-muted-foreground">(7 active)</span></CardTitle>
-        <button onClick={() => router.push("/redesign/analytics")} className="text-[11px] font-semibold text-primary hover:underline">View in Journal →</button>
+        <CardTitle><span>📍</span> Open Positions <span className="text-xs font-normal text-muted-foreground">(7 active)</span></CardTitle>
+        <button onClick={() => router.push("/redesign/analytics")} className="text-xs font-semibold text-primary hover:underline">View in Journal →</button>
       </CardHeader>
       <div className="overflow-x-auto">
         <Table>
@@ -150,23 +150,23 @@ function PositionsTable() {
               <TableRow key={i} className="cursor-pointer" onClick={() => console.info(`Viewing trade details for ${p.pair}`)}>
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-full bg-muted/50 border border-border flex items-center justify-center text-[10px] font-extrabold text-foreground">{p.icon}</div>
+                    <div className="w-7 h-7 rounded-full bg-muted/50 border border-border flex items-center justify-center text-xs font-extrabold text-foreground">{p.icon}</div>
                     <div>
-                      <div className="text-[13px] font-bold text-foreground">{p.pair}</div>
-                      <div className="text-[10px] text-muted-foreground">{p.tf}</div>
+                      <div className="text-sm font-bold text-foreground">{p.pair}</div>
+                      <div className="text-xs text-muted-foreground">{p.tf}</div>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell className={`${p.paper ? "italic text-muted-foreground" : "text-foreground"}`}>{p.bot}</TableCell>
                 <TableCell>
-                  <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-bold uppercase border ${p.side === "long" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-rose-500/10 text-rose-500 border-rose-500/20"}`}>{p.side}</span>
+                  <span className={`px-2 py-0.5 rounded-[4px] text-xs font-bold uppercase border ${p.side === "long" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-rose-500/10 text-rose-500 border-rose-500/20"}`}>{p.side}</span>
                 </TableCell>
-                <TableCell><span className="px-2 py-0.5 rounded-[4px] bg-muted/50 border border-border text-[10px] font-bold">{p.lev}</span></TableCell>
+                <TableCell><span className="px-2 py-0.5 rounded-[4px] bg-muted/50 border border-border text-xs font-bold">{p.lev}</span></TableCell>
                 <TableCell className="font-mono">{p.entry}</TableCell>
                 <TableCell className="font-mono">{p.current}</TableCell>
                 <TableCell>
-                  <span className={`text-[13px] font-bold font-mono ${p.pnlUp ? "text-emerald-500" : "text-rose-500"}`}>{p.pnl}</span>
-                  {p.paper && <span className="text-[10px] text-amber-500 font-semibold ml-1">(paper)</span>}
+                  <span className={`text-sm font-bold font-mono ${p.pnlUp ? "text-emerald-500" : "text-rose-500"}`}>{p.pnl}</span>
+                  {p.paper && <span className="text-xs text-amber-500-500 font-semibold ml-1">(paper)</span>}
                 </TableCell>
                 <TableCell className="text-muted-foreground">{p.duration}</TableCell>
                 <TableCell className="text-muted-foreground hover:text-foreground text-center text-lg">⋮</TableCell>
@@ -191,8 +191,8 @@ function ClosedTradesTable() {
   return (
     <Card className="overflow-hidden">
       <CardHeader>
-        <CardTitle><span>📋</span> Today&apos;s Closed Trades <span className="text-[11px] font-normal text-muted-foreground">(5 trades)</span></CardTitle>
-        <button onClick={() => router.push("/redesign/analytics")} className="text-[11px] font-semibold text-primary hover:underline">Full history →</button>
+        <CardTitle><span>📋</span> Today&apos;s Closed Trades <span className="text-xs font-normal text-muted-foreground">(5 trades)</span></CardTitle>
+        <button onClick={() => router.push("/redesign/analytics")} className="text-xs font-semibold text-primary hover:underline">Full history →</button>
       </CardHeader>
       <div className="overflow-x-auto">
         <Table>
@@ -210,9 +210,9 @@ function ClosedTradesTable() {
               <TableRow key={t.id} className="cursor-pointer" onClick={() => console.info(`Viewing trade ${t.id}`)}>
                 <TableCell className="font-mono text-muted-foreground">{t.id}</TableCell>
                 <TableCell className="font-bold text-foreground">{t.pair}</TableCell>
-                <TableCell className="text-[11px]">{t.bot}</TableCell>
+                <TableCell className="text-xs">{t.bot}</TableCell>
                 <TableCell>
-                  <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-bold uppercase border ${t.side === "long" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-rose-500/10 text-rose-500 border-rose-500/20"}`}>{t.side}</span>
+                  <span className={`px-2 py-0.5 rounded-[4px] text-xs font-bold uppercase border ${t.side === "long" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-rose-500/10 text-rose-500 border-rose-500/20"}`}>{t.side}</span>
                 </TableCell>
                 <TableCell className="font-mono text-muted-foreground">{t.entry}</TableCell>
                 <TableCell className="font-mono text-muted-foreground">{t.exit}</TableCell>
@@ -247,7 +247,7 @@ function QuickActions() {
           <button
             key={a.label}
             onClick={() => { if (a.href !== "#") router.push(a.href); }}
-            className="flex items-center gap-3 px-4 py-3 rounded-btn border border-border bg-muted/50 cursor-pointer hover:border-primary hover:bg-primary/10 hover:text-primary transition-all text-[13px] text-muted-foreground font-medium w-full text-left"
+            className="flex items-center gap-3 px-4 py-3 rounded-btn border border-border bg-muted/50 cursor-pointer hover:border-primary hover:bg-primary/10 hover:text-primary transition-all text-sm text-muted-foreground font-medium w-full text-left"
           >
             <span className="text-[16px] w-5 text-center">{a.icon}</span>
             {a.label}
@@ -273,7 +273,7 @@ function EquityCurve() {
     <Card className="flex flex-col h-full">
       <CardHeader>
         <CardTitle><span>📈</span> Equity Curve (30d)</CardTitle>
-        <button onClick={() => router.push("/redesign/analytics")} className="text-[11px] font-semibold text-primary hover:underline">Full Analytics →</button>
+        <button onClick={() => router.push("/redesign/analytics")} className="text-xs font-semibold text-primary hover:underline">Full Analytics →</button>
       </CardHeader>
       <div className="p-5 pt-0 flex-1 w-full min-h-[160px]">
         <ResponsiveContainer width="100%" height="100%">
@@ -308,19 +308,19 @@ function Alerts() {
   return (
     <Card className="flex flex-col h-full">
       <CardHeader>
-        <CardTitle><span>🔔</span> Recent Alerts {alerts.length > 0 && <span className="text-[11px] font-normal text-muted-foreground">({alerts.length})</span>}</CardTitle>
-        <button className="text-[11px] font-semibold text-primary hover:underline">View all →</button>
+        <CardTitle><span>🔔</span> Recent Alerts {alerts.length > 0 && <span className="text-xs font-normal text-muted-foreground">({alerts.length})</span>}</CardTitle>
+        <button className="text-xs font-semibold text-primary hover:underline">View all →</button>
       </CardHeader>
       <div className="overflow-y-auto max-h-[160px] custom-scrollbar">
-        {alerts.length === 0 && <div className="text-[12px] text-muted-foreground text-center py-6">No active alerts.</div>}
+        {alerts.length === 0 && <div className="text-xs text-muted-foreground text-center py-6">No active alerts.</div>}
         {alerts.map((a, i) => (
           <div key={i} className="flex gap-3 px-5 py-3 border-b border-border hover:bg-muted/50 transition-colors">
             <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${alertDotColors[a.type]}`} />
             <div className="flex-1">
-              <div className="text-[12px] text-foreground leading-snug">{a.text}</div>
-              <div className="text-[10px] text-muted-foreground mt-1">{a.time}</div>
+              <div className="text-xs text-foreground leading-snug">{a.text}</div>
+              <div className="text-xs text-muted-foreground mt-1">{a.time}</div>
             </div>
-            <button onClick={() => setAlerts(p => p.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-foreground text-[11px] font-bold">✕</button>
+            <button onClick={() => setAlerts(p => p.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-foreground text-xs font-bold">✕</button>
           </div>
         ))}
       </div>
@@ -341,16 +341,16 @@ function SystemHealth() {
     <Card className="flex flex-col h-full">
       <CardHeader>
         <CardTitle><span>💚</span> System Health</CardTitle>
-        <span className="text-[10px] text-muted-foreground">Check: {timestamp}</span>
+        <span className="text-xs text-muted-foreground">Check: {timestamp}</span>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
-         {HEALTH.length === 0 && <div className="text-[12px] text-muted-foreground text-center py-6">Systems Operational</div>}
+         {HEALTH.length === 0 && <div className="text-xs text-muted-foreground text-center py-6">Systems Operational</div>}
          {HEALTH.map((h, i) => (
            <div key={i} className="flex items-center gap-3 px-3 py-2 bg-muted/50 border border-border rounded-[8px]">
              <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${healthDotColors[h.status]}`} />
              <div>
-               <div className="text-[12px] font-bold text-foreground">{h.name}</div>
-               <div className="text-[10px] text-muted-foreground">{h.detail}</div>
+               <div className="text-xs font-bold text-foreground">{h.name}</div>
+               <div className="text-xs text-muted-foreground">{h.detail}</div>
              </div>
            </div>
          ))}
@@ -380,7 +380,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-[26px] font-extrabold text-foreground tracking-tight leading-tight">System Dashboard</h1>
-          <p className="text-[13px] text-muted-foreground mt-1">Live connection to Orchestrator Enclave.</p>
+          <p className="text-sm text-muted-foreground mt-1">Live connection to Orchestrator Enclave.</p>
         </div>
         <Button variant="destructive" onClick={() => setKillSwitchOpen(true)}>
           🚨 Kill Switch
@@ -391,9 +391,9 @@ export default function DashboardPage() {
       <BotGrid selectedBotId={selectedBotId} onSelectBot={(name) => setSelectedBotId(prev => prev === name ? null : name)} />
 
       {selectedBotId && (
-        <div className="mb-6 px-5 py-3 bg-primary/10 border border-primary/20 rounded-[8px] text-[13px] text-foreground font-medium flex items-center justify-between">
+        <div className="mb-6 px-5 py-3 bg-primary/10 border border-primary/20 rounded-[8px] text-sm text-foreground font-medium flex items-center justify-between">
           <span>Filtering active display for enclave: <strong className="text-primary">{selectedBotId}</strong></span>
-          <button onClick={() => setSelectedBotId(null)} className="text-[12px] text-muted-foreground hover:text-foreground hover:underline transition-colors">Clear Filter ✕</button>
+          <button onClick={() => setSelectedBotId(null)} className="text-xs text-muted-foreground hover:text-foreground hover:underline transition-colors">Clear Filter ✕</button>
         </div>
       )}
 

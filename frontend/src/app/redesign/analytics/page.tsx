@@ -182,14 +182,14 @@ export default function AnalyticsPage() {
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="text-2xs px-2 py-1 rounded border border-border bg-accent/20 text-foreground"
+            className="text-2xs px-2 py-1 rounded border border-border bg-primary/20 text-foreground"
           />
           <span className="text-2xs text-muted-foreground">→</span>
           <input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="text-2xs px-2 py-1 rounded border border-border bg-accent/20 text-foreground"
+            className="text-2xs px-2 py-1 rounded border border-border bg-primary/20 text-foreground"
           />
           <button
             onClick={() => console.info(`Exporting CSV...\nDate range: ${dateFrom} → ${dateTo}\nPeriod: ${period}\nTab: ${activeTab}`)}
@@ -209,7 +209,7 @@ export default function AnalyticsPage() {
             className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
               period === p
                 ? "bg-primary text-primary-foreground border-primary"
-                : "bg-accent/20 text-muted-foreground border-border hover:border-primary/30"
+                : "bg-primary/20 text-muted-foreground border-border hover:border-primary/30"
             }`}
           >
             {p === "all" ? "All Time" : p}
@@ -223,7 +223,7 @@ export default function AnalyticsPage() {
           <Card key={c.label} className="hover:-translate-y-0.5 transition-all">
             <CardContent className="p-4">
               <div className="text-2xs text-muted-foreground uppercase tracking-wider mb-1">{c.label}</div>
-              <div className={`text-lg font-extrabold font-mono-data ${c.up ? "text-ft-green" : "text-ft-red"}`}>{c.value}</div>
+              <div className={`text-lg font-extrabold font-mono ${c.up ? "text-ft-green" : "text-ft-red"}`}>{c.value}</div>
               <div className="text-2xs text-muted-foreground mt-0.5">{c.sub}</div>
             </CardContent>
           </Card>
@@ -231,7 +231,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Tab navigation */}
-      <div className="mb-4 bg-accent/20 p-1 rounded-lg inline-flex gap-1">
+      <div className="mb-4 bg-primary/20 p-1 rounded-lg inline-flex gap-1">
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -292,7 +292,7 @@ export default function AnalyticsPage() {
         <Card>
           <Table>
             <TableHeader>
-              <TableRow className="bg-accent/20 hover:bg-accent/20">
+              <TableRow className="bg-primary/20 hover:bg-primary/20">
                 <TableHead className="text-2xs cursor-pointer select-none hover:text-foreground" onClick={() => toggleMonthlySort("month")}>
                   Month{sortIndicator(monthlySort.col === "month", monthlySort.dir)}
                 </TableHead>
@@ -316,9 +316,9 @@ export default function AnalyticsPage() {
               {sortedMonthly.map(m => (
                 <TableRow key={m.month}>
                   <TableCell className="text-xs font-bold text-foreground">{m.month}</TableCell>
-                  <TableCell className={`text-sm font-bold font-mono-data ${m.pnl.startsWith("+") ? "text-ft-green" : "text-ft-red"}`}>{m.pnl}</TableCell>
-                  <TableCell className="text-xs font-mono-data">{m.trades}</TableCell>
-                  <TableCell className="text-xs font-mono-data">{m.winRate}</TableCell>
+                  <TableCell className={`text-sm font-bold font-mono ${m.pnl.startsWith("+") ? "text-ft-green" : "text-ft-red"}`}>{m.pnl}</TableCell>
+                  <TableCell className="text-xs font-mono">{m.trades}</TableCell>
+                  <TableCell className="text-xs font-mono">{m.winRate}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -330,7 +330,7 @@ export default function AnalyticsPage() {
         <Card>
           <Table>
             <TableHeader>
-              <TableRow className="bg-accent/20 hover:bg-accent/20">
+              <TableRow className="bg-primary/20 hover:bg-primary/20">
                 <TableHead className="text-2xs cursor-pointer select-none hover:text-foreground" onClick={() => togglePairSort("pair")}>
                   Pair{sortIndicator(pairSort.col === "pair", pairSort.dir)}
                 </TableHead>
@@ -359,11 +359,11 @@ export default function AnalyticsPage() {
                     {p.best && <Badge className="bg-ft-green/15 text-ft-green text-2xs">Best</Badge>}
                     {p.worst && <Badge className="bg-ft-red/15 text-ft-red text-2xs">Worst</Badge>}
                   </TableCell>
-                  <TableCell className={`text-sm font-bold font-mono-data ${p.totalPnl.startsWith("+") ? "text-ft-green" : "text-ft-red"}`}>{p.totalPnl}</TableCell>
-                  <TableCell className="text-xs font-mono-data">{p.trades}</TableCell>
-                  <TableCell className="text-xs font-mono-data">{p.winRate}</TableCell>
-                  <TableCell className="text-xs font-mono-data">{p.sharpe}</TableCell>
-                  <TableCell className={`text-xs font-mono-data ${p.avgProfit.startsWith("+") ? "text-ft-green" : "text-ft-red"}`}>{p.avgProfit}</TableCell>
+                  <TableCell className={`text-sm font-bold font-mono ${p.totalPnl.startsWith("+") ? "text-ft-green" : "text-ft-red"}`}>{p.totalPnl}</TableCell>
+                  <TableCell className="text-xs font-mono">{p.trades}</TableCell>
+                  <TableCell className="text-xs font-mono">{p.winRate}</TableCell>
+                  <TableCell className="text-xs font-mono">{p.sharpe}</TableCell>
+                  <TableCell className={`text-xs font-mono ${p.avgProfit.startsWith("+") ? "text-ft-green" : "text-ft-red"}`}>{p.avgProfit}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -375,7 +375,7 @@ export default function AnalyticsPage() {
         <Card>
           <Table>
             <TableHeader>
-              <TableRow className="bg-accent/20 hover:bg-accent/20">
+              <TableRow className="bg-primary/20 hover:bg-primary/20">
                 <TableHead className="text-2xs cursor-pointer select-none hover:text-foreground" onClick={() => toggleStrategySort("strategy")}>
                   Strategy{sortIndicator(strategySort.col === "strategy", strategySort.dir)}
                 </TableHead>
@@ -401,11 +401,11 @@ export default function AnalyticsPage() {
               {sortedStrategies.map(s => (
                 <TableRow key={s.strategy}>
                   <TableCell className="text-xs font-bold text-foreground">{s.strategy}</TableCell>
-                  <TableCell className={`text-sm font-bold font-mono-data ${s.totalPnl.startsWith("+") ? "text-ft-green" : "text-ft-red"}`}>{s.totalPnl}</TableCell>
-                  <TableCell className="text-xs font-mono-data">{s.trades}</TableCell>
-                  <TableCell className="text-xs font-mono-data">{s.winRate}</TableCell>
-                  <TableCell className="text-xs font-mono-data">{s.sharpe}</TableCell>
-                  <TableCell className="text-xs font-mono-data text-ft-red">{s.maxDd}</TableCell>
+                  <TableCell className={`text-sm font-bold font-mono ${s.totalPnl.startsWith("+") ? "text-ft-green" : "text-ft-red"}`}>{s.totalPnl}</TableCell>
+                  <TableCell className="text-xs font-mono">{s.trades}</TableCell>
+                  <TableCell className="text-xs font-mono">{s.winRate}</TableCell>
+                  <TableCell className="text-xs font-mono">{s.sharpe}</TableCell>
+                  <TableCell className="text-xs font-mono text-ft-red">{s.maxDd}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{s.bot}</TableCell>
                 </TableRow>
               ))}

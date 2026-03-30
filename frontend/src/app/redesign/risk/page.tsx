@@ -72,7 +72,7 @@ function KillSwitchCard({ bots, botStatuses, onSoftKill, onHardKill, onToggleBot
             
             const isActive = displayStatus === "live" || displayStatus === "paper";
             return (
-              <div key={b.id} className="flex items-center justify-between py-2 px-3 bg-accent/20 rounded-btn">
+              <div key={b.id} className="flex items-center justify-between py-2 px-3 bg-primary/20 rounded-btn">
                 <div className="flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full ${
                     displayStatus === "killed" ? "bg-ft-red" :
@@ -149,7 +149,7 @@ function HeartbeatCard({ bots, botStatuses }: { bots: Bot[], botStatuses: Record
       <CardContent className="px-5 pb-5 pt-0">
         <Table>
           <TableHeader>
-            <TableRow className="bg-accent/20 hover:bg-accent/20">
+            <TableRow className="bg-primary/20 hover:bg-primary/20">
               <TableHead className="text-2xs">Bot</TableHead>
               <TableHead className="text-2xs">Ping</TableHead>
               <TableHead className="text-2xs">Last Candle</TableHead>
@@ -169,12 +169,12 @@ function HeartbeatCard({ bots, botStatuses }: { bots: Bot[], botStatuses: Record
               return (
                 <TableRow key={b.id}>
                   <TableCell className="text-xs font-bold text-foreground">{b.name}</TableCell>
-                  <TableCell className={`text-xs font-mono-data ${isDead ? "text-ft-red" : "text-muted-foreground"}`}>
+                  <TableCell className={`text-xs font-mono ${isDead ? "text-ft-red" : "text-muted-foreground"}`}>
                     {isDead ? "TIMEOUT" : pingData ? `${pingData.ms}ms` : "..."}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{isDead ? "—" : "—"}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{isDead ? "—" : "—"}</TableCell>
-                  <TableCell className="text-xs font-mono-data text-foreground">{isDead ? "—" : "0"}</TableCell>
+                  <TableCell className="text-xs font-mono text-foreground">{isDead ? "—" : "0"}</TableCell>
                   <TableCell>
                     <span className={`w-2.5 h-2.5 rounded-full inline-block ${
                       isDead
@@ -184,7 +184,7 @@ function HeartbeatCard({ bots, botStatuses }: { bots: Bot[], botStatuses: Record
                         : "bg-ft-green shadow-[0_0_6px_hsla(97,75%,33%,0.3)]"
                     }`} />
                   </TableCell>
-                  <TableCell className="text-2xs font-mono-data text-muted-foreground">
+                  <TableCell className="text-2xs font-mono text-muted-foreground">
                     {pingData?.lastChecked || "..."}
                   </TableCell>
                 </TableRow>
@@ -220,7 +220,7 @@ function ProtectionsCard() {
       <CardContent className="px-5 pb-5 pt-0">
         <Table>
           <TableHeader>
-            <TableRow className="bg-accent/20 hover:bg-accent/20">
+            <TableRow className="bg-primary/20 hover:bg-primary/20">
               <TableHead className="text-2xs">Bot</TableHead>
               <TableHead className="text-2xs">StoplossGuard</TableHead>
               <TableHead className="text-2xs">MaxDrawdown</TableHead>
@@ -276,7 +276,7 @@ function PairLocksCard({ locks, onUnlock, onAddLock }: {
       <CardContent className="px-5 pb-5 pt-0">
         <Table>
           <TableHeader>
-            <TableRow className="bg-accent/20 hover:bg-accent/20">
+            <TableRow className="bg-primary/20 hover:bg-primary/20">
               <TableHead className="text-2xs">ID</TableHead>
               <TableHead className="text-2xs">Bot</TableHead>
               <TableHead className="text-2xs">Pair</TableHead>
@@ -293,11 +293,11 @@ function PairLocksCard({ locks, onUnlock, onAddLock }: {
             )}
             {locks.map((l) => (
               <TableRow key={l.id}>
-                <TableCell className="text-xs font-mono-data text-muted-foreground">{l.id}</TableCell>
+                <TableCell className="text-xs font-mono text-muted-foreground">{l.id}</TableCell>
                 <TableCell className="text-xs text-foreground">{l.bot}</TableCell>
                 <TableCell className="text-xs font-bold text-foreground">{l.pair}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{l.reason}</TableCell>
-                <TableCell className="text-xs font-mono-data text-foreground">{l.until}</TableCell>
+                <TableCell className="text-xs font-mono text-foreground">{l.until}</TableCell>
                 <TableCell>
                   {l.active && (
                     <button
@@ -347,7 +347,7 @@ function LockPairForm({ onClose, onSubmit }: {
               value={pair}
               onChange={(e) => setPair(e.target.value)}
               placeholder="e.g. BTC/USDT"
-              className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-accent/20 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-primary/20 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>
           <div>
@@ -357,7 +357,7 @@ function LockPairForm({ onClose, onSubmit }: {
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g. Manual lock — high volatility"
-              className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-accent/20 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-primary/20 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>
           <div>
@@ -367,14 +367,14 @@ function LockPairForm({ onClose, onSubmit }: {
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
               min="1"
-              className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-accent/20 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-primary/20 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>
           <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 text-sm rounded-lg border border-border text-muted-foreground hover:bg-accent/30 transition-colors"
+              className="flex-1 px-4 py-2 text-sm rounded-lg border border-border text-muted-foreground hover:bg-primary/30 transition-colors"
             >
               Cancel
             </button>
@@ -415,7 +415,7 @@ function ExposureCard() {
             <div className="flex-1">
               <Progress value={e.pct} className="h-2" />
             </div>
-            <span className="text-xs font-mono-data text-muted-foreground w-20 text-right">{e.exposure}</span>
+            <span className="text-xs font-mono text-muted-foreground w-20 text-right">{e.exposure}</span>
             <span className="text-2xs font-bold text-foreground w-10 text-right">{e.pct}%</span>
           </div>
         ))}
@@ -444,7 +444,7 @@ function RiskEventsCard({ events }: { events: RiskEvent[] }) {
           {events.length === 0 && <div className="text-sm text-muted-foreground p-5 text-center italic">No risk events logged.</div>}
           {visibleEvents.map((e, i) => (
             <div key={i} className="flex gap-3 py-2.5 border-b border-border last:border-b-0">
-              <span className="text-xs font-mono-data text-muted-foreground/50 w-32 flex-shrink-0">{new Date(e.created_at).toLocaleString()}</span>
+              <span className="text-xs font-mono text-muted-foreground/50 w-32 flex-shrink-0">{new Date(e.created_at).toLocaleString()}</span>
               <span className="text-sm flex-shrink-0">{eventIcons[e.trigger === "HEARTBEAT_FAILURE" ? "system" : e.trigger === "DRAWDOWN_LIMIT" ? "protection" : "alert"]}</span>
               <span className="text-xs text-muted-foreground leading-relaxed">[{e.bot_instance_id ? `Bot #${e.bot_instance_id}` : "Global"}] {e.trigger} — {e.reason || "No reason"} by {e.triggered_by}</span>
             </div>

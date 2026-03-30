@@ -77,7 +77,7 @@ export function ImportStrategyModal({ onImport }: ImportModalProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
       <DialogTrigger asChild>
-        <button className="h-9 px-4 rounded-btn bg-accent/50 border border-border text-xs font-bold text-muted-foreground hover:border-primary/30 hover:text-foreground transition-colors flex items-center gap-2">
+        <button className="h-9 px-4 rounded-btn bg-primary/50 border border-border text-xs font-bold text-muted-foreground hover:border-primary/30 hover:text-foreground transition-colors flex items-center gap-2">
           📥 Import .py
         </button>
       </DialogTrigger>
@@ -126,7 +126,7 @@ export function ImportStrategyModal({ onImport }: ImportModalProps) {
           <select
             value={selectedBot}
             onChange={(e) => setSelectedBot(Number(e.target.value))}
-            className="w-full bg-accent/30 border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:border-primary transition-colors"
+            className="w-full bg-primary/30 border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:border-primary transition-colors"
           >
             {bots.length === 0 ? (
               <option value="">No bots available</option>
@@ -140,7 +140,7 @@ export function ImportStrategyModal({ onImport }: ImportModalProps) {
 
         {/* Server import */}
         <div className="text-2xs text-muted-foreground text-center my-2">&mdash; or import from server &mdash;</div>
-        <div className="bg-accent/30 border border-border rounded-lg px-4 py-3 text-xs text-muted-foreground font-mono-data mb-4">
+        <div className="bg-primary/30 border border-border rounded-lg px-4 py-3 text-xs text-muted-foreground font-mono mb-4">
           /opt/freqtrade/user_data/strategies/ <span className="text-foreground font-semibold">(26 files)</span>
         </div>
 

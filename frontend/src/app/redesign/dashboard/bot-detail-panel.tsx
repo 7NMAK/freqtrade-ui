@@ -85,7 +85,7 @@ export function BotDetailPanel({ bot, onClose }: Props) {
         <div className="px-6 py-2 border-b border-border flex gap-1 overflow-x-auto flex-shrink-0">
           {tabs.map((t) => (
             <button key={t.key} onClick={() => { setTab(t.key); setSelectedTradeId(null); }}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap ${tab === t.key ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent/30"}`}>
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap ${tab === t.key ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-primary/30"}`}>
               {t.label}
             </button>
           ))}
@@ -107,17 +107,17 @@ export function BotDetailPanel({ bot, onClose }: Props) {
                 ].map((s) => (
                   <div key={s.label} className={`bg-gradient-to-br ${s.bg} border border-border rounded-xl p-4`}>
                     <div className="text-2xs text-muted-foreground uppercase tracking-wider">{s.label}</div>
-                    <div className={`text-xl font-extrabold font-mono-data mt-1 ${s.color}`}>{s.value}</div>
+                    <div className={`text-xl font-extrabold font-mono mt-1 ${s.color}`}>{s.value}</div>
                     <div className="text-2xs text-muted-foreground mt-1">{s.sub}</div>
                   </div>
                 ))}
               </div>
 
               {/* ═══ Recharts Profit Chart — FreqUI style ═══ */}
-              <div className="bg-accent/20 border border-border rounded-xl p-4">
+              <div className="bg-primary/20 border border-border rounded-xl p-4">
                 {/* Period + mode toggles */}
                 <div className="flex items-center justify-between mb-3">
-                  <div className="flex bg-accent/40 rounded-md p-0.5">
+                  <div className="flex bg-primary/40 rounded-md p-0.5">
                     {(["days", "weeks", "months"] as const).map((p) => (
                       <button key={p} onClick={() => setChartPeriod(p)}
                         className={`px-3 py-1 text-2xs font-semibold rounded capitalize transition-all ${chartPeriod === p ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
@@ -129,7 +129,7 @@ export function BotDetailPanel({ bot, onClose }: Props) {
                     <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-ft-green inline-block" /> Absolute profit</span>
                     <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-muted-foreground/30 inline-block" /> Trade Count</span>
                   </div>
-                  <div className="flex bg-accent/40 rounded-md p-0.5">
+                  <div className="flex bg-primary/40 rounded-md p-0.5">
                     {(["abs", "rel"] as const).map((m) => (
                       <button key={m} onClick={() => setChartMode(m)}
                         className={`px-3 py-1 text-2xs font-semibold rounded transition-all ${chartMode === m ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
@@ -204,9 +204,9 @@ export function BotDetailPanel({ bot, onClose }: Props) {
                     { l: "Rejected Signals", v: String(stats.rejected) }, { l: "Volume", v: `$${stats.volume.toLocaleString()}` },
                     { l: "Winning Trades", v: String(stats.winning) }, { l: "Losing Trades", v: String(stats.losing) },
                   ].map((s) => (
-                    <div key={s.l} className="bg-accent/20 rounded-lg px-3 py-2">
+                    <div key={s.l} className="bg-primary/20 rounded-lg px-3 py-2">
                       <div className="text-2xs text-muted-foreground">{s.l}</div>
-                      <div className="text-sm font-bold text-foreground font-mono-data">{s.v}</div>
+                      <div className="text-sm font-bold text-foreground font-mono">{s.v}</div>
                     </div>
                   ))}
                 </div>
@@ -221,23 +221,23 @@ export function BotDetailPanel({ bot, onClose }: Props) {
                 <h4 className="text-xs font-bold text-foreground mb-3">Open Trades ({openTrades.length})</h4>
                 {openTrades.map((t) => (
                   <div key={t.trade_id} onClick={() => setSelectedTradeId(t.trade_id)}
-                    className="bg-accent/20 border border-border rounded-xl p-4 mb-3 cursor-pointer hover:border-primary/30 transition-all">
+                    className="bg-primary/20 border border-border rounded-xl p-4 mb-3 cursor-pointer hover:border-primary/30 transition-all">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-bold text-foreground">{t.pair}</span>
                         <Badge variant="outline" className={`text-2xs font-bold ${t.is_short ? "text-ft-red border-ft-red/20" : "text-ft-green border-ft-green/20"}`}>{t.is_short ? "SHORT" : "LONG"} {t.leverage}x</Badge>
                         <Badge variant="secondary" className="text-2xs">{t.enter_tag}</Badge>
                       </div>
-                      <span className={`text-md font-extrabold font-mono-data ${t.current_profit >= 0 ? "text-ft-green" : "text-ft-red"}`}>
+                      <span className={`text-md font-extrabold font-mono ${t.current_profit >= 0 ? "text-ft-green" : "text-ft-red"}`}>
                         {t.current_profit >= 0 ? "+" : ""}{(t.current_profit * 100).toFixed(2)}% (${t.current_profit_abs >= 0 ? "+" : ""}${t.current_profit_abs.toFixed(2)})
                       </span>
                     </div>
                     <div className="grid grid-cols-5 gap-4 text-2xs">
-                      <div><span className="text-muted-foreground">open_rate</span><br /><span className="text-foreground font-mono-data font-semibold">${t.open_rate.toLocaleString()}</span></div>
-                      <div><span className="text-muted-foreground">current_rate</span><br /><span className="text-foreground font-mono-data font-semibold">${t.current_rate.toLocaleString()}</span></div>
-                      <div><span className="text-muted-foreground">stake_amount</span><br /><span className="text-foreground font-mono-data font-semibold">${t.stake_amount}</span></div>
-                      <div><span className="text-muted-foreground">stop_loss</span><br /><span className="text-ft-red font-mono-data font-semibold">${t.stop_loss.toLocaleString()}</span></div>
-                      <div><span className="text-muted-foreground">open_date</span><br /><span className="text-foreground font-mono-data font-semibold">{t.open_date}</span></div>
+                      <div><span className="text-muted-foreground">open_rate</span><br /><span className="text-foreground font-mono font-semibold">${t.open_rate.toLocaleString()}</span></div>
+                      <div><span className="text-muted-foreground">current_rate</span><br /><span className="text-foreground font-mono font-semibold">${t.current_rate.toLocaleString()}</span></div>
+                      <div><span className="text-muted-foreground">stake_amount</span><br /><span className="text-foreground font-mono font-semibold">${t.stake_amount}</span></div>
+                      <div><span className="text-muted-foreground">stop_loss</span><br /><span className="text-ft-red font-mono font-semibold">${t.stop_loss.toLocaleString()}</span></div>
+                      <div><span className="text-muted-foreground">open_date</span><br /><span className="text-foreground font-mono font-semibold">{t.open_date}</span></div>
                     </div>
                   </div>
                 ))}
@@ -247,7 +247,7 @@ export function BotDetailPanel({ bot, onClose }: Props) {
                 <h4 className="text-xs font-bold text-foreground mb-3">Closed Trades ({closedTrades.length})</h4>
                 {closedTrades.map((t) => (
                   <div key={t.trade_id} onClick={() => setSelectedTradeId(t.trade_id)}
-                    className="bg-accent/20 border border-border rounded-xl p-4 mb-3 cursor-pointer hover:border-primary/30 transition-all">
+                    className="bg-primary/20 border border-border rounded-xl p-4 mb-3 cursor-pointer hover:border-primary/30 transition-all">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-bold text-foreground">{t.pair}</span>
@@ -255,16 +255,16 @@ export function BotDetailPanel({ bot, onClose }: Props) {
                         <Badge variant="secondary" className="text-2xs">{t.enter_tag}</Badge>
                         <span className="text-2xs text-muted-foreground">\u2192 {t.exit_reason}</span>
                       </div>
-                      <span className={`text-md font-extrabold font-mono-data ${t.close_profit_abs >= 0 ? "text-ft-green" : "text-ft-red"}`}>
+                      <span className={`text-md font-extrabold font-mono ${t.close_profit_abs >= 0 ? "text-ft-green" : "text-ft-red"}`}>
                         {t.close_profit_abs >= 0 ? "+" : ""}${t.close_profit_abs.toFixed(2)}
                       </span>
                     </div>
                     <div className="grid grid-cols-5 gap-4 text-2xs">
-                      <div><span className="text-muted-foreground">open_rate</span><br /><span className="text-foreground font-mono-data font-semibold">${t.open_rate.toLocaleString()}</span></div>
-                      <div><span className="text-muted-foreground">close_rate</span><br /><span className="text-foreground font-mono-data font-semibold">${t.close_rate.toLocaleString()}</span></div>
-                      <div><span className="text-muted-foreground">stake_amount</span><br /><span className="text-foreground font-mono-data font-semibold">${t.stake_amount}</span></div>
-                      <div><span className="text-muted-foreground">close_date</span><br /><span className="text-foreground font-mono-data font-semibold">{t.close_date}</span></div>
-                      <div><span className="text-muted-foreground">fees</span><br /><span className="text-foreground font-mono-data font-semibold">{((t.fee_open + t.fee_close) * 100).toFixed(2)}%</span></div>
+                      <div><span className="text-muted-foreground">open_rate</span><br /><span className="text-foreground font-mono font-semibold">${t.open_rate.toLocaleString()}</span></div>
+                      <div><span className="text-muted-foreground">close_rate</span><br /><span className="text-foreground font-mono font-semibold">${t.close_rate.toLocaleString()}</span></div>
+                      <div><span className="text-muted-foreground">stake_amount</span><br /><span className="text-foreground font-mono font-semibold">${t.stake_amount}</span></div>
+                      <div><span className="text-muted-foreground">close_date</span><br /><span className="text-foreground font-mono font-semibold">{t.close_date}</span></div>
+                      <div><span className="text-muted-foreground">fees</span><br /><span className="text-foreground font-mono font-semibold">{((t.fee_open + t.fee_close) * 100).toFixed(2)}%</span></div>
                     </div>
                   </div>
                 ))}
@@ -279,9 +279,9 @@ export function BotDetailPanel({ bot, onClose }: Props) {
               <h4 className="text-sm font-bold text-foreground">Trade #{selectedTrade.trade_id}</h4>
               <div className="grid grid-cols-2 gap-3">
                 {Object.entries(selectedTrade).filter(([k]) => !k.startsWith("_")).map(([k, v]) => (
-                  <div key={k} className="bg-accent/20 rounded-lg px-3 py-2">
+                  <div key={k} className="bg-primary/20 rounded-lg px-3 py-2">
                     <div className="text-2xs text-muted-foreground">{k}</div>
-                    <div className="text-xs font-semibold text-foreground font-mono-data">{typeof v === "number" ? (k.includes("rate") || k.includes("loss") ? `$${v.toLocaleString()}` : k.includes("profit") && !k.includes("abs") ? `${(v * 100).toFixed(2)}%` : String(v)) : String(v)}</div>
+                    <div className="text-xs font-semibold text-foreground font-mono">{typeof v === "number" ? (k.includes("rate") || k.includes("loss") ? `$${v.toLocaleString()}` : k.includes("profit") && !k.includes("abs") ? `${(v * 100).toFixed(2)}%` : String(v)) : String(v)}</div>
                   </div>
                 ))}
               </div>
@@ -303,14 +303,14 @@ export function BotDetailPanel({ bot, onClose }: Props) {
                 <Button variant="outline" className="text-xs" onClick={() => router.push("/redesign/backtesting")}>Run New Backtest</Button>
               </div>
               {btRuns.map((b) => (
-                <div key={b.id} className="bg-accent/20 border border-border rounded-xl p-4">
+                <div key={b.id} className="bg-primary/20 border border-border rounded-xl p-4">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-xs text-muted-foreground">{b.date} \u2014 {b.range}</span>
-                    <span className="text-md font-extrabold text-ft-green font-mono-data">{b.profit} ({b.profitAbs})</span>
+                    <span className="text-md font-extrabold text-ft-green font-mono">{b.profit} ({b.profitAbs})</span>
                   </div>
                   <div className="grid grid-cols-5 gap-3">
                     {[{ l: "Sharpe", v: b.sharpe }, { l: "Trades", v: b.trades }, { l: "Win Rate", v: b.winRate }, { l: "Max DD", v: b.maxDd }, { l: "Avg Duration", v: b.duration }].map((m) => (
-                      <div key={m.l}><div className="text-2xs text-muted-foreground">{m.l}</div><div className="text-xs font-bold text-foreground font-mono-data">{m.v}</div></div>
+                      <div key={m.l}><div className="text-2xs text-muted-foreground">{m.l}</div><div className="text-xs font-bold text-foreground font-mono">{m.v}</div></div>
                     ))}
                   </div>
                 </div>
@@ -336,7 +336,7 @@ export function BotDetailPanel({ bot, onClose }: Props) {
               ].map((c) => (
                 <div key={c.key} className="flex justify-between items-baseline py-2 border-b border-border/30 last:border-b-0">
                   <span className="text-xs text-muted-foreground">{c.key}</span>
-                  <span className={`text-xs font-semibold font-mono-data ${c.color || "text-foreground"} ${c.accent ? "text-primary" : ""}`}>{c.val}</span>
+                  <span className={`text-xs font-semibold font-mono ${c.color || "text-foreground"} ${c.accent ? "text-primary" : ""}`}>{c.val}</span>
                 </div>
               ))}
             </div>
@@ -346,7 +346,7 @@ export function BotDetailPanel({ bot, onClose }: Props) {
           {tab === "logs" && (
             <div>
               <h4 className="text-xs font-bold text-foreground mb-3">Bot Logs</h4>
-              <div className="bg-background rounded-xl p-4 font-mono-data text-2xs space-y-1.5 max-h-[500px] overflow-y-auto">
+              <div className="bg-background rounded-xl p-4 font-mono text-2xs space-y-1.5 max-h-[500px] overflow-y-auto">
                 {logs.map((l) => (
                   <div key={`${l.time}-${l.msg.slice(0,15)}`} className="flex gap-3">
                     <span className="text-muted-foreground/40 w-16 flex-shrink-0">{l.time}</span>

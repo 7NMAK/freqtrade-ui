@@ -93,7 +93,7 @@ function Sidebar() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-[13px] font-medium transition-colors mb-0.5 ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-sm font-medium transition-colors mb-0.5 ${
                     isActive
                       ? "bg-sidebar-accent text-sidebar-accent-foreground"
                       : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -182,7 +182,7 @@ function Header() {
             placeholder="Search strategies, pairs..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-[220px] h-9 pl-8 pr-3 rounded-btn bg-accent/50 border border-border text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary transition-colors"
+            className="w-[220px] h-9 pl-8 pr-3 rounded-btn bg-primary/50 border border-border text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary transition-colors"
           />
           <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 text-2xs text-muted-foreground/40 border border-border rounded px-1">⌘K</kbd>
         </div>
@@ -190,12 +190,12 @@ function Header() {
         {/* Notifications */}
         <div className="relative" ref={notifRef}>
           <button
-            className="relative w-9 h-9 rounded-btn bg-accent/50 border border-border flex items-center justify-center text-sm text-muted-foreground hover:bg-accent transition-colors"
+            className="relative w-9 h-9 rounded-btn bg-primary/50 border border-border flex items-center justify-center text-sm text-muted-foreground hover:bg-primary transition-colors"
             onClick={() => { setNotifOpen(!notifOpen); setAvatarMenuOpen(false); }}
           >
             🔔
             {notifications.length > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-ft-red text-white text-[10px] font-bold flex items-center justify-center px-1">
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-ft-red text-white text-xs font-bold flex items-center justify-center px-1">
                 {notifications.length}
               </span>
             )}
@@ -214,7 +214,7 @@ function Header() {
                 <div className="p-4 text-center text-xs text-muted-foreground">No notifications</div>
               ) : (
                 notifications.map(n => (
-                  <div key={n.id} className="px-4 py-3 border-b border-border/50 hover:bg-accent/20 transition-colors flex gap-2">
+                  <div key={n.id} className="px-4 py-3 border-b border-border/50 hover:bg-primary/20 transition-colors flex gap-2">
                     <div className="flex-1">
                       <div className="text-xs text-foreground leading-relaxed">{n.text}</div>
                       <div className="text-2xs text-muted-foreground mt-0.5">{n.time}</div>
@@ -257,7 +257,7 @@ function Header() {
               ].map(item => (
                 <button
                   key={item.label}
-                  className="w-full text-left px-4 py-2 text-xs text-foreground hover:bg-accent/30 transition-colors"
+                  className="w-full text-left px-4 py-2 text-xs text-foreground hover:bg-primary/30 transition-colors"
                   onClick={() => { item.action(); setAvatarMenuOpen(false); }}
                 >
                   {item.label}

@@ -4,12 +4,13 @@ import { useState, useMemo, useEffect, useRef, useCallback, Fragment } from "rea
 import Tooltip from "@/components/ui/Tooltip";
 import Toggle from "@/components/ui/Toggle";
 import { INPUT, SELECT, LABEL, fmt$, fmtPctRatio, fmtNum } from "@/lib/design";
-import { botLogs, botBacktestResults, botBacktestStart, botBacktestDelete, botBacktestHistory, botBacktestHistoryResult, botBacktestHistoryDelete } from "@/lib/api";
+import { botLogs, botBacktestResults, botBacktestStart, botBacktestDelete, botBacktestHistory, botBacktestHistoryResult, botBacktestHistoryDelete, createExperimentRun } from "@/lib/api";
 import { useToast } from "@/components/ui/Toast";
 
 interface BacktestTabProps {
   strategy: string;
   backtestBotId?: number;
+  experimentId?: number;
 }
 
 interface LogEntry {
@@ -687,7 +688,7 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
 // ══════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ══════════════════════════════════════════════════════════════════════════
-export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTabProps) {
+export default function BacktestTab({ strategy, backtestBotId = 2, experimentId }: BacktestTabProps) {
   const toast = useToast();
   const [testName, setTestName] = useState(`${strategy} baseline ${new Date().toISOString().split("T")[0]}`);
   const [description, setDescription] = useState("");
@@ -943,6 +944,20 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
               addLog("INFO", `Result: ${result.strategy_name || "?"} \u2014 ${result.total_trades} trades`);
               setBtResult(result);
               try { sessionStorage.setItem(BT_CACHE_KEY, JSON.stringify(result)); } catch { /* quota */ }
+              // Record as experiment run for metrics tracking
+              if (experimentId) {
+                createExperimentRun(experimentId, {
+                  run_type: "backtest",
+                  total_trades: result.total_trades,
+                  win_rate: result.winrate != null ? result.winrate * 100 : undefined,
+                  profit_pct: result.profit_total != null ? result.profit_total * 100 : undefined,
+                  profit_abs: result.profit_total_abs,
+                  max_drawdown: result.max_drawdown_account != null ? result.max_drawdown_account * 100 : undefined,
+                  sharpe_ratio: result.sharpe,
+                  sortino_ratio: result.sortino,
+                  calmar_ratio: result.calmar,
+                }).catch(err => console.warn("Failed to record experiment run:", err));
+              }
             } else {
               addLog("WARNING", `extractResult null. backtest_result keys: ${JSON.stringify(Object.keys(raw.backtest_result as object))}`);
             }

@@ -996,6 +996,31 @@ export const getExperimentRuns = (experimentId: number, filters?: {
 export const deleteExperimentRun = (runId: number) =>
   request<void>(`/api/experiments/runs/${runId}`, { method: "DELETE" });
 
+export const createExperimentRun = (experimentId: number, data: {
+  run_type: string;
+  status?: string;
+  total_trades?: number;
+  win_rate?: number;
+  profit_abs?: number;
+  profit_pct?: number;
+  max_drawdown?: number;
+  sharpe_ratio?: number;
+  sortino_ratio?: number;
+  calmar_ratio?: number;
+  avg_duration?: string;
+  sampler?: string;
+  loss_function?: string;
+  epochs?: number;
+  spaces?: string[];
+  hyperopt_duration_seconds?: number;
+  raw_output?: string;
+  error_message?: string;
+}) =>
+  request<{ id: number; experiment_id: number; run_type: string; status: string }>(
+    `/api/experiments/${experimentId}/runs`,
+    { method: "POST", body: JSON.stringify({ ...data, status: data.status || "completed" }) }
+  );
+
 // getStrategyVersions already defined above (line 763)
 
 export const activateStrategyVersion = (strategyId: number, versionId: number) =>

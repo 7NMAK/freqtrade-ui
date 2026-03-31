@@ -287,6 +287,106 @@ async def seed_experiments(
     return {"created": created, "total_strategies": len(strategies), "already_existed": len(existing_ids)}
 
 
+# ── Create experiment run ──────────────────────────────────
+
+class ExperimentRunCreate(BaseModel):
+    """Create a new run record for an experiment."""
+    run_type: str  # backtest, hyperopt, ai_pre, ai_post, oos_validation, freqai
+    status: str = "completed"  # running, completed, failed
+    backtest_result_id: int | None = None
+    strategy_version_id: int | None = None
+    ai_analysis_id: int | None = None
+    parent_run_id: int | None = None
+    # Metrics
+    total_trades: int | None = None
+    win_rate: float | None = None
+    profit_abs: float | None = None
+    profit_pct: float | None = None
+    max_drawdown: float | None = None
+    sharpe_ratio: float | None = None
+    sortino_ratio: float | None = None
+    calmar_ratio: float | None = None
+    avg_duration: str | None = None
+    # Hyperopt-specific
+    sampler: str | None = None
+    loss_function: str | None = None
+    epochs: int | None = None
+    spaces: list[str] | None = None
+    hyperopt_duration_seconds: int | None = None
+    # Output
+    raw_output: str | None = None
+    error_message: str | None = None
+
+
+@router.post("/{experiment_id}/runs", status_code=201)
+async def create_experiment_run(
+    experiment_id: int,
+    body: ExperimentRunCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(require_auth),
+) -> dict:
+    """Record a completed run (backtest, hyperopt, etc.) for an experiment."""
+    from decimal import Decimal
+
+    # Verify experiment exists
+    exp_result = await db.execute(
+        select(Experiment).where(Experiment.id == experiment_id, Experiment.is_deleted == False)  # noqa: E712
+    )
+    exp = exp_result.scalar_one_or_none()
+    if not exp:
+        raise HTTPException(404, f"Experiment {experiment_id} not found")
+
+    run = ExperimentRun(
+        experiment_id=experiment_id,
+        parent_run_id=body.parent_run_id,
+        run_type=body.run_type,
+        status=body.status,
+        backtest_result_id=body.backtest_result_id,
+        strategy_version_id=body.strategy_version_id,
+        ai_analysis_id=body.ai_analysis_id,
+        total_trades=body.total_trades,
+        win_rate=Decimal(str(body.win_rate)) if body.win_rate is not None else None,
+        profit_abs=Decimal(str(body.profit_abs)) if body.profit_abs is not None else None,
+        profit_pct=Decimal(str(body.profit_pct)) if body.profit_pct is not None else None,
+        max_drawdown=Decimal(str(body.max_drawdown)) if body.max_drawdown is not None else None,
+        sharpe_ratio=Decimal(str(body.sharpe_ratio)) if body.sharpe_ratio is not None else None,
+        sortino_ratio=Decimal(str(body.sortino_ratio)) if body.sortino_ratio is not None else None,
+        calmar_ratio=Decimal(str(body.calmar_ratio)) if body.calmar_ratio is not None else None,
+        avg_duration=body.avg_duration,
+        sampler=body.sampler,
+        loss_function=body.loss_function,
+        epochs=body.epochs,
+        spaces=body.spaces,
+        hyperopt_duration_seconds=body.hyperopt_duration_seconds,
+        raw_output=body.raw_output[-8000:] if body.raw_output else None,
+        error_message=body.error_message,
+    )
+    db.add(run)
+    await db.flush()
+
+    await log_activity(
+        db,
+        action=f"experiment.run.{body.run_type}",
+        level="info",
+        actor=current_user.get("username", "unknown"),
+        target_type="experiment_run",
+        target_id=run.id,
+        target_name=f"{exp.name} — {body.run_type}",
+        details=f"Recorded {body.run_type} run (status={body.status})",
+    )
+
+    await db.commit()
+
+    return {
+        "id": run.id,
+        "experiment_id": experiment_id,
+        "run_type": body.run_type,
+        "status": body.status,
+        "profit_pct": float(run.profit_pct) if run.profit_pct else None,
+        "win_rate": float(run.win_rate) if run.win_rate else None,
+    }
+
+
 @router.get("/")
 async def list_experiments(
     db: AsyncSession = Depends(get_db),

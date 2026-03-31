@@ -64,6 +64,8 @@ Build the main **Control Room** dashboard — a single-page, high-density analys
 - `#side-menu.collapsed nav button` → `justify-content: center; padding: 0`
 - `#side-menu.collapsed .toggle-btn` → `transform: rotate(180deg)`
 
+**Default state: COLLAPSED** — sidebar starts at 56px (icons only) for maximum workspace. User clicks chevron (`»`) to expand to 240px.
+
 ### Footer Status
 - Green pulse dot: `bg-up shadow-[0_0_6px_#22c55e]`
 - Exchange latencies: `font-mono text-[11px] text-up`
@@ -394,7 +396,9 @@ Sources: `FTDailyResponse`, `FTWeeklyResponse`, `FTMonthlyResponse`
 ### SVG Chart Details
 - `viewBox="0 0 200 100"`, `preserveAspectRatio="none"`
 - Zero line: `stroke-dasharray="3,3"`, `rgba(255,255,255,0.08)`
-- Y-axis labels: `text-[9px] font-mono text-white/25` (left), `text-white/20` (right)
+- Trade count bars: **bottom-aligned** (`y + height = 100`), grow upward from baseline
+- P&L line: `stroke="#22c55e"`, `stroke-width: 0.4`, dots `r="1.2"` (green=profit, red=loss)
+- Left Y-axis: Profit scale (`text-[9px] font-mono text-white/25`)
 
 ---
 
@@ -554,11 +558,18 @@ ID: `#dash-col-sidebar` — scrollable independently (`overflow-y-auto min-h-0`)
 ### Widget 1: Balance Breakdown
 Source: `GET /api/v1/balance`
 
-Layout per row: `[Symbol 40px] [USD value bold] [coin amount right-aligned muted]`
-- USDT: shows `$82,330.80` with `free` right-aligned
-- BTC: shows `$31,420` with `0.4821` right-aligned (30% opacity)
-- ETH, SOL: same pattern
+Layout per row: `[Symbol 40px] [Coin qty bold white] [≈ $USD value right-aligned muted 10px]`
+- USDT: shows `82,330.80` bold with `free` right-aligned
+- BTC: shows `0.4821` bold with `≈ $31,420` right-aligned (30% opacity)
+- ETH, SOL: same pattern (coin quantity bold, USD equivalent right)
 - Starting Capital row at bottom (no separator line)
+
+### Collapsible Right Sidebar
+- Toggle button in chart header bar (after Rel% button): `panel-right-close` icon
+- Click toggles `#dash-col-sidebar.collapsed` class
+- CSS transition: `width 0.3s, min-width 0.3s, opacity 0.3s`
+- Collapsed: `width: 0; min-width: 0; opacity: 0; overflow: hidden`
+- Icon swaps to `panel-right-open` when collapsed
 
 ### Widget 2: Fees & Costs
 Source: Calculated from `FTTrade` data + `FTStats`

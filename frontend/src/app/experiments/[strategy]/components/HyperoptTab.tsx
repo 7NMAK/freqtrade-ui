@@ -24,6 +24,7 @@ import {
   botHyperoptRuns,
   botHyperoptHistoryDelete,
   botHyperoptHistoryResults,
+  createExperimentRun,
 } from '@/lib/api';
 
 interface HyperoptRun {
@@ -81,10 +82,11 @@ interface BatchJob {
 interface HyperoptTabProps {
   strategy: string;
   botId?: number;
+  experimentId?: number;
   onNavigateToTab?: (tab: number) => void;
 }
 
-export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: HyperoptTabProps) {
+export default function HyperoptTab({ strategy, botId = 2, experimentId, onNavigateToTab }: HyperoptTabProps) {
   const toast = useToast();
 
   // ── Form State ───────────────────────────────────────────────────
@@ -388,6 +390,22 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                 }
                 setResults(prev => [...prev, newResult]);
                 toast.success('Hyperopt completed');
+                // Record as experiment run
+                if (experimentId) {
+                  createExperimentRun(experimentId, {
+                    run_type: 'hyperopt',
+                    total_trades: newResult.trades,
+                    win_rate: newResult.winRate != null ? newResult.winRate * 100 : undefined,
+                    profit_pct: newResult.profitPct,
+                    max_drawdown: newResult.maxDrawdown,
+                    sharpe_ratio: newResult.sharpe || undefined,
+                    sortino_ratio: newResult.sortino || undefined,
+                    epochs,
+                    sampler: samplerLabel,
+                    loss_function: lfLabel,
+                    spaces: customSpaces,
+                  }).catch(err => console.warn('Failed to record hyperopt run:', err));
+                }
               } else {
                 setHoProgress('✗ Failed');
                 const errMsg = status.output?.substring(0, 200) || 'Unknown error';

@@ -210,25 +210,41 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
     getExperimentRuns(experimentId, { run_type: "freqai", status: "completed" })
       .then((runs) => {
         if (Array.isArray(runs) && runs.length > 0) {
-          const mapped: FreqAIResult[] = runs.map((r, i) => ({
-            id: r.id ?? i + 1,
-            model: (r as Record<string, unknown>).model as string || "Unknown",
-            outlier: (r as Record<string, unknown>).outlier as string || "none",
-            pca: false,
-            noise: false,
-            status: "completed" as const,
-            trades: r.total_trades ?? 0,
-            winRate: r.win_rate ?? 0,
-            profitPct: r.profit_pct ?? 0,
-            maxDrawdown: r.max_drawdown ?? 0,
-            sharpe: r.sharpe_ratio ?? 0,
-            sortino: r.sortino_ratio ?? 0,
-            startedAt: r.created_at ?? "",
-            finishedAt: "",
-            trainingDuration: "",
-            featureImportance: [],
-            predictionAccuracy: 0,
-          }));
+          const mapped: FreqAIResult[] = runs.map((r, i) => {
+            // Try to extract model/outlier from raw_output JSON if available
+            let model = "Unknown";
+            let outlier = "none";
+            let pca = false;
+            let noise = false;
+            if (r.raw_output) {
+              try {
+                const raw = JSON.parse(r.raw_output);
+                model = raw.model || model;
+                outlier = raw.outlier || outlier;
+                pca = raw.pca ?? false;
+                noise = raw.noise ?? false;
+              } catch { /* ignore */ }
+            }
+            return {
+              id: r.id ?? i + 1,
+              model,
+              outlier,
+              pca,
+              noise,
+              status: "completed" as const,
+              trades: r.total_trades ?? 0,
+              winRate: r.win_rate ?? 0,
+              profitPct: r.profit_pct ?? 0,
+              maxDrawdown: r.max_drawdown ?? 0,
+              sharpe: r.sharpe_ratio ?? 0,
+              sortino: r.sortino_ratio ?? 0,
+              startedAt: r.created_at ?? "",
+              finishedAt: "",
+              trainingDuration: "",
+              featureImportance: [],
+              predictionAccuracy: 0,
+            };
+          });
           setResults(mapped);
           addLog("INFO", `Loaded ${mapped.length} existing FreqAI results`);
         }

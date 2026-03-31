@@ -2269,218 +2269,192 @@
               </div>
           </div>
 
-          <!-- STRATEGY LIST (fleet-style compact rows) -->
+          <!-- STRATEGY GRID (3-col compact cards) -->
           <div class="flex-1 overflow-y-auto p-5" id="strat-cards-container">
-          <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden flex flex-col font-mono text-xs">
+          <div class="grid grid-cols-3 gap-3">
 
-              <!-- HEADER -->
-              <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40 shrink-0">
-                  <span class="section-title flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4 text-muted"></i>Strategy Registry (7)</span>
+              <!-- CARD 1: TrendFollowerV3_BTC — LIVE -->
+              <div class="bg-surface l-bd rounded-md hover:border-white/22 transition-all group cursor-pointer strat-card" data-lifecycle="live" onclick="openStratDrawer('TrendFollowerV3_BTC', 'live')">
+                  <div class="px-3.5 pt-3 pb-2 flex items-center justify-between">
+                      <div class="flex items-center gap-2 min-w-0">
+                          <div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e] shrink-0"></div>
+                          <span class="font-bold text-white uppercase text-[11px] tracking-wide font-mono truncate">TrendFollowerV3_BTC</span>
+                      </div>
+                      <span class="px-1.5 py-[1px] text-[8px] font-bold rounded bg-up/12 text-up border border-up/25 shrink-0">LIVE</span>
+                  </div>
+                  <div class="px-3.5 pb-2 flex items-baseline gap-1.5">
+                      <span class="text-up font-bold text-[15px] font-mono">+$18,940</span>
+                      <span class="text-[10px] font-mono" style="color:rgba(34,197,94,0.5)">+142.5%</span>
+                  </div>
+                  <div class="px-3.5 pb-2.5 grid grid-cols-2 gap-y-1 text-[10px] font-mono text-muted">
+                      <div>Trades: <span class="text-white/70">1,284</span></div>
+                      <div>Win: <span class="text-white/70">68.4%</span></div>
+                      <div>DD: <span class="text-down">-4.12%</span></div>
+                      <div>Binance · 5m</div>
+                  </div>
+                  <div class="px-3.5 pb-2.5 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div class="flex gap-[2px] h-3 items-end"><div class="w-1.5 bg-up h-[40%] rounded-sm"></div><div class="w-1.5 bg-up h-[60%] rounded-sm"></div><div class="w-1.5 bg-down h-[20%] rounded-sm"></div><div class="w-1.5 bg-up h-[100%] rounded-sm"></div><div class="w-1.5 bg-up h-[80%] rounded-sm"></div><div class="w-1.5 bg-up h-[50%] rounded-sm"></div></div>
+                      <div class="flex gap-1"><button class="bot-ctrl" title="Trades" onclick="event.stopPropagation()"><i data-lucide="list" class="w-3 h-3"></i></button><button class="bot-ctrl" title="Experiments" onclick="event.stopPropagation()"><i data-lucide="flask-conical" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-start" title="View Bot" onclick="event.stopPropagation()"><i data-lucide="bot" class="w-3 h-3"></i></button></div>
+                  </div>
+                  <div class="h-5 l-t px-3.5 flex items-center text-[9px] text-muted font-mono"><span class="w-1.5 h-1.5 rounded-full bg-up shadow-[0_0_4px_#22c55e] mr-1.5"></span>3 bots · Updated 2h ago</div>
               </div>
 
-              <!-- ROW 1: TrendFollowerV3_BTC — LIVE -->
-              <div class="p-3.5 l-b hover:bg-white/[0.03] transition-colors group cursor-pointer strat-card" data-lifecycle="live" onclick="openStratDrawer('TrendFollowerV3_BTC', 'live')">
-                  <div class="flex items-start justify-between mb-2">
-                      <div class="flex items-center gap-2">
-                          <div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div>
-                          <span class="font-bold text-white uppercase text-[12px] tracking-wide">TrendFollowerV3_BTC</span>
-                          <span class="px-1.5 py-[1px] text-[9px] font-bold rounded bg-up/12 text-up border border-up/25">LIVE</span>
+              <!-- CARD 2: MeanReversion_ETH — PAPER -->
+              <div class="bg-surface l-bd rounded-md hover:border-white/22 transition-all group cursor-pointer strat-card" data-lifecycle="paper" onclick="openStratDrawer('MeanReversion_ETH', 'paper')">
+                  <div class="px-3.5 pt-3 pb-2 flex items-center justify-between">
+                      <div class="flex items-center gap-2 min-w-0">
+                          <div class="w-2 h-2 bg-yellow-400 rounded-full shadow-[0_0_4px_#eab308] shrink-0"></div>
+                          <span class="font-bold text-white uppercase text-[11px] tracking-wide font-mono truncate">MeanReversion_ETH</span>
                       </div>
-                      <span class="text-up font-bold text-[13px]">+$18,940</span>
-                      <span class="text-[10px] ml-1" style="color:rgba(34,197,94,0.5)">+142.5%</span>
+                      <span class="px-1.5 py-[1px] text-[8px] font-bold rounded bg-yellow-500/12 text-yellow-400 border border-yellow-500/25 shrink-0">PAPER</span>
                   </div>
-                  <div class="grid grid-cols-4 gap-y-1 text-muted text-[11px] mb-2.5">
-                      <div class="flex gap-1.5"><span>Trades:</span><span class="text-white/70">1,284</span></div>
-                      <div class="flex gap-1.5"><span>Win:</span><span class="text-white/70">68.4%</span></div>
-                      <div class="flex gap-1.5"><span>DD:</span><span class="text-down">-4.12%</span></div>
-                      <div class="flex gap-1.5"><span>Binance</span><span class="text-white/40">· 5m · 3 bots</span></div>
+                  <div class="px-3.5 pb-2 flex items-baseline gap-1.5">
+                      <span class="text-up font-bold text-[15px] font-mono">+$4,210</span>
+                      <span class="text-[10px] font-mono" style="color:rgba(34,197,94,0.5)">+42.1%</span>
                   </div>
-                  <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
-                      <div class="flex gap-[2px] h-3.5 items-end">
-                          <div class="w-1.5 bg-up h-[40%] rounded-sm"></div><div class="w-1.5 bg-up h-[60%] rounded-sm"></div><div class="w-1.5 bg-down h-[20%] rounded-sm"></div><div class="w-1.5 bg-up h-[100%] rounded-sm"></div><div class="w-1.5 bg-up h-[80%] rounded-sm"></div><div class="w-1.5 bg-up h-[50%] rounded-sm"></div><div class="w-1.5 bg-down h-[30%] rounded-sm"></div><div class="w-1.5 bg-up h-[70%] rounded-sm"></div>
-                      </div>
-                      <div class="flex gap-1">
-                          <button class="bot-ctrl" title="View Trades" onclick="event.stopPropagation()"><i data-lucide="list" class="w-3 h-3"></i></button>
-                          <button class="bot-ctrl" title="Analytics" onclick="event.stopPropagation()"><i data-lucide="bar-chart-2" class="w-3 h-3"></i></button>
-                          <button class="bot-ctrl" title="Experiments" onclick="event.stopPropagation(); switchPage('page-experiments')"><i data-lucide="flask-conical" class="w-3 h-3"></i></button>
-                          <button class="bot-ctrl ctrl-start" title="View Bot" onclick="event.stopPropagation()"><i data-lucide="bot" class="w-3 h-3"></i></button>
-                      </div>
+                  <div class="px-3.5 pb-2.5 grid grid-cols-2 gap-y-1 text-[10px] font-mono text-muted">
+                      <div>Trades: <span class="text-white/70">412</span></div>
+                      <div>Win: <span class="text-white/70">62.1%</span></div>
+                      <div>DD: <span class="text-down">-6.80%</span></div>
+                      <div>Binance · 15m</div>
                   </div>
+                  <div class="px-3.5 pb-2.5 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div class="flex gap-[2px] h-3 items-end"><div class="w-1.5 bg-up h-[50%] rounded-sm"></div><div class="w-1.5 bg-up h-[40%] rounded-sm"></div><div class="w-1.5 bg-up h-[70%] rounded-sm"></div><div class="w-1.5 bg-down h-[30%] rounded-sm"></div><div class="w-1.5 bg-up h-[60%] rounded-sm"></div></div>
+                      <div class="flex gap-1"><button class="bot-ctrl" title="Trades" onclick="event.stopPropagation()"><i data-lucide="list" class="w-3 h-3"></i></button><button class="bot-ctrl" title="Experiments" onclick="event.stopPropagation()"><i data-lucide="flask-conical" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-start" title="Go Live" onclick="event.stopPropagation()"><i data-lucide="rocket" class="w-3 h-3"></i></button></div>
+                  </div>
+                  <div class="h-5 l-t px-3.5 flex items-center text-[9px] text-muted font-mono"><span class="w-1.5 h-1.5 rounded-full bg-yellow-400 mr-1.5"></span>1 bot · Day 12/30</div>
               </div>
 
-              <!-- ROW 2: MeanReversion_ETH — PAPER -->
-              <div class="p-3.5 l-b hover:bg-white/[0.03] transition-colors group cursor-pointer strat-card" data-lifecycle="paper" onclick="openStratDrawer('MeanReversion_ETH', 'paper')">
-                  <div class="flex items-start justify-between mb-2">
-                      <div class="flex items-center gap-2">
-                          <div class="w-2 h-2 bg-yellow-400 rounded-full shadow-[0_0_4px_#eab308]"></div>
-                          <span class="font-bold text-white uppercase text-[12px] tracking-wide">MeanReversion_ETH</span>
-                          <span class="px-1.5 py-[1px] text-[9px] font-bold rounded bg-yellow-500/12 text-yellow-400 border border-yellow-500/25">PAPER</span>
+              <!-- CARD 3: ScalpBot_XRP — LIVE -->
+              <div class="bg-surface l-bd rounded-md hover:border-white/22 transition-all group cursor-pointer strat-card" data-lifecycle="live" onclick="openStratDrawer('ScalpBot_XRP', 'live')">
+                  <div class="px-3.5 pt-3 pb-2 flex items-center justify-between">
+                      <div class="flex items-center gap-2 min-w-0">
+                          <div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e] shrink-0"></div>
+                          <span class="font-bold text-white uppercase text-[11px] tracking-wide font-mono truncate">ScalpBot_XRP</span>
                       </div>
-                      <span class="text-up font-bold text-[13px]">+$4,210</span>
-                      <span class="text-[10px] ml-1" style="color:rgba(34,197,94,0.5)">+42.1%</span>
+                      <span class="px-1.5 py-[1px] text-[8px] font-bold rounded bg-up/12 text-up border border-up/25 shrink-0">LIVE</span>
                   </div>
-                  <div class="grid grid-cols-4 gap-y-1 text-muted text-[11px] mb-2.5">
-                      <div class="flex gap-1.5"><span>Trades:</span><span class="text-white/70">412</span></div>
-                      <div class="flex gap-1.5"><span>Win:</span><span class="text-white/70">62.1%</span></div>
-                      <div class="flex gap-1.5"><span>DD:</span><span class="text-down">-6.80%</span></div>
-                      <div class="flex gap-1.5"><span>Binance</span><span class="text-white/40">· 15m · 1 bot</span></div>
+                  <div class="px-3.5 pb-2 flex items-baseline gap-1.5">
+                      <span class="text-up font-bold text-[15px] font-mono">+$2,830</span>
+                      <span class="text-[10px] font-mono" style="color:rgba(34,197,94,0.5)">+28.3%</span>
                   </div>
-                  <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
-                      <div class="flex gap-[2px] h-3.5 items-end">
-                          <div class="w-1.5 bg-up h-[50%] rounded-sm"></div><div class="w-1.5 bg-up h-[40%] rounded-sm"></div><div class="w-1.5 bg-up h-[70%] rounded-sm"></div><div class="w-1.5 bg-down h-[30%] rounded-sm"></div><div class="w-1.5 bg-up h-[60%] rounded-sm"></div>
-                      </div>
-                      <div class="flex gap-1">
-                          <button class="bot-ctrl" title="View Trades" onclick="event.stopPropagation()"><i data-lucide="list" class="w-3 h-3"></i></button>
-                          <button class="bot-ctrl" title="Experiments" onclick="event.stopPropagation()"><i data-lucide="flask-conical" class="w-3 h-3"></i></button>
-                          <button class="bot-ctrl ctrl-start" title="Promote to Live" onclick="event.stopPropagation()"><i data-lucide="rocket" class="w-3 h-3"></i></button>
-                      </div>
+                  <div class="px-3.5 pb-2.5 grid grid-cols-2 gap-y-1 text-[10px] font-mono text-muted">
+                      <div>Trades: <span class="text-white/70">3,920</span></div>
+                      <div>Win: <span class="text-white/70">71.2%</span></div>
+                      <div>DD: <span class="text-down">-2.50%</span></div>
+                      <div>Kraken · 1m</div>
                   </div>
+                  <div class="px-3.5 pb-2.5 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div class="flex gap-[2px] h-3 items-end"><div class="w-1.5 bg-up h-[80%] rounded-sm"></div><div class="w-1.5 bg-up h-[90%] rounded-sm"></div><div class="w-1.5 bg-up h-[60%] rounded-sm"></div><div class="w-1.5 bg-up h-[100%] rounded-sm"></div><div class="w-1.5 bg-down h-[15%] rounded-sm"></div></div>
+                      <div class="flex gap-1"><button class="bot-ctrl" title="Trades" onclick="event.stopPropagation()"><i data-lucide="list" class="w-3 h-3"></i></button><button class="bot-ctrl" title="Analytics" onclick="event.stopPropagation()"><i data-lucide="bar-chart-2" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-start" title="View Bot" onclick="event.stopPropagation()"><i data-lucide="bot" class="w-3 h-3"></i></button></div>
+                  </div>
+                  <div class="h-5 l-t px-3.5 flex items-center text-[9px] text-muted font-mono"><span class="w-1.5 h-1.5 rounded-full bg-up shadow-[0_0_4px_#22c55e] mr-1.5"></span>2 bots · Updated 5m ago</div>
               </div>
 
-              <!-- ROW 3: ScalpBot_XRP — LIVE -->
-              <div class="p-3.5 l-b hover:bg-white/[0.03] transition-colors group cursor-pointer strat-card" data-lifecycle="live" onclick="openStratDrawer('ScalpBot_XRP', 'live')">
-                  <div class="flex items-start justify-between mb-2">
-                      <div class="flex items-center gap-2">
-                          <div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div>
-                          <span class="font-bold text-white uppercase text-[12px] tracking-wide">ScalpBot_XRP</span>
-                          <span class="px-1.5 py-[1px] text-[9px] font-bold rounded bg-up/12 text-up border border-up/25">LIVE</span>
+              <!-- CARD 4: MomentumRider_SOL — BACKTEST -->
+              <div class="bg-surface l-bd rounded-md hover:border-white/22 transition-all group cursor-pointer strat-card" data-lifecycle="backtest" onclick="openStratDrawer('MomentumRider_SOL', 'backtest')">
+                  <div class="px-3.5 pt-3 pb-2 flex items-center justify-between">
+                      <div class="flex items-center gap-2 min-w-0">
+                          <div class="w-2 h-2 bg-blue-400 rounded-full shadow-[0_0_4px_#3b82f6] shrink-0"></div>
+                          <span class="font-bold text-white uppercase text-[11px] tracking-wide font-mono truncate">MomentumRider_SOL</span>
                       </div>
-                      <span class="text-up font-bold text-[13px]">+$2,830</span>
-                      <span class="text-[10px] ml-1" style="color:rgba(34,197,94,0.5)">+28.3%</span>
+                      <span class="px-1.5 py-[1px] text-[8px] font-bold rounded bg-blue-500/12 text-blue-400 border border-blue-500/25 shrink-0">BACKTEST</span>
                   </div>
-                  <div class="grid grid-cols-4 gap-y-1 text-muted text-[11px] mb-2.5">
-                      <div class="flex gap-1.5"><span>Trades:</span><span class="text-white/70">3,920</span></div>
-                      <div class="flex gap-1.5"><span>Win:</span><span class="text-white/70">71.2%</span></div>
-                      <div class="flex gap-1.5"><span>DD:</span><span class="text-down">-2.50%</span></div>
-                      <div class="flex gap-1.5"><span>Kraken</span><span class="text-white/40">· 1m · 2 bots</span></div>
+                  <div class="px-3.5 pb-2 flex items-baseline gap-1.5">
+                      <span class="text-up font-bold text-[15px] font-mono">+$12,450</span>
+                      <span class="text-[10px] font-mono" style="color:rgba(34,197,94,0.5)">+124.5%</span>
                   </div>
-                  <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
-                      <div class="flex gap-[2px] h-3.5 items-end">
-                          <div class="w-1.5 bg-up h-[80%] rounded-sm"></div><div class="w-1.5 bg-up h-[90%] rounded-sm"></div><div class="w-1.5 bg-up h-[60%] rounded-sm"></div><div class="w-1.5 bg-up h-[100%] rounded-sm"></div><div class="w-1.5 bg-down h-[15%] rounded-sm"></div><div class="w-1.5 bg-up h-[70%] rounded-sm"></div>
-                      </div>
-                      <div class="flex gap-1">
-                          <button class="bot-ctrl" title="View Trades" onclick="event.stopPropagation()"><i data-lucide="list" class="w-3 h-3"></i></button>
-                          <button class="bot-ctrl" title="Analytics" onclick="event.stopPropagation()"><i data-lucide="bar-chart-2" class="w-3 h-3"></i></button>
-                          <button class="bot-ctrl ctrl-start" title="View Bot" onclick="event.stopPropagation()"><i data-lucide="bot" class="w-3 h-3"></i></button>
-                      </div>
+                  <div class="px-3.5 pb-2.5 grid grid-cols-2 gap-y-1 text-[10px] font-mono text-muted">
+                      <div>Trades: <span class="text-white/70">890</span></div>
+                      <div>Win: <span class="text-white/70">58.9%</span></div>
+                      <div>Sharpe: <span class="text-white/70">1.82</span></div>
+                      <div>Binance · 1h</div>
                   </div>
+                  <div class="px-3.5 pb-2.5 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div class="flex gap-[2px] h-3 items-end"><div class="w-1.5 bg-up h-[50%] rounded-sm"></div><div class="w-1.5 bg-up h-[70%] rounded-sm"></div><div class="w-1.5 bg-down h-[40%] rounded-sm"></div><div class="w-1.5 bg-up h-[60%] rounded-sm"></div><div class="w-1.5 bg-up h-[90%] rounded-sm"></div></div>
+                      <div class="flex gap-1"><button class="bot-ctrl" title="Results" onclick="event.stopPropagation()"><i data-lucide="eye" class="w-3 h-3"></i></button><button class="bot-ctrl" title="Edit" onclick="event.stopPropagation()"><i data-lucide="pencil" class="w-3 h-3"></i></button><button class="bot-ctrl" title="Experiments" onclick="event.stopPropagation()"><i data-lucide="flask-conical" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-start" title="Start Paper" onclick="event.stopPropagation()"><i data-lucide="file-text" class="w-3 h-3"></i></button></div>
+                  </div>
+                  <div class="h-5 l-t px-3.5 flex items-center text-[9px] text-muted font-mono">0 bots · Last BT: 4h ago</div>
               </div>
 
-              <!-- ROW 4: MomentumRider_SOL — BACKTEST -->
-              <div class="p-3.5 l-b hover:bg-white/[0.03] transition-colors group cursor-pointer strat-card" data-lifecycle="backtest" onclick="openStratDrawer('MomentumRider_SOL', 'backtest')">
-                  <div class="flex items-start justify-between mb-2">
-                      <div class="flex items-center gap-2">
-                          <div class="w-2 h-2 bg-blue-400 rounded-full shadow-[0_0_4px_#3b82f6]"></div>
-                          <span class="font-bold text-white uppercase text-[12px] tracking-wide">MomentumRider_SOL</span>
-                          <span class="px-1.5 py-[1px] text-[9px] font-bold rounded bg-blue-500/12 text-blue-400 border border-blue-500/25">BACKTEST</span>
+              <!-- CARD 5: AlphaTrend_V5 — DRAFT -->
+              <div class="bg-surface l-bd rounded-md hover:border-white/22 transition-all group cursor-pointer strat-card" data-lifecycle="draft" onclick="openStratDrawer('AlphaTrend_V5', 'draft')">
+                  <div class="px-3.5 pt-3 pb-2 flex items-center justify-between">
+                      <div class="flex items-center gap-2 min-w-0">
+                          <div class="w-2 h-2 bg-white/20 rounded-full shrink-0"></div>
+                          <span class="font-bold text-white uppercase text-[11px] tracking-wide font-mono truncate">AlphaTrend_V5</span>
                       </div>
-                      <span class="text-up font-bold text-[13px]">+$12,450</span>
-                      <span class="text-[10px] ml-1" style="color:rgba(34,197,94,0.5)">+124.5%</span>
+                      <span class="px-1.5 py-[1px] text-[8px] font-bold rounded bg-white/5 text-muted border border-white/10 shrink-0">DRAFT</span>
                   </div>
-                  <div class="grid grid-cols-4 gap-y-1 text-muted text-[11px] mb-2.5">
-                      <div class="flex gap-1.5"><span>Trades:</span><span class="text-white/70">890</span></div>
-                      <div class="flex gap-1.5"><span>Win:</span><span class="text-white/70">58.9%</span></div>
-                      <div class="flex gap-1.5"><span>Sharpe:</span><span class="text-white/70">1.82</span></div>
-                      <div class="flex gap-1.5"><span>Binance</span><span class="text-white/40">· 1h · 0 bots</span></div>
+                  <div class="px-3.5 pb-2 flex items-baseline gap-1.5">
+                      <span class="text-muted font-bold text-[15px] font-mono">—</span>
                   </div>
-                  <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
-                      <div class="flex gap-[2px] h-3.5 items-end">
-                          <div class="w-1.5 bg-up h-[50%] rounded-sm"></div><div class="w-1.5 bg-up h-[70%] rounded-sm"></div><div class="w-1.5 bg-down h-[40%] rounded-sm"></div><div class="w-1.5 bg-up h-[60%] rounded-sm"></div><div class="w-1.5 bg-up h-[90%] rounded-sm"></div>
-                      </div>
-                      <div class="flex gap-1">
-                          <button class="bot-ctrl" title="View Results" onclick="event.stopPropagation()"><i data-lucide="eye" class="w-3 h-3"></i></button>
-                          <button class="bot-ctrl" title="Edit" onclick="event.stopPropagation()"><i data-lucide="pencil" class="w-3 h-3"></i></button>
-                          <button class="bot-ctrl" title="Experiments" onclick="event.stopPropagation()"><i data-lucide="flask-conical" class="w-3 h-3"></i></button>
-                          <button class="bot-ctrl ctrl-start" title="Start Paper" onclick="event.stopPropagation()"><i data-lucide="file-text" class="w-3 h-3"></i></button>
-                      </div>
+                  <div class="px-3.5 pb-2.5 grid grid-cols-2 gap-y-1 text-[10px] font-mono text-muted">
+                      <div>Trades: <span class="text-white/30">—</span></div>
+                      <div>Win: <span class="text-white/30">—</span></div>
+                      <div>DD: <span class="text-white/30">—</span></div>
+                      <div>— · 5m</div>
                   </div>
+                  <div class="px-3.5 pb-2.5 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div></div>
+                      <div class="flex gap-1"><button class="bot-ctrl" title="Edit in Builder" onclick="event.stopPropagation()"><i data-lucide="code-2" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-start" title="Run Backtest" onclick="event.stopPropagation()"><i data-lucide="play" class="w-3 h-3"></i></button></div>
+                  </div>
+                  <div class="h-5 l-t px-3.5 flex items-center text-[9px] text-muted font-mono">0 bots · No pairs configured</div>
               </div>
 
-              <!-- ROW 5: AlphaTrend_V5 — DRAFT -->
-              <div class="p-3.5 l-b hover:bg-white/[0.03] transition-colors group cursor-pointer strat-card" data-lifecycle="draft" onclick="openStratDrawer('AlphaTrend_V5', 'draft')">
-                  <div class="flex items-start justify-between mb-2">
-                      <div class="flex items-center gap-2">
-                          <div class="w-2 h-2 bg-white/20 rounded-full"></div>
-                          <span class="font-bold text-white uppercase text-[12px] tracking-wide">AlphaTrend_V5</span>
-                          <span class="px-1.5 py-[1px] text-[9px] font-bold rounded bg-white/5 text-muted border border-white/10">DRAFT</span>
+              <!-- CARD 6: GridTrader_BNB — RETIRED -->
+              <div class="bg-surface l-bd rounded-md hover:border-white/22 transition-all group cursor-pointer strat-card opacity-50" data-lifecycle="retired" onclick="openStratDrawer('GridTrader_BNB', 'retired')">
+                  <div class="px-3.5 pt-3 pb-2 flex items-center justify-between">
+                      <div class="flex items-center gap-2 min-w-0">
+                          <div class="w-2 h-2 bg-down/40 rounded-full shrink-0"></div>
+                          <span class="font-bold text-white uppercase text-[11px] tracking-wide font-mono truncate">GridTrader_BNB</span>
                       </div>
-                      <span class="text-muted font-bold text-[13px]">—</span>
+                      <span class="px-1.5 py-[1px] text-[8px] font-bold rounded bg-down/12 text-down border border-down/25 shrink-0">RETIRED</span>
                   </div>
-                  <div class="grid grid-cols-4 gap-y-1 text-muted text-[11px] mb-2.5">
-                      <div class="flex gap-1.5"><span>Trades:</span><span class="text-white/30">—</span></div>
-                      <div class="flex gap-1.5"><span>Win:</span><span class="text-white/30">—</span></div>
-                      <div class="flex gap-1.5"><span>DD:</span><span class="text-white/30">—</span></div>
-                      <div class="flex gap-1.5"><span>—</span><span class="text-white/40">· 5m · 0 bots</span></div>
+                  <div class="px-3.5 pb-2 flex items-baseline gap-1.5">
+                      <span class="text-up font-bold text-[15px] font-mono">+$6,100</span>
+                      <span class="text-[10px] font-mono" style="color:rgba(34,197,94,0.5)">+61.0%</span>
                   </div>
-                  <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
-                      <div class="flex gap-[2px] h-3.5 items-end"></div>
-                      <div class="flex gap-1">
-                          <button class="bot-ctrl" title="Edit in Builder" onclick="event.stopPropagation()"><i data-lucide="code-2" class="w-3 h-3"></i></button>
-                          <button class="bot-ctrl ctrl-start" title="Run Backtest" onclick="event.stopPropagation()"><i data-lucide="play" class="w-3 h-3"></i></button>
-                      </div>
+                  <div class="px-3.5 pb-2.5 grid grid-cols-2 gap-y-1 text-[10px] font-mono text-muted">
+                      <div>Trades: <span class="text-white/70">2,100</span></div>
+                      <div>Win: <span class="text-white/70">55.0%</span></div>
+                      <div>DD: <span class="text-down">-12.4%</span></div>
+                      <div>Binance · 1h</div>
                   </div>
+                  <div class="px-3.5 pb-2.5 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div class="flex gap-[2px] h-3 items-end"><div class="w-1.5 bg-up h-[30%] rounded-sm"></div><div class="w-1.5 bg-down h-[50%] rounded-sm"></div><div class="w-1.5 bg-up h-[40%] rounded-sm"></div><div class="w-1.5 bg-down h-[60%] rounded-sm"></div></div>
+                      <div class="flex gap-1"><button class="bot-ctrl" title="History" onclick="event.stopPropagation()"><i data-lucide="history" class="w-3 h-3"></i></button><button class="bot-ctrl" title="Clone" onclick="event.stopPropagation()"><i data-lucide="copy" class="w-3 h-3"></i></button><button class="bot-ctrl" title="Export .py" onclick="event.stopPropagation()"><i data-lucide="download" class="w-3 h-3"></i></button></div>
+                  </div>
+                  <div class="h-5 l-t px-3.5 flex items-center text-[9px] text-muted font-mono">Retired 2024-02-15</div>
               </div>
 
-              <!-- ROW 6: GridTrader_BNB — RETIRED (dimmed) -->
-              <div class="p-3.5 l-b hover:bg-white/[0.03] transition-colors group cursor-pointer strat-card opacity-50" data-lifecycle="retired" onclick="openStratDrawer('GridTrader_BNB', 'retired')">
-                  <div class="flex items-start justify-between mb-2">
-                      <div class="flex items-center gap-2">
-                          <div class="w-2 h-2 bg-down/40 rounded-full"></div>
-                          <span class="font-bold text-white uppercase text-[12px] tracking-wide">GridTrader_BNB</span>
-                          <span class="px-1.5 py-[1px] text-[9px] font-bold rounded bg-down/12 text-down border border-down/25">RETIRED</span>
+              <!-- CARD 7: FreqAI_LGBM_Multi — AI_TESTED -->
+              <div class="bg-surface l-bd rounded-md hover:border-white/22 transition-all group cursor-pointer strat-card" data-lifecycle="ai_tested" onclick="openStratDrawer('FreqAI_LGBM_Multi', 'ai_tested')">
+                  <div class="px-3.5 pt-3 pb-2 flex items-center justify-between">
+                      <div class="flex items-center gap-2 min-w-0">
+                          <div class="w-2 h-2 bg-purple-400 rounded-full shadow-[0_0_4px_#a855f7] shrink-0"></div>
+                          <span class="font-bold text-white uppercase text-[11px] tracking-wide font-mono truncate">FreqAI_LGBM_Multi</span>
                       </div>
-                      <span class="text-up font-bold text-[13px]">+$6,100</span>
-                      <span class="text-[10px] ml-1" style="color:rgba(34,197,94,0.5)">+61.0%</span>
+                      <span class="px-1.5 py-[1px] text-[8px] font-bold rounded bg-purple-500/12 text-purple-400 border border-purple-500/25 shrink-0">AI TESTED</span>
                   </div>
-                  <div class="grid grid-cols-4 gap-y-1 text-muted text-[11px] mb-2.5">
-                      <div class="flex gap-1.5"><span>Trades:</span><span class="text-white/70">2,100</span></div>
-                      <div class="flex gap-1.5"><span>Win:</span><span class="text-white/70">55.0%</span></div>
-                      <div class="flex gap-1.5"><span>DD:</span><span class="text-down">-12.4%</span></div>
-                      <div class="flex gap-1.5"><span>Binance</span><span class="text-white/40">· 1h · 0 bots</span></div>
+                  <div class="px-3.5 pb-2 flex items-baseline gap-1.5">
+                      <span class="text-up font-bold text-[15px] font-mono">+$8,200</span>
+                      <span class="text-[10px] font-mono" style="color:rgba(34,197,94,0.5)">+82.0%</span>
                   </div>
-                  <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
-                      <div class="flex gap-[2px] h-3.5 items-end">
-                          <div class="w-1.5 bg-up h-[30%] rounded-sm"></div><div class="w-1.5 bg-down h-[50%] rounded-sm"></div><div class="w-1.5 bg-up h-[40%] rounded-sm"></div><div class="w-1.5 bg-down h-[60%] rounded-sm"></div><div class="w-1.5 bg-up h-[20%] rounded-sm"></div>
-                      </div>
-                      <div class="flex gap-1">
-                          <button class="bot-ctrl" title="View History" onclick="event.stopPropagation()"><i data-lucide="history" class="w-3 h-3"></i></button>
-                          <button class="bot-ctrl" title="Clone" onclick="event.stopPropagation()"><i data-lucide="copy" class="w-3 h-3"></i></button>
-                          <button class="bot-ctrl" title="Export .py" onclick="event.stopPropagation()"><i data-lucide="download" class="w-3 h-3"></i></button>
-                      </div>
+                  <div class="px-3.5 pb-2.5 grid grid-cols-2 gap-y-1 text-[10px] font-mono text-muted">
+                      <div>Trades: <span class="text-white/70">640</span></div>
+                      <div>Win: <span class="text-white/70">65.3%</span></div>
+                      <div>DD: <span class="text-down">-5.10%</span></div>
+                      <div>Binance · 1h</div>
                   </div>
+                  <div class="px-3.5 pb-2.5 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div class="flex gap-[2px] h-3 items-end"><div class="w-1.5 bg-up h-[60%] rounded-sm"></div><div class="w-1.5 bg-up h-[80%] rounded-sm"></div><div class="w-1.5 bg-up h-[50%] rounded-sm"></div><div class="w-1.5 bg-down h-[25%] rounded-sm"></div><div class="w-1.5 bg-up h-[90%] rounded-sm"></div></div>
+                      <div class="flex gap-1"><button class="bot-ctrl" title="Results" onclick="event.stopPropagation()"><i data-lucide="eye" class="w-3 h-3"></i></button><button class="bot-ctrl" title="Experiments" onclick="event.stopPropagation()"><i data-lucide="flask-conical" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-start" title="Start Paper" onclick="event.stopPropagation()"><i data-lucide="file-text" class="w-3 h-3"></i></button></div>
+                  </div>
+                  <div class="h-5 l-t px-3.5 flex items-center text-[9px] text-muted font-mono"><span class="w-1.5 h-1.5 rounded-full bg-purple-400 mr-1.5"></span>1 bot · AI Score: 87/100</div>
               </div>
 
-              <!-- ROW 7: FreqAI_LGBM_Multi — AI_TESTED -->
-              <div class="p-3.5 l-b hover:bg-white/[0.03] transition-colors group cursor-pointer strat-card" data-lifecycle="ai_tested" onclick="openStratDrawer('FreqAI_LGBM_Multi', 'ai_tested')">
-                  <div class="flex items-start justify-between mb-2">
-                      <div class="flex items-center gap-2">
-                          <div class="w-2 h-2 bg-purple-400 rounded-full shadow-[0_0_4px_#a855f7]"></div>
-                          <span class="font-bold text-white uppercase text-[12px] tracking-wide">FreqAI_LGBM_Multi</span>
-                          <span class="px-1.5 py-[1px] text-[9px] font-bold rounded bg-purple-500/12 text-purple-400 border border-purple-500/25">AI TESTED</span>
-                      </div>
-                      <span class="text-up font-bold text-[13px]">+$8,200</span>
-                      <span class="text-[10px] ml-1" style="color:rgba(34,197,94,0.5)">+82.0%</span>
-                  </div>
-                  <div class="grid grid-cols-4 gap-y-1 text-muted text-[11px] mb-2.5">
-                      <div class="flex gap-1.5"><span>Trades:</span><span class="text-white/70">640</span></div>
-                      <div class="flex gap-1.5"><span>Win:</span><span class="text-white/70">65.3%</span></div>
-                      <div class="flex gap-1.5"><span>DD:</span><span class="text-down">-5.10%</span></div>
-                      <div class="flex gap-1.5"><span>Binance</span><span class="text-white/40">· 1h · 1 bot</span></div>
-                  </div>
-                  <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
-                      <div class="flex gap-[2px] h-3.5 items-end">
-                          <div class="w-1.5 bg-up h-[60%] rounded-sm"></div><div class="w-1.5 bg-up h-[80%] rounded-sm"></div><div class="w-1.5 bg-up h-[50%] rounded-sm"></div><div class="w-1.5 bg-down h-[25%] rounded-sm"></div><div class="w-1.5 bg-up h-[90%] rounded-sm"></div><div class="w-1.5 bg-up h-[70%] rounded-sm"></div>
-                      </div>
-                      <div class="flex gap-1">
-                          <button class="bot-ctrl" title="View Results" onclick="event.stopPropagation()"><i data-lucide="eye" class="w-3 h-3"></i></button>
-                          <button class="bot-ctrl" title="Edit" onclick="event.stopPropagation()"><i data-lucide="pencil" class="w-3 h-3"></i></button>
-                          <button class="bot-ctrl" title="Experiments" onclick="event.stopPropagation()"><i data-lucide="flask-conical" class="w-3 h-3"></i></button>
-                          <button class="bot-ctrl ctrl-start" title="Start Paper" onclick="event.stopPropagation()"><i data-lucide="file-text" class="w-3 h-3"></i></button>
-                      </div>
-                  </div>
-              </div>
-
-          </div><!-- /end container -->
+          </div><!-- /end grid -->
 
           </div>
       </div><!-- /END STRATEGIES -->

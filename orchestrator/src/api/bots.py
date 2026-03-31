@@ -1874,9 +1874,9 @@ async def bot_hyperopt_runs(bot_id: int, request: Request, db: AsyncSession = De
             size_bytes = int(parts[1]) if parts[1].isdigit() else 0
             mtime = float(parts[2]) if parts[2].replace(".", "").isdigit() else 0
             # Parse strategy name and date from filename: strategy_StrategyName_YYYY-MM-DD_HH-MM-SS.fthypt
-            m = re.match(r"strategy_(.+?)_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\.fthypt", filename)
+            m = re.match(r"strategy_(.+?)_(\d{4}-\d{2}-\d{2})_(\d{2})-(\d{2})-(\d{2})\.fthypt", filename)
             strategy_name = m.group(1) if m else filename
-            created_str = m.group(2).replace("_", " ").replace("-", ":", 2) if m else ""
+            created_str = f"{m.group(2)} {m.group(3)}:{m.group(4)}:{m.group(5)}" if m else ""
             # Count epochs by counting lines in file
             count_result = container.exec_run(
                 ["wc", "-l", f"/freqtrade/user_data/hyperopt_results/{filename}"],

@@ -166,18 +166,20 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
   // ── Batch Calculation ────────────────────────────────────────────
   const totalBatchRuns = selectedLossFunctions.length * selectedSamplers.length;
 
-  // ── Map API response to HyperoptResult[] ───────────────────────
   const mapApiResults = useCallback((data: { results: unknown[] }): HyperoptResult[] => {
     return data.results.map((rawItem, i) => {
       const r = rawItem as Record<string, unknown>;
+      // total_profit is a ratio (-0.107 = -10.7%), profit_pct is USDT abs amount
+      const totalProfitRatio = Number(r.total_profit ?? 0);
+      const profitPctStr = String(r.profit_pct ?? '0').replace(/[,%]/g, '');
       return {
         id: Number(r.epoch ?? i + 1),
         loss: Number(r.objective ?? 0),
         trades: Number(r.trades ?? 0),
         winRate: 0,
-        profitPct: Number(String(r.total_profit ?? '0').replace(/[,%]/g, '')),
-        profitAbs: Number(String(r.total_profit ?? '0').replace(/[,%]/g, '')) * 100,
-        maxDrawdown: Number(r.max_drawdown_pct ?? 0) / 100,
+        profitPct: totalProfitRatio * 100,    // Convert ratio to percentage
+        profitAbs: Number(profitPctStr),       // USDT absolute amount
+        maxDrawdown: Number(r.max_drawdown_pct ?? 0),  // Already in % (e.g. 28.2)
         sharpe: 0,
         sortino: 0,
         avgDuration: String(r.avg_duration ?? '—'),

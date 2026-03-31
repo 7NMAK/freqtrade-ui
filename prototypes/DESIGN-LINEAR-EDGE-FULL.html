@@ -238,7 +238,7 @@
                           <i data-lucide="layers" class="w-4 h-4 text-muted"></i> Fleet Management (312)
                       </span>
                       <div class="flex gap-2">
-                         <button class="bg-white/10 px-3 py-1 rounded text-[11px] hover:bg-white/20 transition-colors font-medium">Compact View</button>
+                      <button onclick="switchPage('page-fleet')" class="bg-white/10 px-3 py-1 rounded text-[11px] hover:bg-white/20 transition-colors font-medium flex items-center gap-1.5"><i data-lucide="git-compare" class="w-3 h-3"></i>Compare View</button>
                       </div>
                   </div>
                   
@@ -251,7 +251,8 @@
                                    <span class="font-bold text-white uppercase text-[12px] tracking-wide">TrendFollowerV3_BTC</span>
                                    <span class="text-[10px] border border-white/20 px-1.5 py-[1px] rounded text-white/60 font-medium">LIVE</span>
                                </div>
-                               <span class="text-up font-bold text-[13px]">+$48.20</span>
+                                <span class="text-up font-bold text-[13px]">+$48.20</span>
+                                <span class="text-[10px] ml-1" style="color:rgba(34,197,94,0.5)">+2.4%</span>
                            </div>
                            <div class="grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3">
                                <div class="flex justify-between w-full pr-5"><span>Trades:</span> <span class="text-white/70">412</span></div>
@@ -285,7 +286,8 @@
                                    <span class="font-bold text-white uppercase text-[12px] tracking-wide">TrendFollowerV3_ETH</span>
                                    <span class="text-[10px] border border-white/20 px-1.5 py-[1px] rounded text-white/60 font-medium">LIVE</span>
                                </div>
-                               <span class="text-down font-bold text-[13px]">-$12.40</span>
+                                <span class="text-down font-bold text-[13px]">-$12.40</span>
+                                <span class="text-[10px] ml-1" style="color:rgba(239,68,68,0.5)">-0.7%</span>
                            </div>
                            <div class="grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3">
                                <div class="flex justify-between w-full pr-5"><span>Trades:</span> <span class="text-white/70">188</span></div>
@@ -311,11 +313,86 @@
                            </div>
                        </div>
                        
-                       <div class="p-5 text-center text-muted font-mono text-[12px]">
-                            + 310 Other Bots running...
-                       </div>
-                  </div>
-              </div>
+                        <!-- Bot 3: Compact -->
+                        <div class="p-3 px-4 l-b hover:bg-white/[0.03] transition-colors cursor-pointer flex items-center justify-between" onclick="openBotDrawer('ScalpBot_XRP', 'LIVE')">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div>
+                                <span class="font-bold text-white text-[11px] tracking-wide">ScalpBot_XRP</span>
+                                <span class="text-muted text-[10px]">Binance</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-[11px]">
+                                <span class="text-muted">71%</span>
+                                <span class="text-up font-bold">+$92.10</span>
+                                <span class="text-[10px]" style="color:rgba(34,197,94,0.5)">+3.1%</span>
+                            </div>
+                        </div>
+                        <!-- Bot 4: Compact -->
+                        <div class="p-3 px-4 l-b hover:bg-white/[0.03] transition-colors cursor-pointer bg-white/[0.015] flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div>
+                                <span class="font-bold text-white text-[11px] tracking-wide">GridBot_BNB_DCA</span>
+                                <span class="text-muted text-[10px]">Binance</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-[11px]">
+                                <span class="text-muted">81%</span>
+                                <span class="text-up font-bold">+$14.80</span>
+                                <span class="text-[10px]" style="color:rgba(34,197,94,0.5)">+0.8%</span>
+                            </div>
+                        </div>
+                        <!-- Bot 5: Compact -->
+                        <div class="p-3 px-4 l-b hover:bg-white/[0.03] transition-colors cursor-pointer flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                                <span class="font-bold text-white/60 text-[11px] tracking-wide">MomentumRider_SOL</span>
+                                <span class="text-muted text-[10px]">Kraken</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-[11px]">
+                                <span class="text-muted">62%</span>
+                                <span class="text-muted">$0.00</span>
+                                <span class="text-muted text-[10px]">PAUSED</span>
+                            </div>
+                        </div>
+                        <!-- Bot 6: Compact -->
+                        <div class="p-3 px-4 l-b hover:bg-white/[0.03] transition-colors cursor-pointer bg-white/[0.015] flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div>
+                                <span class="font-bold text-white text-[11px] tracking-wide">BreakoutHunter_AVAX</span>
+                                <span class="text-muted text-[10px]">Kraken</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-[11px]">
+                                <span class="text-muted">68%</span>
+                                <span class="text-up font-bold">+$220.40</span>
+                                <span class="text-[10px]" style="color:rgba(34,197,94,0.5)">+8.2%</span>
+                            </div>
+                        </div>
+                        <!-- Bot 7: Compact -->
+                        <div class="p-3 px-4 l-b hover:bg-white/[0.03] transition-colors cursor-pointer flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-2 h-2 bg-down rounded-full"></div>
+                                <span class="font-bold text-white/40 text-[11px] tracking-wide">MemeScalper_DOGE</span>
+                                <span class="text-muted text-[10px]">Binance</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-[11px]">
+                                <span class="text-down">28%</span>
+                                <span class="text-down font-bold">-$420</span>
+                                <span class="text-[10px]" style="color:rgba(239,68,68,0.5)">-12.4%</span>
+                            </div>
+                        </div>
+                        <!-- Bot 8: Compact -->
+                        <div class="p-3 px-4 l-b hover:bg-white/[0.03] transition-colors cursor-pointer bg-white/[0.015] flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div>
+                                <span class="font-bold text-white text-[11px] tracking-wide">MeanRevert_LINK</span>
+                                <span class="text-muted text-[10px]">Binance</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-[11px]">
+                                <span class="text-muted">55%</span>
+                                <span class="text-down font-bold">-$8.50</span>
+                                <span class="text-[10px]" style="color:rgba(239,68,68,0.5)">-0.4%</span>
+                            </div>
+                        </div>
+                   </div>
+               </div>
           </div>
 
           <!-- COL 2: MAIN WORKSPACE -->
@@ -1003,6 +1080,202 @@
           </div>
       </div>
 
+      <!-- PAGE: FLEET MANAGEMENT -->
+      <div id="page-fleet" class="page-view flex-1 overflow-y-auto flex-col p-5 gap-5">
+          
+          <!-- Fleet Header -->
+          <div class="flex items-center justify-between mb-5 shrink-0">
+              <div class="flex items-center gap-4">
+                  <button onclick="switchPage('page-dashboard')" class="text-muted hover:text-white transition-colors flex items-center gap-1.5 text-[12px] font-medium"><i data-lucide="arrow-left" class="w-4 h-4"></i>Dashboard</button>
+                  <span class="text-white/15">|</span>
+                  <h2 class="text-[16px] font-bold uppercase tracking-widest text-white/80">Fleet Management</h2>
+                  <span class="bg-white/10 px-2.5 py-1 rounded text-[11px] font-mono text-muted">312 bots</span>
+                  <span class="flex items-center gap-1.5 text-up text-[11px] font-mono"><div class="w-2 h-2 bg-up rounded-full animate-pulse"></div>284 running</span>
+                  <span class="flex items-center gap-1.5 text-yellow-400 text-[11px] font-mono">16 paused</span>
+                  <span class="flex items-center gap-1.5 text-down text-[11px] font-mono">12 stopped</span>
+              </div>
+              <div class="flex items-center gap-2">
+                  <button class="px-3 py-1.5 border border-white/12 rounded text-[11px] hover:bg-white/10 font-medium transition-colors flex items-center gap-1.5"><i data-lucide="git-compare" class="w-3.5 h-3.5"></i>Compare Selected</button>
+                  <button class="px-3 py-1.5 border border-white/12 rounded text-[11px] hover:bg-white/10 font-medium transition-colors flex items-center gap-1.5"><i data-lucide="download" class="w-3.5 h-3.5"></i>Export CSV</button>
+              </div>
+          </div>
+
+          <!-- Fleet Table -->
+          <div class="flex-1 bg-surface l-bd rounded-md shadow-xl overflow-hidden flex flex-col">
+              <div class="flex-1 overflow-x-auto overflow-y-auto">
+                  <table class="w-full text-left border-collapse whitespace-nowrap text-[12px]">
+                      <thead class="sticky top-0 bg-surface l-b font-mono text-[10px] uppercase tracking-widest text-muted z-10 shadow-lg">
+                          <tr>
+                              <th class="px-3 py-3 font-medium w-8"><input type="checkbox" class="rounded" title="Select all"></th>
+                              <th class="px-3 py-3 font-medium">Status</th>
+                              <th class="px-4 py-3 font-medium">Bot Name</th>
+                              <th class="px-3 py-3 font-medium">Strategy</th>
+                              <th class="px-3 py-3 font-medium">Exchange</th>
+                              <th class="px-3 py-3 font-medium text-right">Balance</th>
+                              <th class="px-3 py-3 font-medium text-right bg-black/20">Today P&L</th>
+                              <th class="px-3 py-3 font-medium text-right bg-black/20">Total P&L</th>
+                              <th class="px-3 py-3 font-medium text-right bg-black/20">P&L %</th>
+                              <th class="px-3 py-3 font-medium text-right">Win Rate</th>
+                              <th class="px-3 py-3 font-medium text-right">Trades</th>
+                              <th class="px-3 py-3 font-medium text-right">Open</th>
+                              <th class="px-3 py-3 font-medium text-right">Drawdown</th>
+                              <th class="px-3 py-3 font-medium text-right">Avg Dur</th>
+                              <th class="px-3 py-3 font-medium text-center">Actions</th>
+                          </tr>
+                      </thead>
+                      <tbody class="font-mono text-white/85 divide-y divide-white/[0.05]">
+                          <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer" onclick="openBotDrawer('TrendFollowerV3_BTC', 'LIVE')">
+                              <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
+                              <td class="px-3 py-2.5"><span class="flex items-center gap-1.5"><div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUN</span></span></td>
+                              <td class="px-4 py-2.5 font-bold text-white">TrendFollowerV3_BTC</td>
+                              <td class="px-3 py-2.5 text-muted font-sans text-[11px]">TrendFollowerV3</td>
+                              <td class="px-3 py-2.5 text-muted">Binance</td>
+                              <td class="px-3 py-2.5 text-right">$24,500</td>
+                              <td class="px-3 py-2.5 text-right bg-up/5 text-up font-bold">+$48.20</td>
+                              <td class="px-3 py-2.5 text-right bg-up/5 text-up">+$4,210</td>
+                              <td class="px-3 py-2.5 text-right bg-up/5 text-up text-[11px]">+17.2%</td>
+                              <td class="px-3 py-2.5 text-right text-up">72%</td>
+                              <td class="px-3 py-2.5 text-right">412</td>
+                              <td class="px-3 py-2.5 text-right">6</td>
+                              <td class="px-3 py-2.5 text-right text-down">-1.2%</td>
+                              <td class="px-3 py-2.5 text-right">1.5h</td>
+                              <td class="px-3 py-2.5 text-center"><div class="flex gap-1 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button></div></td>
+                          </tr>
+                          <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer bg-white/[0.015]" onclick="openBotDrawer('TrendFollowerV3_ETH', 'LIVE')">
+                              <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
+                              <td class="px-3 py-2.5"><span class="flex items-center gap-1.5"><div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUN</span></span></td>
+                              <td class="px-4 py-2.5 font-bold text-white">TrendFollowerV3_ETH</td>
+                              <td class="px-3 py-2.5 text-muted font-sans text-[11px]">TrendFollowerV3</td>
+                              <td class="px-3 py-2.5 text-muted">Binance</td>
+                              <td class="px-3 py-2.5 text-right">$18,200</td>
+                              <td class="px-3 py-2.5 text-right bg-down/5 text-down font-bold">-$12.40</td>
+                              <td class="px-3 py-2.5 text-right bg-down/5 text-down">-$320</td>
+                              <td class="px-3 py-2.5 text-right bg-down/5 text-down text-[11px]">-1.8%</td>
+                              <td class="px-3 py-2.5 text-right text-down">48%</td>
+                              <td class="px-3 py-2.5 text-right">84</td>
+                              <td class="px-3 py-2.5 text-right">3</td>
+                              <td class="px-3 py-2.5 text-right text-down">-3.8%</td>
+                              <td class="px-3 py-2.5 text-right">2.1h</td>
+                              <td class="px-3 py-2.5 text-center"><div class="flex gap-1 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button></div></td>
+                          </tr>
+                          <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer">
+                              <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
+                              <td class="px-3 py-2.5"><span class="flex items-center gap-1.5"><div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUN</span></span></td>
+                              <td class="px-4 py-2.5 font-bold text-white">ScalpBot_XRP_Fast</td>
+                              <td class="px-3 py-2.5 text-muted font-sans text-[11px]">ScalperV2</td>
+                              <td class="px-3 py-2.5 text-muted">Binance</td>
+                              <td class="px-3 py-2.5 text-right">$8,400</td>
+                              <td class="px-3 py-2.5 text-right bg-up/5 text-up font-bold">+$92.10</td>
+                              <td class="px-3 py-2.5 text-right bg-up/5 text-up">+$1,840</td>
+                              <td class="px-3 py-2.5 text-right bg-up/5 text-up text-[11px]">+21.9%</td>
+                              <td class="px-3 py-2.5 text-right text-up">71%</td>
+                              <td class="px-3 py-2.5 text-right">620</td>
+                              <td class="px-3 py-2.5 text-right">4</td>
+                              <td class="px-3 py-2.5 text-right text-down">-2.1%</td>
+                              <td class="px-3 py-2.5 text-right">0.4h</td>
+                              <td class="px-3 py-2.5 text-center"><div class="flex gap-1 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button></div></td>
+                          </tr>
+                          <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer bg-white/[0.015]">
+                              <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
+                              <td class="px-3 py-2.5"><span class="flex items-center gap-1.5"><div class="w-2 h-2 bg-yellow-400 rounded-full"></div><span class="text-yellow-400 text-[10px] font-bold">PAUSE</span></span></td>
+                              <td class="px-4 py-2.5 font-bold text-white/60">MomentumRider_SOL</td>
+                              <td class="px-3 py-2.5 text-muted font-sans text-[11px]">MomentumV1</td>
+                              <td class="px-3 py-2.5 text-muted">Kraken</td>
+                              <td class="px-3 py-2.5 text-right">$12,100</td>
+                              <td class="px-3 py-2.5 text-right text-muted">$0.00</td>
+                              <td class="px-3 py-2.5 text-right bg-up/5 text-up">+$890</td>
+                              <td class="px-3 py-2.5 text-right bg-up/5 text-up text-[11px]">+7.4%</td>
+                              <td class="px-3 py-2.5 text-right">62%</td>
+                              <td class="px-3 py-2.5 text-right">156</td>
+                              <td class="px-3 py-2.5 text-right text-muted">0</td>
+                              <td class="px-3 py-2.5 text-right text-down">-5.2%</td>
+                              <td class="px-3 py-2.5 text-right">3.2h</td>
+                              <td class="px-3 py-2.5 text-center"><div class="flex gap-1 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button></div></td>
+                          </tr>
+                          <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer">
+                              <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
+                              <td class="px-3 py-2.5"><span class="flex items-center gap-1.5"><div class="w-2 h-2 bg-down rounded-full"></div><span class="text-down text-[10px] font-bold">STOP</span></span></td>
+                              <td class="px-4 py-2.5 font-bold text-white/40">MemeScalper_DOGE</td>
+                              <td class="px-3 py-2.5 text-muted font-sans text-[11px]">MemeScalperV1</td>
+                              <td class="px-3 py-2.5 text-muted">Binance</td>
+                              <td class="px-3 py-2.5 text-right">$2,400</td>
+                              <td class="px-3 py-2.5 text-right text-muted">—</td>
+                              <td class="px-3 py-2.5 text-right bg-down/5 text-down">-$420</td>
+                              <td class="px-3 py-2.5 text-right bg-down/5 text-down text-[11px]">-17.5%</td>
+                              <td class="px-3 py-2.5 text-right text-down">28%</td>
+                              <td class="px-3 py-2.5 text-right">18</td>
+                              <td class="px-3 py-2.5 text-right text-muted">0</td>
+                              <td class="px-3 py-2.5 text-right text-down">-12.4%</td>
+                              <td class="px-3 py-2.5 text-right">0.8h</td>
+                              <td class="px-3 py-2.5 text-center"><div class="flex gap-1 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button></div></td>
+                          </tr>
+                          <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer bg-white/[0.015]">
+                              <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
+                              <td class="px-3 py-2.5"><span class="flex items-center gap-1.5"><div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUN</span></span></td>
+                              <td class="px-4 py-2.5 font-bold text-white">GridBot_BNB_DCA</td>
+                              <td class="px-3 py-2.5 text-muted font-sans text-[11px]">GridDCA_V2</td>
+                              <td class="px-3 py-2.5 text-muted">Binance</td>
+                              <td class="px-3 py-2.5 text-right">$5,800</td>
+                              <td class="px-3 py-2.5 text-right bg-up/5 text-up font-bold">+$14.80</td>
+                              <td class="px-3 py-2.5 text-right bg-up/5 text-up">+$640</td>
+                              <td class="px-3 py-2.5 text-right bg-up/5 text-up text-[11px]">+11.0%</td>
+                              <td class="px-3 py-2.5 text-right text-up">81%</td>
+                              <td class="px-3 py-2.5 text-right">340</td>
+                              <td class="px-3 py-2.5 text-right">8</td>
+                              <td class="px-3 py-2.5 text-right text-down">-0.8%</td>
+                              <td class="px-3 py-2.5 text-right">4.2h</td>
+                              <td class="px-3 py-2.5 text-center"><div class="flex gap-1 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button></div></td>
+                          </tr>
+                          <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer">
+                              <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
+                              <td class="px-3 py-2.5"><span class="flex items-center gap-1.5"><div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUN</span></span></td>
+                              <td class="px-4 py-2.5 font-bold text-white">BreakoutHunter_AVAX</td>
+                              <td class="px-3 py-2.5 text-muted font-sans text-[11px]">BreakoutV3</td>
+                              <td class="px-3 py-2.5 text-muted">Kraken</td>
+                              <td class="px-3 py-2.5 text-right">$6,200</td>
+                              <td class="px-3 py-2.5 text-right bg-up/5 text-up font-bold">+$220.40</td>
+                              <td class="px-3 py-2.5 text-right bg-up/5 text-up">+$3,120</td>
+                              <td class="px-3 py-2.5 text-right bg-up/5 text-up text-[11px]">+50.3%</td>
+                              <td class="px-3 py-2.5 text-right text-up">68%</td>
+                              <td class="px-3 py-2.5 text-right">210</td>
+                              <td class="px-3 py-2.5 text-right">2</td>
+                              <td class="px-3 py-2.5 text-right text-down">-3.4%</td>
+                              <td class="px-3 py-2.5 text-right">1.8h</td>
+                              <td class="px-3 py-2.5 text-center"><div class="flex gap-1 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button></div></td>
+                          </tr>
+                          <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer bg-white/[0.015]">
+                              <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
+                              <td class="px-3 py-2.5"><span class="flex items-center gap-1.5"><div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUN</span></span></td>
+                              <td class="px-4 py-2.5 font-bold text-white">MeanRevert_LINK</td>
+                              <td class="px-3 py-2.5 text-muted font-sans text-[11px]">MeanRevertV1</td>
+                              <td class="px-3 py-2.5 text-muted">Binance</td>
+                              <td class="px-3 py-2.5 text-right">$4,100</td>
+                              <td class="px-3 py-2.5 text-right bg-down/5 text-down font-bold">-$8.50</td>
+                              <td class="px-3 py-2.5 text-right bg-up/5 text-up">+$280</td>
+                              <td class="px-3 py-2.5 text-right bg-up/5 text-up text-[11px]">+6.8%</td>
+                              <td class="px-3 py-2.5 text-right">55%</td>
+                              <td class="px-3 py-2.5 text-right">92</td>
+                              <td class="px-3 py-2.5 text-right">1</td>
+                              <td class="px-3 py-2.5 text-right text-down">-6.1%</td>
+                              <td class="px-3 py-2.5 text-right">5.4h</td>
+                              <td class="px-3 py-2.5 text-center"><div class="flex gap-1 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button></div></td>
+                          </tr>
+                      </tbody>
+                  </table>
+              </div>
+              <!-- Fleet Footer -->
+              <div class="h-10 l-b bg-black/40 flex items-center justify-between px-5 shrink-0 font-mono text-[11px] text-muted">
+                  <span>Showing 8 of 312 bots</span>
+                  <div class="flex items-center gap-3">
+                      <span>Sort: P&L ▼</span>
+                      <span>Filter: All</span>
+                      <span class="text-white/50">Page 1 / 39</span>
+                  </div>
+              </div>
+          </div>
+
+      </div><!-- /END FLEET -->
+
   </div> <!-- /END MAIN WINDOW -->
 
   <script>
@@ -1011,7 +1284,12 @@
     function switchPage(pageId) {
         document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active'));
         document.getElementById(pageId).classList.add('active');
-        document.getElementById('top-title').innerText = pageId === 'page-dashboard' ? 'Control Room' : 'Experiments Matrix';
+        document.getElementById('top-title').innerText = {
+            'page-dashboard': 'Control Room',
+            'page-fleet': 'Fleet Management',
+            'page-experiments': 'Experiments Matrix'
+        }[pageId] || pageId;
+        setTimeout(() => lucide.createIcons(), 50);
         
         document.querySelectorAll('.nav-btn').forEach(btn => {
             btn.classList.remove('bg-white/10', 'text-white', 'active');

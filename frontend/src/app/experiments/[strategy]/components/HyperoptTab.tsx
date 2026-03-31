@@ -134,6 +134,10 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
   const [results, setResults] = useState<HyperoptResult[]>([]);
   const [sortBy, setSortBy] = useState<'profitPct' | 'sharpe' | 'sortino' | 'winRate' | 'maxDrawdown'>('profitPct');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [resultsPage, setResultsPage] = useState(1);
+  const [hoPage, setHoPage] = useState(1);
+  const resultsPerPage = 20;
+  const hoPerPage = 10;
 
   // ── Preset handling ──────────────────────────────────────────────
   const handlePresetChange = useCallback((presetKey: string) => {
@@ -924,7 +928,10 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
           </div>
         )}
 
-        {sortedResults.length > 0 ? (
+        {sortedResults.length > 0 ? (() => {
+          const totalResPages = Math.ceil(sortedResults.length / resultsPerPage);
+          const pagedResults = sortedResults.slice((resultsPage - 1) * resultsPerPage, resultsPage * resultsPerPage);
+          return (
           <div className="bg-card border border-border rounded-card overflow-hidden">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
               <span className="text-xs font-semibold text-foreground">
@@ -967,15 +974,16 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedResults.map((r, idx) => {
+                  {pagedResults.map((r, idx) => {
                     const isWinner = winner?.id === r.id;
+                    const globalIdx = (resultsPage - 1) * resultsPerPage + idx;
                     return (
                       <tr
                         key={r.id}
                         className={`border-t border-border hover:bg-muted/30 ${isWinner ? 'bg-emerald-500/5' : ''}`}
                       >
                         <td className="px-3 py-2 tabular-nums text-muted-foreground">
-                          {isWinner ? <span className="text-amber-400">★</span> : idx + 1}
+                          {isWinner ? <span className="text-amber-400">★</span> : globalIdx + 1}
                         </td>
                         <td className="px-3 py-2 font-mono">{r.sampler}</td>
                         <td className="px-3 py-2">{r.lossFunction}</td>
@@ -1014,8 +1022,22 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                 </tbody>
               </table>
             </div>
+            {totalResPages > 1 && (
+              <div className="flex items-center justify-between px-3 py-2 border-t border-border bg-muted/30">
+                <span className="text-xs text-muted-foreground">
+                  Showing {(resultsPage - 1) * resultsPerPage + 1}-{Math.min(resultsPage * resultsPerPage, sortedResults.length)} of {sortedResults.length}
+                </span>
+                <div className="flex gap-1">
+                  <button onClick={() => setResultsPage(p => Math.max(1, p - 1))} disabled={resultsPage === 1}
+                    className="px-2 py-1 text-xs border border-border rounded bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all">← Prev</button>
+                  <button onClick={() => setResultsPage(p => Math.min(totalResPages, p + 1))} disabled={resultsPage === totalResPages}
+                    className="px-2 py-1 text-xs border border-border rounded bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all">Next →</button>
+                </div>
+              </div>
+            )}
           </div>
-        ) : (
+          );
+        })() : (
           <div className="bg-card border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[200px]">
             <div className="text-[32px] mb-3 opacity-30">⚡</div>
             <div className="text-sm font-semibold text-muted-foreground mb-1">No hyperopt results yet</div>
@@ -1026,44 +1048,76 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
         )}
 
         {/* ── Hyperopt History ── */}
-        {hoRuns.length > 0 && (
-          <div className="bg-card border border-border rounded-card overflow-hidden">
-            <div className="px-4 py-3 border-b border-border">
-              <span className="text-xs font-semibold text-foreground">Hyperopt History ({hoRuns.length})</span>
+        {hoRuns.length > 0 && (() => {
+          const totalHoPages = Math.ceil(hoRuns.length / hoPerPage);
+          const pagedHoRuns = hoRuns.slice((hoPage - 1) * hoPerPage, hoPage * hoPerPage);
+          return (
+          <div>
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              Hyperopt History ({hoRuns.length})
             </div>
-            <div className="flex flex-col gap-0.5">
-              {hoRuns.map((run) => {
-                const isConfirming = hoConfirmDelete === run.filename;
-                return (
-                  <div
-                    key={run.filename}
-                    className="flex items-center gap-3 px-4 py-2 text-xs hover:bg-muted/30 transition-colors group"
-                  >
-                    <span className="text-muted-foreground shrink-0">{run.created_at || new Date(run.mtime * 1000).toLocaleString()}</span>
-                    <span className="font-mono text-muted-foreground">{run.epochs} epochs</span>
-                    <span className="text-muted-foreground truncate flex-1">{run.strategy.replace('_HO_', '')}</span>
-                    {isConfirming ? (
-                      <button
-                        onClick={() => { setHoConfirmDelete(null); handleDeleteRun(run.filename); }}
-                        className="text-[10px] px-1.5 py-0.5 bg-rose-500/20 border border-rose-500/50 text-rose-400 rounded hover:bg-rose-500/30 transition-all shrink-0 animate-pulse"
-                      >
-                        Confirm?
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setHoConfirmDelete(run.filename)}
-                        className="text-rose-400/60 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all text-sm"
-                        title="Delete this run"
-                      >
-                        🗑
-                      </button>
-                    )}
+            <div className="border border-border rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-muted/50 text-muted-foreground">
+                      <th className="text-left px-3 py-2 font-semibold">Date</th>
+                      <th className="text-left px-3 py-2 font-semibold">Strategy</th>
+                      <th className="text-right px-3 py-2 font-semibold">Epochs</th>
+                      <th className="text-right px-3 py-2 font-semibold">Size</th>
+                      <th className="text-center px-3 py-2 font-semibold w-[80px]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pagedHoRuns.map((run) => {
+                      const isConfirming = hoConfirmDelete === run.filename;
+                      const dateStr = run.created_at || new Date(run.mtime * 1000).toLocaleString();
+                      const sizeKb = (run.size_bytes / 1024).toFixed(0);
+                      return (
+                        <tr key={run.filename} className="border-t border-border hover:bg-muted/30 transition-colors group">
+                          <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{dateStr}</td>
+                          <td className="px-3 py-2 font-mono text-foreground">{run.strategy}</td>
+                          <td className="px-3 py-2 text-right tabular-nums text-foreground">{run.epochs}</td>
+                          <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{sizeKb} KB</td>
+                          <td className="px-3 py-2 whitespace-nowrap">
+                            <div className="flex items-center justify-center gap-2">
+                              {isConfirming ? (
+                                <button
+                                  onClick={() => { setHoConfirmDelete(null); handleDeleteRun(run.filename); }}
+                                  className="text-[10px] px-1.5 py-0.5 bg-rose-500/20 border border-rose-500/50 text-rose-400 rounded hover:bg-rose-500/30 transition-all animate-pulse"
+                                >Confirm?</button>
+                              ) : (
+                                <button
+                                  onClick={() => setHoConfirmDelete(run.filename)}
+                                  className="text-rose-400/50 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all"
+                                  title="Delete"
+                                >🗑</button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {totalHoPages > 1 && (
+                <div className="flex items-center justify-between px-3 py-2 border-t border-border bg-muted/30">
+                  <span className="text-xs text-muted-foreground">
+                    Showing {(hoPage - 1) * hoPerPage + 1}-{Math.min(hoPage * hoPerPage, hoRuns.length)} of {hoRuns.length}
+                  </span>
+                  <div className="flex gap-1">
+                    <button onClick={() => setHoPage(p => Math.max(1, p - 1))} disabled={hoPage === 1}
+                      className="px-2 py-1 text-xs border border-border rounded bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all">← Prev</button>
+                    <button onClick={() => setHoPage(p => Math.min(totalHoPages, p + 1))} disabled={hoPage === totalHoPages}
+                      className="px-2 py-1 text-xs border border-border rounded bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all">Next →</button>
                   </div>
-                );
-              })}
+                </div>
+              )}
             </div>
           </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );

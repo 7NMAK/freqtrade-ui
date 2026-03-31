@@ -240,6 +240,9 @@ function ResultsPanel({ data }: { data: FTStrategyResult }) {
                     <th onClick={() => handleTradeSort('trade_id')} className="text-left px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground transition-colors">#<TradeSortArrow col="trade_id" /></th>
                     <th onClick={() => handleTradeSort('pair')} className="text-left px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground transition-colors">Pair<TradeSortArrow col="pair" /></th>
                     <th className="text-left px-2 py-1.5 font-semibold">Side</th>
+                    <th className="text-right px-2 py-1.5 font-semibold">Stake</th>
+                    <th className="text-right px-2 py-1.5 font-semibold">Open</th>
+                    <th className="text-right px-2 py-1.5 font-semibold">Close</th>
                     <th onClick={() => handleTradeSort('close_profit')} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground transition-colors">Profit%<TradeSortArrow col="close_profit" /></th>
                     <th onClick={() => handleTradeSort('close_profit_abs')} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground transition-colors">Profit$<TradeSortArrow col="close_profit_abs" /></th>
                     <th onClick={() => handleTradeSort('open_date')} className="text-left px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground transition-colors">Open Date<TradeSortArrow col="open_date" /></th>
@@ -259,6 +262,9 @@ function ResultsPanel({ data }: { data: FTStrategyResult }) {
                           {t.is_short ? "Short" : "Long"}
                         </span>
                       </td>
+                      <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">${t.stake_amount.toFixed(0)}</td>
+                      <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">{t.open_rate.toFixed(2)}</td>
+                      <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">{t.close_rate.toFixed(2)}</td>
                       <td className={`px-2 py-1.5 text-right tabular-nums ${t.close_profit >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                         {fmtPctRatio(t.close_profit)}
                       </td>

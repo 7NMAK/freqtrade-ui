@@ -202,7 +202,19 @@
           <!-- ═══ TAB: TRADES ═══ -->
           <div id="drawer-trades" class="drawer-tab-content p-4 flex flex-col gap-4" style="display:none">
               <div>
-                  <h3 class="section-title mb-2.5 flex items-center gap-2">Open Positions <span class="text-white/30">(6)</span></h3>
+                  <h3 class="section-title mb-2 flex items-center gap-2">Open Positions <span class="text-white/30">(6)</span></h3>
+                  <div class="flex items-center gap-1.5 mb-2">
+                      <input type="text" placeholder="Pair..." class="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-mono text-white placeholder:text-white/25 w-20 focus:outline-none focus:border-white/30">
+                      <select class="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-mono text-muted cursor-pointer focus:outline-none">
+                          <option>All</option><option>LONG</option><option>SHORT</option>
+                      </select>
+                      <div class="ml-auto flex items-center gap-1">
+                          <span class="text-[9px] text-muted uppercase">Sort:</span>
+                          <select class="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-mono text-muted cursor-pointer focus:outline-none">
+                              <option>P&L ↓</option><option>P&L ↑</option><option>Pair</option><option>Duration</option>
+                          </select>
+                      </div>
+                  </div>
                   <div class="overflow-x-auto">
                   <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr>
                       <th class="text-left py-1.5 px-1">Pair</th><th class="text-left py-1.5 px-1">Side</th><th class="text-right py-1.5 px-1">Leverage</th><th class="text-right py-1.5 px-1">Entry</th><th class="text-right py-1.5 px-1">Current</th><th class="text-right py-1.5 px-1">Stake</th><th class="text-right py-1.5 px-1">P&amp;L</th><th class="text-right py-1.5 px-1">P&amp;L %</th><th class="text-right py-1.5 px-1">Duration</th><th class="text-left py-1.5 px-1">Enter Tag</th><th class="text-right py-1.5 px-1">SL</th>
@@ -214,7 +226,22 @@
                   </tbody></table></div>
               </div>
               <div>
-                  <h3 class="section-title mb-2.5 flex items-center gap-2">Closed Trades <span class="text-white/30">(last 10)</span></h3>
+                  <h3 class="section-title mb-2 flex items-center gap-2">Closed Trades <span class="text-white/30">(last 10)</span></h3>
+                  <div class="flex items-center gap-1.5 mb-2">
+                      <input type="text" placeholder="Pair..." class="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-mono text-white placeholder:text-white/25 w-20 focus:outline-none focus:border-white/30">
+                      <select class="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-mono text-muted cursor-pointer focus:outline-none">
+                          <option>All</option><option>LONG</option><option>SHORT</option>
+                      </select>
+                      <select class="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-mono text-muted cursor-pointer focus:outline-none">
+                          <option>All Exits</option><option>roi</option><option>stoploss</option><option>trailing</option>
+                      </select>
+                      <div class="ml-auto flex items-center gap-1">
+                          <span class="text-[9px] text-muted uppercase">Sort:</span>
+                          <select class="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-mono text-muted cursor-pointer focus:outline-none">
+                              <option>Date ↓</option><option>P&L ↓</option><option>P&L ↑</option><option>Pair</option>
+                          </select>
+                      </div>
+                  </div>
                   <div class="overflow-x-auto">
                   <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr>
                       <th class="text-left py-1.5 px-1">Pair</th><th class="text-left py-1.5 px-1">Side</th><th class="text-right py-1.5 px-1">Lev</th><th class="text-right py-1.5 px-1">Entry</th><th class="text-right py-1.5 px-1">Exit</th><th class="text-right py-1.5 px-1">Stake</th><th class="text-right py-1.5 px-1">P&amp;L</th><th class="text-right py-1.5 px-1">P&amp;L %</th><th class="text-right py-1.5 px-1">Duration</th><th class="text-left py-1.5 px-1">Enter Tag</th><th class="text-left py-1.5 px-1">Exit Reason</th>
@@ -240,6 +267,15 @@
               <!-- Pair Performance -->
               <div class="bg-surface l-bd rounded p-3">
                   <h3 class="section-title mb-2">Per-Pair Performance</h3>
+                  <div class="flex items-center gap-1.5 mb-2">
+                      <input type="text" placeholder="Pair..." class="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-mono text-white placeholder:text-white/25 w-20 focus:outline-none focus:border-white/30">
+                      <div class="ml-auto flex items-center gap-1">
+                          <span class="text-[9px] text-muted uppercase">Sort:</span>
+                          <select class="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-mono text-muted cursor-pointer focus:outline-none">
+                              <option>Profit ↓</option><option>Profit ↑</option><option>Trades ↓</option><option>Win% ↓</option><option>Pair</option>
+                          </select>
+                      </div>
+                  </div>
                   <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr><th class="text-left py-1.5">Pair</th><th class="text-right py-1.5">Trades</th><th class="text-right py-1.5">Wins</th><th class="text-right py-1.5">Losses</th><th class="text-right py-1.5">Win%</th><th class="text-right py-1.5">Profit</th><th class="text-right py-1.5">Avg P&amp;L</th></tr></thead>
                   <tbody class="divide-y divide-white/[0.04]">
                       <tr class="hover:bg-white/[0.02]"><td class="py-1.5 text-white font-medium">BTC/USDT</td><td class="py-1.5 text-right">128</td><td class="py-1.5 text-right text-up">94</td><td class="py-1.5 text-right text-down">34</td><td class="py-1.5 text-right">73.4%</td><td class="py-1.5 text-right text-up font-bold">+$1,840</td><td class="py-1.5 text-right text-up">+$14.4</td></tr>
@@ -667,15 +703,15 @@
               </div>
               <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
                   <span class="kpi-label">Today's P&L</span>
-                  <span class="kpi-value text-xl text-up">+$1,420.10</span>
+                  <span class="kpi-value text-xl text-up">+$1,420.10 <span class="text-[11px] font-sans font-normal">+1.12%</span></span>
               </div>
               <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
                   <span class="kpi-label">Total P&L (Closed)</span>
-                  <span class="kpi-value text-xl text-up">+$18,940.20</span>
+                  <span class="kpi-value text-xl text-up">+$18,940.20 <span class="text-[11px] font-sans font-normal">+14.86%</span></span>
               </div>
               <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
                   <span class="kpi-label">Open P&L (Unreal.)</span>
-                  <span class="kpi-value text-xl text-up">+$432.60</span>
+                  <span class="kpi-value text-xl text-up">+$432.60 <span class="text-[11px] font-sans font-normal">+0.96%</span></span>
               </div>
               <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
                   <span class="kpi-label">Open Trades</span>
@@ -992,7 +1028,22 @@
                   </div>
                   
                   <!-- TAB: OPEN TRADES -->
-                  <div id="trades-open" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto">
+                  <div id="trades-open" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto flex flex-col">
+                      <div class="flex items-center gap-2 px-5 py-2 bg-black/30 border-b border-white/[0.06] shrink-0">
+                          <input type="text" placeholder="Filter pair..." class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-white placeholder:text-white/25 w-28 focus:outline-none focus:border-white/30">
+                          <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
+                              <option>All Sides</option><option>LONG</option><option>SHORT</option>
+                          </select>
+                          <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
+                              <option>All Bots</option><option>TrendFollowerV3_BTC</option><option>ScalpBot_XRP</option>
+                          </select>
+                          <div class="ml-auto flex items-center gap-2">
+                              <span class="text-[10px] text-muted uppercase tracking-wider">Sort:</span>
+                              <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
+                                  <option>P&L ↓</option><option>P&L ↑</option><option>Date ↓</option><option>Date ↑</option><option>Pair A-Z</option><option>Duration ↓</option>
+                              </select>
+                          </div>
+                      </div>
                       <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
                            <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
                                <tr>
@@ -1071,8 +1122,25 @@
                       </table>
                   </div>
 
-                  <!-- TAB: CLOSED TRADES -->
-                  <div id="trades-closed" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto" style="display:none;">
+                  <div id="trades-closed" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto flex flex-col" style="display:none;">
+                      <div class="flex items-center gap-2 px-5 py-2 bg-black/30 border-b border-white/[0.06] shrink-0">
+                          <input type="text" placeholder="Filter pair..." class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-white placeholder:text-white/25 w-28 focus:outline-none focus:border-white/30">
+                          <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
+                              <option>All Sides</option><option>LONG</option><option>SHORT</option>
+                          </select>
+                          <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
+                              <option>All Exits</option><option>roi</option><option>stoploss</option><option>trailing_stop</option><option>exit_signal</option>
+                          </select>
+                          <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
+                              <option>All Bots</option><option>TrendFollowerV3_BTC</option><option>ScalpBot_XRP</option>
+                          </select>
+                          <div class="ml-auto flex items-center gap-2">
+                              <span class="text-[10px] text-muted uppercase tracking-wider">Sort:</span>
+                              <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
+                                  <option>Date ↓</option><option>Date ↑</option><option>P&L ↓</option><option>P&L ↑</option><option>Pair A-Z</option><option>Duration ↓</option>
+                              </select>
+                          </div>
+                      </div>
                       <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
                            <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
                                <tr>
@@ -1121,7 +1189,19 @@
                   </div>
 
                   <!-- TAB: WHITELIST MATRIX -->
-                  <div id="trades-whitelist" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto" style="display:none;">
+                  <div id="trades-whitelist" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto flex flex-col" style="display:none;">
+                      <div class="flex items-center gap-2 px-5 py-2 bg-black/30 border-b border-white/[0.06] shrink-0">
+                          <input type="text" placeholder="Filter pair..." class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-white placeholder:text-white/25 w-28 focus:outline-none focus:border-white/30">
+                          <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
+                              <option>All Status</option><option>ACTIVE</option><option>LOCKED</option><option>COOLDOWN</option>
+                          </select>
+                          <div class="ml-auto flex items-center gap-2">
+                              <span class="text-[10px] text-muted uppercase tracking-wider">Sort:</span>
+                              <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
+                                  <option>Pair A-Z</option><option>Trades ↓</option><option>P&L ↓</option><option>Volatility ↓</option>
+                              </select>
+                          </div>
+                      </div>
                       <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
                            <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
                                <tr>
@@ -1218,8 +1298,19 @@
                       </table>
                   </div>
 
-                  <!-- TAB: PERFORMANCE BY PAIR -->
-                  <div id="trades-performance" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto" style="display:none;">
+                  <div id="trades-performance" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto flex flex-col" style="display:none;">
+                      <div class="flex items-center gap-2 px-5 py-2 bg-black/30 border-b border-white/[0.06] shrink-0">
+                          <input type="text" placeholder="Filter pair..." class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-white placeholder:text-white/25 w-28 focus:outline-none focus:border-white/30">
+                          <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
+                              <option>All Bots</option><option>TrendFollowerV3_BTC</option><option>ScalpBot_XRP</option>
+                          </select>
+                          <div class="ml-auto flex items-center gap-2">
+                              <span class="text-[10px] text-muted uppercase tracking-wider">Sort:</span>
+                              <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
+                                  <option>Profit ↓</option><option>Profit ↑</option><option>Trades ↓</option><option>Win Rate ↓</option><option>Pair A-Z</option>
+                              </select>
+                          </div>
+                      </div>
                       <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
                            <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
                                <tr>
@@ -1295,7 +1386,18 @@
                   </div>
 
                   <!-- TAB: ENTRY / EXIT TAGS -->
-                  <div id="trades-tags" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto" style="display:none;">
+                  <div id="trades-tags" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto flex flex-col" style="display:none;">
+                      <div class="flex items-center gap-2 px-5 py-2 bg-black/30 border-b border-white/[0.06] shrink-0">
+                          <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
+                              <option>All Bots</option><option>TrendFollowerV3_BTC</option><option>ScalpBot_XRP</option>
+                          </select>
+                          <div class="ml-auto flex items-center gap-2">
+                              <span class="text-[10px] text-muted uppercase tracking-wider">Sort:</span>
+                              <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
+                                  <option>Profit ↓</option><option>Profit ↑</option><option>Trades ↓</option><option>Win Rate ↓</option><option>Tag A-Z</option>
+                              </select>
+                          </div>
+                      </div>
                       <div class="flex h-full">
                           <!-- Entry Tags -->
                           <div class="flex-1 border-r border-white/8 overflow-y-auto">
@@ -1585,6 +1687,21 @@
 
           <!-- Fleet Table -->
           <div class="flex-1 bg-surface l-bd rounded-md shadow-xl overflow-hidden flex flex-col">
+              <div class="flex items-center gap-2 px-5 py-2 bg-black/30 border-b border-white/[0.06] shrink-0">
+                  <input type="text" placeholder="Search bots..." class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-white placeholder:text-white/25 w-36 focus:outline-none focus:border-white/30">
+                  <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
+                      <option>All Status</option><option>Running</option><option>Paused</option><option>Stopped</option>
+                  </select>
+                  <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
+                      <option>All Exchanges</option><option>Binance</option><option>Bybit</option><option>OKX</option>
+                  </select>
+                  <div class="ml-auto flex items-center gap-2">
+                      <span class="text-[10px] text-muted uppercase tracking-wider">Sort:</span>
+                      <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
+                          <option>P&L ↓</option><option>P&L ↑</option><option>Name A-Z</option><option>Trades ↓</option><option>Win Rate ↓</option><option>Drawdown ↑</option>
+                      </select>
+                  </div>
+              </div>
               <div class="flex-1 overflow-x-auto overflow-y-auto">
                   <table class="w-full text-left border-collapse whitespace-nowrap text-[12px]">
                       <thead class="sticky top-0 bg-surface l-b font-mono text-[10px] uppercase tracking-widest text-muted z-10 shadow-lg">

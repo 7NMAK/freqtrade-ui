@@ -258,13 +258,19 @@ Sources: `FTShowConfig`, `FTProfit`, `FTStats`, `FTBalance`, `botDaily`
 Sources: `botStatus(id)`, `botTrades(id)`
 
 **Open Positions** — 11-column table: Pair, Side, Leverage, Entry, Current, Stake, P&L, P&L %, Duration, Enter Tag, SL
+- **Filters**: Pair search, Side (All/LONG/SHORT) — **Sort**: P&L ↓/↑, Pair, Duration
+
 **Closed Trades** — 11-column table: Pair, Side, Lev, Entry, Exit, Stake, P&L, P&L %, Duration, Enter Tag, Exit Reason
+- **Filters**: Pair search, Side, Exit reason — **Sort**: Date ↓, P&L ↓/↑, Pair
 
 #### Tab 3: Performance (expanded with win/loss breakdown)
 Sources: `botPerformance(id)`, `botEntries(id)`, `botExits(id)`
 
 **KPI Summary** (4-col grid): Best Pair, Worst Pair, Best Tag, Best Exit
+
 **Per-Pair Performance** — 7-column table: Pair, Trades, Wins, Losses, Win%, Profit, Avg P&L
+- **Filters**: Pair search — **Sort**: Profit ↓/↑, Trades ↓, Win% ↓, Pair
+
 **Entry Tags** — 4-col side-by-side: Tag, N, Win%, Profit
 **Exit Reasons** — 4-col side-by-side: Reason, N, Win%, Profit
 
@@ -394,6 +400,12 @@ The main tabular engine with switchable views.
 - Inactive tabs: `text-muted hover:text-white`
 - Right side: CSV export button
 
+### Filter & Sort Bar (all tabs)
+Each tab has a compact filter bar below the tab header:
+- Background: `bg-black/30 border-b border-white/[0.06]`
+- Inputs: `bg-white/5 border border-white/10 rounded text-[11px] font-mono`
+- Sort dropdown aligned right with "Sort:" label
+
 ### Tab Tooltips
 | Tab | Tooltip |
 |---|---|
@@ -405,6 +417,9 @@ The main tabular engine with switchable views.
 
 ### Tab 1: Open Trades
 Source: `GET /api/v1/status` (per bot, aggregated)
+
+**Filters**: Pair search, Side (All/LONG/SHORT), Bot selector
+**Sort**: P&L ↓/↑, Date ↓/↑, Pair A-Z, Duration ↓
 
 | Column | Field | Notes |
 |---|---|---|
@@ -433,6 +448,9 @@ Source: `GET /api/v1/status` (per bot, aggregated)
 ### Tab 2: Closed Trades
 Source: `GET /api/v1/trades` (per bot, aggregated)
 
+**Filters**: Pair search, Side (All/LONG/SHORT), Exit reason (All/roi/stoploss/trailing_stop/exit_signal), Bot selector
+**Sort**: Date ↓/↑, P&L ↓/↑, Pair A-Z, Duration ↓
+
 | Column | Field |
 |---|---|
 | Date | `close_date` |
@@ -450,6 +468,9 @@ Source: `GET /api/v1/trades` (per bot, aggregated)
 ### Tab 3: Whitelist Matrix
 → See `PROMPT-WHITELIST-MATRIX.md` for full spec
 
+**Filters**: Pair search, Status (All/ACTIVE/LOCKED/COOLDOWN)
+**Sort**: Pair A-Z, Trades ↓, P&L ↓, Volatility ↓
+
 Note: HTML prototype includes additional statuses beyond ACTIVE/LOCKED:
 - **COOLDOWN**: yellow badge (`bg-yellow-500/12 text-yellow-400`) — pair temporarily suspended
 - Lock column shows countdown: `14m left`, `5m left` for active locks/cooldowns
@@ -457,6 +478,9 @@ Note: HTML prototype includes additional statuses beyond ACTIVE/LOCKED:
 
 ### Tab 4: Performance by Pair
 Source: `botPerformance(botId)` → `GET /api/bots/{id}/performance`
+
+**Filters**: Pair search, Bot selector
+**Sort**: Profit ↓/↑, Trades ↓, Win Rate ↓, Pair A-Z
 
 Returns `FTPerformance[]` per bot, aggregate by pair across all bots.
 
@@ -474,6 +498,9 @@ Returns `FTPerformance[]` per bot, aggregate by pair across all bots.
 
 ### Tab 5: Entry / Exit Tags
 Sources: `botEntries(botId)` → `GET /api/bots/{id}/entries`, `botExits(botId)` → `GET /api/bots/{id}/exits`
+
+**Filters**: Bot selector
+**Sort**: Profit ↓/↑, Trades ↓, Win Rate ↓, Tag A-Z
 
 **Split-view layout**: Entry Tags (left half) | Exit Reasons (right half)
 

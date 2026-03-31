@@ -991,13 +991,16 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                   <span className="text-xs font-semibold text-foreground">
                     Hyperopt Results ({sortedResults.length})
                   </span>
+                  <button
+                    onClick={fetchResults}
+                    className="text-[10px] text-primary hover:underline"
+                  >
+                    ↻ Refresh
+                  </button>
                 </div>
-                <button
-                  onClick={fetchResults}
-                  className="text-[10px] text-primary hover:underline"
-                >
-                  Refresh
-                </button>
+                <div className={`text-lg font-bold tabular-nums ${(sortedResults[0]?.profitPct ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {fmt$(sortedResults[0]?.profitAbs ?? 0)}
+                </div>
               </div>
               <div className="grid grid-cols-4 gap-2 text-[10px]">
                 <div className="bg-muted/30 border border-border rounded px-2 py-1.5">

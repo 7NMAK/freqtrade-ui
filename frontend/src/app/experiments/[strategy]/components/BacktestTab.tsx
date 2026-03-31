@@ -295,14 +295,14 @@ function ResultsPanel({ data }: { data: FTStrategyResult }) {
                   <button
                     onClick={() => setTradesPage(Math.max(1, tradesPage - 1))}
                     disabled={tradesPage === 1}
-                    className="px-2 py-1 text-xs border border-border rounded-btn bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all"
+                    className="px-2 py-1 text-xs border border-border rounded bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all"
                   >
                     ← Prev
                   </button>
                   <button
                     onClick={() => setTradesPage(Math.min(totalPages, tradesPage + 1))}
                     disabled={tradesPage === totalPages}
-                    className="px-2 py-1 text-xs border border-border rounded-btn bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all"
+                    className="px-2 py-1 text-xs border border-border rounded bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all"
                   >
                     Next →
                   </button>
@@ -538,7 +538,7 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
                 <th className="text-right px-3 py-2 font-semibold">Win Rate</th>
                 <th className="text-right px-3 py-2 font-semibold">Max DD</th>
                 <th className="text-right px-3 py-2 font-semibold">PF</th>
-                <th className="text-center px-3 py-2 font-semibold w-[80px]">Actions</th>
+                <th className="text-center px-3 py-2 font-semibold w-[120px]">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -551,12 +551,12 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
                 const s = (stats && stats !== 'loading' && stats !== 'error') ? stats as HistoryStats : null;
 
                 return (
-                  <tr key={entryKey} className="border-t border-border hover:bg-muted/30 transition-colors group">
+                  <tr key={entryKey} className="border-t border-border hover:bg-muted/30 transition-colors">
                     <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{runStr}</td>
                     <td className="px-3 py-2 font-mono text-muted-foreground">{entry.timeframe || "—"}</td>
                     <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{fmtDate(entry.backtest_start_ts)} → {fmtDate(entry.backtest_end_ts)}</td>
                     {stats === 'loading' ? (
-                      <td colSpan={5} className="px-3 py-2 text-center text-muted-foreground/50 animate-pulse">Loading...</td>
+                      <td colSpan={6} className="px-3 py-2 text-center text-muted-foreground/50 animate-pulse">Loading...</td>
                     ) : s ? (
                       <>
                         <td className="px-3 py-2 text-right tabular-nums text-foreground">{s.total_trades}</td>
@@ -577,7 +577,7 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
                         </td>
                       </>
                     ) : (
-                      <td colSpan={5} className="px-3 py-2 text-center text-muted-foreground/30">—</td>
+                      <td colSpan={6} className="px-3 py-2 text-center text-muted-foreground/30">—</td>
                     )}
                     <td className="px-3 py-2 whitespace-nowrap">
                       <div className="flex items-center justify-center gap-2">
@@ -611,9 +611,9 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
             </span>
             <div className="flex gap-1">
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                className="px-2 py-1 text-xs border border-border rounded-btn bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all">← Prev</button>
+                className="px-2 py-1 text-xs border border-border rounded bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all">← Prev</button>
               <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                className="px-2 py-1 text-xs border border-border rounded-btn bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all">Next →</button>
+                className="px-2 py-1 text-xs border border-border rounded bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all">Next →</button>
             </div>
           </div>
         )}

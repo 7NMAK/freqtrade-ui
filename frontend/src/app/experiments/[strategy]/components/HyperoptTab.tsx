@@ -496,6 +496,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
     addLog('INFO', `Batch complete: ${batchQueue.length} runs finished`);
     toast.success(`Batch complete: ${batchQueue.length} runs finished`);
     fetchResults();
+    fetchRuns();
   };
 
   // ── Stop ─────────────────────────────────────────────────────────
@@ -942,7 +943,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
           const totalResPages = Math.ceil(sortedResults.length / resultsPerPage);
           const pagedResults = sortedResults.slice((resultsPage - 1) * resultsPerPage, resultsPage * resultsPerPage);
           return (
-          <div className="bg-card border border-border rounded-card overflow-hidden">
+          <div data-ho-results className="bg-card border border-border rounded-card overflow-hidden">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
               <span className="text-xs font-semibold text-foreground">
                 Hyperopt Results ({sortedResults.length})
@@ -1120,7 +1121,13 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                           <td className="px-3 py-2 whitespace-nowrap">
                             <div className="flex items-center justify-center gap-2">
                               <button
-                                onClick={fetchResults}
+                                onClick={async () => {
+                                  addLog('INFO', `Loading results from ${run.filename}...`);
+                                  await fetchResults();
+                                  toast.success('Results loaded');
+                                  // Scroll to results section
+                                  document.querySelector('[data-ho-results]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }}
                                 className="text-[10px] px-2 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded hover:bg-primary/20 transition-all"
                               >Load</button>
                               {isConfirming ? (

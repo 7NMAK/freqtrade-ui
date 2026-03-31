@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FreqTrade | OMEGA LINEAR FULL DASHBOARD</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
@@ -13,472 +13,218 @@
     theme: {
       extend: {
         fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['"JetBrains Mono"', 'monospace'] },
-        colors: {
-          bg: { DEFAULT: "#09090B", raised: "#111113", elevated: "#18181B" },
-          border: { DEFAULT: "rgba(255,255,255,0.08)", hover: "rgba(255,255,255,0.16)", strong: "rgba(255,255,255,0.12)" },
-          muted: "#71717A",
-          subtle: "#A1A1AA",
-          fg: "#FAFAFA",
-          up: "#34D399",
-          down: "#FB7185",
-          accent: "#818CF8"
-        }
+        colors: { background: "#000000", surface: "#0C0C0C", border: "rgba(255,255,255,0.12)", borderHover: "rgba(255,255,255,0.22)", muted: "#9CA3AF", foreground: "#F5F5F5", accent: "#FFFFFF", up: "#22c55e", down: "#ef4444" }
       }
     }
   }
 </script>
 <style>
-  * { box-sizing: border-box; }
-  body { font-family: 'Inter', sans-serif; background: #09090B; color: #FAFAFA; overflow: hidden; }
-
-  /* ── BORDERS ── */
-  .bd { border: 1px solid rgba(255,255,255,0.08); }
-  .bb { border-bottom: 1px solid rgba(255,255,255,0.08); }
-  .br { border-right: 1px solid rgba(255,255,255,0.08); }
-
-  /* ── SUBTLE GRID TEXTURE ── */
-  .dot-grid {
-    background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
-    background-size: 20px 20px;
-  }
-
-  /* ── SCROLLBAR ── */
+  body { font-family: 'Inter', sans-serif; background: #000; color: #F5F5F5; overflow: hidden; }
+  .l-bd { border: 1px solid rgba(255,255,255,0.10); }
+  .l-b { border-bottom: 1px solid rgba(255,255,255,0.10); }
+  .l-r { border-right: 1px solid rgba(255,255,255,0.10); }
+  .l-grid { background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px); background-size: 24px 24px; }
   ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); border-radius: 10px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.20); }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
 
-  /* ── GLOW HELPERS ── */
-  .glow-up { text-shadow: 0 0 20px rgba(52,211,153,0.35); }
-  .glow-down { text-shadow: 0 0 20px rgba(251,113,133,0.35); }
-  .glow-accent { text-shadow: 0 0 20px rgba(129,140,248,0.35); }
-
-  /* ── CARD HOVER LIFT ── */
-  .card {
-    background: #111113;
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 8px;
-    transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
-  }
-  .card:hover {
-    border-color: rgba(255,255,255,0.14);
-    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
-  }
-
-  /* ── KPI CARDS ── */
-  .kpi-card {
-    background: linear-gradient(180deg, #111113 0%, #0D0D0F 100%);
-    transition: background 0.3s, border-color 0.3s;
-  }
-  .kpi-card:hover {
-    background: linear-gradient(180deg, #18181B 0%, #111113 100%);
-    border-color: rgba(255,255,255,0.14);
-  }
-
-  /* ── SECTION LABEL ── */
-  .section-label {
-    font-size: 11px; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 0.1em; color: #71717A;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .section-label::before {
-    content: ''; width: 3px; height: 14px;
-    background: #818CF8; border-radius: 2px;
-    display: inline-block;
-  }
-
-  /* ── TAGS ── */
-  .tag-live {
-    font-size: 10px; font-weight: 700; padding: 2px 8px;
-    background: rgba(52,211,153,0.1); color: #34D399;
-    border: 1px solid rgba(52,211,153,0.2); border-radius: 4px;
-    letter-spacing: 0.05em;
-  }
-  .tag-long {
-    font-size: 11px; font-weight: 600; padding: 3px 10px;
-    background: rgba(52,211,153,0.08); color: #34D399;
-    border: 1px solid rgba(52,211,153,0.18); border-radius: 5px;
-  }
-  .tag-short {
-    font-size: 11px; font-weight: 600; padding: 3px 10px;
-    background: rgba(251,113,133,0.08); color: #FB7185;
-    border: 1px solid rgba(251,113,133,0.18); border-radius: 5px;
-  }
-
-  /* ── TABLE ── */
-  .data-table th {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 0.12em; color: #71717A;
-    padding: 14px 20px; white-space: nowrap;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    background: #0D0D0F;
-  }
-  .data-table td {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px; padding: 14px 20px; white-space: nowrap;
-    color: rgba(255,255,255,0.8);
-  }
-  .data-table tbody tr {
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    transition: background 0.15s;
-  }
-  .data-table tbody tr:hover { background: rgba(255,255,255,0.03); }
-
-  /* ── PROGRESS BARS ── */
-  .progress-track {
-    height: 6px; width: 100%; background: rgba(255,255,255,0.06);
-    border-radius: 3px; overflow: hidden;
-  }
-  .progress-fill {
-    height: 100%; border-radius: 3px;
-    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  /* ── DRAWER ── */
-  .drawer {
-    position: fixed; right: 0; top: 0; height: 100vh; width: 500px;
-    background: #111113; border-left: 1px solid rgba(255,255,255,0.08);
-    transform: translateX(100%);
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    z-index: 60; display: flex; flex-direction: column;
-    box-shadow: -20px 0 60px rgba(0,0,0,0.7);
-  }
+  /* NEW COMPONENTS */
+  .drawer { position: fixed; right: 0; top: 0; height: 100vh; width: 480px; background: #0C0C0C; border-left: 1px solid rgba(255,255,255,0.10); transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); z-index: 60; display: flex; flex-direction: column; box-shadow: -10px 0 40px rgba(0,0,0,0.85); }
   .drawer.open { transform: translateX(0); }
-  .backdrop {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.3s; z-index: 50;
-  }
+  .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 50; }
   .backdrop.open { opacity: 1; pointer-events: all; }
-
-  /* ── PAGES ── */
   .page-view { display: none; }
-  .page-view.active { display: flex; animation: fadeSlideIn 0.4s ease; }
+  .page-view.active { display: flex; animation: fadeIn 0.3s; }
   .exp-tab { display: none; height: 100%; overflow-y: auto; overflow-x: hidden; }
   .exp-tab.active { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-  @keyframes fadeSlideIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* ── SPARKLINE BARS ── */
-  .spark-bar {
-    width: 4px; border-radius: 2px;
-    transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  /* ── BUTTON STYLES ── */
-  .btn-primary {
-    background: #FAFAFA; color: #09090B;
-    font-weight: 700; font-size: 13px;
-    padding: 10px 20px; border-radius: 6px;
-    transition: background 0.2s, transform 0.15s;
-    text-transform: uppercase; letter-spacing: 0.05em;
-  }
-  .btn-primary:hover { background: #E4E4E7; transform: translateY(-1px); }
-  .btn-primary:active { transform: translateY(0); }
-
-  .btn-ghost {
-    background: transparent; border: 1px solid rgba(255,255,255,0.10);
-    font-weight: 600; font-size: 11px; padding: 6px 14px;
-    border-radius: 6px; color: #A1A1AA;
-    transition: all 0.2s;
-  }
-  .btn-ghost:hover { border-color: rgba(255,255,255,0.22); color: #FAFAFA; background: rgba(255,255,255,0.04); }
-
-  .btn-danger {
-    background: transparent; border: 1px solid rgba(251,113,133,0.2);
-    color: #FB7185; font-weight: 700; font-size: 10px;
-    padding: 5px 12px; border-radius: 5px;
-    text-transform: uppercase; letter-spacing: 0.05em;
-    transition: all 0.2s;
-  }
-  .btn-danger:hover { background: #FB7185; color: white; border-color: #FB7185; }
-
-  /* ── NAV BUTTON ── */
-  .nav-item {
-    display: flex; align-items: center; gap: 12px;
-    padding: 10px 16px; border-radius: 8px;
-    font-size: 13px; font-weight: 500;
-    color: #71717A; transition: all 0.2s; cursor: pointer;
-    border: 1px solid transparent;
-  }
-  .nav-item:hover { color: #FAFAFA; background: rgba(255,255,255,0.04); }
-  .nav-item.active {
-    color: #FAFAFA; background: rgba(255,255,255,0.06);
-    border-color: rgba(255,255,255,0.08); font-weight: 600;
-  }
-
-  /* ── INPUT ── */
-  .input-field {
-    width: 100%; background: #09090B;
-    border: 1px solid rgba(255,255,255,0.08);
-    padding: 10px 14px; color: #FAFAFA;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px; border-radius: 6px;
-    outline: none; transition: border-color 0.2s;
-  }
-  .input-field:focus { border-color: rgba(129,140,248,0.5); }
-  .input-label { font-size: 11px; font-weight: 500; color: #71717A; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
-
-  /* ── TAB BUTTON ── */
-  .tab-btn {
-    height: 100%; padding: 0 24px; font-weight: 700; font-size: 12px;
-    text-transform: uppercase; letter-spacing: 0.06em;
-    color: #71717A; border-bottom: 2px solid transparent;
-    transition: all 0.2s; position: relative;
-  }
-  .tab-btn:hover { color: #A1A1AA; }
-  .tab-btn.active {
-    color: #FAFAFA;
-    border-bottom-color: #818CF8;
-  }
-
-  /* ── EXPERIMENT TAB ── */
-  .exp-tab-btn {
-    height: 38px; padding: 0 20px;
-    border: 1px solid rgba(255,255,255,0.08);
-    border-bottom: none; border-radius: 8px 8px 0 0;
-    font-weight: 600; font-size: 12px;
-    text-transform: uppercase; letter-spacing: 0.08em;
-    color: #71717A; background: #09090B;
-    transition: all 0.2s;
-  }
-  .exp-tab-btn:hover { color: #FAFAFA; }
-  .exp-tab-btn.active {
-    background: #111113; color: #FAFAFA;
-    border-color: rgba(255,255,255,0.10);
-  }
-
-  /* ── LOG LINE ── */
-  .log-line {
-    padding: 3px 0; font-size: 11px; line-height: 1.7;
-    border-bottom: 1px solid rgba(255,255,255,0.02);
-  }
-  .log-ts { color: rgba(255,255,255,0.25); margin-right: 10px; }
-
-  /* ── LIVE DOT ── */
-  .live-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: #34D399;
-    box-shadow: 0 0 8px rgba(52,211,153,0.5);
-    animation: pulse 2s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 8px rgba(52,211,153,0.5); }
-    50% { box-shadow: 0 0 16px rgba(52,211,153,0.7); }
-  }
+  /* Better label styling */
+  .kpi-label { font-size: 11px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; margin-bottom: 4px; }
+  .kpi-value { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+  .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9CA3AF; }
 </style>
 </head>
 <body class="w-screen h-screen flex relative overflow-hidden">
-
+  
   <div id="drawer-backdrop" class="backdrop" onclick="closeBotDrawer()"></div>
-
-  <!-- ════════════════════════════════════════════ -->
-  <!-- BOT DRAWER                                   -->
-  <!-- ════════════════════════════════════════════ -->
+  
+  <!-- BOT DRAWER -->
   <aside id="bot-drawer" class="drawer">
-      <div class="p-6 bb flex justify-between items-start shrink-0" style="background: linear-gradient(180deg, #151517 0%, #111113 100%);">
+      <div class="p-5 l-b bg-black flex justify-between items-start shrink-0">
           <div>
-              <div class="flex items-center gap-3 mb-2">
-                  <h2 id="drawer-bot-name" class="text-lg font-bold tracking-tight text-white font-mono">TrendFollowerV3_BTC</h2>
-                  <span id="drawer-bot-mode" class="tag-live">LIVE</span>
+              <div class="flex items-center gap-2.5 mb-1.5">
+                  <h2 id="drawer-bot-name" class="text-base font-bold tracking-tight text-white font-mono">TrendFollowerV3_BTC</h2>
+                  <span id="drawer-bot-mode" class="px-1.5 py-[2px] bg-up/15 text-up border border-up/25 text-[10px] font-bold rounded">LIVE</span>
               </div>
-              <p class="text-[12px] text-muted font-mono uppercase tracking-wide">Strategy: TrendFollowerV3 · Running</p>
+              <p class="text-xs text-muted font-mono uppercase tracking-wide">Strategy: TrendFollowerV3 · Running</p>
           </div>
-          <button onclick="closeBotDrawer()" class="hover:text-white text-muted p-2 hover:bg-white/8 rounded-lg transition-all"><i data-lucide="x" class="w-5 h-5"></i></button>
+          <button onclick="closeBotDrawer()" class="hover:text-white text-muted p-1.5 hover:bg-white/10 rounded transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
-
-      <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
-          <div class="card p-5">
-              <h3 class="section-label mb-4">Process Controls</h3>
-              <div class="grid grid-cols-2 gap-3">
-                  <button class="btn-ghost text-up border-up/20 hover:bg-up/10 hover:border-up/30">Start</button>
-                  <button class="btn-ghost text-yellow-400 border-yellow-400/20 hover:bg-yellow-400/10 hover:border-yellow-400/30">Pause</button>
-                  <button class="btn-ghost text-down border-down/20 hover:bg-down/10 hover:border-down/30">Stop</button>
-                  <button class="btn-ghost">Reload Config</button>
+      
+      <div class="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
+          <div class="bg-black p-4 l-bd rounded">
+              <h3 class="section-title mb-3 flex items-center gap-2">Process Controls</h3>
+              <div class="grid grid-cols-2 gap-2.5">
+                  <button class="bg-black l-bd hover:bg-white/5 py-2 text-up font-bold text-xs uppercase tracking-wider rounded transition-colors">Start</button>
+                  <button class="bg-black l-bd hover:bg-white/5 py-2 text-yellow-500 font-bold text-xs uppercase tracking-wider rounded transition-colors">Pause</button>
+                  <button class="bg-black l-bd hover:bg-white/5 py-2 text-down font-bold text-xs uppercase tracking-wider rounded transition-colors">Stop</button>
+                  <button class="bg-black l-bd hover:bg-white/5 py-2 text-white font-bold text-xs uppercase tracking-wider rounded transition-colors">Reload Config</button>
               </div>
           </div>
-          <div class="card p-5">
-              <h3 class="section-label mb-4">RPC Actions</h3>
-              <div class="grid grid-cols-2 gap-3">
-                  <button class="btn-ghost text-up border-up/20 hover:bg-up/10">Force Enter</button>
-                  <button class="btn-ghost text-down border-down/20 hover:bg-down/10">Force Exit All</button>
-                  <button class="btn-ghost col-span-2 text-yellow-400 border-yellow-400/20 hover:bg-yellow-400/10">Toggle Stopbuy</button>
+          <div class="bg-black p-4 l-bd rounded">
+              <h3 class="section-title mb-3 flex items-center gap-2">RPC Actions</h3>
+              <div class="grid grid-cols-2 gap-2.5">
+                  <button class="bg-black l-bd hover:bg-white/5 py-2 text-up font-bold text-xs uppercase tracking-wider rounded transition-colors">Force Enter</button>
+                  <button class="bg-black l-bd hover:bg-white/5 py-2 text-down font-bold text-xs uppercase tracking-wider rounded transition-colors">Force Exit All</button>
+                  <button class="bg-black l-bd hover:bg-white/5 py-2 col-span-2 text-yellow-500 font-bold text-xs uppercase tracking-wider rounded transition-colors">Toggle Stopbuy</button>
               </div>
           </div>
-          <div class="flex-1 card p-5 flex flex-col min-h-[200px]">
-              <h3 class="section-label mb-3">Tail_Log.txt</h3>
-              <div class="flex-1 overflow-y-auto font-mono bg-[#09090B] p-4 rounded-md bd">
-                  <div class="log-line"><span class="log-ts">14:02:11</span> <span class="text-accent font-medium">INFO</span> Evaluated signal logic.</div>
-                  <div class="log-line"><span class="log-ts">14:02:11</span> <span class="text-up font-bold">BUY</span> Executing LONG (Size: 0.50).</div>
-                  <div class="log-line"><span class="log-ts">14:02:12</span> <span class="text-up font-bold">FILL</span> Order Filled at 64,220.00.</div>
+          <div class="flex-1 bg-black p-4 l-bd rounded flex flex-col min-h-[180px]">
+              <h3 class="section-title mb-3 flex items-center gap-2">Tail_Log.txt</h3>
+              <div class="flex-1 overflow-y-auto font-mono text-[11px] text-muted bg-[#060606] p-3 leading-relaxed l-bd rounded">
+                  <div class="mb-1.5"><span class="text-white/35 mr-2">14:02:11</span> <span class="text-blue-400 font-medium">INFO</span> Evaluated signal logic.</div>
+                  <div class="mb-1.5"><span class="text-white/35 mr-2">14:02:11</span> <span class="text-up font-bold">BUY</span> Executing LONG (Size: 0.50).</div>
+                  <div class="mb-1.5"><span class="text-white/35 mr-2">14:02:12</span> <span class="text-up font-bold">FILL</span> Order Filled at 64,220.00.</div>
               </div>
           </div>
       </div>
   </aside>
 
-  <!-- ════════════════════════════════════════════ -->
-  <!-- SIDE MENU                                    -->
-  <!-- ════════════════════════════════════════════ -->
-  <aside class="w-[250px] h-full flex flex-col br shrink-0 z-20" style="background: linear-gradient(180deg, #0E0E10 0%, #09090B 100%);">
-      <div class="h-[60px] flex items-center px-5 gap-3 bb shrink-0">
-          <div class="w-7 h-7 bg-accent text-white flex items-center justify-center font-bold font-mono text-[11px] rounded-md">FT</div>
-          <span class="font-bold tracking-wider text-[14px] text-white">Orchestrator <span class="text-accent font-mono">V4</span></span>
+  <!-- SIDE MENU -->
+  <aside class="w-[240px] h-full flex flex-col bg-black l-r shrink-0 z-20">
+      <div class="h-14 flex items-center px-5 gap-3 bg-surface l-b shrink-0">
+          <div class="w-6 h-6 bg-white text-black flex items-center justify-center font-bold font-mono text-[11px] rounded-sm">FT</div>
+          <span class="font-bold tracking-widest text-[13px] text-white uppercase">Orchestrator V4</span>
       </div>
-      <nav class="flex-1 py-5 flex flex-col gap-1 overflow-y-auto px-3">
-          <button onclick="switchPage('page-dashboard')" class="nav-item active nav-btn"><i data-lucide="layout-dashboard" class="w-[18px] h-[18px]"></i> Control Room</button>
-          <button onclick="switchPage('page-experiments')" class="nav-item nav-btn"><i data-lucide="flask-conical" class="w-[18px] h-[18px]"></i> Experiments</button>
-          <button class="nav-item"><i data-lucide="list" class="w-[18px] h-[18px]"></i> Strategies</button>
-          <button class="nav-item"><i data-lucide="settings" class="w-[18px] h-[18px]"></i> System</button>
+      <nav class="flex-1 py-5 flex flex-col gap-1.5 overflow-y-auto px-3">
+          <button onclick="switchPage('page-dashboard')" class="text-left px-4 py-2.5 text-white bg-white/10 rounded-md font-semibold nav-btn active hover:bg-white/10 flex items-center gap-3 text-[13px]"><i data-lucide="layout-dashboard" class="w-[18px] h-[18px]"></i> Control Room</button>
+          <button onclick="switchPage('page-experiments')" class="text-left px-4 py-2.5 text-muted hover:text-white transition-colors nav-btn hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]"><i data-lucide="flask-conical" class="w-[18px] h-[18px]"></i> Experiments</button>
+          <button class="text-left px-4 py-2.5 text-muted hover:text-white transition-colors hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]"><i data-lucide="list" class="w-[18px] h-[18px]"></i> Strategies</button>
+          <button class="text-left px-4 py-2.5 text-muted hover:text-white transition-colors hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]"><i data-lucide="settings" class="w-[18px] h-[18px]"></i> System</button>
       </nav>
-      <div class="p-5 bb flex flex-col gap-3 shrink-0" style="background: rgba(17,17,19,0.8);">
-          <div class="flex items-center gap-3 font-mono text-[12px] text-subtle"><div class="live-dot"></div> LIVE Trading</div>
-          <div class="flex gap-4 text-[11px] font-mono">
-              <span class="text-up">Bin: <span class="font-bold">32ms</span></span>
-              <span class="text-up">Krk: <span class="font-bold">45ms</span></span>
-          </div>
+      <div class="p-5 l-b bg-surface flex flex-col gap-2.5 shrink-0">
+          <div class="flex items-center gap-2.5 font-mono text-[11px] text-muted"><div class="w-2 h-2 rounded-full bg-up shadow-[0_0_6px_#22c55e]"></div> LIVE Trading</div>
+          <div class="flex gap-3 text-[11px] text-up font-mono"><span>Bin: 32ms</span><span>Krk: 45ms</span></div>
       </div>
   </aside>
 
-  <!-- ════════════════════════════════════════════ -->
-  <!-- MAIN WINDOW                                  -->
-  <!-- ════════════════════════════════════════════ -->
-  <div class="flex-1 flex flex-col min-w-0 relative" style="background: #09090B;">
-
-      <!-- HEADER BAR -->
-      <header class="h-[60px] flex items-center px-6 justify-between bb shrink-0 z-20 sticky top-0" style="background: rgba(13,13,15,0.85); backdrop-filter: blur(12px);">
-          <h1 id="top-title" class="font-semibold text-[14px] tracking-widest uppercase text-subtle">Control Room</h1>
-          <div class="relative">
-              <i data-lucide="search" class="absolute left-3.5 top-[11px] h-4 w-4 text-muted"></i>
-              <input type="text" placeholder="Search bots, pairs, configs... ⌘K"
-                class="w-[420px] h-10 bg-bg bd rounded-lg pl-10 pr-4 text-[13px] text-fg focus:outline-none focus:border-accent/40 font-mono placeholder:text-muted transition-colors">
+  <!-- MAIN WINDOW WRAPPER -->
+  <div class="flex-1 flex flex-col min-w-0 bg-black relative">
+      <header class="h-14 flex items-center px-5 justify-between bg-surface l-b shrink-0 z-20 sticky top-0">
+          <h1 id="top-title" class="font-bold text-[13px] tracking-widest uppercase text-muted">Control Room</h1>
+          <div class="relative group">
+              <i data-lucide="search" class="absolute left-3 top-2.5 h-4 w-4 text-muted"></i>
+              <input type="text" placeholder="Global fuzzy search... (Bots, Pairs, Configs ⌘K)" class="w-96 h-9 bg-black l-bd rounded-lg pl-9 pr-10 text-sm text-foreground focus:outline-none focus:border-white/30 font-mono">
           </div>
       </header>
 
-      <!-- ════════════════════════════════════════ -->
-      <!-- PAGE: DASHBOARD                          -->
-      <!-- ════════════════════════════════════════ -->
-      <div id="page-dashboard" class="page-view active flex-1 overflow-y-auto dot-grid p-6 flex-col gap-6">
-
-      <!-- LAYER 1: KPIs -->
-      <div class="grid grid-cols-7 gap-[1px] rounded-lg overflow-hidden bd shrink-0">
-          <div class="kpi-card p-5 flex flex-col">
-              <span class="text-[11px] text-muted uppercase tracking-wider font-medium mb-2">Total Equity</span>
-              <span class="text-[22px] font-mono font-bold tracking-tight">$127,450</span>
+      <!-- PAGE: DASHBOARD -->
+      <div id="page-dashboard" class="page-view active flex-1 overflow-y-auto l-grid p-5 flex-col gap-5">
+      
+      <!-- LAYER 1: HIGHEST LEVEL KPIs -->
+      <div class="grid grid-cols-7 gap-px rounded-md bg-white/10 l-bd shrink-0">
+          <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
+              <span class="kpi-label">Total Equity</span>
+              <span class="kpi-value text-xl">$127,450.80</span>
           </div>
-          <div class="kpi-card p-5 flex flex-col">
-              <span class="text-[11px] text-muted uppercase tracking-wider font-medium mb-2">Locked</span>
-              <span class="text-[22px] font-mono font-bold tracking-tight">$45,120 <span class="text-[12px] text-muted font-normal">35%</span></span>
+          <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
+              <span class="kpi-label">Locked Values</span>
+              <span class="kpi-value text-xl">$45,120 <span class="text-[11px] text-muted font-sans font-normal">(35%)</span></span>
           </div>
-          <div class="kpi-card p-5 flex flex-col">
-              <span class="text-[11px] text-muted uppercase tracking-wider font-medium mb-2">Today's P&L</span>
-              <span class="text-[22px] font-mono font-bold tracking-tight text-up glow-up">+$1,420</span>
+          <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
+              <span class="kpi-label">Today's P&L</span>
+              <span class="kpi-value text-xl text-up">+$1,420.10</span>
           </div>
-          <div class="kpi-card p-5 flex flex-col">
-              <span class="text-[11px] text-muted uppercase tracking-wider font-medium mb-2">Total P&L</span>
-              <span class="text-[22px] font-mono font-bold tracking-tight text-up glow-up">+$18,940</span>
+          <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
+              <span class="kpi-label">Total P&L</span>
+              <span class="kpi-value text-xl text-up">+$18,940.20</span>
           </div>
-          <div class="kpi-card p-5 flex flex-col">
-              <span class="text-[11px] text-muted uppercase tracking-wider font-medium mb-2">Open Trades</span>
-              <span class="text-[22px] font-mono font-bold tracking-tight">42</span>
+          <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
+              <span class="kpi-label">Open Trades</span>
+              <span class="kpi-value text-xl">42</span>
           </div>
-          <div class="kpi-card p-5 flex flex-col">
-              <span class="text-[11px] text-muted uppercase tracking-wider font-medium mb-2">Win Rate</span>
-              <span class="text-[22px] font-mono font-bold tracking-tight">68.4<span class="text-[14px] text-subtle">%</span></span>
+          <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
+              <span class="kpi-label">Win Rate</span>
+              <span class="kpi-value text-xl">68.4%</span>
           </div>
-          <div class="kpi-card p-5 flex flex-col">
-              <span class="text-[11px] text-muted uppercase tracking-wider font-medium mb-2">Max Drawdown</span>
-              <span class="text-[22px] font-mono font-bold tracking-tight text-down glow-down">-4.12<span class="text-[14px]">%</span></span>
+          <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
+              <span class="kpi-label">Max Drawdown</span>
+              <span class="kpi-value text-xl text-down">-4.12%</span>
           </div>
       </div>
 
-      <!-- LAYER 2: 3-COL LAYOUT -->
-      <div class="flex-1 flex gap-6 min-w-0 min-h-[600px]">
-
-          <!-- COL 1: FLEET -->
-          <div class="w-[420px] flex flex-col gap-6 min-w-[420px] shrink-0">
-              <div class="flex-1 card flex flex-col overflow-hidden shadow-2xl">
-                  <div class="h-[52px] bb flex items-center justify-between px-5 shrink-0" style="background: linear-gradient(180deg, #151517 0%, #111113 100%);">
-                      <span class="section-label">
-                          <i data-lucide="layers" class="w-4 h-4 text-accent" style="margin-left:-4px;"></i> Fleet Management
-                          <span class="text-subtle font-mono text-[12px] ml-1">(312)</span>
+      <!-- LAYER 2: MASTER 3-COLUMN LAYOUT -->
+      <div class="flex-1 flex gap-5 min-w-0 min-h-[600px]">
+          
+          <!-- COL 1: BOT FLEET ARCHITECTURE -->
+          <div class="w-[400px] flex flex-col gap-5 min-w-[400px] shrink-0">
+              <div class="flex-1 bg-surface l-bd rounded-md flex flex-col shadow-xl overflow-hidden">
+                  <div class="h-12 l-b flex items-center justify-between px-5 bg-black/40 shrink-0">
+                      <span class="section-title flex items-center gap-2.5">
+                          <i data-lucide="layers" class="w-4 h-4 text-muted"></i> Fleet Management (312)
                       </span>
-                      <button class="btn-ghost text-[10px]">Compact View</button>
+                      <div class="flex gap-2">
+                         <button class="bg-white/10 px-3 py-1 rounded text-[11px] hover:bg-white/20 transition-colors font-medium">Compact View</button>
+                      </div>
                   </div>
-
-                  <div class="flex-1 overflow-y-auto">
-                       <!-- Bot Row 1 -->
-                       <div class="p-5 bb hover:bg-white/[0.02] transition-all group cursor-pointer" onclick="openBotDrawer('TrendFollowerV3_BTC', 'LIVE')">
-                           <div class="flex items-center justify-between mb-3">
-                               <div class="flex items-center gap-2.5">
-                                   <div class="live-dot" style="width:7px;height:7px;"></div>
-                                   <span class="font-bold text-white text-[13px] font-mono tracking-wide">TrendFollowerV3_BTC</span>
-                                   <span class="tag-live">LIVE</span>
+                  
+                  <div class="flex-1 overflow-y-auto flex flex-col font-mono text-xs">
+                       <!-- Bot Row Expanded Format -->
+                       <div class="p-4 l-b hover:bg-white/[0.03] transition-colors group cursor-pointer" onclick="openBotDrawer('TrendFollowerV3_BTC', 'LIVE')">
+                           <div class="flex items-start justify-between mb-2.5">
+                               <div class="flex items-center gap-2">
+                                   <div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div>
+                                   <span class="font-bold text-white uppercase text-[12px] tracking-wide">TrendFollowerV3_BTC</span>
+                                   <span class="text-[10px] border border-white/20 px-1.5 py-[1px] rounded text-white/60 font-medium">LIVE</span>
                                </div>
-                               <span class="text-up font-bold text-[14px] font-mono glow-up">+$48.20</span>
+                               <span class="text-up font-bold text-[13px]">+$48.20</span>
                            </div>
-                           <div class="grid grid-cols-2 gap-y-2 text-[12px] mb-4 font-mono">
-                               <div class="flex justify-between pr-6"><span class="text-muted">Trades</span> <span class="text-subtle">412</span></div>
-                               <div class="flex justify-between"><span class="text-muted">Win</span> <span class="text-subtle">72%</span></div>
-                               <div class="flex justify-between pr-6"><span class="text-muted">Drawdown</span> <span class="text-down">-1.2%</span></div>
-                               <div class="flex justify-between"><span class="text-muted">Avg. Dur</span> <span class="text-subtle">1.5h</span></div>
+                           <div class="grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3">
+                               <div class="flex justify-between w-full pr-5"><span>Trades:</span> <span class="text-white/70">412</span></div>
+                               <div class="flex justify-between w-full"><span>Win:</span> <span class="text-white/70">72%</span></div>
+                               <div class="flex justify-between w-full pr-5"><span>Drawdown:</span> <span class="text-down">-1.2%</span></div>
+                               <div class="flex justify-between w-full"><span>Avg. Dur:</span> <span class="text-white/70">1.5h</span></div>
                            </div>
-                           <div class="flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
-                               <div class="flex gap-[3px] h-5 items-end">
-                                  <div class="spark-bar bg-up" style="height:40%"></div>
-                                  <div class="spark-bar bg-up" style="height:60%"></div>
-                                  <div class="spark-bar bg-down" style="height:20%"></div>
-                                  <div class="spark-bar bg-up" style="height:100%"></div>
-                                  <div class="spark-bar bg-up" style="height:80%"></div>
-                                  <div class="spark-bar bg-up" style="height:50%"></div>
-                                  <div class="spark-bar bg-down" style="height:30%"></div>
-                                  <div class="spark-bar bg-up" style="height:70%"></div>
+                           <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
+                               <div class="flex gap-[2px] h-4 items-end">
+                                  <div class="w-1.5 bg-up h-[40%] rounded-sm"></div><div class="w-1.5 bg-up h-[60%] rounded-sm"></div><div class="w-1.5 bg-down h-[20%] rounded-sm"></div><div class="w-1.5 bg-up h-[100%] rounded-sm"></div><div class="w-1.5 bg-up h-[80%] rounded-sm"></div>
                                </div>
-                               <div class="flex gap-2">
-                                   <button class="btn-ghost p-1.5" title="/stopbuy"><i data-lucide="pause" class="w-3.5 h-3.5"></i></button>
-                                   <button class="btn-ghost p-1.5" title="/stop"><i data-lucide="square" class="w-3.5 h-3.5"></i></button>
+                               <div class="flex gap-1.5">
+                                   <button class="bg-black border border-white/12 px-2 py-1 rounded hover:bg-down hover:text-white transition-colors" title="/stopbuy"><i data-lucide="pause" class="w-3 h-3 inline"></i></button>
+                                   <button class="bg-black border border-white/12 px-2 py-1 rounded hover:bg-down hover:text-white transition-colors" title="/stop"><i data-lucide="square" class="w-3 h-3 inline"></i></button>
                                </div>
                            </div>
                        </div>
 
                        <!-- Bot Row 2 -->
-                       <div class="p-5 bb hover:bg-white/[0.02] transition-all group cursor-pointer" style="background: rgba(255,255,255,0.01);" onclick="openBotDrawer('TrendFollowerV3_ETH', 'LIVE')">
-                           <div class="flex items-center justify-between mb-3">
-                               <div class="flex items-center gap-2.5">
-                                   <div class="live-dot" style="width:7px;height:7px;"></div>
-                                   <span class="font-bold text-white text-[13px] font-mono tracking-wide">TrendFollowerV3_ETH</span>
-                                   <span class="tag-live">LIVE</span>
+                       <div class="p-4 l-b hover:bg-white/[0.03] transition-colors group cursor-pointer bg-white/[0.015]" onclick="openBotDrawer('TrendFollowerV3_ETH', 'LIVE')">
+                           <div class="flex items-start justify-between mb-2.5">
+                               <div class="flex items-center gap-2">
+                                   <div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div>
+                                   <span class="font-bold text-white uppercase text-[12px] tracking-wide">TrendFollowerV3_ETH</span>
+                                   <span class="text-[10px] border border-white/20 px-1.5 py-[1px] rounded text-white/60 font-medium">LIVE</span>
                                </div>
-                               <span class="text-down font-bold text-[14px] font-mono glow-down">-$12.40</span>
+                               <span class="text-down font-bold text-[13px]">-$12.40</span>
                            </div>
-                           <div class="grid grid-cols-2 gap-y-2 text-[12px] mb-4 font-mono">
-                               <div class="flex justify-between pr-6"><span class="text-muted">Trades</span> <span class="text-subtle">188</span></div>
-                               <div class="flex justify-between"><span class="text-muted">Win</span> <span class="text-subtle">41%</span></div>
-                               <div class="flex justify-between pr-6"><span class="text-muted">Drawdown</span> <span class="text-down">-4.2%</span></div>
-                               <div class="flex justify-between"><span class="text-muted">Avg. Dur</span> <span class="text-subtle">3.2h</span></div>
+                           <div class="grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3">
+                               <div class="flex justify-between w-full pr-5"><span>Trades:</span> <span class="text-white/70">188</span></div>
+                               <div class="flex justify-between w-full"><span>Win:</span> <span class="text-white/70">41%</span></div>
+                               <div class="flex justify-between w-full pr-5"><span>Drawdown:</span> <span class="text-down">-4.2%</span></div>
+                               <div class="flex justify-between w-full"><span>Avg. Dur:</span> <span class="text-white/70">3.2h</span></div>
                            </div>
-                           <div class="flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
-                               <div class="flex gap-[3px] h-5 items-end">
-                                  <div class="spark-bar bg-down" style="height:60%"></div>
-                                  <div class="spark-bar bg-up" style="height:20%"></div>
-                                  <div class="spark-bar bg-down" style="height:100%"></div>
-                                  <div class="spark-bar bg-down" style="height:80%"></div>
-                                  <div class="spark-bar bg-up" style="height:30%"></div>
-                                  <div class="spark-bar bg-down" style="height:50%"></div>
-                                  <div class="spark-bar bg-up" style="height:40%"></div>
+                           <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
+                               <div class="flex gap-[2px] h-4 items-end">
+                                  <div class="w-1.5 bg-down h-[60%] rounded-sm"></div><div class="w-1.5 bg-up h-[20%] rounded-sm"></div><div class="w-1.5 bg-down h-[100%] rounded-sm"></div><div class="w-1.5 bg-down h-[80%] rounded-sm"></div><div class="w-1.5 bg-up h-[30%] rounded-sm"></div>
                                </div>
-                               <div class="flex gap-2">
-                                   <button class="btn-ghost p-1.5" title="/stopbuy"><i data-lucide="pause" class="w-3.5 h-3.5"></i></button>
-                                   <button class="btn-ghost p-1.5" title="/stop"><i data-lucide="square" class="w-3.5 h-3.5"></i></button>
+                               <div class="flex gap-1.5">
+                                   <button class="bg-black border border-white/12 px-2 py-1 rounded hover:bg-down hover:text-white transition-colors" title="/stopbuy"><i data-lucide="pause" class="w-3 h-3 inline"></i></button>
+                                   <button class="bg-black border border-white/12 px-2 py-1 rounded hover:bg-down hover:text-white transition-colors" title="/stop"><i data-lucide="square" class="w-3 h-3 inline"></i></button>
                                </div>
                            </div>
                        </div>
-
-                       <div class="p-6 text-center text-muted font-mono text-[12px]">
+                       
+                       <div class="p-5 text-center text-muted font-mono text-[12px]">
                             + 310 Other Bots running...
                        </div>
                   </div>
@@ -486,114 +232,102 @@
           </div>
 
           <!-- COL 2: MAIN WORKSPACE -->
-          <div class="flex-1 flex flex-col gap-6 min-w-0">
-
-              <!-- Chart Area -->
-              <div class="h-[270px] card flex shadow-2xl shrink-0 overflow-hidden relative">
-                  <!-- P&L Curve -->
-                  <div class="flex-1 p-6 relative br" style="background: linear-gradient(180deg, transparent 0%, rgba(52,211,153,0.03) 100%);">
-                       <h3 class="absolute top-6 left-6 section-label text-muted">Global P&L Curve</h3>
-                       <div class="absolute inset-0 dot-grid opacity-40"></div>
+          <div class="flex-1 flex flex-col gap-5 min-w-0">
+              
+              <!-- Huge Graphic Visualizations -->
+              <div class="h-[260px] bg-surface l-bd rounded-md flex shadow-xl shrink-0 overflow-hidden relative">
+                  <!-- Spline / Area Chart -->
+                  <div class="flex-1 p-5 relative border-r border-white/8 bg-gradient-to-t from-up/5 to-transparent">
+                       <h3 class="absolute top-5 left-5 section-title text-white/50">Global P&L Curve</h3>
+                       <div class="absolute inset-0 l-grid opacity-30"></div>
                        <svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
-                           <defs>
-                             <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-                               <stop offset="0%" stop-color="#34D399" stop-opacity="0.5"/>
-                               <stop offset="100%" stop-color="#34D399" stop-opacity="1"/>
-                             </linearGradient>
-                             <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                               <stop offset="0%" stop-color="#34D399" stop-opacity="0.12"/>
-                               <stop offset="100%" stop-color="#34D399" stop-opacity="0"/>
-                             </linearGradient>
-                           </defs>
-                           <path d="M0,80 L20,70 L40,50 L60,45 L80,20 L100,25 L100,100 L0,100 Z" fill="url(#areaGrad)"></path>
-                           <path d="M0,80 L20,70 L40,50 L60,45 L80,20 L100,25" fill="none" stroke="url(#lineGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                           <circle cx="80" cy="20" r="3" fill="#34D399" stroke="#09090B" stroke-width="2"/>
+                           <path d="M0,80 L20,70 L40,50 L60,45 L80,20 L100,25" fill="none" stroke="#22c55e" stroke-width="1.5"></path>
                        </svg>
                   </div>
-                  <!-- Drawdown -->
-                  <div class="w-[340px] p-6 relative" style="background: linear-gradient(180deg, #111113 0%, #0D0D0F 100%);">
-                      <h3 class="section-label mb-6">Drawdown Depth</h3>
-                      <div class="h-14 w-full mb-6 flex items-end gap-1">
-                          <div class="flex-1 bg-down/25 rounded-t-sm h-[10%] transition-all hover:bg-down/40"></div>
-                          <div class="flex-1 bg-down/40 rounded-t-sm h-[30%] transition-all hover:bg-down/55"></div>
-                          <div class="flex-1 bg-down/80 rounded-t-sm h-[80%] transition-all hover:bg-down"></div>
-                          <div class="flex-1 bg-down/40 rounded-t-sm h-[40%] transition-all hover:bg-down/55"></div>
-                          <div class="flex-1 bg-down/15 rounded-t-sm h-[5%] transition-all hover:bg-down/30"></div>
+                  <!-- Volume / Drawdown Chart -->
+                  <div class="w-[320px] p-5 relative bg-black/20">
+                      <h3 class="section-title text-white/50 mb-5">Drawdown Depth</h3>
+                      <div class="h-12 w-full mb-5 flex items-end gap-[2px]">
+                          <div class="w-full bg-down/30 rounded-t h-[10%]"></div>
+                          <div class="w-full bg-down/50 rounded-t h-[30%]"></div>
+                          <div class="w-full bg-down rounded-t h-[80%]"></div>
+                          <div class="w-full bg-down/50 rounded-t h-[40%]"></div>
+                          <div class="w-full bg-down/20 rounded-t h-[5%]"></div>
                       </div>
-
-                      <div class="grid grid-cols-2 gap-6">
+                      
+                      <div class="grid grid-cols-2 gap-5">
                            <div>
-                               <div class="text-[11px] text-muted uppercase font-medium mb-1">Absolute DD</div>
-                               <div class="text-[18px] font-bold font-mono text-down glow-down">-$5,210</div>
+                               <div class="kpi-label">Absolute DD</div>
+                               <div class="text-base font-bold font-mono text-down">-$5,210.00</div>
                            </div>
                            <div>
-                               <div class="text-[11px] text-muted uppercase font-medium mb-1">Relative DD</div>
-                               <div class="text-[18px] font-bold font-mono text-down glow-down">-4.12%</div>
+                               <div class="kpi-label">Relative DD</div>
+                               <div class="text-base font-bold font-mono text-down">-4.12%</div>
                            </div>
                       </div>
                   </div>
               </div>
 
-              <!-- Master Table -->
-              <div class="flex-1 card shadow-2xl flex flex-col min-h-0 overflow-hidden">
-                  <div class="h-[52px] bb flex items-center shrink-0" style="background: linear-gradient(180deg, #151517 0%, #111113 100%);">
-                      <button class="tab-btn active">Open Trades (42)</button>
-                      <button class="tab-btn">Closed Trades (1284)</button>
-                      <button class="tab-btn">Whitelist Matrix</button>
-
-                      <div class="ml-auto mr-5 flex items-center gap-3">
-                           <button class="btn-ghost text-[10px]"><i data-lucide="download" class="w-3.5 h-3.5 inline mr-1.5"></i>CSV</button>
+              <!-- Master Tabular Engine -->
+              <div class="flex-1 bg-surface l-bd rounded-md shadow-xl flex flex-col min-h-0 overflow-hidden">
+                  <div class="h-12 l-b flex items-center bg-black/40 shrink-0 border-b-2 border-transparent">
+                      <button class="h-full px-6 font-bold text-[12px] uppercase tracking-wide border-b-2 border-white text-white">Open Trades (42)</button>
+                      <button class="h-full px-6 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-white transition-colors">Closed Trades (1284)</button>
+                      <button class="h-full px-6 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-white transition-colors">Whitelist Matrix</button>
+                      
+                      <div class="ml-auto mr-5 flex items-center gap-2">
+                           <button class="px-3 py-1 border border-white/12 rounded text-[11px] hover:bg-white/10 font-medium transition-colors"><i data-lucide="download" class="w-3.5 h-3.5 inline mr-1"></i>CSV</button>
                       </div>
                   </div>
-
+                  
                   <div class="flex-1 overflow-x-auto overflow-y-auto">
-                      <table class="w-full text-left border-collapse data-table">
-                           <thead class="sticky top-0 z-10">
+                      <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
+                           <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
                                <tr>
-                                   <th>Date & Time</th>
-                                   <th>Pair</th>
-                                   <th>Bot Logic</th>
-                                   <th class="text-center">Side</th>
-                                   <th class="text-right">Size</th>
-                                   <th class="text-right">Entry</th>
-                                   <th class="text-right">Mark Price</th>
-                                   <th class="text-right" style="background:rgba(52,211,153,0.03);">Profit %</th>
-                                   <th class="text-right" style="background:rgba(52,211,153,0.03);">Value</th>
-                                   <th>Age</th>
-                                   <th class="text-center" style="border-left:1px solid rgba(255,255,255,0.06);">Actions</th>
+                                   <th class="px-5 py-3.5 font-medium">Date & Time</th>
+                                   <th class="px-5 py-3.5 font-medium">Pair</th>
+                                   <th class="px-5 py-3.5 font-medium">Bot Logic</th>
+                                   <th class="px-5 py-3.5 font-medium text-center">Side</th>
+                                   <th class="px-5 py-3.5 font-medium text-right">Size</th>
+                                   <th class="px-5 py-3.5 font-medium text-right">Entry</th>
+                                   <th class="px-5 py-3.5 font-medium text-right">Mark Price</th>
+                                   <th class="px-5 py-3.5 font-medium text-right bg-black/20">Profit %</th>
+                                   <th class="px-5 py-3.5 font-medium text-right bg-black/20">Value</th>
+                                   <th class="px-5 py-3.5 font-medium">Age</th>
+                                   <th class="px-5 py-3.5 font-medium border-l border-white/8 text-center">Engine Actions</th>
                                </tr>
                            </thead>
-                           <tbody>
-                               <tr class="group">
-                                   <td>26.10.23 <span class="text-white/30 ml-1">14:02</span></td>
-                                   <td class="font-bold text-white">BTC/USDT</td>
-                                   <td class="text-muted font-sans text-[12px]">TrendFollowerV3_BTC</td>
-                                   <td class="text-center"><span class="tag-long">LONG 10x</span></td>
-                                   <td class="text-right text-muted">0.50</td>
-                                   <td class="text-right text-subtle">64,220.00</td>
-                                   <td class="text-right font-semibold text-white">65,110.20</td>
-                                   <td class="text-right font-bold text-up" style="background:rgba(52,211,153,0.04);">+1.38%</td>
-                                   <td class="text-right text-up" style="background:rgba(52,211,153,0.04);">+$445.10</td>
-                                   <td class="text-muted">14h 22m</td>
-                                   <td class="text-center opacity-30 group-hover:opacity-100 transition-opacity" style="border-left:1px solid rgba(255,255,255,0.06);">
-                                       <button class="btn-danger mr-1">FORCE EXIT</button>
-                                       <button class="btn-ghost text-[10px] py-1 px-2.5">TRAIL</button>
+                           <tbody class="font-mono text-white/85 divide-y divide-white/[0.05]">
+                               <tr class="hover:bg-white/[0.04] transition-colors group">
+                                   <td class="px-5 py-3">26.10.23 <span class="text-white/35 ml-1">14:02</span></td>
+                                   <td class="px-5 py-3 font-bold text-white">BTC/USDT</td>
+                                   <td class="px-5 py-3 text-muted font-sans text-[12px]">TrendFollowerV3_BTC</td>
+                                   <td class="px-5 py-3 text-center"><span class="bg-up/12 text-up border border-up/25 px-2 py-0.5 rounded text-[11px] font-medium">LONG 10x</span></td>
+                                   <td class="px-5 py-3 text-right text-muted">0.50</td>
+                                   <td class="px-5 py-3 text-right">64,220.00</td>
+                                   <td class="px-5 py-3 text-right font-medium">65,110.20</td>
+                                   <td class="px-5 py-3 text-right bg-up/5 text-up font-bold">+1.38%</td>
+                                   <td class="px-5 py-3 text-right bg-up/5 text-up">+$445.10</td>
+                                   <td class="px-5 py-3 text-muted">14h 22m</td>
+                                   <td class="px-5 py-3 border-l border-white/8 text-center opacity-40 group-hover:opacity-100 transition-opacity">
+                                       <button class="bg-black l-bd hover:bg-down hover:text-white text-down px-2.5 py-1 rounded uppercase font-bold text-[10px] transition-colors">FORCE EXIT</button>
+                                       <button class="bg-black l-bd hover:bg-white/10 px-2.5 py-1 rounded text-[10px] ml-1.5 transition-colors">TRAIL</button>
                                    </td>
                                </tr>
-                               <tr class="group" style="background: rgba(255,255,255,0.01);">
-                                   <td>26.10.23 <span class="text-white/30 ml-1">11:45</span></td>
-                                   <td class="font-bold text-white">ETH/USDT</td>
-                                   <td class="text-muted font-sans text-[12px]">MeanReversion-ETH</td>
-                                   <td class="text-center"><span class="tag-short">SHORT 5x</span></td>
-                                   <td class="text-right text-muted">15.0</td>
-                                   <td class="text-right text-subtle">3,854.20</td>
-                                   <td class="text-right font-semibold text-white">3,880.00</td>
-                                   <td class="text-right font-bold text-down" style="background:rgba(251,113,133,0.04);">-0.66%</td>
-                                   <td class="text-right text-down" style="background:rgba(251,113,133,0.04);">-$12.50</td>
-                                   <td class="text-muted">16h 45m</td>
-                                   <td class="text-center opacity-30 group-hover:opacity-100 transition-opacity" style="border-left:1px solid rgba(255,255,255,0.06);">
-                                       <button class="btn-danger mr-1">FORCE EXIT</button>
-                                       <button class="btn-ghost text-[10px] py-1 px-2.5">TRAIL</button>
+                               <tr class="hover:bg-white/[0.04] transition-colors group bg-white/[0.015]">
+                                   <td class="px-5 py-3">26.10.23 <span class="text-white/35 ml-1">11:45</span></td>
+                                   <td class="px-5 py-3 font-bold text-white">ETH/USDT</td>
+                                   <td class="px-5 py-3 text-muted font-sans text-[12px]">MeanReversion-ETH</td>
+                                   <td class="px-5 py-3 text-center"><span class="bg-down/12 text-down border border-down/25 px-2 py-0.5 rounded text-[11px] font-medium">SHORT 5x</span></td>
+                                   <td class="px-5 py-3 text-right text-muted">15.0</td>
+                                   <td class="px-5 py-3 text-right">3,854.20</td>
+                                   <td class="px-5 py-3 text-right font-medium">3,880.00</td>
+                                   <td class="px-5 py-3 text-right bg-down/5 text-down font-bold">-0.66%</td>
+                                   <td class="px-5 py-3 text-right bg-down/5 text-down">-$12.50</td>
+                                   <td class="px-5 py-3 text-muted">16h 45m</td>
+                                   <td class="px-5 py-3 border-l border-white/8 text-center opacity-40 group-hover:opacity-100 transition-opacity">
+                                       <button class="bg-black l-bd hover:bg-down hover:text-white text-down px-2.5 py-1 rounded uppercase font-bold text-[10px] transition-colors">FORCE EXIT</button>
+                                       <button class="bg-black l-bd hover:bg-white/10 px-2.5 py-1 rounded text-[10px] ml-1.5 transition-colors">TRAIL</button>
                                    </td>
                                </tr>
                            </tbody>
@@ -602,120 +336,106 @@
               </div>
           </div>
 
-          <!-- COL 3: SYSTEM -->
-          <div class="w-[340px] flex flex-col gap-6 min-w-[340px] shrink-0">
-
-               <!-- Telemetry -->
-               <div class="card p-6 flex flex-col gap-6 shadow-2xl">
-                   <span class="section-label">Node Telemetry</span>
-
+          <!-- COL 3: SYSTEM METRICS & LOGS -->
+          <div class="w-[320px] flex flex-col gap-5 min-w-[320px] shrink-0">
+               
+               <!-- System Resource Dashboard -->
+               <div class="bg-surface l-bd rounded-md p-5 flex flex-col gap-5 shadow-xl">
+                   <span class="section-title">Node Telemetry</span>
+                   
                    <div>
-                       <div class="flex justify-between text-[12px] font-mono mb-2.5"><span class="text-muted">CPU Thread Load</span> <span class="text-subtle font-semibold">14%</span></div>
-                       <div class="progress-track"><div class="progress-fill" style="width: 14%; background: linear-gradient(90deg, rgba(255,255,255,0.5), rgba(255,255,255,0.7));"></div></div>
+                       <div class="flex justify-between text-[12px] font-mono mb-2"><span class="text-muted">CPU Thread Load</span> <span class="text-white font-medium">14%</span></div>
+                       <div class="h-2 w-full bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-white/70 rounded-full" style="width: 14%"></div></div>
                    </div>
-
+                   
                    <div>
-                       <div class="flex justify-between text-[12px] font-mono mb-2.5"><span class="text-muted">RAM Utilization</span> <span class="text-yellow-400 font-semibold">82%</span></div>
-                       <div class="progress-track"><div class="progress-fill" style="width: 82%; background: linear-gradient(90deg, #facc15, #f59e0b);"></div></div>
-                   </div>
-
-                   <div>
-                       <div class="flex justify-between text-[12px] font-mono mb-2.5"><span class="text-muted">Disk I/O</span> <span class="text-up font-semibold">23%</span></div>
-                       <div class="progress-track"><div class="progress-fill" style="width: 23%; background: linear-gradient(90deg, #34D399, #10b981);"></div></div>
+                       <div class="flex justify-between text-[12px] font-mono mb-2"><span class="text-muted">RAM Utilization</span> <span class="text-yellow-400 font-medium">82%</span></div>
+                       <div class="h-2 w-full bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-yellow-400 rounded-full" style="width: 82%"></div></div>
                    </div>
                </div>
 
-               <!-- Terminal Logs -->
-               <div class="flex-1 card flex flex-col shadow-2xl overflow-hidden">
-                   <div class="flex justify-between items-center px-5 py-3.5 bb" style="background: linear-gradient(180deg, #151517 0%, #111113 100%);">
-                       <span class="section-label">Terminal StdOut</span>
-                       <span class="flex items-center gap-2 text-up text-[11px] font-mono font-medium"><div class="live-dot" style="width:6px;height:6px;"></div> Streaming</span>
+               <!-- Live Event Logs Terminal -->
+               <div class="flex-1 bg-black l-bd rounded-md flex flex-col shadow-xl overflow-hidden p-3 font-mono text-[11px] leading-relaxed text-muted">
+                   <div class="flex justify-between items-center mb-3 px-1">
+                       <span class="section-title text-white/50">Terminal StdOut</span>
+                       <span class="flex items-center gap-1.5 text-green-400 text-[11px]"><div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div> Streaming</span>
                    </div>
-                   <div class="flex-1 overflow-y-auto p-4 font-mono" style="background: #09090B;">
-                       <div class="log-line"><span class="log-ts">14:02:11</span> <span class="text-accent font-medium">INFO</span> TrendFollowerV3_BTC evaluated rules.</div>
-                       <div class="log-line"><span class="log-ts">14:02:11</span> <span class="text-up font-bold">BUY</span> Executing LONG on BTC/USDT (Size: 0.50).</div>
-                       <div class="log-line"><span class="log-ts">14:02:12</span> <span class="text-yellow-400 font-medium">HTTP</span> Binance API /order sent. Latency 32ms.</div>
-                       <div class="log-line"><span class="log-ts">14:02:12</span> <span class="text-up font-bold">FILL</span> Order Filled at 64,220.00.</div>
-                       <div class="log-line"><span class="log-ts">14:03:00</span> <span class="text-accent font-medium">INFO</span> DB heartbeat synchronized.</div>
-                       <div class="log-line"><span class="log-ts">14:05:00</span> <span class="text-down font-bold">WARN</span> High volatility detected on SOL/USDT.</div>
-                       <div class="log-line"><span class="log-ts">14:05:01</span> <span class="text-accent font-medium">INFO</span> SOL/USDT pair locked for 30m cooldown.</div>
+                   <div class="flex-1 overflow-y-auto l-bd rounded p-3 bg-black">
+                       <div class="mb-2"><span class="text-white/35 pr-2">14:02:11</span> <span class="text-blue-400 font-medium">INFO</span> TrendFollowerV3_BTC evaluated rules.</div>
+                       <div class="mb-2"><span class="text-white/35 pr-2">14:02:11</span> <span class="text-up font-bold">BUY</span> Executing LONG on BTC/USDT (Size: 0.50).</div>
+                       <div class="mb-2"><span class="text-white/35 pr-2">14:02:12</span> <span class="text-yellow-500 font-medium">HTTP</span> Binance API /order sent. Latency 32ms.</div>
+                       <div class="mb-2"><span class="text-white/35 pr-2">14:02:12</span> <span class="text-up font-bold">FILL</span> Order Filled at 64,220.00.</div>
+                       <div class="mb-2"><span class="text-white/35 pr-2">14:03:00</span> <span class="text-blue-400 font-medium">INFO</span> DB heartbeat synchronized.</div>
+                       <div class="mb-2"><span class="text-white/35 pr-2">14:05:00</span> <span class="text-down font-bold">WARN</span> High volatility detected on SOL/USDT.</div>
                    </div>
                </div>
           </div>
-
+          
       </div>
 
       </div><!-- /END DASHBOARD -->
 
-      <!-- ════════════════════════════════════════ -->
-      <!-- PAGE: EXPERIMENTS                        -->
-      <!-- ════════════════════════════════════════ -->
-      <div id="page-experiments" class="page-view flex-1 overflow-hidden flex-col" style="background: #0C0C0E;">
-          <!-- Tabs -->
-          <div class="h-[52px] flex gap-2 px-6 shrink-0 items-end" style="background: #09090B; border-bottom: 1px solid rgba(255,255,255,0.06);">
-              <button onclick="switchExpTab('tab-backtest', this)" class="exp-tab-btn active exp-nav">Backtest</button>
-              <button onclick="switchExpTab('tab-hyperopt', this)" class="exp-tab-btn exp-nav">Hyperopt</button>
-              <button onclick="switchExpTab('tab-freqai', this)"   class="exp-tab-btn exp-nav">FreqAI</button>
-              <button onclick="switchExpTab('tab-ai', this)"       class="exp-tab-btn exp-nav">AI Review</button>
-              <button onclick="switchExpTab('tab-val', this)"      class="exp-tab-btn exp-nav">Validation</button>
+      <!-- PAGE: EXPERIMENTS -->
+      <div id="page-experiments" class="page-view flex-1 overflow-hidden flex-col bg-surface">
+          <!-- Experiment Tabs Menu -->
+          <div class="h-12 bg-black l-b flex gap-1.5 px-5 shrink-0 items-end">
+              <button onclick="switchExpTab('tab-backtest', this)" class="h-9 px-5 l-bd border-b-0 rounded-t bg-surface text-white font-bold text-[12px] uppercase tracking-widest exp-nav">Backtest</button>
+              <button onclick="switchExpTab('tab-hyperopt', this)" class="h-9 px-5 l-bd border-b-0 rounded-t bg-black text-muted text-[12px] uppercase tracking-widest hover:text-white exp-nav transition-colors">Hyperopt</button>
+              <button onclick="switchExpTab('tab-freqai', this)"   class="h-9 px-5 l-bd border-b-0 rounded-t bg-black text-muted text-[12px] uppercase tracking-widest hover:text-white exp-nav transition-colors">FreqAI</button>
+              <button onclick="switchExpTab('tab-ai', this)"       class="h-9 px-5 l-bd border-b-0 rounded-t bg-black text-muted text-[12px] uppercase tracking-widest hover:text-white exp-nav transition-colors">AI Review</button>
+              <button onclick="switchExpTab('tab-val', this)"      class="h-9 px-5 l-bd border-b-0 rounded-t bg-black text-muted text-[12px] uppercase tracking-widest hover:text-white exp-nav transition-colors">Validation</button>
           </div>
 
-          <div class="flex-1 dot-grid p-6 overflow-hidden relative">
-
+          <div class="flex-1 l-grid p-5 overflow-hidden relative border-t border-transparent">
+              
               <!-- TAB: BACKTEST -->
-              <div id="tab-backtest" class="exp-tab active h-full flex flex-row gap-6">
-                  <!-- Config Panel -->
-                  <div class="w-[360px] flex flex-col card shrink-0 h-full overflow-y-auto">
-                      <div class="h-[44px] bb flex items-center px-5 shrink-0" style="background: linear-gradient(180deg, #151517 0%, #111113 100%);">
-                          <span class="section-label">Run Configuration</span>
-                      </div>
-                      <div class="p-6 flex flex-col gap-5 flex-1">
-                          <div><div class="input-label">Strategy Name</div><input type="text" class="input-field" value="AlphaTrend_V5"></div>
-                          <div class="flex gap-4">
-                             <div class="w-1/2"><div class="input-label">Timeframe</div><select class="input-field appearance-none"><option>1h</option><option>4h</option></select></div>
-                             <div class="w-1/2"><div class="input-label">Fee %</div><input type="text" class="input-field" value="0.001"></div>
+              <div id="tab-backtest" class="exp-tab active h-full flex flex-row gap-5">
+                  <!-- Control Panel -->
+                  <div class="w-[340px] flex flex-col gap-0 bg-black l-bd rounded-md shrink-0 h-full overflow-y-auto font-mono text-[12px] uppercase tracking-wider">
+                      <div class="h-10 l-b flex items-center px-4 bg-surface text-white/60 font-semibold">Run Configuration</div>
+                      <div class="p-5 flex flex-col gap-5">
+                          <div><div class="text-white/45 mb-1.5 text-[11px]">Strategy Name</div><input type="text" class="w-full bg-black l-bd px-3 py-2 text-white outline-none focus:border-white/30 rounded text-[13px]" value="AlphaTrend_V5"></div>
+                          <div class="flex gap-3">
+                             <div class="w-1/2"><div class="text-white/45 mb-1.5 text-[11px]">Timeframe</div><select class="w-full bg-black l-bd px-3 py-2 text-white/80 appearance-none rounded text-[13px]"><option>1h</option><option>4h</option></select></div>
+                             <div class="w-1/2"><div class="text-white/45 mb-1.5 text-[11px]">Fee %</div><input type="text" class="w-full bg-black l-bd px-3 py-2 text-white outline-none rounded text-[13px]" value="0.001"></div>
                           </div>
-                          <div><div class="input-label">Timerange</div><input type="text" class="input-field" value="20240101-20241231"></div>
-                          <div class="mt-auto pt-4">
-                              <button class="btn-primary w-full">Execute Backtest</button>
-                          </div>
+                          <div><div class="text-white/45 mb-1.5 text-[11px]">Timerange</div><input type="text" class="w-full bg-black l-bd px-3 py-2 text-white outline-none focus:border-white/30 rounded text-[13px]" value="20240101-20241231"></div>
+                          <button class="w-full bg-white text-black font-bold py-2.5 hover:bg-white/85 transition-colors mt-2 rounded text-[13px]">Execute Backtest</button>
                       </div>
                   </div>
-                  <!-- Results -->
-                  <div class="flex-1 flex flex-col gap-6 min-w-0">
-                      <!-- Metrics -->
-                      <div class="h-[140px] shrink-0 flex gap-[1px] rounded-lg overflow-hidden bd">
-                          <div class="flex-1 kpi-card p-6 flex flex-col justify-center">
-                              <span class="text-[11px] text-muted uppercase font-medium mb-2">Total Profit</span>
-                              <span class="font-mono text-[28px] text-up font-bold glow-up tracking-tight">142.5<span class="text-[18px]">%</span></span>
-                              <span class="text-muted text-[11px] mt-1 font-mono">+$21,400.00</span>
+                  <!-- Main Content -->
+                  <div class="flex-1 flex flex-col gap-5 min-w-0">
+                      <!-- Results Matrix -->
+                      <div class="h-[130px] shrink-0 bg-black l-bd rounded-md flex">
+                          <div class="flex-1 p-5 border-r border-white/8 flex flex-col justify-center">
+                              <span class="kpi-label">Total Profit</span>
+                              <span class="font-mono text-2xl text-up font-bold">142.50%</span>
+                              <span class="text-white/35 text-[11px] mt-1 font-mono">+$21,400.00</span>
                           </div>
-                          <div class="flex-1 kpi-card p-6 flex flex-col justify-center">
-                              <span class="text-[11px] text-muted uppercase font-medium mb-2">Max Drawdown</span>
-                              <span class="font-mono text-[28px] text-down font-bold glow-down tracking-tight">-18.4<span class="text-[18px]">%</span></span>
-                              <span class="text-muted text-[11px] mt-1 font-mono">-$2,100 Abs</span>
+                          <div class="flex-1 p-5 border-r border-white/8 flex flex-col justify-center">
+                              <span class="kpi-label">Max Drawdown</span>
+                              <span class="font-mono text-2xl text-down font-bold">-18.40%</span>
+                              <span class="text-white/35 text-[11px] mt-1 font-mono">-$2,100 Abs</span>
                           </div>
-                          <div class="flex-1 kpi-card p-6 flex flex-col justify-center">
-                              <span class="text-[11px] text-muted uppercase font-medium mb-2">Win Rate</span>
-                              <span class="font-mono text-[28px] text-white font-bold tracking-tight">64.2<span class="text-[18px] text-subtle">%</span></span>
-                              <span class="text-muted text-[11px] mt-1 font-mono">142W / 88L</span>
+                          <div class="flex-1 p-5 flex flex-col justify-center">
+                              <span class="kpi-label">Win Rate</span>
+                              <span class="font-mono text-2xl text-white font-bold">64.2%</span>
+                              <span class="text-white/35 text-[11px] mt-1 font-mono">142W / 88L</span>
                           </div>
                       </div>
-                      <!-- Trade Table -->
-                      <div class="flex-1 card flex flex-col overflow-hidden">
-                          <div class="h-[44px] bb flex items-center px-5 shrink-0" style="background: linear-gradient(180deg, #151517 0%, #111113 100%);">
-                              <span class="section-label">Test Logs & Trades</span>
-                          </div>
+                      <!-- Trade List -->
+                      <div class="flex-1 bg-black l-bd rounded-md flex flex-col overflow-hidden">
+                          <div class="h-10 border-b border-white/8 bg-surface flex items-center px-5 section-title">Test Logs & Trades</div>
                           <div class="flex-1 overflow-x-auto overflow-y-auto">
-                              <table class="w-full text-left border-collapse data-table">
-                                   <thead class="sticky top-0 z-10">
-                                       <tr><th>Pair</th><th>Enter</th><th>Exit</th><th class="text-right">Profit</th></tr>
+                              <table class="w-full text-left border-collapse whitespace-nowrap text-[12px] font-mono">
+                                   <thead class="sticky top-0 bg-surface l-b text-[11px] uppercase tracking-widest text-muted z-10">
+                                       <tr><th class="px-5 py-3">Pair</th><th class="px-5 py-3">Enter</th><th class="px-5 py-3">Exit</th><th class="px-5 py-3 text-right">Profit</th></tr>
                                    </thead>
-                                   <tbody>
-                                       <tr><td>BTC/USDT</td><td>64,220.0</td><td>65,110.0</td><td class="text-right text-up font-bold">+1.38%</td></tr>
-                                       <tr><td>ETH/USDT</td><td>3,120.0</td><td>3,010.0</td><td class="text-right text-down font-bold">-2.10%</td></tr>
-                                       <tr><td>SOL/USDT</td><td>144.20</td><td>156.40</td><td class="text-right text-up font-bold">+8.12%</td></tr>
-                                       <tr><td>BTC/USDT</td><td>64,220.0</td><td>65,110.0</td><td class="text-right text-up font-bold">+1.38%</td></tr>
+                                   <tbody class="divide-y divide-white/[0.05] text-white/85">
+                                       <tr class="hover:bg-white/[0.03] transition-colors"><td class="px-5 py-2.5">BTC/USDT</td><td class="px-5 py-2.5">64,220.0</td><td class="px-5 py-2.5">65,110.0</td><td class="px-5 py-2.5 text-right text-up font-bold">+1.38%</td></tr>
+                                       <tr class="hover:bg-white/[0.03] transition-colors"><td class="px-5 py-2.5">ETH/USDT</td><td class="px-5 py-2.5">3,120.0</td><td class="px-5 py-2.5">3,010.0</td><td class="px-5 py-2.5 text-right text-down font-bold">-2.10%</td></tr>
+                                       <tr class="hover:bg-white/[0.03] transition-colors"><td class="px-5 py-2.5">SOL/USDT</td><td class="px-5 py-2.5">144.20</td><td class="px-5 py-2.5">156.40</td><td class="px-5 py-2.5 text-right text-up font-bold">+8.12%</td></tr>
+                                       <tr class="hover:bg-white/[0.03] transition-colors"><td class="px-5 py-2.5">BTC/USDT</td><td class="px-5 py-2.5">64,220.0</td><td class="px-5 py-2.5">65,110.0</td><td class="px-5 py-2.5 text-right text-up font-bold">+1.38%</td></tr>
                                    </tbody>
                               </table>
                           </div>
@@ -724,46 +444,42 @@
               </div>
 
               <!-- TAB: HYPEROPT -->
-              <div id="tab-hyperopt" class="exp-tab h-full flex flex-col gap-6">
-                  <div class="card p-8 text-center max-w-3xl mx-auto mt-10 w-full shrink-0">
-                      <h2 class="text-[16px] font-bold tracking-widest uppercase mb-6 flex items-center justify-center gap-3">
-                          <i data-lucide="zap" class="w-6 h-6 text-accent"></i> Hyperopt Compute
-                      </h2>
-                      <div class="grid grid-cols-3 gap-5 mb-6">
-                          <div class="card p-4 text-left"><div class="input-label">Epochs</div><input type="text" value="3000" class="input-field mt-1"></div>
-                          <div class="card p-4 text-left"><div class="input-label">Loss Func</div><input type="text" value="SharpeHyperOptLoss" class="input-field mt-1"></div>
-                          <div class="card p-4 text-left"><div class="input-label">Space</div><input type="text" value="buy sell trailing" class="input-field mt-1"></div>
+              <div id="tab-hyperopt" class="exp-tab h-full flex flex-col gap-5">
+                  <div class="bg-black l-bd rounded-md p-8 text-center max-w-3xl mx-auto mt-10 w-full shrink-0">
+                      <h2 class="text-base font-bold tracking-widest uppercase mb-5"><i data-lucide="zap" class="w-7 h-7 inline-block mb-1 text-white"></i> Hyperopt Compute</h2>
+                      <div class="grid grid-cols-3 gap-5 mb-5 font-mono text-[11px] uppercase text-left tracking-widest">
+                          <div class="l-bd rounded p-4 bg-white/5"><span class="text-white/45 block mb-1.5">Epochs</span><input type="text" value="3000" class="bg-transparent border-none text-white w-full text-[13px]"></div>
+                          <div class="l-bd rounded p-4 bg-white/5"><span class="text-white/45 block mb-1.5">Loss Func</span><input type="text" value="SharpeHyperOptLoss" class="bg-transparent border-none text-white w-full text-[13px]"></div>
+                          <div class="l-bd rounded p-4 bg-white/5"><span class="text-white/45 block mb-1.5">Space</span><input type="text" value="buy sell trailing" class="bg-transparent border-none text-white w-full text-[13px]"></div>
                       </div>
-                      <button class="btn-primary w-full">Run Optimizer</button>
+                      <button class="w-full bg-white/10 l-bd hover:bg-white hover:text-black transition-colors font-bold text-[12px] py-2.5 uppercase tracking-widest rounded">Run Optimizer</button>
                   </div>
-                  <div class="w-full max-w-3xl mx-auto flex-1 card overflow-y-auto p-6 font-mono text-[12px] leading-relaxed">
-                      <div class="log-line text-muted">[1/3000] Epoch evaluated. Objective: -0.1245</div>
-                      <div class="log-line text-up font-medium">[2/3000] Epoch evaluated. Objective: -0.1555 (NEW BEST)</div>
-                      <div class="log-line text-muted">[3/3000] Epoch evaluated. Objective: -0.1422</div>
+                  <div class="w-full max-w-3xl mx-auto flex-1 bg-black l-bd rounded-md overflow-y-auto p-5 font-mono text-[12px] text-muted leading-relaxed">
+                      [1/3000] Epoch evaluated. Objective: -0.1245<br>
+                      [2/3000] Epoch evaluated. Objective: -0.1555 (NEW BEST)<br>
+                      [3/3000] Epoch evaluated. Objective: -0.1422<br>
                   </div>
               </div>
-
+              
               <!-- TAB: FREQAI -->
-              <div id="tab-freqai" class="exp-tab h-full card flex items-center justify-center flex-col text-muted font-mono tracking-widest text-[14px]">
-                  <i data-lucide="brain-circuit" class="w-14 h-14 mb-5 text-accent/30"></i>
+              <div id="tab-freqai" class="exp-tab h-full bg-black l-bd rounded-md flex items-center justify-center flex-col text-muted font-mono tracking-widest text-[13px]">
+                  <i data-lucide="brain-circuit" class="w-12 h-12 mb-5 text-white/20"></i>
                   FreqAI Tensor Matrix Initialized
               </div>
-
+              
               <!-- TAB: AI REVIEW -->
-              <div id="tab-ai" class="exp-tab h-full card flex items-center justify-center flex-col text-muted font-mono tracking-widest text-[14px]">
-                  <i data-lucide="bot" class="w-14 h-14 mb-5 text-accent/40"></i>
+              <div id="tab-ai" class="exp-tab h-full bg-black l-bd rounded-md flex items-center justify-center flex-col text-muted font-mono tracking-widest text-[13px]">
+                  <i data-lucide="bot" class="w-12 h-12 mb-5 text-blue-500/50"></i>
                   Strategy Evaluation Cost: $0.15 OpenAI Credits
               </div>
-
+              
               <!-- TAB: VALIDATION -->
-              <div id="tab-val" class="exp-tab h-full card flex flex-col overflow-hidden">
-                  <div class="h-[44px] flex items-center px-6 font-bold text-[12px] uppercase tracking-widest text-down" style="background: linear-gradient(90deg, rgba(251,113,133,0.08) 0%, transparent 100%); border-bottom: 1px solid rgba(251,113,133,0.15);">
-                      <i data-lucide="alert-triangle" class="w-4 h-4 mr-3"></i> OOS Lookahead Detected
-                  </div>
-                  <div class="p-8 text-fg font-mono text-[13px] leading-relaxed">
-                      <span class="text-down font-bold">WARNING:</span> Strategy uses Future Data (Lookahead Bias).<br><br>
-                      Validation Engine evaluated <span class="text-white font-bold">15,000 candles</span> and found referencing of closed candle data in current tick execution.<br><br>
-                      <span class="text-subtle">Mitigation:</span> Use <code class="bg-white/5 px-2 py-0.5 rounded text-accent bd">shift(1)</code> or validate on <code class="bg-white/5 px-2 py-0.5 rounded text-accent bd">NextBarOpen</code>.<br>
+              <div id="tab-val" class="exp-tab h-full bg-black l-bd rounded-md flex flex-col overflow-hidden">
+                  <div class="h-10 l-b bg-[#1A0000] flex items-center px-5 font-bold text-[11px] uppercase tracking-widest text-down">OOS Lookahead Detected</div>
+                  <div class="p-8 text-white font-mono text-[13px] leading-relaxed">
+                      WARNING: Strategy uses Future Data (Lookahead Bias).<br>
+                      Validation Engine evaluated 15,000 candles and found referencing of closed candle data in current tick execution.<br><br>
+                      Mitigation: Use shift(1) or validate on NextBarOpen.<br>
                   </div>
               </div>
 
@@ -779,11 +495,13 @@
         document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active'));
         document.getElementById(pageId).classList.add('active');
         document.getElementById('top-title').innerText = pageId === 'page-dashboard' ? 'Control Room' : 'Experiments Matrix';
-
+        
         document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if(btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(pageId)) {
-                btn.classList.add('active');
+            btn.classList.remove('bg-white/10', 'text-white', 'active');
+            btn.classList.add('text-muted');
+            if(btn.getAttribute('onclick').includes(pageId)) {
+                btn.classList.add('bg-white/10', 'text-white', 'active');
+                btn.classList.remove('text-muted');
             }
         });
     }
@@ -791,9 +509,13 @@
     function switchExpTab(tabId, btn) {
         document.querySelectorAll('.exp-tab').forEach(el => el.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
-
-        document.querySelectorAll('.exp-nav').forEach(el => el.classList.remove('active'));
-        btn.classList.add('active');
+        
+        document.querySelectorAll('.exp-nav').forEach(el => {
+            el.classList.remove('bg-surface', 'text-white');
+            el.classList.add('bg-black', 'text-muted');
+        });
+        btn.classList.add('bg-surface', 'text-white');
+        btn.classList.remove('bg-black', 'text-muted');
     }
 
     function openBotDrawer(name, mode) {
@@ -802,7 +524,7 @@
         document.getElementById('bot-drawer').classList.add('open');
         document.getElementById('drawer-backdrop').classList.add('open');
     }
-
+    
     function closeBotDrawer() {
         document.getElementById('bot-drawer').classList.remove('open');
         document.getElementById('drawer-backdrop').classList.remove('open');

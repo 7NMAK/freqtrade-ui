@@ -157,7 +157,7 @@ export default function ExperimentsPage() {
               lastTestType: exp.last_run_type ?? null,
               lastTestDate: exp.last_run_date ?? exp.created_at,
               bestProfit: exp.best_profit_pct ?? null,
-              winRate: exp.best_win_rate != null ? exp.best_win_rate * 100 : null,
+              winRate: exp.best_win_rate ?? null,
               maxDD: exp.best_max_drawdown ?? null,
               sharpe: exp.best_sharpe ?? null,
               pipelineSteps,

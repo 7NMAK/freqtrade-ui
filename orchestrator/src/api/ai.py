@@ -409,31 +409,40 @@ async def strategy_review(
         from ..ai_validator.llm_gateway import LLMGateway
 
         gateway = LLMGateway(api_key=settings.ai_openrouter_api_key)
-        result = await gateway.call(
-            model=body.model,
-            system=body.system_prompt,
-            prompt=body.user_prompt,
+
+        # Map frontend model names to advisor keys
+        # gateway.query() expects "claude" or "grok" — it handles primary/fallback internally
+        advisor = "claude"
+        if "grok" in body.model.lower():
+            advisor = "grok"
+
+        result = await gateway.query(
+            model=advisor,
+            system_prompt=body.system_prompt,
+            user_content=body.user_prompt,
         )
 
-        # result is a dict with: text, model, tokens_used, cost_usd
-        raw_text = result.get("text", "")
+        # result is a dict with: content, tokens_used, cost_usd, model_used
+        raw_content = result.get("content", {})
         cost_usd = result.get("cost_usd", 0.0)
         tokens_used = result.get("tokens_used", 0)
 
-        # Try to parse JSON from the response
-        import json
-        analysis = None
-        try:
-            # Extract JSON from response (may be wrapped in markdown)
-            import re
-            json_match = re.search(r'\{[\s\S]*\}', raw_text)
-            if json_match:
-                analysis = json.loads(json_match.group(0))
-        except json.JSONDecodeError:
-            logger.warning("AI response for strategy %s was not valid JSON", body.strategy)
+        # content is already parsed JSON dict from gateway
+        # If it's a string (unlikely), try to parse it
+        analysis = raw_content
+        if isinstance(raw_content, str):
+            try:
+                import json
+                import re
+                json_match = re.search(r'\{[\s\S]*\}', raw_content)
+                if json_match:
+                    analysis = json.loads(json_match.group(0))
+            except (json.JSONDecodeError, ValueError):
+                logger.warning("AI response for strategy %s was not valid JSON", body.strategy)
+                analysis = raw_content
 
         return {
-            "analysis": analysis or raw_text,
+            "analysis": analysis,
             "cost_usd": cost_usd,
             "tokens_used": tokens_used,
             "model": body.model,

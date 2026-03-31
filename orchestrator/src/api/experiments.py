@@ -340,21 +340,38 @@ async def list_experiments(
     run_counts: dict[int, int] = {row[0]: row[1] for row in count_result.all()}
 
     # Batch-load best run metrics per experiment (1 query)
-    # Get the best completed run (by profit_pct) for each experiment
-    best_runs_result = await db.execute(
+    # Use a window function to get ALL metrics from the single best run (by profit_pct)
+    # This ensures profit, win_rate, drawdown, sharpe are from the SAME run
+
+    # Subquery: rank runs per experiment by profit_pct DESC
+    best_run_sub = (
         select(
             ExperimentRun.experiment_id,
-            func.max(ExperimentRun.profit_pct).label("best_profit_pct"),
-            func.max(ExperimentRun.win_rate).label("best_win_rate"),
-            func.min(ExperimentRun.max_drawdown).label("best_max_drawdown"),
-            func.max(ExperimentRun.sharpe_ratio).label("best_sharpe"),
+            ExperimentRun.profit_pct,
+            ExperimentRun.win_rate,
+            ExperimentRun.max_drawdown,
+            ExperimentRun.sharpe_ratio,
+            func.row_number().over(
+                partition_by=ExperimentRun.experiment_id,
+                order_by=ExperimentRun.profit_pct.desc().nullslast(),
+            ).label("rn"),
         )
         .where(
             ExperimentRun.experiment_id.in_(exp_ids),
             ExperimentRun.status == "completed",
             ExperimentRun.is_deleted == False,  # noqa: E712
         )
-        .group_by(ExperimentRun.experiment_id)
+        .subquery()
+    )
+
+    best_runs_result = await db.execute(
+        select(
+            best_run_sub.c.experiment_id,
+            best_run_sub.c.profit_pct,
+            best_run_sub.c.win_rate,
+            best_run_sub.c.max_drawdown,
+            best_run_sub.c.sharpe_ratio,
+        ).where(best_run_sub.c.rn == 1)
     )
     best_metrics: dict[int, dict] = {}
     for row in best_runs_result.all():

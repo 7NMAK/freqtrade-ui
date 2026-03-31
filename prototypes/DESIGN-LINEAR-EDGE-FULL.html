@@ -124,6 +124,8 @@
     #page-dashboard { gap: 12px !important; padding: 12px !important; }
     .h-\[280px\] { height: 220px !important; }
     .grid.grid-cols-7 { grid-template-columns: repeat(4, 1fr) !important; }
+    .trade-tab-btn { padding-left: 8px !important; padding-right: 8px !important; font-size: 10px !important; letter-spacing: 0.02em !important; }
+    .section-title { font-size: 10px !important; }
     :root { --drawer-left: 500px; }
   }
 
@@ -945,9 +947,9 @@
               <div class="h-[280px] bg-surface l-bd rounded-md flex shadow-xl shrink-0 overflow-hidden relative">
                   <!-- Profit Over Time: Line = P&L, Bars = Trade Count -->
                   <div class="flex-1 flex flex-col relative">
-                       <div class="flex items-center justify-between px-5 py-3 shrink-0">
-                           <h3 class="section-title text-white/50">Profit Over Time</h3>
-                           <div class="flex gap-0">
+                       <div class="flex items-center justify-between px-5 py-3 shrink-0 gap-3">
+                           <h3 class="section-title text-white/50 whitespace-nowrap">Profit Over Time</h3>
+                           <div class="flex gap-0 shrink-0">
                                <button class="px-3 py-1 text-[10px] font-bold uppercase bg-white/10 text-white rounded-l" title="Show daily chart">Days</button>
                                <button class="px-3 py-1 text-[10px] font-bold uppercase text-muted hover:text-white l-bd border-l-0 transition-colors" title="Show weekly chart">Weeks</button>
                                <button class="px-3 py-1 text-[10px] font-bold uppercase text-muted hover:text-white l-bd border-l-0 rounded-r transition-colors" title="Show monthly chart">Months</button>
@@ -967,29 +969,27 @@
                            <div class="absolute left-1 top-0 bottom-4 flex flex-col justify-between text-[9px] font-mono text-white/25">
                                <span>40</span><span>20</span><span>0</span><span>-20</span><span>-40</span>
                            </div>
-                           <!-- Right Y-axis: Trade Count -->
-                           <div class="absolute right-1 top-0 bottom-4 flex flex-col justify-between text-[9px] font-mono text-white/20 text-right">
-                               <span>8</span><span>6</span><span>4</span><span>2</span><span>0</span>
-                           </div>
+
                            <!-- Bars + Line overlay -->
                            <svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 200 100">
                                <!-- Zero line -->
                                <line x1="0" y1="50" x2="200" y2="50" stroke="rgba(255,255,255,0.08)" stroke-width="0.5" stroke-dasharray="3,3"/>
-                               <!-- Trade count bars (semi-transparent) -->
-                               <rect x="4"  y="48" width="5" height="4" rx="0.5" fill="rgba(255,255,255,0.12)"/>
-                               <rect x="18" y="46" width="5" height="8" rx="0.5" fill="rgba(255,255,255,0.12)"/>
-                               <rect x="32" y="48" width="5" height="4" rx="0.5" fill="rgba(255,255,255,0.12)"/>
-                               <rect x="46" y="48" width="5" height="4" rx="0.5" fill="rgba(255,255,255,0.12)"/>
-                               <rect x="60" y="48" width="5" height="4" rx="0.5" fill="rgba(255,255,255,0.12)"/>
-                               <rect x="74" y="48" width="5" height="4" rx="0.5" fill="rgba(255,255,255,0.12)"/>
-                               <rect x="88" y="48" width="5" height="4" rx="0.5" fill="rgba(255,255,255,0.12)"/>
-                               <rect x="102" y="48" width="5" height="4" rx="0.5" fill="rgba(255,255,255,0.12)"/>
-                               <rect x="116" y="48" width="5" height="4" rx="0.5" fill="rgba(255,255,255,0.12)"/>
-                               <rect x="130" y="42" width="5" height="16" rx="0.5" fill="rgba(255,255,255,0.18)"/>
-                               <rect x="144" y="38" width="5" height="24" rx="0.5" fill="rgba(255,255,255,0.18)"/>
-                               <rect x="158" y="30" width="5" height="40" rx="0.5" fill="rgba(255,255,255,0.22)"/>
-                               <rect x="172" y="35" width="5" height="30" rx="0.5" fill="rgba(255,255,255,0.18)"/>
-                               <rect x="186" y="40" width="5" height="20" rx="0.5" fill="rgba(255,255,255,0.15)"/>
+                               <!-- Trade count bars (bottom-aligned) -->
+                               <rect x="4"   y="96" width="5" height="4"  rx="0.5" fill="rgba(255,255,255,0.10)"/>
+                               <rect x="18"  y="92" width="5" height="8"  rx="0.5" fill="rgba(255,255,255,0.10)"/>
+                               <rect x="32"  y="96" width="5" height="4"  rx="0.5" fill="rgba(255,255,255,0.10)"/>
+                               <rect x="46"  y="96" width="5" height="4"  rx="0.5" fill="rgba(255,255,255,0.10)"/>
+                               <rect x="60"  y="96" width="5" height="4"  rx="0.5" fill="rgba(255,255,255,0.10)"/>
+                               <rect x="74"  y="96" width="5" height="4"  rx="0.5" fill="rgba(255,255,255,0.10)"/>
+                               <rect x="88"  y="96" width="5" height="4"  rx="0.5" fill="rgba(255,255,255,0.10)"/>
+                               <rect x="102" y="96" width="5" height="4"  rx="0.5" fill="rgba(255,255,255,0.10)"/>
+                               <rect x="116" y="92" width="5" height="8"  rx="0.5" fill="rgba(255,255,255,0.12)"/>
+                               <rect x="130" y="76" width="5" height="24" rx="0.5" fill="rgba(255,255,255,0.15)"/>
+                               <rect x="144" y="68" width="5" height="32" rx="0.5" fill="rgba(255,255,255,0.15)"/>
+                               <rect x="158" y="56" width="5" height="44" rx="0.5" fill="rgba(255,255,255,0.18)"/>
+                               <rect x="172" y="64" width="5" height="36" rx="0.5" fill="rgba(255,255,255,0.15)"/>
+                               <rect x="186" y="72" width="5" height="28" rx="0.5" fill="rgba(255,255,255,0.12)"/>
+
                                <!-- P&L thin line with dots -->
                                <polyline points="7,50 21,50 35,50 49,50 63,50 77,50 91,50 105,50 119,48 133,55 147,72 161,30 175,38 189,25" fill="none" stroke="#22c55e" stroke-width="0.4" stroke-linejoin="round"/>
                                <!-- Dots on the line -->
@@ -1048,13 +1048,13 @@
 
               <!-- Master Tabular Engine -->
               <div class="flex-1 bg-surface l-bd rounded-md shadow-xl flex flex-col min-h-0 overflow-hidden">
-                  <div class="h-12 l-b flex items-center bg-black/40 shrink-0 border-b-2 border-transparent">
-                      <button onclick="switchTradeTab('trades-open', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide border-b-2 border-white text-white trade-tab-btn" title="Currently active trades">Open Trades (42)</button>
-                      <button onclick="switchTradeTab('trades-closed', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-white transition-colors trade-tab-btn" title="Completed trade history">Closed (1284)</button>
-                      <button onclick="switchTradeTab('trades-whitelist', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-white transition-colors trade-tab-btn" title="Pair monitoring and lock management">Whitelist Matrix</button>
-                      <button onclick="switchTradeTab('trades-performance', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-white transition-colors trade-tab-btn" title="Performance by trading pair">Performance</button>
-                      <button onclick="switchTradeTab('trades-entry', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-white transition-colors trade-tab-btn" title="Entry signal tag analysis">Entry Tags</button>
-                      <button onclick="switchTradeTab('trades-exit', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-white transition-colors trade-tab-btn" title="Exit reason analysis">Exit Reasons</button>
+                  <div class="h-12 l-b flex items-center bg-black/40 shrink-0 border-b-2 border-transparent overflow-x-auto whitespace-nowrap">
+                      <button onclick="switchTradeTab('trades-open', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide border-b-2 border-white text-white trade-tab-btn shrink-0" title="Currently active trades">Open Trades (42)</button>
+                      <button onclick="switchTradeTab('trades-closed', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-white transition-colors trade-tab-btn shrink-0" title="Completed trade history">Closed (1284)</button>
+                      <button onclick="switchTradeTab('trades-whitelist', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-white transition-colors trade-tab-btn shrink-0" title="Pair monitoring and lock management">Whitelist Matrix</button>
+                      <button onclick="switchTradeTab('trades-performance', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-white transition-colors trade-tab-btn shrink-0" title="Performance by trading pair">Performance</button>
+                      <button onclick="switchTradeTab('trades-entry', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-white transition-colors trade-tab-btn shrink-0" title="Entry signal tag analysis">Entry Tags</button>
+                      <button onclick="switchTradeTab('trades-exit', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-white transition-colors trade-tab-btn shrink-0" title="Exit reason analysis">Exit Reasons</button>
                       
                       <div class="ml-auto mr-5 flex items-center gap-2">
                            <button class="px-2 py-1 rounded text-[10px] text-muted hover:text-white hover:bg-white/6 transition-colors flex items-center gap-1 opacity-50 hover:opacity-100" title="Export table data as CSV"><i data-lucide="download" class="w-3 h-3 inline"></i>CSV</button>

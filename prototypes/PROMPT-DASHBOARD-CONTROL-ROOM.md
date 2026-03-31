@@ -364,10 +364,22 @@ All columns use **sortable column headers** (see Section 4 spec). Checkbox and A
 
 Sources: `FTDailyResponse`, `FTWeeklyResponse`, `FTMonthlyResponse`
 
-### Chart Type: Bars + Thin Line overlay
-- **Bars**: Absolute profit per period (green = profit, red = loss)
-- **Thin line**: Cumulative profit curve
-- **Style**: `stroke-width: 0.4`, dot radius: `1.2`
+### Chart Type: Dual-axis — Line (Profit) + Bars (Trade Count)
+- **Thin line (left Y-axis)**: Cumulative profit per period
+  - `stroke="#22c55e"`, `stroke-width: 0.4`, dot radius: `1.2`
+  - Dots: green (#22c55e) for profit, red (#ef4444) for loss
+- **Bars (right Y-axis)**: Trade count per period
+  - Semi-transparent `rgba(255,255,255,0.12–0.22)` rectangles
+  - Taller bars = more trades in that period
+
+### Axes
+- **Left Y-axis**: Profit scale (e.g. -40 to +40)
+- **Right Y-axis**: Trade Count scale (e.g. 0 to 8)
+- **X-axis**: Date format `MM-DD`
+
+### Legend (top-right of chart)
+- `━ Profit` (green line swatch)
+- `█ Trade Count` (gray bar swatch)
 
 ### Tabs (timeframe switching):
 - Days | Weeks | Months (switch API endpoint)
@@ -382,10 +394,7 @@ Sources: `FTDailyResponse`, `FTWeeklyResponse`, `FTMonthlyResponse`
 ### SVG Chart Details
 - `viewBox="0 0 200 100"`, `preserveAspectRatio="none"`
 - Zero line: `stroke-dasharray="3,3"`, `rgba(255,255,255,0.08)`
-- Trade count bars: semi-transparent `rgba(255,255,255,0.12)` rectangles
-- P&L line: `stroke="#22c55e"`, `stroke-width="0.4"`, dots `r="1.2"`
-- Y-axis labels: `text-[9px] font-mono text-white/25`
-- X-axis labels: date format `MM-DD`
+- Y-axis labels: `text-[9px] font-mono text-white/25` (left), `text-white/20` (right)
 
 ---
 

@@ -441,6 +441,7 @@ interface HistoryStats {
   wins: number;
   losses: number;
   profit_factor: number;
+  winrate: number;
 }
 
 function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
@@ -467,7 +468,6 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
 
   const paged = filtered.slice((page - 1) * perPage, page * perPage);
 
-  // Lazy-load stats for visible entries
   useEffect(() => {
     paged.forEach(async (entry) => {
       const key = entry.filename;
@@ -478,17 +478,20 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
         const br = (data as Record<string, unknown>).backtest_result ?? data;
         const stratMap = (br as Record<string, unknown>).strategy as Record<string, Record<string, unknown>> | undefined;
         if (stratMap) {
-          const firstKey = Object.keys(stratMap)[0];
-          if (firstKey) {
-            const s = stratMap[firstKey];
+          const fk = Object.keys(stratMap)[0];
+          if (fk) {
+            const s = stratMap[fk];
+            const tt = Number(s.total_trades ?? 0);
+            const w = Number(s.wins ?? 0);
             setStatsCache(prev => new Map(prev).set(key, {
-              total_trades: Number(s.total_trades ?? 0),
+              total_trades: tt,
               profit_total_abs: Number(s.profit_total_abs ?? 0),
               profit_total: Number(s.profit_total ?? 0),
               max_drawdown_account: Number(s.max_drawdown_account ?? 0),
-              wins: Number(s.wins ?? 0),
+              wins: w,
               losses: Number(s.losses ?? 0),
               profit_factor: Number(s.profit_factor ?? 0),
+              winrate: Number(s.winrate ?? (tt > 0 ? w / tt : 0)),
             }));
             return;
           }
@@ -504,9 +507,8 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
   if (filtered.length === 0) return null;
   const totalPages = Math.ceil(filtered.length / perPage);
 
-  /** Convert FT timestamp — could be seconds or milliseconds */
   const fmtDate = (ts?: number) => {
-    if (!ts) return "?";
+    if (!ts) return "—";
     const ms = ts > 1e12 ? ts : ts * 1000;
     return new Date(ms).toISOString().split("T")[0];
   };
@@ -516,77 +518,101 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
       <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
         Backtest History ({filtered.length})
       </div>
-      <div className="flex flex-col gap-1">
-        {paged.map((entry) => {
-          const runDate = new Date(entry.backtest_start_time * 1000);
-          const runStr = `${runDate.getMonth()+1}/${runDate.getDate()} ${String(runDate.getHours()).padStart(2,'0')}:${String(runDate.getMinutes()).padStart(2,'0')}`;
-          const entryKey = `${entry.filename}-${entry.run_id}`;
-          const isConfirming = confirmId === entryKey;
-          const stats = statsCache.get(entry.filename);
-          const s = (stats && stats !== 'loading' && stats !== 'error') ? stats as HistoryStats : null;
-          const profitOk = s ? s.profit_total_abs >= 0 : null;
+      <div className="border border-border rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="bg-muted/50 text-muted-foreground">
+                <th className="text-left px-3 py-2 font-semibold">Run Date</th>
+                <th className="text-left px-3 py-2 font-semibold">Timeframe</th>
+                <th className="text-left px-3 py-2 font-semibold">Range</th>
+                <th className="text-right px-3 py-2 font-semibold">Trades</th>
+                <th className="text-right px-3 py-2 font-semibold">Profit</th>
+                <th className="text-right px-3 py-2 font-semibold">Profit %</th>
+                <th className="text-right px-3 py-2 font-semibold">Win Rate</th>
+                <th className="text-right px-3 py-2 font-semibold">Max DD</th>
+                <th className="text-right px-3 py-2 font-semibold">PF</th>
+                <th className="text-center px-3 py-2 font-semibold w-[80px]">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paged.map((entry) => {
+                const runDate = new Date(entry.backtest_start_time * 1000);
+                const runStr = `${runDate.getFullYear()}-${String(runDate.getMonth()+1).padStart(2,'0')}-${String(runDate.getDate()).padStart(2,'0')} ${String(runDate.getHours()).padStart(2,'0')}:${String(runDate.getMinutes()).padStart(2,'0')}`;
+                const entryKey = `${entry.filename}-${entry.run_id}`;
+                const isConfirming = confirmId === entryKey;
+                const stats = statsCache.get(entry.filename);
+                const s = (stats && stats !== 'loading' && stats !== 'error') ? stats as HistoryStats : null;
 
-          return (
-            <div
-              key={entryKey}
-              className="flex items-center gap-2 px-3 py-1.5 bg-muted/20 border border-border rounded-lg text-[10px] hover:bg-muted/40 hover:border-primary/30 transition-all group"
-            >
-              {/* Date + TF + Range */}
-              <span className="text-muted-foreground shrink-0 w-[70px]">{runStr}</span>
-              <span className="font-mono text-muted-foreground shrink-0 w-[28px]">{entry.timeframe || "?"}</span>
-              <span className="text-muted-foreground shrink-0">{fmtDate(entry.backtest_start_ts)}→{fmtDate(entry.backtest_end_ts)}</span>
-
-              {/* Lazy stats */}
-              {stats === 'loading' && <span className="text-muted-foreground/40 animate-pulse ml-1">...</span>}
-              {s && (
-                <>
-                  <span className="font-mono text-muted-foreground ml-1">{s.total_trades}t</span>
-                  <span className={`font-mono font-medium ${profitOk ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {profitOk ? '+' : ''}{fmt$(s.profit_total_abs)}
-                  </span>
-                  <span className={`font-mono opacity-70 ${profitOk ? 'text-emerald-400/70' : 'text-rose-400/70'}`}>
-                    {fmtPctRatio(s.profit_total)}
-                  </span>
-                  <span className="font-mono text-rose-400/80">DD-{(s.max_drawdown_account * 100).toFixed(1)}%</span>
-                  <span className={`font-mono ${s.profit_factor > 1 ? 'text-emerald-400/70' : 'text-rose-400/70'}`}>PF:{s.profit_factor.toFixed(1)}</span>
-                </>
-              )}
-
-              {/* Spacer */}
-              <span className="flex-1" />
-
-              {/* Load */}
-              <button
-                onClick={() => onLoad(entry)}
-                className="text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0 hover:underline"
-              >Load</button>
-
-              {/* Delete */}
-              {isConfirming ? (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setConfirmId(null); onDelete(entry); }}
-                  className="px-1.5 py-0.5 bg-rose-500/20 border border-rose-500/50 text-rose-400 rounded hover:bg-rose-500/30 transition-all shrink-0 animate-pulse"
-                >Confirm?</button>
-              ) : (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setConfirmId(entryKey); }}
-                  className="text-rose-400/40 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all shrink-0"
-                  title="Delete"
-                >🗑</button>
-              )}
-            </div>
-          );
-        })}
-      </div>
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-2">
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-            className="px-2 py-0.5 text-[10px] border border-border rounded hover:bg-muted/50 disabled:opacity-30 transition">← Prev</button>
-          <span className="text-[10px] text-muted-foreground">{page}/{totalPages}</span>
-          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-            className="px-2 py-0.5 text-[10px] border border-border rounded hover:bg-muted/50 disabled:opacity-30 transition">Next →</button>
+                return (
+                  <tr key={entryKey} className="border-t border-border hover:bg-muted/30 transition-colors group">
+                    <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{runStr}</td>
+                    <td className="px-3 py-2 font-mono text-muted-foreground">{entry.timeframe || "—"}</td>
+                    <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{fmtDate(entry.backtest_start_ts)} → {fmtDate(entry.backtest_end_ts)}</td>
+                    {stats === 'loading' ? (
+                      <td colSpan={5} className="px-3 py-2 text-center text-muted-foreground/50 animate-pulse">Loading...</td>
+                    ) : s ? (
+                      <>
+                        <td className="px-3 py-2 text-right tabular-nums text-foreground">{s.total_trades}</td>
+                        <td className={`px-3 py-2 text-right tabular-nums font-medium ${s.profit_total_abs >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {fmt$(s.profit_total_abs)}
+                        </td>
+                        <td className={`px-3 py-2 text-right tabular-nums ${s.profit_total >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {fmtPctRatio(s.profit_total)}
+                        </td>
+                        <td className="px-3 py-2 text-right tabular-nums text-foreground">
+                          {(s.winrate * 100).toFixed(1)}%
+                        </td>
+                        <td className="px-3 py-2 text-right tabular-nums text-rose-400">
+                          -{(s.max_drawdown_account * 100).toFixed(1)}%
+                        </td>
+                        <td className={`px-3 py-2 text-right tabular-nums ${s.profit_factor > 1 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {s.profit_factor.toFixed(2)}
+                        </td>
+                      </>
+                    ) : (
+                      <td colSpan={5} className="px-3 py-2 text-center text-muted-foreground/30">—</td>
+                    )}
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => onLoad(entry)}
+                          className="text-[10px] px-2 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded hover:bg-primary/20 transition-all"
+                        >Load</button>
+                        {isConfirming ? (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setConfirmId(null); onDelete(entry); }}
+                            className="text-[10px] px-1.5 py-0.5 bg-rose-500/20 border border-rose-500/50 text-rose-400 rounded hover:bg-rose-500/30 transition-all animate-pulse"
+                          >Confirm?</button>
+                        ) : (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setConfirmId(entryKey); }}
+                            className="text-rose-400/50 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all"
+                            title="Delete"
+                          >🗑</button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-      )}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-3 py-2 border-t border-border bg-muted/30">
+            <span className="text-xs text-muted-foreground">
+              Showing {(page - 1) * perPage + 1}-{Math.min(page * perPage, filtered.length)} of {filtered.length}
+            </span>
+            <div className="flex gap-1">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                className="px-2 py-1 text-xs border border-border rounded-btn bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all">← Prev</button>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                className="px-2 py-1 text-xs border border-border rounded-btn bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all">Next →</button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

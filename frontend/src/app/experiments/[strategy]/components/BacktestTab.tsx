@@ -593,9 +593,8 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
                         ) : (
                           <button
                             onClick={(e) => { e.stopPropagation(); setConfirmId(entryKey); }}
-                            className="text-rose-400/50 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all"
-                            title="Delete"
-                          >🗑</button>
+                            className="text-[10px] px-1.5 py-0.5 bg-rose-500/10 border border-rose-500/20 text-rose-400/70 rounded hover:bg-rose-500/20 hover:text-rose-400 transition-all"
+                          >Delete</button>
                         )}
                       </div>
                     </td>

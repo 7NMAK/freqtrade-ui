@@ -313,85 +313,77 @@
                            </div>
                        </div>
                        
-                        <!-- Bot 3: Compact -->
-                        <div class="p-3 px-4 l-b hover:bg-white/[0.03] transition-colors cursor-pointer flex items-center justify-between" onclick="openBotDrawer('ScalpBot_XRP', 'LIVE')">
-                            <div class="flex items-center gap-2.5">
-                                <div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div>
-                                <span class="font-bold text-white text-[11px] tracking-wide">ScalpBot_XRP</span>
-                                <span class="text-muted text-[10px]">Binance</span>
+                                 <!-- Bot 3 -->
+                        <div class="p-4 l-b hover:bg-white/[0.03] transition-colors group cursor-pointer" onclick="openBotDrawer('ScalpBot_XRP', 'LIVE')">
+                            <div class="flex items-start justify-between mb-2.5">
+                                <div class="flex items-center gap-2"><div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="font-bold text-white uppercase text-[12px] tracking-wide">ScalpBot_XRP</span><span class="text-[10px] border border-white/20 px-1.5 py-[1px] rounded text-white/60 font-medium">LIVE</span></div>
+                                <div class="text-right"><span class="text-up font-bold text-[13px]">+$92.10</span> <span class="text-[10px]" style="color:rgba(34,197,94,0.5)">+3.1%</span></div>
                             </div>
-                            <div class="flex items-center gap-3 text-[11px]">
-                                <span class="text-muted">71%</span>
-                                <span class="text-up font-bold">+$92.10</span>
-                                <span class="text-[10px]" style="color:rgba(34,197,94,0.5)">+3.1%</span>
+                            <div class="grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3">
+                                <div class="flex justify-between w-full pr-5"><span>Trades:</span> <span class="text-white/70">620</span></div>
+                                <div class="flex justify-between w-full"><span>Win:</span> <span class="text-white/70">71%</span></div>
+                                <div class="flex justify-between w-full pr-5"><span>Drawdown:</span> <span class="text-down">-2.1%</span></div>
+                                <div class="flex justify-between w-full"><span>Avg. Dur:</span> <span class="text-white/70">0.4h</span></div>
                             </div>
-                        </div>
-                        <!-- Bot 4: Compact -->
-                        <div class="p-3 px-4 l-b hover:bg-white/[0.03] transition-colors cursor-pointer bg-white/[0.015] flex items-center justify-between">
-                            <div class="flex items-center gap-2.5">
-                                <div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div>
-                                <span class="font-bold text-white text-[11px] tracking-wide">GridBot_BNB_DCA</span>
-                                <span class="text-muted text-[10px]">Binance</span>
-                            </div>
-                            <div class="flex items-center gap-3 text-[11px]">
-                                <span class="text-muted">81%</span>
-                                <span class="text-up font-bold">+$14.80</span>
-                                <span class="text-[10px]" style="color:rgba(34,197,94,0.5)">+0.8%</span>
+                            <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
+                                <div class="flex gap-[2px] h-4 items-end"><div class="w-1.5 bg-up h-[80%] rounded-sm"></div><div class="w-1.5 bg-up h-[100%] rounded-sm"></div><div class="w-1.5 bg-up h-[40%] rounded-sm"></div><div class="w-1.5 bg-down h-[20%] rounded-sm"></div><div class="w-1.5 bg-up h-[60%] rounded-sm"></div></div>
+                                <div class="flex gap-1"><button class="bot-ctrl ctrl-start" title="Start" onclick="event.stopPropagation()"><i data-lucide="play" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="Stop" onclick="event.stopPropagation()"><i data-lucide="square" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-pause" title="Pause" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-3 h-3"></i></button><button class="bot-ctrl" title="Reload" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="Force Exit All" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-3 h-3"></i></button><button class="bot-ctrl" title="Stopbuy" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-3 h-3"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="color:#facc15" title="Soft Kill" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="Hard Kill" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-3 h-3"></i></button></div>
                             </div>
                         </div>
-                        <!-- Bot 5: Compact -->
-                        <div class="p-3 px-4 l-b hover:bg-white/[0.03] transition-colors cursor-pointer flex items-center justify-between">
-                            <div class="flex items-center gap-2.5">
-                                <div class="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                                <span class="font-bold text-white/60 text-[11px] tracking-wide">MomentumRider_SOL</span>
-                                <span class="text-muted text-[10px]">Kraken</span>
+
+                        <!-- Bot 4: PAUSED -->
+                        <div class="p-4 l-b hover:bg-white/[0.03] transition-colors group cursor-pointer bg-white/[0.015]">
+                            <div class="flex items-start justify-between mb-2.5">
+                                <div class="flex items-center gap-2"><div class="w-2 h-2 bg-yellow-400 rounded-full"></div><span class="font-bold text-white/60 uppercase text-[12px] tracking-wide">MomentumRider_SOL</span><span class="text-[10px] border border-yellow-500/30 px-1.5 py-[1px] rounded text-yellow-400 font-medium">PAUSED</span></div>
+                                <span class="text-muted font-bold text-[13px]">$0.00</span>
                             </div>
-                            <div class="flex items-center gap-3 text-[11px]">
-                                <span class="text-muted">62%</span>
-                                <span class="text-muted">$0.00</span>
-                                <span class="text-muted text-[10px]">PAUSED</span>
+                            <div class="grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3">
+                                <div class="flex justify-between w-full pr-5"><span>Trades:</span> <span class="text-white/70">156</span></div>
+                                <div class="flex justify-between w-full"><span>Win:</span> <span class="text-white/70">62%</span></div>
+                                <div class="flex justify-between w-full pr-5"><span>Drawdown:</span> <span class="text-down">-5.2%</span></div>
+                                <div class="flex justify-between w-full"><span>Avg. Dur:</span> <span class="text-white/70">3.2h</span></div>
                             </div>
-                        </div>
-                        <!-- Bot 6: Compact -->
-                        <div class="p-3 px-4 l-b hover:bg-white/[0.03] transition-colors cursor-pointer bg-white/[0.015] flex items-center justify-between">
-                            <div class="flex items-center gap-2.5">
-                                <div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div>
-                                <span class="font-bold text-white text-[11px] tracking-wide">BreakoutHunter_AVAX</span>
-                                <span class="text-muted text-[10px]">Kraken</span>
-                            </div>
-                            <div class="flex items-center gap-3 text-[11px]">
-                                <span class="text-muted">68%</span>
-                                <span class="text-up font-bold">+$220.40</span>
-                                <span class="text-[10px]" style="color:rgba(34,197,94,0.5)">+8.2%</span>
+                            <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
+                                <div class="flex gap-[2px] h-4 items-end"><div class="w-1.5 bg-up h-[30%] rounded-sm"></div><div class="w-1.5 bg-down h-[50%] rounded-sm"></div><div class="w-1.5 bg-up h-[40%] rounded-sm"></div><div class="w-1.5 bg-down h-[70%] rounded-sm"></div><div class="w-1.5 bg-down h-[20%] rounded-sm"></div></div>
+                                <div class="flex gap-1"><button class="bot-ctrl ctrl-start" title="Start" onclick="event.stopPropagation()"><i data-lucide="play" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="Stop" onclick="event.stopPropagation()"><i data-lucide="square" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-pause" title="Pause" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-3 h-3"></i></button><button class="bot-ctrl" title="Reload" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="Force Exit All" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-3 h-3"></i></button><button class="bot-ctrl" title="Stopbuy" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-3 h-3"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="color:#facc15" title="Soft Kill" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="Hard Kill" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-3 h-3"></i></button></div>
                             </div>
                         </div>
-                        <!-- Bot 7: Compact -->
-                        <div class="p-3 px-4 l-b hover:bg-white/[0.03] transition-colors cursor-pointer flex items-center justify-between">
-                            <div class="flex items-center gap-2.5">
-                                <div class="w-2 h-2 bg-down rounded-full"></div>
-                                <span class="font-bold text-white/40 text-[11px] tracking-wide">MemeScalper_DOGE</span>
-                                <span class="text-muted text-[10px]">Binance</span>
+
+                        <!-- Bot 5: STOPPED -->
+                        <div class="p-4 l-b hover:bg-white/[0.03] transition-colors group cursor-pointer">
+                            <div class="flex items-start justify-between mb-2.5">
+                                <div class="flex items-center gap-2"><div class="w-2 h-2 bg-down rounded-full"></div><span class="font-bold text-white/40 uppercase text-[12px] tracking-wide">MemeScalper_DOGE</span><span class="text-[10px] border border-down/30 px-1.5 py-[1px] rounded text-down font-medium">STOPPED</span></div>
+                                <div class="text-right"><span class="text-down font-bold text-[13px]">-$420</span> <span class="text-[10px]" style="color:rgba(239,68,68,0.5)">-17.5%</span></div>
                             </div>
-                            <div class="flex items-center gap-3 text-[11px]">
-                                <span class="text-down">28%</span>
-                                <span class="text-down font-bold">-$420</span>
-                                <span class="text-[10px]" style="color:rgba(239,68,68,0.5)">-12.4%</span>
+                            <div class="grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3">
+                                <div class="flex justify-between w-full pr-5"><span>Trades:</span> <span class="text-white/70">18</span></div>
+                                <div class="flex justify-between w-full"><span>Win:</span> <span class="text-down">28%</span></div>
+                                <div class="flex justify-between w-full pr-5"><span>Drawdown:</span> <span class="text-down">-12.4%</span></div>
+                                <div class="flex justify-between w-full"><span>Avg. Dur:</span> <span class="text-white/70">0.8h</span></div>
                             </div>
-                        </div>
-                        <!-- Bot 8: Compact -->
-                        <div class="p-3 px-4 l-b hover:bg-white/[0.03] transition-colors cursor-pointer bg-white/[0.015] flex items-center justify-between">
-                            <div class="flex items-center gap-2.5">
-                                <div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div>
-                                <span class="font-bold text-white text-[11px] tracking-wide">MeanRevert_LINK</span>
-                                <span class="text-muted text-[10px]">Binance</span>
-                            </div>
-                            <div class="flex items-center gap-3 text-[11px]">
-                                <span class="text-muted">55%</span>
-                                <span class="text-down font-bold">-$8.50</span>
-                                <span class="text-[10px]" style="color:rgba(239,68,68,0.5)">-0.4%</span>
+                            <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
+                                <div class="flex gap-[2px] h-4 items-end"><div class="w-1.5 bg-down h-[90%] rounded-sm"></div><div class="w-1.5 bg-down h-[100%] rounded-sm"></div><div class="w-1.5 bg-up h-[10%] rounded-sm"></div><div class="w-1.5 bg-down h-[80%] rounded-sm"></div><div class="w-1.5 bg-down h-[60%] rounded-sm"></div></div>
+                                <div class="flex gap-1"><button class="bot-ctrl ctrl-start" title="Start" onclick="event.stopPropagation()"><i data-lucide="play" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="Stop" onclick="event.stopPropagation()"><i data-lucide="square" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-pause" title="Pause" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-3 h-3"></i></button><button class="bot-ctrl" title="Reload" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="Force Exit All" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-3 h-3"></i></button><button class="bot-ctrl" title="Stopbuy" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-3 h-3"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="color:#facc15" title="Soft Kill" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="Hard Kill" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-3 h-3"></i></button></div>
                             </div>
                         </div>
-                   </div>
+
+                        <!-- Bot 6 -->
+                        <div class="p-4 l-b hover:bg-white/[0.03] transition-colors group cursor-pointer bg-white/[0.015]">
+                            <div class="flex items-start justify-between mb-2.5">
+                                <div class="flex items-center gap-2"><div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="font-bold text-white uppercase text-[12px] tracking-wide">BreakoutHunter_AVAX</span><span class="text-[10px] border border-white/20 px-1.5 py-[1px] rounded text-white/60 font-medium">LIVE</span></div>
+                                <div class="text-right"><span class="text-up font-bold text-[13px]">+$220.40</span> <span class="text-[10px]" style="color:rgba(34,197,94,0.5)">+8.2%</span></div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3">
+                                <div class="flex justify-between w-full pr-5"><span>Trades:</span> <span class="text-white/70">210</span></div>
+                                <div class="flex justify-between w-full"><span>Win:</span> <span class="text-white/70">68%</span></div>
+                                <div class="flex justify-between w-full pr-5"><span>Drawdown:</span> <span class="text-down">-3.4%</span></div>
+                                <div class="flex justify-between w-full"><span>Avg. Dur:</span> <span class="text-white/70">1.8h</span></div>
+                            </div>
+                            <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
+                                <div class="flex gap-[2px] h-4 items-end"><div class="w-1.5 bg-up h-[60%] rounded-sm"></div><div class="w-1.5 bg-up h-[80%] rounded-sm"></div><div class="w-1.5 bg-up h-[100%] rounded-sm"></div><div class="w-1.5 bg-down h-[30%] rounded-sm"></div><div class="w-1.5 bg-up h-[70%] rounded-sm"></div></div>
+                                <div class="flex gap-1"><button class="bot-ctrl ctrl-start" title="Start" onclick="event.stopPropagation()"><i data-lucide="play" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="Stop" onclick="event.stopPropagation()"><i data-lucide="square" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-pause" title="Pause" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-3 h-3"></i></button><button class="bot-ctrl" title="Reload" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="Force Exit All" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-3 h-3"></i></button><button class="bot-ctrl" title="Stopbuy" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-3 h-3"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="color:#facc15" title="Soft Kill" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="Hard Kill" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-3 h-3"></i></button></div>
+                            </div>
+                        </div>               </div>
                </div>
           </div>
 
@@ -1139,7 +1131,7 @@
                               <td class="px-3 py-2.5 text-right">6</td>
                               <td class="px-3 py-2.5 text-right text-down">-1.2%</td>
                               <td class="px-3 py-2.5 text-right">1.5h</td>
-                              <td class="px-3 py-2.5 text-center"><div class="flex gap-1 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button></div></td>
+                              <td class="px-3 py-2.5 text-center"><div class="flex gap-0.5 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
                           </tr>
                           <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer bg-white/[0.015]" onclick="openBotDrawer('TrendFollowerV3_ETH', 'LIVE')">
                               <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
@@ -1156,7 +1148,7 @@
                               <td class="px-3 py-2.5 text-right">3</td>
                               <td class="px-3 py-2.5 text-right text-down">-3.8%</td>
                               <td class="px-3 py-2.5 text-right">2.1h</td>
-                              <td class="px-3 py-2.5 text-center"><div class="flex gap-1 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button></div></td>
+                              <td class="px-3 py-2.5 text-center"><div class="flex gap-0.5 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
                           </tr>
                           <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer">
                               <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
@@ -1173,7 +1165,7 @@
                               <td class="px-3 py-2.5 text-right">4</td>
                               <td class="px-3 py-2.5 text-right text-down">-2.1%</td>
                               <td class="px-3 py-2.5 text-right">0.4h</td>
-                              <td class="px-3 py-2.5 text-center"><div class="flex gap-1 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button></div></td>
+                              <td class="px-3 py-2.5 text-center"><div class="flex gap-0.5 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
                           </tr>
                           <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer bg-white/[0.015]">
                               <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
@@ -1190,7 +1182,7 @@
                               <td class="px-3 py-2.5 text-right text-muted">0</td>
                               <td class="px-3 py-2.5 text-right text-down">-5.2%</td>
                               <td class="px-3 py-2.5 text-right">3.2h</td>
-                              <td class="px-3 py-2.5 text-center"><div class="flex gap-1 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button></div></td>
+                              <td class="px-3 py-2.5 text-center"><div class="flex gap-0.5 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
                           </tr>
                           <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer">
                               <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
@@ -1207,7 +1199,7 @@
                               <td class="px-3 py-2.5 text-right text-muted">0</td>
                               <td class="px-3 py-2.5 text-right text-down">-12.4%</td>
                               <td class="px-3 py-2.5 text-right">0.8h</td>
-                              <td class="px-3 py-2.5 text-center"><div class="flex gap-1 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button></div></td>
+                              <td class="px-3 py-2.5 text-center"><div class="flex gap-0.5 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
                           </tr>
                           <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer bg-white/[0.015]">
                               <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
@@ -1224,7 +1216,7 @@
                               <td class="px-3 py-2.5 text-right">8</td>
                               <td class="px-3 py-2.5 text-right text-down">-0.8%</td>
                               <td class="px-3 py-2.5 text-right">4.2h</td>
-                              <td class="px-3 py-2.5 text-center"><div class="flex gap-1 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button></div></td>
+                              <td class="px-3 py-2.5 text-center"><div class="flex gap-0.5 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
                           </tr>
                           <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer">
                               <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
@@ -1241,7 +1233,7 @@
                               <td class="px-3 py-2.5 text-right">2</td>
                               <td class="px-3 py-2.5 text-right text-down">-3.4%</td>
                               <td class="px-3 py-2.5 text-right">1.8h</td>
-                              <td class="px-3 py-2.5 text-center"><div class="flex gap-1 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button></div></td>
+                              <td class="px-3 py-2.5 text-center"><div class="flex gap-0.5 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
                           </tr>
                           <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer bg-white/[0.015]">
                               <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
@@ -1258,7 +1250,7 @@
                               <td class="px-3 py-2.5 text-right">1</td>
                               <td class="px-3 py-2.5 text-right text-down">-6.1%</td>
                               <td class="px-3 py-2.5 text-right">5.4h</td>
-                              <td class="px-3 py-2.5 text-center"><div class="flex gap-1 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button></div></td>
+                              <td class="px-3 py-2.5 text-center"><div class="flex gap-0.5 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
                           </tr>
                       </tbody>
                   </table>

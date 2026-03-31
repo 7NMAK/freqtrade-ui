@@ -1061,26 +1061,31 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="bg-muted/50 text-muted-foreground">
-                      <th className="text-left px-3 py-2 font-semibold">Date</th>
+                      <th className="text-left px-3 py-2 font-semibold">Run Date</th>
                       <th className="text-left px-3 py-2 font-semibold">Strategy</th>
                       <th className="text-right px-3 py-2 font-semibold">Epochs</th>
                       <th className="text-right px-3 py-2 font-semibold">Size</th>
-                      <th className="text-center px-3 py-2 font-semibold w-[80px]">Actions</th>
+                      <th className="text-center px-3 py-2 font-semibold w-[120px]">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {pagedHoRuns.map((run) => {
                       const isConfirming = hoConfirmDelete === run.filename;
-                      const dateStr = run.created_at || new Date(run.mtime * 1000).toLocaleString();
+                      const runDate = new Date(run.mtime * 1000);
+                      const runStr = `${runDate.getFullYear()}-${String(runDate.getMonth()+1).padStart(2,'0')}-${String(runDate.getDate()).padStart(2,'0')} ${String(runDate.getHours()).padStart(2,'0')}:${String(runDate.getMinutes()).padStart(2,'0')}`;
                       const sizeKb = (run.size_bytes / 1024).toFixed(0);
                       return (
-                        <tr key={run.filename} className="border-t border-border hover:bg-muted/30 transition-colors group">
-                          <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{dateStr}</td>
+                        <tr key={run.filename} className="border-t border-border hover:bg-muted/30 transition-colors">
+                          <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{runStr}</td>
                           <td className="px-3 py-2 font-mono text-foreground">{run.strategy}</td>
                           <td className="px-3 py-2 text-right tabular-nums text-foreground">{run.epochs}</td>
                           <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{sizeKb} KB</td>
                           <td className="px-3 py-2 whitespace-nowrap">
                             <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={fetchResults}
+                                className="text-[10px] px-2 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded hover:bg-primary/20 transition-all"
+                              >Load</button>
                               {isConfirming ? (
                                 <button
                                   onClick={() => { setHoConfirmDelete(null); handleDeleteRun(run.filename); }}
@@ -1089,9 +1094,8 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                               ) : (
                                 <button
                                   onClick={() => setHoConfirmDelete(run.filename)}
-                                  className="text-rose-400/50 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all"
-                                  title="Delete"
-                                >🗑</button>
+                                  className="text-[10px] px-1.5 py-0.5 bg-rose-500/10 border border-rose-500/20 text-rose-400/70 rounded hover:bg-rose-500/20 hover:text-rose-400 transition-all"
+                                >Delete</button>
                               )}
                             </div>
                           </td>

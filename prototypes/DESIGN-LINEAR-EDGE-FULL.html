@@ -1876,6 +1876,114 @@
         // Re-render Lucide icons after state change
         setTimeout(() => lucide.createIcons(), 300);
     }
+    // ═══ SORTABLE COLUMN HEADERS ═══
+    document.querySelectorAll('th.sortable').forEach(th => {
+        th.addEventListener('click', function(e) {
+            // Don't sort if clicking filter
+            if (e.target.closest('.col-filter-dropdown')) return;
+            const table = this.closest('table');
+            if (!table) return;
+            const tbody = table.querySelector('tbody');
+            if (!tbody) return;
+            const idx = Array.from(this.parentNode.children).indexOf(this);
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            // Toggle sort direction
+            const wasAsc = this.classList.contains('sort-asc');
+            const wasDesc = this.classList.contains('sort-desc');
+            // Clear all siblings
+            this.parentNode.querySelectorAll('th').forEach(h => h.classList.remove('sort-asc','sort-desc'));
+            const dir = wasAsc ? 'desc' : 'asc';
+            this.classList.add('sort-' + dir);
+            
+            rows.sort((a, b) => {
+                const aText = (a.children[idx]?.textContent || '').trim();
+                const bText = (b.children[idx]?.textContent || '').trim();
+                const aNum = parseFloat(aText.replace(/[^0-9.\-]/g, ''));
+                const bNum = parseFloat(bText.replace(/[^0-9.\-]/g, ''));
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return dir === 'asc' ? aNum - bNum : bNum - aNum;
+                }
+                return dir === 'asc' ? aText.localeCompare(bText) : bText.localeCompare(aText);
+            });
+            rows.forEach(r => tbody.appendChild(r));
+        });
+    });
+
+    // ═══ FILTERABLE COLUMN HEADERS — dropdown ═══
+    let activeFilterDropdown = null;
+
+    document.querySelectorAll('th.filterable').forEach(th => {
+        th.addEventListener('click', function(e) {
+            e.stopPropagation();
+            // Close any existing dropdown
+            if (activeFilterDropdown) { activeFilterDropdown.remove(); activeFilterDropdown = null; }
+            
+            const table = this.closest('table');
+            if (!table) return;
+            const tbody = table.querySelector('tbody');
+            if (!tbody) return;
+            const idx = Array.from(this.parentNode.children).indexOf(this);
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            // Gather unique values
+            const values = new Set();
+            rows.forEach(r => {
+                const cell = r.children[idx];
+                if (cell) values.add(cell.textContent.trim());
+            });
+            
+            // Build dropdown
+            const dd = document.createElement('div');
+            dd.className = 'col-filter-dropdown';
+            dd.style.cssText = 'position:absolute; top:100%; left:0; z-index:100; min-width:160px; max-height:240px; overflow-y:auto; background:#1a1a1a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; box-shadow:0 8px 32px rgba(0,0,0,0.6); padding:4px 0; margin-top:4px;';
+            
+            // "Show All" option
+            const allBtn = document.createElement('div');
+            allBtn.textContent = '✕  Clear Filter';
+            allBtn.style.cssText = 'padding:6px 12px; font-size:11px; font-family:monospace; color:#22d3ee; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.06);';
+            allBtn.onmouseenter = () => allBtn.style.background = 'rgba(255,255,255,0.06)';
+            allBtn.onmouseleave = () => allBtn.style.background = '';
+            allBtn.onclick = (e) => {
+                e.stopPropagation();
+                rows.forEach(r => r.style.display = '');
+                this.classList.remove('filter-active');
+                dd.remove();
+                activeFilterDropdown = null;
+            };
+            dd.appendChild(allBtn);
+            
+            // Value options
+            Array.from(values).sort().forEach(val => {
+                const opt = document.createElement('div');
+                opt.textContent = val;
+                opt.style.cssText = 'padding:5px 12px; font-size:11px; font-family:monospace; color:rgba(255,255,255,0.8); cursor:pointer; white-space:nowrap;';
+                opt.onmouseenter = () => opt.style.background = 'rgba(255,255,255,0.06)';
+                opt.onmouseleave = () => opt.style.background = '';
+                opt.onclick = (e) => {
+                    e.stopPropagation();
+                    rows.forEach(r => {
+                        const cell = r.children[idx];
+                        r.style.display = (cell && cell.textContent.trim() === val) ? '' : 'none';
+                    });
+                    this.classList.add('filter-active');
+                    dd.remove();
+                    activeFilterDropdown = null;
+                };
+                dd.appendChild(opt);
+            });
+            
+            this.style.position = 'relative';
+            this.appendChild(dd);
+            activeFilterDropdown = dd;
+        });
+    });
+
+    // Close filter dropdown on outside click
+    document.addEventListener('click', () => {
+        if (activeFilterDropdown) { activeFilterDropdown.remove(); activeFilterDropdown = null; }
+    });
+
   </script>
 </body>
 </html>

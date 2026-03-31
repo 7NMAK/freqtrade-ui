@@ -1362,7 +1362,7 @@ export default function DashboardPage() {
         locksData={locksData}
         balanceData={balanceData}
         healthData={healthData}
-        loading={selectedBotId !== null && (weeklyLoading || monthlyLoading || perfLoading || entryLoading || exitLoading || mixTagLoading || statsLoading || configLoading || sysinfoLoading || logsLoading || whitelistLoading || locksLoading || balanceLoading)}
+        loading={selectedBotId !== null && configLoading}
         onStart={() => selectedBot && handleStartBot(selectedBot.id)}
         onStop={() => selectedBot && handleStopBot(selectedBot.id)}
         onDrain={() => selectedBot && handleDrainBot(selectedBot.id)}

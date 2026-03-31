@@ -10,6 +10,7 @@ import {
   botBacktestStart,
   botBacktestResults,
   botBacktestDelete,
+  botConfig,
   createExperimentRun,
   getExperimentRuns,
   getExperiments,
@@ -167,7 +168,14 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
 
   // ── Running State ─────────────────────────────────────────────────
   const [isRunning, setIsRunning] = useState(false);
-  const [results, setResults] = useState<FreqAIResult[]>([]);
+  const RESULTS_KEY = `freqai_results_${strategy}`;
+  const [results, setResults] = useState<FreqAIResult[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const saved = localStorage.getItem(RESULTS_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
   const [completedCount, setCompletedCount] = useState(0);
   const [currentRunLabel, setCurrentRunLabel] = useState("");
   const abortRef = useRef(false);
@@ -379,12 +387,39 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
     };
   }, [strategy]);
 
+  // ── Persist results to localStorage on every change ────────────────
+  useEffect(() => {
+    if (results.length > 0) {
+      try { localStorage.setItem(RESULTS_KEY, JSON.stringify(results)); } catch { /* quota */ }
+    }
+  }, [results, RESULTS_KEY]);
+
   // ── Run Matrix ────────────────────────────────────────────────────
   const handleRunMatrix = useCallback(async () => {
     const queue = buildQueue();
     if (queue.length === 0) {
       toast.error("No combinations to run — select at least one model and outlier");
       return;
+    }
+
+    // ── Pre-flight: check bot state ──────────────────────────────────
+    try {
+      const cfg = (await botConfig(botId)) as unknown as Record<string, unknown>;
+      const state = (cfg.state as string || "").toLowerCase();
+      const runmode = (cfg.runmode as string || "").toLowerCase();
+      if (state === "running" && runmode !== "dry_run") {
+        toast.error(`Bot #${botId} is live trading (${runmode}). Stop trading before running FreqAI backtests.`);
+        addLog("ERROR", `Cannot start — bot is in ${runmode} mode. Backtests are blocked while live trading.`);
+        return;
+      }
+      if (runmode === "live") {
+        toast.error(`Bot #${botId} is in LIVE mode. Cannot run backtests.`);
+        addLog("ERROR", "Cannot start — bot is in LIVE mode.");
+        return;
+      }
+      addLog("INFO", `Bot #${botId} state=${state}, runmode=${runmode} — OK to backtest`);
+    } catch (err) {
+      addLog("WARNING", `Could not verify bot state: ${err}. Proceeding anyway...`);
     }
 
     setIsRunning(true);
@@ -420,7 +455,12 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
 
         // Parse result
         const result = parseResult(raw, item, results.length + i);
-        setResults((prev) => [...prev, result]);
+        setResults((prev) => {
+          const next = [...prev, result];
+          // Persist immediately so browser refresh doesn't lose progress
+          try { localStorage.setItem(RESULTS_KEY, JSON.stringify(next)); } catch { /* quota */ }
+          return next;
+        });
         setCompletedCount(i + 1);
 
         if (result.status === "completed") {
@@ -760,8 +800,9 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
         {/* Results Master Table */}
         {sortedResults.length > 0 ? (
           <div className="bg-card border border-border rounded-[10px] overflow-hidden">
-            <div className="px-4 py-3 border-b border-border">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
               <span className="text-xs font-semibold text-foreground">FreqAI Results ({sortedResults.length})</span>
+              <button onClick={() => { setResults([]); try { localStorage.removeItem(RESULTS_KEY); } catch {} toast.info("Results cleared"); }} className="text-[10px] text-muted-foreground hover:text-rose-400 transition">Clear All</button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-xs whitespace-nowrap">

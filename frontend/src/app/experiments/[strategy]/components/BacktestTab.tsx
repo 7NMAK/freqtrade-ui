@@ -989,7 +989,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2, experimentId 
     poll();
     pollRef.current = setInterval(poll, 3000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [isRunning, backtestBotId, strategy, addLog, extractResult, fetchHistory, BT_CACHE_KEY]);
+  }, [isRunning, backtestBotId, strategy, experimentId, addLog, extractResult, fetchHistory, BT_CACHE_KEY]);
 
   // Timerange display (auto-generated from dates)
   const timerangeDisplay = useMemo(() => {

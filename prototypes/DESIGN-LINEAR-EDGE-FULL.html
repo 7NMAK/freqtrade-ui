@@ -51,6 +51,17 @@
   .bot-ctrl.ctrl-stop:hover { color: #ef4444; border-color: rgba(239,68,68,0.3); }
   .bot-ctrl.ctrl-pause:hover { color: #eab308; border-color: rgba(234,179,8,0.3); }
 
+  /* Collapsible sidebar */
+  #side-menu { width: 240px; transition: width 0.25s ease; overflow: hidden; }
+  #side-menu.collapsed { width: 56px; }
+  #side-menu.collapsed .nav-label { display: none; }
+  #side-menu.collapsed .sidebar-title { display: none; }
+  #side-menu.collapsed .sidebar-footer-text { display: none; }
+  #side-menu.collapsed nav button { justify-content: center; padding-left: 0; padding-right: 0; }
+  #side-menu.collapsed .sidebar-header { justify-content: center; padding-left: 0; padding-right: 0; }
+  #side-menu .toggle-btn { transition: transform 0.25s ease; }
+  #side-menu.collapsed .toggle-btn { transform: rotate(180deg); }
+
   /* Action dropdown */
   .action-menu { position: relative; display: inline-block; }
   .action-menu-btn { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.10); padding: 4px 10px; border-radius: 5px; color: #9CA3AF; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 5px; }
@@ -111,20 +122,23 @@
   </aside>
 
   <!-- SIDE MENU -->
-  <aside class="w-[240px] h-full flex flex-col bg-black l-r shrink-0 z-20">
-      <div class="h-14 flex items-center px-5 gap-3 bg-surface l-b shrink-0">
-          <div class="w-6 h-6 bg-white text-black flex items-center justify-center font-bold font-mono text-[11px] rounded-sm">FT</div>
-          <span class="font-bold tracking-widest text-[13px] text-white uppercase">Orchestrator V4</span>
+  <aside id="side-menu" class="h-full flex flex-col bg-black l-r shrink-0 z-20">
+      <div class="h-14 flex items-center px-5 gap-3 bg-surface l-b shrink-0 sidebar-header">
+          <div class="w-6 h-6 bg-white text-black flex items-center justify-center font-bold font-mono text-[11px] rounded-sm shrink-0">FT</div>
+          <span class="font-bold tracking-widest text-[13px] text-white uppercase sidebar-title whitespace-nowrap">Orchestrator V4</span>
+          <button onclick="toggleSidebar()" class="ml-auto w-6 h-6 flex items-center justify-center text-muted hover:text-white transition-colors toggle-btn shrink-0" title="Toggle sidebar">
+              <i data-lucide="chevrons-left" class="w-4 h-4"></i>
+          </button>
       </div>
-      <nav class="flex-1 py-5 flex flex-col gap-1.5 overflow-y-auto px-3">
-          <button onclick="switchPage('page-dashboard')" class="text-left px-4 py-2.5 text-white bg-white/10 rounded-md font-semibold nav-btn active hover:bg-white/10 flex items-center gap-3 text-[13px]"><i data-lucide="layout-dashboard" class="w-[18px] h-[18px]"></i> Control Room</button>
-          <button onclick="switchPage('page-experiments')" class="text-left px-4 py-2.5 text-muted hover:text-white transition-colors nav-btn hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]"><i data-lucide="flask-conical" class="w-[18px] h-[18px]"></i> Experiments</button>
-          <button class="text-left px-4 py-2.5 text-muted hover:text-white transition-colors hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]"><i data-lucide="list" class="w-[18px] h-[18px]"></i> Strategies</button>
-          <button class="text-left px-4 py-2.5 text-muted hover:text-white transition-colors hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]"><i data-lucide="settings" class="w-[18px] h-[18px]"></i> System</button>
+      <nav class="flex-1 py-5 flex flex-col gap-1.5 overflow-y-auto px-2">
+          <button onclick="switchPage('page-dashboard')" class="text-left px-3 py-2.5 text-white bg-white/10 rounded-md font-semibold nav-btn active hover:bg-white/10 flex items-center gap-3 text-[13px]"><i data-lucide="layout-dashboard" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">Control Room</span></button>
+          <button onclick="switchPage('page-experiments')" class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors nav-btn hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]"><i data-lucide="flask-conical" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">Experiments</span></button>
+          <button class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]"><i data-lucide="list" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">Strategies</span></button>
+          <button class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]"><i data-lucide="settings" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">System</span></button>
       </nav>
-      <div class="p-5 l-b bg-surface flex flex-col gap-2.5 shrink-0">
-          <div class="flex items-center gap-2.5 font-mono text-[11px] text-muted"><div class="w-2 h-2 rounded-full bg-up shadow-[0_0_6px_#22c55e]"></div> LIVE Trading</div>
-          <div class="flex gap-3 text-[11px] text-up font-mono"><span>Bin: 32ms</span><span>Krk: 45ms</span></div>
+      <div class="p-4 l-b bg-surface flex flex-col gap-2 shrink-0">
+          <div class="flex items-center gap-2.5 font-mono text-[11px] text-muted"><div class="w-2 h-2 rounded-full bg-up shadow-[0_0_6px_#22c55e] shrink-0"></div><span class="sidebar-footer-text"> LIVE Trading</span></div>
+          <div class="flex gap-3 text-[11px] text-up font-mono sidebar-footer-text"><span>Bin: 32ms</span><span>Krk: 45ms</span></div>
       </div>
   </aside>
 
@@ -1057,6 +1071,13 @@
     document.addEventListener('click', () => {
         document.querySelectorAll('.action-dropdown.open').forEach(d => d.classList.remove('open'));
     });
+
+    function toggleSidebar() {
+        const menu = document.getElementById('side-menu');
+        menu.classList.toggle('collapsed');
+        // Re-render Lucide icons after state change
+        setTimeout(() => lucide.createIcons(), 300);
+    }
   </script>
 </body>
 </html>

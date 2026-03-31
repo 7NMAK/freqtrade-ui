@@ -441,7 +441,6 @@ interface HistoryStats {
   wins: number;
   losses: number;
   profit_factor: number;
-  holding_avg: string;
 }
 
 function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
@@ -454,22 +453,21 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
   const [page, setPage] = useState(1);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [statsCache, setStatsCache] = useState<Map<string, HistoryStats | 'loading' | 'error'>>(new Map());
-  const perPage = 5;
+  const perPage = 10;
 
-  // Auto-reset confirm after 3s
   useEffect(() => {
     if (!confirmId) return;
     const t = setTimeout(() => setConfirmId(null), 3000);
     return () => clearTimeout(t);
   }, [confirmId]);
 
-  // Filter to current strategy, most recent first
   const filtered = entries
     .filter((e) => e.strategy === currentStrategy)
     .sort((a, b) => b.backtest_start_time - a.backtest_start_time);
 
-  // Lazy-load stats for visible entries
   const paged = filtered.slice((page - 1) * perPage, page * perPage);
+
+  // Lazy-load stats for visible entries
   useEffect(() => {
     paged.forEach(async (entry) => {
       const key = entry.filename;
@@ -483,18 +481,14 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
           const firstKey = Object.keys(stratMap)[0];
           if (firstKey) {
             const s = stratMap[firstKey];
-            const totalTrades = Number(s.total_trades ?? 0);
-            const wins = Number(s.wins ?? 0);
-            const losses = Number(s.losses ?? 0);
             setStatsCache(prev => new Map(prev).set(key, {
-              total_trades: totalTrades,
+              total_trades: Number(s.total_trades ?? 0),
               profit_total_abs: Number(s.profit_total_abs ?? 0),
               profit_total: Number(s.profit_total ?? 0),
               max_drawdown_account: Number(s.max_drawdown_account ?? 0),
-              wins,
-              losses,
+              wins: Number(s.wins ?? 0),
+              losses: Number(s.losses ?? 0),
               profit_factor: Number(s.profit_factor ?? 0),
-              holding_avg: String(s.holding_avg ?? s.holding_avg_s ?? ''),
             }));
             return;
           }
@@ -508,133 +502,89 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
   }, [page, filtered.length, botId]);
 
   if (filtered.length === 0) return null;
-
   const totalPages = Math.ceil(filtered.length / perPage);
+
+  /** Convert FT timestamp — could be seconds or milliseconds */
+  const fmtDate = (ts?: number) => {
+    if (!ts) return "?";
+    const ms = ts > 1e12 ? ts : ts * 1000;
+    return new Date(ms).toISOString().split("T")[0];
+  };
 
   return (
     <div>
       <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
         Backtest History ({filtered.length})
       </div>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1">
         {paged.map((entry) => {
-          const startDate = entry.backtest_start_ts ? new Date(entry.backtest_start_ts * 1000).toISOString().split("T")[0] : "?";
-          const endDate = entry.backtest_end_ts ? new Date(entry.backtest_end_ts * 1000).toISOString().split("T")[0] : "?";
           const runDate = new Date(entry.backtest_start_time * 1000);
-          const runDateStr = `${runDate.getFullYear()}-${String(runDate.getMonth()+1).padStart(2,'0')}-${String(runDate.getDate()).padStart(2,'0')} ${String(runDate.getHours()).padStart(2,'0')}:${String(runDate.getMinutes()).padStart(2,'0')}`;
+          const runStr = `${runDate.getMonth()+1}/${runDate.getDate()} ${String(runDate.getHours()).padStart(2,'0')}:${String(runDate.getMinutes()).padStart(2,'0')}`;
           const entryKey = `${entry.filename}-${entry.run_id}`;
           const isConfirming = confirmId === entryKey;
           const stats = statsCache.get(entry.filename);
-          const hasStats = stats && stats !== 'loading' && stats !== 'error';
-          const s = hasStats ? stats as HistoryStats : null;
-          const winRate = s && s.total_trades > 0 ? (s.wins / s.total_trades * 100).toFixed(0) : null;
-          const profitPositive = s ? s.profit_total_abs >= 0 : null;
+          const s = (stats && stats !== 'loading' && stats !== 'error') ? stats as HistoryStats : null;
+          const profitOk = s ? s.profit_total_abs >= 0 : null;
 
           return (
             <div
               key={entryKey}
-              className="bg-muted/20 border border-border rounded-lg overflow-hidden hover:border-primary/30 transition-all group"
+              className="flex items-center gap-2 px-3 py-1.5 bg-muted/20 border border-border rounded-lg text-[10px] hover:bg-muted/40 hover:border-primary/30 transition-all group"
             >
-              {/* Top row: strategy, run date, actions */}
-              <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="text-xs font-semibold text-foreground">{entry.strategy}</span>
-                  <span className="text-[10px] text-muted-foreground">{runDateStr}</span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 bg-muted/50 rounded text-muted-foreground">{entry.timeframe || "?"}{entry.timeframe_detail ? ` / ${entry.timeframe_detail}` : ""}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => onLoad(entry)}
-                    className="text-[10px] px-2 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded hover:bg-primary/20 transition-all"
-                  >
-                    Load →
-                  </button>
-                  {isConfirming ? (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setConfirmId(null); onDelete(entry); }}
-                      className="text-[10px] px-1.5 py-0.5 bg-rose-500/20 border border-rose-500/50 text-rose-400 rounded hover:bg-rose-500/30 transition-all shrink-0 animate-pulse"
-                    >
-                      Confirm?
-                    </button>
-                  ) : (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setConfirmId(entryKey); }}
-                      className="text-rose-400/60 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all text-sm shrink-0"
-                      title="Delete this backtest"
-                    >
-                      🗑
-                    </button>
-                  )}
-                </div>
-              </div>
+              {/* Date + TF + Range */}
+              <span className="text-muted-foreground shrink-0 w-[70px]">{runStr}</span>
+              <span className="font-mono text-muted-foreground shrink-0 w-[28px]">{entry.timeframe || "?"}</span>
+              <span className="text-muted-foreground shrink-0">{fmtDate(entry.backtest_start_ts)}→{fmtDate(entry.backtest_end_ts)}</span>
 
-              {/* Bottom row: date range + lazy-loaded stats */}
-              <div className="px-3 py-2 flex items-center gap-4 flex-wrap">
-                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                  <span className="opacity-60">Range:</span>
-                  <span className="font-mono">{startDate}</span>
-                  <span className="opacity-40">→</span>
-                  <span className="font-mono">{endDate}</span>
-                </div>
+              {/* Lazy stats */}
+              {stats === 'loading' && <span className="text-muted-foreground/40 animate-pulse ml-1">...</span>}
+              {s && (
+                <>
+                  <span className="font-mono text-muted-foreground ml-1">{s.total_trades}t</span>
+                  <span className={`font-mono font-medium ${profitOk ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {profitOk ? '+' : ''}{fmt$(s.profit_total_abs)}
+                  </span>
+                  <span className={`font-mono opacity-70 ${profitOk ? 'text-emerald-400/70' : 'text-rose-400/70'}`}>
+                    {fmtPctRatio(s.profit_total)}
+                  </span>
+                  <span className="font-mono text-rose-400/80">DD-{(s.max_drawdown_account * 100).toFixed(1)}%</span>
+                  <span className={`font-mono ${s.profit_factor > 1 ? 'text-emerald-400/70' : 'text-rose-400/70'}`}>PF:{s.profit_factor.toFixed(1)}</span>
+                </>
+              )}
 
-                {stats === 'loading' && (
-                  <span className="text-[10px] text-muted-foreground animate-pulse">Loading stats...</span>
-                )}
-                {stats === 'error' && (
-                  <span className="text-[10px] text-muted-foreground/50">—</span>
-                )}
-                {s && (
-                  <>
-                    <div className="flex items-center gap-1 text-[10px]">
-                      <span className="text-muted-foreground opacity-60">Trades:</span>
-                      <span className="font-mono text-foreground">{s.total_trades}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-[10px]">
-                      <span className="text-muted-foreground opacity-60">Profit:</span>
-                      <span className={`font-mono font-medium ${profitPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {profitPositive ? '+' : ''}{fmt$(s.profit_total_abs)}
-                        <span className="ml-1 opacity-70">({fmtPctRatio(s.profit_total)})</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 text-[10px]">
-                      <span className="text-muted-foreground opacity-60">Win:</span>
-                      <span className="font-mono text-foreground">{winRate}%</span>
-                      <span className="text-muted-foreground/50">({s.wins}W/{s.losses}L)</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-[10px]">
-                      <span className="text-muted-foreground opacity-60">DD:</span>
-                      <span className="font-mono text-rose-400">-{(s.max_drawdown_account * 100).toFixed(1)}%</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-[10px]">
-                      <span className="text-muted-foreground opacity-60">PF:</span>
-                      <span className={`font-mono ${s.profit_factor > 1 ? 'text-emerald-400' : 'text-rose-400'}`}>{s.profit_factor.toFixed(2)}</span>
-                    </div>
-                    {s.holding_avg && (
-                      <div className="flex items-center gap-1 text-[10px]">
-                        <span className="text-muted-foreground opacity-60">Avg Hold:</span>
-                        <span className="font-mono text-muted-foreground">{s.holding_avg}</span>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
+              {/* Spacer */}
+              <span className="flex-1" />
+
+              {/* Load */}
+              <button
+                onClick={() => onLoad(entry)}
+                className="text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0 hover:underline"
+              >Load</button>
+
+              {/* Delete */}
+              {isConfirming ? (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirmId(null); onDelete(entry); }}
+                  className="px-1.5 py-0.5 bg-rose-500/20 border border-rose-500/50 text-rose-400 rounded hover:bg-rose-500/30 transition-all shrink-0 animate-pulse"
+                >Confirm?</button>
+              ) : (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirmId(entryKey); }}
+                  className="text-rose-400/40 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all shrink-0"
+                  title="Delete"
+                >🗑</button>
+              )}
             </div>
           );
         })}
       </div>
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-2">
-          <button
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="px-2 py-0.5 text-[10px] border border-border rounded hover:bg-muted/50 disabled:opacity-30 transition"
-          >← Prev</button>
+          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+            className="px-2 py-0.5 text-[10px] border border-border rounded hover:bg-muted/50 disabled:opacity-30 transition">← Prev</button>
           <span className="text-[10px] text-muted-foreground">{page}/{totalPages}</span>
-          <button
-            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            className="px-2 py-0.5 text-[10px] border border-border rounded hover:bg-muted/50 disabled:opacity-30 transition"
-          >Next →</button>
+          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+            className="px-2 py-0.5 text-[10px] border border-border rounded hover:bg-muted/50 disabled:opacity-30 transition">Next →</button>
         </div>
       )}
     </div>
@@ -716,16 +666,22 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
 
   // Auto-load: cache first, then fetch history and auto-load latest
   useEffect(() => {
-    // 1. Instant load from cache
+    // 1. Instant load from cache (with validation)
     let loadedFromCache = false;
     try {
       const cached = sessionStorage.getItem(BT_CACHE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached) as FTStrategyResult;
-        if (parsed?.total_trades) {
+        // Validate cache: must have trades with close_profit (not NaN from old extraction)
+        const firstTrade = parsed?.trades?.[0];
+        const cacheValid = parsed?.total_trades && (!firstTrade || (firstTrade.close_profit !== undefined && !isNaN(firstTrade.close_profit)));
+        if (cacheValid) {
           setBtResult(parsed);
           addLog('INFO', `Loaded cached result: ${parsed.strategy_name} — ${parsed.total_trades} trades`);
           loadedFromCache = true;
+        } else {
+          // Stale cache — clear it
+          sessionStorage.removeItem(BT_CACHE_KEY);
         }
       }
     } catch { /* no cache */ }
@@ -794,7 +750,8 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
     const wins = Number(raw.wins ?? 0);
     const losses = Number(raw.losses ?? 0);
     const totalTrades = Number(raw.total_trades ?? 0);
-    const winrate = totalTrades > 0 ? wins / totalTrades : 0;
+    // FT provides winrate directly; fallback to calculation
+    const winrate = Number(raw.winrate ?? (totalTrades > 0 ? wins / totalTrades : 0));
 
     return {
       strategy_name: String(raw.strategy_name ?? firstKey),
@@ -810,9 +767,9 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
       losses,
       draws: Number(raw.draws ?? 0),
       winrate,
-      sharpe: Number(raw.sharpe_ratio ?? raw.sharpe ?? 0),
-      sortino: Number(raw.sortino_ratio ?? raw.sortino ?? 0),
-      calmar: Number(raw.calmar_ratio ?? raw.calmar ?? 0),
+      sharpe: Number(raw.sharpe ?? raw.sharpe_ratio ?? 0),
+      sortino: Number(raw.sortino ?? raw.sortino_ratio ?? 0),
+      calmar: Number(raw.calmar ?? raw.calmar_ratio ?? 0),
       expectancy: Number(raw.expectancy ?? 0),
       expectancy_ratio: Number(raw.expectancy_ratio ?? 0),
       max_drawdown_account: Number(raw.max_drawdown_account ?? 0),

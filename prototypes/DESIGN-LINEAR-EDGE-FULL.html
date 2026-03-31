@@ -59,7 +59,7 @@
   .drawer { position: fixed; top: 0; height: 100vh; left: var(--drawer-left); right: 0; width: auto; background: #0C0C0C; border-left: 1px solid rgba(255,255,255,0.10); transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), left 0.25s ease; z-index: 60; display: flex; flex-direction: column; box-shadow: -10px 0 40px rgba(0,0,0,0.85); }
   .drawer.open { transform: translateX(0); }
   .drawer-tab-content { display: block; }
-  .backdrop { position: fixed; top: 0; bottom: 0; left: var(--drawer-left); right: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); opacity: 0; pointer-events: none; transition: opacity 0.3s, left 0.25s ease; z-index: 50; }
+  .backdrop { position: fixed; top: 0; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 50; }
   .backdrop.open { opacity: 1; pointer-events: all; }
   .page-view { display: none; }
   .page-view.active { display: flex; animation: fadeIn 0.3s; }
@@ -266,6 +266,8 @@
               <!-- Pair Performance -->
               <div class="bg-surface l-bd rounded p-3">
                   <h3 class="section-title mb-2">Per-Pair Performance</h3>
+                  <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr><th class="text-left py-1.5 sortable filterable">Pair</th><th class="text-right py-1.5 sortable">Trades</th><th class="text-right py-1.5 sortable">Wins</th><th class="text-right py-1.5 sortable">Losses</th><th class="text-right py-1.5 sortable">Win%</th><th class="text-right py-1.5 sortable">Profit</th><th class="text-right py-1.5 sortable">Avg P&amp;L</th></tr></thead>
+                  <tbody class="divide-y divide-white/[0.04]">
                       <tr class="hover:bg-white/[0.02]"><td class="py-1.5 text-white font-medium">BTC/USDT</td><td class="py-1.5 text-right">128</td><td class="py-1.5 text-right text-up">94</td><td class="py-1.5 text-right text-down">34</td><td class="py-1.5 text-right">73.4%</td><td class="py-1.5 text-right text-up font-bold">+$1,840</td><td class="py-1.5 text-right text-up">+$14.4</td></tr>
                       <tr class="hover:bg-white/[0.02]"><td class="py-1.5 text-white font-medium">SOL/USDT</td><td class="py-1.5 text-right">32</td><td class="py-1.5 text-right text-up">25</td><td class="py-1.5 text-right text-down">7</td><td class="py-1.5 text-right">78.1%</td><td class="py-1.5 text-right text-up font-bold">+$2,140</td><td class="py-1.5 text-right text-up">+$66.9</td></tr>
                       <tr class="hover:bg-white/[0.02]"><td class="py-1.5 text-white font-medium">ETH/USDT</td><td class="py-1.5 text-right">95</td><td class="py-1.5 text-right text-up">66</td><td class="py-1.5 text-right text-down">29</td><td class="py-1.5 text-right">69.5%</td><td class="py-1.5 text-right text-up font-bold">+$620</td><td class="py-1.5 text-right text-up">+$6.5</td></tr>
@@ -581,7 +583,7 @@
               </div>
           </div>
           <!-- ═══ TAB: SYSTEM & LOG (merged) ═══ -->
-          <div id="drawer-system" class="drawer-tab-content p-4 flex flex-col gap-3" style="display:none">
+          <div id="drawer-system" class="drawer-tab-content p-4 flex flex-col gap-3 flex-1 min-h-0" style="display:none">
               <!-- System Status -->
               <div class="grid grid-cols-2 gap-2.5">
                   <div class="bg-surface l-bd rounded p-3">
@@ -602,7 +604,7 @@
                   </div>
               </div>
               <!-- Log Section -->
-              <div class="flex-1 bg-surface l-bd rounded flex flex-col min-h-[300px]">
+              <div class="flex-1 bg-surface l-bd rounded flex flex-col min-h-0">
                   <div class="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06] shrink-0">
                       <div class="flex gap-1">
                           <button class="px-2 py-0.5 text-[9px] font-bold uppercase bg-white/10 text-white rounded" title="Show all log levels">ALL</button>
@@ -676,7 +678,7 @@
       </header>
 
       <!-- PAGE: DASHBOARD -->
-      <div id="page-dashboard" class="page-view active flex-1 overflow-y-auto l-grid p-5 flex-col gap-5">
+      <div id="page-dashboard" class="page-view active flex-1 overflow-hidden l-grid p-5 flex-col gap-5">
       
       <!-- LAYER 1: HIGHEST LEVEL KPIs -->
       <div class="rounded-md bg-white/10 l-bd shrink-0 overflow-hidden">
@@ -743,7 +745,7 @@
       </div>
 
       <!-- LAYER 2: MASTER 3-COLUMN LAYOUT -->
-      <div class="flex-1 flex gap-5 min-w-0 min-h-[600px]">
+      <div class="flex-1 flex gap-5 min-w-0 min-h-0 overflow-hidden">
           
           <!-- COL 1: BOT FLEET ARCHITECTURE -->
           <div class="w-[400px] flex flex-col gap-5 min-w-[400px] shrink-0">
@@ -908,7 +910,7 @@
               <!-- Huge Graphic Visualizations -->
               <div class="h-[280px] bg-surface l-bd rounded-md flex shadow-xl shrink-0 overflow-hidden relative">
                   <!-- Profit Over Time: Bars + Thin Line -->
-                  <div class="flex-1 flex flex-col relative border-r border-white/8">
+                  <div class="flex-1 flex flex-col relative">
                        <div class="flex items-center justify-between px-5 py-3 shrink-0">
                            <h3 class="section-title text-white/50">Profit Over Time</h3>
                            <div class="flex gap-0">
@@ -1320,7 +1322,7 @@
                   <div id="trades-tags" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto flex flex-col" style="display:none;">
                       <div class="flex h-full">
                           <!-- Entry Tags -->
-                          <div class="flex-1 border-r border-white/8 overflow-y-auto">
+                          <div class="flex-1 overflow-y-auto">
                               <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
                                    <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
                                        <tr><th class="px-5 py-3.5 font-medium sortable" colspan="6">Entry Tags</th></tr>
@@ -1370,31 +1372,35 @@
           </div>
 
           <!-- COL 3: SYSTEM METRICS, BALANCE, PERFORMANCE -->
-          <div class="w-[320px] flex flex-col gap-4 min-w-[320px] shrink-0">
+          <div class="w-[320px] flex flex-col gap-4 min-w-[320px] shrink-0 overflow-y-auto min-h-0">
                
                <!-- Balance Breakdown -->
-               <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
+               <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden shrink-0">
                    <div class="h-10 l-b flex items-center px-4 bg-black/40 shrink-0">
                        <span class="section-title">Balance</span>
                    </div>
                    <div class="p-4 font-mono text-[12px] space-y-2.5">
-                       <div class="flex justify-between items-center">
-                           <span class="text-muted">USDT</span>
-                           <div class="text-right"><span class="text-white font-medium">82,330.80</span> <span class="text-muted text-[10px] ml-1">free</span></div>
+                       <div class="flex items-center">
+                           <span class="text-muted w-10">USDT</span>
+                           <span class="text-white font-medium">$82,330.80</span>
+                           <span class="text-muted text-[10px] ml-auto">free</span>
                        </div>
-                       <div class="flex justify-between items-center">
-                           <span class="text-muted">BTC</span>
-                           <div class="text-right"><span class="text-white font-medium">0.4821</span> <span class="text-white/40 text-[10px] ml-1">≈ $31,420</span></div>
+                       <div class="flex items-center">
+                           <span class="text-muted w-10">BTC</span>
+                           <span class="text-white font-medium">$31,420</span>
+                           <span class="text-white/30 text-[10px] ml-auto">0.4821</span>
                        </div>
-                       <div class="flex justify-between items-center">
-                           <span class="text-muted">ETH</span>
-                           <div class="text-right"><span class="text-white font-medium">3.200</span> <span class="text-white/40 text-[10px] ml-1">≈ $12,420</span></div>
+                       <div class="flex items-center">
+                           <span class="text-muted w-10">ETH</span>
+                           <span class="text-white font-medium">$12,420</span>
+                           <span class="text-white/30 text-[10px] ml-auto">3.200</span>
                        </div>
-                       <div class="flex justify-between items-center">
-                           <span class="text-muted">SOL</span>
-                           <div class="text-right"><span class="text-white font-medium">8.50</span> <span class="text-white/40 text-[10px] ml-1">≈ $1,280</span></div>
+                       <div class="flex items-center">
+                           <span class="text-muted w-10">SOL</span>
+                           <span class="text-white font-medium">$1,280</span>
+                           <span class="text-white/30 text-[10px] ml-auto">8.50</span>
                        </div>
-                       <div class="border-t border-white/8 pt-2 flex justify-between">
+                       <div class="pt-2 flex justify-between">
                            <span class="text-white/50 text-[11px] uppercase font-sans font-medium">Starting Capital</span>
                            <span class="text-white font-medium">$108,510.00</span>
                        </div>
@@ -1402,7 +1408,7 @@
                </div>
 
                <!-- Fees & Costs -->
-               <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
+               <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden shrink-0">
                    <div class="h-10 l-b flex items-center px-4 bg-black/40 shrink-0">
                        <span class="section-title">Fees & Costs</span>
                    </div>
@@ -1423,7 +1429,7 @@
                            <span class="text-muted">Funding Fees</span>
                            <span class="text-down">-$124.50</span>
                        </div>
-                       <div class="border-t border-white/8 pt-2.5 flex justify-between items-center">
+                       <div class="pt-2.5 flex justify-between items-center">
                            <span class="text-muted">Fees / Gross Profit</span>
                            <span class="text-yellow-400 font-bold">3.4%</span>
                        </div>
@@ -1435,7 +1441,7 @@
                </div>
 
                <!-- System Telemetry -->
-               <div class="bg-surface l-bd rounded-md p-4 flex flex-col gap-4 shadow-xl">
+               <div class="bg-surface l-bd rounded-md p-4 flex flex-col gap-4 shadow-xl shrink-0">
                    <span class="section-title">Node Telemetry</span>
                    <div>
                        <div class="flex justify-between text-[12px] font-mono mb-1.5"><span class="text-muted">CPU</span> <span class="text-white font-medium">14%</span></div>
@@ -1454,7 +1460,7 @@
                </div>
 
                <!-- Live Event Logs Terminal -->
-               <div class="flex-1 bg-black l-bd rounded-md flex flex-col shadow-xl overflow-hidden p-3 font-mono text-[11px] leading-relaxed text-muted min-h-[160px]">
+               <div class="bg-black l-bd rounded-md flex flex-col shadow-xl overflow-hidden p-3 font-mono text-[11px] leading-relaxed text-muted shrink-0 h-[320px]">
                    <div class="flex justify-between items-center mb-3 px-1">
                        <span class="section-title text-white/50">Terminal StdOut</span>
                        <span class="flex items-center gap-1.5 text-green-400 text-[11px]"><div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div> Streaming</span>

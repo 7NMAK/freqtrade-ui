@@ -900,7 +900,12 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
             <div className="flex-1 min-w-0">
               <div className="text-xs font-semibold text-emerald-400 mb-0.5">Best Result</div>
               <div className="text-xs text-muted-foreground">
-                {winner.sampler} × {winner.lossFunction} — {winner.spaces}
+                {(() => {
+                  const s = winner.sampler !== '—' ? winner.sampler : selectedSamplers.map(v => SAMPLERS.find(x => x.value === v)?.label || v).join(', ');
+                  const l = winner.lossFunction !== '—' ? winner.lossFunction : selectedLossFunctions.map(v => LOSS_FUNCTIONS.find(x => x.value === v)?.label || v).join(', ');
+                  const sp = winner.spaces !== '—' ? winner.spaces : customSpaces.join(', ');
+                  return `${s} × ${l} — ${sp}`;
+                })()}
               </div>
             </div>
             <div className="text-right">
@@ -908,7 +913,9 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                 {fmtPctRatio(winner.profitPct / 100)}
               </div>
               <div className="text-[10px] text-muted-foreground">
-                Sharpe {winner.sharpe !== 0 ? fmtNum(winner.sharpe) : '—'} · WR {winner.winRate > 0 ? `${(winner.winRate * 100).toFixed(1)}%` : '—'}
+                {winner.trades} trades · {fmt$(winner.profitAbs)}
+                {winner.sharpe !== 0 && ` · Sharpe ${fmtNum(winner.sharpe)}`}
+                {winner.winRate > 0 && ` · WR ${(winner.winRate * 100).toFixed(1)}%`}
               </div>
             </div>
             <div className="flex gap-1.5 shrink-0">

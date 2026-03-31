@@ -1,21 +1,143 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import Tooltip from "@/components/ui/Tooltip";
 import Toggle from "@/components/ui/Toggle";
 import { INPUT, SELECT, LABEL } from "@/lib/design";
 import { FREQAI_MODELS, OUTLIER_METHODS } from "@/lib/experiments";
 import { useToast } from "@/components/ui/Toast";
+import {
+  botBacktestStart,
+  botBacktestResults,
+  botBacktestDelete,
+  createExperimentRun,
+  getExperimentRuns,
+  getExperiments,
+  activateStrategyVersion,
+} from "@/lib/api";
 
+// ── Types ─────────────────────────────────────────────────────────────
 interface FreqAITabProps {
   strategy: string;
   botId?: number;
+  experimentId?: number;
   onNavigateToTab?: (tab: number) => void;
 }
 
-export default function FreqAITab({ strategy, botId = 2, onNavigateToTab }: FreqAITabProps) {
+type FreqAIResult = {
+  id: number;
+  model: string;
+  outlier: string;
+  pca: boolean;
+  noise: boolean;
+  status: "pending" | "running" | "completed" | "failed";
+  trades: number;
+  winRate: number;
+  profitPct: number;
+  maxDrawdown: number;
+  sharpe: number;
+  sortino: number;
+  startedAt: string;
+  finishedAt: string;
+  trainingDuration: string;
+  featureImportance: string[];
+  predictionAccuracy: number;
+};
+
+type QueueItem = {
+  model: string;
+  outlier: string;
+  pca: boolean;
+  noise: boolean;
+  config: Record<string, unknown>;
+};
+
+type SortKey = "profitPct" | "sharpe" | "sortino" | "winRate" | "maxDrawdown" | "trades";
+
+// ── Config Generator ──────────────────────────────────────────────────
+
+function buildFreqAIConfig(opts: {
+  strategy: string;
+  model: string;
+  outlier: string;
+  pca: boolean;
+  noise: boolean;
+  btStart: string;
+  btEnd: string;
+  trainDays: number;
+  diThreshold: number;
+  svmNu: number;
+  weightFactor: number;
+  noiseStdDev: number;
+  featurePeriod: string;
+  labelPeriod: string;
+  indicatorPeriods: string;
+  bufferTrainData: number;
+  shuffleAfterSplit: boolean;
+  includeCorrPairs: boolean;
+}): Record<string, unknown> {
+  const timerange = `${opts.btStart.replace(/-/g, "")}-${opts.btEnd.replace(/-/g, "")}`;
+  const indicatorPeriods = opts.indicatorPeriods
+    .split(",")
+    .map((s) => parseInt(s.trim(), 10))
+    .filter((n) => !isNaN(n));
+
+  return {
+    strategy: opts.strategy,
+    timerange,
+    freqaimodel: opts.model,
+    freqai: {
+      enabled: true,
+      purge_old_models: 2,
+      train_period_days: opts.trainDays,
+      backtest_period_days: 7,
+      identifier: `${opts.model}_${opts.outlier}_pca${opts.pca ? 1 : 0}_noise${opts.noise ? 1 : 0}`,
+      feature_parameters: {
+        include_timeframes: ["5m", "15m", "1h"],
+        include_corr_pairlist: opts.includeCorrPairs ? ["BTC/USDT:USDT", "ETH/USDT:USDT"] : [],
+        indicator_periods_candles: indicatorPeriods.length > 0 ? indicatorPeriods : [10, 20],
+        label_period_candles: parseInt(opts.labelPeriod, 10) || 24,
+        DI_threshold: opts.outlier === "di" ? opts.diThreshold : 0,
+        use_SVM_to_remove_outliers: opts.outlier === "svm",
+        use_DBSCAN_to_remove_outliers: opts.outlier === "dbscan",
+        principal_component_analysis: opts.pca,
+        noise_standard_deviation: opts.noise ? opts.noiseStdDev : 0,
+        weight_factor: opts.weightFactor,
+        buffer_train_data_candles: opts.bufferTrainData,
+        shuffle_after_split: opts.shuffleAfterSplit,
+      },
+      data_split_parameters: {
+        test_size: 0.33,
+        random_state: 1,
+      },
+    },
+    dry_run_wallet: 10000,
+    stake_amount: "unlimited",
+  };
+}
+
+function daysBetween(a: string, b: string): number {
+  const d1 = new Date(a);
+  const d2 = new Date(b);
+  return Math.max(1, Math.round(Math.abs(d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)));
+}
+
+// ── Log Entry ─────────────────────────────────────────────────────────
+
+interface LogEntry {
+  ts: string;
+  level: string;
+  msg: string;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// COMPONENT
+// ══════════════════════════════════════════════════════════════════════
+
+export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigateToTab }: FreqAITabProps) {
   const toast = useToast();
-  // Form state
+
+  // ── Form State ────────────────────────────────────────────────────
   const [selectedHyperopt, setSelectedHyperopt] = useState(0);
   const [testNamePrefix, setTestNamePrefix] = useState(`freqai_${new Date().toISOString().split("T")[0]}`);
   const [trainStartDate, setTrainStartDate] = useState("2022-01-01");
@@ -43,66 +165,348 @@ export default function FreqAITab({ strategy, botId = 2, onNavigateToTab }: Freq
   const [includeCorrPairs, setIncludeCorrPairs] = useState(false);
   const [indicatorPeriods, setIndicatorPeriods] = useState("10, 20");
 
-  // Running state
+  // ── Running State ─────────────────────────────────────────────────
   const [isRunning, setIsRunning] = useState(false);
+  const [results, setResults] = useState<FreqAIResult[]>([]);
+  const [completedCount, setCompletedCount] = useState(0);
+  const [currentRunLabel, setCurrentRunLabel] = useState("");
+  const abortRef = useRef(false);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
 
-  const matrixTotal = selectedModels.size * selectedOutliers.size * 2 * 2;
+  // ── Sorting ───────────────────────────────────────────────────────
+  const [sortBy, setSortBy] = useState<SortKey>("sharpe");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
+  // ── Hyperopt options ──────────────────────────────────────────────
+  const [hyperoptOptions, setHyperoptOptions] = useState<Array<{ id: number; label: string }>>([]);
+
+  // ── Matrix Calculation ────────────────────────────────────────────
+  const matrixTotal = selectedModels.size * selectedOutliers.size
+    * (pcaEnabled ? 2 : 1) * (noiseEnabled ? 2 : 1);
+
+  // ── Logging ───────────────────────────────────────────────────────
+  const addLog = useCallback((level: string, msg: string) => {
+    setLogs((prev) => [...prev.slice(-200), { ts: new Date().toISOString().slice(11, 19), level, msg }]);
+  }, []);
+
+  // ── Toggle Handlers ───────────────────────────────────────────────
   const handleToggleModel = (v: string) => {
     const s = new Set(selectedModels);
-    if (s.has(v)) {
-      s.delete(v);
-    } else {
-      s.add(v);
-    }
+    if (s.has(v)) s.delete(v);
+    else s.add(v);
     setSelectedModels(s);
   };
 
   const handleToggleOutlier = (v: string) => {
     const s = new Set(selectedOutliers);
-    if (s.has(v)) {
-      s.delete(v);
-    } else {
-      s.add(v);
-    }
+    if (s.has(v)) s.delete(v);
+    else s.add(v);
     setSelectedOutliers(s);
   };
 
-  // ── FreqAI Results Types & State ────────────────────────────────────
-  type FreqAIResult = {
-    id: number; model: string; outlier: string; pca: boolean; noise: boolean;
-    status: 'pending' | 'running' | 'completed' | 'failed';
-    trades: number; winRate: number; profitPct: number; maxDrawdown: number;
-    sharpe: number; sortino: number; startedAt: string; finishedAt: string;
-    trainingDuration: string; featureImportance: string[]; predictionAccuracy: number;
-  };
-  const [results, setResults] = useState<FreqAIResult[]>([]);
-  const [completedCount, setCompletedCount] = useState(0);
-  type SortKey = 'profitPct' | 'sharpe' | 'sortino' | 'winRate' | 'maxDrawdown' | 'trades';
-  const [sortBy, setSortBy] = useState<SortKey>('sharpe');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  // ── Load Existing Results on Mount ────────────────────────────────
+  useEffect(() => {
+    if (!experimentId) return;
+    getExperimentRuns(experimentId, { run_type: "freqai", status: "completed" })
+      .then((runs) => {
+        if (Array.isArray(runs) && runs.length > 0) {
+          const mapped: FreqAIResult[] = runs.map((r, i) => ({
+            id: r.id ?? i + 1,
+            model: (r as Record<string, unknown>).model as string || "Unknown",
+            outlier: (r as Record<string, unknown>).outlier as string || "none",
+            pca: false,
+            noise: false,
+            status: "completed" as const,
+            trades: r.total_trades ?? 0,
+            winRate: r.win_rate ?? 0,
+            profitPct: r.profit_pct ?? 0,
+            maxDrawdown: r.max_drawdown ?? 0,
+            sharpe: r.sharpe_ratio ?? 0,
+            sortino: r.sortino_ratio ?? 0,
+            startedAt: r.created_at ?? "",
+            finishedAt: "",
+            trainingDuration: "",
+            featureImportance: [],
+            predictionAccuracy: 0,
+          }));
+          setResults(mapped);
+          addLog("INFO", `Loaded ${mapped.length} existing FreqAI results`);
+        }
+      })
+      .catch((err) => {
+        addLog("WARNING", `Failed to load existing results: ${err}`);
+      });
 
+    // Load hyperopt runs for dropdown
+    getExperimentRuns(experimentId, { run_type: "hyperopt", status: "completed" })
+      .then((runs) => {
+        if (Array.isArray(runs) && runs.length > 0) {
+          setHyperoptOptions(
+            runs.map((r, i) => ({
+              id: r.id ?? i,
+              label: `Hyperopt #${r.id ?? i + 1} — ${r.profit_pct != null ? `${r.profit_pct.toFixed(2)}%` : "—"}`,
+            }))
+          );
+        }
+      })
+      .catch(() => {});
+  }, [experimentId, addLog]);
+
+  // ── Build Matrix Queue ────────────────────────────────────────────
+  const buildQueue = useCallback((): QueueItem[] => {
+    const queue: QueueItem[] = [];
+    const trainDays = daysBetween(trainStartDate, trainEndDate);
+
+    for (const model of Array.from(selectedModels)) {
+      for (const outlier of Array.from(selectedOutliers)) {
+        const pcaValues = pcaEnabled ? [true, false] : [pcaEnabled];
+        const noiseValues = noiseEnabled ? [true, false] : [noiseEnabled];
+        for (const pca of pcaValues) {
+          for (const noise of noiseValues) {
+            queue.push({
+              model,
+              outlier,
+              pca,
+              noise,
+              config: buildFreqAIConfig({
+                strategy, model, outlier, pca, noise,
+                btStart: backTestStartDate,
+                btEnd: backTestEndDate,
+                trainDays,
+                diThreshold, svmNu, weightFactor, noiseStdDev,
+                featurePeriod, labelPeriod, indicatorPeriods,
+                bufferTrainData, shuffleAfterSplit, includeCorrPairs,
+              }),
+            });
+          }
+        }
+      }
+    }
+    return queue;
+  }, [
+    strategy, selectedModels, selectedOutliers, pcaEnabled, noiseEnabled,
+    trainStartDate, trainEndDate, backTestStartDate, backTestEndDate,
+    diThreshold, svmNu, weightFactor, noiseStdDev,
+    featurePeriod, labelPeriod, indicatorPeriods,
+    bufferTrainData, shuffleAfterSplit, includeCorrPairs,
+  ]);
+
+  // ── Poll Until Done ───────────────────────────────────────────────
+  const pollUntilDone = useCallback(async (): Promise<Record<string, unknown> | null> => {
+    const MAX_POLLS = 600; // 30 minutes max
+    for (let i = 0; i < MAX_POLLS; i++) {
+      if (abortRef.current) return null;
+      await new Promise((r) => setTimeout(r, 3000));
+      try {
+        const raw = (await botBacktestResults(botId)) as unknown as Record<string, unknown>;
+        const running = raw.running as boolean | undefined;
+        const step = raw.step as string | undefined;
+        const progress = raw.progress as number | undefined;
+
+        if (step) {
+          const pct = progress != null ? ` (${(progress * 100).toFixed(0)}%)` : "";
+          setCurrentRunLabel(`${step}${pct}`);
+        }
+
+        if (running === false && step && (step === "finished" || step === "done" || step === "backtest" && progress === 1)) {
+          return raw;
+        }
+        if (step === "error" || (raw.status as string)?.toLowerCase()?.includes("error")) {
+          return raw;
+        }
+      } catch (err) {
+        addLog("WARNING", `Poll error: ${err}`);
+      }
+    }
+    addLog("ERROR", "Polling timed out after 30 minutes");
+    return null;
+  }, [botId, addLog]);
+
+  // ── Parse Result ──────────────────────────────────────────────────
+  const parseResult = useCallback((raw: Record<string, unknown>, item: QueueItem, idx: number): FreqAIResult => {
+    const br = raw.backtest_result as Record<string, unknown> | undefined;
+    let sd: Record<string, unknown> = {};
+    if (br) {
+      const stratData = (br.strategy as Record<string, Record<string, unknown>>) ?? br;
+      sd = (stratData[strategy] ?? stratData[Object.keys(stratData)[0]] ?? {}) as Record<string, unknown>;
+    }
+
+    const tt = Number(sd.total_trades ?? 0);
+    const wins = Number(sd.wins ?? 0);
+    const losses = Number(sd.losses ?? 0);
+    const draws = Number(sd.draws ?? 0);
+    const total = wins + losses + draws;
+    const wr = total > 0 ? (wins / total) * 100 : 0;
+    const pt = Number(sd.profit_total ?? 0) * 100;
+    const mdd = Number(sd.max_drawdown_account ?? 0) * 100;
+    const sh = Number(sd.sharpe ?? 0);
+    const so = Number(sd.sortino ?? 0);
+
+    return {
+      id: idx + 1,
+      model: item.model,
+      outlier: item.outlier,
+      pca: item.pca,
+      noise: item.noise,
+      status: tt > 0 || pt !== 0 ? "completed" : "failed",
+      trades: tt,
+      winRate: wr,
+      profitPct: pt,
+      maxDrawdown: mdd,
+      sharpe: sh,
+      sortino: so,
+      startedAt: new Date().toISOString(),
+      finishedAt: new Date().toISOString(),
+      trainingDuration: "",
+      featureImportance: [],
+      predictionAccuracy: 0,
+    };
+  }, [strategy]);
+
+  // ── Run Matrix ────────────────────────────────────────────────────
+  const handleRunMatrix = useCallback(async () => {
+    const queue = buildQueue();
+    if (queue.length === 0) {
+      toast.error("No combinations to run — select at least one model and outlier");
+      return;
+    }
+
+    setIsRunning(true);
+    abortRef.current = false;
+    setCompletedCount(0);
+    addLog("INFO", `Starting FreqAI matrix: ${queue.length} combinations for ${strategy}`);
+    toast.info(`Starting ${queue.length} FreqAI runs...`);
+
+    const startTime = Date.now();
+
+    for (let i = 0; i < queue.length; i++) {
+      if (abortRef.current) {
+        addLog("INFO", "Matrix run aborted by user");
+        break;
+      }
+
+      const item = queue[i];
+      const label = `${item.model.replace("Regressor", "Reg").replace("Classifier", "Cls")}+${item.outlier}+PCA${item.pca ? "1" : "0"}+N${item.noise ? "1" : "0"}`;
+      setCurrentRunLabel(`[${i + 1}/${queue.length}] ${label} — starting...`);
+      addLog("INFO", `[${i + 1}/${queue.length}] Starting: ${label}`);
+
+      try {
+        // Start the backtest with FreqAI config
+        await botBacktestStart(botId, item.config);
+        setCurrentRunLabel(`[${i + 1}/${queue.length}] ${label} — training...`);
+
+        // Poll until done
+        const raw = await pollUntilDone();
+        if (!raw || abortRef.current) {
+          addLog("WARNING", `[${i + 1}] ${label} — aborted or timed out`);
+          continue;
+        }
+
+        // Parse result
+        const result = parseResult(raw, item, results.length + i);
+        setResults((prev) => [...prev, result]);
+        setCompletedCount(i + 1);
+
+        if (result.status === "completed") {
+          addLog("INFO", `[${i + 1}] ${label} — ✓ ${result.trades} trades, ${result.profitPct.toFixed(2)}%, sharpe=${result.sharpe.toFixed(2)}`);
+
+          // Record as experiment run
+          if (experimentId) {
+            createExperimentRun(experimentId, {
+              run_type: "freqai",
+              total_trades: result.trades,
+              win_rate: result.winRate,
+              profit_pct: result.profitPct,
+              max_drawdown: result.maxDrawdown,
+              sharpe_ratio: result.sharpe,
+              sortino_ratio: result.sortino,
+            }).catch((err) => addLog("WARNING", `Failed to record run: ${err}`));
+          }
+        } else {
+          addLog("WARNING", `[${i + 1}] ${label} — failed or no trades`);
+        }
+
+        // Reset backtest state for next run
+        try { await botBacktestDelete(botId); } catch { /* ignore */ }
+        await new Promise((r) => setTimeout(r, 1000)); // Cool-down
+
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        addLog("ERROR", `[${i + 1}] ${label} — error: ${msg}`);
+        toast.error(`Run ${i + 1} failed: ${msg}`);
+        // Try to reset for next run
+        try { await botBacktestDelete(botId); } catch { /* ignore */ }
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+    }
+
+    const elapsed = Math.round((Date.now() - startTime) / 1000 / 60);
+    setIsRunning(false);
+    setCurrentRunLabel("");
+    addLog("INFO", `Matrix complete: ${completedCount}/${queue.length} in ~${elapsed}min`);
+    toast.success(`FreqAI matrix complete: ${queue.length} runs in ~${elapsed}min`);
+  }, [buildQueue, strategy, botId, experimentId, pollUntilDone, parseResult, addLog, toast, results.length, completedCount]);
+
+  // ── Stop Handler ──────────────────────────────────────────────────
+  const handleStop = useCallback(async () => {
+    abortRef.current = true;
+    try {
+      await botBacktestDelete(botId);
+      addLog("INFO", "FreqAI matrix stopped");
+      toast.info("FreqAI stopped");
+    } catch {
+      addLog("WARNING", "Failed to abort backtest");
+    }
+    setIsRunning(false);
+    setCurrentRunLabel("");
+  }, [botId, addLog, toast]);
+
+  // ── Promote Handler ───────────────────────────────────────────────
+  const handlePromote = useCallback(async () => {
+    try {
+      const res = await getExperiments();
+      const data = (res as unknown as { items?: Array<{ strategy_name: string; name: string; strategy_id: number; best_version_id: number | null }> }).items || [];
+      const exp = data.find((e) => e.strategy_name === strategy || e.name === strategy);
+      if (exp && exp.best_version_id) {
+        await activateStrategyVersion(exp.strategy_id, exp.best_version_id);
+        toast.success(`Activated version for ${strategy} ★`);
+      } else {
+        toast.info("No version to activate yet — run verification first");
+      }
+    } catch (err) {
+      toast.error(`Promote failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }, [strategy, toast]);
+
+  // ── Sorted Results ────────────────────────────────────────────────
   const sortedResults = useMemo(() => {
-    const copy = [...results.filter(r => r.status === 'completed')];
-    copy.sort((a, b) => sortDir === 'desc' ? (b[sortBy] ?? 0) - (a[sortBy] ?? 0) : (a[sortBy] ?? 0) - (b[sortBy] ?? 0));
+    const copy = [...results.filter((r) => r.status === "completed")];
+    copy.sort((a, b) => (sortDir === "desc" ? (b[sortBy] ?? 0) - (a[sortBy] ?? 0) : (a[sortBy] ?? 0) - (b[sortBy] ?? 0)));
     return copy;
   }, [results, sortBy, sortDir]);
 
-  const winner = useMemo(() => sortedResults.length > 0 ? sortedResults[0] : null, [sortedResults]);
+  const winner = useMemo(() => (sortedResults.length > 0 ? sortedResults[0] : null), [sortedResults]);
 
   const handleSort = (col: SortKey) => {
-    if (sortBy === col) setSortDir(d => d === 'desc' ? 'asc' : 'desc');
-    else { setSortBy(col); setSortDir('desc'); }
+    if (sortBy === col) setSortDir((d) => (d === "desc" ? "asc" : "desc"));
+    else { setSortBy(col); setSortDir("desc"); }
   };
-  const SortArrow = ({ col }: { col: SortKey }) =>
-    sortBy === col ? <span className="ml-0.5 text-primary">{sortDir === 'desc' ? '↓' : '↑'}</span> : null;
 
-  // Suppress unused — these are wired to real API when FreqAI training endpoint is available
-  void setResults; void setCompletedCount;
+  const SortArrow = ({ col }: { col: SortKey }) =>
+    sortBy === col ? <span className="ml-0.5 text-primary">{sortDir === "desc" ? "↓" : "↑"}</span> : null;
+
+  // Suppress unused vars that are used by form but not yet wired everywhere
+  void selectedHyperopt; void setSelectedHyperopt; void testNamePrefix; void setTestNamePrefix;
+  void outlierProtectionPct; void setOutlierProtectionPct; void reverseTrainTest; void setReverseTrainTest;
+  void svmNu;
+
+  // ══════════════════════════════════════════════════════════════════
+  // RENDER
+  // ══════════════════════════════════════════════════════════════════
 
   return (
     <div className="grid grid-cols-[380px_minmax(0,1fr)] gap-5">
-      {/* LEFT PANEL */}
+      {/* ── LEFT PANEL ────────────────────────────────────────── */}
       <div className="space-y-4">
         {/* FreqAI Config */}
         <div className="bg-card border border-border rounded-[10px] p-4">
@@ -111,7 +515,10 @@ export default function FreqAITab({ strategy, botId = 2, onNavigateToTab }: Freq
           <div className="mb-3">
             <label className={LABEL}>Hyperopt Source</label>
             <select value={selectedHyperopt} onChange={(e) => setSelectedHyperopt(Number(e.target.value))} className={SELECT}>
-              <option value="0">No hyperopt results available</option>
+              <option value="0">No hyperopt — use strategy defaults</option>
+              {hyperoptOptions.map((h) => (
+                <option key={h.id} value={h.id}>{h.label}</option>
+              ))}
             </select>
           </div>
 
@@ -123,7 +530,7 @@ export default function FreqAITab({ strategy, botId = 2, onNavigateToTab }: Freq
           <div className="mb-3">
             <label className={LABEL}>Description (auto)</label>
             <div className="w-full h-[34px] py-0 px-3 bg-muted/50 border border-border rounded-btn text-xs text-muted-foreground flex items-center truncate">
-              {selectedModels.size} models × {selectedOutliers.size} outliers × PCA({pcaEnabled ? "on" : "off"}) × Noise({noiseEnabled ? "on" : "off"}) = {matrixTotal} tests
+              {selectedModels.size} models × {selectedOutliers.size} outliers × PCA({pcaEnabled ? "on/off" : "off"}) × Noise({noiseEnabled ? "on/off" : "off"}) = {matrixTotal} tests
             </div>
           </div>
 
@@ -160,7 +567,7 @@ export default function FreqAITab({ strategy, botId = 2, onNavigateToTab }: Freq
 
         {/* Matrix Info */}
         <div className="bg-[rgba(99,102,241,0.12)] border border-[rgba(99,102,241,0.3)] rounded-btn px-3 py-2 text-xs text-primary">
-          ℹ️ {selectedModels.size} models × {selectedOutliers.size} outlier × 2 PCA × 2 noise = {matrixTotal} tests
+          ℹ️ {selectedModels.size} models × {selectedOutliers.size} outlier × {pcaEnabled ? 2 : 1} PCA × {noiseEnabled ? 2 : 1} noise = <strong>{matrixTotal}</strong> tests
         </div>
 
         {/* ML Models */}
@@ -211,7 +618,7 @@ export default function FreqAITab({ strategy, botId = 2, onNavigateToTab }: Freq
           <Toggle checked={noiseEnabled} onChange={setNoiseEnabled} label="Anti-Overfitting (Noise)" />
         </div>
 
-        {/* Advanced Options — FLAT, no dropdown */}
+        {/* Advanced Options */}
         <div className="bg-card border border-border rounded-[10px] p-4">
           <div className="text-xs font-semibold text-foreground mb-3">⚡ Advanced Options</div>
 
@@ -263,46 +670,33 @@ export default function FreqAITab({ strategy, botId = 2, onNavigateToTab }: Freq
         {/* Action Buttons */}
         <div className="flex gap-2">
           <button
-            onClick={() => {
-              setIsRunning(true);
-              toast.info(`Starting FreqAI matrix: ${matrixTotal} combinations for ${strategy} (bot ${botId})`);
-            }}
+            onClick={handleRunMatrix}
             disabled={isRunning || selectedModels.size === 0}
             className="flex-1 h-[34px] rounded-btn text-xs font-medium bg-primary border border-primary text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             ▶ Run Matrix ({matrixTotal})
           </button>
-          <button
-            onClick={() => {
-              setIsRunning(true);
-              toast.info(`Starting selected FreqAI runs for ${strategy} (bot ${botId})`);
-            }}
-            disabled={isRunning || selectedModels.size === 0}
-            className="flex-1 h-[34px] rounded-btn text-xs font-medium border border-border bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            Run Selected
-          </button>
           {isRunning && (
             <button
-              onClick={() => { setIsRunning(false); toast.info('FreqAI stopped'); }}
+              onClick={handleStop}
               className="h-[34px] px-3 rounded-btn text-xs font-medium bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.25)] text-rose-500 hover:bg-[rgba(239,68,68,0.15)] transition-all"
             >
-              ⏹
+              ⏹ Stop
             </button>
           )}
         </div>
 
-        {/* GPU Info */}
+        {/* Bot Info */}
         <div className="bg-card border border-border rounded-[10px] px-3 py-2">
-          <div className="text-xs text-primary font-semibold">RunPod RTX 4090</div>
-          <div className="text-xs text-muted-foreground">~3-6h for {matrixTotal} tests</div>
+          <div className="text-xs text-primary font-semibold">Bot #{botId} · FreqAI</div>
+          <div className="text-xs text-muted-foreground">~{Math.max(1, Math.round(matrixTotal * 15))}min estimated for {matrixTotal} runs</div>
         </div>
       </div>
 
-      {/* RIGHT PANEL — Results + Progress */}
+      {/* ── RIGHT PANEL — Results + Progress ─────────────────── */}
       <div className="space-y-4">
 
-        {/* Progress Display (§697-709) */}
+        {/* Progress Display */}
         {isRunning && (
           <div className="bg-card border border-primary/30 rounded-[10px] p-4">
             <div className="flex items-center justify-between mb-2">
@@ -310,7 +704,7 @@ export default function FreqAITab({ strategy, botId = 2, onNavigateToTab }: Freq
                 FreqAI Batch: {completedCount}/{matrixTotal} completed ({matrixTotal > 0 ? Math.round((completedCount / matrixTotal) * 100) : 0}%)
               </span>
               <span className="text-[10px] text-muted-foreground">
-                Est. remaining: ~{Math.max(0, Math.round((matrixTotal - completedCount) * 15))}min
+                {currentRunLabel}
               </span>
             </div>
             <div className="w-full h-2 bg-muted rounded-full overflow-hidden mb-3">
@@ -329,12 +723,12 @@ export default function FreqAITab({ strategy, botId = 2, onNavigateToTab }: Freq
             <div className="flex-1 min-w-0">
               <div className="text-xs font-semibold text-emerald-400 mb-0.5">Best FreqAI Result</div>
               <div className="text-xs text-muted-foreground">
-                {winner.model} + {winner.outlier} + PCA {winner.pca ? 'On' : 'Off'} + Noise {winner.noise ? 'On' : 'Off'}
+                {winner.model} + {winner.outlier} + PCA {winner.pca ? "On" : "Off"} + Noise {winner.noise ? "On" : "Off"}
               </div>
             </div>
             <div className="text-right">
-              <div className={`text-sm font-bold tabular-nums ${winner.profitPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                {winner.profitPct >= 0 ? '+' : ''}{winner.profitPct.toFixed(2)}%
+              <div className={`text-sm font-bold tabular-nums ${winner.profitPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                {winner.profitPct >= 0 ? "+" : ""}{winner.profitPct.toFixed(2)}%
               </div>
               <div className="text-[10px] text-muted-foreground">
                 Sharpe {winner.sharpe.toFixed(2)} · WR {winner.winRate.toFixed(1)}%
@@ -342,27 +736,12 @@ export default function FreqAITab({ strategy, botId = 2, onNavigateToTab }: Freq
             </div>
             <div className="flex gap-1.5 shrink-0">
               <button onClick={() => onNavigateToTab?.(5)} className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-primary/40 text-primary hover:bg-primary/10 transition-all">→ Verify</button>
-              <button onClick={async () => {
-                try {
-                  const { getExperiments, activateStrategyVersion } = await import('@/lib/api');
-                  const res = await getExperiments();
-                  const exp = (res.items || []).find((e) => e.strategy_name === strategy || e.name === strategy);
-                  if (exp && exp.best_version_id) {
-                    await activateStrategyVersion(exp.strategy_id, exp.best_version_id);
-                    toast.success(`Activated version for ${strategy} ★`);
-                  } else {
-                    toast.info('No version to activate yet — run verification first');
-                  }
-                } catch (err) {
-                  toast.error(`Promote failed: ${err instanceof Error ? err.message : String(err)}`);
-                }
-              }} className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-all">Promote ★</button>
-              <button onClick={() => toast.info('Opening Analysis')} className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-border text-muted-foreground hover:bg-muted transition-all">→ Analysis</button>
+              <button onClick={handlePromote} className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-all">Promote ★</button>
             </div>
           </div>
         )}
 
-        {/* Results Master Table (§711-736) */}
+        {/* Results Master Table */}
         {sortedResults.length > 0 ? (
           <div className="bg-card border border-border rounded-[10px] overflow-hidden">
             <div className="px-4 py-3 border-b border-border">
@@ -377,41 +756,35 @@ export default function FreqAITab({ strategy, botId = 2, onNavigateToTab }: Freq
                     <th className="text-left px-2 py-1.5 font-semibold">Outlier</th>
                     <th className="text-center px-2 py-1.5 font-semibold">PCA</th>
                     <th className="text-center px-2 py-1.5 font-semibold">Noise</th>
-                    <th onClick={() => handleSort('trades')} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Trades<SortArrow col="trades" /></th>
-                    <th onClick={() => handleSort('winRate')} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Win Rate<SortArrow col="winRate" /></th>
-                    <th onClick={() => handleSort('profitPct')} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Profit%<SortArrow col="profitPct" /></th>
-                    <th onClick={() => handleSort('maxDrawdown')} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Max DD<SortArrow col="maxDrawdown" /></th>
-                    <th onClick={() => handleSort('sharpe')} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Sharpe<SortArrow col="sharpe" /></th>
-                    <th onClick={() => handleSort('sortino')} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Sortino<SortArrow col="sortino" /></th>
-                    <th className="text-left px-2 py-1.5 font-semibold">Top Features</th>
-                    <th className="text-right px-2 py-1.5 font-semibold">Acc%</th>
-                    <th className="text-right px-2 py-1.5 font-semibold">Duration</th>
+                    <th onClick={() => handleSort("trades")} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Trades<SortArrow col="trades" /></th>
+                    <th onClick={() => handleSort("winRate")} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Win Rate<SortArrow col="winRate" /></th>
+                    <th onClick={() => handleSort("profitPct")} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Profit%<SortArrow col="profitPct" /></th>
+                    <th onClick={() => handleSort("maxDrawdown")} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Max DD<SortArrow col="maxDrawdown" /></th>
+                    <th onClick={() => handleSort("sharpe")} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Sharpe<SortArrow col="sharpe" /></th>
+                    <th onClick={() => handleSort("sortino")} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Sortino<SortArrow col="sortino" /></th>
                     <th className="text-right px-2 py-1.5 font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedResults.map((r, idx) => (
-                    <tr key={r.id} className={`border-t border-border hover:bg-muted/20 ${idx === 0 ? 'bg-emerald-500/5' : ''}`}>
-                      <td className="px-2 py-1.5 tabular-nums text-muted-foreground">{idx === 0 ? '★' : ''}{r.id}</td>
-                      <td className="px-2 py-1.5 font-medium text-foreground">{r.model.replace('Regressor', 'Reg').replace('Classifier', 'Cls')}</td>
+                    <tr key={r.id} className={`border-t border-border hover:bg-muted/20 ${idx === 0 ? "bg-emerald-500/5" : ""}`}>
+                      <td className="px-2 py-1.5 tabular-nums text-muted-foreground">{idx === 0 ? "★" : ""}{r.id}</td>
+                      <td className="px-2 py-1.5 font-medium text-foreground">{r.model.replace("Regressor", "Reg").replace("Classifier", "Cls")}</td>
                       <td className="px-2 py-1.5 text-muted-foreground">{r.outlier}</td>
                       <td className="px-2 py-1.5 text-center">{r.pca ? <span className="text-emerald-400">On</span> : <span className="text-muted-foreground">Off</span>}</td>
                       <td className="px-2 py-1.5 text-center">{r.noise ? <span className="text-amber-400">On</span> : <span className="text-muted-foreground">Off</span>}</td>
                       <td className="px-2 py-1.5 text-right tabular-nums">{r.trades}</td>
                       <td className="px-2 py-1.5 text-right tabular-nums">{r.winRate.toFixed(1)}%</td>
-                      <td className={`px-2 py-1.5 text-right tabular-nums font-medium ${r.profitPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {r.profitPct >= 0 ? '+' : ''}{r.profitPct.toFixed(2)}%
+                      <td className={`px-2 py-1.5 text-right tabular-nums font-medium ${r.profitPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                        {r.profitPct >= 0 ? "+" : ""}{r.profitPct.toFixed(2)}%
                       </td>
                       <td className="px-2 py-1.5 text-right tabular-nums text-rose-400">{r.maxDrawdown.toFixed(2)}%</td>
                       <td className="px-2 py-1.5 text-right tabular-nums">{r.sharpe.toFixed(2)}</td>
                       <td className="px-2 py-1.5 text-right tabular-nums">{r.sortino.toFixed(2)}</td>
-                      <td className="px-2 py-1.5 text-muted-foreground max-w-[120px] truncate">{r.featureImportance?.slice(0, 3).join(', ') || '—'}</td>
-                      <td className="px-2 py-1.5 text-right tabular-nums">{r.predictionAccuracy?.toFixed(1) ?? '—'}%</td>
-                      <td className="px-2 py-1.5 text-right text-muted-foreground">{r.trainingDuration || '—'}</td>
                       <td className="px-2 py-1.5">
                         <div className="flex gap-1 justify-end">
                           <button onClick={() => onNavigateToTab?.(5)} className="px-1.5 py-0.5 text-[9px] border border-primary/30 text-primary rounded hover:bg-primary/10 transition">→ Verify</button>
-                          <button onClick={() => toast.success(`Promoted #${r.id}`)} className="px-1.5 py-0.5 text-[9px] border border-amber-500/30 text-amber-400 rounded hover:bg-amber-500/10 transition">Promote</button>
+                          <button onClick={handlePromote} className="px-1.5 py-0.5 text-[9px] border border-amber-500/30 text-amber-400 rounded hover:bg-amber-500/10 transition">Promote</button>
                         </div>
                       </td>
                     </tr>
@@ -425,7 +798,24 @@ export default function FreqAITab({ strategy, botId = 2, onNavigateToTab }: Freq
             <div className="text-[32px] mb-3 opacity-30">🧠</div>
             <div className="text-sm font-semibold text-muted-foreground mb-1">No FreqAI results yet</div>
             <div className="text-xs text-muted-foreground text-center max-w-[280px]">
-              Configure your ML models and click &quot;Run Matrix&quot; to start real FreqAI training runs.
+              Configure your ML models and click &quot;Run Matrix&quot; to start FreqAI training backtests through the bot API.
+            </div>
+          </div>
+        )}
+
+        {/* Log Panel */}
+        {logs.length > 0 && (
+          <div className="bg-card border border-border rounded-[10px] overflow-hidden">
+            <div className="px-4 py-2 border-b border-border flex items-center justify-between">
+              <span className="text-xs font-semibold text-foreground">Logs ({logs.length})</span>
+              <button onClick={() => setLogs([])} className="text-[10px] text-muted-foreground hover:text-foreground transition">Clear</button>
+            </div>
+            <div className="max-h-[200px] overflow-y-auto p-2 font-mono text-[10px] space-y-0.5">
+              {logs.map((l, i) => (
+                <div key={i} className={`${l.level === "ERROR" ? "text-rose-400" : l.level === "WARNING" ? "text-amber-400" : "text-muted-foreground"}`}>
+                  <span className="text-zinc-600">{l.ts}</span> [{l.level}] {l.msg}
+                </div>
+              ))}
             </div>
           </div>
         )}

@@ -1,0 +1,219 @@
+
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <!-- PAGE: STRATEGIES                                                       -->
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <div id="page-strategies" class="page-view flex-1 overflow-hidden flex-col">
+
+          <!-- TOOLBAR / FILTER BAR -->
+          <div class="h-12 l-b flex items-center px-5 gap-3 bg-surface shrink-0">
+              <!-- Filter Pills -->
+              <div class="flex gap-1">
+                  <button onclick="setStratFilter('all', this)" class="strat-filter-pill active px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/10 text-white border border-white/15 transition-all" title="Show all strategies">All</button>
+                  <button onclick="setStratFilter('live', this)" class="strat-filter-pill px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-muted border border-transparent hover:border-white/10 hover:text-white transition-all" title="Show live strategies">Live</button>
+                  <button onclick="setStratFilter('paper', this)" class="strat-filter-pill px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-muted border border-transparent hover:border-white/10 hover:text-white transition-all" title="Show paper trading">Paper</button>
+                  <button onclick="setStratFilter('backtest', this)" class="strat-filter-pill px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-muted border border-transparent hover:border-white/10 hover:text-white transition-all" title="Show backtested">Backtest</button>
+                  <button onclick="setStratFilter('draft', this)" class="strat-filter-pill px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-muted border border-transparent hover:border-white/10 hover:text-white transition-all" title="Show drafts">Draft</button>
+                  <button onclick="setStratFilter('retired', this)" class="strat-filter-pill px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-muted border border-transparent hover:border-white/10 hover:text-white transition-all" title="Show retired">Retired</button>
+              </div>
+              <span class="text-[11px] text-muted font-mono ml-1" id="strat-count">7 strategies</span>
+              <div class="ml-auto flex gap-2">
+                  <button class="h-8 px-3.5 rounded-md border border-white/12 bg-white/5 text-white/70 text-[11px] font-bold uppercase tracking-wide hover:bg-white/10 transition-colors flex items-center gap-1.5" title="Import .py strategy file"><i data-lucide="upload" class="w-3.5 h-3.5"></i>Import .py</button>
+                  <button class="h-8 px-3.5 rounded-md bg-white text-black text-[11px] font-bold uppercase tracking-wide hover:bg-white/90 transition-colors flex items-center gap-1.5" title="Create new strategy"><i data-lucide="plus" class="w-3.5 h-3.5"></i>New Strategy</button>
+              </div>
+          </div>
+
+          <!-- STRATEGY CARDS GRID -->
+          <div class="flex-1 overflow-y-auto p-5 space-y-3" id="strat-cards-container">
+
+              <!-- CARD 1: TrendFollowerV3_BTC — LIVE -->
+              <div class="bg-surface l-bd rounded-md shadow-xl cursor-pointer hover:border-white/22 hover:-translate-y-0.5 transition-all strat-card" data-lifecycle="live" onclick="openStratDrawer('TrendFollowerV3_BTC', 'live')">
+                  <div class="h-10 l-b flex items-center px-4 bg-black/40 gap-3">
+                      <span class="text-[16px]">📈</span>
+                      <span class="text-[13px] font-bold text-white flex-1 truncate font-mono">TrendFollowerV3_BTC</span>
+                      <span class="px-2 py-0.5 text-[9px] font-bold rounded-full uppercase tracking-wider bg-up/12 text-up border border-up/25">LIVE</span>
+                      <span class="text-[10px] text-muted font-mono">Binance</span>
+                      <span class="text-[10px] text-muted font-mono">5m</span>
+                  </div>
+                  <div class="grid grid-cols-4 l-b">
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">PROFIT</div><div class="kpi-value text-up text-[14px]">+$18,940</div></div>
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">WIN RATE</div><div class="kpi-value text-[14px]">68.4%</div></div>
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">MAX DD</div><div class="kpi-value text-down text-[14px]">-4.12%</div></div>
+                      <div class="px-3 py-2.5 text-center"><div class="kpi-label">TRADES</div><div class="kpi-value text-[14px]">1,284</div></div>
+                  </div>
+                  <div class="px-4 py-2 flex items-center gap-2 text-[10px] text-muted font-mono">
+                      <span class="w-1.5 h-1.5 rounded-full bg-up shadow-[0_0_4px_#22c55e]"></span>
+                      <span>3 bots</span><span class="text-white/15">|</span><span>BTC/USDT +10</span><span class="text-white/15">|</span><span>Updated 2h ago</span>
+                  </div>
+                  <div class="px-4 py-2 l-t flex gap-1.5">
+                      <button class="bot-ctrl px-2 w-auto text-[10px] gap-1" title="View Trades" onclick="event.stopPropagation()"><i data-lucide="list" class="w-3 h-3"></i>Trades</button>
+                      <button class="bot-ctrl px-2 w-auto text-[10px] gap-1" title="Analytics" onclick="event.stopPropagation()"><i data-lucide="bar-chart-2" class="w-3 h-3"></i>Analytics</button>
+                      <span class="flex-1"></span>
+                      <button class="bot-ctrl px-2 w-auto text-[10px] gap-1" title="Open in Experiments Lab" onclick="event.stopPropagation(); switchPage('page-experiments')"><i data-lucide="flask-conical" class="w-3 h-3"></i>Experiments</button>
+                      <button class="bot-ctrl ctrl-start px-2 w-auto text-[10px] gap-1" title="View Bot" onclick="event.stopPropagation()"><i data-lucide="bot" class="w-3 h-3"></i>View Bot</button>
+                  </div>
+              </div>
+
+              <!-- CARD 2: MeanReversion_ETH — PAPER -->
+              <div class="bg-surface l-bd rounded-md shadow-xl cursor-pointer hover:border-white/22 hover:-translate-y-0.5 transition-all strat-card" data-lifecycle="paper" onclick="openStratDrawer('MeanReversion_ETH', 'paper')">
+                  <div class="h-10 l-b flex items-center px-4 bg-black/40 gap-3">
+                      <span class="text-[16px]">🔄</span>
+                      <span class="text-[13px] font-bold text-white flex-1 truncate font-mono">MeanReversion_ETH</span>
+                      <span class="px-2 py-0.5 text-[9px] font-bold rounded-full uppercase tracking-wider bg-yellow-500/12 text-yellow-400 border border-yellow-500/25">PAPER</span>
+                      <span class="text-[10px] text-muted font-mono">Binance</span>
+                      <span class="text-[10px] text-muted font-mono">15m</span>
+                  </div>
+                  <div class="grid grid-cols-4 l-b">
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">PAPER P&amp;L</div><div class="kpi-value text-up text-[14px]">+$4,210</div></div>
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">WIN RATE</div><div class="kpi-value text-[14px]">62.1%</div></div>
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">MAX DD</div><div class="kpi-value text-down text-[14px]">-6.80%</div></div>
+                      <div class="px-3 py-2.5 text-center"><div class="kpi-label">TRADES</div><div class="kpi-value text-[14px]">412</div></div>
+                  </div>
+                  <div class="px-4 py-2 flex items-center gap-2 text-[10px] text-muted font-mono">
+                      <span class="w-1.5 h-1.5 rounded-full bg-yellow-400 shadow-[0_0_4px_#eab308]"></span>
+                      <span>1 bot</span><span class="text-white/15">|</span><span>ETH/USDT +5</span><span class="text-white/15">|</span><span>Day 12/30</span>
+                  </div>
+                  <div class="px-4 py-2 l-t flex gap-1.5">
+                      <button class="bot-ctrl px-2 w-auto text-[10px] gap-1" title="View Trades" onclick="event.stopPropagation()"><i data-lucide="list" class="w-3 h-3"></i>Trades</button>
+                      <span class="flex-1"></span>
+                      <button class="bot-ctrl px-2 w-auto text-[10px] gap-1" title="Open in Experiments Lab" onclick="event.stopPropagation()"><i data-lucide="flask-conical" class="w-3 h-3"></i>Experiments</button>
+                      <button class="bot-ctrl ctrl-start px-2 w-auto text-[10px] gap-1" title="Promote to Live" onclick="event.stopPropagation()"><i data-lucide="rocket" class="w-3 h-3"></i>Go Live →</button>
+                  </div>
+              </div>
+
+              <!-- CARD 3: ScalpBot_XRP — LIVE -->
+              <div class="bg-surface l-bd rounded-md shadow-xl cursor-pointer hover:border-white/22 hover:-translate-y-0.5 transition-all strat-card" data-lifecycle="live" onclick="openStratDrawer('ScalpBot_XRP', 'live')">
+                  <div class="h-10 l-b flex items-center px-4 bg-black/40 gap-3">
+                      <span class="text-[16px]">⚡</span>
+                      <span class="text-[13px] font-bold text-white flex-1 truncate font-mono">ScalpBot_XRP</span>
+                      <span class="px-2 py-0.5 text-[9px] font-bold rounded-full uppercase tracking-wider bg-up/12 text-up border border-up/25">LIVE</span>
+                      <span class="text-[10px] text-muted font-mono">Kraken</span>
+                      <span class="text-[10px] text-muted font-mono">1m</span>
+                  </div>
+                  <div class="grid grid-cols-4 l-b">
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">PROFIT</div><div class="kpi-value text-up text-[14px]">+$2,830</div></div>
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">WIN RATE</div><div class="kpi-value text-[14px]">71.2%</div></div>
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">MAX DD</div><div class="kpi-value text-down text-[14px]">-2.50%</div></div>
+                      <div class="px-3 py-2.5 text-center"><div class="kpi-label">TRADES</div><div class="kpi-value text-[14px]">3,920</div></div>
+                  </div>
+                  <div class="px-4 py-2 flex items-center gap-2 text-[10px] text-muted font-mono">
+                      <span class="w-1.5 h-1.5 rounded-full bg-up shadow-[0_0_4px_#22c55e]"></span>
+                      <span>2 bots</span><span class="text-white/15">|</span><span>XRP/USDT +8</span><span class="text-white/15">|</span><span>Updated 5m ago</span>
+                  </div>
+                  <div class="px-4 py-2 l-t flex gap-1.5">
+                      <button class="bot-ctrl px-2 w-auto text-[10px] gap-1" title="View Trades" onclick="event.stopPropagation()"><i data-lucide="list" class="w-3 h-3"></i>Trades</button>
+                      <button class="bot-ctrl px-2 w-auto text-[10px] gap-1" title="Analytics" onclick="event.stopPropagation()"><i data-lucide="bar-chart-2" class="w-3 h-3"></i>Analytics</button>
+                      <span class="flex-1"></span>
+                      <button class="bot-ctrl ctrl-start px-2 w-auto text-[10px] gap-1" title="View Bot" onclick="event.stopPropagation()"><i data-lucide="bot" class="w-3 h-3"></i>View Bot</button>
+                  </div>
+              </div>
+
+              <!-- CARD 4: MomentumRider_SOL — BACKTEST -->
+              <div class="bg-surface l-bd rounded-md shadow-xl cursor-pointer hover:border-white/22 hover:-translate-y-0.5 transition-all strat-card" data-lifecycle="backtest" onclick="openStratDrawer('MomentumRider_SOL', 'backtest')">
+                  <div class="h-10 l-b flex items-center px-4 bg-black/40 gap-3">
+                      <span class="text-[16px]">🚀</span>
+                      <span class="text-[13px] font-bold text-white flex-1 truncate font-mono">MomentumRider_SOL</span>
+                      <span class="px-2 py-0.5 text-[9px] font-bold rounded-full uppercase tracking-wider bg-blue-500/12 text-blue-400 border border-blue-500/25">BACKTEST</span>
+                      <span class="text-[10px] text-muted font-mono">Binance</span>
+                      <span class="text-[10px] text-muted font-mono">1h</span>
+                  </div>
+                  <div class="grid grid-cols-4 l-b">
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">BT PROFIT</div><div class="kpi-value text-up text-[14px]">+$12,450</div></div>
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">WIN RATE</div><div class="kpi-value text-[14px]">58.9%</div></div>
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">SHARPE</div><div class="kpi-value text-[14px]">1.82</div></div>
+                      <div class="px-3 py-2.5 text-center"><div class="kpi-label">TRADES</div><div class="kpi-value text-[14px]">890</div></div>
+                  </div>
+                  <div class="px-4 py-2 flex items-center gap-2 text-[10px] text-muted font-mono">
+                      <span class="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_4px_#3b82f6]"></span>
+                      <span>0 bots</span><span class="text-white/15">|</span><span>SOL/USDT</span><span class="text-white/15">|</span><span>Last BT: 4h ago</span>
+                  </div>
+                  <div class="px-4 py-2 l-t flex gap-1.5">
+                      <button class="bot-ctrl px-2 w-auto text-[10px] gap-1" title="View Results" onclick="event.stopPropagation()"><i data-lucide="eye" class="w-3 h-3"></i>Results</button>
+                      <button class="bot-ctrl px-2 w-auto text-[10px] gap-1" title="Edit Strategy" onclick="event.stopPropagation()"><i data-lucide="pencil" class="w-3 h-3"></i>Edit</button>
+                      <span class="flex-1"></span>
+                      <button class="bot-ctrl px-2 w-auto text-[10px] gap-1" title="Open in Experiments Lab" onclick="event.stopPropagation()"><i data-lucide="flask-conical" class="w-3 h-3"></i>Experiments</button>
+                      <button class="bot-ctrl ctrl-start px-2 w-auto text-[10px] gap-1" title="Start Paper Trading" onclick="event.stopPropagation()"><i data-lucide="file-text" class="w-3 h-3"></i>Start Paper →</button>
+                  </div>
+              </div>
+
+              <!-- CARD 5: AlphaTrend_V5 — DRAFT -->
+              <div class="bg-surface l-bd rounded-md shadow-xl cursor-pointer hover:border-white/22 hover:-translate-y-0.5 transition-all strat-card" data-lifecycle="draft" onclick="openStratDrawer('AlphaTrend_V5', 'draft')">
+                  <div class="h-10 l-b flex items-center px-4 bg-black/40 gap-3">
+                      <span class="text-[16px]">📝</span>
+                      <span class="text-[13px] font-bold text-white flex-1 truncate font-mono">AlphaTrend_V5</span>
+                      <span class="px-2 py-0.5 text-[9px] font-bold rounded-full uppercase tracking-wider bg-white/5 text-muted border border-white/10">DRAFT</span>
+                      <span class="text-[10px] text-muted font-mono">—</span>
+                      <span class="text-[10px] text-muted font-mono">5m</span>
+                  </div>
+                  <div class="grid grid-cols-4 l-b">
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">PROFIT</div><div class="kpi-value text-muted text-[14px]">—</div></div>
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">WIN RATE</div><div class="kpi-value text-muted text-[14px]">—</div></div>
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">MAX DD</div><div class="kpi-value text-muted text-[14px]">—</div></div>
+                      <div class="px-3 py-2.5 text-center"><div class="kpi-label">TRADES</div><div class="kpi-value text-muted text-[14px]">—</div></div>
+                  </div>
+                  <div class="px-4 py-2 flex items-center gap-2 text-[10px] text-muted font-mono">
+                      <span class="w-1.5 h-1.5 rounded-full bg-white/20"></span>
+                      <span>0 bots</span><span class="text-white/15">|</span><span>No pairs configured</span>
+                  </div>
+                  <div class="px-4 py-2 l-t flex gap-1.5">
+                      <button class="bot-ctrl px-2 w-auto text-[10px] gap-1" title="Edit in Builder" onclick="event.stopPropagation()"><i data-lucide="code-2" class="w-3 h-3"></i>Edit in Builder</button>
+                      <span class="flex-1"></span>
+                      <button class="bot-ctrl ctrl-start px-2 w-auto text-[10px] gap-1" title="Run Backtest" onclick="event.stopPropagation()"><i data-lucide="play" class="w-3 h-3"></i>Run Backtest →</button>
+                  </div>
+              </div>
+
+              <!-- CARD 6: GridTrader_BNB — RETIRED (opacity-60) -->
+              <div class="bg-surface l-bd rounded-md shadow-xl cursor-pointer hover:border-white/22 hover:-translate-y-0.5 transition-all strat-card opacity-60" data-lifecycle="retired" onclick="openStratDrawer('GridTrader_BNB', 'retired')">
+                  <div class="h-10 l-b flex items-center px-4 bg-black/40 gap-3">
+                      <span class="text-[16px]">🏁</span>
+                      <span class="text-[13px] font-bold text-white flex-1 truncate font-mono">GridTrader_BNB</span>
+                      <span class="px-2 py-0.5 text-[9px] font-bold rounded-full uppercase tracking-wider bg-down/12 text-down border border-down/25">RETIRED</span>
+                      <span class="text-[10px] text-muted font-mono">Binance</span>
+                      <span class="text-[10px] text-muted font-mono">1h</span>
+                  </div>
+                  <div class="grid grid-cols-4 l-b">
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">TOTAL P&amp;L</div><div class="kpi-value text-up text-[14px]">+$6,100</div></div>
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">WIN RATE</div><div class="kpi-value text-[14px]">55.0%</div></div>
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">MAX DD</div><div class="kpi-value text-down text-[14px]">-12.4%</div></div>
+                      <div class="px-3 py-2.5 text-center"><div class="kpi-label">TRADES</div><div class="kpi-value text-[14px]">2,100</div></div>
+                  </div>
+                  <div class="px-4 py-2 flex items-center gap-2 text-[10px] text-muted font-mono">
+                      <span class="w-1.5 h-1.5 rounded-full bg-down/40"></span>
+                      <span>0 bots</span><span class="text-white/15">|</span><span>Retired 2024-02-15</span>
+                  </div>
+                  <div class="px-4 py-2 l-t flex gap-1.5">
+                      <button class="bot-ctrl px-2 w-auto text-[10px] gap-1" title="View History" onclick="event.stopPropagation()"><i data-lucide="history" class="w-3 h-3"></i>History</button>
+                      <button class="bot-ctrl px-2 w-auto text-[10px] gap-1" title="Clone Strategy" onclick="event.stopPropagation()"><i data-lucide="copy" class="w-3 h-3"></i>Clone</button>
+                      <button class="bot-ctrl px-2 w-auto text-[10px] gap-1" title="Export .py" onclick="event.stopPropagation()"><i data-lucide="download" class="w-3 h-3"></i>Export .py</button>
+                  </div>
+              </div>
+
+              <!-- CARD 7: FreqAI_LGBM_Multi — AI_TESTED -->
+              <div class="bg-surface l-bd rounded-md shadow-xl cursor-pointer hover:border-white/22 hover:-translate-y-0.5 transition-all strat-card" data-lifecycle="ai_tested" onclick="openStratDrawer('FreqAI_LGBM_Multi', 'ai_tested')">
+                  <div class="h-10 l-b flex items-center px-4 bg-black/40 gap-3">
+                      <span class="text-[16px]">🧠</span>
+                      <span class="text-[13px] font-bold text-white flex-1 truncate font-mono">FreqAI_LGBM_Multi</span>
+                      <span class="px-2 py-0.5 text-[9px] font-bold rounded-full uppercase tracking-wider bg-purple-500/12 text-purple-400 border border-purple-500/25">AI TESTED</span>
+                      <span class="text-[10px] text-muted font-mono">Binance</span>
+                      <span class="text-[10px] text-muted font-mono">1h</span>
+                  </div>
+                  <div class="grid grid-cols-4 l-b">
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">PROFIT</div><div class="kpi-value text-up text-[14px]">+$8,200</div></div>
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">WIN RATE</div><div class="kpi-value text-[14px]">65.3%</div></div>
+                      <div class="px-3 py-2.5 text-center l-r"><div class="kpi-label">MAX DD</div><div class="kpi-value text-down text-[14px]">-5.10%</div></div>
+                      <div class="px-3 py-2.5 text-center"><div class="kpi-label">TRADES</div><div class="kpi-value text-[14px]">640</div></div>
+                  </div>
+                  <div class="px-4 py-2 flex items-center gap-2 text-[10px] text-muted font-mono">
+                      <span class="w-1.5 h-1.5 rounded-full bg-purple-400 shadow-[0_0_4px_#a855f7]"></span>
+                      <span>1 bot</span><span class="text-white/15">|</span><span>MULTI</span><span class="text-white/15">|</span><span>AI Score: 87/100</span>
+                  </div>
+                  <div class="px-4 py-2 l-t flex gap-1.5">
+                      <button class="bot-ctrl px-2 w-auto text-[10px] gap-1" title="View Results" onclick="event.stopPropagation()"><i data-lucide="eye" class="w-3 h-3"></i>Results</button>
+                      <button class="bot-ctrl px-2 w-auto text-[10px] gap-1" title="Edit" onclick="event.stopPropagation()"><i data-lucide="pencil" class="w-3 h-3"></i>Edit</button>
+                      <span class="flex-1"></span>
+                      <button class="bot-ctrl px-2 w-auto text-[10px] gap-1" title="Open in Experiments Lab" onclick="event.stopPropagation()"><i data-lucide="flask-conical" class="w-3 h-3"></i>Experiments</button>
+                      <button class="bot-ctrl ctrl-start px-2 w-auto text-[10px] gap-1" title="Start Paper Trading" onclick="event.stopPropagation()"><i data-lucide="file-text" class="w-3 h-3"></i>Start Paper →</button>
+                  </div>
+              </div>
+
+          </div>
+      </div><!-- /END STRATEGIES -->

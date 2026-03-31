@@ -1745,8 +1745,8 @@ async def bot_trades_to_ohlcv(bot_id: int, body: dict[str, Any], request: Reques
 
 @router.post("/{bot_id}/hyperopt-list")
 async def bot_hyperopt_list(bot_id: int, body: dict[str, Any], request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
-    """Run freqtrade hyperopt-list via Docker exec. Returns parsed results."""
-    import docker
+    """Run freqtrade hyperopt-list via Docker exec. Returns parsed results from CSV export."""
+    import docker, csv, io
     manager = request.app.state.bot_manager
     bot = await manager.get_bot(db, bot_id)
     if not bot:
@@ -1754,35 +1754,74 @@ async def bot_hyperopt_list(bot_id: int, body: dict[str, Any], request: Request,
     try:
         dk = docker.from_env()
         container = dk.containers.get(bot.container_id or bot.name)
-        cmd = ["freqtrade", "hyperopt-list"]
+
+        # Use --export-csv for clean, reliable parsing of all epochs
+        csv_path = "/tmp/hyperopt_list.csv"
+        cmd = [
+            "freqtrade", "hyperopt-list",
+            "--config", "/freqtrade/user_data/config_backtest.json",
+            "--export-csv", csv_path,
+            "--no-color",
+        ]
         if body.get("profitable"):
             cmd += ["--profitable"]
         if body.get("min_trades"):
             cmd += ["--min-trades", str(body["min_trades"])]
-        if body.get("no_details"):
-            cmd += ["--no-details"]
+
         result = container.exec_run(cmd, detach=False)
-        raw = result.output.decode("utf-8", errors="replace")
-        # Parse FT hyperopt-list tabular output
+        if result.exit_code != 0:
+            raw = result.output.decode("utf-8", errors="replace")
+            return {"results": [], "raw": raw[-2000:], "exit_code": result.exit_code}
+
+        # Read the CSV file from the container
+        csv_result = container.exec_run(["cat", csv_path])
+        if csv_result.exit_code != 0:
+            return {"results": [], "raw": "CSV file not created", "exit_code": 1}
+
+        csv_text = csv_result.output.decode("utf-8", errors="replace")
+        reader = csv.DictReader(io.StringIO(csv_text))
+
         results: list[dict[str, Any]] = []
-        for line in raw.split("\n"):
-            line = line.strip()
-            if not line.startswith("│") or "───" in line:
+        for row in reader:
+            try:
+                epoch_str = row.get("Epoch", "0")
+                trades = int(row.get("Trades", "0"))
+                avg_profit_str = row.get("Avg profit", "0").replace("%", "").strip()
+                total_profit_str = row.get("Total profit", "0").replace(",", "")
+                profit_pct_str = row.get("Profit", "0").replace(",", "").replace("%", "").strip()
+                objective_str = row.get("Objective", "0")
+                avg_duration = row.get("Avg duration", "—")
+                max_dd_pct_str = row.get("Max drawdown percent", "0").replace("%", "").strip()
+                is_best = row.get("Best", "").strip().startswith("*")
+
+                # Extract buy/sell params
+                params: dict[str, Any] = {}
+                for key, val in row.items():
+                    if key.startswith("buy_") or key.startswith("sell_"):
+                        try:
+                            params[key] = float(val) if "." in str(val) else int(val)
+                        except (ValueError, TypeError):
+                            params[key] = val
+
+                results.append({
+                    "epoch": int(epoch_str) if epoch_str.isdigit() else epoch_str,
+                    "trades": trades,
+                    "avg_profit": float(avg_profit_str) if avg_profit_str else 0,
+                    "total_profit": float(total_profit_str) if total_profit_str else 0,
+                    "profit_pct": profit_pct_str,
+                    "avg_duration": avg_duration,
+                    "objective": float(objective_str) if objective_str else 0,
+                    "max_drawdown_pct": float(max_dd_pct_str) if max_dd_pct_str else 0,
+                    "is_best": is_best,
+                    "params": params if params else None,
+                })
+            except (ValueError, KeyError):
                 continue
-            cols = [c.strip() for c in line.split("│") if c.strip()]
-            if len(cols) >= 6 and cols[0].lower() not in ("best", "epoch"):
-                try:
-                    results.append({
-                        "epoch": int(cols[0]) if cols[0].replace("*", "").strip().isdigit() else cols[0],
-                        "trades": cols[1] if len(cols) > 1 else "",
-                        "avg_profit": cols[2] if len(cols) > 2 else "",
-                        "total_profit": cols[3] if len(cols) > 3 else "",
-                        "avg_duration": cols[4] if len(cols) > 4 else "",
-                        "objective": cols[5] if len(cols) > 5 else "",
-                    })
-                except (ValueError, IndexError):
-                    continue
-        return {"results": results, "raw": raw[-4000:], "exit_code": result.exit_code}
+
+        # Cleanup temp CSV
+        container.exec_run(["rm", "-f", csv_path])
+
+        return {"results": results, "total": len(results), "exit_code": 0}
     except Exception as e:
         raise HTTPException(502, f"Hyperopt-list failed: {e}")
 

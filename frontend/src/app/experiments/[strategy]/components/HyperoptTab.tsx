@@ -155,42 +155,37 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
   const fetchResults = useCallback(async () => {
     try {
       const data = await botHyperoptList(botId, { profitable: false });
-      if (data?.results) {
+      if (data?.results && data.results.length > 0) {
         const mapped: HyperoptResult[] = data.results.map((rawItem, i) => {
-          // FTHyperoptResult has [key: string]: unknown, so typed access returns `{}`.
-          // Cast to Record to safely extract fields.
           const r = rawItem as Record<string, unknown>;
           return {
-            id: i + 1,
-            loss: Number(r.loss ?? 0),
-            trades: Number(r.total_trades ?? r.trades ?? 0),
-            winRate: Number(r.win_rate ?? 0),
-            profitPct: Number(r.profit_pct ?? r.profit_total ?? 0),
-            profitAbs: Number(r.profit_abs ?? r.profit_total_abs ?? 0),
-            maxDrawdown: Number(r.max_drawdown ?? r.max_drawdown_account ?? 0),
-            sharpe: Number(r.sharpe_ratio ?? r.sharpe ?? 0),
-            sortino: Number(r.sortino_ratio ?? r.sortino ?? 0),
-            avgDuration: String(r.avg_duration ?? r.holding_avg ?? '—'),
-            sampler: String(r.sampler ?? '—'),
-            lossFunction: String(r.loss_function ?? '—'),
-            spaces: Array.isArray(r.spaces) ? (r.spaces as string[]).join(', ') : String(r.spaces ?? '—'),
-            epochs: Number(r.epochs ?? r.epoch ?? 0),
+            id: Number(r.epoch ?? i + 1),
+            loss: Number(r.objective ?? 0),
+            trades: Number(r.trades ?? 0),
+            winRate: 0, // Not in CSV, would need separate calculation
+            profitPct: Number(String(r.total_profit ?? '0').replace(/[,%]/g, '')),
+            profitAbs: Number(String(r.total_profit ?? '0').replace(/[,%]/g, '')) * 100,
+            maxDrawdown: Number(r.max_drawdown_pct ?? 0) / 100,
+            sharpe: 0,
+            sortino: 0,
+            avgDuration: String(r.avg_duration ?? '—'),
+            sampler: '—',
+            lossFunction: '—',
+            spaces: '—',
+            epochs: Number(r.epoch ?? 0),
             status: 'completed' as const,
-            startedAt: String(r.created_at ?? ''),
+            startedAt: '',
             params: (r.params as Record<string, unknown>) ?? undefined,
           };
         });
-        // Merge API results with existing (don't wipe locally-extracted results)
-        setResults(prev => {
-          const existingIds = new Set(prev.map(r => `${r.sampler}-${r.lossFunction}-${r.startedAt}`));
-          const newOnes = mapped.filter(r => !existingIds.has(`${r.sampler}-${r.lossFunction}-${r.startedAt}`));
-          return newOnes.length > 0 ? [...prev, ...newOnes] : prev;
-        });
+        // Replace results with full set from API (all epochs)
+        setResults(mapped);
+        addLog('INFO', `Loaded ${mapped.length} hyperopt epochs from history`);
       }
     } catch {
       // No results yet — that's fine
     }
-  }, [botId]);
+  }, [botId, addLog]);
 
   useEffect(() => {
     fetchResults();

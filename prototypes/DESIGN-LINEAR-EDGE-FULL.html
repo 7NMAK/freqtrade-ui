@@ -360,16 +360,17 @@
               <!-- Master Tabular Engine -->
               <div class="flex-1 bg-surface l-bd rounded-md shadow-xl flex flex-col min-h-0 overflow-hidden">
                   <div class="h-12 l-b flex items-center bg-black/40 shrink-0 border-b-2 border-transparent">
-                      <button class="h-full px-6 font-bold text-[12px] uppercase tracking-wide border-b-2 border-white text-white">Open Trades (42)</button>
-                      <button class="h-full px-6 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-white transition-colors">Closed Trades (1284)</button>
-                      <button class="h-full px-6 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-white transition-colors">Whitelist Matrix</button>
+                      <button onclick="switchTradeTab('trades-open', this)" class="h-full px-6 font-bold text-[12px] uppercase tracking-wide border-b-2 border-white text-white trade-tab-btn">Open Trades (42)</button>
+                      <button onclick="switchTradeTab('trades-closed', this)" class="h-full px-6 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-white transition-colors trade-tab-btn">Closed Trades (1284)</button>
+                      <button onclick="switchTradeTab('trades-whitelist', this)" class="h-full px-6 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-white transition-colors trade-tab-btn">Whitelist Matrix</button>
                       
                       <div class="ml-auto mr-5 flex items-center gap-2">
                            <button class="px-3 py-1 border border-white/12 rounded text-[11px] hover:bg-white/10 font-medium transition-colors"><i data-lucide="download" class="w-3.5 h-3.5 inline mr-1"></i>CSV</button>
                       </div>
                   </div>
                   
-                  <div class="flex-1 overflow-x-auto overflow-y-auto">
+                  <!-- TAB: OPEN TRADES -->
+                  <div id="trades-open" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto">
                       <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
                            <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
                                <tr>
@@ -383,7 +384,7 @@
                                    <th class="px-5 py-3.5 font-medium text-right bg-black/20">Profit %</th>
                                    <th class="px-5 py-3.5 font-medium text-right bg-black/20">Value</th>
                                    <th class="px-5 py-3.5 font-medium">Age</th>
-                                   <th class="px-5 py-3.5 font-medium border-l border-white/8 text-center">Engine Actions</th>
+                                   <th class="px-5 py-3.5 font-medium border-l border-white/8 text-center">Actions</th>
                                </tr>
                            </thead>
                            <tbody class="font-mono text-white/85 divide-y divide-white/[0.05]">
@@ -439,6 +440,150 @@
                                                <button class="danger" onclick="event.stopPropagation()"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete trade</button>
                                            </div>
                                        </div>
+                                   </td>
+                               </tr>
+                           </tbody>
+                      </table>
+                  </div>
+
+                  <!-- TAB: CLOSED TRADES -->
+                  <div id="trades-closed" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto" style="display:none;">
+                      <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
+                           <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
+                               <tr>
+                                   <th class="px-5 py-3.5 font-medium">Date</th>
+                                   <th class="px-5 py-3.5 font-medium">Pair</th>
+                                   <th class="px-5 py-3.5 font-medium">Bot</th>
+                                   <th class="px-5 py-3.5 font-medium text-center">Side</th>
+                                   <th class="px-5 py-3.5 font-medium text-right">Entry</th>
+                                   <th class="px-5 py-3.5 font-medium text-right">Exit</th>
+                                   <th class="px-5 py-3.5 font-medium text-right bg-black/20">Profit %</th>
+                                   <th class="px-5 py-3.5 font-medium text-right bg-black/20">Value</th>
+                                   <th class="px-5 py-3.5 font-medium">Duration</th>
+                                   <th class="px-5 py-3.5 font-medium">Exit Reason</th>
+                               </tr>
+                           </thead>
+                           <tbody class="font-mono text-white/85 divide-y divide-white/[0.05]">
+                               <tr class="hover:bg-white/[0.04] transition-colors">
+                                   <td class="px-5 py-3">25.10.23 <span class="text-white/35 ml-1">18:30</span></td>
+                                   <td class="px-5 py-3 font-bold text-white">SOL/USDT</td>
+                                   <td class="px-5 py-3 text-muted font-sans text-[12px]">MomentumV2</td>
+                                   <td class="px-5 py-3 text-center"><span class="bg-up/12 text-up border border-up/25 px-2 py-0.5 rounded text-[11px] font-medium">LONG 5x</span></td>
+                                   <td class="px-5 py-3 text-right">144.20</td>
+                                   <td class="px-5 py-3 text-right">156.40</td>
+                                   <td class="px-5 py-3 text-right bg-up/5 text-up font-bold">+8.46%</td>
+                                   <td class="px-5 py-3 text-right bg-up/5 text-up">+$610.00</td>
+                                   <td class="px-5 py-3 text-muted">6h 12m</td>
+                                   <td class="px-5 py-3 text-muted font-sans text-[11px]">trailing_stop</td>
+                               </tr>
+                               <tr class="hover:bg-white/[0.04] transition-colors bg-white/[0.015]">
+                                   <td class="px-5 py-3">25.10.23 <span class="text-white/35 ml-1">09:15</span></td>
+                                   <td class="px-5 py-3 font-bold text-white">XRP/USDT</td>
+                                   <td class="px-5 py-3 text-muted font-sans text-[12px]">ScalpBot_XRP</td>
+                                   <td class="px-5 py-3 text-center"><span class="bg-down/12 text-down border border-down/25 px-2 py-0.5 rounded text-[11px] font-medium">SHORT 3x</span></td>
+                                   <td class="px-5 py-3 text-right">0.6420</td>
+                                   <td class="px-5 py-3 text-right">0.6580</td>
+                                   <td class="px-5 py-3 text-right bg-down/5 text-down font-bold">-2.49%</td>
+                                   <td class="px-5 py-3 text-right bg-down/5 text-down">-$48.20</td>
+                                   <td class="px-5 py-3 text-muted">2h 44m</td>
+                                   <td class="px-5 py-3 text-down font-sans text-[11px]">stoploss</td>
+                               </tr>
+                           </tbody>
+                      </table>
+                  </div>
+
+                  <!-- TAB: WHITELIST MATRIX -->
+                  <div id="trades-whitelist" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto" style="display:none;">
+                      <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
+                           <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
+                               <tr>
+                                   <th class="px-5 py-3.5 font-medium">Pair</th>
+                                   <th class="px-5 py-3.5 font-medium text-center">Status</th>
+                                   <th class="px-5 py-3.5 font-medium">Assigned Bots</th>
+                                   <th class="px-5 py-3.5 font-medium text-right">Price</th>
+                                   <th class="px-5 py-3.5 font-medium text-right">24h Change</th>
+                                   <th class="px-5 py-3.5 font-medium text-right">Spread</th>
+                                   <th class="px-5 py-3.5 font-medium text-right">24h Vol</th>
+                                   <th class="px-5 py-3.5 font-medium text-right">Volatility</th>
+                                   <th class="px-5 py-3.5 font-medium text-center">Open Pos</th>
+                                   <th class="px-5 py-3.5 font-medium text-center">Lock</th>
+                                   <th class="px-5 py-3.5 font-medium border-l border-white/8 text-center">Controls</th>
+                               </tr>
+                           </thead>
+                           <tbody class="font-mono text-white/85 divide-y divide-white/[0.05]">
+                               <tr class="hover:bg-white/[0.04] transition-colors">
+                                   <td class="px-5 py-3 font-bold text-white">BTC/USDT</td>
+                                   <td class="px-5 py-3 text-center"><span class="bg-up/12 text-up border border-up/25 px-2 py-0.5 rounded text-[10px] font-bold">ACTIVE</span></td>
+                                   <td class="px-5 py-3 text-muted font-sans text-[11px]">TrendFollowerV3, ScalpBTC, SwingBot</td>
+                                   <td class="px-5 py-3 text-right">65,110.20</td>
+                                   <td class="px-5 py-3 text-right text-up font-medium">+2.14%</td>
+                                   <td class="px-5 py-3 text-right text-muted">0.01%</td>
+                                   <td class="px-5 py-3 text-right text-muted">$1.2B</td>
+                                   <td class="px-5 py-3 text-right"><span class="text-up">Low</span></td>
+                                   <td class="px-5 py-3 text-center font-bold">3</td>
+                                   <td class="px-5 py-3 text-center">—</td>
+                                   <td class="px-5 py-3 border-l border-white/8 text-center">
+                                       <button class="bg-black l-bd hover:bg-down/20 text-muted hover:text-down px-2 py-0.5 rounded text-[10px] font-bold transition-colors" title="Lock pair">LOCK</button>
+                                   </td>
+                               </tr>
+                               <tr class="hover:bg-white/[0.04] transition-colors bg-white/[0.015]">
+                                   <td class="px-5 py-3 font-bold text-white">ETH/USDT</td>
+                                   <td class="px-5 py-3 text-center"><span class="bg-up/12 text-up border border-up/25 px-2 py-0.5 rounded text-[10px] font-bold">ACTIVE</span></td>
+                                   <td class="px-5 py-3 text-muted font-sans text-[11px]">MeanReversion-ETH, SwingBot</td>
+                                   <td class="px-5 py-3 text-right">3,880.40</td>
+                                   <td class="px-5 py-3 text-right text-down font-medium">-0.82%</td>
+                                   <td class="px-5 py-3 text-right text-muted">0.02%</td>
+                                   <td class="px-5 py-3 text-right text-muted">$680M</td>
+                                   <td class="px-5 py-3 text-right"><span class="text-yellow-400">Med</span></td>
+                                   <td class="px-5 py-3 text-center font-bold">1</td>
+                                   <td class="px-5 py-3 text-center">—</td>
+                                   <td class="px-5 py-3 border-l border-white/8 text-center">
+                                       <button class="bg-black l-bd hover:bg-down/20 text-muted hover:text-down px-2 py-0.5 rounded text-[10px] font-bold transition-colors" title="Lock pair">LOCK</button>
+                                   </td>
+                               </tr>
+                               <tr class="hover:bg-white/[0.04] transition-colors">
+                                   <td class="px-5 py-3 font-bold text-white">SOL/USDT</td>
+                                   <td class="px-5 py-3 text-center"><span class="bg-down/12 text-down border border-down/25 px-2 py-0.5 rounded text-[10px] font-bold">LOCKED</span></td>
+                                   <td class="px-5 py-3 text-muted font-sans text-[11px]">MomentumV2</td>
+                                   <td class="px-5 py-3 text-right">156.80</td>
+                                   <td class="px-5 py-3 text-right text-up font-medium">+5.40%</td>
+                                   <td class="px-5 py-3 text-right text-muted">0.03%</td>
+                                   <td class="px-5 py-3 text-right text-muted">$420M</td>
+                                   <td class="px-5 py-3 text-right"><span class="text-down">High</span></td>
+                                   <td class="px-5 py-3 text-center font-bold">0</td>
+                                   <td class="px-5 py-3 text-center text-down text-[10px] font-bold">14m left</td>
+                                   <td class="px-5 py-3 border-l border-white/8 text-center">
+                                       <button class="bg-black l-bd hover:bg-up/20 text-muted hover:text-up px-2 py-0.5 rounded text-[10px] font-bold transition-colors" title="Unlock pair">UNLOCK</button>
+                                   </td>
+                               </tr>
+                               <tr class="hover:bg-white/[0.04] transition-colors bg-white/[0.015]">
+                                   <td class="px-5 py-3 font-bold text-white">XRP/USDT</td>
+                                   <td class="px-5 py-3 text-center"><span class="bg-up/12 text-up border border-up/25 px-2 py-0.5 rounded text-[10px] font-bold">ACTIVE</span></td>
+                                   <td class="px-5 py-3 text-muted font-sans text-[11px]">ScalpBot_XRP</td>
+                                   <td class="px-5 py-3 text-right">0.6520</td>
+                                   <td class="px-5 py-3 text-right text-up font-medium">+1.10%</td>
+                                   <td class="px-5 py-3 text-right text-muted">0.04%</td>
+                                   <td class="px-5 py-3 text-right text-muted">$310M</td>
+                                   <td class="px-5 py-3 text-right"><span class="text-up">Low</span></td>
+                                   <td class="px-5 py-3 text-center font-bold">1</td>
+                                   <td class="px-5 py-3 text-center">—</td>
+                                   <td class="px-5 py-3 border-l border-white/8 text-center">
+                                       <button class="bg-black l-bd hover:bg-down/20 text-muted hover:text-down px-2 py-0.5 rounded text-[10px] font-bold transition-colors" title="Lock pair">LOCK</button>
+                                   </td>
+                               </tr>
+                               <tr class="hover:bg-white/[0.04] transition-colors">
+                                   <td class="px-5 py-3 font-bold text-white">DOGE/USDT</td>
+                                   <td class="px-5 py-3 text-center"><span class="bg-yellow-500/12 text-yellow-400 border border-yellow-500/25 px-2 py-0.5 rounded text-[10px] font-bold">COOLDOWN</span></td>
+                                   <td class="px-5 py-3 text-muted font-sans text-[11px]">MemeScalper</td>
+                                   <td class="px-5 py-3 text-right">0.1842</td>
+                                   <td class="px-5 py-3 text-right text-down font-medium">-3.20%</td>
+                                   <td class="px-5 py-3 text-right text-yellow-400">0.12%</td>
+                                   <td class="px-5 py-3 text-right text-muted">$95M</td>
+                                   <td class="px-5 py-3 text-right"><span class="text-down">High</span></td>
+                                   <td class="px-5 py-3 text-center font-bold">0</td>
+                                   <td class="px-5 py-3 text-center text-yellow-400 text-[10px] font-bold">5m left</td>
+                                   <td class="px-5 py-3 border-l border-white/8 text-center">
+                                       <button class="bg-black l-bd hover:bg-up/20 text-muted hover:text-up px-2 py-0.5 rounded text-[10px] font-bold transition-colors" title="Unlock pair">UNLOCK</button>
                                    </td>
                                </tr>
                            </tbody>
@@ -636,6 +781,17 @@
         document.getElementById('drawer-backdrop').classList.add('open');
     }
     
+    function switchTradeTab(tabId, btn) {
+        document.querySelectorAll('.trade-tab-content').forEach(el => el.style.display = 'none');
+        document.getElementById(tabId).style.display = '';
+        document.querySelectorAll('.trade-tab-btn').forEach(b => {
+            b.classList.remove('border-white', 'text-white', 'border-b-2');
+            b.classList.add('text-muted');
+        });
+        btn.classList.add('border-b-2', 'border-white', 'text-white');
+        btn.classList.remove('text-muted');
+    }
+
     function closeBotDrawer() {
         document.getElementById('bot-drawer').classList.remove('open');
         document.getElementById('drawer-backdrop').classList.remove('open');

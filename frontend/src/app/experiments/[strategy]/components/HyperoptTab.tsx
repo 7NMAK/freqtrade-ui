@@ -968,10 +968,19 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
               return `HO-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;
             } catch { return 'HO-unknown'; }
           })();
-          // Summarize unique configs from results
-          const uniqueSamplers = Array.from(new Set(sortedResults.map(r => r.sampler))).join(', ');
-          const uniqueLoss = Array.from(new Set(sortedResults.map(r => r.lossFunction))).join(', ');
-          const uniqueSpaces = Array.from(new Set(sortedResults.map(r => r.spaces))).join(', ');
+          // Summarize config — prefer results data, fall back to form state
+          const uniqueSamplers = (() => {
+            const fromResults = Array.from(new Set(sortedResults.map(r => r.sampler).filter(s => s && s !== '—' && s !== '')));
+            return fromResults.length > 0 ? fromResults.join(', ') : selectedSamplers.map(v => SAMPLERS.find(s => s.value === v)?.label || v).join(', ');
+          })();
+          const uniqueLoss = (() => {
+            const fromResults = Array.from(new Set(sortedResults.map(r => r.lossFunction).filter(s => s && s !== '—' && s !== '')));
+            return fromResults.length > 0 ? fromResults.join(', ') : selectedLossFunctions.map(v => LOSS_FUNCTIONS.find(l => l.value === v)?.label || v).join(', ');
+          })();
+          const uniqueSpaces = (() => {
+            const fromResults = Array.from(new Set(sortedResults.map(r => r.spaces).filter(s => s && s !== '—' && s !== '')));
+            return fromResults.length > 0 ? fromResults.join(', ') : customSpaces.join(', ');
+          })();
           return (
           <div data-ho-results className="bg-card border border-border rounded-card overflow-hidden">
             {/* Config Header */}
@@ -1033,7 +1042,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                   {/* Row 1: Core Metrics (6-grid — same as BacktestTab Row 1) */}
                   <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                     <MC label="Total Trades" value={String(best.trades)} />
-                    <MC label="Win Rate" value={`${(best.winRate * 100).toFixed(1)}%`} positive={best.winRate > 0.6 ? true : best.winRate < 0.4 ? false : null} />
+                    <MC label="Win Rate" value={best.winRate > 0 ? `${(best.winRate * 100).toFixed(1)}%` : '—'} positive={best.winRate > 0.6 ? true : best.winRate > 0 && best.winRate < 0.4 ? false : null} />
                     <MC label="Total Profit" value={`${profitOk ? '+' : ''}${best.profitPct.toFixed(2)}%`} sub={fmt$(best.profitAbs)} positive={profitOk} />
                     <MC label="Max Drawdown" value={`-${Math.abs(best.maxDrawdown).toFixed(2)}%`} positive={false} />
                     <MC label="Sharpe" value={fmtNum(best.sharpe)} positive={best.sharpe > 1 ? true : best.sharpe < 0 ? false : null} />
@@ -1044,7 +1053,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                     <MC label="Avg Duration" value={best.avgDuration || "—"} />
                     <MC label="Loss" value={best.loss.toFixed(5)} positive={best.loss < 0 ? true : false} />
                     <MC label="Profit $" value={fmt$(best.profitAbs)} positive={profitOk} />
-                    <MC label="Epochs" value={String(best.epochs)} />
+                    <MC label="Epochs" value={String(sortedResults.length)} />
                   </div>
                 </div>
               );
@@ -1055,10 +1064,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                 <thead>
                   <tr className="bg-muted/50 text-muted-foreground">
                     <th className="text-left px-3 py-2 font-semibold">#</th>
-                    <th className="text-left px-3 py-2 font-semibold">Sampler</th>
-                    <th className="text-left px-3 py-2 font-semibold">Loss Function</th>
-                    <th className="text-left px-3 py-2 font-semibold">Spaces</th>
-                    <th className="text-right px-3 py-2 font-semibold">Epochs</th>
+                    <th className="text-right px-3 py-2 font-semibold">Epoch</th>
                     <th className="text-right px-3 py-2 font-semibold">Trades</th>
                     <th className="text-right px-3 py-2 font-semibold cursor-pointer hover:text-primary select-none" onClick={() => handleSort('winRate')}>
                       Win% <SortArrow col="winRate" />
@@ -1066,6 +1072,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                     <th className="text-right px-3 py-2 font-semibold cursor-pointer hover:text-primary select-none" onClick={() => handleSort('profitPct')}>
                       Profit% <SortArrow col="profitPct" />
                     </th>
+                    <th className="text-right px-3 py-2 font-semibold">Profit $</th>
                     <th className="text-right px-3 py-2 font-semibold cursor-pointer hover:text-primary select-none" onClick={() => handleSort('maxDrawdown')}>
                       Max DD <SortArrow col="maxDrawdown" />
                     </th>
@@ -1091,20 +1098,20 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                         <td className="px-3 py-2 tabular-nums text-muted-foreground">
                           {isWinner ? <span className="text-amber-400">★</span> : globalIdx + 1}
                         </td>
-                        <td className="px-3 py-2 font-mono">{r.sampler}</td>
-                        <td className="px-3 py-2">{r.lossFunction}</td>
-                        <td className="px-3 py-2 text-muted-foreground">{r.spaces}</td>
-                        <td className="px-3 py-2 text-right tabular-nums">{r.epochs}</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{r.id}</td>
                         <td className="px-3 py-2 text-right tabular-nums">{r.trades}</td>
-                        <td className="px-3 py-2 text-right tabular-nums">{r.winRate.toFixed(1)}%</td>
+                        <td className="px-3 py-2 text-right tabular-nums">{r.winRate > 0 ? `${(r.winRate * 100).toFixed(1)}%` : '—'}</td>
                         <td className={`px-3 py-2 text-right tabular-nums font-medium ${r.profitPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                           {r.profitPct >= 0 ? '+' : ''}{r.profitPct.toFixed(2)}%
+                        </td>
+                        <td className={`px-3 py-2 text-right tabular-nums ${r.profitAbs >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {fmt$(r.profitAbs)}
                         </td>
                         <td className="px-3 py-2 text-right tabular-nums text-rose-400">
                           -{Math.abs(r.maxDrawdown).toFixed(2)}%
                         </td>
-                        <td className="px-3 py-2 text-right tabular-nums">{fmtNum(r.sharpe)}</td>
-                        <td className="px-3 py-2 text-right tabular-nums">{fmtNum(r.sortino)}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">{r.sharpe !== 0 ? fmtNum(r.sharpe) : '—'}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">{r.sortino !== 0 ? fmtNum(r.sortino) : '—'}</td>
                         <td className="px-3 py-2 text-right text-muted-foreground">{r.avgDuration}</td>
                         <td className="px-3 py-2 text-center">
                           <div className="flex gap-1 justify-center">

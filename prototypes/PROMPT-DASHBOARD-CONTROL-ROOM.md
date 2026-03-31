@@ -183,22 +183,22 @@ Every bot uses the same expanded card format — NO compact rows. This ensures c
 ### Bot Drawer (responsive full-width overlay)
 
 #### Layout & Sizing
-- **Responsive width**: Fills all space right of Col 1 (Bot Fleet)
-  - `left: calc(var(--sidebar-width) + 400px); right: 0; width: auto;`
-  - When sidebar expanded (240px): left = 640px
-  - When sidebar collapsed (56px): left = 456px
+- **Responsive width**: Fills all space right of Col 1 (Bot Fleet), does NOT overlay bot list
+  - `left: 670px; right: 0; width: auto;` (sidebar expanded)
+  - `left: 486px;` (sidebar collapsed)
   - Scales proportionally with screen resolution
 - Animation: `translateX(100%) → translateX(0)`, `cubic-bezier(0.16, 1, 0.3, 1)` 0.3s
-- Backdrop: `rgba(0,0,0,0.6)` + `backdrop-filter: blur(3px)`
+- Backdrop: `rgba(0,0,0,0.5)` + `backdrop-filter: blur(2px)` — covers Col 2+3 only, NOT Col 1
 - Click backdrop to close
-- Col 1 (Bot Fleet) remains visible and interactive
+- Col 1 (Bot Fleet) remains fully visible and interactive
+- No footer buttons — use X to close and Config tab to edit
 
 #### Drawer Header
 Opens when clicking bot name or bot card row. Contains:
-- Close button: `×` icon, left side, `w-8 h-8`
+- Close button: `×` icon, top right, `w-5 h-5`
 - Bot name: `font-bold text-base font-mono text-white`
 - Status badge: `LIVE` / `PAUSED` / `STOPPED` / `DRAINING`
-- Subtitle: `Strategy: {name} · {exchange} · {status}` — `text-xs text-muted font-mono`
+- Subtitle: `Strategy: {name} · {exchange} · {status}` — `text-[11px] text-muted font-mono`
 
 **9 Action Buttons** (all in one row in header):
 
@@ -215,117 +215,97 @@ Opens when clicking bot name or bot card row. Contains:
 | 8 | `shield-alert` | Soft Kill | `🛡 Soft Kill — Exit all trades, keep bot alive` | Yellow |
 | 9 | `zap` | Hard Kill | `⚡ Hard Kill — Force stop bot + container` | Red |
 
-#### 10-Tab Navigation
+#### 8-Tab Navigation
 
 ```
-[ Overview | Trades | Performance | Config | System | Log | Backtest | Hyperopt | FreqAI | Edit Bot ]
+[ Overview | Trades | Performance | Config | Backtest | Hyperopt | FreqAI | System & Log ]
 ```
 
-- Tab bar: `h-12 border-b`, active = `border-b-2 border-white text-white`, inactive = `text-muted`
-- Tabs scroll horizontally if needed on smaller screens
+- Tab bar: `h-9`, active = `border-b-2 border-white text-white`, inactive = `text-muted`
+- Tab text: `text-[10px] font-bold uppercase tracking-wider`
+- Tabs scroll horizontally on smaller screens
 - Tab switching via `switchDrawerTab(tabId, btn)` function
 
 | Tab | ID | Source APIs |
 |---|---|---|
-| Overview | `drawer-overview` | `botProfit`, `botStats`, `botBalance`, `botConfig` |
+| Overview | `drawer-overview` | `botProfit`, `botStats`, `botBalance`, `botConfig`, `botDaily`, `botWeekly` |
 | Trades | `drawer-trades` | `botStatus`, `botTrades` |
 | Performance | `drawer-perf` | `botPerformance`, `botEntries`, `botExits` |
-| Config | `drawer-config` | `botConfig`, `botLocks` |
-| System | `drawer-system` | `botSysinfo`, `botHealth` |
-| Log | `drawer-log` | `botLogs` |
-| Backtest | `drawer-backtest` | `botBacktestStart`, `botBacktestResults`, `botBacktestHistory` |
-| Hyperopt | `drawer-hyperopt` | `botHyperoptStart`, `botHyperoptStatus`, `botHyperoptList` |
-| FreqAI | `drawer-freqai` | FreqAI config endpoints |
-| Edit Bot | `drawer-edit` | `botConfig` (read + write) |
+| Config | `drawer-config` | `botConfig`, `botLocks` (view + edit combined) |
+| Backtest | `drawer-backtest` | `botBacktestHistory`, `botBacktestResults` |
+| Hyperopt | `drawer-hyperopt` | `botHyperoptRuns`, `botHyperoptList` |
+| FreqAI | `drawer-freqai` | FreqAI model endpoints |
+| System & Log | `drawer-system` | `botSysinfo`, `botHealth`, `botLogs` |
 
-#### Tab 1: Overview
-Sources: `FTShowConfig`, `FTProfit`, `FTStats`, `FTBalance`
+#### Tab 1: Overview (card-based dashboard layout)
+Sources: `FTShowConfig`, `FTProfit`, `FTStats`, `FTBalance`, `botDaily`
 
-**Bot Configuration** (key-value rows):
-Exchange, Strategy, Timeframe, Trading Mode, Margin Mode, Stake Currency, Stake Amount, Max Open Trades, Dry Run, Pairs Count
+**KPI Row** (4-col grid, `bg-surface l-bd`):
+- Closed P&L: value + percentage sub-text
+- Open P&L: value + position count
+- Win Rate: value + W/L counts
+- Trades: total count + avg hold time
 
-**P&L Summary** (2×2 grid cards):
-Closed Profit (`profit_closed_coin`), Total Profit (`profit_all_coin`), Trade Count, Win Rate
+**Stats Grid** (2-col grid):
+- Risk Metrics card: Profit Factor, Max Drawdown, Sharpe, Sortino, Expectancy
+- Bot Info card: Exchange, Mode, Timeframe, Stake, Max Trades
 
-**Advanced Stats** (key-value rows):
-Profit Factor, Max Drawdown (red), Sharpe Ratio, Sortino Ratio
+**Wallet Balance** (3-col grid): per-currency free amount + total estimate
 
-**Wallet Balance** (per-currency rows):
-Currency name, Free amount, Est. value in fiat
+**Period Summary** (3-col grid): Today, This Week, This Month P&L
 
-#### Tab 2: Trades
+#### Tab 2: Trades (expanded, dashboard-style columns)
 Sources: `botStatus(id)`, `botTrades(id)`
 
-**Open Positions (N)** — table: Pair, Side (LONG/SHORT badge), Entry, Current, P&L
-**Closed Trades (Last 10)** — table: Pair, Side, Entry, Exit, P&L
+**Open Positions** — 11-column table: Pair, Side, Leverage, Entry, Current, Stake, P&L, P&L %, Duration, Enter Tag, SL
+**Closed Trades** — 11-column table: Pair, Side, Lev, Entry, Exit, Stake, P&L, P&L %, Duration, Enter Tag, Exit Reason
 
-#### Tab 3: Performance
+#### Tab 3: Performance (expanded with win/loss breakdown)
 Sources: `botPerformance(id)`, `botEntries(id)`, `botExits(id)`
 
-**Per-Pair Performance** — table: Pair, Trades, Profit
-**Entry Tag Analysis (Top 5)** — table: Tag, Trades, Profit
-**Exit Reason Analysis (Top 5)** — table: Reason, Trades, Profit
+**KPI Summary** (4-col grid): Best Pair, Worst Pair, Best Tag, Best Exit
+**Per-Pair Performance** — 7-column table: Pair, Trades, Wins, Losses, Win%, Profit, Avg P&L
+**Entry Tags** — 4-col side-by-side: Tag, N, Win%, Profit
+**Exit Reasons** — 4-col side-by-side: Reason, N, Win%, Profit
 
-#### Tab 4: Config
-Sources: `botConfig(id)`, `botLocks(id)`
+#### Tab 4: Config (view + edit merged)
+Sources: `botConfig(id)`, `botLocks(id)` — each section has an EDIT button
 
-**Core Config**: Exchange, Timeframe, Stake Currency, Dry Run
-**ROI & Stoploss**: Stoploss %, Trailing Stop, Trailing Positive, Trailing Offset, Minimal ROI table
-**Whitelist**: Pair chips from `pair_whitelist[]`
+**Core Config** card: Strategy, Exchange, Timeframe, Mode, Stake, Max Trades, Dry Run — with EDIT button
+**Risk Management** card: Stoploss, Trailing Stop, Trailing Positive, Offset, ROI — with EDIT button
+**Whitelist**: Pair chips from `pair_whitelist[]` — with EDIT button
 **Active Locks**: table — Pair, Reason, Until
 
-#### Tab 5: System
-Sources: `botSysinfo(id)`, `botHealth(id)`
+#### Tab 5: Backtest (results history list)
+Sources: `botBacktestHistory(id)`, `botBacktestResults(id)`
 
-**System Info**: CPU % (progress bar), Memory % (bar, yellow >80%, red >95%)
-**Bot Health**: Last Process, Last Process TS
+Displays list of past backtest runs. Each run is a clickable card showing:
+- Run # + date, PROFITABLE/LOSS badge
+- 5-col grid: Profit, Drawdown, Win Rate, Trades, Timerange
 
-#### Tab 6: Log
-Source: `botLogs(id, limit)` — `GET /api/bots/{id}/logs?limit=50`
+#### Tab 6: Hyperopt (results history list)
+Sources: `botHyperoptRuns(id)`, `botHyperoptList(id)`
 
-Full-height dedicated streaming log viewer.
-**Header bar**: Log level filter (ALL | INFO | BUY/SELL | WARN | ERROR), Pin-to-bottom toggle, Refresh button, entry count
-**Log viewer**: `font-mono text-[11px]` on `bg-[#060606]`, full height scrollable
-**Colors**: INFO=blue-400, BUY/FILL=green bold, SELL/EXIT=red bold, WARN=yellow-500, ERROR=red-500 bold, HTTP=yellow-500, DEBUG=white/30
-**Polling**: Every 5 seconds when tab is active
+Displays list of past hyperopt runs. Each run is a clickable card showing:
+- Opt # + loss function, BEST score badge
+- 5-col grid: Epochs, Space, Profit, Drawdown, Date
 
-#### Tab 7: Backtest (per-bot)
-Sources: `botBacktestStart(id)`, `botBacktestResults(id)`, `botBacktestHistory(id)`
+#### Tab 7: FreqAI (model results)
+Shows trained models for this bot's strategy. Each model card:
+- Model name + version, ACTIVE/ARCHIVED badge
+- 4-col grid: Features, Training date, Accuracy, Predictions
 
-Run backtest using THIS bot's strategy.
-**Config form**: Strategy (pre-filled), Timeframe, Fee %, Timerange
-**Execute button** → `botBacktestStart(id, params)`
-**Results**: Total Profit, Max Drawdown, Win Rate (3 KPI cards) + trade list table
-**History**: Previous runs from `botBacktestHistory(id)`
+#### Tab 8: System & Log (merged)
+Sources: `botSysinfo(id)`, `botHealth(id)`, `botLogs(id)`
 
-#### Tab 8: Hyperopt (per-bot)
-Sources: `botHyperoptStart(id)`, `botHyperoptStatus(id)`, `botHyperoptList(id)`
+**Top row** (2-col grid):
+- System Resources: CPU/RAM progress bars
+- Bot Health: Last Process, DB Sync, Exchange Latency, FT Version
 
-Optimize THIS bot's parameters.
-**Config form**: Epochs, Loss Function, Search Space
-**Run button** → `botHyperoptStart(id, params)`
-**Live log**: Streaming epoch results
-**Results**: Best parameters from `botHyperoptList(id)`
-
-#### Tab 9: FreqAI (per-bot)
-ML model training for THIS bot.
-Model type selector, training status/progress, feature importance (placeholder)
-
-#### Tab 10: Edit Bot
-Sources: `botConfig(id)` read + write
-
-Edit bot configuration in-place.
-- Strategy selector (from `botFtStrategies(id)`)
-- Pair whitelist editor (add/remove chips)
-- Stoploss / ROI editor
-- Key config field forms
-- Save button → writes config back
-
-#### Drawer Footer
-| Button | Action | Style |
-|---|---|---|
-| Edit Bot Settings | switches to Edit Bot tab | Neutral border |
-| Close Panel | `closeBotDrawer()` | White bg, black text |
+**Log viewer** (fills remaining height):
+- Filter bar: ALL | INFO | BUY/SELL | WARN | ERROR
+- Pin-to-bottom, Refresh, entry count
+- Colors: INFO=blue, BUY/FILL=green bold, SELL=red bold, WARN=yellow, ERROR=red bold, DEBUG=white/25
 
 ---
 
@@ -656,12 +636,10 @@ font-family: 'JetBrains Mono', monospace; /* Data values */
 | `drawer-trades` | `<div>` | Drawer tab: Trades |
 | `drawer-perf` | `<div>` | Drawer tab: Performance |
 | `drawer-config` | `<div>` | Drawer tab: Config |
-| `drawer-system` | `<div>` | Drawer tab: System |
-| `drawer-log` | `<div>` | Drawer tab: Log |
+| `drawer-system` | `<div>` | Drawer tab: System & Log (merged) |
 | `drawer-backtest` | `<div>` | Drawer tab: Backtest |
 | `drawer-hyperopt` | `<div>` | Drawer tab: Hyperopt |
 | `drawer-freqai` | `<div>` | Drawer tab: FreqAI |
-| `drawer-edit` | `<div>` | Drawer tab: Edit Bot |
 
 ### Section Titles in Prototype
 
@@ -674,29 +652,26 @@ font-family: 'JetBrains Mono', monospace; /* Data values */
 | `Fees & Costs` | Col 3 widget 2 |
 | `Node Telemetry` | Col 3 widget 3 |
 | `Terminal StdOut` | Col 3 widget 4 |
-| `Process Controls` | Bot drawer section 1 |
-| `RPC Actions` | Bot drawer section 2 |
-| `Tail_Log.txt` | Bot drawer section 3 |
-| `Run Configuration` | Backtest control panel |
-| `Total Profit` / `Max Drawdown` / `Win Rate` | Backtest results KPIs |
-| `Test Logs & Trades` | Backtest results table |
-| `Hyperopt Compute` | Hyperopt tab heading |
-| `Open Positions (6)` | Drawer Trades tab |
-| `Closed Trades (Last 10)` | Drawer Trades tab |
+| `Risk Metrics` | Drawer Overview stats card |
+| `Bot Info` | Drawer Overview info card |
+| `Wallet Balance` | Drawer Overview wallet section |
+| `Open Positions` | Drawer Trades tab |
+| `Closed Trades` | Drawer Trades tab |
 | `Per-Pair Performance` | Drawer Performance tab |
-| `Entry Tag Analysis (Top 5)` | Drawer Performance tab |
-| `Exit Reason Analysis (Top 5)` | Drawer Performance tab |
+| `Entry Tags` | Drawer Performance tab |
+| `Exit Reasons` | Drawer Performance tab |
 | `Core Config` | Drawer Config tab |
-| `ROI & Stoploss` | Drawer Config tab |
-| `Whitelist (24 pairs)` | Drawer Config tab |
+| `Risk Management` | Drawer Config tab |
+| `Whitelist` | Drawer Config tab |
 | `Active Locks` | Drawer Config tab |
-| `System Info` | Drawer System tab |
-| `Bot Health` | Drawer System tab |
-| `Run Backtest — TrendFollowerV3` | Drawer Backtest tab |
-| `Hyperopt — TrendFollowerV3` | Drawer Hyperopt tab |
-| `P&L Summary` | Drawer Overview tab |
-| `Closed Profit` | Drawer Overview P&L card |
-| `Wallet Balance` | Drawer Overview section |
+| `Backtest History` | Drawer Backtest tab |
+| `Hyperopt Runs` | Drawer Hyperopt tab |
+| `FreqAI Models` | Drawer FreqAI tab |
+| `System Resources` | Drawer System & Log tab |
+| `Bot Health` | Drawer System & Log tab |
+| `Run Configuration` | Experiments Backtest panel |
+| `Test Logs & Trades` | Experiments Backtest results |
+| `Hyperopt Compute` | Experiments Hyperopt panel |
 
 ## Tooltips — Every Interactive Element
 
@@ -791,14 +766,12 @@ ALL buttons in the application have descriptive `title=` attributes for hover to
 |---|---|
 | Overview | `Bot overview and stats` |
 | Trades | `Open and closed trades` |
-| Performance | `Performance by pair` |
-| Config | `Bot configuration details` |
-| System | `System info and health` |
-| Log | `Live bot log stream` |
-| Backtest | `Run backtest on this bot strategy` |
-| Hyperopt | `Optimize strategy parameters` |
-| FreqAI | `ML model training` |
-| Edit Bot | `Edit bot settings` |
+| Performance | `Performance analytics` |
+| Config | `Bot configuration and editing` |
+| Backtest | `Backtest results history` |
+| Hyperopt | `Hyperopt results history` |
+| FreqAI | `FreqAI model results` |
+| System & Log | `System health and logs` |
 
 ### Log Tab Tooltips
 | Button | Tooltip |
@@ -811,12 +784,12 @@ ALL buttons in the application have descriptive `title=` attributes for hover to
 | Pin | `Pin to bottom — auto-scroll` |
 | Refresh | `Refresh logs` |
 
-### Drawer Footer Tooltips
+### Config Tab Tooltips
 | Button | Tooltip |
 |---|---|
-| Edit Bot Settings | `Switch to Edit Bot tab` |
-| Close Panel | `Close this panel` |
-| Save Changes | `Save bot configuration changes` |
+| EDIT (Core Config) | `Edit core config` |
+| EDIT (Risk) | `Edit risk settings` |
+| EDIT (Whitelist) | `Edit whitelist` |
 
 ---
 

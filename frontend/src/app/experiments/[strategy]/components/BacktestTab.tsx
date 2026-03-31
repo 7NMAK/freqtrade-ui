@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import Tooltip from "@/components/ui/Tooltip";
 import Toggle from "@/components/ui/Toggle";
-import { INPUT, SELECT, LABEL, fmt$, fmtPctRatio, fmtNum, fmtTimestamp } from "@/lib/design";
+import { INPUT, SELECT, LABEL, fmt$, fmtPctRatio, fmtNum } from "@/lib/design";
 import { botLogs, botBacktestResults, botBacktestStart, botBacktestDelete, botBacktestHistory, botBacktestHistoryResult, botBacktestHistoryDelete } from "@/lib/api";
 import { useToast } from "@/components/ui/Toast";
 
@@ -924,7 +924,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
     poll();
     pollRef.current = setInterval(poll, 3000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [isRunning, backtestBotId, strategy, addLog, extractResult, fetchHistory]);
+  }, [isRunning, backtestBotId, strategy, addLog, extractResult, fetchHistory, BT_CACHE_KEY]);
 
   // Timerange display (auto-generated from dates)
   const timerangeDisplay = useMemo(() => {

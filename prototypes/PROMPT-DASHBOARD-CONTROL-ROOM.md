@@ -180,17 +180,152 @@ Every bot uses the same expanded card format — NO compact rows. This ensures c
 - **Paused**: Yellow dot (no glow), dimmed name (`text-white/60`), `PAUSED` badge in yellow
 - **Stopped**: Red dot, very dimmed name (`text-white/40`), `STOPPED` badge in red
 
-### Bot Drawer (slide-in overlay from right)
-- Width: `480px`, slides from right edge
+### Bot Drawer (responsive full-width overlay)
+
+#### Layout & Sizing
+- **Responsive width**: Fills all space right of Col 1 (Bot Fleet)
+  - `left: calc(var(--sidebar-width) + 400px); right: 0; width: auto;`
+  - When sidebar expanded (240px): left = 640px
+  - When sidebar collapsed (56px): left = 456px
+  - Scales proportionally with screen resolution
 - Animation: `translateX(100%) → translateX(0)`, `cubic-bezier(0.16, 1, 0.3, 1)` 0.3s
 - Backdrop: `rgba(0,0,0,0.6)` + `backdrop-filter: blur(3px)`
 - Click backdrop to close
-Opens when clicking bot name. Contains:
-- Bot controls (Start/Pause/Stop/Reload) — `grid-cols-2 gap-2.5`, each with descriptive tooltip
-- RPC Actions (Force Enter, Force Exit All, Toggle Stopbuy) — `grid-cols-2 gap-2.5`, each with tooltip
-- Tail log (`Tail_Log.txt`) — last 20 log lines from `/api/v1/logs`, color-coded: INFO (blue), BUY (green), FILL (green)
-- Full config view from `show_config`
-- Close button: `X` icon with tooltip "Close drawer"
+- Col 1 (Bot Fleet) remains visible and interactive
+
+#### Drawer Header
+Opens when clicking bot name or bot card row. Contains:
+- Close button: `×` icon, left side, `w-8 h-8`
+- Bot name: `font-bold text-base font-mono text-white`
+- Status badge: `LIVE` / `PAUSED` / `STOPPED` / `DRAINING`
+- Subtitle: `Strategy: {name} · {exchange} · {status}` — `text-xs text-muted font-mono`
+
+**9 Action Buttons** (all in one row in header):
+
+| # | Icon | Label | Tooltip | Hover Color |
+|---|---|---|---|---|
+| 1 | `play` | Start | `▶ Start Bot — Resume trading engine` | Green |
+| 2 | `square` | Stop | `■ Stop Bot — Gracefully stop trading` | Red |
+| 3 | `pause` | Pause | `⏸ Pause — Stop opening new trades` | Yellow |
+| 4 | `refresh-cw` | Reload | `↻ Reload Config — Hot-reload strategy config` | White |
+| 5 | `plus-circle` | Force Enter | `Force open a new trade manually` | Green |
+| 6 | `x-square` | Force Exit | `✕ Force Exit All — Close all open positions` | Red |
+| 7 | `plus-square` | Stopbuy | `⊞ Toggle Stopbuy — Prevent new buy orders` | White |
+| — | divider | `w-px h-4 bg-white/15` | — | — |
+| 8 | `shield-alert` | Soft Kill | `🛡 Soft Kill — Exit all trades, keep bot alive` | Yellow |
+| 9 | `zap` | Hard Kill | `⚡ Hard Kill — Force stop bot + container` | Red |
+
+#### 10-Tab Navigation
+
+```
+[ Overview | Trades | Performance | Config | System | Log | Backtest | Hyperopt | FreqAI | Edit Bot ]
+```
+
+- Tab bar: `h-12 border-b`, active = `border-b-2 border-white text-white`, inactive = `text-muted`
+- Tabs scroll horizontally if needed on smaller screens
+- Tab switching via `switchDrawerTab(tabId, btn)` function
+
+| Tab | ID | Source APIs |
+|---|---|---|
+| Overview | `drawer-overview` | `botProfit`, `botStats`, `botBalance`, `botConfig` |
+| Trades | `drawer-trades` | `botStatus`, `botTrades` |
+| Performance | `drawer-perf` | `botPerformance`, `botEntries`, `botExits` |
+| Config | `drawer-config` | `botConfig`, `botLocks` |
+| System | `drawer-system` | `botSysinfo`, `botHealth` |
+| Log | `drawer-log` | `botLogs` |
+| Backtest | `drawer-backtest` | `botBacktestStart`, `botBacktestResults`, `botBacktestHistory` |
+| Hyperopt | `drawer-hyperopt` | `botHyperoptStart`, `botHyperoptStatus`, `botHyperoptList` |
+| FreqAI | `drawer-freqai` | FreqAI config endpoints |
+| Edit Bot | `drawer-edit` | `botConfig` (read + write) |
+
+#### Tab 1: Overview
+Sources: `FTShowConfig`, `FTProfit`, `FTStats`, `FTBalance`
+
+**Bot Configuration** (key-value rows):
+Exchange, Strategy, Timeframe, Trading Mode, Margin Mode, Stake Currency, Stake Amount, Max Open Trades, Dry Run, Pairs Count
+
+**P&L Summary** (2×2 grid cards):
+Closed Profit (`profit_closed_coin`), Total Profit (`profit_all_coin`), Trade Count, Win Rate
+
+**Advanced Stats** (key-value rows):
+Profit Factor, Max Drawdown (red), Sharpe Ratio, Sortino Ratio
+
+**Wallet Balance** (per-currency rows):
+Currency name, Free amount, Est. value in fiat
+
+#### Tab 2: Trades
+Sources: `botStatus(id)`, `botTrades(id)`
+
+**Open Positions (N)** — table: Pair, Side (LONG/SHORT badge), Entry, Current, P&L
+**Closed Trades (Last 10)** — table: Pair, Side, Entry, Exit, P&L
+
+#### Tab 3: Performance
+Sources: `botPerformance(id)`, `botEntries(id)`, `botExits(id)`
+
+**Per-Pair Performance** — table: Pair, Trades, Profit
+**Entry Tag Analysis (Top 5)** — table: Tag, Trades, Profit
+**Exit Reason Analysis (Top 5)** — table: Reason, Trades, Profit
+
+#### Tab 4: Config
+Sources: `botConfig(id)`, `botLocks(id)`
+
+**Core Config**: Exchange, Timeframe, Stake Currency, Dry Run
+**ROI & Stoploss**: Stoploss %, Trailing Stop, Trailing Positive, Trailing Offset, Minimal ROI table
+**Whitelist**: Pair chips from `pair_whitelist[]`
+**Active Locks**: table — Pair, Reason, Until
+
+#### Tab 5: System
+Sources: `botSysinfo(id)`, `botHealth(id)`
+
+**System Info**: CPU % (progress bar), Memory % (bar, yellow >80%, red >95%)
+**Bot Health**: Last Process, Last Process TS
+
+#### Tab 6: Log
+Source: `botLogs(id, limit)` — `GET /api/bots/{id}/logs?limit=50`
+
+Full-height dedicated streaming log viewer.
+**Header bar**: Log level filter (ALL | INFO | BUY/SELL | WARN | ERROR), Pin-to-bottom toggle, Refresh button, entry count
+**Log viewer**: `font-mono text-[11px]` on `bg-[#060606]`, full height scrollable
+**Colors**: INFO=blue-400, BUY/FILL=green bold, SELL/EXIT=red bold, WARN=yellow-500, ERROR=red-500 bold, HTTP=yellow-500, DEBUG=white/30
+**Polling**: Every 5 seconds when tab is active
+
+#### Tab 7: Backtest (per-bot)
+Sources: `botBacktestStart(id)`, `botBacktestResults(id)`, `botBacktestHistory(id)`
+
+Run backtest using THIS bot's strategy.
+**Config form**: Strategy (pre-filled), Timeframe, Fee %, Timerange
+**Execute button** → `botBacktestStart(id, params)`
+**Results**: Total Profit, Max Drawdown, Win Rate (3 KPI cards) + trade list table
+**History**: Previous runs from `botBacktestHistory(id)`
+
+#### Tab 8: Hyperopt (per-bot)
+Sources: `botHyperoptStart(id)`, `botHyperoptStatus(id)`, `botHyperoptList(id)`
+
+Optimize THIS bot's parameters.
+**Config form**: Epochs, Loss Function, Search Space
+**Run button** → `botHyperoptStart(id, params)`
+**Live log**: Streaming epoch results
+**Results**: Best parameters from `botHyperoptList(id)`
+
+#### Tab 9: FreqAI (per-bot)
+ML model training for THIS bot.
+Model type selector, training status/progress, feature importance (placeholder)
+
+#### Tab 10: Edit Bot
+Sources: `botConfig(id)` read + write
+
+Edit bot configuration in-place.
+- Strategy selector (from `botFtStrategies(id)`)
+- Pair whitelist editor (add/remove chips)
+- Stoploss / ROI editor
+- Key config field forms
+- Save button → writes config back
+
+#### Drawer Footer
+| Button | Action | Style |
+|---|---|---|
+| Edit Bot Settings | switches to Edit Bot tab | Neutral border |
+| Close Panel | `closeBotDrawer()` | White bg, black text |
 
 ---
 

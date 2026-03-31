@@ -495,6 +495,11 @@ export const botHyperoptRuns = (id: number) =>
     `/api/bots/${id}/hyperopt-runs`
   );
 
+export const botHyperoptHistoryResults = (id: number, filename: string) =>
+  request<{ results: Array<{ current_epoch: number; loss: number; trades: number; winRate: number; profitPct: number; profitAbs: number; maxDrawdown: number; sharpe: number; sortino: number; avgDuration: string; params?: Record<string, unknown> }>; total: number }>(
+    `/api/bots/${id}/hyperopt/history/${encodeURIComponent(filename)}/results`
+  );
+
 export const botHyperoptHistoryDelete = (id: number, filename: string) =>
   request<{ status: string }>(`/api/bots/${id}/hyperopt/history/${encodeURIComponent(filename)}`, { method: "DELETE" });
 

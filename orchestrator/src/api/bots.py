@@ -1863,8 +1863,8 @@ async def bot_hyperopt_show(bot_id: int, request: Request, db: AsyncSession = De
 
 @router.get("/{bot_id}/hyperopt-runs")
 async def bot_hyperopt_runs(bot_id: int, request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
-    """List all .fthypt result files with best-epoch stats."""
-    import docker, re, json as _json
+    """List all .fthypt result files with best-epoch stats (optimized)."""
+    import docker, json as _json
     manager = request.app.state.bot_manager
     bot = await manager.get_bot(db, bot_id)
     if not bot:
@@ -1872,66 +1872,124 @@ async def bot_hyperopt_runs(bot_id: int, request: Request, db: AsyncSession = De
     try:
         dk = docker.from_env()
         container = dk.containers.get(bot.container_id or bot.name)
-        # Get filename, size, mtime, epoch count, AND last line (best epoch) for each file
-        sh_cmd = (
-            'for f in /freqtrade/user_data/hyperopt_results/*.fthypt; do '
-            '[ -f "$f" ] && printf "%s\\t%s\\t%s\\t%s\\t%s\\n" '
-            '"$(basename "$f")" "$(stat -c %s "$f")" "$(stat -c %Y "$f")" "$(wc -l < "$f")" "$(tail -1 "$f")"; '
-            'done'
-        )
-        result = container.exec_run(["sh", "-c", sh_cmd], detach=False)
+        # Use a Python one-liner inside the container to extract stats efficiently
+        # This avoids piping huge JSON lines through shell printf
+        py_script = '''
+import os, json, sys
+d = "/freqtrade/user_data/hyperopt_results"
+if not os.path.isdir(d): sys.exit(0)
+for fn in sorted(os.listdir(d)):
+    if not fn.endswith(".fthypt"): continue
+    fp = os.path.join(d, fn)
+    st = os.stat(fp)
+    sz, mt = st.st_size, int(st.st_mtime)
+    lc = 0
+    last = ""
+    with open(fp, "rb") as f:
+        for lc_i, ln in enumerate(f, 1):
+            lc = lc_i
+            last = ln
+    stats = {}
+    try:
+        ep = json.loads(last)
+        rk = ep.get("results_metrics", {})
+        stats = {"tt": rk.get("total_trades",0), "pt": rk.get("profit_total",0),
+                 "pa": rk.get("profit_total_abs",0), "md": rk.get("max_drawdown_account", rk.get("max_drawdown",0)),
+                 "wr": rk.get("winrate",0), "pf": rk.get("profit_factor",0),
+                 "sh": rk.get("sharpe", rk.get("sharpe_ratio",0)),
+                 "so": rk.get("sortino", rk.get("sortino_ratio",0))}
+    except: pass
+    print(json.dumps({"fn":fn,"sz":sz,"mt":mt,"lc":lc,**stats}))
+'''
+        result = container.exec_run(["python3", "-c", py_script], detach=False)
         if result.exit_code != 0:
             return {"runs": []}
         runs: list[dict[str, Any]] = []
+        import re
         for line in result.output.decode("utf-8", errors="replace").strip().split("\n"):
             if not line.strip():
                 continue
-            parts = line.split("\t", 4)  # split into max 5 parts
-            if len(parts) < 4:
+            try:
+                d = _json.loads(line)
+            except Exception:
                 continue
-            filename = parts[0]
-            size_bytes = int(parts[1]) if parts[1].isdigit() else 0
-            mtime = float(parts[2]) if parts[2].replace(".", "").isdigit() else 0
-            epoch_count = int(parts[3].strip()) if parts[3].strip().isdigit() else 0
-            # Parse strategy name and date from filename
-            m = re.match(r"strategy_(.+?)_(\d{4}-\d{2}-\d{2})_(\d{2})-(\d{2})-(\d{2})\.fthypt", filename)
-            strategy_name = m.group(1) if m else filename
-            created_str = f"{m.group(2)} {m.group(3)}:{m.group(4)}:{m.group(5)}" if m else ""
-            # Parse best epoch stats from last line of file
-            best_stats: dict[str, Any] = {}
-            if len(parts) >= 5 and parts[4].strip():
-                try:
-                    epoch_data = _json.loads(parts[4].strip())
-                    rk = epoch_data.get("results_metrics", {})
-                    best_stats = {
-                        "total_trades": rk.get("total_trades", 0),
-                        "profit_total": rk.get("profit_total", 0),
-                        "profit_total_abs": rk.get("profit_total_abs", 0),
-                        "max_drawdown_account": rk.get("max_drawdown_account", rk.get("max_drawdown", 0)),
-                        "wins": rk.get("wins", 0),
-                        "losses": rk.get("losses", 0),
-                        "winrate": rk.get("winrate", 0),
-                        "profit_factor": rk.get("profit_factor", 0),
-                        "sharpe": rk.get("sharpe", rk.get("sharpe_ratio", 0)),
-                        "sortino": rk.get("sortino", rk.get("sortino_ratio", 0)),
-                        "holding_avg": rk.get("holding_avg", ""),
-                    }
-                except Exception:
-                    pass  # malformed JSON, skip stats
+            fn = d["fn"]
+            m = re.match(r"strategy_(.+?)_(\d{4}-\d{2}-\d{2})_(\d{2})-(\d{2})-(\d{2})\.fthypt", fn)
+            strategy_name = m.group(1) if m else fn
             runs.append({
-                "filename": filename,
+                "filename": fn,
                 "strategy": strategy_name,
-                "created_at": created_str,
-                "mtime": mtime,
-                "size_bytes": size_bytes,
-                "epochs": epoch_count,
-                **best_stats,
+                "created_at": f"{m.group(2)} {m.group(3)}:{m.group(4)}:{m.group(5)}" if m else "",
+                "mtime": d["mt"],
+                "size_bytes": d["sz"],
+                "epochs": d["lc"],
+                "total_trades": d.get("tt", 0),
+                "profit_total": d.get("pt", 0),
+                "profit_total_abs": d.get("pa", 0),
+                "max_drawdown_account": d.get("md", 0),
+                "winrate": d.get("wr", 0),
+                "profit_factor": d.get("pf", 0),
+                "sharpe": d.get("sh", 0),
+                "sortino": d.get("so", 0),
             })
         runs.sort(key=lambda r: r["mtime"], reverse=True)
         return {"runs": runs}
     except Exception as e:
         raise HTTPException(502, f"Hyperopt-runs failed: {e}")
 
+
+@router.get("/{bot_id}/hyperopt/history/{filename:path}/results")
+async def bot_hyperopt_history_results(bot_id: int, filename: str, request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
+    """Load all epochs from a specific .fthypt file and return parsed results."""
+    import docker, json as _json
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    try:
+        dk = docker.from_env()
+        container = dk.containers.get(bot.container_id or bot.name)
+        # Read the file and parse each line as JSON epoch
+        py_script = f'''
+import json, sys, os
+fp = "/freqtrade/user_data/hyperopt_results/{filename}"
+if not os.path.isfile(fp):
+    print(json.dumps({{"error": "File not found"}}))
+    sys.exit(0)
+results = []
+with open(fp, "r") as f:
+    for i, line in enumerate(f, 1):
+        try:
+            ep = json.loads(line.strip())
+            rm = ep.get("results_metrics", {{}})
+            results.append({{
+                "current_epoch": ep.get("current_epoch", i),
+                "loss": ep.get("loss", 0),
+                "trades": rm.get("total_trades", 0),
+                "winRate": rm.get("winrate", 0),
+                "profitPct": rm.get("profit_total", 0) * 100,
+                "profitAbs": rm.get("profit_total_abs", 0),
+                "maxDrawdown": rm.get("max_drawdown_account", rm.get("max_drawdown", 0)) * 100,
+                "sharpe": rm.get("sharpe", rm.get("sharpe_ratio", 0)),
+                "sortino": rm.get("sortino", rm.get("sortino_ratio", 0)),
+                "avgDuration": rm.get("holding_avg", ""),
+                "params": ep.get("params_details", {{}}),
+            }})
+        except:
+            pass
+print(json.dumps({{"results": results, "total": len(results)}}))
+'''
+        result = container.exec_run(["python3", "-c", py_script], detach=False)
+        if result.exit_code != 0:
+            raise HTTPException(500, "Failed to read hyperopt file")
+        data = _json.loads(result.output.decode("utf-8", errors="replace").strip())
+        if "error" in data:
+            raise HTTPException(404, data["error"])
+        return data
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(502, f"Hyperopt history load failed: {e}")
 
 
 

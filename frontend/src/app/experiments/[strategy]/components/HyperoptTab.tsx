@@ -23,6 +23,7 @@ import {
   botHyperoptList,
   botHyperoptRuns,
   botHyperoptHistoryDelete,
+  botHyperoptHistoryResults,
 } from '@/lib/api';
 
 interface HyperoptRun {
@@ -1188,9 +1189,36 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                                 onClick={async (e) => {
                                   e.stopPropagation();
                                   addLog('INFO', `Loading results from ${run.filename}...`);
-                                  await fetchResults();
-                                  toast.success('Results loaded');
-                                  document.querySelector('[data-ho-results]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                  try {
+                                    const data = await botHyperoptHistoryResults(botId, run.filename);
+                                    const mapped: HyperoptResult[] = (data.results || []).map((r, i) => ({
+                                      id: r.current_epoch || i + 1,
+                                      loss: r.loss,
+                                      trades: r.trades,
+                                      winRate: r.winRate,
+                                      profitPct: r.profitPct,
+                                      profitAbs: r.profitAbs,
+                                      maxDrawdown: r.maxDrawdown,
+                                      sharpe: r.sharpe,
+                                      sortino: r.sortino,
+                                      avgDuration: r.avgDuration,
+                                      sampler: '',
+                                      lossFunction: '',
+                                      spaces: '',
+                                      epochs: data.total,
+                                      status: 'completed' as const,
+                                      startedAt: new Date(run.mtime * 1000).toISOString(),
+                                      params: r.params,
+                                    }));
+                                    setResults(mapped);
+                                    setResultsPage(1);
+                                    addLog('INFO', `Loaded ${mapped.length} epochs from ${run.filename}`);
+                                    toast.success(`Loaded ${mapped.length} epochs`);
+                                    setTimeout(() => document.querySelector('[data-ho-results]')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                                  } catch (err) {
+                                    addLog('ERROR', `Failed to load: ${err}`);
+                                    toast.error('Failed to load results');
+                                  }
                                 }}
                                 className="text-[10px] px-2 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded hover:bg-primary/20 transition-all"
                               >Load</button>

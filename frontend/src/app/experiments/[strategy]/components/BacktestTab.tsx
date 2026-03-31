@@ -432,15 +432,29 @@ function EquityCurve({ breakdown, startingBalance }: { breakdown: Record<string,
 // ══════════════════════════════════════════════════════════════════════════
 // HISTORY PANEL
 // ══════════════════════════════════════════════════════════════════════════
-function HistoryPanel({ entries, currentStrategy, onLoad, onDelete }: {
+/** Lazy-loaded summary stats for a history entry */
+interface HistoryStats {
+  total_trades: number;
+  profit_total_abs: number;
+  profit_total: number;
+  max_drawdown_account: number;
+  wins: number;
+  losses: number;
+  profit_factor: number;
+  holding_avg: string;
+}
+
+function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
   entries: HistoryEntry[];
   currentStrategy: string;
   onLoad: (entry: HistoryEntry) => void;
   onDelete: (entry: HistoryEntry) => void;
+  botId: number;
 }) {
   const [page, setPage] = useState(1);
   const [confirmId, setConfirmId] = useState<string | null>(null);
-  const perPage = 10;
+  const [statsCache, setStatsCache] = useState<Map<string, HistoryStats | 'loading' | 'error'>>(new Map());
+  const perPage = 5;
 
   // Auto-reset confirm after 3s
   useEffect(() => {
@@ -454,52 +468,156 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete }: {
     .filter((e) => e.strategy === currentStrategy)
     .sort((a, b) => b.backtest_start_time - a.backtest_start_time);
 
+  // Lazy-load stats for visible entries
+  const paged = filtered.slice((page - 1) * perPage, page * perPage);
+  useEffect(() => {
+    paged.forEach(async (entry) => {
+      const key = entry.filename;
+      if (statsCache.has(key)) return;
+      setStatsCache(prev => new Map(prev).set(key, 'loading'));
+      try {
+        const data = await botBacktestHistoryResult(botId, entry.filename, entry.strategy);
+        const br = (data as Record<string, unknown>).backtest_result ?? data;
+        const stratMap = (br as Record<string, unknown>).strategy as Record<string, Record<string, unknown>> | undefined;
+        if (stratMap) {
+          const firstKey = Object.keys(stratMap)[0];
+          if (firstKey) {
+            const s = stratMap[firstKey];
+            const totalTrades = Number(s.total_trades ?? 0);
+            const wins = Number(s.wins ?? 0);
+            const losses = Number(s.losses ?? 0);
+            setStatsCache(prev => new Map(prev).set(key, {
+              total_trades: totalTrades,
+              profit_total_abs: Number(s.profit_total_abs ?? 0),
+              profit_total: Number(s.profit_total ?? 0),
+              max_drawdown_account: Number(s.max_drawdown_account ?? 0),
+              wins,
+              losses,
+              profit_factor: Number(s.profit_factor ?? 0),
+              holding_avg: String(s.holding_avg ?? s.holding_avg_s ?? ''),
+            }));
+            return;
+          }
+        }
+        setStatsCache(prev => new Map(prev).set(key, 'error'));
+      } catch {
+        setStatsCache(prev => new Map(prev).set(key, 'error'));
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, filtered.length, botId]);
+
   if (filtered.length === 0) return null;
 
   const totalPages = Math.ceil(filtered.length / perPage);
-  const paged = filtered.slice((page - 1) * perPage, page * perPage);
 
   return (
     <div>
       <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
         Backtest History ({filtered.length})
       </div>
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-2">
         {paged.map((entry) => {
-          const startTs = entry.backtest_start_ts ? new Date(entry.backtest_start_ts * 1000).toISOString().split("T")[0] : "?";
-          const endTs = entry.backtest_end_ts ? new Date(entry.backtest_end_ts * 1000).toISOString().split("T")[0] : "?";
+          const startDate = entry.backtest_start_ts ? new Date(entry.backtest_start_ts * 1000).toISOString().split("T")[0] : "?";
+          const endDate = entry.backtest_end_ts ? new Date(entry.backtest_end_ts * 1000).toISOString().split("T")[0] : "?";
+          const runDate = new Date(entry.backtest_start_time * 1000);
+          const runDateStr = `${runDate.getFullYear()}-${String(runDate.getMonth()+1).padStart(2,'0')}-${String(runDate.getDate()).padStart(2,'0')} ${String(runDate.getHours()).padStart(2,'0')}:${String(runDate.getMinutes()).padStart(2,'0')}`;
           const entryKey = `${entry.filename}-${entry.run_id}`;
           const isConfirming = confirmId === entryKey;
+          const stats = statsCache.get(entry.filename);
+          const hasStats = stats && stats !== 'loading' && stats !== 'error';
+          const s = hasStats ? stats as HistoryStats : null;
+          const winRate = s && s.total_trades > 0 ? (s.wins / s.total_trades * 100).toFixed(0) : null;
+          const profitPositive = s ? s.profit_total_abs >= 0 : null;
+
           return (
             <div
               key={entryKey}
-              className="flex items-center gap-2 px-3 py-2 bg-muted/30 border border-border rounded-lg text-xs hover:bg-muted/60 hover:border-primary/30 transition-all group"
+              className="bg-muted/20 border border-border rounded-lg overflow-hidden hover:border-primary/30 transition-all group"
             >
-              <button
-                onClick={() => onLoad(entry)}
-                className="flex items-center gap-3 text-left flex-1 min-w-0"
-              >
-                <span className="text-muted-foreground shrink-0">{fmtTimestamp(entry.backtest_start_time)}</span>
-                <span className="font-mono text-muted-foreground">{entry.timeframe || "?"}</span>
-                <span className="text-muted-foreground truncate flex-1">{startTs} → {endTs}</span>
-                <span className="text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0">Load →</span>
-              </button>
-              {isConfirming ? (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setConfirmId(null); onDelete(entry); }}
-                  className="text-[10px] px-1.5 py-0.5 bg-rose-500/20 border border-rose-500/50 text-rose-400 rounded hover:bg-rose-500/30 transition-all shrink-0 animate-pulse"
-                >
-                  Confirm?
-                </button>
-              ) : (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setConfirmId(entryKey); }}
-                  className="text-rose-400/60 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all text-sm shrink-0"
-                  title="Delete this backtest"
-                >
-                  🗑
-                </button>
-              )}
+              {/* Top row: strategy, run date, actions */}
+              <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-xs font-semibold text-foreground">{entry.strategy}</span>
+                  <span className="text-[10px] text-muted-foreground">{runDateStr}</span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 bg-muted/50 rounded text-muted-foreground">{entry.timeframe || "?"}{entry.timeframe_detail ? ` / ${entry.timeframe_detail}` : ""}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => onLoad(entry)}
+                    className="text-[10px] px-2 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded hover:bg-primary/20 transition-all"
+                  >
+                    Load →
+                  </button>
+                  {isConfirming ? (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setConfirmId(null); onDelete(entry); }}
+                      className="text-[10px] px-1.5 py-0.5 bg-rose-500/20 border border-rose-500/50 text-rose-400 rounded hover:bg-rose-500/30 transition-all shrink-0 animate-pulse"
+                    >
+                      Confirm?
+                    </button>
+                  ) : (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setConfirmId(entryKey); }}
+                      className="text-rose-400/60 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all text-sm shrink-0"
+                      title="Delete this backtest"
+                    >
+                      🗑
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Bottom row: date range + lazy-loaded stats */}
+              <div className="px-3 py-2 flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <span className="opacity-60">Range:</span>
+                  <span className="font-mono">{startDate}</span>
+                  <span className="opacity-40">→</span>
+                  <span className="font-mono">{endDate}</span>
+                </div>
+
+                {stats === 'loading' && (
+                  <span className="text-[10px] text-muted-foreground animate-pulse">Loading stats...</span>
+                )}
+                {stats === 'error' && (
+                  <span className="text-[10px] text-muted-foreground/50">—</span>
+                )}
+                {s && (
+                  <>
+                    <div className="flex items-center gap-1 text-[10px]">
+                      <span className="text-muted-foreground opacity-60">Trades:</span>
+                      <span className="font-mono text-foreground">{s.total_trades}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-[10px]">
+                      <span className="text-muted-foreground opacity-60">Profit:</span>
+                      <span className={`font-mono font-medium ${profitPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {profitPositive ? '+' : ''}{fmt$(s.profit_total_abs)}
+                        <span className="ml-1 opacity-70">({fmtPctRatio(s.profit_total)})</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 text-[10px]">
+                      <span className="text-muted-foreground opacity-60">Win:</span>
+                      <span className="font-mono text-foreground">{winRate}%</span>
+                      <span className="text-muted-foreground/50">({s.wins}W/{s.losses}L)</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-[10px]">
+                      <span className="text-muted-foreground opacity-60">DD:</span>
+                      <span className="font-mono text-rose-400">-{(s.max_drawdown_account * 100).toFixed(1)}%</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-[10px]">
+                      <span className="text-muted-foreground opacity-60">PF:</span>
+                      <span className={`font-mono ${s.profit_factor > 1 ? 'text-emerald-400' : 'text-rose-400'}`}>{s.profit_factor.toFixed(2)}</span>
+                    </div>
+                    {s.holding_avg && (
+                      <div className="flex items-center gap-1 text-[10px]">
+                        <span className="text-muted-foreground opacity-60">Avg Hold:</span>
+                        <span className="font-mono text-muted-foreground">{s.holding_avg}</span>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           );
         })}
@@ -1120,7 +1238,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
         {btResult ? (
           <>
             <ResultsPanel data={btResult} />
-            <HistoryPanel entries={history} currentStrategy={strategy} onLoad={handleLoadHistory} onDelete={handleDeleteHistory} />
+            <HistoryPanel entries={history} currentStrategy={strategy} onLoad={handleLoadHistory} onDelete={handleDeleteHistory} botId={backtestBotId} />
           </>
         ) : (
           <>
@@ -1133,7 +1251,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
               </div>
             </div>
             {/* Still show history even without current result */}
-            <HistoryPanel entries={history} currentStrategy={strategy} onLoad={handleLoadHistory} onDelete={handleDeleteHistory} />
+            <HistoryPanel entries={history} currentStrategy={strategy} onLoad={handleLoadHistory} onDelete={handleDeleteHistory} botId={backtestBotId} />
           </>
         )}
       </div>

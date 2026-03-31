@@ -85,6 +85,17 @@ Sources: Orchestrator `GET /api/bots`, per-bot `FTProfit`, `FTShowConfig`
 | **Reload** | `reloadBotConfig(id)` → `POST /api/bots/{id}/reload-config` | White |
 | **Force Exit All** | `botForceExit(id, 'all')` → `POST /api/bots/{id}/forceexit` | Red |
 | **Stopbuy** | `botStopBuy(id)` → `POST /api/bots/{id}/stopbuy` | Yellow |
+| — | — vertical separator — | — |
+| **Soft Kill** | `softKill(id, reason)` → `POST /api/kill-switch/soft/{id}` | Yellow ⚡ |
+| **Hard Kill** | `hardKill(id, reason)` → `POST /api/kill-switch/hard/{id}` | Red ⚡ |
+
+> **Soft Kill**: Forcefully exits ALL open trades (market orders), keeps bot process running.  
+> **Hard Kill**: Stops the bot AND its Docker container immediately. Nuclear option.
+
+#### Global Kill Switch (header or top-level action)
+- **Soft Kill All** → `softKillAll(reason)` → `POST /api/kill-switch/soft-all`
+- **Hard Kill All** → `hardKillAll(reason)` → `POST /api/kill-switch/hard-all`
+- Both should show a **confirmation modal** with reason textarea before executing.
 
 ### Bot Drawer (slide-in overlay)
 Opens when clicking bot name. Contains:
@@ -302,6 +313,11 @@ font-family: 'JetBrains Mono', mono; /* Data values */
 | `POST /api/bots/{id}/trades/{tid}/reload` | `botReloadTrade(id, tradeId)` | Trade actions |
 | `POST /api/bots/{id}/locks` | `botLockAdd(id, { pair, until, reason })` | Whitelist Matrix |
 | `DELETE /api/bots/{id}/locks/{lid}` | `botDeleteLock(id, lockId)` | Whitelist Matrix |
+| `POST /api/kill-switch/soft/{id}` | `softKill(id, reason)` | Bot control — Soft Kill |
+| `POST /api/kill-switch/hard/{id}` | `hardKill(id, reason)` | Bot control — Hard Kill |
+| `POST /api/kill-switch/soft-all` | `softKillAll(reason)` | Global kill switch |
+| `POST /api/kill-switch/hard-all` | `hardKillAll(reason)` | Global kill switch |
+| `GET /api/kill-switch/events` | `getRiskEvents()` | Risk event history |
 | `GET /api/portfolio/balance` | `portfolioBalance()` | Aggregated balance |
 | `GET /api/portfolio/profit` | `portfolioProfit()` | Aggregated profit |
 | `GET /api/portfolio/trades` | `portfolioTrades()` | Aggregated trades |

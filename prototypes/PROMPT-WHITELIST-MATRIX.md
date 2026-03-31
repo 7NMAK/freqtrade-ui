@@ -18,9 +18,9 @@ All API endpoints already exist in `frontend/src/lib/api.ts`:
 |---|---|---|
 | `GET /api/v1/whitelist` | `botWhitelist(botId)` | `{ whitelist: string[], length, method[] }` |
 | `GET /api/v1/locks` | `botLocks(botId)` | `{ lock_count, locks: FTLock[] }` |
-| `GET /api/v1/status` | `botOpenTrades(botId)` | `FTTrade[]` (open trades) |
-| `GET /api/v1/show_config` | `botShowConfig(botId)` | `{ pair_whitelist: string[], ... }` |
-| `POST /api/v1/locks` | `botAddLock(botId, ...)` | Creates a pair lock |
+| `GET /api/v1/status` | `botStatus(botId)` | `FTTrade[]` (open trades) |
+| `GET /api/v1/show_config` | `botConfig(botId)` | `FTShowConfig` (NB: route is `/config`) |
+| `POST /api/v1/locks` | `botLockAdd(botId, { pair, until, reason })` | Creates a pair lock |
 | `DELETE /api/v1/locks/{id}` | `botDeleteLock(botId, lockId)` | Removes a pair lock |
 
 ## Types (Already in `types/index.ts`)
@@ -145,6 +145,7 @@ function formatLockTimer(endTimestamp: number): string {
   - **Reason**: optional text input
   - **Confirm** button
 - API: `POST /api/bots/{botId}/locks` with `{ pair, until: ISO_string, reason }`
+  - Function: `botLockAdd(botId, { pair, until, reason })`
 
 ### UNLOCK Button
 - Visible when pair is LOCKED or COOLDOWN

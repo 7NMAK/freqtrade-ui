@@ -647,11 +647,86 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
 
   // Extract strategy result from FT's nested response
   const extractResult = useCallback((backtestResult: Record<string, unknown>): FTStrategyResult | null => {
-    const strategyMap = backtestResult.strategy as Record<string, FTStrategyResult> | undefined;
+    const strategyMap = backtestResult.strategy as Record<string, Record<string, unknown>> | undefined;
     if (!strategyMap) return null;
-    // Get first strategy result (there's usually only one)
     const firstKey = Object.keys(strategyMap)[0];
-    return firstKey ? strategyMap[firstKey] : null;
+    if (!firstKey) return null;
+    const raw = strategyMap[firstKey];
+
+    // Normalize trades: FT uses profit_ratio/profit_abs, we use close_profit/close_profit_abs
+    const rawTrades = (raw.trades as Array<Record<string, unknown>>) || [];
+    const trades: FTTradeEntry[] = rawTrades.map((t, i) => ({
+      trade_id: Number(t.trade_id ?? i + 1),
+      pair: String(t.pair ?? ''),
+      is_short: Boolean(t.is_short),
+      stake_amount: Number(t.stake_amount ?? 0),
+      open_rate: Number(t.open_rate ?? 0),
+      close_rate: Number(t.close_rate ?? 0),
+      fee_open: Number(t.fee_open ?? 0),
+      fee_close: Number(t.fee_close ?? 0),
+      close_profit: Number(t.profit_ratio ?? t.close_profit ?? 0),
+      close_profit_abs: Number(t.profit_abs ?? t.close_profit_abs ?? 0),
+      open_date: String(t.open_date ?? ''),
+      close_date: String(t.close_date ?? ''),
+      trade_duration: Number(t.trade_duration ?? 0),
+      enter_tag: String(t.enter_tag ?? ''),
+      exit_reason: String(t.exit_reason ?? ''),
+    }));
+
+    const wins = Number(raw.wins ?? 0);
+    const losses = Number(raw.losses ?? 0);
+    const totalTrades = Number(raw.total_trades ?? 0);
+    const winrate = totalTrades > 0 ? wins / totalTrades : 0;
+
+    return {
+      strategy_name: String(raw.strategy_name ?? firstKey),
+      total_trades: totalTrades,
+      trade_count_long: Number(raw.trade_count_long ?? 0),
+      trade_count_short: Number(raw.trade_count_short ?? 0),
+      profit_total: Number(raw.profit_total ?? 0),
+      profit_total_abs: Number(raw.profit_total_abs ?? 0),
+      profit_mean: Number(raw.profit_mean ?? 0),
+      profit_median: Number(raw.profit_median ?? 0),
+      profit_factor: Number(raw.profit_factor ?? 0),
+      wins,
+      losses,
+      draws: Number(raw.draws ?? 0),
+      winrate,
+      sharpe: Number(raw.sharpe_ratio ?? raw.sharpe ?? 0),
+      sortino: Number(raw.sortino_ratio ?? raw.sortino ?? 0),
+      calmar: Number(raw.calmar_ratio ?? raw.calmar ?? 0),
+      expectancy: Number(raw.expectancy ?? 0),
+      expectancy_ratio: Number(raw.expectancy_ratio ?? 0),
+      max_drawdown_account: Number(raw.max_drawdown_account ?? 0),
+      max_drawdown_abs: Number(raw.max_drawdown_abs ?? 0),
+      starting_balance: Number(raw.starting_balance ?? 0),
+      final_balance: Number(raw.final_balance ?? 0),
+      stake_currency: String(raw.stake_currency ?? 'USDT'),
+      backtest_start: String(raw.backtest_start ?? ''),
+      backtest_end: String(raw.backtest_end ?? ''),
+      backtest_days: Number(raw.backtest_days ?? 0),
+      timeframe: String(raw.timeframe ?? ''),
+      timeframe_detail: raw.timeframe_detail as string | null ?? null,
+      stoploss: Number(raw.stoploss ?? 0),
+      max_open_trades_setting: Number(raw.max_open_trades_setting ?? raw.max_open_trades ?? 0),
+      trading_mode: String(raw.trading_mode ?? ''),
+      holding_avg: String(raw.holding_avg ?? raw.holding_avg_s ?? ''),
+      backtest_best_day: Number(raw.backtest_best_day ?? 0),
+      backtest_worst_day: Number(raw.backtest_worst_day ?? 0),
+      backtest_best_day_abs: Number(raw.backtest_best_day_abs ?? 0),
+      backtest_worst_day_abs: Number(raw.backtest_worst_day_abs ?? 0),
+      winning_days: Number(raw.winning_days ?? 0),
+      losing_days: Number(raw.losing_days ?? 0),
+      draw_days: Number(raw.draw_days ?? 0),
+      max_consecutive_wins: Number(raw.max_consecutive_wins ?? 0),
+      max_consecutive_losses: Number(raw.max_consecutive_losses ?? 0),
+      cagr: Number(raw.cagr ?? 0),
+      sqn: Number(raw.sqn ?? 0),
+      results_per_pair: (raw.results_per_pair as FTStrategyResult['results_per_pair']) ?? [],
+      exit_reason_summary: (raw.exit_reason_summary as FTStrategyResult['exit_reason_summary']) ?? [],
+      periodic_breakdown: (raw.periodic_breakdown as FTStrategyResult['periodic_breakdown']) ?? undefined,
+      trades,
+    };
   }, []);
 
   // Poll FT logs + backtest status while running

@@ -1588,16 +1588,27 @@ async def bot_backtest_history_result(bot_id: int, request: Request, db: AsyncSe
 
 
 @router.delete("/{bot_id}/backtest/history/result")
-async def bot_backtest_history_delete_via_ft(bot_id: int, request: Request, db: AsyncSession = Depends(get_db), filename: str = "", strategy: str = "") -> dict[str, Any]:
-    """DELETE /api/v1/backtest/history/result — delete backtest result via FT API."""
-    if not filename or not strategy:
-        raise HTTPException(400, "Both 'filename' and 'strategy' query params are required")
-    client = await _get_bot_client(bot_id, request, db)
+async def bot_backtest_history_delete_via_docker(bot_id: int, request: Request, db: AsyncSession = Depends(get_db), filename: str = "", strategy: str = "") -> dict[str, Any]:
+    """Delete a backtest result file via Docker exec (FT API doesn't support delete)."""
+    import docker
+    if not filename:
+        raise HTTPException(400, "'filename' query param is required")
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    # Sanitize to prevent path traversal
+    if ".." in filename or "/" in filename:
+        raise HTTPException(400, "Invalid filename")
     try:
-        return await client.backtest_history_delete(strategy=strategy, filename=filename)
-    except FTClientError as e:
-        detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
-        raise HTTPException(502, detail=detail)
+        dk = docker.from_env()
+        container = dk.containers.get(bot.container_id or bot.name)
+        # Delete the result file (.zip or .json) and its .meta.json companion
+        base = f"/freqtrade/user_data/backtest_results/{filename}"
+        container.exec_run(["rm", "-f", f"{base}.zip", f"{base}.json", f"{base}.meta.json", f"{base}.json.meta"], detach=False)
+        return {"status": "deleted", "filename": filename}
+    except Exception as e:
+        raise HTTPException(502, f"Delete failed: {e}")
 
 
 # ── Data management (CLI commands — not native FT REST API) ──────────

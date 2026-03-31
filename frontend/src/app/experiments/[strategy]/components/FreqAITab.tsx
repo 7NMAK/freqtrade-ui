@@ -168,11 +168,11 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
 
   // ── Running State ─────────────────────────────────────────────────
   const [isRunning, setIsRunning] = useState(false);
-  const RESULTS_KEY = `freqai_results_${strategy}`;
+  const RESULTS_KEY = useMemo(() => `freqai_results_${strategy}`, [strategy]);
   const [results, setResults] = useState<FreqAIResult[]>(() => {
     if (typeof window === "undefined") return [];
     try {
-      const saved = localStorage.getItem(RESULTS_KEY);
+      const saved = localStorage.getItem(`freqai_results_${strategy}`);
       return saved ? JSON.parse(saved) : [];
     } catch { return []; }
   });
@@ -215,51 +215,56 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
   // ── Load Existing Results on Mount ────────────────────────────────
   useEffect(() => {
     if (!experimentId) return;
-    getExperimentRuns(experimentId, { run_type: "freqai", status: "completed" })
-      .then((runs) => {
-        if (Array.isArray(runs) && runs.length > 0) {
-          const mapped: FreqAIResult[] = runs.map((r, i) => {
-            // Try to extract model/outlier from raw_output JSON if available
-            let model = "Unknown";
-            let outlier = "none";
-            let pca = false;
-            let noise = false;
-            if (r.raw_output) {
-              try {
-                const raw = JSON.parse(r.raw_output);
-                model = raw.model || model;
-                outlier = raw.outlier || outlier;
-                pca = raw.pca ?? false;
-                noise = raw.noise ?? false;
-              } catch { /* ignore */ }
-            }
-            return {
-              id: r.id ?? i + 1,
-              model,
-              outlier,
-              pca,
-              noise,
-              status: "completed" as const,
-              trades: r.total_trades ?? 0,
-              winRate: r.win_rate ?? 0,
-              profitPct: r.profit_pct ?? 0,
-              maxDrawdown: r.max_drawdown ?? 0,
-              sharpe: r.sharpe_ratio ?? 0,
-              sortino: r.sortino_ratio ?? 0,
-              startedAt: r.created_at ?? "",
-              finishedAt: "",
-              trainingDuration: "",
-              featureImportance: [],
-              predictionAccuracy: 0,
-            };
-          });
-          setResults(mapped);
-          addLog("INFO", `Loaded ${mapped.length} existing FreqAI results`);
-        }
-      })
-      .catch((err) => {
-        addLog("WARNING", `Failed to load existing results: ${err}`);
-      });
+
+    // Skip DB load if we already have localStorage results (preserves in-progress matrix data)
+    if (results.length > 0) {
+      addLog("INFO", `Using ${results.length} cached results from localStorage`);
+    } else {
+      getExperimentRuns(experimentId, { run_type: "freqai", status: "completed" })
+        .then((runs) => {
+          if (Array.isArray(runs) && runs.length > 0) {
+            const mapped: FreqAIResult[] = runs.map((r, i) => {
+              let model = "Unknown";
+              let outlier = "none";
+              let pca = false;
+              let noise = false;
+              if (r.raw_output) {
+                try {
+                  const raw = JSON.parse(r.raw_output);
+                  model = raw.model || model;
+                  outlier = raw.outlier || outlier;
+                  pca = raw.pca ?? false;
+                  noise = raw.noise ?? false;
+                } catch { /* ignore */ }
+              }
+              return {
+                id: r.id ?? i + 1,
+                model,
+                outlier,
+                pca,
+                noise,
+                status: "completed" as const,
+                trades: r.total_trades ?? 0,
+                winRate: r.win_rate ?? 0,
+                profitPct: r.profit_pct ?? 0,
+                maxDrawdown: r.max_drawdown ?? 0,
+                sharpe: r.sharpe_ratio ?? 0,
+                sortino: r.sortino_ratio ?? 0,
+                startedAt: r.created_at ?? "",
+                finishedAt: "",
+                trainingDuration: "",
+                featureImportance: [],
+                predictionAccuracy: 0,
+              };
+            });
+            setResults(mapped);
+            addLog("INFO", `Loaded ${mapped.length} existing FreqAI results from DB`);
+          }
+        })
+        .catch((err) => {
+          addLog("WARNING", `Failed to load existing results: ${err}`);
+        });
+    }
 
     // Load hyperopt runs for dropdown
     getExperimentRuns(experimentId, { run_type: "hyperopt", status: "completed" })
@@ -387,12 +392,8 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
     };
   }, [strategy]);
 
-  // ── Persist results to localStorage on every change ────────────────
-  useEffect(() => {
-    if (results.length > 0) {
-      try { localStorage.setItem(RESULTS_KEY, JSON.stringify(results)); } catch { /* quota */ }
-    }
-  }, [results, RESULTS_KEY]);
+  // NOTE: localStorage persistence is handled inline in setResults calls (line ~458)
+  // to guarantee immediate save. No separate useEffect needed.
 
   // ── Run Matrix ────────────────────────────────────────────────────
   const handleRunMatrix = useCallback(async () => {
@@ -454,10 +455,9 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
         }
 
         // Parse result
-        const result = parseResult(raw, item, results.length + i);
+        const result = parseResult(raw, item, i);
         setResults((prev) => {
           const next = [...prev, result];
-          // Persist immediately so browser refresh doesn't lose progress
           try { localStorage.setItem(RESULTS_KEY, JSON.stringify(next)); } catch { /* quota */ }
           return next;
         });
@@ -466,7 +466,7 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
         if (result.status === "completed") {
           addLog("INFO", `[${i + 1}] ${label} — ✓ ${result.trades} trades, ${result.profitPct.toFixed(2)}%, sharpe=${result.sharpe.toFixed(2)}`);
 
-          // Record as experiment run
+          // Record as experiment run (with raw_output so model/outlier survives reload)
           if (experimentId) {
             createExperimentRun(experimentId, {
               run_type: "freqai",
@@ -476,6 +476,7 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
               max_drawdown: result.maxDrawdown,
               sharpe_ratio: result.sharpe,
               sortino_ratio: result.sortino,
+              raw_output: JSON.stringify({ model: result.model, outlier: result.outlier, pca: result.pca, noise: result.noise }),
             }).catch((err) => addLog("WARNING", `Failed to record run: ${err}`));
           }
         } else {
@@ -499,9 +500,9 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
     const elapsed = Math.round((Date.now() - startTime) / 1000 / 60);
     setIsRunning(false);
     setCurrentRunLabel("");
-    addLog("INFO", `Matrix complete: ${completedCount}/${queue.length} in ~${elapsed}min`);
+    addLog("INFO", `Matrix complete: ${queue.length} runs in ~${elapsed}min`);
     toast.success(`FreqAI matrix complete: ${queue.length} runs in ~${elapsed}min`);
-  }, [buildQueue, strategy, botId, experimentId, pollUntilDone, parseResult, addLog, toast, results.length, completedCount]);
+  }, [buildQueue, strategy, botId, experimentId, pollUntilDone, parseResult, addLog, toast, RESULTS_KEY]);
 
   // ── Stop Handler ──────────────────────────────────────────────────
   const handleStop = useCallback(async () => {
@@ -554,7 +555,6 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
   // Suppress unused vars that are used by form but not yet wired everywhere
   void selectedHyperopt; void setSelectedHyperopt; void testNamePrefix; void setTestNamePrefix;
   void outlierProtectionPct; void setOutlierProtectionPct; void reverseTrainTest; void setReverseTrainTest;
-  void svmNu;
 
   // ══════════════════════════════════════════════════════════════════
   // RENDER

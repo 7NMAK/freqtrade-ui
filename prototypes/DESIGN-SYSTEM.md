@@ -389,27 +389,32 @@ Grid overlay:       .l-grid class, opacity-20
 
 ```
 Structure:
-  Container:   bg-surface l-bd rounded-md group cursor-pointer
+  Container:   l-bd rounded-md group cursor-pointer
+  Background:  NO background (transparent/inherit from parent)
   Hover:       hover:bg-white/[0.03] transition-colors
-  ⚠ DO NOT USE: hover:border-white/22, hover:-translate-y, shadow-xl per-card
+  ⚠ DO NOT USE bg-surface on individual cards
+  ⚠ DO NOT USE hover:border-white/22, hover:-translate-y, shadow-xl per-card
+  ⚠ Cards MUST be dark at rest, lighten on hover (dark → light)
+  ⚠ NEVER light at rest darkening on hover (light → dark is WRONG)
 
-  Row 1 — Identity:
+  Row 1 — Identity + Profit (SINGLE ROW):
     Layout:    flex items-start justify-between mb-2.5
+    Content:   [StatusDot + Name + Badge] ... [Profit $] [Profit %]
     Name:      font-bold text-white uppercase text-[12px] tracking-wide
     Badge:     text-[10px] font-bold rounded px-1.5 py-[1px] (see 7.16)
     Status:    w-2 h-2 rounded-full + shadow glow
+    Profit $:  text-up|text-down font-bold text-[13px]
+    Profit %:  text-[10px] ml-1 (half-opacity color via inline style)
+    ⚠ Name, badge, AND profit MUST be in the SAME flex row
+    ⚠ DO NOT put profit in a separate div/row
 
-  Row 2 — Profit:
-    Value:     text-up|text-down font-bold text-[13px]
-    Percent:   text-[10px] ml-1 (half-opacity color via inline style)
-
-  Row 3 — Stats Grid:
+  Row 2 — Stats Grid:
     Layout:    grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3
     Labels:    plain text (Trades:, Win:, Drawdown:, Avg. Dur:)
     Values:    text-white/70, or text-down for drawdown
     Stats use: flex justify-between w-full
 
-  Row 4 — Chart + Actions (COMBINED):
+  Row 3 — Chart + Actions (COMBINED):
     Wrapper:   flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity
     Chart:     flex gap-[2px] h-4 items-end (mini bar chart, w-1.5 bars)
     Actions:   flex gap-1 (bot-ctrl buttons)

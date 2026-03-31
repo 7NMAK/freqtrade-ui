@@ -1011,6 +1011,58 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                 </div>
               </div>
             </div>
+
+            {/* Best Epoch Summary Metrics */}
+            {(() => {
+              // Find the best epoch (lowest loss / highest profit)
+              const best = sortedResults[0];
+              if (!best) return null;
+              const profitOk = best.profitPct >= 0;
+              return (
+                <div className="px-4 py-3 border-b border-border">
+                  <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Best Epoch Summary</div>
+                  <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                    <div className="bg-muted/50 border border-border rounded-lg p-2">
+                      <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Total Trades</div>
+                      <div className="text-sm font-bold tabular-nums text-foreground">{best.trades}</div>
+                    </div>
+                    <div className="bg-muted/50 border border-border rounded-lg p-2">
+                      <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Win Rate</div>
+                      <div className="text-sm font-bold tabular-nums text-foreground">{(best.winRate * 100).toFixed(1)}%</div>
+                    </div>
+                    <div className="bg-muted/50 border border-border rounded-lg p-2">
+                      <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Total Profit</div>
+                      <div className={`text-sm font-bold tabular-nums ${profitOk ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {profitOk ? '+' : ''}{best.profitPct.toFixed(2)}%
+                      </div>
+                    </div>
+                    <div className="bg-muted/50 border border-border rounded-lg p-2">
+                      <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Profit $</div>
+                      <div className={`text-sm font-bold tabular-nums ${profitOk ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {fmt$(best.profitAbs)}
+                      </div>
+                    </div>
+                    <div className="bg-muted/50 border border-border rounded-lg p-2">
+                      <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Max Drawdown</div>
+                      <div className="text-sm font-bold tabular-nums text-rose-400">-{Math.abs(best.maxDrawdown).toFixed(2)}%</div>
+                    </div>
+                    <div className="bg-muted/50 border border-border rounded-lg p-2">
+                      <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Sharpe</div>
+                      <div className="text-sm font-bold tabular-nums text-foreground">{fmtNum(best.sharpe)}</div>
+                    </div>
+                    <div className="bg-muted/50 border border-border rounded-lg p-2">
+                      <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Sortino</div>
+                      <div className="text-sm font-bold tabular-nums text-foreground">{fmtNum(best.sortino)}</div>
+                    </div>
+                    <div className="bg-muted/50 border border-border rounded-lg p-2">
+                      <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Avg Duration</div>
+                      <div className="text-sm font-bold tabular-nums text-foreground">{best.avgDuration || '—'}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>

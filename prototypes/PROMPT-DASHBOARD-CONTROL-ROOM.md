@@ -576,6 +576,9 @@ font-family: 'JetBrains Mono', monospace; /* Data values */
           linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
           background-size: 24px 24px; }
 
+/* Drawer tab content visibility */
+.drawer-tab-content { display: block; }
+
 /* Bot control button base */
 .bot-ctrl { width: 28px; height: 28px; border-radius: 5px; background: #1a1a1a;
             border: 1px solid rgba(255,255,255,0.10); color: #9CA3AF; }
@@ -629,11 +632,12 @@ font-family: 'JetBrains Mono', monospace; /* Data values */
 | `chevron-down` | Action dropdown toggle |
 | `log-out` | Forceexit limit |
 | `scissors` | Forceexit partial |
-| `plus-circle` | Increase position |
+| `plus-circle` | Force Enter in drawer + Increase position |
 | `trash-2` | Delete trade |
 | `arrow-left` | Back to Dashboard |
 | `brain-circuit` | FreqAI tab placeholder |
 | `bot` | AI Review tab placeholder |
+| `pin` | Log tab — Pin to bottom toggle |
 
 ### Key DOM Element IDs
 
@@ -648,6 +652,16 @@ font-family: 'JetBrains Mono', monospace; /* Data values */
 | `page-dashboard` | `<div>` | Control Room page container |
 | `page-fleet` | `<div>` | Fleet Management page container |
 | `page-experiments` | `<div>` | Experiments page container |
+| `drawer-overview` | `<div>` | Drawer tab: Overview |
+| `drawer-trades` | `<div>` | Drawer tab: Trades |
+| `drawer-perf` | `<div>` | Drawer tab: Performance |
+| `drawer-config` | `<div>` | Drawer tab: Config |
+| `drawer-system` | `<div>` | Drawer tab: System |
+| `drawer-log` | `<div>` | Drawer tab: Log |
+| `drawer-backtest` | `<div>` | Drawer tab: Backtest |
+| `drawer-hyperopt` | `<div>` | Drawer tab: Hyperopt |
+| `drawer-freqai` | `<div>` | Drawer tab: FreqAI |
+| `drawer-edit` | `<div>` | Drawer tab: Edit Bot |
 
 ### Section Titles in Prototype
 
@@ -667,6 +681,22 @@ font-family: 'JetBrains Mono', monospace; /* Data values */
 | `Total Profit` / `Max Drawdown` / `Win Rate` | Backtest results KPIs |
 | `Test Logs & Trades` | Backtest results table |
 | `Hyperopt Compute` | Hyperopt tab heading |
+| `Open Positions (6)` | Drawer Trades tab |
+| `Closed Trades (Last 10)` | Drawer Trades tab |
+| `Per-Pair Performance` | Drawer Performance tab |
+| `Entry Tag Analysis (Top 5)` | Drawer Performance tab |
+| `Exit Reason Analysis (Top 5)` | Drawer Performance tab |
+| `Core Config` | Drawer Config tab |
+| `ROI & Stoploss` | Drawer Config tab |
+| `Whitelist (24 pairs)` | Drawer Config tab |
+| `Active Locks` | Drawer Config tab |
+| `System Info` | Drawer System tab |
+| `Bot Health` | Drawer System tab |
+| `Run Backtest — TrendFollowerV3` | Drawer Backtest tab |
+| `Hyperopt — TrendFollowerV3` | Drawer Hyperopt tab |
+| `P&L Summary` | Drawer Overview tab |
+| `Closed Profit` | Drawer Overview P&L card |
+| `Wallet Balance` | Drawer Overview section |
 
 ## Tooltips — Every Interactive Element
 
@@ -756,13 +786,46 @@ ALL buttons in the application have descriptive `title=` attributes for hover to
 | CSV | `Export trade data as CSV` |
 | Toggle sidebar | `Toggle sidebar` (chevrons-left icon, rotates 180° collapsed) |
 
+### Drawer Tab Tooltips
+| Tab | Tooltip |
+|---|---|
+| Overview | `Bot overview and stats` |
+| Trades | `Open and closed trades` |
+| Performance | `Performance by pair` |
+| Config | `Bot configuration details` |
+| System | `System info and health` |
+| Log | `Live bot log stream` |
+| Backtest | `Run backtest on this bot strategy` |
+| Hyperopt | `Optimize strategy parameters` |
+| FreqAI | `ML model training` |
+| Edit Bot | `Edit bot settings` |
+
+### Log Tab Tooltips
+| Button | Tooltip |
+|---|---|
+| ALL | `Show all log levels` |
+| INFO | `Show info messages only` |
+| BUY/SELL | `Show buy and sell signals` |
+| WARN | `Show warnings only` |
+| ERROR | `Show errors only` |
+| Pin | `Pin to bottom — auto-scroll` |
+| Refresh | `Refresh logs` |
+
+### Drawer Footer Tooltips
+| Button | Tooltip |
+|---|---|
+| Edit Bot Settings | `Switch to Edit Bot tab` |
+| Close Panel | `Close this panel` |
+| Save Changes | `Save bot configuration changes` |
+
 ---
 
 ## Interaction Patterns
 
 | Pattern | Implementation |
 |---|---|
-| Tab switching | `switchTradeTab(tabId, btn)` — hide all `.trade-tab-content`, show selected |
+| Tab switching (trades) | `switchTradeTab(tabId, btn)` — hide all `.trade-tab-content`, show selected |
+| Tab switching (drawer) | `switchDrawerTab(tabId, btn)` — hide all `.drawer-tab-content`, show selected |
 | Action dropdown | `toggleActionMenu(btn, event)` — toggle `.action-dropdown.open` class |
 | Bot drawer | `openBotDrawer(name, mode)` — slide-in overlay from right |
 | Close on outside click | Global `document.addEventListener('click', ...)` |

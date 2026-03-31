@@ -1127,6 +1127,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="bg-muted/50 text-muted-foreground">
+                      <th className="text-center px-2 py-2 font-semibold w-[32px]">#</th>
                       <th className="text-left px-3 py-2 font-semibold w-[90px]">ID</th>
                       <th className="text-left px-3 py-2 font-semibold">Run Date</th>
                       <th className="text-left px-3 py-2 font-semibold">Strategy</th>
@@ -1141,7 +1142,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                     </tr>
                   </thead>
                   <tbody>
-                    {pagedHoRuns.map((run) => {
+                    {pagedHoRuns.map((run, idx) => {
                       const isConfirming = hoConfirmDelete === run.filename;
                       const runDate = new Date(run.mtime * 1000);
                       const runStr = `${runDate.getFullYear()}-${String(runDate.getMonth()+1).padStart(2,'0')}-${String(runDate.getDate()).padStart(2,'0')} ${String(runDate.getHours()).padStart(2,'0')}:${String(runDate.getMinutes()).padStart(2,'0')}`;
@@ -1152,6 +1153,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                       return (
                         <Fragment key={run.filename}>
                         <tr className={`border-t border-border hover:bg-muted/30 transition-colors cursor-pointer ${isExpanded ? 'bg-muted/20' : ''}`} onClick={() => setHoExpandedId(isExpanded ? null : run.filename)}>
+                          <td className="px-2 py-2 text-center text-[10px] text-muted-foreground tabular-nums">{(hoPage - 1) * hoPerPage + idx + 1}</td>
                           <td className="px-3 py-2">
                             <span className="text-[9px] font-mono px-1 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded whitespace-nowrap">{hoId}</span>
                           </td>
@@ -1208,7 +1210,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                         </tr>
                         {isExpanded && (
                           <tr key={`${run.filename}-expand`} className="bg-muted/10">
-                            <td colSpan={11} className="px-4 py-2">
+                            <td colSpan={12} className="px-4 py-2">
                               <div className="flex flex-wrap gap-x-6 gap-y-1 text-[10px]">
                                 <span className="text-muted-foreground">Strategy: <span className="text-foreground font-mono">{run.strategy}</span></span>
                                 <span className="text-muted-foreground">Epochs: <span className="text-foreground font-mono">{run.epochs}</span></span>

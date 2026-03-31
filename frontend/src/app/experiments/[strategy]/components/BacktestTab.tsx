@@ -568,6 +568,7 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-muted/50 text-muted-foreground">
+                <th className="text-center px-2 py-2 font-semibold w-[32px]">#</th>
                 <th className="text-left px-3 py-2 font-semibold w-[90px]">ID</th>
                 <th className="text-left px-3 py-2 font-semibold">Run Date</th>
                 <th className="text-left px-3 py-2 font-semibold">Timeframe</th>
@@ -582,7 +583,7 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
               </tr>
             </thead>
             <tbody>
-              {paged.map((entry) => {
+              {paged.map((entry, idx) => {
                 const runDate = new Date(entry.backtest_start_time * 1000);
                 const runStr = `${runDate.getFullYear()}-${String(runDate.getMonth()+1).padStart(2,'0')}-${String(runDate.getDate()).padStart(2,'0')} ${String(runDate.getHours()).padStart(2,'0')}:${String(runDate.getMinutes()).padStart(2,'0')}`;
                 const entryKey = `${entry.filename}-${entry.run_id}`;
@@ -595,6 +596,7 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
                 return (
                   <Fragment key={entryKey}>
                   <tr className={`border-t border-border hover:bg-muted/30 transition-colors cursor-pointer ${isExpanded ? 'bg-muted/20' : ''}`} onClick={() => setExpandedId(isExpanded ? null : entryKey)}>
+                    <td className="px-2 py-2 text-center text-[10px] text-muted-foreground tabular-nums">{(page - 1) * perPage + idx + 1}</td>
                     <td className="px-3 py-2">
                       <span className="text-[9px] font-mono px-1 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded whitespace-nowrap">{btId}</span>
                     </td>
@@ -647,7 +649,7 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
                   </tr>
                   {isExpanded && (
                     <tr key={`${entryKey}-expand`} className="bg-muted/10">
-                      <td colSpan={11} className="px-4 py-2">
+                      <td colSpan={12} className="px-4 py-2">
                         <div className="flex flex-wrap gap-x-6 gap-y-1 text-[10px]">
                           <span className="text-muted-foreground">Strategy: <span className="text-foreground font-mono">{entry.strategy}</span></span>
                           <span className="text-muted-foreground">Timeframe: <span className="text-foreground font-mono">{entry.timeframe || '—'}</span></span>

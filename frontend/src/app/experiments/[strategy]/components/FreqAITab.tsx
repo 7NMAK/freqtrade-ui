@@ -342,7 +342,21 @@ export default function FreqAITab({ strategy, botId = 2, onNavigateToTab }: Freq
             </div>
             <div className="flex gap-1.5 shrink-0">
               <button onClick={() => onNavigateToTab?.(5)} className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-primary/40 text-primary hover:bg-primary/10 transition-all">→ Verify</button>
-              <button onClick={() => toast.success('Winner promoted ★')} className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-all">Promote ★</button>
+              <button onClick={async () => {
+                try {
+                  const { getExperiments, activateStrategyVersion } = await import('@/lib/api');
+                  const res = await getExperiments();
+                  const exp = (res.items || []).find((e) => e.strategy_name === strategy || e.name === strategy);
+                  if (exp && exp.best_version_id) {
+                    await activateStrategyVersion(exp.strategy_id, exp.best_version_id);
+                    toast.success(`Activated version for ${strategy} ★`);
+                  } else {
+                    toast.info('No version to activate yet — run verification first');
+                  }
+                } catch (err) {
+                  toast.error(`Promote failed: ${err instanceof Error ? err.message : String(err)}`);
+                }
+              }} className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-all">Promote ★</button>
               <button onClick={() => toast.info('Opening Analysis')} className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-border text-muted-foreground hover:bg-muted transition-all">→ Analysis</button>
             </div>
           </div>

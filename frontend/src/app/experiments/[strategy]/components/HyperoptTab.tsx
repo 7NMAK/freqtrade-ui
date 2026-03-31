@@ -925,7 +925,23 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
               >
                 → Verify
               </button>
-              <button onClick={() => toast.success('Best hyperopt promoted to active version ★')} className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-all">
+              <button onClick={async () => {
+                try {
+                  const { getExperiments, activateStrategyVersion } = await import('@/lib/api');
+                  const res = await getExperiments();
+                  const exp = (res.items || []).find((e) => e.strategy_name === strategy || e.name === strategy);
+                  if (exp && exp.best_version_id) {
+                    await activateStrategyVersion(exp.strategy_id, exp.best_version_id);
+                    toast.success(`Activated version ${exp.best_version_id} for ${strategy} ★`);
+                  } else if (exp) {
+                    toast.info('No version to activate yet — run verification first');
+                  } else {
+                    toast.error('Experiment not found');
+                  }
+                } catch (err) {
+                  toast.error(`Promote failed: ${err instanceof Error ? err.message : String(err)}`);
+                }
+              }} className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-all">
                 Promote ★
               </button>
             </div>

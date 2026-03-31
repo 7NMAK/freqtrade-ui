@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Tooltip from '@/components/ui/Tooltip';
 import { INPUT, SELECT, LABEL } from '@/lib/design';
 import { useToast } from '@/components/ui/Toast';
@@ -99,7 +99,7 @@ export default function ValidationTab({
   }, [experimentId, toast]);
 
   // Load on mount
-  useState(() => { loadSourceRuns(); });
+  useEffect(() => { loadSourceRuns(); }, [loadSourceRuns]);
 
   // ── Verification Backtest ────────────────────────────────────────
   const handleRunVerification = async () => {
@@ -499,13 +499,27 @@ export default function ValidationTab({
             {verificationResult.verdict === 'PASS' && (
               <div className="flex gap-2">
                 <button
-                  onClick={() => toast.success('Strategy verified! Ready for paper trading.')}
+                  onClick={() => { onNavigateToTab?.(6); toast.success('Navigate to Paper Trading setup'); }}
                   className="flex-1 h-[34px] inline-flex items-center justify-center gap-[6px] rounded-btn text-xs font-medium border bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
                 >
                   → Paper Trading
                 </button>
                 <button
-                  onClick={() => toast.success('Strategy promoted to active version ★')}
+                  onClick={async () => {
+                    try {
+                      const { getExperiments, activateStrategyVersion } = await import('@/lib/api');
+                      const res = await getExperiments();
+                      const exp = (res.items || []).find((e) => e.strategy_name === strategy || e.name === strategy);
+                      if (exp && exp.best_version_id) {
+                        await activateStrategyVersion(exp.strategy_id, exp.best_version_id);
+                        toast.success(`Activated version ${exp.best_version_id} for ${strategy} ★`);
+                      } else {
+                        toast.info('No version to activate yet');
+                      }
+                    } catch (err) {
+                      toast.error(`Promote failed: ${err instanceof Error ? err.message : String(err)}`);
+                    }
+                  }}
                   className="flex-1 h-[34px] inline-flex items-center justify-center gap-[6px] rounded-btn text-xs font-medium border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-colors">
                   Promote to Version ★
                 </button>
@@ -722,7 +736,7 @@ export default function ValidationTab({
             </div>
             {allPassed && (
               <button
-                onClick={() => toast.success('All checks passed! Strategy ready for paper trading.')}
+                onClick={() => { onNavigateToTab?.(6); toast.success('All checks passed! Ready for paper trading.'); }}
                 className="ml-auto px-3 py-1.5 rounded-btn text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
               >
                 → Paper Trading

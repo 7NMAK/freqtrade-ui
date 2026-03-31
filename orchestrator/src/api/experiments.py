@@ -71,6 +71,14 @@ class ExperimentResponse(BaseModel):
     notes: str | None
     run_count: int = 0
     created_at: str
+    # Enriched fields — aggregated from best completed run
+    best_profit_pct: float | None = None
+    best_win_rate: float | None = None
+    best_max_drawdown: float | None = None
+    best_sharpe: float | None = None
+    last_run_type: str | None = None
+    last_run_date: str | None = None
+    completed_run_types: list[str] = []
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -331,9 +339,63 @@ async def list_experiments(
     )
     run_counts: dict[int, int] = {row[0]: row[1] for row in count_result.all()}
 
+    # Batch-load best run metrics per experiment (1 query)
+    # Get the best completed run (by profit_pct) for each experiment
+    best_runs_result = await db.execute(
+        select(
+            ExperimentRun.experiment_id,
+            func.max(ExperimentRun.profit_pct).label("best_profit_pct"),
+            func.max(ExperimentRun.win_rate).label("best_win_rate"),
+            func.min(ExperimentRun.max_drawdown).label("best_max_drawdown"),
+            func.max(ExperimentRun.sharpe_ratio).label("best_sharpe"),
+        )
+        .where(
+            ExperimentRun.experiment_id.in_(exp_ids),
+            ExperimentRun.status == "completed",
+            ExperimentRun.is_deleted == False,  # noqa: E712
+        )
+        .group_by(ExperimentRun.experiment_id)
+    )
+    best_metrics: dict[int, dict] = {}
+    for row in best_runs_result.all():
+        best_metrics[row[0]] = {
+            "best_profit_pct": float(row[1]) if row[1] is not None else None,
+            "best_win_rate": float(row[2]) if row[2] is not None else None,
+            "best_max_drawdown": float(row[3]) if row[3] is not None else None,
+            "best_sharpe": float(row[4]) if row[4] is not None else None,
+        }
+
+    # Batch-load last run info + completed run types per experiment (1 query)
+    last_run_result = await db.execute(
+        select(
+            ExperimentRun.experiment_id,
+            ExperimentRun.run_type,
+            func.max(ExperimentRun.created_at).label("last_date"),
+        )
+        .where(
+            ExperimentRun.experiment_id.in_(exp_ids),
+            ExperimentRun.status == "completed",
+            ExperimentRun.is_deleted == False,  # noqa: E712
+        )
+        .group_by(ExperimentRun.experiment_id, ExperimentRun.run_type)
+    )
+    last_runs: dict[int, dict] = {}  # {exp_id: {"last_run_type": ..., "last_run_date": ..., "types": [...]}}
+    for row in last_run_result.all():
+        eid = row[0]
+        if eid not in last_runs:
+            last_runs[eid] = {"last_run_type": None, "last_run_date": None, "types": []}
+        last_runs[eid]["types"].append(row[1])
+        run_date = row[2]
+        if run_date and (last_runs[eid]["last_run_date"] is None or run_date > last_runs[eid]["last_run_date"]):
+            last_runs[eid]["last_run_date"] = run_date
+            last_runs[eid]["last_run_type"] = row[1]
+
     # Build response using batch data (0 additional queries)
     items = []
     for exp in experiments:
+        eid = exp.id
+        metrics = best_metrics.get(eid, {})
+        lr = last_runs.get(eid, {})
         items.append(ExperimentResponse(
             id=exp.id,
             strategy_id=exp.strategy_id,
@@ -346,8 +408,15 @@ async def list_experiments(
             baseline_backtest_id=exp.baseline_backtest_id,
             best_version_id=exp.best_version_id,
             notes=exp.notes,
-            run_count=run_counts.get(exp.id, 0),
+            run_count=run_counts.get(eid, 0),
             created_at=exp.created_at.isoformat() if exp.created_at else None,
+            best_profit_pct=metrics.get("best_profit_pct"),
+            best_win_rate=metrics.get("best_win_rate"),
+            best_max_drawdown=metrics.get("best_max_drawdown"),
+            best_sharpe=metrics.get("best_sharpe"),
+            last_run_type=lr.get("last_run_type"),
+            last_run_date=lr.get("last_run_date").isoformat() if lr.get("last_run_date") else None,
+            completed_run_types=sorted(lr.get("types", [])),
         ))
 
     return ExperimentListResponse(total=total, items=items)

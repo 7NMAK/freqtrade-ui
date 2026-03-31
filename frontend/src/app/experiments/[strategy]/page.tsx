@@ -158,21 +158,35 @@ export default function StrategyWorkspacePage() {
         );
         if (exp) {
           setExperimentId(exp.id);
+
+          // Compute pipeline from actual completed run types
+          const types = new Set(exp.completed_run_types ?? []);
+          const steps: Record<PipelineStepKey, StepState> = {
+            backtest: types.has("backtest") ? "completed" : "pending",
+            hyperopt: types.has("hyperopt") ? "completed" : "pending",
+            freqai: types.has("freqai") ? "completed" : "skipped",
+            verify: types.has("oos_validation") || types.has("verification") ? "completed" : "pending",
+            ai_review: types.has("ai_pre") || types.has("ai_post") ? "completed" : "skipped",
+            paper: "pending",
+            live: "pending",
+          };
+
+          // Compute status from pipeline
+          const completedCount = Object.values(steps).filter(s => s === "completed").length;
+          const testCount = exp.run_count ?? 0;
+          let status: "Draft" | "Testing" | "Optimized" | "Paper" | "Live" = "Draft";
+          if (testCount > 0) {
+            if (completedCount >= 5) status = "Optimized";
+            else if (completedCount >= 2) status = "Testing";
+          }
+
           setStrategyData({
             name: exp.strategy_name || exp.name || strategyName,
-            status: "Testing",
-            paperDayElapsed: 12,
+            status,
+            paperDayElapsed: 0,
             paperDayTotal: 30,
-            testCount: exp.run_count || 0,
-            steps: {
-              backtest: "completed",
-              hyperopt: "completed",
-              freqai: "skipped",
-              verify: "completed",
-              ai_review: "skipped",
-              paper: "active",
-              live: "pending",
-            },
+            testCount,
+            steps,
           });
         } else {
           setStrategyData({

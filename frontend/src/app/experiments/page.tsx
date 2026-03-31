@@ -36,6 +36,32 @@ interface UIExperiment {
   pipelineSteps: Record<string, StepState>;
 }
 
+// ── Compute pipeline steps from completed run types ──────────────────────
+
+function computePipelineSteps(completedRunTypes: string[]): Record<string, StepState> {
+  const types = new Set(completedRunTypes);
+  const steps: Record<string, StepState> = {
+    backtest: types.has("backtest") ? "completed" : "pending",
+    hyperopt: types.has("hyperopt") ? "completed" : "pending",
+    freqai: types.has("freqai") ? "completed" : "skipped",
+    verify: types.has("oos_validation") || types.has("verification") ? "completed" : "pending",
+    ai_review: types.has("ai_pre") || types.has("ai_post") ? "completed" : "skipped",
+    paper: "pending",
+    live: "pending",
+  };
+  return steps;
+}
+
+// ── Compute status from pipeline steps ────────────────────────────────
+
+function computeStatus(steps: Record<string, StepState>, testCount: number): StrategyTestStatus {
+  if (testCount === 0) return "Draft";
+  const completed = Object.values(steps).filter(s => s === "completed").length;
+  if (completed >= 5) return "Optimized";
+  if (completed >= 2) return "Testing";
+  return "Draft";
+}
+
 // ── Status badge ─────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: StrategyTestStatus }) {
@@ -97,7 +123,9 @@ function MiniPipeline({ steps }: { steps: Record<string, StepState> }) {
   );
 }
 
-// ── Main Page ────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// MAIN PAGE
+// ══════════════════════════════════════════════════════════════════════════
 
 export default function ExperimentsPage() {
   const router = useRouter();
@@ -113,31 +141,28 @@ export default function ExperimentsPage() {
       .then((res) => {
         const data = (res as unknown as { items?: Experiment[] }).items || (res as unknown as Experiment[]);
         if (Array.isArray(data)) {
-          const mapped: UIExperiment[] = data.map((exp: Experiment) => ({
-            id: exp.id,
-            strategyName: exp.strategy_name || exp.name || "Unknown",
-            description: "",
-            status: "Draft" as StrategyTestStatus,
-            version: "v0 (draft)",
-            pair: "BTC/USDT:USDT",
-            timeframe: "1h",
-            testCount: exp.run_count,
-            lastTestType: null,
-            lastTestDate: exp.created_at,
-            bestProfit: null,
-            winRate: null,
-            maxDD: null,
-            sharpe: null,
-            pipelineSteps: {
-              backtest: "pending",
-              hyperopt: "pending",
-              freqai: "pending",
-              verify: "pending",
-              ai_review: "pending",
-              paper: "pending",
-              live: "pending",
-            },
-          }));
+          const mapped: UIExperiment[] = data.map((exp: Experiment) => {
+            const pipelineSteps = computePipelineSteps(exp.completed_run_types ?? []);
+            const testCount = exp.run_count ?? 0;
+            const status = computeStatus(pipelineSteps, testCount);
+            return {
+              id: exp.id,
+              strategyName: exp.strategy_name || exp.name || "Unknown",
+              description: exp.notes || "",
+              status,
+              version: exp.best_version_id ? `v${exp.best_version_id}` : "v0 (draft)",
+              pair: exp.pair || "BTC/USDT:USDT",
+              timeframe: exp.timeframe || "1h",
+              testCount,
+              lastTestType: exp.last_run_type ?? null,
+              lastTestDate: exp.last_run_date ?? exp.created_at,
+              bestProfit: exp.best_profit_pct ?? null,
+              winRate: exp.best_win_rate != null ? exp.best_win_rate * 100 : null,
+              maxDD: exp.best_max_drawdown ?? null,
+              sharpe: exp.best_sharpe ?? null,
+              pipelineSteps,
+            };
+          });
           setExperiments(mapped);
         }
       })
@@ -218,7 +243,7 @@ export default function ExperimentsPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="flex h-9 w-full max-w-[160px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed appearance-none"
+          className="flex h-9 w-full max-w-[160px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring appearance-none"
         >
           <option value="">All Status</option>
           <option value="Draft">Draft</option>
@@ -230,7 +255,7 @@ export default function ExperimentsPage() {
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
-          className="flex h-9 w-full max-w-[160px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed appearance-none"
+          className="flex h-9 w-full max-w-[160px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring appearance-none"
         >
           <option value="lastTest">Sort: Last Activity</option>
           <option value="name">Sort: Name A-Z</option>
@@ -381,7 +406,7 @@ export default function ExperimentsPage() {
 
                   {/* Open button */}
                   <td className="px-2.5 py-2 border-b border-border/50">
-                    <button onClick={(e) => { e.stopPropagation(); router.push(`/experiments/${encodeURIComponent(exp.strategyName)}`); }} className="inline-flex items-center gap-1.5 px-2.5 py-1 border border-border bg-muted/50 hover:bg-muted hover:border-border-border hover:border-ring text-xs text-muted-foreground rounded-btn transition-all">
+                    <button onClick={(e) => { e.stopPropagation(); router.push(`/experiments/${encodeURIComponent(exp.strategyName)}`); }} className="inline-flex items-center gap-1.5 px-2.5 py-1 border border-border bg-muted/50 hover:bg-muted hover:border-ring text-xs text-muted-foreground rounded-btn transition-all">
                       Open →
                     </button>
                   </td>

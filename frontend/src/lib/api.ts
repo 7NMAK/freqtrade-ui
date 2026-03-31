@@ -942,6 +942,14 @@ export interface Experiment {
   notes: string | null;
   run_count: number;
   created_at: string;
+  // Enriched fields — aggregated from best completed run
+  best_profit_pct: number | null;
+  best_win_rate: number | null;
+  best_max_drawdown: number | null;
+  best_sharpe: number | null;
+  last_run_type: string | null;
+  last_run_date: string | null;
+  completed_run_types: string[];
 }
 
 export interface ExperimentDetail extends Experiment {

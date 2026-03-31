@@ -278,7 +278,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
     return () => clearTimeout(t);
   }, [hoConfirmDelete]);
 
-  // ── Mount: load from cache first, then fetch from API ───────────
+  // ── Mount: load from cache, fetch history list (fast) ────────────
   useEffect(() => {
     // 1. Instant load from cache
     try {
@@ -291,10 +291,11 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
         }
       }
     } catch { /* no cache */ }
-    // 2. Fetch fresh data in background
-    fetchResults();
+    // 2. Fetch history list only (fast Python script)
+    // NOTE: fetchResults() is NOT called here — it runs `freqtrade hyperopt-list`
+    // which is very slow. Results load via: cache, Load button, or Refresh.
     fetchRuns();
-  }, [CACHE_KEY, fetchResults, fetchRuns, addLog]);
+  }, [CACHE_KEY, fetchRuns, addLog]);
 
   // ── Run Single Hyperopt ──────────────────────────────────────────
   const handleRunSingle = async () => {

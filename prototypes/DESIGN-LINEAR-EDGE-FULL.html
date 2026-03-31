@@ -37,6 +37,23 @@
   th.sortable.sort-desc::after { content: '↓'; opacity: 0.9; color: #fff; }
   th.sortable.sort-asc, th.sortable.sort-desc { color: #fff; background: rgba(255,255,255,0.04); }
 
+  /* FILTERABLE COLUMN HEADERS — visible funnel indicator */
+  th.filterable { position: relative; cursor: pointer; }
+  th.filterable::before {
+    content: '';
+    display: inline-block;
+    width: 0; height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid rgba(255,255,255,0.2);
+    margin-right: 5px;
+    vertical-align: middle;
+    transition: border-color 0.15s;
+  }
+  th.filterable:hover::before { border-top-color: rgba(255,255,255,0.6); }
+  th.filterable.filter-active::before { border-top-color: #22d3ee; }
+  th.filterable.filter-active { color: #22d3ee; }
+
   /* NEW COMPONENTS */
   :root { --drawer-left: 680px; }
   .drawer { position: fixed; top: 0; height: 100vh; left: var(--drawer-left); right: 0; width: auto; background: #0C0C0C; border-left: 1px solid rgba(255,255,255,0.10); transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), left 0.25s ease; z-index: 60; display: flex; flex-direction: column; box-shadow: -10px 0 40px rgba(0,0,0,0.85); }
@@ -214,7 +231,7 @@
                   <h3 class="section-title mb-2 flex items-center gap-2">Open Positions <span class="text-white/30">(6)</span></h3>
                   <div class="overflow-x-auto">
                   <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr>
-                      <th class="text-left py-1.5 px-1 sortable">Pair</th><th class="text-left py-1.5 px-1 sortable">Side</th><th class="text-right py-1.5 px-1 sortable">Leverage</th><th class="text-right py-1.5 px-1 sortable">Entry</th><th class="text-right py-1.5 px-1 sortable">Current</th><th class="text-right py-1.5 px-1 sortable">Stake</th><th class="text-right py-1.5 px-1 sortable">P&amp;L</th><th class="text-right py-1.5 px-1 sortable">P&amp;L %</th><th class="text-right py-1.5 px-1 sortable">Duration</th><th class="text-left py-1.5 px-1 sortable">Enter Tag</th><th class="text-right py-1.5 px-1 sortable">SL</th>
+                      <th class="text-left py-1.5 px-1 sortable filterable">Pair</th><th class="text-left py-1.5 px-1 sortable filterable">Side</th><th class="text-right py-1.5 px-1 sortable">Leverage</th><th class="text-right py-1.5 px-1 sortable">Entry</th><th class="text-right py-1.5 px-1 sortable">Current</th><th class="text-right py-1.5 px-1 sortable">Stake</th><th class="text-right py-1.5 px-1 sortable">P&amp;L</th><th class="text-right py-1.5 px-1 sortable">P&amp;L %</th><th class="text-right py-1.5 px-1 sortable">Duration</th><th class="text-left py-1.5 px-1 sortable filterable">Enter Tag</th><th class="text-right py-1.5 px-1 sortable">SL</th>
                   </tr></thead>
                   <tbody class="divide-y divide-white/[0.04]">
                       <tr class="hover:bg-white/[0.02]"><td class="py-1.5 px-1 text-white font-medium">BTC/USDT</td><td class="py-1.5 px-1"><span class="bg-up/12 text-up px-1 py-0.5 rounded text-[9px] font-bold">LONG</span></td><td class="py-1.5 px-1 text-right">10x</td><td class="py-1.5 px-1 text-right">64,220</td><td class="py-1.5 px-1 text-right font-medium">65,110</td><td class="py-1.5 px-1 text-right">100</td><td class="py-1.5 px-1 text-right text-up font-bold">+$445</td><td class="py-1.5 px-1 text-right text-up">+1.38%</td><td class="py-1.5 px-1 text-right text-muted">2h14m</td><td class="py-1.5 px-1 text-muted">ema_cross</td><td class="py-1.5 px-1 text-right text-down">-10%</td></tr>
@@ -224,8 +241,9 @@
               </div>
               <div>
                   <h3 class="section-title mb-2 flex items-center gap-2">Closed Trades <span class="text-white/30">(last 10)</span></h3>
+                  <div class="overflow-x-auto">
                   <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr>
-                      <th class="text-left py-1.5 px-1 sortable">Pair</th><th class="text-left py-1.5 px-1 sortable">Side</th><th class="text-right py-1.5 px-1 sortable">Lev</th><th class="text-right py-1.5 px-1 sortable">Entry</th><th class="text-right py-1.5 px-1 sortable">Exit</th><th class="text-right py-1.5 px-1 sortable">Stake</th><th class="text-right py-1.5 px-1 sortable">P&amp;L</th><th class="text-right py-1.5 px-1 sortable">P&amp;L %</th><th class="text-right py-1.5 px-1 sortable">Duration</th><th class="text-left py-1.5 px-1 sortable">Enter Tag</th><th class="text-left py-1.5 px-1 sortable">Exit Reason</th>
+                      <th class="text-left py-1.5 px-1 sortable filterable">Pair</th><th class="text-left py-1.5 px-1 sortable filterable">Side</th><th class="text-right py-1.5 px-1 sortable">Lev</th><th class="text-right py-1.5 px-1 sortable">Entry</th><th class="text-right py-1.5 px-1 sortable">Exit</th><th class="text-right py-1.5 px-1 sortable">Stake</th><th class="text-right py-1.5 px-1 sortable">P&amp;L</th><th class="text-right py-1.5 px-1 sortable">P&amp;L %</th><th class="text-right py-1.5 px-1 sortable">Duration</th><th class="text-left py-1.5 px-1 sortable filterable">Enter Tag</th><th class="text-left py-1.5 px-1 sortable filterable">Exit Reason</th>
                   </tr></thead>
                   <tbody class="divide-y divide-white/[0.04]">
                       <tr class="hover:bg-white/[0.02]"><td class="py-1.5 px-1 text-white font-medium">SOL/USDT</td><td class="py-1.5 px-1"><span class="text-up text-[9px] font-bold">LONG</span></td><td class="py-1.5 px-1 text-right">3x</td><td class="py-1.5 px-1 text-right">144.20</td><td class="py-1.5 px-1 text-right">156.40</td><td class="py-1.5 px-1 text-right">100</td><td class="py-1.5 px-1 text-right text-up font-bold">+$610</td><td class="py-1.5 px-1 text-right text-up">+8.46%</td><td class="py-1.5 px-1 text-right text-muted">18h</td><td class="py-1.5 px-1 text-muted">ema_cross</td><td class="py-1.5 px-1 text-muted">trailing_stop</td></tr>
@@ -259,7 +277,7 @@
               <div class="grid grid-cols-2 gap-2.5">
                   <div class="bg-surface l-bd rounded p-3">
                       <h3 class="section-title mb-2">Entry Tags</h3>
-                      <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr><th class="text-left py-1 sortable">Tag</th><th class="text-right py-1 sortable">N</th><th class="text-right py-1 sortable">Win%</th><th class="text-right py-1 sortable">Profit</th></tr></thead>
+                      <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr><th class="text-left py-1 sortable filterable">Tag</th><th class="text-right py-1 sortable">N</th><th class="text-right py-1 sortable">Win%</th><th class="text-right py-1 sortable">Profit</th></tr></thead>
                       <tbody class="divide-y divide-white/[0.04]">
                           <tr><td class="py-1 text-white/80">rsi_oversold</td><td class="py-1 text-right">185</td><td class="py-1 text-right">76%</td><td class="py-1 text-right text-up font-bold">+$2,100</td></tr>
                           <tr><td class="py-1 text-white/80">ema_cross</td><td class="py-1 text-right">140</td><td class="py-1 text-right">71%</td><td class="py-1 text-right text-up font-bold">+$1,240</td></tr>
@@ -268,7 +286,7 @@
                   </div>
                   <div class="bg-surface l-bd rounded p-3">
                       <h3 class="section-title mb-2">Exit Reasons</h3>
-                      <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr><th class="text-left py-1 sortable">Reason</th><th class="text-right py-1 sortable">N</th><th class="text-right py-1 sortable">Win%</th><th class="text-right py-1 sortable">Profit</th></tr></thead>
+                      <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr><th class="text-left py-1 sortable filterable">Reason</th><th class="text-right py-1 sortable">N</th><th class="text-right py-1 sortable">Win%</th><th class="text-right py-1 sortable">Profit</th></tr></thead>
                       <tbody class="divide-y divide-white/[0.04]">
                           <tr><td class="py-1 text-white/80">trailing_stop</td><td class="py-1 text-right">210</td><td class="py-1 text-right">92%</td><td class="py-1 text-right text-up font-bold">+$3,800</td></tr>
                           <tr><td class="py-1 text-white/80">roi</td><td class="py-1 text-right">120</td><td class="py-1 text-right">100%</td><td class="py-1 text-right text-up font-bold">+$1,900</td></tr>
@@ -324,7 +342,7 @@
               <!-- Active Locks -->
               <div class="bg-surface l-bd rounded p-3">
                   <h3 class="section-title mb-2">Active Locks</h3>
-                  <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr><th class="text-left py-1 sortable">Pair</th><th class="text-left py-1 sortable">Reason</th><th class="text-right py-1 sortable">Until</th></tr></thead>
+                  <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr><th class="text-left py-1 sortable filterable">Pair</th><th class="text-left py-1 sortable filterable">Reason</th><th class="text-right py-1 sortable">Until</th></tr></thead>
                   <tbody class="divide-y divide-white/[0.04]">
                       <tr><td class="py-1.5 text-white font-medium">SOL/USDT</td><td class="py-1.5 text-muted">StoplossGuard</td><td class="py-1.5 text-right text-down">14m left</td></tr>
                   </tbody></table>
@@ -993,7 +1011,7 @@
                       <button onclick="switchTradeTab('trades-tags', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-white transition-colors trade-tab-btn" title="Entry and exit tag analysis">Entry / Exit</button>
                       
                       <div class="ml-auto mr-5 flex items-center gap-2">
-                           <button class="px-3 py-1 border border-white/12 rounded text-[11px] hover:bg-white/10 font-medium transition-colors"><i data-lucide="download" class="w-3.5 h-3.5 inline mr-1"></i>>CSV</button>
+                           <button class="px-3 py-1 border border-white/12 rounded text-[11px] hover:bg-white/10 font-medium transition-colors"><i data-lucide="download" class="w-3.5 h-3.5 inline mr-1"></i>CSV</button>
                       </div>
                   </div>
                   
@@ -1003,9 +1021,9 @@
                            <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
                                <tr>
                                    <th class="px-5 py-3.5 font-medium sortable sort-desc">Date & Time</th>
-                                   <th class="px-5 py-3.5 font-medium sortable">Pair</th>
-                                   <th class="px-5 py-3.5 font-medium sortable">Bot Logic</th>
-                                   <th class="px-5 py-3.5 font-medium text-center sortable">Side</th>
+                                   <th class="px-5 py-3.5 font-medium sortable filterable">Pair</th>
+                                   <th class="px-5 py-3.5 font-medium sortable filterable">Bot Logic</th>
+                                   <th class="px-5 py-3.5 font-medium text-center sortable filterable">Side</th>
                                    <th class="px-5 py-3.5 font-medium text-right sortable">Size</th>
                                    <th class="px-5 py-3.5 font-medium text-right sortable">Entry</th>
                                    <th class="px-5 py-3.5 font-medium text-right sortable">Mark Price</th>
@@ -1031,14 +1049,14 @@
                                    <td class="px-5 py-3 text-muted">14h 22m</td>
                                    <td class="px-5 py-3 border-l border-white/8 text-center opacity-40 group-hover:opacity-100 transition-opacity">
                                        <div class="action-menu">
-                                           <button class="action-menu-btn" onclick="toggleActionMenu(this, event)"><i data-lucide="chevron-down" class="w-3 h-3"></i>> Actions</button>
+                                           <button class="action-menu-btn" onclick="toggleActionMenu(this, event)"><i data-lucide="chevron-down" class="w-3 h-3"></i> Actions</button>
                                            <div class="action-dropdown">
-                                               <button onclick="event.stopPropagation()"><i data-lucide="log-out" class="w-3.5 h-3.5 text-muted"></i>> Forceexit limit</button>
-                                               <button onclick="event.stopPropagation()"><i data-lucide="zap" class="w-3.5 h-3.5 text-muted"></i>> Forceexit market</button>
-                                               <button onclick="event.stopPropagation()"><i data-lucide="scissors" class="w-3.5 h-3.5 text-muted"></i>> Forceexit partial</button>
+                                               <button onclick="event.stopPropagation()"><i data-lucide="log-out" class="w-3.5 h-3.5 text-muted"></i> Forceexit limit</button>
+                                               <button onclick="event.stopPropagation()"><i data-lucide="zap" class="w-3.5 h-3.5 text-muted"></i> Forceexit market</button>
+                                               <button onclick="event.stopPropagation()"><i data-lucide="scissors" class="w-3.5 h-3.5 text-muted"></i> Forceexit partial</button>
                                                <div class="sep"></div>
-                                               <button onclick="event.stopPropagation()"><i data-lucide="plus-circle" class="w-3.5 h-3.5 text-muted"></i>> Increase position</button>
-                                               <button onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-muted"></i>> Reload</button>
+                                               <button onclick="event.stopPropagation()"><i data-lucide="plus-circle" class="w-3.5 h-3.5 text-muted"></i> Increase position</button>
+                                               <button onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-muted"></i> Reload</button>
                                                <div class="sep"></div>
                                                <button class="danger" title="🗑 Delete trade — Remove from history permanently" onclick="event.stopPropagation()"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete trade</button>
                                            </div>
@@ -1059,14 +1077,14 @@
                                    <td class="px-5 py-3 text-muted">16h 45m</td>
                                    <td class="px-5 py-3 border-l border-white/8 text-center opacity-40 group-hover:opacity-100 transition-opacity">
                                        <div class="action-menu">
-                                           <button class="action-menu-btn" onclick="toggleActionMenu(this, event)"><i data-lucide="chevron-down" class="w-3 h-3"></i>> Actions</button>
+                                           <button class="action-menu-btn" onclick="toggleActionMenu(this, event)"><i data-lucide="chevron-down" class="w-3 h-3"></i> Actions</button>
                                            <div class="action-dropdown">
-                                               <button onclick="event.stopPropagation()"><i data-lucide="log-out" class="w-3.5 h-3.5 text-muted"></i>> Forceexit limit</button>
-                                               <button onclick="event.stopPropagation()"><i data-lucide="zap" class="w-3.5 h-3.5 text-muted"></i>> Forceexit market</button>
-                                               <button onclick="event.stopPropagation()"><i data-lucide="scissors" class="w-3.5 h-3.5 text-muted"></i>> Forceexit partial</button>
+                                               <button onclick="event.stopPropagation()"><i data-lucide="log-out" class="w-3.5 h-3.5 text-muted"></i> Forceexit limit</button>
+                                               <button onclick="event.stopPropagation()"><i data-lucide="zap" class="w-3.5 h-3.5 text-muted"></i> Forceexit market</button>
+                                               <button onclick="event.stopPropagation()"><i data-lucide="scissors" class="w-3.5 h-3.5 text-muted"></i> Forceexit partial</button>
                                                <div class="sep"></div>
-                                               <button onclick="event.stopPropagation()"><i data-lucide="plus-circle" class="w-3.5 h-3.5 text-muted"></i>> Increase position</button>
-                                               <button onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-muted"></i>> Reload</button>
+                                               <button onclick="event.stopPropagation()"><i data-lucide="plus-circle" class="w-3.5 h-3.5 text-muted"></i> Increase position</button>
+                                               <button onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-muted"></i> Reload</button>
                                                <div class="sep"></div>
                                                <button class="danger" title="🗑 Delete trade — Remove from history permanently" onclick="event.stopPropagation()"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete trade</button>
                                            </div>
@@ -1077,20 +1095,21 @@
                       </table>
                   </div>
 
-                  <div id="trades-closed" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto flex flex-col" style="display:none;">
+                  <div id="trades-closed" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto" style="display:none;">
+                      <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
                            <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
                                <tr>
                                    <th class="px-5 py-3.5 font-medium sortable">Date</th>
-                                   <th class="px-5 py-3.5 font-medium sortable">Pair</th>
-                                   <th class="px-5 py-3.5 font-medium sortable">Bot</th>
-                                   <th class="px-5 py-3.5 font-medium text-center sortable">Side</th>
+                                   <th class="px-5 py-3.5 font-medium sortable filterable">Pair</th>
+                                   <th class="px-5 py-3.5 font-medium sortable filterable">Bot</th>
+                                   <th class="px-5 py-3.5 font-medium text-center sortable filterable">Side</th>
                                    <th class="px-5 py-3.5 font-medium text-right sortable">Entry</th>
                                    <th class="px-5 py-3.5 font-medium text-right sortable">Exit</th>
                                    <th class="px-5 py-3.5 font-medium text-right bg-black/20 sortable">Profit %</th>
                                    <th class="px-5 py-3.5 font-medium text-right bg-black/20 sortable">Value</th>
                                    <th class="px-5 py-3.5 font-medium text-right sortable">Fee</th>
                                    <th class="px-5 py-3.5 font-medium sortable">Duration</th>
-                                   <th class="px-5 py-3.5 font-medium sortable">Exit Reason</th>
+                                   <th class="px-5 py-3.5 font-medium sortable filterable">Exit Reason</th>
                                </tr>
                            </thead>
                            <tbody class="font-mono text-white/85 divide-y divide-white/[0.05]">
@@ -1125,11 +1144,12 @@
                   </div>
 
                   <!-- TAB: WHITELIST MATRIX -->
-                  <div id="trades-whitelist" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto flex flex-col" style="display:none;">
+                  <div id="trades-whitelist" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto" style="display:none;">
+                      <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
                            <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
                                <tr>
-                                   <th class="px-5 py-3.5 font-medium sortable">Pair</th>
-                                   <th class="px-5 py-3.5 font-medium text-center sortable">Status</th>
+                                   <th class="px-5 py-3.5 font-medium sortable filterable">Pair</th>
+                                   <th class="px-5 py-3.5 font-medium text-center sortable filterable">Status</th>
                                    <th class="px-5 py-3.5 font-medium sortable">Assigned Bots</th>
                                    <th class="px-5 py-3.5 font-medium text-right sortable">Price</th>
                                    <th class="px-5 py-3.5 font-medium text-right sortable">24h Change</th>
@@ -1221,10 +1241,11 @@
                       </table>
                   </div>
 
-                  <div id="trades-performance" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto flex flex-col" style="display:none;">
+                  <div id="trades-performance" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto" style="display:none;">
+                      <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
                            <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
                                <tr>
-                                   <th class="px-5 py-3.5 font-medium sortable">Pair</th>
+                                   <th class="px-5 py-3.5 font-medium sortable filterable">Pair</th>
                                    <th class="px-5 py-3.5 font-medium text-right sortable">Trades</th>
                                    <th class="px-5 py-3.5 font-medium text-right sortable">Wins</th>
                                    <th class="px-5 py-3.5 font-medium text-right sortable">Losses</th>
@@ -1570,7 +1591,7 @@
           <!-- Fleet Header -->
           <div class="flex items-center justify-between mb-5 shrink-0">
               <div class="flex items-center gap-4">
-                  <button onclick="switchPage('page-dashboard')" class="text-muted hover:text-white transition-colors flex items-center gap-1.5 text-[12px] font-medium"><i data-lucide="arrow-left" class="w-4 h-4"></i>>Dashboard</button>
+                  <button onclick="switchPage('page-dashboard')" class="text-muted hover:text-white transition-colors flex items-center gap-1.5 text-[12px] font-medium"><i data-lucide="arrow-left" class="w-4 h-4"></i>Dashboard</button>
                   <span class="text-white/15">|</span>
                   <h2 class="text-[16px] font-bold uppercase tracking-widest text-white/80">Fleet Management</h2>
                   <span class="bg-white/10 px-2.5 py-1 rounded text-[11px] font-mono text-muted">312 bots</span>
@@ -1579,8 +1600,8 @@
                   <span class="flex items-center gap-1.5 text-down text-[11px] font-mono">12 stopped</span>
               </div>
               <div class="flex items-center gap-2">
-                  <button class="px-3 py-1.5 border border-white/12 rounded text-[11px] hover:bg-white/10 font-medium transition-colors flex items-center gap-1.5"><i data-lucide="git-compare" class="w-3.5 h-3.5"></i>>Compare Selected</button>
-                  <button class="px-3 py-1.5 border border-white/12 rounded text-[11px] hover:bg-white/10 font-medium transition-colors flex items-center gap-1.5"><i data-lucide="download" class="w-3.5 h-3.5"></i>>Export CSV</button>
+                  <button class="px-3 py-1.5 border border-white/12 rounded text-[11px] hover:bg-white/10 font-medium transition-colors flex items-center gap-1.5"><i data-lucide="git-compare" class="w-3.5 h-3.5"></i>Compare Selected</button>
+                  <button class="px-3 py-1.5 border border-white/12 rounded text-[11px] hover:bg-white/10 font-medium transition-colors flex items-center gap-1.5"><i data-lucide="download" class="w-3.5 h-3.5"></i>Export CSV</button>
               </div>
           </div>
 
@@ -1591,10 +1612,10 @@
                       <thead class="sticky top-0 bg-surface l-b font-mono text-[10px] uppercase tracking-widest text-muted z-10 shadow-lg">
                           <tr>
                               <th class="px-3 py-3 font-medium w-8"><input type="checkbox" class="rounded" title="Select all"></th>
-                              <th class="px-3 py-3 font-medium sortable">Status</th>
+                              <th class="px-3 py-3 font-medium sortable filterable">Status</th>
                               <th class="px-4 py-3 font-medium">Bot Name</th>
                               <th class="px-3 py-3 font-medium sortable">Strategy</th>
-                              <th class="px-3 py-3 font-medium sortable">Exchange</th>
+                              <th class="px-3 py-3 font-medium sortable filterable">Exchange</th>
                               <th class="px-3 py-3 font-medium text-right sortable">Balance</th>
                               <th class="px-3 py-3 font-medium text-right bg-black/20 sortable">Today P&L</th>
                               <th class="px-3 py-3 font-medium text-right bg-black/20 sortable">Total P&L</th>

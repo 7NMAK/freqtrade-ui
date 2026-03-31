@@ -409,6 +409,14 @@ All data tables use **inline sortable column headers** — no separate filter ba
 - Active header gets `color: #fff; background: rgba(255,255,255,0.04)`
 - Actions and Checkbox columns are NOT sortable
 
+### Filterable Column Headers (inline filter icons)
+Key categorical columns also have `th.filterable` — a visible **▼ triangle** (CSS border trick) before the column name:
+- Default: small downward triangle (`border-top: 5px solid rgba(255,255,255,0.2)`)
+- Hover: brighter triangle (`border-top-color: rgba(255,255,255,0.6)`)
+- Active filter: `th.filter-active` — **cyan** triangle + text (`#22d3ee`)
+- **Filterable columns**: Pair, Side, Bot Logic, Bot, Exit Reason, Status, Exchange, Enter Tag, Tag, Reason
+- Clicking opens an inline dropdown with unique values from the column data
+
 ### Tab Tooltips
 | Tab | Tooltip |
 |---|---|

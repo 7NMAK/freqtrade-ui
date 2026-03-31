@@ -388,39 +388,51 @@ Grid overlay:       .l-grid class, opacity-20
 > **RULE: All entity cards (bot, strategy) MUST use identical structure, tokens, and hover behavior.**
 
 ```
-Structure:
-  Container:   l-bd rounded-md group cursor-pointer
-  Background:  NO background (transparent/inherit from parent)
+LAYOUT MODES:
+  Fleet row (bot list):  p-4 l-b (flat row inside shared container, border-bottom)
+  Grid card (strategy):  l-bd rounded-md (individual card in CSS grid, border all sides)
+
+SHARED TOKENS (MUST be identical in both modes):
+  Background:  NO background on the card itself (transparent/inherit)
   Hover:       hover:bg-white/[0.03] transition-colors
+  Cursor:      group cursor-pointer
   ⚠ DO NOT USE bg-surface on individual cards
   ⚠ DO NOT USE hover:border-white/22, hover:-translate-y, shadow-xl per-card
   ⚠ Cards MUST be dark at rest, lighten on hover (dark → light)
   ⚠ NEVER light at rest darkening on hover (light → dark is WRONG)
 
   Row 1 — Identity + Profit (SINGLE ROW):
-    Layout:    flex items-start justify-between mb-2.5
-    Content:   [StatusDot + Name + Badge] ... [Profit $] [Profit %]
-    Name:      font-bold text-white uppercase text-[12px] tracking-wide
-    Badge:     text-[10px] font-bold rounded px-1.5 py-[1px] (see 7.16)
-    Status:    w-2 h-2 rounded-full + shadow glow
-    Profit $:  text-up|text-down font-bold text-[13px]
-    Profit %:  text-[10px] ml-1 (half-opacity color via inline style)
-    ⚠ Name, badge, AND profit MUST be in the SAME flex row
+    Layout:      flex items-start justify-between mb-2.5
+    Padding:     inherits from container (fleet: p-4) or explicit (grid: px-4 pt-4)
+    Status dot:  w-2 h-2 rounded-full shadow-[0_0_4px_<color>] shrink-0
+    Name:        font-bold text-white uppercase text-[12px] tracking-wide
+                 Grid cards add: truncate (for column width constraint)
+    Badge:       text-[10px] rounded px-1.5 py-[1px]
+                 Bot badge:      border border-white/20 text-white/60 font-medium
+                 Strategy badge: font-bold bg-<color>/12 text-<color> border border-<color>/25 (see 7.16)
+    Profit $:    text-up|text-down font-bold text-[13px]
+    Profit %:    text-[10px] ml-1 style="color:rgba(<r>,<g>,<b>,0.5)"
+    ⚠ Name + Badge + Profit MUST all be in the SAME flex row
     ⚠ DO NOT put profit in a separate div/row
 
   Row 2 — Stats Grid:
-    Layout:    grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3
-    Labels:    plain text (Trades:, Win:, Drawdown:, Avg. Dur:)
-    Values:    text-white/70, or text-down for drawdown
-    Stats use: flex justify-between w-full
+    Layout:      grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3
+    Stats items: flex justify-between w-full
+                 Odd columns add: pr-5 (for visual separation)
+    Values:      text-white/70 for normal, text-down for drawdown
 
   Row 3 — Chart + Actions (COMBINED):
-    Wrapper:   flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity
-    Chart:     flex gap-[2px] h-4 items-end (mini bar chart, w-1.5 bars)
-    Actions:   flex gap-1 (bot-ctrl buttons)
+    Wrapper:     flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity
+    Chart:       flex gap-[2px] h-4 items-end
+    Chart bars:  w-1.5 bg-up|bg-down h-[<pct>%] rounded-sm
+    Actions:     flex gap-1 (bot-ctrl icon buttons, no text labels)
     ⚠ Chart and Actions MUST be in the SAME wrapper div
     ⚠ BOTH fade in together: opacity-50 → opacity-100 on hover
     ⚠ DO NOT separate chart and buttons into different opacity wrappers
+
+  Row 4 — Footer (OPTIONAL, strategy cards only):
+    Layout:      h-6 l-t px-4 flex items-center text-[9px] text-muted font-mono
+    Content:     status dot + bot count + last activity
 ```
 
 ### 7.16 Strategy Lifecycle Badge
@@ -778,4 +790,4 @@ This Design System defines **visual presentation only**. For API endpoints, data
 |---|---|
 | 2026-03-31 | v1.0 — Initial extraction from production prototype |
 | 2026-03-31 | v1.1 — Added 46 missing tokens: hex colors, JS functions, element IDs, icons, API cross-refs |
-| 2026-03-31 | v1.2 — Added §7.15 Entity Card pattern (hover, chart+action wrapper rules), §7.16 Strategy Lifecycle Badges |
+| 2026-03-31 | v1.2 — Added §7.15 Entity Card (NO bg-surface on cards, dark→light hover, merged identity+profit row, chart+action wrapper), §7.16 Strategy Lifecycle Badges |

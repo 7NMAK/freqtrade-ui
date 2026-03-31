@@ -97,9 +97,11 @@ function buildFreqAIConfig(opts: {
         include_timeframes: ["5m", "15m", "1h"],
         include_corr_pairlist: opts.includeCorrPairs ? ["BTC/USDT:USDT", "ETH/USDT:USDT"] : [],
         indicator_periods_candles: indicatorPeriods.length > 0 ? indicatorPeriods : [10, 20],
+        feature_period_candles: parseInt(opts.featurePeriod, 10) || 20,
         label_period_candles: parseInt(opts.labelPeriod, 10) || 24,
         DI_threshold: opts.outlier === "di" ? opts.diThreshold : 0,
         use_SVM_to_remove_outliers: opts.outlier === "svm",
+        svm_params: opts.outlier === "svm" ? { shuffle: false, nu: opts.svmNu } : undefined,
         use_DBSCAN_to_remove_outliers: opts.outlier === "dbscan",
         principal_component_analysis: opts.pca,
         noise_standard_deviation: opts.noise ? opts.noiseStdDev : 0,
@@ -279,6 +281,7 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
         }
       })
       .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally exclude results.length to prevent DB load overwriting localStorage
   }, [experimentId, addLog]);
 
   // ── Build Matrix Queue ────────────────────────────────────────────
@@ -337,7 +340,7 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
           setCurrentRunLabel(`${step}${pct}`);
         }
 
-        if (running === false && step && (step === "finished" || step === "done" || step === "backtest" && progress === 1)) {
+        if (running === false && step && (step === "finished" || step === "done" || (step === "backtest" && progress === 1))) {
           return raw;
         }
         if (step === "error" || (raw.status as string)?.toLowerCase()?.includes("error")) {
@@ -421,6 +424,18 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
       addLog("INFO", `Bot #${botId} state=${state}, runmode=${runmode} — OK to backtest`);
     } catch (err) {
       addLog("WARNING", `Could not verify bot state: ${err}. Proceeding anyway...`);
+    }
+
+    // ── Pre-flight: check if a backtest is already running ─────────────
+    try {
+      const btStatus = (await botBacktestResults(botId)) as unknown as Record<string, unknown>;
+      if (btStatus.running === true) {
+        toast.error("A backtest is already running on this bot. Wait for it to finish or stop it first.");
+        addLog("ERROR", "Cannot start — another backtest is already running.");
+        return;
+      }
+    } catch {
+      // No backtest running or endpoint not available — safe to proceed
     }
 
     setIsRunning(true);

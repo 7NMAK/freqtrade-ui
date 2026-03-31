@@ -490,6 +490,17 @@ export const botHyperoptList = (id: number, params?: {
 export const botHyperoptShow = (id: number, epoch: number) =>
   request<Record<string, unknown>>(`/api/bots/${id}/hyperopt-show?epoch=${epoch}`);
 
+export const botHyperoptRuns = (id: number) =>
+  request<{ runs: Array<{ filename: string; strategy: string; created_at: string; mtime: number; size_bytes: number; epochs: number }> }>(
+    `/api/bots/${id}/hyperopt-runs`
+  );
+
+export const botHyperoptHistoryDelete = (id: number, filename: string) =>
+  request<{ status: string }>(`/api/bots/${id}/hyperopt/history/${encodeURIComponent(filename)}`, { method: "DELETE" });
+
+export const botBacktestHistoryDelete = (id: number, filename: string) =>
+  request<{ status: string }>(`/api/bots/${id}/backtest/history/${encodeURIComponent(filename)}`, { method: "DELETE" });
+
 export const botBacktestHistory = async (id: number) => {
   const raw = await request<
     | Array<{ filename: string; strategy: string; run_id: string; backtest_start_time: number; notes?: string; timeframe?: string; timeframe_detail?: string }>

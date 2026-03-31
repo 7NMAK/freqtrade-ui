@@ -1846,6 +1846,103 @@ async def bot_hyperopt_show(bot_id: int, request: Request, db: AsyncSession = De
         raise HTTPException(502, f"Hyperopt-show failed: {e}")
 
 
+@router.get("/{bot_id}/hyperopt-runs")
+async def bot_hyperopt_runs(bot_id: int, request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
+    """List all .fthypt result files (hyperopt runs) in user_data/hyperopt_results/."""
+    import docker, re
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    try:
+        dk = docker.from_env()
+        container = dk.containers.get(bot.container_id or bot.name)
+        result = container.exec_run(
+            ["find", "/freqtrade/user_data/hyperopt_results/", "-name", "*.fthypt", "-printf", "%f\\t%s\\t%T@\\n"],
+            detach=False,
+        )
+        if result.exit_code != 0:
+            return {"runs": []}
+        runs: list[dict[str, Any]] = []
+        for line in result.output.decode("utf-8", errors="replace").strip().split("\n"):
+            if not line.strip():
+                continue
+            parts = line.split("\t")
+            if len(parts) < 3:
+                continue
+            filename = parts[0]
+            size_bytes = int(parts[1]) if parts[1].isdigit() else 0
+            mtime = float(parts[2]) if parts[2].replace(".", "").isdigit() else 0
+            # Parse strategy name and date from filename: strategy_StrategyName_YYYY-MM-DD_HH-MM-SS.fthypt
+            m = re.match(r"strategy_(.+?)_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\.fthypt", filename)
+            strategy_name = m.group(1) if m else filename
+            created_str = m.group(2).replace("_", " ").replace("-", ":", 2) if m else ""
+            # Count epochs by counting lines in file
+            count_result = container.exec_run(
+                ["wc", "-l", f"/freqtrade/user_data/hyperopt_results/{filename}"],
+                detach=False,
+            )
+            epoch_count = 0
+            if count_result.exit_code == 0:
+                count_str = count_result.output.decode("utf-8", errors="replace").strip().split()[0]
+                epoch_count = int(count_str) if count_str.isdigit() else 0
+            runs.append({
+                "filename": filename,
+                "strategy": strategy_name,
+                "created_at": created_str,
+                "mtime": mtime,
+                "size_bytes": size_bytes,
+                "epochs": epoch_count,
+            })
+        runs.sort(key=lambda r: r["mtime"], reverse=True)
+        return {"runs": runs}
+    except Exception as e:
+        raise HTTPException(502, f"Hyperopt-runs failed: {e}")
+
+
+@router.delete("/{bot_id}/backtest/history/{filename:path}")
+async def bot_backtest_history_delete(bot_id: int, filename: str, request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
+    """Delete a specific backtest result file."""
+    import docker
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    # Sanitize filename to prevent path traversal
+    if ".." in filename or "/" in filename:
+        raise HTTPException(400, "Invalid filename")
+    try:
+        dk = docker.from_env()
+        container = dk.containers.get(bot.container_id or bot.name)
+        filepath = f"/freqtrade/user_data/backtest_results/{filename}"
+        result = container.exec_run(["rm", "-f", filepath], detach=False)
+        # Also remove associated .meta file if present
+        container.exec_run(["rm", "-f", f"{filepath}.meta"], detach=False)
+        return {"status": "deleted", "filename": filename, "exit_code": result.exit_code}
+    except Exception as e:
+        raise HTTPException(502, f"Delete failed: {e}")
+
+
+@router.delete("/{bot_id}/hyperopt/history/{filename:path}")
+async def bot_hyperopt_history_delete(bot_id: int, filename: str, request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
+    """Delete a specific hyperopt .fthypt result file."""
+    import docker
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    if ".." in filename or "/" in filename:
+        raise HTTPException(400, "Invalid filename")
+    try:
+        dk = docker.from_env()
+        container = dk.containers.get(bot.container_id or bot.name)
+        filepath = f"/freqtrade/user_data/hyperopt_results/{filename}"
+        result = container.exec_run(["rm", "-f", filepath], detach=False)
+        return {"status": "deleted", "filename": filename, "exit_code": result.exit_code}
+    except Exception as e:
+        raise HTTPException(502, f"Delete failed: {e}")
+
+
 @router.get("/{bot_id}/list-data")
 async def bot_list_data(bot_id: int, request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
     """List available data files via Docker exec: freqtrade list-data. Parses tabular output."""

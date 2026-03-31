@@ -21,7 +21,18 @@ import {
   botHyperoptStart,
   botHyperoptStatus,
   botHyperoptList,
+  botHyperoptRuns,
+  botHyperoptHistoryDelete,
 } from '@/lib/api';
+
+interface HyperoptRun {
+  filename: string;
+  strategy: string;
+  created_at: string;
+  mtime: number;
+  size_bytes: number;
+  epochs: number;
+}
 
 // ── Types ─────────────────────────────────────────────────────────────
 interface HyperoptResult {
@@ -97,6 +108,10 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
   const [completedCount, setCompletedCount] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // ── History State ─────────────────────────────────────────────
+  const [hoRuns, setHoRuns] = useState<HyperoptRun[]>([]);
+  const CACHE_KEY = `ho-results-${strategy}`;
+
   // ── Log State ───────────────────────────────────────────────────
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [hoProgress, setHoProgress] = useState("");
@@ -151,45 +166,90 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
   // ── Batch Calculation ────────────────────────────────────────────
   const totalBatchRuns = selectedLossFunctions.length * selectedSamplers.length;
 
+  // ── Map API response to HyperoptResult[] ───────────────────────
+  const mapApiResults = useCallback((data: { results: unknown[] }): HyperoptResult[] => {
+    return data.results.map((rawItem, i) => {
+      const r = rawItem as Record<string, unknown>;
+      return {
+        id: Number(r.epoch ?? i + 1),
+        loss: Number(r.objective ?? 0),
+        trades: Number(r.trades ?? 0),
+        winRate: 0,
+        profitPct: Number(String(r.total_profit ?? '0').replace(/[,%]/g, '')),
+        profitAbs: Number(String(r.total_profit ?? '0').replace(/[,%]/g, '')) * 100,
+        maxDrawdown: Number(r.max_drawdown_pct ?? 0) / 100,
+        sharpe: 0,
+        sortino: 0,
+        avgDuration: String(r.avg_duration ?? '—'),
+        sampler: '—',
+        lossFunction: '—',
+        spaces: '—',
+        epochs: Number(r.epoch ?? 0),
+        status: 'completed' as const,
+        startedAt: '',
+        params: (r.params as Record<string, unknown>) ?? undefined,
+      };
+    });
+  }, []);
+
   // ── Fetch existing results from API ──────────────────────────────
   const fetchResults = useCallback(async () => {
     try {
       const data = await botHyperoptList(botId, { profitable: false });
       if (data?.results && data.results.length > 0) {
-        const mapped: HyperoptResult[] = data.results.map((rawItem, i) => {
-          const r = rawItem as Record<string, unknown>;
-          return {
-            id: Number(r.epoch ?? i + 1),
-            loss: Number(r.objective ?? 0),
-            trades: Number(r.trades ?? 0),
-            winRate: 0, // Not in CSV, would need separate calculation
-            profitPct: Number(String(r.total_profit ?? '0').replace(/[,%]/g, '')),
-            profitAbs: Number(String(r.total_profit ?? '0').replace(/[,%]/g, '')) * 100,
-            maxDrawdown: Number(r.max_drawdown_pct ?? 0) / 100,
-            sharpe: 0,
-            sortino: 0,
-            avgDuration: String(r.avg_duration ?? '—'),
-            sampler: '—',
-            lossFunction: '—',
-            spaces: '—',
-            epochs: Number(r.epoch ?? 0),
-            status: 'completed' as const,
-            startedAt: '',
-            params: (r.params as Record<string, unknown>) ?? undefined,
-          };
-        });
-        // Replace results with full set from API (all epochs)
+        const mapped = mapApiResults(data);
         setResults(mapped);
+        // Cache to sessionStorage
+        try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(mapped)); } catch { /* quota */ }
         addLog('INFO', `Loaded ${mapped.length} hyperopt epochs from history`);
       }
     } catch {
       // No results yet — that's fine
     }
-  }, [botId, addLog]);
+  }, [botId, addLog, mapApiResults, CACHE_KEY]);
 
+  // ── Fetch hyperopt runs (history) ────────────────────────────────
+  const fetchRuns = useCallback(async () => {
+    try {
+      const data = await botHyperoptRuns(botId);
+      if (data?.runs) {
+        // Filter to current strategy
+        const filtered = data.runs.filter(r => r.strategy === strategy || r.strategy === `_HO_${strategy}`);
+        setHoRuns(filtered);
+      }
+    } catch { /* no runs */ }
+  }, [botId, strategy]);
+
+  // ── Delete a hyperopt run ────────────────────────────────────────
+  const handleDeleteRun = useCallback(async (filename: string) => {
+    if (!confirm(`Delete hyperopt run "${filename}"?`)) return;
+    try {
+      await botHyperoptHistoryDelete(botId, filename);
+      toast.success('Hyperopt run deleted');
+      addLog('INFO', `Deleted hyperopt run: ${filename}`);
+      fetchRuns();
+    } catch (err) {
+      toast.error(`Delete failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }, [botId, toast, addLog, fetchRuns]);
+
+  // ── Mount: load from cache first, then fetch from API ───────────
   useEffect(() => {
+    // 1. Instant load from cache
+    try {
+      const cached = sessionStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached) as HyperoptResult[];
+        if (parsed.length > 0) {
+          setResults(parsed);
+          addLog('INFO', `Loaded ${parsed.length} epochs from cache`);
+        }
+      }
+    } catch { /* no cache */ }
+    // 2. Fetch fresh data in background
     fetchResults();
-  }, [fetchResults]);
+    fetchRuns();
+  }, [CACHE_KEY, fetchResults, fetchRuns, addLog]);
 
   // ── Run Single Hyperopt ──────────────────────────────────────────
   const handleRunSingle = async () => {
@@ -944,11 +1004,39 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
             </div>
           </div>
         ) : (
-          <div className="bg-card border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[400px]">
+          <div className="bg-card border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[200px]">
             <div className="text-[32px] mb-3 opacity-30">⚡</div>
             <div className="text-sm font-semibold text-muted-foreground mb-1">No hyperopt results yet</div>
             <div className="text-xs text-muted-foreground text-center max-w-[280px]">
               Configure loss functions, samplers, and spaces, then click &quot;Run&quot; to start hyperparameter optimization.
+            </div>
+          </div>
+        )}
+
+        {/* ── Hyperopt History ── */}
+        {hoRuns.length > 0 && (
+          <div className="bg-card border border-border rounded-card overflow-hidden">
+            <div className="px-4 py-3 border-b border-border">
+              <span className="text-xs font-semibold text-foreground">Hyperopt History ({hoRuns.length})</span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              {hoRuns.map((run) => (
+                <div
+                  key={run.filename}
+                  className="flex items-center gap-3 px-4 py-2 text-xs hover:bg-muted/30 transition-colors group"
+                >
+                  <span className="text-muted-foreground shrink-0">{run.created_at || new Date(run.mtime * 1000).toLocaleString()}</span>
+                  <span className="font-mono text-muted-foreground">{run.epochs} epochs</span>
+                  <span className="text-muted-foreground truncate flex-1">{run.strategy.replace('_HO_', '')}</span>
+                  <button
+                    onClick={() => handleDeleteRun(run.filename)}
+                    className="text-rose-400/60 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all text-sm"
+                    title="Delete this run"
+                  >
+                    🗑
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         )}

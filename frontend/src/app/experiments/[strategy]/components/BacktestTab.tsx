@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import Tooltip from "@/components/ui/Tooltip";
 import Toggle from "@/components/ui/Toggle";
 import { INPUT, SELECT, LABEL, fmt$, fmtPctRatio, fmtNum, fmtTimestamp } from "@/lib/design";
-import { botLogs, botBacktestResults, botBacktestStart, botBacktestDelete, botBacktestHistory, botBacktestHistoryResult } from "@/lib/api";
+import { botLogs, botBacktestResults, botBacktestStart, botBacktestDelete, botBacktestHistory, botBacktestHistoryResult, botBacktestHistoryDelete } from "@/lib/api";
 import { useToast } from "@/components/ui/Toast";
 
 interface BacktestTabProps {
@@ -432,7 +432,15 @@ function EquityCurve({ breakdown, startingBalance }: { breakdown: Record<string,
 // ══════════════════════════════════════════════════════════════════════════
 // HISTORY PANEL
 // ══════════════════════════════════════════════════════════════════════════
-function HistoryPanel({ entries, currentStrategy, onLoad }: { entries: HistoryEntry[]; currentStrategy: string; onLoad: (entry: HistoryEntry) => void }) {
+function HistoryPanel({ entries, currentStrategy, onLoad, onDelete }: {
+  entries: HistoryEntry[];
+  currentStrategy: string;
+  onLoad: (entry: HistoryEntry) => void;
+  onDelete: (entry: HistoryEntry) => void;
+}) {
+  const [page, setPage] = useState(1);
+  const perPage = 10;
+
   // Filter to current strategy, most recent first
   const filtered = entries
     .filter((e) => e.strategy === currentStrategy)
@@ -440,29 +448,58 @@ function HistoryPanel({ entries, currentStrategy, onLoad }: { entries: HistoryEn
 
   if (filtered.length === 0) return null;
 
+  const totalPages = Math.ceil(filtered.length / perPage);
+  const paged = filtered.slice((page - 1) * perPage, page * perPage);
+
   return (
     <div>
       <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
         Backtest History ({filtered.length})
       </div>
       <div className="flex flex-col gap-1">
-        {filtered.map((entry) => {
+        {paged.map((entry) => {
           const startTs = entry.backtest_start_ts ? new Date(entry.backtest_start_ts * 1000).toISOString().split("T")[0] : "?";
           const endTs = entry.backtest_end_ts ? new Date(entry.backtest_end_ts * 1000).toISOString().split("T")[0] : "?";
           return (
-            <button
+            <div
               key={`${entry.filename}-${entry.run_id}`}
-              onClick={() => onLoad(entry)}
-              className="flex items-center gap-3 px-3 py-2 bg-muted/30 border border-border rounded-lg text-xs hover:bg-muted/60 hover:border-primary/30 transition-all text-left group"
+              className="flex items-center gap-2 px-3 py-2 bg-muted/30 border border-border rounded-lg text-xs hover:bg-muted/60 hover:border-primary/30 transition-all group"
             >
-              <span className="text-muted-foreground shrink-0">{fmtTimestamp(entry.backtest_start_time)}</span>
-              <span className="font-mono text-muted-foreground">{entry.timeframe || "?"}</span>
-              <span className="text-muted-foreground truncate flex-1">{startTs} → {endTs}</span>
-              <span className="text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0">Load →</span>
-            </button>
+              <button
+                onClick={() => onLoad(entry)}
+                className="flex items-center gap-3 text-left flex-1 min-w-0"
+              >
+                <span className="text-muted-foreground shrink-0">{fmtTimestamp(entry.backtest_start_time)}</span>
+                <span className="font-mono text-muted-foreground">{entry.timeframe || "?"}</span>
+                <span className="text-muted-foreground truncate flex-1">{startTs} → {endTs}</span>
+                <span className="text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0">Load →</span>
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete(entry); }}
+                className="text-rose-400/60 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all text-sm shrink-0"
+                title="Delete this backtest"
+              >
+                🗑
+              </button>
+            </div>
           );
         })}
       </div>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-2">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-2 py-0.5 text-[10px] border border-border rounded hover:bg-muted/50 disabled:opacity-30 transition"
+          >← Prev</button>
+          <span className="text-[10px] text-muted-foreground">{page}/{totalPages}</span>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="px-2 py-0.5 text-[10px] border border-border rounded hover:bg-muted/50 disabled:opacity-30 transition"
+          >Next →</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -500,6 +537,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
   // ── Results + History state ────────────────────────────────────────
   const [btResult, setBtResult] = useState<FTStrategyResult | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const BT_CACHE_KEY = `bt-result-${strategy}`;
 
   const addLog = useCallback((level: string, msg: string) => {
     setLogs((prev) => {
@@ -523,7 +561,34 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
     }
   }, [backtestBotId]);
 
-  useEffect(() => { fetchHistory(); }, [fetchHistory]);
+  // Delete a backtest history entry
+  const handleDeleteHistory = useCallback(async (entry: HistoryEntry) => {
+    if (!confirm(`Delete backtest "${entry.filename}"?`)) return;
+    try {
+      await botBacktestHistoryDelete(backtestBotId, entry.filename);
+      toast.success('Backtest deleted');
+      fetchHistory();
+    } catch (err) {
+      toast.error(`Delete failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }, [backtestBotId, toast, fetchHistory]);
+
+  // Auto-load: cache first, then fetch history and auto-load latest
+  useEffect(() => {
+    // 1. Instant load from cache
+    try {
+      const cached = sessionStorage.getItem(BT_CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached) as FTStrategyResult;
+        if (parsed?.total_trades) {
+          setBtResult(parsed);
+          addLog('INFO', `Loaded cached result: ${parsed.strategy_name} — ${parsed.total_trades} trades`);
+        }
+      }
+    } catch { /* no cache */ }
+    // 2. Fetch history list
+    fetchHistory();
+  }, [BT_CACHE_KEY, fetchHistory, addLog]);
 
   // Extract strategy result from FT's nested response
   const extractResult = useCallback((backtestResult: Record<string, unknown>): FTStrategyResult | null => {
@@ -579,6 +644,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
             if (result) {
               addLog("INFO", `Result: ${result.strategy_name || "?"} \u2014 ${result.total_trades} trades`);
               setBtResult(result);
+              try { sessionStorage.setItem(BT_CACHE_KEY, JSON.stringify(result)); } catch { /* quota */ }
             } else {
               addLog("WARNING", `extractResult null. backtest_result keys: ${JSON.stringify(Object.keys(raw.backtest_result as object))}`);
             }
@@ -722,6 +788,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
           const result = extractResult(backtestData);
           if (result) {
             setBtResult(result);
+            try { sessionStorage.setItem(BT_CACHE_KEY, JSON.stringify(result)); } catch { /* quota */ }
             addLog("INFO", `Loaded: ${result.strategy_name} — ${result.total_trades} trades`);
             return;
           }
@@ -923,7 +990,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
         {btResult ? (
           <>
             <ResultsPanel data={btResult} />
-            <HistoryPanel entries={history} currentStrategy={strategy} onLoad={handleLoadHistory} />
+            <HistoryPanel entries={history} currentStrategy={strategy} onLoad={handleLoadHistory} onDelete={handleDeleteHistory} />
           </>
         ) : (
           <>
@@ -936,7 +1003,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
               </div>
             </div>
             {/* Still show history even without current result */}
-            <HistoryPanel entries={history} currentStrategy={strategy} onLoad={handleLoadHistory} />
+            <HistoryPanel entries={history} currentStrategy={strategy} onLoad={handleLoadHistory} onDelete={handleDeleteHistory} />
           </>
         )}
       </div>

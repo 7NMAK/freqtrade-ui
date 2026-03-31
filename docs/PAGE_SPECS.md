@@ -159,7 +159,7 @@
 - **On success:** Store JWT token → redirect to `/dashboard`
 - **On error:** Show error message below form (red text)
 - **Loading state:** Button shows "Signing in..." and is disabled
-- **Credentials:** `admin` / `***REMOVED***`
+- **Credentials:** `admin` / `$FT_API_PASSWORD`
 
 ## L-6: Error Display
 - **Visual:** Red text below form

@@ -176,7 +176,7 @@ This file maps ALL 34 sections of FREQTRADE_REFERENCE.md to specific UI pages an
 - **Server:** 204.168.187.107 (SSH as root)
 - **FreqTrade:** 2026.2, Docker image `freqtradeorg/freqtrade:stable_freqai`
 - **Container:** `freqtrade`, port 127.0.0.1:8080
-- **FreqUI credentials:** novakus / ***REMOVED***
+- **FreqUI credentials:** novakus / (set via $FT_API_PASSWORD env var)
 - **SSH tunnel:** `ssh -L 8080:127.0.0.1:8080 root@204.168.187.107`
 - **Config:** dry_run: true, trading_mode: futures, margin_mode: isolated, exchange: binance
 - **Data:** BTC/USDT futures (1h + daily from 2022-01-01)

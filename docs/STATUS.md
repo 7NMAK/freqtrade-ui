@@ -29,7 +29,7 @@
 - [x] TA libraries (technical, ft-pandas-ta, ta)
 - [x] 26 strategies loaded, ftui on host
 - [x] BTC/USDT futures data (1h + daily from 2022)
-- [x] FreqUI working (port 8080, novakus/***REMOVED***)
+- [x] FreqUI working (port 8080, credentials via env var)
 
 ### Documentation
 - [x] FREQTRADE_REFERENCE.md — 34 sections, verified against official docs

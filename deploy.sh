@@ -141,7 +141,7 @@ if echo "$BOT_LIST" | python3 -c "import sys,json; bots=json.load(sys.stdin); ex
 else
     step "Registering FreqTrade bot"
     FT_USER="${FT_API_USERNAME:-novakus}"
-    FT_PASS="${FT_API_PASSWORD:-***REMOVED***}"
+    FT_PASS="${FT_API_PASSWORD:?FT_API_PASSWORD env var must be set}"
     REGISTER_RESP=$(curl -sf -X POST http://127.0.0.1:8888/api/bots/ \
         -H "Content-Type: application/json" \
         -d "{

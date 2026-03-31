@@ -303,11 +303,11 @@ describe('Login Page (L-*)', () => {
     render(<LoginPage />);
 
     fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'admin' } });
-    fireEvent.change(screen.getByLabelText('Password'), { target: { value: '***REMOVED***' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'test-password' } });
     fireEvent.click(screen.getByRole('button', { name: /Sign In/i }));
 
     await waitFor(() => {
-      expect(mockLogin).toHaveBeenCalledWith('admin', '***REMOVED***');
+      expect(mockLogin).toHaveBeenCalledWith('admin', 'test-password');
     });
   });
 
@@ -330,7 +330,7 @@ describe('Login Page (L-*)', () => {
     render(<LoginPage />);
 
     fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'admin' } });
-    fireEvent.change(screen.getByLabelText('Password'), { target: { value: '***REMOVED***' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'test-password' } });
     fireEvent.click(screen.getByRole('button', { name: /Sign In/i }));
 
     await waitFor(() => {
@@ -627,7 +627,7 @@ describe('API Client Functions', () => {
       })
     );
 
-    const response = await login('admin', '***REMOVED***');
+    const response = await login('admin', 'test-password');
     expect(response.token).toBe('jwt_token_123');
   });
 
@@ -760,7 +760,7 @@ class TestAuthEndpoints:
         """Test login with valid credentials"""
         response = client.post('/api/auth/login', json={
             'username': 'admin',
-            'password': '***REMOVED***'
+            'password': 'test-password'
         })
         assert response.status_code == 200
         assert 'token' in response.json()
@@ -818,7 +818,7 @@ class TestBotEndpoints:
         """Get authorization headers with valid token"""
         response = client.post('/api/auth/login', json={
             'username': 'admin',
-            'password': '***REMOVED***'
+            'password': 'test-password'
         })
         token = response.json()['token']
         return {'Authorization': f'Bearer {token}'}
@@ -902,7 +902,7 @@ class TestKillSwitchEndpoints:
     def auth_headers(self):
         response = client.post('/api/auth/login', json={
             'username': 'admin',
-            'password': '***REMOVED***'
+            'password': 'test-password'
         })
         token = response.json()['token']
         return {'Authorization': f'Bearer {token}'}
@@ -961,7 +961,7 @@ class TestHeartbeatMonitor:
     def auth_headers(self):
         response = client.post('/api/auth/login', json={
             'username': 'admin',
-            'password': '***REMOVED***'
+            'password': 'test-password'
         })
         token = response.json()['token']
         return {'Authorization': f'Bearer {token}'}
@@ -1261,7 +1261,7 @@ class TestOrchestrationToFTFlow:
     def auth_headers(self):
         response = client.post('/api/auth/login', json={
             'username': 'admin',
-            'password': '***REMOVED***'
+            'password': 'test-password'
         })
         token = response.json()['token']
         return {'Authorization': f'Bearer {token}'}
@@ -1324,7 +1324,7 @@ describe('Authentication Flow Integration', () => {
 
     // 3. Login
     fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'admin' } });
-    fireEvent.change(screen.getByLabelText('Password'), { target: { value: '***REMOVED***' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'test-password' } });
     fireEvent.click(screen.getByRole('button', { name: /Sign In/i }));
 
     // 4. Verify redirect to dashboard
@@ -1542,7 +1542,7 @@ test.describe('E2E: Critical User Flows', () => {
   test('Flow 1: Login → Dashboard → View Bots → Kill Switch', async () => {
     // 1. Login
     await page.fill('input[name="username"]', 'admin');
-    await page.fill('input[name="password"]', '***REMOVED***');
+    await page.fill('input[name="password"]', 'test-password');
     await page.click('button:has-text("Sign In")');
     await page.waitForURL('http://localhost:3000/dashboard');
 
@@ -1569,7 +1569,7 @@ test.describe('E2E: Critical User Flows', () => {
   test('Flow 2: Create Strategy → Run Backtest → View Results', async () => {
     // 1. Login
     await page.fill('input[name="username"]', 'admin');
-    await page.fill('input[name="password"]', '***REMOVED***');
+    await page.fill('input[name="password"]', 'test-password');
     await page.click('button:has-text("Sign In")');
     await page.waitForURL('http://localhost:3000/dashboard');
 
@@ -1604,7 +1604,7 @@ test.describe('E2E: Critical User Flows', () => {
   test('Flow 3: View Dashboard → Filter Pairs → View Analytics', async () => {
     // 1. Login
     await page.fill('input[name="username"]', 'admin');
-    await page.fill('input[name="password"]', '***REMOVED***');
+    await page.fill('input[name="password"]', 'test-password');
     await page.click('button:has-text("Sign In")');
     await page.waitForURL('http://localhost:3000/dashboard');
 
@@ -1621,7 +1621,7 @@ test.describe('E2E: Critical User Flows', () => {
   test('Flow 4: Access Settings → Update Config → Restart Bot', async () => {
     // 1. Login
     await page.fill('input[name="username"]', 'admin');
-    await page.fill('input[name="password"]', '***REMOVED***');
+    await page.fill('input[name="password"]', 'test-password');
     await page.click('button:has-text("Sign In")');
     await page.waitForURL('http://localhost:3000/dashboard');
 

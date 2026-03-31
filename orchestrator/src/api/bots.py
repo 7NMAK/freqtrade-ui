@@ -1962,16 +1962,28 @@ with open(fp, "r") as f:
         try:
             ep = json.loads(line.strip())
             rm = ep.get("results_metrics", {{}})
+            tt = rm.get("total_trades", 0)
+            wins = rm.get("wins", 0)
+            losses = rm.get("losses", 0)
+            draws = rm.get("draws", 0)
+            wr = rm.get("winrate", 0)
+            if wr == 0 and tt > 0:
+                wr = wins / tt if tt > 0 else 0
+            pf = rm.get("profit_factor", 0)
             results.append({{
                 "current_epoch": ep.get("current_epoch", i),
                 "loss": ep.get("loss", 0),
-                "trades": rm.get("total_trades", 0),
-                "winRate": rm.get("winrate", 0),
+                "trades": tt,
+                "wins": wins,
+                "losses": losses,
+                "draws": draws,
+                "winRate": wr,
                 "profitPct": rm.get("profit_total", 0) * 100,
                 "profitAbs": rm.get("profit_total_abs", 0),
                 "maxDrawdown": rm.get("max_drawdown_account", rm.get("max_drawdown", 0)) * 100,
                 "sharpe": rm.get("sharpe", rm.get("sharpe_ratio", 0)),
                 "sortino": rm.get("sortino", rm.get("sortino_ratio", 0)),
+                "profitFactor": pf,
                 "avgDuration": rm.get("holding_avg", ""),
                 "params": ep.get("params_details", {{}}),
             }})

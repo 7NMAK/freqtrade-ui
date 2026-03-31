@@ -1045,8 +1045,8 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                     <MC label="Win Rate" value={best.winRate > 0 ? `${(best.winRate * 100).toFixed(1)}%` : '—'} positive={best.winRate > 0.6 ? true : best.winRate > 0 && best.winRate < 0.4 ? false : null} />
                     <MC label="Total Profit" value={`${profitOk ? '+' : ''}${best.profitPct.toFixed(2)}%`} sub={fmt$(best.profitAbs)} positive={profitOk} />
                     <MC label="Max Drawdown" value={`-${Math.abs(best.maxDrawdown).toFixed(2)}%`} positive={false} />
-                    <MC label="Sharpe" value={fmtNum(best.sharpe)} positive={best.sharpe > 1 ? true : best.sharpe < 0 ? false : null} />
-                    <MC label="Sortino" value={fmtNum(best.sortino)} positive={best.sortino > 1 ? true : best.sortino < 0 ? false : null} />
+                    <MC label="Sharpe" value={best.sharpe !== 0 ? fmtNum(best.sharpe) : '—'} positive={best.sharpe > 1 ? true : best.sharpe < 0 ? false : null} />
+                    <MC label="Sortino" value={best.sortino !== 0 ? fmtNum(best.sortino) : '—'} positive={best.sortino > 1 ? true : best.sortino < 0 ? false : null} />
                   </div>
                   {/* Row 2: Extra (4-grid — same as BacktestTab Row 4) */}
                   <div className="grid grid-cols-4 gap-2">

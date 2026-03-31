@@ -9,7 +9,7 @@ interface LogEntry {
 }
 import Tooltip from '@/components/ui/Tooltip';
 import Toggle from '@/components/ui/Toggle';
-import { INPUT, LABEL, fmtPctRatio, fmtNum } from '@/lib/design';
+import { INPUT, LABEL, fmtPctRatio, fmtNum, fmt$ } from '@/lib/design';
 import { useToast } from '@/components/ui/Toast';
 import {
   LOSS_FUNCTIONS,
@@ -32,6 +32,16 @@ interface HyperoptRun {
   mtime: number;
   size_bytes: number;
   epochs: number;
+  total_trades?: number;
+  profit_total?: number;
+  profit_total_abs?: number;
+  max_drawdown_account?: number;
+  wins?: number;
+  losses?: number;
+  winrate?: number;
+  profit_factor?: number;
+  sharpe?: number;
+  sortino?: number;
 }
 
 // ── Types ─────────────────────────────────────────────────────────────
@@ -1064,7 +1074,12 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                       <th className="text-left px-3 py-2 font-semibold">Run Date</th>
                       <th className="text-left px-3 py-2 font-semibold">Strategy</th>
                       <th className="text-right px-3 py-2 font-semibold">Epochs</th>
-                      <th className="text-right px-3 py-2 font-semibold">Size</th>
+                      <th className="text-right px-3 py-2 font-semibold">Trades</th>
+                      <th className="text-right px-3 py-2 font-semibold">Profit</th>
+                      <th className="text-right px-3 py-2 font-semibold">Profit %</th>
+                      <th className="text-right px-3 py-2 font-semibold">Win Rate</th>
+                      <th className="text-right px-3 py-2 font-semibold">Max DD</th>
+                      <th className="text-right px-3 py-2 font-semibold">PF</th>
                       <th className="text-center px-3 py-2 font-semibold w-[120px]">Actions</th>
                     </tr>
                   </thead>
@@ -1073,13 +1088,35 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                       const isConfirming = hoConfirmDelete === run.filename;
                       const runDate = new Date(run.mtime * 1000);
                       const runStr = `${runDate.getFullYear()}-${String(runDate.getMonth()+1).padStart(2,'0')}-${String(runDate.getDate()).padStart(2,'0')} ${String(runDate.getHours()).padStart(2,'0')}:${String(runDate.getMinutes()).padStart(2,'0')}`;
-                      const sizeKb = (run.size_bytes / 1024).toFixed(0);
+                      const hasStats = run.total_trades !== undefined && run.total_trades > 0;
+                      const profitOk = (run.profit_total_abs ?? 0) >= 0;
                       return (
                         <tr key={run.filename} className="border-t border-border hover:bg-muted/30 transition-colors">
                           <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{runStr}</td>
                           <td className="px-3 py-2 font-mono text-foreground">{run.strategy}</td>
                           <td className="px-3 py-2 text-right tabular-nums text-foreground">{run.epochs}</td>
-                          <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{sizeKb} KB</td>
+                          {hasStats ? (
+                            <>
+                              <td className="px-3 py-2 text-right tabular-nums text-foreground">{run.total_trades}</td>
+                              <td className={`px-3 py-2 text-right tabular-nums font-medium ${profitOk ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                {fmt$(run.profit_total_abs ?? 0)}
+                              </td>
+                              <td className={`px-3 py-2 text-right tabular-nums ${profitOk ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                {fmtPctRatio(run.profit_total ?? 0)}
+                              </td>
+                              <td className="px-3 py-2 text-right tabular-nums text-foreground">
+                                {((run.winrate ?? 0) * 100).toFixed(1)}%
+                              </td>
+                              <td className="px-3 py-2 text-right tabular-nums text-rose-400">
+                                -{((run.max_drawdown_account ?? 0) * 100).toFixed(1)}%
+                              </td>
+                              <td className={`px-3 py-2 text-right tabular-nums ${(run.profit_factor ?? 0) > 1 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                {(run.profit_factor ?? 0).toFixed(2)}
+                              </td>
+                            </>
+                          ) : (
+                            <td colSpan={6} className="px-3 py-2 text-center text-muted-foreground/30">—</td>
+                          )}
                           <td className="px-3 py-2 whitespace-nowrap">
                             <div className="flex items-center justify-center gap-2">
                               <button

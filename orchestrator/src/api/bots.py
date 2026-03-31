@@ -1863,8 +1863,8 @@ async def bot_hyperopt_show(bot_id: int, request: Request, db: AsyncSession = De
 
 @router.get("/{bot_id}/hyperopt-runs")
 async def bot_hyperopt_runs(bot_id: int, request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
-    """List all .fthypt result files (hyperopt runs) in user_data/hyperopt_results/."""
-    import docker, re
+    """List all .fthypt result files with best-epoch stats."""
+    import docker, re, json as _json
     manager = request.app.state.bot_manager
     bot = await manager.get_bot(db, bot_id)
     if not bot:
@@ -1872,11 +1872,11 @@ async def bot_hyperopt_runs(bot_id: int, request: Request, db: AsyncSession = De
     try:
         dk = docker.from_env()
         container = dk.containers.get(bot.container_id or bot.name)
-        # Single command: get filename, size, mtime, line count for ALL .fthypt files in one exec
+        # Get filename, size, mtime, epoch count, AND last line (best epoch) for each file
         sh_cmd = (
             'for f in /freqtrade/user_data/hyperopt_results/*.fthypt; do '
-            '[ -f "$f" ] && printf "%s\\t%s\\t%s\\t%s\\n" '
-            '"$(basename "$f")" "$(stat -c %s "$f")" "$(stat -c %Y "$f")" "$(wc -l < "$f")"; '
+            '[ -f "$f" ] && printf "%s\\t%s\\t%s\\t%s\\t%s\\n" '
+            '"$(basename "$f")" "$(stat -c %s "$f")" "$(stat -c %Y "$f")" "$(wc -l < "$f")" "$(tail -1 "$f")"; '
             'done'
         )
         result = container.exec_run(["sh", "-c", sh_cmd], detach=False)
@@ -1886,7 +1886,7 @@ async def bot_hyperopt_runs(bot_id: int, request: Request, db: AsyncSession = De
         for line in result.output.decode("utf-8", errors="replace").strip().split("\n"):
             if not line.strip():
                 continue
-            parts = line.split("\t")
+            parts = line.split("\t", 4)  # split into max 5 parts
             if len(parts) < 4:
                 continue
             filename = parts[0]
@@ -1897,6 +1897,27 @@ async def bot_hyperopt_runs(bot_id: int, request: Request, db: AsyncSession = De
             m = re.match(r"strategy_(.+?)_(\d{4}-\d{2}-\d{2})_(\d{2})-(\d{2})-(\d{2})\.fthypt", filename)
             strategy_name = m.group(1) if m else filename
             created_str = f"{m.group(2)} {m.group(3)}:{m.group(4)}:{m.group(5)}" if m else ""
+            # Parse best epoch stats from last line of file
+            best_stats: dict[str, Any] = {}
+            if len(parts) >= 5 and parts[4].strip():
+                try:
+                    epoch_data = _json.loads(parts[4].strip())
+                    rk = epoch_data.get("results_metrics", {})
+                    best_stats = {
+                        "total_trades": rk.get("total_trades", 0),
+                        "profit_total": rk.get("profit_total", 0),
+                        "profit_total_abs": rk.get("profit_total_abs", 0),
+                        "max_drawdown_account": rk.get("max_drawdown_account", rk.get("max_drawdown", 0)),
+                        "wins": rk.get("wins", 0),
+                        "losses": rk.get("losses", 0),
+                        "winrate": rk.get("winrate", 0),
+                        "profit_factor": rk.get("profit_factor", 0),
+                        "sharpe": rk.get("sharpe", rk.get("sharpe_ratio", 0)),
+                        "sortino": rk.get("sortino", rk.get("sortino_ratio", 0)),
+                        "holding_avg": rk.get("holding_avg", ""),
+                    }
+                except Exception:
+                    pass  # malformed JSON, skip stats
             runs.append({
                 "filename": filename,
                 "strategy": strategy_name,
@@ -1904,6 +1925,7 @@ async def bot_hyperopt_runs(bot_id: int, request: Request, db: AsyncSession = De
                 "mtime": mtime,
                 "size_bytes": size_bytes,
                 "epochs": epoch_count,
+                **best_stats,
             })
         runs.sort(key=lambda r: r["mtime"], reverse=True)
         return {"runs": runs}

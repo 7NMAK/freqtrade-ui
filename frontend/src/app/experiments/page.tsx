@@ -92,13 +92,13 @@ function MiniPipeline({ steps }: { steps: Record<string, StepState> }) {
         let connectorClass = "w-[6px] h-[1.5px]";
 
         if (state === "completed") {
-          dotClass += " bg-green border-emerald-500";
-          connectorClass += " bg-green";
+          dotClass += " bg-emerald-500 border-emerald-500";
+          connectorClass += " bg-emerald-500";
         } else if (state === "active") {
           dotClass += " bg-primary border-primary";
           connectorClass += " bg-border";
         } else if (state === "skipped") {
-          dotClass += " border-dashed border-text-3";
+          dotClass += " border-dashed border-zinc-600";
           connectorClass += " bg-border";
         } else {
           dotClass += " border-border";
@@ -155,7 +155,7 @@ export default function ExperimentsPage() {
               timeframe: exp.timeframe || "1h",
               testCount,
               lastTestType: exp.last_run_type ?? null,
-              lastTestDate: exp.last_run_date ?? exp.created_at,
+              lastTestDate: exp.last_run_date ?? (exp.run_count && exp.run_count > 0 ? exp.created_at : null),
               bestProfit: exp.best_profit_pct ?? null,
               winRate: exp.best_win_rate ?? null,
               maxDD: exp.best_max_drawdown ?? null,

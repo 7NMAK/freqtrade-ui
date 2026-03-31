@@ -31,6 +31,8 @@
 | `text-white/80` | Secondary data in tables |
 | `text-white/70` | Tertiary info (best pair, etc.) |
 | `text-white/50` | Section titles, faded content |
+| `text-white/45` | Bot card secondary values |
+| `text-white/35` | Fleet bot sub-values |
 | `text-white/30` | Right-aligned metadata (balance USD equivalent) |
 | `text-white/25` | Chart axis labels |
 | `text-white/20` | Faintest data/grid lines |
@@ -48,6 +50,10 @@
 | `bg-white/[0.04]` | Table row hover |
 | `bg-white/[0.015]` | Alternating table row stripe |
 | `bg-white/6` | Subtle button hover |
+| `bg-white/8` | Sidebar toggle hover |
+| `bg-white/[0.02]` | Faint table row background |
+| `bg-white/[0.03]` | Drawer section background |
+| `bg-white/[0.06]` | Dropdown separator line |
 | `bg-up/5` | Profit cell highlight |
 | `bg-up/15` | Active profit toggle (Abs $) |
 | `bg-down/5` | Loss cell highlight |
@@ -62,6 +68,38 @@
 | LONG | `text-up` | `bg-up/12` | — |
 | SHORT | `text-down` | `bg-down/12` | — |
 | COOLDOWN | `text-yellow-400` | `bg-yellow-500/12` | — |
+
+### Extended Color Aliases
+
+| Token | Usage |
+|---|---|
+| `red-400` | Error text (lighter) |
+| `red-500` | Danger backgrounds, error borders |
+| `green-400` | Metrics positive glow |
+| `yellow-400` | Paused status text |
+| `yellow-500` | Paused badges, warning backgrounds |
+| `cyan` / `#22d3ee` | Active filter indicators |
+
+### Raw Hex Colors (Used in inline styles/CSS)
+
+| Hex | Usage |
+|---|---|
+| `#000000` | Page background |
+| `#0C0C0C` | Surface/cards |
+| `#060606` | Darkest card background (rare) |
+| `#1A0000` | Danger card tint (stopped bot bg) |
+| `#1a1a1a` | Bot control buttons, action menu buttons |
+| `#151515` | Action dropdown panel background |
+| `#2a2a2a` | Button hover background |
+| `#22c55e` | Profit green (up) |
+| `#ef4444` | Loss red (down) |
+| `#22d3ee` | Active filter cyan |
+| `#9CA3AF` | Muted text / labels |
+| `#6B7280` | KPI label text |
+| `#F5F5F5` | Foreground text |
+| `#d4d4d8` | Dropdown item text (zinc-300) |
+| `#facc15` | Soft kill icon yellow |
+| `#eab308` | Yellow-500 (warning accents) |
 
 ---
 
@@ -139,7 +177,8 @@
 | `h-10` | Widget headers |
 | `h-12` | Trade tab bar |
 | `h-14` | Top bar, sidebar header |
-| `h-[280px]` | Chart container |
+| `h-[280px]` | Chart container (desktop) |
+| `h-[220px]` | Chart container (≤1280px responsive) |
 | `h-[320px]` | Terminal widget |
 
 ---
@@ -320,6 +359,28 @@ Icon:     w-[18px] h-[18px] shrink-0
 Label:    .nav-label (hidden when collapsed)
 ```
 
+### 7.13 Scrollbar Styling
+
+```css
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+```
+Apply to all scrollable containers (`overflow-y-auto`, `overflow-x-auto`).
+
+### 7.14 SVG Chart Tokens
+
+```
+viewBox:            "0 0 200 100"
+preserveAspectRatio: "none"
+Zero line:          stroke-dasharray="3,3", rgba(255,255,255,0.08), stroke-width: 0.5
+Profit line:        stroke="#22c55e", stroke-width: 0.4, stroke-linejoin: round
+Profit dots:        r="1.2", fill=#22c55e (profit) or #ef4444 (loss)
+Trade count bars:   bottom-aligned (y+height=100), fill: rgba(255,255,255, 0.10–0.18)
+Grid overlay:       .l-grid class, opacity-20
+```
+
 ---
 
 ## 8. Layout Architecture
@@ -373,7 +434,7 @@ Label:    .nav-label (hidden when collapsed)
 
 | Duration | Usage |
 |---|---|
-| `0.15s` | Button hover, bot controls, dropdown items |
+| `0.15s` | Button hover, bot controls, dropdown items, border-color transitions |
 | `0.25s` | Sidebar collapse, drawer positioning |
 | `0.3s` | Page fade-in, drawer slide, right sidebar collapse |
 
@@ -425,6 +486,10 @@ Label:    .nav-label (hidden when collapsed)
 | `log-out` | Forceexit |
 | `scissors` | Partial exit |
 | `plus-circle` | Increase position |
+| `plus-square` | Toggle stopbuy |
+| `brain-circuit` | FreqAI tab icon |
+| `layers` | AI models / layers |
+| `pin` | Pinned/locked items |
 
 ---
 
@@ -476,6 +541,12 @@ Button: text-[10px] font-bold uppercase tracking-wider
 Active: border-b-2 border-white text-white
 ```
 
+### Content Panels
+```css
+.drawer-tab-content { display: none; } /* hidden by default */
+.drawer-tab-content.active { display: block; }
+```
+
 ---
 
 ## 13. Accessibility Rules
@@ -517,8 +588,140 @@ Active: border-b-2 border-white text-white
 
 ---
 
+## 16. JavaScript Functions
+
+All JS functions defined in the prototype:
+
+| Function | Purpose |
+|---|---|
+| `switchPage(pageId)` | Show/hide page views (`page-dashboard`, `page-experiments`, `page-fleet`) |
+| `switchTradeTab(tabId, btn)` | Show/hide trade engine panels + update active tab button |
+| `switchDrawerTab(tabId, btn)` | Show/hide drawer tab content panels |
+| `switchExpTab(tabId, btn)` | Show/hide experiment sub-tabs |
+| `openBotDrawer(botName, mode)` | Open drawer overlay with bot data, set name/mode in header |
+| `closeBotDrawer()` | Close drawer, hide backdrop |
+| `toggleSidebar()` | Toggle left nav `.collapsed`, recalculate `--drawer-left` |
+| `toggleRightSidebar()` | Toggle right sidebar `.collapsed`, swap icon |
+| `toggleActionMenu(btn, event)` | Toggle `.open` on action dropdown, close others |
+
+---
+
+## 17. Element ID Map
+
+All significant element IDs used for JS targeting:
+
+### Pages
+| ID | Element | Purpose |
+|---|---|---|
+| `page-dashboard` | `<div>` | Main dashboard page view |
+| `page-experiments` | `<div>` | Experiments page view |
+| `page-fleet` | `<div>` | Fleet management page view |
+
+### Layout Columns
+| ID | Element | Purpose |
+|---|---|---|
+| `dash-col-fleet` | `<div>` | Left fleet column |
+| `dash-col-center` | `<div>` | Center workspace column |
+| `dash-col-sidebar` | `<div>` | Right sidebar column |
+
+### Navigation
+| ID | Element | Purpose |
+|---|---|---|
+| `side-menu` | `<aside>` | Left sidebar container |
+| `top-title` | `<h1>` | Dynamic page title in header |
+
+### Trade Engine Tabs
+| ID | Element | Purpose |
+|---|---|---|
+| `trades-open` | `<div>` | Open trades panel |
+| `trades-closed` | `<div>` | Closed trades panel |
+| `trades-whitelist` | `<div>` | Whitelist matrix panel |
+| `trades-performance` | `<div>` | Performance by pair panel |
+| `trades-entry` | `<div>` | Entry tags analysis panel |
+| `trades-exit` | `<div>` | Exit reasons analysis panel |
+
+### Drawer
+| ID | Element | Purpose |
+|---|---|---|
+| `bot-drawer` | `<aside>` | Main bot drawer container |
+| `drawer-backdrop` | `<div>` | Semi-transparent backdrop overlay |
+| `drawer-bot-name` | `<span>` | Bot name text in drawer header |
+| `drawer-bot-mode` | `<span>` | Bot mode badge in drawer header |
+| `drawer-overview` | `<div>` | Drawer overview tab content |
+| `drawer-trades` | `<div>` | Drawer trades tab content |
+| `drawer-perf` | `<div>` | Drawer performance tab content |
+| `drawer-config` | `<div>` | Drawer config tab content |
+| `drawer-backtest` | `<div>` | Drawer backtest tab content |
+| `drawer-hyperopt` | `<div>` | Drawer hyperopt tab content |
+| `drawer-freqai` | `<div>` | Drawer FreqAI tab content |
+| `drawer-system` | `<div>` | Drawer system/logs tab content |
+
+### Experiment Tabs
+| ID | Element | Purpose |
+|---|---|---|
+| `tab-backtest` | `<div>` | Backtest sub-tab panel |
+| `tab-hyperopt` | `<div>` | Hyperopt sub-tab panel |
+| `tab-freqai` | `<div>` | FreqAI sub-tab panel |
+| `tab-ai` | `<div>` | AI analysis sub-tab panel |
+| `tab-val` | `<div>` | Validation sub-tab panel |
+
+---
+
+## 18. CSS Helper Classes Reference
+
+All custom CSS classes used across the platform:
+
+| Class | Purpose |
+|---|---|
+| `.l-bd` | Full border (1px solid white/10) |
+| `.l-b` | Bottom border only |
+| `.l-r` | Right border only |
+| `.l-grid` | Chart grid overlay pattern |
+| `.section-title` | Widget heading style |
+| `.kpi-value` | KPI number style (JetBrains Mono, bold) |
+| `.kpi-label` | KPI label style (11px, uppercase, gray) |
+| `.bot-ctrl` | Bot control button (28×28px) |
+| `.trade-tab-btn` | Trade engine tab button |
+| `.action-menu` | Action dropdown container |
+| `.action-menu-btn` | Action dropdown trigger |
+| `.action-dropdown` | Action dropdown panel |
+| `.nav-label` | Nav button text (hidden when collapsed) |
+| `.sidebar-title` | Sidebar heading text (hidden when collapsed) |
+| `.sidebar-header` | Sidebar header container (centers when collapsed) |
+| `.sidebar-footer-text` | Sidebar footer labels (hidden when collapsed) |
+| `.sidebar-toggle` | Right sidebar toggle button |
+| `.toggle-btn` | Left sidebar chevron (rotates when collapsed) |
+| `.page-view` | Page container (hidden by default, shown when active) |
+| `.exp-tab` | Experiment tab panel (hidden/shown) |
+| `.drawer-tab-content` | Drawer tab panel (hidden/shown) |
+| `.rotated` | 180° rotation (right sidebar toggle icon) |
+| `.danger` | Red text for destructive actions |
+| `.sep` | Dropdown divider line |
+| `.collapsed` | Collapsed state for sidebars |
+| `.open` | Open state for dropdowns |
+| `.active` | Active state for nav/tab buttons |
+| `.backdrop` | Drawer backdrop overlay |
+
+---
+
+## 19. API & Data Source Cross-References
+
+This Design System defines **visual presentation only**. For API endpoints, data models, and binding logic, refer to the page-specific prompt spec:
+
+| Page | Spec Document | Key API Endpoints |
+|---|---|---|
+| Dashboard | `PROMPT-DASHBOARD-CONTROL-ROOM.md` | `/api/v1/status`, `/api/v1/profit`, `/api/v1/balance`, `/api/v1/trades`, `/api/v1/performance` |
+| Whitelist | `PROMPT-WHITELIST-MATRIX.md` | `/api/v1/whitelist`, `/api/v1/locks` |
+| Strategies | _(future)_ | `/api/v1/strategies` |
+| System | _(future)_ | `/api/v1/sysinfo`, `/api/v1/health` |
+
+> **Rule**: When building a new page, always start by reading the Design System (this file) for visual tokens, then the page-specific PROMPT spec for data structure and API binding.
+
+---
+
 ## Changelog
 
 | Date | Change |
 |---|---|
 | 2026-03-31 | v1.0 — Initial extraction from production prototype |
+| 2026-03-31 | v1.1 — Added 46 missing tokens: hex colors, JS functions, element IDs, icons, API cross-refs |

@@ -9,24 +9,92 @@ Build the main **Control Room** dashboard — a single-page, high-density analys
 ## Layout Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│ HEADER: Title + Global Fuzzy Search (⌘K)                                    │
-├──────────────────────────────────────────────────────────────────────────────┤
-│ KPI BAR — 2 rows × 7 columns (14 metrics total)                            │
-├────────────┬──────────────────────────────────────────┬──────────────────────┤
-│ COL 1      │ COL 2                                    │ COL 3               │
-│ Bot Fleet  │ P&L Chart + Profit Distribution          │ Balance             │
-│ 400px      │ (flex-1)                                 │ Fees & Costs        │
-│            │                                          │ Telemetry           │
-│ 2+ bot     ├──────────────────────────────────────────┤ Terminal StdOut     │
-│ cards with │ Trade Engine — 5 tabs:                   │ 320px fixed         │
-│ 6-button   │ Open | Closed | Whitelist | Perf | Tags  │                     │
-│ control    │                                          │                     │
-│ bars       │                                          │                     │
-├────────────┴──────────────────────────────────────────┴──────────────────────┤
-│ BOT DRAWER (slide-in from left, overlay)                                     │
-└──────────────────────────────────────────────────────────────────────────────┘
+┌────────┬──────────────────────────────────────────────────────────────────────┐
+│ SIDE   │ HEADER: Title + Search (⌘K) + [🛡 Soft Kill All] [⚡ Hard Kill All] │
+│ MENU   ├─────────────────────────────────────────────────────────────────────┤
+│        │ KPI BAR — 2 rows × 7 columns (14 metrics total)                   │
+│ Collap-├────────────┬──────────────────────────────┬────────────────────────┤
+│ sible  │ COL 1      │ COL 2                        │ COL 3                 │
+│ 240px  │ Bot Fleet  │ P&L Chart + Distribution     │ Balance               │
+│ → 56px │ 400px      │ (flex-1)                     │ Fees & Costs          │
+│        │            │                              │ Telemetry             │
+│ Icons  │ ALL bots   ├──────────────────────────────┤ Terminal StdOut       │
+│ only   │ expanded   │ Trade Engine — 5 tabs:       │ 320px fixed           │
+│ when   │ with 8-btn │ Open|Closed|WL|Perf|Tags     │                       │
+│ closed │ control    │                              │                       │
+│        │ bars       │                              │                       │
+│        │ + P&L %    │                              │                       │
+│        │ [Compare]→ │                              │                       │
+│        │ Fleet page │                              │                       │
+├────────┼────────────┴──────────────────────────────┴────────────────────────┤
+│        │ BOT DRAWER (slide-in from right, overlay)                          │
+└────────┴───────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Section 0: Collapsible Sidebar Navigation
+
+### Behavior
+- **Expanded** (default): `width: 240px` — shows icon + label text
+- **Collapsed**: `width: 56px` — shows icons only
+- Toggle via `«` (chevrons-left) button in sidebar header — rotates 180° when collapsed
+- Smooth CSS transition: `transition: width 0.25s ease`
+
+### Structure
+```
+┌─────────────────────┐     ┌────┐
+│ FT  Orchestrator V4 «│     │ FT »│
+├─────────────────────┤     ├────┤
+│ 📊 Control Room      │     │ 📊 │
+│ 🧪 Experiments       │     │ 🧪 │
+│ 📋 Strategies        │     │ 📋 │
+│ ⚙  System            │     │ ⚙  │
+│                      │     │    │
+│ 🟢 LIVE Trading      │     │ 🟢 │
+│ Bin: 32ms  Krk: 45ms │     │    │
+└─────────────────────┘     └────┘
+     EXPANDED                 COLLAPSED
+```
+
+### CSS Classes for Collapse
+- `#side-menu.collapsed .nav-label` → `display: none`
+- `#side-menu.collapsed .sidebar-title` → `display: none`
+- `#side-menu.collapsed .sidebar-footer-text` → `display: none`
+- `#side-menu.collapsed nav button` → `justify-content: center; padding: 0`
+- `#side-menu.collapsed .toggle-btn` → `transform: rotate(180deg)`
+
+### Footer Status
+- Green pulse dot: `bg-up shadow-[0_0_6px_#22c55e]`
+- Exchange latencies: `font-mono text-[11px] text-up`
+
+---
+
+## Section 0.5: Header Bar
+
+### Layout: `flex justify-between items-center h-14 sticky top-0`
+
+| Element | Position | Description |
+|---|---|---|
+| Page title | Left | `CONTROL ROOM` / `FLEET MANAGEMENT` / `EXPERIMENTS MATRIX` — uppercase, tracking-widest |
+| Global search | Center | `⌘K` fuzzy search across bots, pairs, configs — `w-96 bg-black l-bd rounded-lg` |
+| **Soft Kill All** | Right | Yellow border+bg, `shield-alert` icon — exits all trades on ALL bots |
+| **Hard Kill All** | Right | Red border+bg, `zap` icon — stops ALL bots + containers |
+
+#### Global Kill Switch Buttons
+```html
+<button class="h-8 px-3 rounded-md border border-yellow-500/40 bg-yellow-500/10 
+        text-yellow-400 text-[11px] font-bold uppercase">
+    🛡 Soft Kill All
+</button>
+<button class="h-8 px-3 rounded-md border border-red-500/40 bg-red-500/10 
+        text-red-400 text-[11px] font-bold uppercase">
+    ⚡ Hard Kill All
+</button>
+```
+- Both must trigger a **confirmation modal** with reason textarea before executing.
+- API: `softKillAll(reason)` → `POST /api/kill-switch/soft-all`
+- API: `hardKillAll(reason)` → `POST /api/kill-switch/hard-all`
 
 ---
 
@@ -71,38 +139,104 @@ Aggregated across ALL running bots. Sources: `FTProfit`, `FTBalance`, `FTStats`,
 
 Sources: Orchestrator `GET /api/bots`, per-bot `FTProfit`, `FTShowConfig`
 
-### Each Bot Card Contains:
-- **Header row**: Bot name (clickable → opens drawer), status badge, exchange icon
-- **Stats grid**: 4 KPIs per bot:
-  - Today's P&L, Total Profit, Win Rate, Active Trades
-- **6-Button Control Bar**:
+### Column Header
+- Title: `Fleet Management (312)` with layers icon
+- **Compare View** button → navigates to Fleet Management page
+  - Icon: `git-compare`, tooltip: "Open Fleet Management — Compare all bots side by side"
 
-| Button | API Function | Color |
-|---|---|---|
-| **Start** | `startBot(id)` → `POST /api/bots/{id}/start` | Green |
-| **Stop** | `stopBot(id)` → `POST /api/bots/{id}/stop` | Red |
-| **Pause** | `botPause(id)` → `POST /api/bots/{id}/pause` | White |
-| **Reload** | `reloadBotConfig(id)` → `POST /api/bots/{id}/reload-config` | White |
-| **Force Exit All** | `botForceExit(id, 'all')` → `POST /api/bots/{id}/forceexit` | Red |
-| **Stopbuy** | `botStopBuy(id)` → `POST /api/bots/{id}/stopbuy` | Yellow |
-| — | — vertical separator — | — |
-| **Soft Kill** | `softKill(id, reason)` → `POST /api/kill-switch/soft/{id}` | Yellow ⚡ |
-| **Hard Kill** | `hardKill(id, reason)` → `POST /api/kill-switch/hard/{id}` | Red ⚡ |
+### ALL Bots Displayed in Expanded Format (scrollable)
+Every bot uses the same expanded card format — NO compact rows. This ensures control buttons are always accessible.
+
+### Each Bot Card Contains:
+- **Header row**: 
+  - Status dot: 🟢 green (running), 🟡 yellow (paused), 🔴 red (stopped)
+  - Bot name: `font-bold uppercase text-[12px] tracking-wide` — clickable → opens drawer
+  - Status badge: `LIVE` (border-white), `PAUSED` (border-yellow), `STOPPED` (border-red)
+  - **P&L $ + P&L %**: e.g. `+$48.20 +2.4%`
+    - Percentage uses `style="color:rgba(34,197,94,0.5)"` for green or `rgba(239,68,68,0.5)` for red
+    - ⚠️ Do NOT use Tailwind `text-up/60` — CDN doesn't support opacity on custom colors
+- **Stats grid**: 2×2 grid, `text-muted text-[12px]`:
+  - Trades count, Win Rate, Drawdown (always red), Avg Duration
+- **Sparkline**: 5-bar mini chart (`w-1.5` bars, green/red)
+- **8-Button Control Bar** (visible on hover, `opacity-50 → opacity-100`):
+
+| # | Icon | Tooltip | API Function | Color |
+|---|---|---|---|---|
+| 1 | `play` | `▶ Start Bot — Resume trading engine` | `startBot(id)` → `POST /api/bots/{id}/start` | Green |
+| 2 | `square` | `■ Stop Bot — Gracefully stop trading` | `stopBot(id)` → `POST /api/bots/{id}/stop` | Red |
+| 3 | `pause` | `⏸ Pause — Stop opening new trades` | `botPause(id)` → `POST /api/bots/{id}/pause` | Yellow |
+| 4 | `refresh-cw` | `↻ Reload Config — Hot-reload strategy config` | `reloadBotConfig(id)` → `POST /api/bots/{id}/reload-config` | White |
+| 5 | `x-square` | `✕ Force Exit All — Close all open positions` | `botForceExit(id, 'all')` → `POST /api/bots/{id}/forceexit` | Red |
+| 6 | `plus-square` | `⊞ Toggle Stopbuy — Prevent new buy orders` | `botStopBuy(id)` → `POST /api/bots/{id}/stopbuy` | White |
+| — | — | **vertical divider** `w-px h-3 bg-white/15` | — | — |
+| 7 | `shield-alert` | `🛡 Soft Kill — Exit all trades, keep bot alive` | `softKill(id, reason)` → `POST /api/kill-switch/soft/{id}` | Yellow |
+| 8 | `zap` | `⚡ Hard Kill — Force stop bot + container` | `hardKill(id, reason)` → `POST /api/kill-switch/hard/{id}` | Red |
 
 > **Soft Kill**: Forcefully exits ALL open trades (market orders), keeps bot process running.  
 > **Hard Kill**: Stops the bot AND its Docker container immediately. Nuclear option.
 
-#### Global Kill Switch (header or top-level action)
-- **Soft Kill All** → `softKillAll(reason)` → `POST /api/kill-switch/soft-all`
-- **Hard Kill All** → `hardKillAll(reason)` → `POST /api/kill-switch/hard-all`
-- Both should show a **confirmation modal** with reason textarea before executing.
+### Bot Status Visual States
+- **Running**: Green dot with glow (`shadow-[0_0_4px_#22c55e]`), white name, `LIVE` badge
+- **Paused**: Yellow dot (no glow), dimmed name (`text-white/60`), `PAUSED` badge in yellow
+- **Stopped**: Red dot, very dimmed name (`text-white/40`), `STOPPED` badge in red
 
-### Bot Drawer (slide-in overlay)
+### Bot Drawer (slide-in overlay from right)
+- Width: `480px`, slides from right edge
+- Animation: `translateX(100%) → translateX(0)`, `cubic-bezier(0.16, 1, 0.3, 1)` 0.3s
+- Backdrop: `rgba(0,0,0,0.6)` + `backdrop-filter: blur(3px)`
+- Click backdrop to close
 Opens when clicking bot name. Contains:
-- Bot controls (start/stop/reload)
-- RPC Actions (force enter, force exit all, toggle stopbuy)
-- Tail log (last 20 log lines from `/api/v1/logs`)
+- Bot controls (Start/Pause/Stop/Reload) — `grid-cols-2 gap-2.5`, each with descriptive tooltip
+- RPC Actions (Force Enter, Force Exit All, Toggle Stopbuy) — `grid-cols-2 gap-2.5`, each with tooltip
+- Tail log (`Tail_Log.txt`) — last 20 log lines from `/api/v1/logs`, color-coded: INFO (blue), BUY (green), FILL (green)
 - Full config view from `show_config`
+- Close button: `X` icon with tooltip "Close drawer"
+
+---
+
+## Section 2.5: Fleet Management Page (Compare View)
+
+Accessed via **Compare View** button in Bot Fleet header. NOT in sidebar nav.
+
+### Navigation
+- `← Dashboard` back button in page header → returns to Control Room
+- Header title changes to `FLEET MANAGEMENT` in top bar
+
+### Fleet Page Header
+- Back button: `← Dashboard` (clickable, returns to page-dashboard)
+- Title: `FLEET MANAGEMENT`
+- Status counters: `312 bots` badge, `🟢 284 running`, `🟡 16 paused`, `🔴 12 stopped`
+- Actions: `[Compare Selected]` + `[Export CSV]` buttons
+
+### Fleet Table (15 Columns)
+
+| # | Column | Align | Notes |
+|---|---|---|---|
+| 1 | ☐ Checkbox | Left | Select for comparison, select-all in header |
+| 2 | Status | Left | `RUN` (green dot), `PAUSE` (yellow), `STOP` (red) |
+| 3 | Bot Name | Left | `font-bold text-white`, dimmed for PAUSE/STOP |
+| 4 | Strategy | Left | `font-sans text-[11px] text-muted` |
+| 5 | Exchange | Left | `text-muted` |
+| 6 | Balance | Right | Current balance |
+| 7 | Today P&L | Right | `bg-up/5` or `bg-down/5`, bold |
+| 8 | Total P&L | Right | `bg-up/5` or `bg-down/5` |
+| 9 | **P&L %** | Right | `bg-up/5` or `bg-down/5`, `text-[11px]` |
+| 10 | Win Rate | Right | Green/Red based on value |
+| 11 | Trades | Right | Total count |
+| 12 | Open | Right | Currently open trades |
+| 13 | Drawdown | Right | Always `text-down` |
+| 14 | Avg Dur | Right | Average trade duration |
+| 15 | Actions | Center | **Full 8-button control bar** (same as bot cards) |
+
+### Table Styling
+- Header: `sticky top-0 bg-surface font-mono text-[10px] uppercase tracking-widest`
+- Rows: `hover:bg-white/[0.04]`, alternating `bg-white/[0.015]`
+- Row click → opens Bot Drawer
+- Action buttons: mini `22×22px` version, `gap-0.5`
+
+### Table Footer
+- `Showing X of 312 bots`
+- Sort indicator, Filter selector, Pagination
 
 ---
 
@@ -120,13 +254,39 @@ Sources: `FTDailyResponse`, `FTWeeklyResponse`, `FTMonthlyResponse`
 - Abs $ | Rel % (toggle y-axis data)
 
 ### Secondary: Profit Distribution Histogram
-- Small histogram below main chart showing profit distribution spread
+- Right panel inside chart container, `w-[300px]`
+- Vertical bars with gradient opacity (`bg-down/60` to `bg-up/80`)
+- Below histogram: **Absolute DD** (e.g. `-$5,210` red) + **Relative DD** (e.g. `-4.12%` red)
+- X-axis labels: `-0.02`, `0`, `+0.01`
+
+### SVG Chart Details
+- `viewBox="0 0 200 100"`, `preserveAspectRatio="none"`
+- Zero line: `stroke-dasharray="3,3"`, `rgba(255,255,255,0.08)`
+- Trade count bars: semi-transparent `rgba(255,255,255,0.12)` rectangles
+- P&L line: `stroke="#22c55e"`, `stroke-width="0.4"`, dots `r="1.2"`
+- Y-axis labels: `text-[9px] font-mono text-white/25`
+- X-axis labels: date format `MM-DD`
 
 ---
 
 ## Section 4: Trade Engine (Col 2 Bottom) — 5 Tabs
 
 The main tabular engine with switchable views.
+
+### Tab Bar
+- Height: `h-12`, background: `bg-black/40 l-b`
+- Active tab: `border-b-2 border-white text-white`
+- Inactive tabs: `text-muted hover:text-white`
+- Right side: CSV export button
+
+### Tab Tooltips
+| Tab | Tooltip |
+|---|---|
+| Open Trades (42) | `Currently active trades` |
+| Closed (1284) | `Completed trade history` |
+| Whitelist Matrix | `Pair monitoring and lock management` |
+| Performance | `Performance by trading pair` |
+| Entry / Exit | `Entry and exit tag analysis` |
 
 ### Tab 1: Open Trades
 Source: `GET /api/v1/status` (per bot, aggregated)
@@ -174,6 +334,11 @@ Source: `GET /api/v1/trades` (per bot, aggregated)
 
 ### Tab 3: Whitelist Matrix
 → See `PROMPT-WHITELIST-MATRIX.md` for full spec
+
+Note: HTML prototype includes additional statuses beyond ACTIVE/LOCKED:
+- **COOLDOWN**: yellow badge (`bg-yellow-500/12 text-yellow-400`) — pair temporarily suspended
+- Lock column shows countdown: `14m left`, `5m left` for active locks/cooldowns
+- Controls column: LOCK button (for active pairs), UNLOCK button (for locked/cooldown pairs)
 
 ### Tab 4: Performance by Pair
 Source: `botPerformance(botId)` → `GET /api/bots/{id}/performance`
@@ -258,22 +423,205 @@ Source: `GET /api/v1/logs`
 /* Colors */
 --up: #22c55e;      /* Green — profit, buy, active */
 --down: #ef4444;    /* Red — loss, sell, locked */
---muted: #6b7280;   /* Gray — labels, secondary */
---surface: #111;    /* Card backgrounds */
+--muted: #9CA3AF;   /* Gray — labels, secondary */
+--surface: #0C0C0C; /* Card backgrounds */
+--background: #000; /* Page background */
 
 /* Typography */
-font-family: 'Inter', system-ui;     /* UI text */
-font-family: 'JetBrains Mono', mono; /* Data values */
+font-family: 'Inter', sans-serif;         /* UI text */
+font-family: 'JetBrains Mono', monospace; /* Data values */
 
-/* Borders */
-.l-bd { border: 1px solid rgba(255,255,255,0.08); }
-.l-b  { border-bottom: 1px solid rgba(255,255,255,0.08); }
+/* Borders — note opacity is 0.10, not 0.08 */
+.l-bd { border: 1px solid rgba(255,255,255,0.10); }
+.l-b  { border-bottom: 1px solid rgba(255,255,255,0.10); }
+.l-r  { border-right: 1px solid rgba(255,255,255,0.10); }
+
+/* Grid background overlay */
+.l-grid { background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+          background-size: 24px 24px; }
+
+/* Bot control button base */
+.bot-ctrl { width: 28px; height: 28px; border-radius: 5px; background: #1a1a1a;
+            border: 1px solid rgba(255,255,255,0.10); color: #9CA3AF; }
+.bot-ctrl:hover { background: #2a2a2a; color: #F5F5F5; }
+.bot-ctrl.ctrl-start:hover { color: #22c55e; border-color: rgba(34,197,94,0.3); }
+.bot-ctrl.ctrl-stop:hover  { color: #ef4444; border-color: rgba(239,68,68,0.3); }
+.bot-ctrl.ctrl-pause:hover { color: #eab308; border-color: rgba(234,179,8,0.3); }
+/* In Fleet table, buttons use 22×22px with gap-0.5 */
+
+/* Action dropdown menu */
+.action-menu { position: relative; display: inline-block; }
+.action-menu-btn { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.10);
+                   padding: 4px 10px; border-radius: 5px; font-size: 11px; }
+.action-dropdown { position: absolute; right: 0; bottom: 100%; min-width: 200px;
+                   background: #151515; border-radius: 8px; box-shadow: 0 -8px 30px rgba(0,0,0,0.6); }
+.action-dropdown.open { display: block; }
+.action-dropdown .sep { height: 1px; background: rgba(255,255,255,0.06); margin: 4px 8px; }
+.action-dropdown button.danger { color: #ef4444; }
+
+/* Sidebar header (centered when collapsed) */
+.sidebar-header { /* inherits from flex, centered via CSS when .collapsed */ }
 
 /* Common patterns */
 .kpi-label: text-[11px] uppercase tracking-widest text-muted font-sans
 .kpi-value: font-mono font-bold text-white
-.section-title: text-[11px] uppercase tracking-widest text-white/50 font-bold font-sans
+.section-title: text-[12px] font-bold uppercase tracking-widest text-muted
 ```
+
+### Lucide Icons Used (26 total)
+
+| Icon | Used In |
+|---|---|
+| `play` | Bot Start button |
+| `square` | Bot Stop button |
+| `pause` | Bot Pause button |
+| `refresh-cw` | Reload Config + Trade Reload |
+| `x-square` | Force Exit All |
+| `plus-square` | Toggle Stopbuy |
+| `shield-alert` | Soft Kill |
+| `zap` | Hard Kill + Hyperopt icon |
+| `x` | Close drawer |
+| `chevrons-left` | Sidebar toggle |
+| `layout-dashboard` | Control Room nav icon |
+| `flask-conical` | Experiments nav icon |
+| `list` | Strategies nav icon |
+| `settings` | System nav icon |
+| `layers` | Fleet Management title |
+| `git-compare` | Compare View button |
+| `search` | Global search icon |
+| `download` | CSV export buttons |
+| `chevron-down` | Action dropdown toggle |
+| `log-out` | Forceexit limit |
+| `scissors` | Forceexit partial |
+| `plus-circle` | Increase position |
+| `trash-2` | Delete trade |
+| `arrow-left` | Back to Dashboard |
+| `brain-circuit` | FreqAI tab placeholder |
+| `bot` | AI Review tab placeholder |
+
+### Key DOM Element IDs
+
+| ID | Element | Purpose |
+|---|---|---|
+| `side-menu` | `<aside>` | Sidebar navigation, toggles `.collapsed` |
+| `top-title` | `<h1>` | Header page title, updated by `switchPage()` |
+| `bot-drawer` | `<aside>` | Bot detail drawer, toggles `.open` |
+| `drawer-backdrop` | `<div>` | Semi-transparent overlay behind drawer |
+| `drawer-bot-name` | `<h2>` | Bot name text in drawer header |
+| `drawer-bot-mode` | `<span>` | Bot mode badge (LIVE/PAUSED/STOPPED) in drawer |
+| `page-dashboard` | `<div>` | Control Room page container |
+| `page-fleet` | `<div>` | Fleet Management page container |
+| `page-experiments` | `<div>` | Experiments page container |
+
+### Section Titles in Prototype
+
+| Title | Location |
+|---|---|
+| `Fleet Management (312)` | Col 1 header |
+| `Profit Over Time` | Chart panel left |
+| `Profit Distribution` | Chart panel right |
+| `Balance` | Col 3 widget 1 |
+| `Fees & Costs` | Col 3 widget 2 |
+| `Node Telemetry` | Col 3 widget 3 |
+| `Terminal StdOut` | Col 3 widget 4 |
+| `Process Controls` | Bot drawer section 1 |
+| `RPC Actions` | Bot drawer section 2 |
+| `Tail_Log.txt` | Bot drawer section 3 |
+| `Run Configuration` | Backtest control panel |
+| `Total Profit` / `Max Drawdown` / `Win Rate` | Backtest results KPIs |
+| `Test Logs & Trades` | Backtest results table |
+| `Hyperopt Compute` | Hyperopt tab heading |
+
+## Tooltips — Every Interactive Element
+
+ALL buttons in the application have descriptive `title=` attributes for hover tooltips.
+
+### Bot Control Buttons (8 per bot)
+| Icon | Tooltip |
+|---|---|
+| `play` | `▶ Start Bot — Resume trading engine` |
+| `square` | `■ Stop Bot — Gracefully stop trading` |
+| `pause` | `⏸ Pause — Stop opening new trades` |
+| `refresh-cw` | `↻ Reload Config — Hot-reload strategy config` |
+| `x-square` | `✕ Force Exit All — Close all open positions` |
+| `plus-square` | `⊞ Toggle Stopbuy — Prevent new buy orders` |
+| `shield-alert` | `🛡 Soft Kill — Exit all trades, keep bot alive` |
+| `zap` | `⚡ Hard Kill — Force stop bot + container` |
+
+### Header Buttons
+| Button | Tooltip |
+|---|---|
+| Soft Kill All | `Soft Kill All — exit all trades on ALL bots` |
+| Hard Kill All | `Hard Kill All — stop ALL bots + containers` |
+
+### Navigation
+| Button | Tooltip |
+|---|---|
+| Control Room | `Dashboard — Real-time trading overview` |
+| Experiments | `Experiments — Backtest, Hyperopt, FreqAI` |
+| Strategies | `Strategies — Manage trading strategies` |
+| System | `System — Server health, configs, logs` |
+
+### Trade Actions
+| Button | Tooltip |
+|---|---|
+| Forceexit limit | `Exit trade at limit price` |
+| Forceexit market | `Exit trade at market price immediately` |
+| Forceexit partial | `Partially exit trade position` |
+| Increase position | `Add to existing position (DCA)` |
+| Reload | `Reload trade data from exchange` |
+| Delete trade | `🗑 Delete trade — Remove from history permanently` |
+
+### Drawer Tooltips
+| Button | Tooltip |
+|---|---|
+| Start | `▶ Start Bot — Resume trading engine` |
+| Pause | `⏸ Pause — Stop opening new trades` |
+| Stop | `■ Stop Bot — Gracefully stop trading` |
+| Reload Config | `↻ Reload Config — Hot-reload strategy config` |
+| Force Enter | `Force open a new trade manually` |
+| Force Exit All | `Close all open positions immediately` |
+| Toggle Stopbuy | `Prevent bot from opening new buy orders` |
+| Close drawer | `Close drawer` |
+
+### Experiments Tab Tooltips
+| Tab | Tooltip |
+|---|---|
+| Backtest | `Run historical simulation on past data` |
+| Hyperopt | `Optimize strategy parameters automatically` |
+| FreqAI | `Machine learning model training` |
+| AI Review | `AI-powered strategy analysis and recommendations` |
+| Validation | `Walk-forward validation and robustness checks` |
+
+### Whitelist Matrix Tooltips
+| Button | Tooltip |
+|---|---|
+| LOCK | `Lock pair` |
+| UNLOCK | `Unlock pair` |
+| Select all checkbox | `Select all` |
+
+### Chart Tooltips
+| Button | Tooltip |
+|---|---|
+| Days | `Show daily chart` |
+| Weeks | `Show weekly chart` |
+| Months | `Show monthly chart` |
+| Abs $ | `Show absolute dollar values` |
+| Rel % | `Show relative percentage values` |
+
+### Other Tooltips
+| Button | Tooltip |
+|---|---|
+| Execute Backtest | `Start backtesting with selected parameters` |
+| Run Optimizer | `Start hyperparameter optimization` |
+| Compare View | `Open Fleet Management — Compare all bots side by side` |
+| Compare Selected | `Compare selected bots side-by-side` |
+| Export CSV | `Export all bot data as CSV file` |
+| CSV | `Export trade data as CSV` |
+| Toggle sidebar | `Toggle sidebar` (chevrons-left icon, rotates 180° collapsed) |
+
+---
 
 ## Interaction Patterns
 
@@ -281,9 +629,37 @@ font-family: 'JetBrains Mono', mono; /* Data values */
 |---|---|
 | Tab switching | `switchTradeTab(tabId, btn)` — hide all `.trade-tab-content`, show selected |
 | Action dropdown | `toggleActionMenu(btn, event)` — toggle `.action-dropdown.open` class |
-| Bot drawer | `openBotDrawer(name, mode)` — slide-in overlay from left |
+| Bot drawer | `openBotDrawer(name, mode)` — slide-in overlay from right |
 | Close on outside click | Global `document.addEventListener('click', ...)` |
+| Sidebar collapse | `toggleSidebar()` — toggle `.collapsed` class on `#side-menu` |
+| Page routing | `switchPage(pageId)` — hide/show `.page-view`, update header title, re-render Lucide icons |
+| Fleet access | Compare View button in Bot Fleet header → `switchPage('page-fleet')` |
+| Fleet back | `← Dashboard` button in Fleet header → `switchPage('page-dashboard')` |
 | Auto-refresh | 10-second polling interval for all data sources |
+| Lucide re-render | `setTimeout(() => lucide.createIcons(), 50)` after every page switch |
+
+### JavaScript Functions (exact signatures)
+
+```javascript
+// Page navigation — hides all .page-view, shows target, updates title, re-renders icons
+function switchPage(pageId) // pageId: 'page-dashboard' | 'page-fleet' | 'page-experiments'
+
+// Experiment tabs — toggles .exp-tab visibility, updates button styling
+function switchExpTab(tabId, btn) // tabId: 'tab-backtest' | 'tab-hyperopt' | 'tab-freqai' | 'tab-ai' | 'tab-val'
+
+// Trade tabs — hides all .trade-tab-content, shows target via display style
+function switchTradeTab(tabId, btn) // tabId: 'trades-open' | 'trades-closed' | 'trades-whitelist' | 'trades-performance' | 'trades-tags'
+
+// Bot drawer — sets name+mode text, adds .open class to drawer + backdrop
+function openBotDrawer(name, mode)
+function closeBotDrawer()
+
+// Action dropdown — toggles .open on dropdown, closes others first
+function toggleActionMenu(btn, event)
+
+// Sidebar — toggles .collapsed on #side-menu, re-renders Lucide after 300ms
+function toggleSidebar()
+```
 
 ## API Dependencies Summary
 
@@ -321,6 +697,14 @@ font-family: 'JetBrains Mono', mono; /* Data values */
 | `GET /api/portfolio/balance` | `portfolioBalance()` | Aggregated balance |
 | `GET /api/portfolio/profit` | `portfolioProfit()` | Aggregated profit |
 | `GET /api/portfolio/trades` | `portfolioTrades()` | Aggregated trades |
+
+## Pages Summary
+
+| Page ID | Title | Access | Content |
+|---|---|---|---|
+| `page-dashboard` | Control Room | Sidebar nav (default) | KPI bar + 3-column layout |
+| `page-fleet` | Fleet Management | Compare View button in Col 1 | 15-column comparison table |
+| `page-experiments` | Experiments Matrix | Sidebar nav | 5 tabs: Backtest, Hyperopt, FreqAI, AI Review, Validation |
 
 ## Reference Files
 

@@ -140,14 +140,32 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs]);
 
-  // ── Results ──────────────────────────────────────────────────────
   const [results, setResults] = useState<HyperoptResult[]>([]);
   const [sortBy, setSortBy] = useState<'profitPct' | 'sharpe' | 'sortino' | 'winRate' | 'maxDrawdown'>('profitPct');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [resultsPage, setResultsPage] = useState(1);
   const [hoPage, setHoPage] = useState(1);
+  const [hoExpandedId, setHoExpandedId] = useState<string | null>(null);
   const resultsPerPage = 20;
   const hoPerPage = 10;
+
+  // Auto-generate description from current settings
+  const autoDescription = useMemo(() => {
+    const spacesStr = customSpaces.join(', ');
+    const lossStr = selectedLossFunctions.map(v => LOSS_FUNCTIONS.find(l => l.value === v)?.label || v).join(', ');
+    const samplerStr = selectedSamplers.map(v => SAMPLERS.find(s => s.value === v)?.label || v).join(', ');
+    const parts = [
+      `${strategy} hyperopt`,
+      `${startDate} → ${endDate}`,
+      `${epochs} epochs`,
+      samplerStr,
+      lossStr,
+      `spaces: ${spacesStr}`,
+      earlyStop ? 'early-stop ON' : null,
+      minTrades ? `min ${minTrades} trades` : null,
+    ].filter(Boolean);
+    return parts.join(' · ');
+  }, [strategy, startDate, endDate, epochs, customSpaces, selectedLossFunctions, selectedSamplers, earlyStop, minTrades]);
 
   // ── Preset handling ──────────────────────────────────────────────
   const handlePresetChange = useCallback((presetKey: string) => {
@@ -561,7 +579,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
             </div>
             <div>
               <label className={LABEL}>Description (optional)</label>
-              <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Auto-generated if empty" className={INPUT} />
+              <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={autoDescription} className={INPUT} />
             </div>
             <div>
               <label className={LABEL}>Strategy</label>
@@ -942,18 +960,55 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
         {sortedResults.length > 0 ? (() => {
           const totalResPages = Math.ceil(sortedResults.length / resultsPerPage);
           const pagedResults = sortedResults.slice((resultsPage - 1) * resultsPerPage, resultsPage * resultsPerPage);
+          // Unique test ID from first result's startedAt
+          const hoTestId = (() => {
+            try {
+              const d = new Date(sortedResults[0]?.startedAt || Date.now());
+              return `HO-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;
+            } catch { return 'HO-unknown'; }
+          })();
+          // Summarize unique configs from results
+          const uniqueSamplers = Array.from(new Set(sortedResults.map(r => r.sampler))).join(', ');
+          const uniqueLoss = Array.from(new Set(sortedResults.map(r => r.lossFunction))).join(', ');
+          const uniqueSpaces = Array.from(new Set(sortedResults.map(r => r.spaces))).join(', ');
           return (
           <div data-ho-results className="bg-card border border-border rounded-card overflow-hidden">
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <span className="text-xs font-semibold text-foreground">
-                Hyperopt Results ({sortedResults.length})
-              </span>
-              <button
-                onClick={fetchResults}
-                className="text-[10px] text-primary hover:underline"
-              >
-                Refresh
-              </button>
+            {/* Config Header */}
+            <div className="px-4 py-3 border-b border-border">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded">{hoTestId}</span>
+                  <span className="text-xs font-semibold text-foreground">
+                    Hyperopt Results ({sortedResults.length})
+                  </span>
+                </div>
+                <button
+                  onClick={fetchResults}
+                  className="text-[10px] text-primary hover:underline"
+                >
+                  Refresh
+                </button>
+              </div>
+              <div className="grid grid-cols-4 gap-2 text-[10px]">
+                <div className="bg-muted/30 border border-border rounded px-2 py-1">
+                  <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Sampler</div>
+                  <div className="text-foreground font-mono truncate">{uniqueSamplers}</div>
+                </div>
+                <div className="bg-muted/30 border border-border rounded px-2 py-1">
+                  <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Loss Function</div>
+                  <div className="text-foreground font-mono truncate">{uniqueLoss}</div>
+                </div>
+                <div className="bg-muted/30 border border-border rounded px-2 py-1">
+                  <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Spaces</div>
+                  <div className="text-foreground font-mono truncate">{uniqueSpaces}</div>
+                </div>
+                <div className="bg-muted/30 border border-border rounded px-2 py-1">
+                  <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Best Profit</div>
+                  <div className={`font-mono ${(sortedResults[0]?.profitPct ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {(sortedResults[0]?.profitPct ?? 0) >= 0 ? '+' : ''}{(sortedResults[0]?.profitPct ?? 0).toFixed(2)}%
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
@@ -1072,6 +1127,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="bg-muted/50 text-muted-foreground">
+                      <th className="text-left px-3 py-2 font-semibold w-[90px]">ID</th>
                       <th className="text-left px-3 py-2 font-semibold">Run Date</th>
                       <th className="text-left px-3 py-2 font-semibold">Strategy</th>
                       <th className="text-right px-3 py-2 font-semibold">Epochs</th>
@@ -1091,8 +1147,14 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                       const runStr = `${runDate.getFullYear()}-${String(runDate.getMonth()+1).padStart(2,'0')}-${String(runDate.getDate()).padStart(2,'0')} ${String(runDate.getHours()).padStart(2,'0')}:${String(runDate.getMinutes()).padStart(2,'0')}`;
                       const hasStats = run.total_trades !== undefined && run.total_trades > 0;
                       const profitOk = (run.profit_total_abs ?? 0) >= 0;
+                      const hoId = `HO-${runDate.getFullYear()}${String(runDate.getMonth()+1).padStart(2,'0')}${String(runDate.getDate()).padStart(2,'0')}-${String(runDate.getHours()).padStart(2,'0')}${String(runDate.getMinutes()).padStart(2,'0')}`;
+                      const isExpanded = hoExpandedId === run.filename;
                       return (
-                        <tr key={run.filename} className="border-t border-border hover:bg-muted/30 transition-colors">
+                        <>
+                        <tr key={run.filename} className={`border-t border-border hover:bg-muted/30 transition-colors cursor-pointer ${isExpanded ? 'bg-muted/20' : ''}`} onClick={() => setHoExpandedId(isExpanded ? null : run.filename)}>
+                          <td className="px-3 py-2">
+                            <span className="text-[9px] font-mono px-1 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded whitespace-nowrap">{hoId}</span>
+                          </td>
                           <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{runStr}</td>
                           <td className="px-3 py-2 font-mono text-foreground">{run.strategy}</td>
                           <td className="px-3 py-2 text-right tabular-nums text-foreground">{run.epochs}</td>
@@ -1144,6 +1206,21 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                             </div>
                           </td>
                         </tr>
+                        {isExpanded && (
+                          <tr key={`${run.filename}-expand`} className="bg-muted/10">
+                            <td colSpan={11} className="px-4 py-2">
+                              <div className="flex flex-wrap gap-x-6 gap-y-1 text-[10px]">
+                                <span className="text-muted-foreground">Strategy: <span className="text-foreground font-mono">{run.strategy}</span></span>
+                                <span className="text-muted-foreground">Epochs: <span className="text-foreground font-mono">{run.epochs}</span></span>
+                                <span className="text-muted-foreground">Size: <span className="text-foreground font-mono">{(run.size_bytes / 1024).toFixed(0)} KB</span></span>
+                                <span className="text-muted-foreground">File: <span className="text-foreground font-mono text-[9px]">{run.filename}</span></span>
+                                {run.sharpe !== undefined && <span className="text-muted-foreground">Sharpe: <span className="text-foreground font-mono">{(run.sharpe ?? 0).toFixed(2)}</span></span>}
+                                {run.sortino !== undefined && <span className="text-muted-foreground">Sortino: <span className="text-foreground font-mono">{(run.sortino ?? 0).toFixed(2)}</span></span>}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                        </>
                       );
                     })}
                   </tbody>

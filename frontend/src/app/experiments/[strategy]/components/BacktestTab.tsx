@@ -164,18 +164,57 @@ function ResultsPanel({ data }: { data: FTStrategyResult }) {
   const totalPages = Math.ceil(sortedTrades.length / tradesPerPage);
   const pagedTrades = sortedTrades.slice((tradesPage - 1) * tradesPerPage, tradesPage * tradesPerPage);
 
+  // Generate unique test ID from backtest_start field
+  const testId = useMemo(() => {
+    try {
+      const d = new Date(data.backtest_start);
+      return `BT-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;
+    } catch { return 'BT-unknown'; }
+  }, [data.backtest_start]);
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Header */}
+      {/* Header with Unique ID */}
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-sm font-semibold text-foreground">{data.strategy_name}</div>
-          <div className="text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono px-1.5 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded">{testId}</span>
+            <span className="text-sm font-semibold text-foreground">{data.strategy_name}</span>
+          </div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">
             {data.backtest_start} → {data.backtest_end} · {data.timeframe}{data.timeframe_detail ? ` (detail: ${data.timeframe_detail})` : ""} · {data.backtest_days} days
           </div>
         </div>
         <div className={`text-lg font-bold tabular-nums ${profitPositive ? "text-emerald-400" : "text-rose-400"}`}>
           {fmt$(data.profit_total_abs)}
+        </div>
+      </div>
+
+      {/* Test Configuration Bar */}
+      <div className="grid grid-cols-6 gap-2 text-[10px]">
+        <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
+          <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Stoploss</div>
+          <div className="text-foreground font-mono">{(data.stoploss * 100).toFixed(1)}%</div>
+        </div>
+        <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
+          <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Max Trades</div>
+          <div className="text-foreground font-mono">{data.max_open_trades_setting}</div>
+        </div>
+        <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
+          <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Capital</div>
+          <div className="text-foreground font-mono">${data.starting_balance.toLocaleString()}</div>
+        </div>
+        <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
+          <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Mode</div>
+          <div className="text-foreground font-mono">{data.trading_mode || 'spot'}</div>
+        </div>
+        <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
+          <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Currency</div>
+          <div className="text-foreground font-mono">{data.stake_currency}</div>
+        </div>
+        <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
+          <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Timeframe</div>
+          <div className="text-foreground font-mono">{data.timeframe}{data.timeframe_detail ? ` / ${data.timeframe_detail}` : ''}</div>
         </div>
       </div>
 
@@ -459,6 +498,7 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
 }) {
   const [page, setPage] = useState(1);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [statsCache, setStatsCache] = useState<Map<string, HistoryStats | 'loading' | 'error'>>(new Map());
   const perPage = 10;
 
@@ -529,6 +569,7 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-muted/50 text-muted-foreground">
+                <th className="text-left px-3 py-2 font-semibold w-[90px]">ID</th>
                 <th className="text-left px-3 py-2 font-semibold">Run Date</th>
                 <th className="text-left px-3 py-2 font-semibold">Timeframe</th>
                 <th className="text-left px-3 py-2 font-semibold">Range</th>
@@ -547,11 +588,17 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
                 const runStr = `${runDate.getFullYear()}-${String(runDate.getMonth()+1).padStart(2,'0')}-${String(runDate.getDate()).padStart(2,'0')} ${String(runDate.getHours()).padStart(2,'0')}:${String(runDate.getMinutes()).padStart(2,'0')}`;
                 const entryKey = `${entry.filename}-${entry.run_id}`;
                 const isConfirming = confirmId === entryKey;
+                const isExpanded = expandedId === entryKey;
                 const stats = statsCache.get(entry.filename);
                 const s = (stats && stats !== 'loading' && stats !== 'error') ? stats as HistoryStats : null;
+                const btId = `BT-${runDate.getFullYear()}${String(runDate.getMonth()+1).padStart(2,'0')}${String(runDate.getDate()).padStart(2,'0')}-${String(runDate.getHours()).padStart(2,'0')}${String(runDate.getMinutes()).padStart(2,'0')}`;
 
                 return (
-                  <tr key={entryKey} className="border-t border-border hover:bg-muted/30 transition-colors">
+                  <>
+                  <tr key={entryKey} className={`border-t border-border hover:bg-muted/30 transition-colors cursor-pointer ${isExpanded ? 'bg-muted/20' : ''}`} onClick={() => setExpandedId(isExpanded ? null : entryKey)}>
+                    <td className="px-3 py-2">
+                      <span className="text-[9px] font-mono px-1 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded whitespace-nowrap">{btId}</span>
+                    </td>
                     <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{runStr}</td>
                     <td className="px-3 py-2 font-mono text-muted-foreground">{entry.timeframe || "—"}</td>
                     <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{fmtDate(entry.backtest_start_ts)} → {fmtDate(entry.backtest_end_ts)}</td>
@@ -599,6 +646,20 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
                       </div>
                     </td>
                   </tr>
+                  {isExpanded && (
+                    <tr key={`${entryKey}-expand`} className="bg-muted/10">
+                      <td colSpan={10} className="px-4 py-2">
+                        <div className="flex flex-wrap gap-x-6 gap-y-1 text-[10px]">
+                          <span className="text-muted-foreground">Strategy: <span className="text-foreground font-mono">{entry.strategy}</span></span>
+                          <span className="text-muted-foreground">Timeframe: <span className="text-foreground font-mono">{entry.timeframe || '—'}</span></span>
+                          {entry.timeframe_detail && <span className="text-muted-foreground">TF Detail: <span className="text-foreground font-mono">{entry.timeframe_detail}</span></span>}
+                          <span className="text-muted-foreground">Range: <span className="text-foreground font-mono">{fmtDate(entry.backtest_start_ts)} → {fmtDate(entry.backtest_end_ts)}</span></span>
+                          <span className="text-muted-foreground">File: <span className="text-foreground font-mono text-[9px]">{entry.filename}</span></span>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  </>
                 );
               })}
             </tbody>
@@ -919,20 +980,24 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
     return `${startDate.replace(/-/g, "")}-${endDate.replace(/-/g, "")}`;
   }, [startDate, endDate]);
 
-  // Auto-generate description from current settings (used as placeholder)
+  // Auto-generate description from current settings
   const autoDescription = useMemo(() => {
     const tf = timeframeOverride === "Use strategy default" ? "default TF" : timeframeOverride;
+    const tfDetail = timeframeDetail !== "None" ? `detail: ${timeframeDetail}` : null;
     const parts = [
       `${strategy} backtest`,
       `${startDate} → ${endDate}`,
       tf,
+      tfDetail,
       maxOpenTrades ? `${maxOpenTrades} max trades` : null,
       `$${startingCapital} capital`,
+      stakeAmount && stakeAmount !== 'unlimited' ? `stake: $${stakeAmount}` : 'stake: unlimited',
+      feeOverride ? `fee: ${feeOverride}%` : null,
       enableFreqAI ? "FreqAI ON" : null,
-      enableProtections ? "Protections ON" : null,
+      enableProtections ? "Protections ON" : "Protections OFF",
     ].filter(Boolean);
     return parts.join(" · ");
-  }, [strategy, startDate, endDate, timeframeOverride, maxOpenTrades, startingCapital, enableFreqAI, enableProtections]);
+  }, [strategy, startDate, endDate, timeframeOverride, timeframeDetail, maxOpenTrades, startingCapital, stakeAmount, feeOverride, enableFreqAI, enableProtections]);
 
   const handleStart = async () => {
     setLogs([]);

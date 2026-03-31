@@ -1,6 +1,12 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+
+interface LogEntry {
+  ts: string;
+  level: string;
+  msg: string;
+}
 import Tooltip from '@/components/ui/Tooltip';
 import Toggle from '@/components/ui/Toggle';
 import { INPUT, LABEL, fmtPctRatio, fmtNum } from '@/lib/design';
@@ -91,6 +97,23 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
   const [completedCount, setCompletedCount] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // ── Log State ───────────────────────────────────────────────────
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [hoProgress, setHoProgress] = useState("");
+  const logEndRef = useRef<HTMLDivElement>(null);
+
+  const addLog = useCallback((level: string, msg: string) => {
+    setLogs((prev) => {
+      const next = [...prev, { ts: new Date().toLocaleTimeString(), level, msg }];
+      return next.length > 200 ? next.slice(-200) : next;
+    });
+  }, []);
+
+  // Auto-scroll log window
+  useEffect(() => {
+    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [logs]);
+
   // ── Results ──────────────────────────────────────────────────────
   const [results, setResults] = useState<HyperoptResult[]>([]);
   const [sortBy, setSortBy] = useState<'profitPct' | 'sharpe' | 'sortino' | 'winRate' | 'maxDrawdown'>('profitPct');
@@ -179,8 +202,15 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
     const lf = selectedLossFunctions[0];
     const sampler = selectedSamplers[0];
 
+    setLogs([]);
+    setHoProgress("");
     setIsRunning(true);
-    toast.info(`Starting hyperopt: ${SAMPLERS.find(s => s.value === sampler)?.label} × ${LOSS_FUNCTIONS.find(l => l.value === lf)?.label}`);
+    const samplerLabel = SAMPLERS.find(s => s.value === sampler)?.label ?? sampler;
+    const lfLabel = LOSS_FUNCTIONS.find(l => l.value === lf)?.label ?? lf;
+    addLog('INFO', `Starting hyperopt: ${samplerLabel} × ${lfLabel}`);
+    addLog('INFO', `Strategy: ${strategy} | Epochs: ${epochs} | Spaces: [${customSpaces.join(', ')}]`);
+    addLog('INFO', `Timerange: ${timerange}`);
+    toast.info(`Starting hyperopt: ${samplerLabel} × ${lfLabel}`);
 
     try {
       const params: Record<string, unknown> = {
@@ -198,27 +228,38 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
       if (effort !== 1.0) params.effort = effort;
       if (earlyStop) params.early_stop = true;
 
+      addLog('INFO', `POST /api/bots/${botId}/hyperopt`);
       const res = await botHyperoptStart(botId, params);
       const jobId = res?.job_id;
+      addLog('INFO', `Hyperopt job submitted — jobId=${jobId ?? 'N/A'}`);
+      setHoProgress('running');
 
       if (jobId) {
         // Poll for completion
         const pollInterval = setInterval(async () => {
           try {
             const status = await botHyperoptStatus(botId, jobId);
+            addLog('INFO', `[poll] status=${status.status}`);
             if (status.status === 'completed' || status.status === 'failed') {
               clearInterval(pollInterval);
               setIsRunning(false);
               if (status.status === 'completed') {
+                setHoProgress('✓ Completed');
+                addLog('INFO', 'Hyperopt completed successfully');
                 toast.success('Hyperopt completed');
                 fetchResults();
               } else {
-                toast.error(`Hyperopt failed: ${status.output?.substring(0, 200) || 'Unknown error'}`);
+                setHoProgress('✗ Failed');
+                const errMsg = status.output?.substring(0, 200) || 'Unknown error';
+                addLog('ERROR', `Hyperopt failed: ${errMsg}`);
+                toast.error(`Hyperopt failed: ${errMsg}`);
               }
             }
-          } catch {
+          } catch (pollErr) {
             clearInterval(pollInterval);
             setIsRunning(false);
+            setHoProgress('✗ Lost connection');
+            addLog('ERROR', `Lost connection to hyperopt job: ${pollErr instanceof Error ? pollErr.message : String(pollErr)}`);
             toast.error('Lost connection to hyperopt job');
           }
         }, 5000);
@@ -226,7 +267,10 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
       }
     } catch (err) {
       setIsRunning(false);
-      toast.error(`Failed to start hyperopt: ${err instanceof Error ? err.message : String(err)}`);
+      setHoProgress('✗ Failed to start');
+      const msg = err instanceof Error ? err.message : String(err);
+      addLog('ERROR', `Failed to start hyperopt: ${msg}`);
+      toast.error(`Failed to start hyperopt: ${msg}`);
     }
   };
 
@@ -240,10 +284,10 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
     const timerange = `${startDate.replace(/-/g, '')}-${endDate.replace(/-/g, '')}`;
 
     // Build batch queue
-    const jobs: BatchJob[] = [];
+    const batchQueue: BatchJob[] = [];
     for (const sampler of selectedSamplers) {
       for (const lf of selectedLossFunctions) {
-        jobs.push({
+        batchQueue.push({
           id: `${sampler}-${lf}`,
           sampler,
           lossFunction: lf,
@@ -254,14 +298,21 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
       }
     }
 
-    setBatchJobs(jobs);
+    setBatchJobs(batchQueue);
     setIsRunning(true);
     setCompletedCount(0);
-    toast.info(`Starting batch: ${jobs.length} hyperopt runs`);
+    setLogs([]);
+    setHoProgress('batch running');
+    addLog('INFO', `Starting batch: ${batchQueue.length} hyperopt runs`);
+    addLog('INFO', `Timerange: ${timerange} | Epochs: ${epochs} | Spaces: [${customSpaces.join(', ')}]`);
+    toast.info(`Starting batch: ${batchQueue.length} hyperopt runs`);
 
     // Run sequentially to avoid overloading the server
-    for (let i = 0; i < jobs.length; i++) {
-      const job = jobs[i];
+    for (let i = 0; i < batchQueue.length; i++) {
+      const job = batchQueue[i];
+      const samplerLabel = SAMPLERS.find(s => s.value === job.sampler)?.label ?? job.sampler;
+      const lfLabel = LOSS_FUNCTIONS.find(l => l.value === job.lossFunction)?.label ?? job.lossFunction;
+      addLog('INFO', `[batch ${i + 1}/${batchQueue.length}] Starting: ${samplerLabel} × ${lfLabel}`);
       setBatchJobs((prev) => prev.map((j) =>
         j.id === job.id ? { ...j, status: 'running' } : j
       ));
@@ -280,6 +331,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
 
         const res = await botHyperoptStart(botId, params);
         const jobId = res?.job_id;
+        addLog('INFO', `[batch ${i + 1}] Job submitted — jobId=${jobId ?? 'N/A'}`);
 
         if (jobId) {
           // Poll this individual job until done
@@ -288,17 +340,21 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
             await new Promise((r) => setTimeout(r, 5000));
             try {
               const status = await botHyperoptStatus(botId, jobId);
+              addLog('INFO', `[batch ${i + 1}] poll: status=${status.status}`);
               if (status.status === 'completed' || status.status === 'failed') {
                 done = true;
+                const ok = status.status === 'completed';
+                addLog(ok ? 'INFO' : 'ERROR', `[batch ${i + 1}] ${ok ? 'Completed' : 'Failed'}: ${samplerLabel} × ${lfLabel}`);
                 setBatchJobs((prev) => prev.map((j) =>
                   j.id === job.id
-                    ? { ...j, status: status.status === 'completed' ? 'completed' : 'failed', jobId }
+                    ? { ...j, status: ok ? 'completed' : 'failed', jobId }
                     : j
                 ));
                 setCompletedCount((c) => c + 1);
               }
-            } catch {
+            } catch (pollErr) {
               done = true;
+              addLog('ERROR', `[batch ${i + 1}] Poll error: ${pollErr instanceof Error ? pollErr.message : String(pollErr)}`);
               setBatchJobs((prev) => prev.map((j) =>
                 j.id === job.id ? { ...j, status: 'failed' } : j
               ));
@@ -306,7 +362,8 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
             }
           }
         }
-      } catch {
+      } catch (err) {
+        addLog('ERROR', `[batch ${i + 1}] Start failed: ${err instanceof Error ? err.message : String(err)}`);
         setBatchJobs((prev) => prev.map((j) =>
           j.id === job.id ? { ...j, status: 'failed' } : j
         ));
@@ -315,7 +372,9 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
     }
 
     setIsRunning(false);
-    toast.success(`Batch complete: ${jobs.length} runs finished`);
+    setHoProgress('✓ Batch complete');
+    addLog('INFO', `Batch complete: ${batchQueue.length} runs finished`);
+    toast.success(`Batch complete: ${batchQueue.length} runs finished`);
     fetchResults();
   };
 
@@ -326,8 +385,10 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
       pollRef.current = null;
     }
     setIsRunning(false);
+    setHoProgress('');
+    addLog('WARNING', 'Hyperopt stopped by user');
     toast.info('Hyperopt stopped');
-  }, [toast]);
+  }, [toast, addLog]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -594,12 +655,57 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
             <button
               onClick={handleStop}
               className="w-full h-[34px] inline-flex items-center justify-center gap-[6px] rounded-btn text-xs font-medium border border-rose-500/40 text-rose-400 hover:bg-rose-500/10 transition-colors"
+            type="button"
             >
               ■ Stop
             </button>
           )}
         </div>
-      </div>
+
+        {/* ═══════════ LOG WINDOW ═══════════ */}
+        <div className="flex flex-col mt-2 flex-1 min-h-[120px]">
+          <div className="flex items-center justify-between mb-[4px]">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.5px]">Log</span>
+            <div className="flex items-center gap-2">
+              {hoProgress && (
+                <span className="text-xs text-primary font-medium">{hoProgress}</span>
+              )}
+              {isRunning && (
+                <span className="w-[6px] h-[6px] rounded-full bg-green animate-pulse" />
+              )}
+              {logs.length > 0 && (
+                <button
+                  onClick={() => { setLogs([]); setHoProgress(""); }}
+                  type="button"
+                  className="text-[9px] text-muted-foreground hover:text-muted-foreground transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="flex-1 bg-[#0d0d14] border border-border rounded-btn p-2 overflow-y-auto font-mono text-xs leading-[1.6] min-h-[100px] max-h-[220px]">
+            {logs.length === 0 ? (
+              <div className="text-muted-foreground text-xs opacity-50 select-none">
+                Logs will appear here when hyperopt starts...
+              </div>
+            ) : (
+              logs.map((entry, i) => (
+                <div key={i} className="flex gap-[6px]">
+                  <span className="text-muted-foreground shrink-0">{entry.ts}</span>
+                  <span className={`shrink-0 w-[38px] ${
+                    entry.level === "ERROR" ? "text-rose-500" :
+                    entry.level === "WARNING" ? "text-[#f59e0b]" :
+                    "text-muted-foreground"
+                  }`}>{entry.level.substring(0, 4)}</span>
+                  <span className="text-muted-foreground break-all">{entry.msg}</span>
+                </div>
+              ))
+            )}
+            <div ref={logEndRef} />
+          </div>
+        </div>
+        </div>
 
       {/* ══════════════ RIGHT PANEL: RESULTS ══════════════ */}
       <div className="flex-1 min-w-0 space-y-4">

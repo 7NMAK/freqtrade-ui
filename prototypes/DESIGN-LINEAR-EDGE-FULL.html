@@ -142,34 +142,66 @@
       <div id="page-dashboard" class="page-view active flex-1 overflow-y-auto l-grid p-5 flex-col gap-5">
       
       <!-- LAYER 1: HIGHEST LEVEL KPIs -->
-      <div class="grid grid-cols-7 gap-px rounded-md bg-white/10 l-bd shrink-0">
-          <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
-              <span class="kpi-label">Total Equity</span>
-              <span class="kpi-value text-xl">$127,450.80</span>
+      <div class="rounded-md bg-white/10 l-bd shrink-0 overflow-hidden">
+          <div class="grid grid-cols-7 gap-px">
+              <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
+                  <span class="kpi-label">Total Equity</span>
+                  <span class="kpi-value text-xl">$127,450.80</span>
+              </div>
+              <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
+                  <span class="kpi-label">Locked in Trades</span>
+                  <span class="kpi-value text-xl">$45,120 <span class="text-[11px] text-muted font-sans font-normal">(35%)</span></span>
+              </div>
+              <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
+                  <span class="kpi-label">Today's P&L</span>
+                  <span class="kpi-value text-xl text-up">+$1,420.10</span>
+              </div>
+              <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
+                  <span class="kpi-label">Total P&L (Closed)</span>
+                  <span class="kpi-value text-xl text-up">+$18,940.20</span>
+              </div>
+              <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
+                  <span class="kpi-label">Open P&L (Unreal.)</span>
+                  <span class="kpi-value text-xl text-up">+$432.60</span>
+              </div>
+              <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
+                  <span class="kpi-label">Open Trades</span>
+                  <span class="kpi-value text-xl">42 <span class="text-[11px] text-muted font-sans font-normal">/ 100 max</span></span>
+              </div>
+              <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
+                  <span class="kpi-label">Max Drawdown</span>
+                  <span class="kpi-value text-xl text-down">-4.12%</span>
+              </div>
           </div>
-          <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
-              <span class="kpi-label">Locked Values</span>
-              <span class="kpi-value text-xl">$45,120 <span class="text-[11px] text-muted font-sans font-normal">(35%)</span></span>
-          </div>
-          <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
-              <span class="kpi-label">Today's P&L</span>
-              <span class="kpi-value text-xl text-up">+$1,420.10</span>
-          </div>
-          <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
-              <span class="kpi-label">Total P&L</span>
-              <span class="kpi-value text-xl text-up">+$18,940.20</span>
-          </div>
-          <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
-              <span class="kpi-label">Open Trades</span>
-              <span class="kpi-value text-xl">42</span>
-          </div>
-          <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
-              <span class="kpi-label">Win Rate</span>
-              <span class="kpi-value text-xl">68.4%</span>
-          </div>
-          <div class="bg-black p-4 flex flex-col hover:bg-white/[0.03] transition-colors">
-              <span class="kpi-label">Max Drawdown</span>
-              <span class="kpi-value text-xl text-down">-4.12%</span>
+          <div class="grid grid-cols-7 gap-px border-t border-white/10">
+              <div class="bg-black p-3 flex flex-col hover:bg-white/[0.03] transition-colors">
+                  <span class="kpi-label">Win Rate</span>
+                  <span class="kpi-value text-base">68.4% <span class="text-[10px] text-muted font-sans font-normal">876W / 405L</span></span>
+              </div>
+              <div class="bg-black p-3 flex flex-col hover:bg-white/[0.03] transition-colors">
+                  <span class="kpi-label">Profit Factor</span>
+                  <span class="kpi-value text-base text-up">2.14</span>
+              </div>
+              <div class="bg-black p-3 flex flex-col hover:bg-white/[0.03] transition-colors">
+                  <span class="kpi-label">Avg Duration</span>
+                  <span class="kpi-value text-base">2h 45m</span>
+              </div>
+              <div class="bg-black p-3 flex flex-col hover:bg-white/[0.03] transition-colors">
+                  <span class="kpi-label">Total Trades</span>
+                  <span class="kpi-value text-base">1,284</span>
+              </div>
+              <div class="bg-black p-3 flex flex-col hover:bg-white/[0.03] transition-colors">
+                  <span class="kpi-label">Best Pair</span>
+                  <span class="kpi-value text-base text-up">SOL/USDT <span class="text-[10px]">+8.12%</span></span>
+              </div>
+              <div class="bg-black p-3 flex flex-col hover:bg-white/[0.03] transition-colors">
+                  <span class="kpi-label">Sharpe Ratio</span>
+                  <span class="kpi-value text-base">1.82</span>
+              </div>
+              <div class="bg-black p-3 flex flex-col hover:bg-white/[0.03] transition-colors">
+                  <span class="kpi-label">Trading Volume</span>
+                  <span class="kpi-value text-base">$2.4M</span>
+              </div>
           </div>
       </div>
 
@@ -592,26 +624,135 @@
               </div>
           </div>
 
-          <!-- COL 3: SYSTEM METRICS & LOGS -->
-          <div class="w-[320px] flex flex-col gap-5 min-w-[320px] shrink-0">
+          <!-- COL 3: SYSTEM METRICS, BALANCE, PERFORMANCE -->
+          <div class="w-[320px] flex flex-col gap-4 min-w-[320px] shrink-0">
                
-               <!-- System Resource Dashboard -->
-               <div class="bg-surface l-bd rounded-md p-5 flex flex-col gap-5 shadow-xl">
-                   <span class="section-title">Node Telemetry</span>
-                   
-                   <div>
-                       <div class="flex justify-between text-[12px] font-mono mb-2"><span class="text-muted">CPU Thread Load</span> <span class="text-white font-medium">14%</span></div>
-                       <div class="h-2 w-full bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-white/70 rounded-full" style="width: 14%"></div></div>
+               <!-- Balance Breakdown -->
+               <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
+                   <div class="h-10 l-b flex items-center px-4 bg-black/40 shrink-0">
+                       <span class="section-title">Balance</span>
                    </div>
-                   
+                   <div class="p-4 font-mono text-[12px] space-y-2.5">
+                       <div class="flex justify-between items-center">
+                           <span class="text-muted">USDT</span>
+                           <div class="text-right"><span class="text-white font-medium">82,330.80</span> <span class="text-muted text-[10px] ml-1">free</span></div>
+                       </div>
+                       <div class="flex justify-between items-center">
+                           <span class="text-muted">BTC</span>
+                           <div class="text-right"><span class="text-white font-medium">0.4821</span> <span class="text-white/40 text-[10px] ml-1">≈ $31,420</span></div>
+                       </div>
+                       <div class="flex justify-between items-center">
+                           <span class="text-muted">ETH</span>
+                           <div class="text-right"><span class="text-white font-medium">3.200</span> <span class="text-white/40 text-[10px] ml-1">≈ $12,420</span></div>
+                       </div>
+                       <div class="flex justify-between items-center">
+                           <span class="text-muted">SOL</span>
+                           <div class="text-right"><span class="text-white font-medium">8.50</span> <span class="text-white/40 text-[10px] ml-1">≈ $1,280</span></div>
+                       </div>
+                       <div class="border-t border-white/8 pt-2 flex justify-between">
+                           <span class="text-white/50 text-[11px] uppercase font-sans font-medium">Starting Capital</span>
+                           <span class="text-white font-medium">$108,510.00</span>
+                       </div>
+                   </div>
+               </div>
+
+               <!-- Performance by Pair -->
+               <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
+                   <div class="h-10 l-b flex items-center px-4 bg-black/40 shrink-0">
+                       <span class="section-title">Performance by Pair</span>
+                   </div>
+                   <div class="font-mono text-[12px]">
+                       <div class="flex justify-between px-4 py-2.5 hover:bg-white/[0.03] transition-colors">
+                           <span class="text-white font-medium">SOL/USDT</span>
+                           <div class="flex gap-4"><span class="text-muted">32 trades</span><span class="text-up font-bold">+$2,140</span></div>
+                       </div>
+                       <div class="flex justify-between px-4 py-2.5 hover:bg-white/[0.03] transition-colors bg-white/[0.015]">
+                           <span class="text-white font-medium">BTC/USDT</span>
+                           <div class="flex gap-4"><span class="text-muted">128 trades</span><span class="text-up font-bold">+$1,840</span></div>
+                       </div>
+                       <div class="flex justify-between px-4 py-2.5 hover:bg-white/[0.03] transition-colors">
+                           <span class="text-white font-medium">ETH/USDT</span>
+                           <div class="flex gap-4"><span class="text-muted">95 trades</span><span class="text-up font-bold">+$620</span></div>
+                       </div>
+                       <div class="flex justify-between px-4 py-2.5 hover:bg-white/[0.03] transition-colors bg-white/[0.015]">
+                           <span class="text-white font-medium">XRP/USDT</span>
+                           <div class="flex gap-4"><span class="text-muted">64 trades</span><span class="text-down font-bold">-$180</span></div>
+                       </div>
+                       <div class="flex justify-between px-4 py-2.5 hover:bg-white/[0.03] transition-colors">
+                           <span class="text-white font-medium">DOGE/USDT</span>
+                           <div class="flex gap-4"><span class="text-muted">18 trades</span><span class="text-down font-bold">-$420</span></div>
+                       </div>
+                   </div>
+               </div>
+
+               <!-- Entry/Exit Tag Analysis -->
+               <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
+                   <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40 shrink-0">
+                       <span class="section-title">Entry Tags</span>
+                       <span class="text-[10px] text-muted font-mono">Top 4</span>
+                   </div>
+                   <div class="font-mono text-[11px]">
+                       <div class="flex items-center justify-between px-4 py-2 hover:bg-white/[0.03]">
+                           <span class="text-white/70">rsi_oversold</span>
+                           <div class="flex gap-3"><span class="text-muted">412</span><span class="text-up">74% win</span><span class="text-up font-bold">+$4,210</span></div>
+                       </div>
+                       <div class="flex items-center justify-between px-4 py-2 hover:bg-white/[0.03] bg-white/[0.015]">
+                           <span class="text-white/70">ema_cross</span>
+                           <div class="flex gap-3"><span class="text-muted">284</span><span class="text-up">68% win</span><span class="text-up font-bold">+$2,100</span></div>
+                       </div>
+                       <div class="flex items-center justify-between px-4 py-2 hover:bg-white/[0.03]">
+                           <span class="text-white/70">bb_squeeze</span>
+                           <div class="flex gap-3"><span class="text-muted">156</span><span class="text-muted">52% win</span><span class="text-up font-bold">+$340</span></div>
+                       </div>
+                       <div class="flex items-center justify-between px-4 py-2 hover:bg-white/[0.03] bg-white/[0.015]">
+                           <span class="text-white/70">vol_breakout</span>
+                           <div class="flex gap-3"><span class="text-muted">98</span><span class="text-down">38% win</span><span class="text-down font-bold">-$680</span></div>
+                       </div>
+                   </div>
+                   <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40">
+                       <span class="section-title">Exit Reasons</span>
+                   </div>
+                   <div class="font-mono text-[11px]">
+                       <div class="flex items-center justify-between px-4 py-2 hover:bg-white/[0.03]">
+                           <span class="text-white/70">trailing_stop</span>
+                           <div class="flex gap-3"><span class="text-muted">520</span><span class="text-up">82% win</span><span class="text-up font-bold">+$8,400</span></div>
+                       </div>
+                       <div class="flex items-center justify-between px-4 py-2 hover:bg-white/[0.03] bg-white/[0.015]">
+                           <span class="text-white/70">roi</span>
+                           <div class="flex gap-3"><span class="text-muted">340</span><span class="text-up">100%</span><span class="text-up font-bold">+$5,210</span></div>
+                       </div>
+                       <div class="flex items-center justify-between px-4 py-2 hover:bg-white/[0.03]">
+                           <span class="text-white/70">stoploss</span>
+                           <div class="flex gap-3"><span class="text-muted">310</span><span class="text-down">0%</span><span class="text-down font-bold">-$6,200</span></div>
+                       </div>
+                       <div class="flex items-center justify-between px-4 py-2 hover:bg-white/[0.03] bg-white/[0.015]">
+                           <span class="text-white/70">exit_signal</span>
+                           <div class="flex gap-3"><span class="text-muted">114</span><span class="text-up">61% win</span><span class="text-up font-bold">+$1,530</span></div>
+                       </div>
+                   </div>
+               </div>
+
+               <!-- System Telemetry -->
+               <div class="bg-surface l-bd rounded-md p-4 flex flex-col gap-4 shadow-xl">
+                   <span class="section-title">Node Telemetry</span>
                    <div>
-                       <div class="flex justify-between text-[12px] font-mono mb-2"><span class="text-muted">RAM Utilization</span> <span class="text-yellow-400 font-medium">82%</span></div>
-                       <div class="h-2 w-full bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-yellow-400 rounded-full" style="width: 82%"></div></div>
+                       <div class="flex justify-between text-[12px] font-mono mb-1.5"><span class="text-muted">CPU</span> <span class="text-white font-medium">14%</span></div>
+                       <div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-white/70 rounded-full" style="width: 14%"></div></div>
+                   </div>
+                   <div>
+                       <div class="flex justify-between text-[12px] font-mono mb-1.5"><span class="text-muted">RAM</span> <span class="text-yellow-400 font-medium">82%</span></div>
+                       <div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-yellow-400 rounded-full" style="width: 82%"></div></div>
+                   </div>
+                   <div class="grid grid-cols-2 gap-3 text-[11px] font-mono">
+                       <div class="flex justify-between"><span class="text-muted">Binance</span><span class="text-up">32ms</span></div>
+                       <div class="flex justify-between"><span class="text-muted">Kraken</span><span class="text-up">45ms</span></div>
+                       <div class="flex justify-between"><span class="text-muted">FT Process</span><span class="text-white/70">1.2s ago</span></div>
+                       <div class="flex justify-between"><span class="text-muted">DB Sync</span><span class="text-up">OK</span></div>
                    </div>
                </div>
 
                <!-- Live Event Logs Terminal -->
-               <div class="flex-1 bg-black l-bd rounded-md flex flex-col shadow-xl overflow-hidden p-3 font-mono text-[11px] leading-relaxed text-muted">
+               <div class="flex-1 bg-black l-bd rounded-md flex flex-col shadow-xl overflow-hidden p-3 font-mono text-[11px] leading-relaxed text-muted min-h-[160px]">
                    <div class="flex justify-between items-center mb-3 px-1">
                        <span class="section-title text-white/50">Terminal StdOut</span>
                        <span class="flex items-center gap-1.5 text-green-400 text-[11px]"><div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div> Streaming</span>

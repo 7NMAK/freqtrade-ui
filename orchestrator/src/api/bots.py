@@ -1857,10 +1857,14 @@ async def bot_hyperopt_runs(bot_id: int, request: Request, db: AsyncSession = De
     try:
         dk = docker.from_env()
         container = dk.containers.get(bot.container_id or bot.name)
-        result = container.exec_run(
-            ["find", "/freqtrade/user_data/hyperopt_results/", "-name", "*.fthypt", "-printf", "%f\\t%s\\t%T@\\n"],
-            detach=False,
+        # Single command: get filename, size, mtime, line count for ALL .fthypt files in one exec
+        sh_cmd = (
+            'for f in /freqtrade/user_data/hyperopt_results/*.fthypt; do '
+            '[ -f "$f" ] && printf "%s\\t%s\\t%s\\t%s\\n" '
+            '"$(basename "$f")" "$(stat -c %s "$f")" "$(stat -c %Y "$f")" "$(wc -l < "$f")"; '
+            'done'
         )
+        result = container.exec_run(["sh", "-c", sh_cmd], detach=False)
         if result.exit_code != 0:
             return {"runs": []}
         runs: list[dict[str, Any]] = []
@@ -1868,24 +1872,16 @@ async def bot_hyperopt_runs(bot_id: int, request: Request, db: AsyncSession = De
             if not line.strip():
                 continue
             parts = line.split("\t")
-            if len(parts) < 3:
+            if len(parts) < 4:
                 continue
             filename = parts[0]
             size_bytes = int(parts[1]) if parts[1].isdigit() else 0
             mtime = float(parts[2]) if parts[2].replace(".", "").isdigit() else 0
-            # Parse strategy name and date from filename: strategy_StrategyName_YYYY-MM-DD_HH-MM-SS.fthypt
+            epoch_count = int(parts[3].strip()) if parts[3].strip().isdigit() else 0
+            # Parse strategy name and date from filename
             m = re.match(r"strategy_(.+?)_(\d{4}-\d{2}-\d{2})_(\d{2})-(\d{2})-(\d{2})\.fthypt", filename)
             strategy_name = m.group(1) if m else filename
             created_str = f"{m.group(2)} {m.group(3)}:{m.group(4)}:{m.group(5)}" if m else ""
-            # Count epochs by counting lines in file
-            count_result = container.exec_run(
-                ["wc", "-l", f"/freqtrade/user_data/hyperopt_results/{filename}"],
-                detach=False,
-            )
-            epoch_count = 0
-            if count_result.exit_code == 0:
-                count_str = count_result.output.decode("utf-8", errors="replace").strip().split()[0]
-                epoch_count = int(count_str) if count_str.isdigit() else 0
             runs.append({
                 "filename": filename,
                 "strategy": strategy_name,

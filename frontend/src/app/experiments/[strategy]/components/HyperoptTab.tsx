@@ -110,6 +110,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
 
   // ── History State ─────────────────────────────────────────────
   const [hoRuns, setHoRuns] = useState<HyperoptRun[]>([]);
+  const [hoConfirmDelete, setHoConfirmDelete] = useState<string | null>(null);
   const CACHE_KEY = `ho-results-${strategy}`;
 
   // ── Log State ───────────────────────────────────────────────────
@@ -224,16 +225,25 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
 
   // ── Delete a hyperopt run ────────────────────────────────────────
   const handleDeleteRun = useCallback(async (filename: string) => {
-    if (!confirm(`Delete hyperopt run "${filename}"?`)) return;
     try {
       await botHyperoptHistoryDelete(botId, filename);
       toast.success('Hyperopt run deleted');
       addLog('INFO', `Deleted hyperopt run: ${filename}`);
+      // Clear results and cache since the source file is gone
+      setResults([]);
+      try { sessionStorage.removeItem(CACHE_KEY); } catch { /* */ }
       fetchRuns();
     } catch (err) {
       toast.error(`Delete failed: ${err instanceof Error ? err.message : String(err)}`);
     }
-  }, [botId, toast, addLog, fetchRuns]);
+  }, [botId, toast, addLog, fetchRuns, CACHE_KEY]);
+
+  // Auto-reset confirm after 3s
+  useEffect(() => {
+    if (!hoConfirmDelete) return;
+    const t = setTimeout(() => setHoConfirmDelete(null), 3000);
+    return () => clearTimeout(t);
+  }, [hoConfirmDelete]);
 
   // ── Mount: load from cache first, then fetch from API ───────────
   useEffect(() => {
@@ -1022,23 +1032,35 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
               <span className="text-xs font-semibold text-foreground">Hyperopt History ({hoRuns.length})</span>
             </div>
             <div className="flex flex-col gap-0.5">
-              {hoRuns.map((run) => (
-                <div
-                  key={run.filename}
-                  className="flex items-center gap-3 px-4 py-2 text-xs hover:bg-muted/30 transition-colors group"
-                >
-                  <span className="text-muted-foreground shrink-0">{run.created_at || new Date(run.mtime * 1000).toLocaleString()}</span>
-                  <span className="font-mono text-muted-foreground">{run.epochs} epochs</span>
-                  <span className="text-muted-foreground truncate flex-1">{run.strategy.replace('_HO_', '')}</span>
-                  <button
-                    onClick={() => handleDeleteRun(run.filename)}
-                    className="text-rose-400/60 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all text-sm"
-                    title="Delete this run"
+              {hoRuns.map((run) => {
+                const isConfirming = hoConfirmDelete === run.filename;
+                return (
+                  <div
+                    key={run.filename}
+                    className="flex items-center gap-3 px-4 py-2 text-xs hover:bg-muted/30 transition-colors group"
                   >
-                    🗑
-                  </button>
-                </div>
-              ))}
+                    <span className="text-muted-foreground shrink-0">{run.created_at || new Date(run.mtime * 1000).toLocaleString()}</span>
+                    <span className="font-mono text-muted-foreground">{run.epochs} epochs</span>
+                    <span className="text-muted-foreground truncate flex-1">{run.strategy.replace('_HO_', '')}</span>
+                    {isConfirming ? (
+                      <button
+                        onClick={() => { setHoConfirmDelete(null); handleDeleteRun(run.filename); }}
+                        className="text-[10px] px-1.5 py-0.5 bg-rose-500/20 border border-rose-500/50 text-rose-400 rounded hover:bg-rose-500/30 transition-all shrink-0 animate-pulse"
+                      >
+                        Confirm?
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setHoConfirmDelete(run.filename)}
+                        className="text-rose-400/60 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all text-sm"
+                        title="Delete this run"
+                      >
+                        🗑
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

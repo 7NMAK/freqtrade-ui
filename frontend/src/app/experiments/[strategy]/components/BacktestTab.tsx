@@ -439,7 +439,15 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete }: {
   onDelete: (entry: HistoryEntry) => void;
 }) {
   const [page, setPage] = useState(1);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
   const perPage = 10;
+
+  // Auto-reset confirm after 3s
+  useEffect(() => {
+    if (!confirmId) return;
+    const t = setTimeout(() => setConfirmId(null), 3000);
+    return () => clearTimeout(t);
+  }, [confirmId]);
 
   // Filter to current strategy, most recent first
   const filtered = entries
@@ -460,9 +468,11 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete }: {
         {paged.map((entry) => {
           const startTs = entry.backtest_start_ts ? new Date(entry.backtest_start_ts * 1000).toISOString().split("T")[0] : "?";
           const endTs = entry.backtest_end_ts ? new Date(entry.backtest_end_ts * 1000).toISOString().split("T")[0] : "?";
+          const entryKey = `${entry.filename}-${entry.run_id}`;
+          const isConfirming = confirmId === entryKey;
           return (
             <div
-              key={`${entry.filename}-${entry.run_id}`}
+              key={entryKey}
               className="flex items-center gap-2 px-3 py-2 bg-muted/30 border border-border rounded-lg text-xs hover:bg-muted/60 hover:border-primary/30 transition-all group"
             >
               <button
@@ -474,13 +484,22 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete }: {
                 <span className="text-muted-foreground truncate flex-1">{startTs} → {endTs}</span>
                 <span className="text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0">Load →</span>
               </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); onDelete(entry); }}
-                className="text-rose-400/60 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all text-sm shrink-0"
-                title="Delete this backtest"
-              >
-                🗑
-              </button>
+              {isConfirming ? (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirmId(null); onDelete(entry); }}
+                  className="text-[10px] px-1.5 py-0.5 bg-rose-500/20 border border-rose-500/50 text-rose-400 rounded hover:bg-rose-500/30 transition-all shrink-0 animate-pulse"
+                >
+                  Confirm?
+                </button>
+              ) : (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirmId(entryKey); }}
+                  className="text-rose-400/60 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all text-sm shrink-0"
+                  title="Delete this backtest"
+                >
+                  🗑
+                </button>
+              )}
             </div>
           );
         })}
@@ -563,15 +582,19 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
 
   // Delete a backtest history entry
   const handleDeleteHistory = useCallback(async (entry: HistoryEntry) => {
-    if (!confirm(`Delete backtest "${entry.filename}"?`)) return;
     try {
       await botBacktestHistoryDelete(backtestBotId, entry.filename);
       toast.success('Backtest deleted');
+      // Clear displayed result if it came from the deleted file
+      if (btResult) {
+        setBtResult(null);
+        try { sessionStorage.removeItem(BT_CACHE_KEY); } catch { /* */ }
+      }
       fetchHistory();
     } catch (err) {
       toast.error(`Delete failed: ${err instanceof Error ? err.message : String(err)}`);
     }
-  }, [backtestBotId, toast, fetchHistory]);
+  }, [backtestBotId, toast, fetchHistory, btResult, BT_CACHE_KEY]);
 
   // Auto-load: cache first, then fetch history and auto-load latest
   useEffect(() => {

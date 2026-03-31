@@ -43,25 +43,6 @@
   .kpi-label { font-size: 11px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; margin-bottom: 4px; }
   .kpi-value { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
   .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9CA3AF; }
-
-  /* Bot control bar */
-  .bot-ctrl { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 5px; background: #1a1a1a; border: 1px solid rgba(255,255,255,0.10); color: #9CA3AF; transition: all 0.15s; cursor: pointer; }
-  .bot-ctrl:hover { background: #2a2a2a; color: #F5F5F5; border-color: rgba(255,255,255,0.20); }
-  .bot-ctrl.ctrl-start:hover { color: #22c55e; border-color: rgba(34,197,94,0.3); }
-  .bot-ctrl.ctrl-stop:hover { color: #ef4444; border-color: rgba(239,68,68,0.3); }
-  .bot-ctrl.ctrl-pause:hover { color: #eab308; border-color: rgba(234,179,8,0.3); }
-
-  /* Action dropdown */
-  .action-menu { position: relative; display: inline-block; }
-  .action-menu-btn { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.10); padding: 4px 10px; border-radius: 5px; color: #9CA3AF; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 5px; }
-  .action-menu-btn:hover { background: #2a2a2a; color: #F5F5F5; }
-  .action-dropdown { display: none; position: absolute; right: 0; bottom: 100%; margin-bottom: 4px; min-width: 200px; background: #151515; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 4px; z-index: 40; box-shadow: 0 -8px 30px rgba(0,0,0,0.6); }
-  .action-dropdown.open { display: block; animation: fadeIn 0.15s; }
-  .action-dropdown button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; font-size: 12px; color: #d4d4d8; background: transparent; border: none; border-radius: 5px; cursor: pointer; transition: background 0.1s; text-align: left; font-family: 'Inter', sans-serif; }
-  .action-dropdown button:hover { background: rgba(255,255,255,0.06); color: #fff; }
-  .action-dropdown button.danger { color: #ef4444; }
-  .action-dropdown button.danger:hover { background: rgba(239,68,68,0.1); }
-  .action-dropdown .sep { height: 1px; background: rgba(255,255,255,0.06); margin: 4px 8px; }
 </style>
 </head>
 <body class="w-screen h-screen flex relative overflow-hidden">
@@ -209,13 +190,9 @@
                                <div class="flex gap-[2px] h-4 items-end">
                                   <div class="w-1.5 bg-up h-[40%] rounded-sm"></div><div class="w-1.5 bg-up h-[60%] rounded-sm"></div><div class="w-1.5 bg-down h-[20%] rounded-sm"></div><div class="w-1.5 bg-up h-[100%] rounded-sm"></div><div class="w-1.5 bg-up h-[80%] rounded-sm"></div>
                                </div>
-                               <div class="flex gap-1">
-                                   <button class="bot-ctrl ctrl-start" title="Start" onclick="event.stopPropagation()"><i data-lucide="play" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl ctrl-stop" title="Stop" onclick="event.stopPropagation()"><i data-lucide="square" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl ctrl-pause" title="Pause" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl" title="Reload Config" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl ctrl-stop" title="Force Exit All" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl" title="Stopbuy" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-3 h-3"></i></button>
+                               <div class="flex gap-1.5">
+                                   <button class="bg-black border border-white/12 px-2 py-1 rounded hover:bg-down hover:text-white transition-colors" title="/stopbuy"><i data-lucide="pause" class="w-3 h-3 inline"></i></button>
+                                   <button class="bg-black border border-white/12 px-2 py-1 rounded hover:bg-down hover:text-white transition-colors" title="/stop"><i data-lucide="square" class="w-3 h-3 inline"></i></button>
                                </div>
                            </div>
                        </div>
@@ -240,13 +217,9 @@
                                <div class="flex gap-[2px] h-4 items-end">
                                   <div class="w-1.5 bg-down h-[60%] rounded-sm"></div><div class="w-1.5 bg-up h-[20%] rounded-sm"></div><div class="w-1.5 bg-down h-[100%] rounded-sm"></div><div class="w-1.5 bg-down h-[80%] rounded-sm"></div><div class="w-1.5 bg-up h-[30%] rounded-sm"></div>
                                </div>
-                               <div class="flex gap-1">
-                                   <button class="bot-ctrl ctrl-start" title="Start" onclick="event.stopPropagation()"><i data-lucide="play" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl ctrl-stop" title="Stop" onclick="event.stopPropagation()"><i data-lucide="square" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl ctrl-pause" title="Pause" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl" title="Reload Config" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl ctrl-stop" title="Force Exit All" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl" title="Stopbuy" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-3 h-3"></i></button>
+                               <div class="flex gap-1.5">
+                                   <button class="bg-black border border-white/12 px-2 py-1 rounded hover:bg-down hover:text-white transition-colors" title="/stopbuy"><i data-lucide="pause" class="w-3 h-3 inline"></i></button>
+                                   <button class="bg-black border border-white/12 px-2 py-1 rounded hover:bg-down hover:text-white transition-colors" title="/stop"><i data-lucide="square" class="w-3 h-3 inline"></i></button>
                                </div>
                            </div>
                        </div>
@@ -262,92 +235,30 @@
           <div class="flex-1 flex flex-col gap-5 min-w-0">
               
               <!-- Huge Graphic Visualizations -->
-              <div class="h-[280px] bg-surface l-bd rounded-md flex shadow-xl shrink-0 overflow-hidden relative">
-                  <!-- Profit Over Time: Bars + Thin Line -->
-                  <div class="flex-1 flex flex-col relative border-r border-white/8">
-                       <div class="flex items-center justify-between px-5 py-3 shrink-0">
-                           <h3 class="section-title text-white/50">Profit Over Time</h3>
-                           <div class="flex gap-0">
-                               <button class="px-3 py-1 text-[10px] font-bold uppercase bg-white/10 text-white rounded-l">Days</button>
-                               <button class="px-3 py-1 text-[10px] font-bold uppercase text-muted hover:text-white l-bd border-l-0 transition-colors">Weeks</button>
-                               <button class="px-3 py-1 text-[10px] font-bold uppercase text-muted hover:text-white l-bd border-l-0 rounded-r transition-colors">Months</button>
-                               <div class="w-3"></div>
-                               <button class="px-3 py-1 text-[10px] font-bold uppercase bg-up/15 text-up rounded-l border border-up/25">Abs $</button>
-                               <button class="px-3 py-1 text-[10px] font-bold uppercase text-muted l-bd border-l-0 rounded-r hover:text-white transition-colors">Rel %</button>
-                           </div>
-                       </div>
-                       <div class="flex-1 px-5 pb-4 relative">
-                           <div class="absolute inset-0 l-grid opacity-20"></div>
-                           <!-- Y-axis labels -->
-                           <div class="absolute left-1 top-0 bottom-4 flex flex-col justify-between text-[9px] font-mono text-white/25">
-                               <span>40</span><span>20</span><span>0</span><span>-20</span><span>-40</span>
-                           </div>
-                           <!-- Bars + Line overlay -->
-                           <svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 200 100">
-                               <!-- Zero line -->
-                               <line x1="0" y1="50" x2="200" y2="50" stroke="rgba(255,255,255,0.08)" stroke-width="0.5" stroke-dasharray="3,3"/>
-                               <!-- Trade count bars (semi-transparent) -->
-                               <rect x="4"  y="48" width="5" height="4" rx="0.5" fill="rgba(255,255,255,0.12)"/>
-                               <rect x="18" y="46" width="5" height="8" rx="0.5" fill="rgba(255,255,255,0.12)"/>
-                               <rect x="32" y="48" width="5" height="4" rx="0.5" fill="rgba(255,255,255,0.12)"/>
-                               <rect x="46" y="48" width="5" height="4" rx="0.5" fill="rgba(255,255,255,0.12)"/>
-                               <rect x="60" y="48" width="5" height="4" rx="0.5" fill="rgba(255,255,255,0.12)"/>
-                               <rect x="74" y="48" width="5" height="4" rx="0.5" fill="rgba(255,255,255,0.12)"/>
-                               <rect x="88" y="48" width="5" height="4" rx="0.5" fill="rgba(255,255,255,0.12)"/>
-                               <rect x="102" y="48" width="5" height="4" rx="0.5" fill="rgba(255,255,255,0.12)"/>
-                               <rect x="116" y="48" width="5" height="4" rx="0.5" fill="rgba(255,255,255,0.12)"/>
-                               <rect x="130" y="42" width="5" height="16" rx="0.5" fill="rgba(255,255,255,0.18)"/>
-                               <rect x="144" y="38" width="5" height="24" rx="0.5" fill="rgba(255,255,255,0.18)"/>
-                               <rect x="158" y="30" width="5" height="40" rx="0.5" fill="rgba(255,255,255,0.22)"/>
-                               <rect x="172" y="35" width="5" height="30" rx="0.5" fill="rgba(255,255,255,0.18)"/>
-                               <rect x="186" y="40" width="5" height="20" rx="0.5" fill="rgba(255,255,255,0.15)"/>
-                               <!-- P&L thin line with dots -->
-                               <polyline points="7,50 21,50 35,50 49,50 63,50 77,50 91,50 105,50 119,48 133,55 147,72 161,30 175,38 189,25" fill="none" stroke="#22c55e" stroke-width="1.2" stroke-linejoin="round"/>
-                               <!-- Dots on the line -->
-                               <circle cx="7" cy="50" r="2" fill="#22c55e"/>
-                               <circle cx="21" cy="50" r="2" fill="#22c55e"/>
-                               <circle cx="35" cy="50" r="2" fill="#22c55e"/>
-                               <circle cx="49" cy="50" r="2" fill="#22c55e"/>
-                               <circle cx="63" cy="50" r="2" fill="#22c55e"/>
-                               <circle cx="77" cy="50" r="2" fill="#22c55e"/>
-                               <circle cx="91" cy="50" r="2" fill="#22c55e"/>
-                               <circle cx="105" cy="50" r="2" fill="#22c55e"/>
-                               <circle cx="119" cy="48" r="2" fill="#22c55e"/>
-                               <circle cx="133" cy="55" r="2" fill="#ef4444"/>
-                               <circle cx="147" cy="72" r="2" fill="#ef4444"/>
-                               <circle cx="161" cy="30" r="2" fill="#22c55e"/>
-                               <circle cx="175" cy="38" r="2" fill="#ef4444"/>
-                               <circle cx="189" cy="25" r="2" fill="#22c55e"/>
-                           </svg>
-                           <!-- X-axis -->
-                           <div class="flex justify-between text-[9px] font-mono text-white/25 mt-1">
-                               <span>03-12</span><span>03-15</span><span>03-18</span><span>03-21</span><span>03-24</span><span>03-27</span><span>03-30</span>
-                           </div>
-                       </div>
+              <div class="h-[260px] bg-surface l-bd rounded-md flex shadow-xl shrink-0 overflow-hidden relative">
+                  <!-- Spline / Area Chart -->
+                  <div class="flex-1 p-5 relative border-r border-white/8 bg-gradient-to-t from-up/5 to-transparent">
+                       <h3 class="absolute top-5 left-5 section-title text-white/50">Global P&L Curve</h3>
+                       <div class="absolute inset-0 l-grid opacity-30"></div>
+                       <svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
+                           <path d="M0,80 L20,70 L40,50 L60,45 L80,20 L100,25" fill="none" stroke="#22c55e" stroke-width="1.5"></path>
+                       </svg>
                   </div>
-                  <!-- Profit Distribution (histogram bars) -->
-                  <div class="w-[300px] flex flex-col relative bg-black/20">
-                      <div class="px-5 py-3 shrink-0"><h3 class="section-title text-white/50">Profit Distribution</h3></div>
-                      <div class="flex-1 px-5 pb-4 flex items-end gap-[3px]">
-                          <div class="flex-1 bg-down/60 rounded-t" style="height:18%"></div>
-                          <div class="flex-1 bg-down/40 rounded-t" style="height:5%"></div>
-                          <div class="flex-1 bg-down/30 rounded-t" style="height:2%"></div>
-                          <div class="flex-1 bg-down/20 rounded-t" style="height:0%"></div>
-                          <div class="flex-1 bg-down/20 rounded-t" style="height:0%"></div>
-                          <div class="flex-1 bg-white/8 rounded-t" style="height:0%"></div>
-                          <div class="flex-1 bg-up/20 rounded-t" style="height:12%"></div>
-                          <div class="flex-1 bg-up/30 rounded-t" style="height:0%"></div>
-                          <div class="flex-1 bg-up/40 rounded-t" style="height:5%"></div>
-                          <div class="flex-1 bg-up/60 rounded-t" style="height:0%"></div>
-                          <div class="flex-1 bg-up/80 rounded-t" style="height:100%"></div>
+                  <!-- Volume / Drawdown Chart -->
+                  <div class="w-[320px] p-5 relative bg-black/20">
+                      <h3 class="section-title text-white/50 mb-5">Drawdown Depth</h3>
+                      <div class="h-12 w-full mb-5 flex items-end gap-[2px]">
+                          <div class="w-full bg-down/30 rounded-t h-[10%]"></div>
+                          <div class="w-full bg-down/50 rounded-t h-[30%]"></div>
+                          <div class="w-full bg-down rounded-t h-[80%]"></div>
+                          <div class="w-full bg-down/50 rounded-t h-[40%]"></div>
+                          <div class="w-full bg-down/20 rounded-t h-[5%]"></div>
                       </div>
-                      <div class="flex justify-between text-[9px] font-mono text-white/25 px-5 pb-2">
-                          <span>-0.02</span><span>0</span><span>+0.01</span>
-                      </div>
-                      <div class="px-5 pb-4 grid grid-cols-2 gap-4">
+                      
+                      <div class="grid grid-cols-2 gap-5">
                            <div>
                                <div class="kpi-label">Absolute DD</div>
-                               <div class="text-base font-bold font-mono text-down">-$5,210</div>
+                               <div class="text-base font-bold font-mono text-down">-$5,210.00</div>
                            </div>
                            <div>
                                <div class="kpi-label">Relative DD</div>
@@ -399,19 +310,8 @@
                                    <td class="px-5 py-3 text-right bg-up/5 text-up">+$445.10</td>
                                    <td class="px-5 py-3 text-muted">14h 22m</td>
                                    <td class="px-5 py-3 border-l border-white/8 text-center opacity-40 group-hover:opacity-100 transition-opacity">
-                                       <div class="action-menu">
-                                           <button class="action-menu-btn" onclick="toggleActionMenu(this, event)"><i data-lucide="chevron-down" class="w-3 h-3"></i> Actions</button>
-                                           <div class="action-dropdown">
-                                               <button onclick="event.stopPropagation()"><i data-lucide="log-out" class="w-3.5 h-3.5 text-muted"></i> Forceexit limit</button>
-                                               <button onclick="event.stopPropagation()"><i data-lucide="zap" class="w-3.5 h-3.5 text-muted"></i> Forceexit market</button>
-                                               <button onclick="event.stopPropagation()"><i data-lucide="scissors" class="w-3.5 h-3.5 text-muted"></i> Forceexit partial</button>
-                                               <div class="sep"></div>
-                                               <button onclick="event.stopPropagation()"><i data-lucide="plus-circle" class="w-3.5 h-3.5 text-muted"></i> Increase position</button>
-                                               <button onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-muted"></i> Reload</button>
-                                               <div class="sep"></div>
-                                               <button class="danger" onclick="event.stopPropagation()"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete trade</button>
-                                           </div>
-                                       </div>
+                                       <button class="bg-black l-bd hover:bg-down hover:text-white text-down px-2.5 py-1 rounded uppercase font-bold text-[10px] transition-colors">FORCE EXIT</button>
+                                       <button class="bg-black l-bd hover:bg-white/10 px-2.5 py-1 rounded text-[10px] ml-1.5 transition-colors">TRAIL</button>
                                    </td>
                                </tr>
                                <tr class="hover:bg-white/[0.04] transition-colors group bg-white/[0.015]">
@@ -426,19 +326,8 @@
                                    <td class="px-5 py-3 text-right bg-down/5 text-down">-$12.50</td>
                                    <td class="px-5 py-3 text-muted">16h 45m</td>
                                    <td class="px-5 py-3 border-l border-white/8 text-center opacity-40 group-hover:opacity-100 transition-opacity">
-                                       <div class="action-menu">
-                                           <button class="action-menu-btn" onclick="toggleActionMenu(this, event)"><i data-lucide="chevron-down" class="w-3 h-3"></i> Actions</button>
-                                           <div class="action-dropdown">
-                                               <button onclick="event.stopPropagation()"><i data-lucide="log-out" class="w-3.5 h-3.5 text-muted"></i> Forceexit limit</button>
-                                               <button onclick="event.stopPropagation()"><i data-lucide="zap" class="w-3.5 h-3.5 text-muted"></i> Forceexit market</button>
-                                               <button onclick="event.stopPropagation()"><i data-lucide="scissors" class="w-3.5 h-3.5 text-muted"></i> Forceexit partial</button>
-                                               <div class="sep"></div>
-                                               <button onclick="event.stopPropagation()"><i data-lucide="plus-circle" class="w-3.5 h-3.5 text-muted"></i> Increase position</button>
-                                               <button onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-muted"></i> Reload</button>
-                                               <div class="sep"></div>
-                                               <button class="danger" onclick="event.stopPropagation()"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete trade</button>
-                                           </div>
-                                       </div>
+                                       <button class="bg-black l-bd hover:bg-down hover:text-white text-down px-2.5 py-1 rounded uppercase font-bold text-[10px] transition-colors">FORCE EXIT</button>
+                                       <button class="bg-black l-bd hover:bg-white/10 px-2.5 py-1 rounded text-[10px] ml-1.5 transition-colors">TRAIL</button>
                                    </td>
                                </tr>
                            </tbody>

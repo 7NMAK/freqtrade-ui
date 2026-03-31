@@ -180,7 +180,12 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
             params: (r.params as Record<string, unknown>) ?? undefined,
           };
         });
-        setResults(mapped);
+        // Merge API results with existing (don't wipe locally-extracted results)
+        setResults(prev => {
+          const existingIds = new Set(prev.map(r => `${r.sampler}-${r.lossFunction}-${r.startedAt}`));
+          const newOnes = mapped.filter(r => !existingIds.has(`${r.sampler}-${r.lossFunction}-${r.startedAt}`));
+          return newOnes.length > 0 ? [...prev, ...newOnes] : prev;
+        });
       }
     } catch {
       // No results yet — that's fine

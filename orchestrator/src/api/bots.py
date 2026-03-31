@@ -1878,8 +1878,9 @@ async def bot_hyperopt_start(bot_id: int, body: dict[str, Any], request: Request
         cmd += ["--spaces"] + list(body["spaces"])
     if body.get("jobs"):
         cmd += ["-j", str(body["jobs"])]
-    if body.get("hyperopt_loss"):
-        cmd += ["--hyperopt-loss", body["hyperopt_loss"]]
+    loss_val = body.get("hyperopt_loss") or body.get("loss")
+    if loss_val:
+        cmd += ["--hyperopt-loss", loss_val]
     if body.get("min_trades"):
         cmd += ["--min-trades", str(body["min_trades"])]
     if body.get("timerange"):

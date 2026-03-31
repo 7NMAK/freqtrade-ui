@@ -425,6 +425,7 @@ Key categorical columns also have `th.filterable` — a visible **▼ triangle**
 | Whitelist Matrix | `Pair monitoring and lock management` |
 | Performance | `Performance by trading pair` |
 | Entry / Exit | `Entry and exit tag analysis` |
+→ **Split into two separate tabs**: `Entry Tags` and `Exit Reasons`
 
 ### Tab 1: Open Trades
 Source: `GET /api/v1/status` (per bot, aggregated)
@@ -499,35 +500,56 @@ Returns `FTPerformance[]` per bot, aggregate by pair across all bots.
 | Avg Profit | `profit / count` |
 | Total Fees | Summed from individual trades |
 
-### Tab 5: Entry / Exit Tags
-Sources: `botEntries(botId)` → `GET /api/bots/{id}/entries`, `botExits(botId)` → `GET /api/bots/{id}/exits`
+### Tab 5: Entry Tags
+Source: `botEntries(botId)` → `GET /api/bots/{id}/entries`
 
-
-**Split-view layout**: Entry Tags (left half) | Exit Reasons (right half)
-
-Each side shows:
+Full-width table with expanded performance columns:
 
 | Column | Field |
 |---|---|
-| Tag / Reason | `enter_tag` or `exit_reason` |
-| Count | `entries` or `exits` |
+| Tag | `enter_tag` |
+| Trades | `entries` |
 | Wins | `wins` |
 | Losses | `losses` |
 | Win Rate | `winrate` |
-| Profit | `profit_abs` |
+| Avg P&L % | `profit / entries` |
+| Total P&L | `profit_abs` |
+| Avg Duration | Calculated from trade data |
+| Best Pair | Pair with highest profit for this tag |
+| Expectancy | `(winrate × avg_win) - ((1-winrate) × avg_loss)` |
+
+### Tab 6: Exit Reasons
+Source: `botExits(botId)` → `GET /api/bots/{id}/exits`
+
+Full-width table with same expanded columns:
+
+| Column | Field |
+|---|---|
+| Reason | `exit_reason` |
+| Exits | `exits` |
+| Wins | `wins` |
+| Losses | `losses` |
+| Win Rate | `winrate` |
+| Avg P&L % | `profit / exits` |
+| Total P&L | `profit_abs` |
+| Avg Duration | Calculated from trade data |
+| Best Pair | Pair with highest profit for this reason |
+| Expectancy | `(winrate × avg_win) - ((1-winrate) × avg_loss)` |
 
 ---
 
 ## Section 5: Sidebar (Col 3, 320px)
 
+ID: `#dash-col-sidebar` — scrollable independently (`overflow-y-auto min-h-0`)
+
 ### Widget 1: Balance Breakdown
 Source: `GET /api/v1/balance`
 
-Shows each currency:
-- Symbol (USDT, BTC, ETH, SOL)
-- Amount (`free` or `balance`)
-- Fiat equivalent (`est_stake` × price)
-- Starting capital from `balance.starting_capital`
+Layout per row: `[Symbol 40px] [USD value bold] [coin amount right-aligned muted]`
+- USDT: shows `$82,330.80` with `free` right-aligned
+- BTC: shows `$31,420` with `0.4821` right-aligned (30% opacity)
+- ETH, SOL: same pattern
+- Starting Capital row at bottom (no separator line)
 
 ### Widget 2: Fees & Costs
 Source: Calculated from `FTTrade` data + `FTStats`
@@ -904,6 +926,30 @@ function toggleSidebar()
 | `page-dashboard` | Control Room | Sidebar nav (default) | KPI bar + 3-column layout |
 | `page-fleet` | Fleet Management | Compare View button in Col 1 | 15-column comparison table |
 | `page-experiments` | Experiments Matrix | Sidebar nav | 5 tabs: Backtest, Hyperopt, FreqAI, AI Review, Validation |
+
+---
+
+## Responsive Breakpoints
+
+| Breakpoint | Fleet Col | Sidebar | KPIs | Drawer | Notes |
+|---|---|---|---|---|---|
+| **≥1600px** | 400px | 320px | 7-col, full size | `--drawer-left: 680px` | Full layout |
+| **≤1440px** | 320px | 260px | 7-col, compact | `--drawer-left: 600px` | Shrunk columns |
+| **≤1280px** | 280px | **hidden** | 4-col | `--drawer-left: 500px` | Sidebar removed |
+| **≤1024px** | 100% | **hidden** | 3-col | `--drawer-left: 0` | Stacked layout |
+
+### Column IDs for CSS Targeting
+- `#dash-col-fleet` — Bot Fleet column
+- `#dash-col-center` — Main workspace (charts + trade engine)
+- `#dash-col-sidebar` — Right sidebar (Balance, Fees, Telemetry, Terminal)
+
+### Drawer Position
+`toggleSidebar()` calculates `--drawer-left` dynamically:
+```
+left = sidebarWidth(56|240) + padding(20) + fleet.offsetWidth + gap(20)
+```
+
+---
 
 ## Reference Files
 

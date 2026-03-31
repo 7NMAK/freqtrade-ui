@@ -84,14 +84,14 @@
   <!-- BOT DRAWER (responsive full-width overlay) -->
   <aside id="bot-drawer" class="drawer">
       <!-- HEADER -->
-      <div class="p-5 l-b bg-black flex flex-col gap-3 shrink-0">
+      <div class="p-4 pb-3 l-b bg-black flex flex-col gap-3 shrink-0">
           <div class="flex justify-between items-start">
               <div>
-                  <div class="flex items-center gap-2.5 mb-1.5">
+                  <div class="flex items-center gap-2.5 mb-1">
                       <h2 id="drawer-bot-name" class="text-base font-bold tracking-tight text-white font-mono">TrendFollowerV3_BTC</h2>
                       <span id="drawer-bot-mode" class="px-1.5 py-[2px] bg-up/15 text-up border border-up/25 text-[10px] font-bold rounded">LIVE</span>
                   </div>
-                  <p class="text-xs text-muted font-mono uppercase tracking-wide">Strategy: TrendFollowerV3 · Binance · Running</p>
+                  <p class="text-[11px] text-muted font-mono uppercase tracking-wide">Strategy: TrendFollowerV3 · Binance · Running</p>
               </div>
               <button title="Close drawer" onclick="closeBotDrawer()" class="hover:text-white text-muted p-1.5 hover:bg-white/10 rounded transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
           </div>
@@ -110,266 +110,384 @@
           </div>
       </div>
       
-      <!-- 10-TAB NAVIGATION -->
-      <div class="l-b flex items-end px-2 bg-black/40 shrink-0 overflow-x-auto gap-0">
-          <button onclick="switchDrawerTab('drawer-overview', this)" class="h-10 px-4 text-[11px] font-bold uppercase tracking-wide border-b-2 border-white text-white drawer-tab-btn whitespace-nowrap" title="Bot overview and stats">Overview</button>
-          <button onclick="switchDrawerTab('drawer-trades', this)" class="h-10 px-4 text-[11px] font-bold uppercase tracking-wide text-muted hover:text-white transition-colors drawer-tab-btn whitespace-nowrap" title="Open and closed trades">Trades</button>
-          <button onclick="switchDrawerTab('drawer-perf', this)" class="h-10 px-4 text-[11px] font-bold uppercase tracking-wide text-muted hover:text-white transition-colors drawer-tab-btn whitespace-nowrap" title="Performance by pair">Performance</button>
-          <button onclick="switchDrawerTab('drawer-config', this)" class="h-10 px-4 text-[11px] font-bold uppercase tracking-wide text-muted hover:text-white transition-colors drawer-tab-btn whitespace-nowrap" title="Bot configuration details">Config</button>
-          <button onclick="switchDrawerTab('drawer-system', this)" class="h-10 px-4 text-[11px] font-bold uppercase tracking-wide text-muted hover:text-white transition-colors drawer-tab-btn whitespace-nowrap" title="System info and health">System</button>
-          <button onclick="switchDrawerTab('drawer-log', this)" class="h-10 px-4 text-[11px] font-bold uppercase tracking-wide text-muted hover:text-white transition-colors drawer-tab-btn whitespace-nowrap" title="Live bot log stream">Log</button>
-          <button onclick="switchDrawerTab('drawer-backtest', this)" class="h-10 px-4 text-[11px] font-bold uppercase tracking-wide text-muted hover:text-white transition-colors drawer-tab-btn whitespace-nowrap" title="Run backtest on this bot strategy">Backtest</button>
-          <button onclick="switchDrawerTab('drawer-hyperopt', this)" class="h-10 px-4 text-[11px] font-bold uppercase tracking-wide text-muted hover:text-white transition-colors drawer-tab-btn whitespace-nowrap" title="Optimize strategy parameters">Hyperopt</button>
-          <button onclick="switchDrawerTab('drawer-freqai', this)" class="h-10 px-4 text-[11px] font-bold uppercase tracking-wide text-muted hover:text-white transition-colors drawer-tab-btn whitespace-nowrap" title="ML model training">FreqAI</button>
-          <button onclick="switchDrawerTab('drawer-edit', this)" class="h-10 px-4 text-[11px] font-bold uppercase tracking-wide text-muted hover:text-white transition-colors drawer-tab-btn whitespace-nowrap" title="Edit bot settings">Edit Bot</button>
+      <!-- 8-TAB NAVIGATION -->
+      <div class="l-b flex items-end px-1 bg-black/50 shrink-0 overflow-x-auto gap-0">
+          <button onclick="switchDrawerTab('drawer-overview', this)" class="h-9 px-3.5 text-[10px] font-bold uppercase tracking-wider border-b-2 border-white text-white drawer-tab-btn whitespace-nowrap" title="Bot overview and stats">Overview</button>
+          <button onclick="switchDrawerTab('drawer-trades', this)" class="h-9 px-3.5 text-[10px] font-bold uppercase tracking-wider text-muted hover:text-white transition-colors drawer-tab-btn whitespace-nowrap" title="Open and closed trades">Trades</button>
+          <button onclick="switchDrawerTab('drawer-perf', this)" class="h-9 px-3.5 text-[10px] font-bold uppercase tracking-wider text-muted hover:text-white transition-colors drawer-tab-btn whitespace-nowrap" title="Performance analytics">Performance</button>
+          <button onclick="switchDrawerTab('drawer-config', this)" class="h-9 px-3.5 text-[10px] font-bold uppercase tracking-wider text-muted hover:text-white transition-colors drawer-tab-btn whitespace-nowrap" title="Bot configuration and editing">Config</button>
+          <button onclick="switchDrawerTab('drawer-backtest', this)" class="h-9 px-3.5 text-[10px] font-bold uppercase tracking-wider text-muted hover:text-white transition-colors drawer-tab-btn whitespace-nowrap" title="Backtest results history">Backtest</button>
+          <button onclick="switchDrawerTab('drawer-hyperopt', this)" class="h-9 px-3.5 text-[10px] font-bold uppercase tracking-wider text-muted hover:text-white transition-colors drawer-tab-btn whitespace-nowrap" title="Hyperopt results history">Hyperopt</button>
+          <button onclick="switchDrawerTab('drawer-freqai', this)" class="h-9 px-3.5 text-[10px] font-bold uppercase tracking-wider text-muted hover:text-white transition-colors drawer-tab-btn whitespace-nowrap" title="FreqAI model results">FreqAI</button>
+          <button onclick="switchDrawerTab('drawer-system', this)" class="h-9 px-3.5 text-[10px] font-bold uppercase tracking-wider text-muted hover:text-white transition-colors drawer-tab-btn whitespace-nowrap" title="System health and logs">System &amp; Log</button>
       </div>
 
       <!-- TAB CONTENT -->
       <div class="flex-1 overflow-y-auto">
 
-          <!-- TAB: OVERVIEW -->
-          <div id="drawer-overview" class="drawer-tab-content p-5 flex flex-col gap-5">
-              <div>
-                  <h3 class="section-title mb-3">Bot Configuration</h3>
-                  <div class="font-mono text-[12px] space-y-0">
-                      <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">Exchange</span><span class="text-white font-medium">Binance</span></div>
-                      <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">Strategy</span><span class="text-white font-medium">TrendFollowerV3</span></div>
-                      <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">Timeframe</span><span class="text-white font-medium">1h</span></div>
-                      <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">Trading Mode</span><span class="text-white font-medium">futures</span></div>
-                      <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">Margin Mode</span><span class="text-white font-medium">isolated</span></div>
-                      <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">Stake Currency</span><span class="text-white font-medium">USDT</span></div>
-                      <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">Stake Amount</span><span class="text-white font-medium">100.00 USDT</span></div>
-                      <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">Max Open Trades</span><span class="text-white font-medium">10</span></div>
-                      <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">Dry Run</span><span class="text-white font-medium">No</span></div>
-                      <div class="flex justify-between py-1.5"><span class="text-muted">Pairs Count</span><span class="text-white font-medium">24</span></div>
+          <!-- ═══ TAB: OVERVIEW ═══ -->
+          <div id="drawer-overview" class="drawer-tab-content p-4 flex flex-col gap-4">
+              <!-- KPI Row -->
+              <div class="grid grid-cols-4 gap-2.5">
+                  <div class="bg-surface p-3 l-bd rounded">
+                      <div class="kpi-label">Closed P&amp;L</div>
+                      <div class="text-up font-mono font-bold text-lg">+$4,210</div>
+                      <div class="text-up/50 text-[10px] font-mono mt-0.5">+14.2%</div>
+                  </div>
+                  <div class="bg-surface p-3 l-bd rounded">
+                      <div class="kpi-label">Open P&amp;L</div>
+                      <div class="text-up font-mono font-bold text-lg">+$448</div>
+                      <div class="text-white/35 text-[10px] font-mono mt-0.5">6 positions</div>
+                  </div>
+                  <div class="bg-surface p-3 l-bd rounded">
+                      <div class="kpi-label">Win Rate</div>
+                      <div class="text-white font-mono font-bold text-lg">72.0%</div>
+                      <div class="text-white/35 text-[10px] font-mono mt-0.5">297W / 115L</div>
+                  </div>
+                  <div class="bg-surface p-3 l-bd rounded">
+                      <div class="kpi-label">Trades</div>
+                      <div class="text-white font-mono font-bold text-lg">412</div>
+                      <div class="text-white/35 text-[10px] font-mono mt-0.5">14d avg hold</div>
                   </div>
               </div>
-              <div>
-                  <h3 class="section-title mb-3">P&amp;L Summary</h3>
-                  <div class="grid grid-cols-2 gap-3">
-                      <div class="bg-black p-3 l-bd rounded"><div class="kpi-label">Closed Profit</div><div class="kpi-value text-up">+$4,210.00</div></div>
-                      <div class="bg-black p-3 l-bd rounded"><div class="kpi-label">Total Profit</div><div class="kpi-value text-up">+$4,658.20</div></div>
-                      <div class="bg-black p-3 l-bd rounded"><div class="kpi-label">Trade Count</div><div class="kpi-value">412</div></div>
-                      <div class="bg-black p-3 l-bd rounded"><div class="kpi-label">Win Rate</div><div class="kpi-value">72.0%</div></div>
+              <!-- Stats Grid -->
+              <div class="grid grid-cols-2 gap-2.5">
+                  <div class="bg-surface p-3 l-bd rounded">
+                      <div class="kpi-label mb-2">Risk Metrics</div>
+                      <div class="space-y-1.5 font-mono text-[12px]">
+                          <div class="flex justify-between"><span class="text-muted">Profit Factor</span><span class="text-up font-bold">2.14</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Max Drawdown</span><span class="text-down font-bold">-1.2%</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Sharpe Ratio</span><span class="text-white">1.82</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Sortino Ratio</span><span class="text-white">2.41</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Expectancy</span><span class="text-up">$10.22</span></div>
+                      </div>
+                  </div>
+                  <div class="bg-surface p-3 l-bd rounded">
+                      <div class="kpi-label mb-2">Bot Info</div>
+                      <div class="space-y-1.5 font-mono text-[12px]">
+                          <div class="flex justify-between"><span class="text-muted">Exchange</span><span class="text-white">Binance</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Mode</span><span class="text-white">Futures · Isolated</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Timeframe</span><span class="text-white">1h</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Stake</span><span class="text-white">100 USDT</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Max Trades</span><span class="text-white">10</span></div>
+                      </div>
                   </div>
               </div>
-              <div>
-                  <h3 class="section-title mb-3">Advanced Stats</h3>
-                  <div class="font-mono text-[12px] space-y-0">
-                      <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">Profit Factor</span><span class="text-up font-medium">2.14</span></div>
-                      <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">Max Drawdown</span><span class="text-down font-medium">-1.2%</span></div>
-                      <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">Sharpe Ratio</span><span class="text-white font-medium">1.82</span></div>
-                      <div class="flex justify-between py-1.5"><span class="text-muted">Sortino Ratio</span><span class="text-white font-medium">2.41</span></div>
+              <!-- Wallet -->
+              <div class="bg-surface p-3 l-bd rounded">
+                  <div class="kpi-label mb-2">Wallet Balance</div>
+                  <div class="grid grid-cols-3 gap-4 font-mono text-[12px]">
+                      <div><span class="text-muted block text-[10px] mb-0.5">USDT</span><span class="text-white font-bold">24,500.80</span></div>
+                      <div><span class="text-muted block text-[10px] mb-0.5">BTC</span><span class="text-white font-bold">0.0000</span></div>
+                      <div><span class="text-muted block text-[10px] mb-0.5">Total Est.</span><span class="text-white font-bold">$24,500</span></div>
                   </div>
               </div>
-              <div>
-                  <h3 class="section-title mb-3">Wallet Balance</h3>
-                  <div class="font-mono text-[12px] space-y-0">
-                      <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">USDT</span><span class="text-white font-medium">24,500.80 <span class="text-white/40 text-[10px]">free</span></span></div>
-                      <div class="flex justify-between py-1.5"><span class="text-muted">BTC</span><span class="text-white font-medium">0.0000 <span class="text-white/40 text-[10px]">≈ $0</span></span></div>
+              <!-- Day/Week Summary -->
+              <div class="grid grid-cols-3 gap-2.5">
+                  <div class="bg-surface p-3 l-bd rounded text-center">
+                      <div class="kpi-label">Today</div>
+                      <div class="text-up font-mono font-bold text-sm">+$142</div>
+                  </div>
+                  <div class="bg-surface p-3 l-bd rounded text-center">
+                      <div class="kpi-label">This Week</div>
+                      <div class="text-up font-mono font-bold text-sm">+$820</div>
+                  </div>
+                  <div class="bg-surface p-3 l-bd rounded text-center">
+                      <div class="kpi-label">This Month</div>
+                      <div class="text-up font-mono font-bold text-sm">+$2,140</div>
                   </div>
               </div>
           </div>
 
-          <!-- TAB: TRADES -->
-          <div id="drawer-trades" class="drawer-tab-content p-5 flex flex-col gap-5" style="display:none">
+          <!-- ═══ TAB: TRADES ═══ -->
+          <div id="drawer-trades" class="drawer-tab-content p-4 flex flex-col gap-4" style="display:none">
               <div>
-                  <h3 class="section-title mb-3">Open Positions (6)</h3>
-                  <table class="w-full text-[12px] font-mono"><thead class="text-muted text-[10px] uppercase tracking-wide"><tr><th class="text-left py-2">Pair</th><th class="text-left py-2">Side</th><th class="text-right py-2">Entry</th><th class="text-right py-2">Current</th><th class="text-right py-2">P&amp;L</th></tr></thead>
-                  <tbody class="divide-y divide-white/[0.05]">
-                      <tr><td class="py-2 text-white font-medium">BTC/USDT</td><td class="py-2"><span class="bg-up/12 text-up px-1.5 py-0.5 rounded text-[10px] font-bold">LONG 10x</span></td><td class="py-2 text-right">64,220.00</td><td class="py-2 text-right font-medium">65,110.20</td><td class="py-2 text-right text-up font-bold">+$445.10</td></tr>
-                      <tr><td class="py-2 text-white font-medium">ETH/USDT</td><td class="py-2"><span class="bg-down/12 text-down px-1.5 py-0.5 rounded text-[10px] font-bold">SHORT 5x</span></td><td class="py-2 text-right">3,854.20</td><td class="py-2 text-right font-medium">3,880.00</td><td class="py-2 text-right text-down font-bold">-$12.50</td></tr>
-                      <tr><td class="py-2 text-white font-medium">SOL/USDT</td><td class="py-2"><span class="bg-up/12 text-up px-1.5 py-0.5 rounded text-[10px] font-bold">LONG 3x</span></td><td class="py-2 text-right">156.40</td><td class="py-2 text-right font-medium">158.20</td><td class="py-2 text-right text-up font-bold">+$54.00</td></tr>
+                  <h3 class="section-title mb-2.5 flex items-center gap-2">Open Positions <span class="text-white/30">(6)</span></h3>
+                  <div class="overflow-x-auto">
+                  <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr>
+                      <th class="text-left py-1.5 px-1">Pair</th><th class="text-left py-1.5 px-1">Side</th><th class="text-right py-1.5 px-1">Leverage</th><th class="text-right py-1.5 px-1">Entry</th><th class="text-right py-1.5 px-1">Current</th><th class="text-right py-1.5 px-1">Stake</th><th class="text-right py-1.5 px-1">P&amp;L</th><th class="text-right py-1.5 px-1">P&amp;L %</th><th class="text-right py-1.5 px-1">Duration</th><th class="text-left py-1.5 px-1">Enter Tag</th><th class="text-right py-1.5 px-1">SL</th>
+                  </tr></thead>
+                  <tbody class="divide-y divide-white/[0.04]">
+                      <tr class="hover:bg-white/[0.02]"><td class="py-1.5 px-1 text-white font-medium">BTC/USDT</td><td class="py-1.5 px-1"><span class="bg-up/12 text-up px-1 py-0.5 rounded text-[9px] font-bold">LONG</span></td><td class="py-1.5 px-1 text-right">10x</td><td class="py-1.5 px-1 text-right">64,220</td><td class="py-1.5 px-1 text-right font-medium">65,110</td><td class="py-1.5 px-1 text-right">100</td><td class="py-1.5 px-1 text-right text-up font-bold">+$445</td><td class="py-1.5 px-1 text-right text-up">+1.38%</td><td class="py-1.5 px-1 text-right text-muted">2h14m</td><td class="py-1.5 px-1 text-muted">ema_cross</td><td class="py-1.5 px-1 text-right text-down">-10%</td></tr>
+                      <tr class="hover:bg-white/[0.02]"><td class="py-1.5 px-1 text-white font-medium">ETH/USDT</td><td class="py-1.5 px-1"><span class="bg-down/12 text-down px-1 py-0.5 rounded text-[9px] font-bold">SHORT</span></td><td class="py-1.5 px-1 text-right">5x</td><td class="py-1.5 px-1 text-right">3,854</td><td class="py-1.5 px-1 text-right font-medium">3,880</td><td class="py-1.5 px-1 text-right">100</td><td class="py-1.5 px-1 text-right text-down font-bold">-$12</td><td class="py-1.5 px-1 text-right text-down">-0.67%</td><td class="py-1.5 px-1 text-right text-muted">45m</td><td class="py-1.5 px-1 text-muted">rsi_oversold</td><td class="py-1.5 px-1 text-right text-down">-10%</td></tr>
+                      <tr class="hover:bg-white/[0.02]"><td class="py-1.5 px-1 text-white font-medium">SOL/USDT</td><td class="py-1.5 px-1"><span class="bg-up/12 text-up px-1 py-0.5 rounded text-[9px] font-bold">LONG</span></td><td class="py-1.5 px-1 text-right">3x</td><td class="py-1.5 px-1 text-right">156.40</td><td class="py-1.5 px-1 text-right font-medium">158.20</td><td class="py-1.5 px-1 text-right">100</td><td class="py-1.5 px-1 text-right text-up font-bold">+$54</td><td class="py-1.5 px-1 text-right text-up">+1.15%</td><td class="py-1.5 px-1 text-right text-muted">1h20m</td><td class="py-1.5 px-1 text-muted">bb_squeeze</td><td class="py-1.5 px-1 text-right text-down">-10%</td></tr>
+                  </tbody></table></div>
+              </div>
+              <div>
+                  <h3 class="section-title mb-2.5 flex items-center gap-2">Closed Trades <span class="text-white/30">(last 10)</span></h3>
+                  <div class="overflow-x-auto">
+                  <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr>
+                      <th class="text-left py-1.5 px-1">Pair</th><th class="text-left py-1.5 px-1">Side</th><th class="text-right py-1.5 px-1">Lev</th><th class="text-right py-1.5 px-1">Entry</th><th class="text-right py-1.5 px-1">Exit</th><th class="text-right py-1.5 px-1">Stake</th><th class="text-right py-1.5 px-1">P&amp;L</th><th class="text-right py-1.5 px-1">P&amp;L %</th><th class="text-right py-1.5 px-1">Duration</th><th class="text-left py-1.5 px-1">Enter Tag</th><th class="text-left py-1.5 px-1">Exit Reason</th>
+                  </tr></thead>
+                  <tbody class="divide-y divide-white/[0.04]">
+                      <tr class="hover:bg-white/[0.02]"><td class="py-1.5 px-1 text-white font-medium">SOL/USDT</td><td class="py-1.5 px-1"><span class="text-up text-[9px] font-bold">LONG</span></td><td class="py-1.5 px-1 text-right">3x</td><td class="py-1.5 px-1 text-right">144.20</td><td class="py-1.5 px-1 text-right">156.40</td><td class="py-1.5 px-1 text-right">100</td><td class="py-1.5 px-1 text-right text-up font-bold">+$610</td><td class="py-1.5 px-1 text-right text-up">+8.46%</td><td class="py-1.5 px-1 text-right text-muted">18h</td><td class="py-1.5 px-1 text-muted">ema_cross</td><td class="py-1.5 px-1 text-muted">trailing_stop</td></tr>
+                      <tr class="hover:bg-white/[0.02]"><td class="py-1.5 px-1 text-white font-medium">XRP/USDT</td><td class="py-1.5 px-1"><span class="text-down text-[9px] font-bold">SHORT</span></td><td class="py-1.5 px-1 text-right">5x</td><td class="py-1.5 px-1 text-right">0.6420</td><td class="py-1.5 px-1 text-right">0.6580</td><td class="py-1.5 px-1 text-right">100</td><td class="py-1.5 px-1 text-right text-down font-bold">-$48</td><td class="py-1.5 px-1 text-right text-down">-2.49%</td><td class="py-1.5 px-1 text-right text-muted">4h</td><td class="py-1.5 px-1 text-muted">rsi_oversold</td><td class="py-1.5 px-1 text-muted">stoploss</td></tr>
+                      <tr class="hover:bg-white/[0.02]"><td class="py-1.5 px-1 text-white font-medium">BTC/USDT</td><td class="py-1.5 px-1"><span class="text-up text-[9px] font-bold">LONG</span></td><td class="py-1.5 px-1 text-right">10x</td><td class="py-1.5 px-1 text-right">63,100</td><td class="py-1.5 px-1 text-right">64,220</td><td class="py-1.5 px-1 text-right">100</td><td class="py-1.5 px-1 text-right text-up font-bold">+$560</td><td class="py-1.5 px-1 text-right text-up">+1.78%</td><td class="py-1.5 px-1 text-right text-muted">12h</td><td class="py-1.5 px-1 text-muted">ema_cross</td><td class="py-1.5 px-1 text-muted">roi</td></tr>
+                      <tr class="hover:bg-white/[0.02]"><td class="py-1.5 px-1 text-white font-medium">AVAX/USDT</td><td class="py-1.5 px-1"><span class="text-up text-[9px] font-bold">LONG</span></td><td class="py-1.5 px-1 text-right">3x</td><td class="py-1.5 px-1 text-right">38.20</td><td class="py-1.5 px-1 text-right">40.10</td><td class="py-1.5 px-1 text-right">100</td><td class="py-1.5 px-1 text-right text-up font-bold">+$149</td><td class="py-1.5 px-1 text-right text-up">+4.97%</td><td class="py-1.5 px-1 text-right text-muted">6h</td><td class="py-1.5 px-1 text-muted">bb_squeeze</td><td class="py-1.5 px-1 text-muted">trailing_stop</td></tr>
+                  </tbody></table></div>
+              </div>
+          </div>
+
+          <!-- ═══ TAB: PERFORMANCE ═══ -->
+          <div id="drawer-perf" class="drawer-tab-content p-4 flex flex-col gap-4" style="display:none">
+              <!-- KPI Summary -->
+              <div class="grid grid-cols-4 gap-2.5">
+                  <div class="bg-surface p-3 l-bd rounded text-center"><div class="kpi-label">Best Pair</div><div class="text-up font-mono font-bold text-sm">SOL/USDT</div><div class="text-up/50 text-[10px] font-mono">+$2,140</div></div>
+                  <div class="bg-surface p-3 l-bd rounded text-center"><div class="kpi-label">Worst Pair</div><div class="text-down font-mono font-bold text-sm">XRP/USDT</div><div class="text-down/50 text-[10px] font-mono">-$180</div></div>
+                  <div class="bg-surface p-3 l-bd rounded text-center"><div class="kpi-label">Best Tag</div><div class="text-up font-mono font-bold text-sm">rsi_oversold</div><div class="text-up/50 text-[10px] font-mono">+$2,100</div></div>
+                  <div class="bg-surface p-3 l-bd rounded text-center"><div class="kpi-label">Best Exit</div><div class="text-up font-mono font-bold text-sm">trailing_stop</div><div class="text-up/50 text-[10px] font-mono">+$3,800</div></div>
+              </div>
+              <!-- Pair Performance -->
+              <div class="bg-surface l-bd rounded p-3">
+                  <h3 class="section-title mb-2">Per-Pair Performance</h3>
+                  <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr><th class="text-left py-1.5">Pair</th><th class="text-right py-1.5">Trades</th><th class="text-right py-1.5">Wins</th><th class="text-right py-1.5">Losses</th><th class="text-right py-1.5">Win%</th><th class="text-right py-1.5">Profit</th><th class="text-right py-1.5">Avg P&amp;L</th></tr></thead>
+                  <tbody class="divide-y divide-white/[0.04]">
+                      <tr class="hover:bg-white/[0.02]"><td class="py-1.5 text-white font-medium">BTC/USDT</td><td class="py-1.5 text-right">128</td><td class="py-1.5 text-right text-up">94</td><td class="py-1.5 text-right text-down">34</td><td class="py-1.5 text-right">73.4%</td><td class="py-1.5 text-right text-up font-bold">+$1,840</td><td class="py-1.5 text-right text-up">+$14.4</td></tr>
+                      <tr class="hover:bg-white/[0.02]"><td class="py-1.5 text-white font-medium">SOL/USDT</td><td class="py-1.5 text-right">32</td><td class="py-1.5 text-right text-up">25</td><td class="py-1.5 text-right text-down">7</td><td class="py-1.5 text-right">78.1%</td><td class="py-1.5 text-right text-up font-bold">+$2,140</td><td class="py-1.5 text-right text-up">+$66.9</td></tr>
+                      <tr class="hover:bg-white/[0.02]"><td class="py-1.5 text-white font-medium">ETH/USDT</td><td class="py-1.5 text-right">95</td><td class="py-1.5 text-right text-up">66</td><td class="py-1.5 text-right text-down">29</td><td class="py-1.5 text-right">69.5%</td><td class="py-1.5 text-right text-up font-bold">+$620</td><td class="py-1.5 text-right text-up">+$6.5</td></tr>
+                      <tr class="hover:bg-white/[0.02]"><td class="py-1.5 text-white font-medium">XRP/USDT</td><td class="py-1.5 text-right">64</td><td class="py-1.5 text-right text-up">38</td><td class="py-1.5 text-right text-down">26</td><td class="py-1.5 text-right">59.4%</td><td class="py-1.5 text-right text-down font-bold">-$180</td><td class="py-1.5 text-right text-down">-$2.8</td></tr>
+                      <tr class="hover:bg-white/[0.02]"><td class="py-1.5 text-white font-medium">AVAX/USDT</td><td class="py-1.5 text-right">48</td><td class="py-1.5 text-right text-up">35</td><td class="py-1.5 text-right text-down">13</td><td class="py-1.5 text-right">72.9%</td><td class="py-1.5 text-right text-up font-bold">+$440</td><td class="py-1.5 text-right text-up">+$9.2</td></tr>
                   </tbody></table>
               </div>
-              <div>
-                  <h3 class="section-title mb-3">Closed Trades (Last 10)</h3>
-                  <table class="w-full text-[12px] font-mono"><thead class="text-muted text-[10px] uppercase tracking-wide"><tr><th class="text-left py-2">Pair</th><th class="text-left py-2">Side</th><th class="text-right py-2">Entry</th><th class="text-right py-2">Exit</th><th class="text-right py-2">P&amp;L</th></tr></thead>
-                  <tbody class="divide-y divide-white/[0.05]">
-                      <tr><td class="py-2 text-white font-medium">SOL/USDT</td><td class="py-2"><span class="text-up text-[10px] font-bold">LONG</span></td><td class="py-2 text-right">144.20</td><td class="py-2 text-right">156.40</td><td class="py-2 text-right text-up font-bold">+$610.00</td></tr>
-                      <tr><td class="py-2 text-white font-medium">XRP/USDT</td><td class="py-2"><span class="text-down text-[10px] font-bold">SHORT</span></td><td class="py-2 text-right">0.6420</td><td class="py-2 text-right">0.6580</td><td class="py-2 text-right text-down font-bold">-$48.20</td></tr>
-                      <tr><td class="py-2 text-white font-medium">BTC/USDT</td><td class="py-2"><span class="text-up text-[10px] font-bold">LONG</span></td><td class="py-2 text-right">63,100.00</td><td class="py-2 text-right">64,220.00</td><td class="py-2 text-right text-up font-bold">+$560.00</td></tr>
+              <!-- Entry / Exit Analysis side by side -->
+              <div class="grid grid-cols-2 gap-2.5">
+                  <div class="bg-surface l-bd rounded p-3">
+                      <h3 class="section-title mb-2">Entry Tags</h3>
+                      <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr><th class="text-left py-1">Tag</th><th class="text-right py-1">N</th><th class="text-right py-1">Win%</th><th class="text-right py-1">Profit</th></tr></thead>
+                      <tbody class="divide-y divide-white/[0.04]">
+                          <tr><td class="py-1 text-white/80">rsi_oversold</td><td class="py-1 text-right">185</td><td class="py-1 text-right">76%</td><td class="py-1 text-right text-up font-bold">+$2,100</td></tr>
+                          <tr><td class="py-1 text-white/80">ema_cross</td><td class="py-1 text-right">140</td><td class="py-1 text-right">71%</td><td class="py-1 text-right text-up font-bold">+$1,240</td></tr>
+                          <tr><td class="py-1 text-white/80">bb_squeeze</td><td class="py-1 text-right">87</td><td class="py-1 text-right">65%</td><td class="py-1 text-right text-up font-bold">+$340</td></tr>
+                      </tbody></table>
+                  </div>
+                  <div class="bg-surface l-bd rounded p-3">
+                      <h3 class="section-title mb-2">Exit Reasons</h3>
+                      <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr><th class="text-left py-1">Reason</th><th class="text-right py-1">N</th><th class="text-right py-1">Win%</th><th class="text-right py-1">Profit</th></tr></thead>
+                      <tbody class="divide-y divide-white/[0.04]">
+                          <tr><td class="py-1 text-white/80">trailing_stop</td><td class="py-1 text-right">210</td><td class="py-1 text-right">92%</td><td class="py-1 text-right text-up font-bold">+$3,800</td></tr>
+                          <tr><td class="py-1 text-white/80">roi</td><td class="py-1 text-right">120</td><td class="py-1 text-right">100%</td><td class="py-1 text-right text-up font-bold">+$1,900</td></tr>
+                          <tr><td class="py-1 text-white/80">stoploss</td><td class="py-1 text-right">82</td><td class="py-1 text-right">0%</td><td class="py-1 text-right text-down font-bold">-$1,490</td></tr>
+                      </tbody></table>
+                  </div>
+              </div>
+          </div>
+
+          <!-- ═══ TAB: CONFIG (merged with Edit) ═══ -->
+          <div id="drawer-config" class="drawer-tab-content p-4 flex flex-col gap-4" style="display:none">
+              <!-- Core Config (view + edit) -->
+              <div class="grid grid-cols-2 gap-2.5">
+                  <div class="bg-surface l-bd rounded p-3">
+                      <h3 class="section-title mb-2 flex items-center justify-between">Core Config <button class="text-[9px] text-muted hover:text-white l-bd px-1.5 py-0.5 rounded transition-colors" title="Edit core config">EDIT</button></h3>
+                      <div class="space-y-1.5 font-mono text-[12px]">
+                          <div class="flex justify-between"><span class="text-muted">Strategy</span><span class="text-white">TrendFollowerV3</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Exchange</span><span class="text-white">Binance</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Timeframe</span><span class="text-white">1h</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Mode</span><span class="text-white">Futures · Isolated</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Stake Currency</span><span class="text-white">USDT</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Stake Amount</span><span class="text-white">100.00</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Max Open Trades</span><span class="text-white">10</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Dry Run</span><span class="text-white">No</span></div>
+                      </div>
+                  </div>
+                  <div class="bg-surface l-bd rounded p-3">
+                      <h3 class="section-title mb-2 flex items-center justify-between">Risk Management <button class="text-[9px] text-muted hover:text-white l-bd px-1.5 py-0.5 rounded transition-colors" title="Edit risk settings">EDIT</button></h3>
+                      <div class="space-y-1.5 font-mono text-[12px]">
+                          <div class="flex justify-between"><span class="text-muted">Stoploss</span><span class="text-down font-bold">-10.0%</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Trailing Stop</span><span class="text-up">Yes</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Trailing Positive</span><span class="text-white">0.02</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Trailing Offset</span><span class="text-white">0.03</span></div>
+                          <div class="flex justify-between"><span class="text-muted">ROI 0</span><span class="text-white">—</span></div>
+                          <div class="flex justify-between"><span class="text-muted">ROI 40</span><span class="text-white">0.0</span></div>
+                      </div>
+                  </div>
+              </div>
+              <!-- Whitelist -->
+              <div class="bg-surface l-bd rounded p-3">
+                  <h3 class="section-title mb-2 flex items-center justify-between">Whitelist <span class="text-white/30 font-normal text-[10px]">24 pairs</span> <button class="text-[9px] text-muted hover:text-white l-bd px-1.5 py-0.5 rounded transition-colors ml-auto" title="Edit whitelist">EDIT</button></h3>
+                  <div class="flex flex-wrap gap-1.5">
+                      <span class="text-[9px] px-2 py-0.5 rounded bg-cyan-500/8 text-cyan-400 border border-cyan-500/20 font-medium">BTC/USDT</span>
+                      <span class="text-[9px] px-2 py-0.5 rounded bg-cyan-500/8 text-cyan-400 border border-cyan-500/20 font-medium">ETH/USDT</span>
+                      <span class="text-[9px] px-2 py-0.5 rounded bg-cyan-500/8 text-cyan-400 border border-cyan-500/20 font-medium">SOL/USDT</span>
+                      <span class="text-[9px] px-2 py-0.5 rounded bg-cyan-500/8 text-cyan-400 border border-cyan-500/20 font-medium">XRP/USDT</span>
+                      <span class="text-[9px] px-2 py-0.5 rounded bg-cyan-500/8 text-cyan-400 border border-cyan-500/20 font-medium">AVAX/USDT</span>
+                      <span class="text-[9px] px-2 py-0.5 rounded bg-cyan-500/8 text-cyan-400 border border-cyan-500/20 font-medium">DOGE/USDT</span>
+                      <span class="text-[9px] px-2 py-0.5 rounded bg-cyan-500/8 text-cyan-400 border border-cyan-500/20 font-medium">LINK/USDT</span>
+                      <span class="text-[9px] px-2 py-0.5 rounded bg-cyan-500/8 text-cyan-400 border border-cyan-500/20 font-medium">BNB/USDT</span>
+                  </div>
+              </div>
+              <!-- Active Locks -->
+              <div class="bg-surface l-bd rounded p-3">
+                  <h3 class="section-title mb-2">Active Locks</h3>
+                  <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr><th class="text-left py-1">Pair</th><th class="text-left py-1">Reason</th><th class="text-right py-1">Until</th></tr></thead>
+                  <tbody class="divide-y divide-white/[0.04]">
+                      <tr><td class="py-1.5 text-white font-medium">SOL/USDT</td><td class="py-1.5 text-muted">StoplossGuard</td><td class="py-1.5 text-right text-down">14m left</td></tr>
                   </tbody></table>
               </div>
           </div>
 
-          <!-- TAB: PERFORMANCE -->
-          <div id="drawer-perf" class="drawer-tab-content p-5 flex flex-col gap-5" style="display:none">
-              <div><h3 class="section-title mb-3">Per-Pair Performance</h3>
-              <table class="w-full text-[12px] font-mono"><thead class="text-muted text-[10px] uppercase tracking-wide"><tr><th class="text-left py-2">Pair</th><th class="text-right py-2">Trades</th><th class="text-right py-2">Profit</th></tr></thead>
-              <tbody class="divide-y divide-white/[0.05]">
-                  <tr><td class="py-2 text-white font-medium">BTC/USDT</td><td class="py-2 text-right">128</td><td class="py-2 text-right text-up font-bold">+$1,840</td></tr>
-                  <tr><td class="py-2 text-white font-medium">SOL/USDT</td><td class="py-2 text-right">32</td><td class="py-2 text-right text-up font-bold">+$2,140</td></tr>
-                  <tr><td class="py-2 text-white font-medium">ETH/USDT</td><td class="py-2 text-right">95</td><td class="py-2 text-right text-up font-bold">+$620</td></tr>
-                  <tr><td class="py-2 text-white font-medium">XRP/USDT</td><td class="py-2 text-right">64</td><td class="py-2 text-right text-down font-bold">-$180</td></tr>
-              </tbody></table></div>
-              <div><h3 class="section-title mb-3">Entry Tag Analysis (Top 5)</h3>
-              <table class="w-full text-[12px] font-mono"><thead class="text-muted text-[10px] uppercase tracking-wide"><tr><th class="text-left py-2">Tag</th><th class="text-right py-2">Entries</th><th class="text-right py-2">Profit</th></tr></thead>
-              <tbody class="divide-y divide-white/[0.05]">
-                  <tr><td class="py-2 text-white/80">rsi_oversold</td><td class="py-2 text-right">185</td><td class="py-2 text-right text-up font-bold">+$2,100</td></tr>
-                  <tr><td class="py-2 text-white/80">ema_cross</td><td class="py-2 text-right">140</td><td class="py-2 text-right text-up font-bold">+$1,240</td></tr>
-                  <tr><td class="py-2 text-white/80">bb_squeeze</td><td class="py-2 text-right">87</td><td class="py-2 text-right text-up font-bold">+$340</td></tr>
-              </tbody></table></div>
-              <div><h3 class="section-title mb-3">Exit Reason Analysis (Top 5)</h3>
-              <table class="w-full text-[12px] font-mono"><thead class="text-muted text-[10px] uppercase tracking-wide"><tr><th class="text-left py-2">Reason</th><th class="text-right py-2">Exits</th><th class="text-right py-2">Profit</th></tr></thead>
-              <tbody class="divide-y divide-white/[0.05]">
-                  <tr><td class="py-2 text-white/80">trailing_stop</td><td class="py-2 text-right">210</td><td class="py-2 text-right text-up font-bold">+$3,800</td></tr>
-                  <tr><td class="py-2 text-white/80">roi</td><td class="py-2 text-right">120</td><td class="py-2 text-right text-up font-bold">+$1,900</td></tr>
-                  <tr><td class="py-2 text-white/80">stoploss</td><td class="py-2 text-right">82</td><td class="py-2 text-right text-down font-bold">-$1,490</td></tr>
-              </tbody></table></div>
-          </div>
-
-          <!-- TAB: CONFIG -->
-          <div id="drawer-config" class="drawer-tab-content p-5 flex flex-col gap-5" style="display:none">
-              <div><h3 class="section-title mb-3">Core Config</h3>
-              <div class="font-mono text-[12px] space-y-0">
-                  <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">Exchange</span><span class="text-white font-medium">Binance</span></div>
-                  <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">Timeframe</span><span class="text-white font-medium">1h</span></div>
-                  <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">Stake Currency</span><span class="text-white font-medium">USDT</span></div>
-                  <div class="flex justify-between py-1.5"><span class="text-muted">Dry Run</span><span class="text-white font-medium">No</span></div>
-              </div></div>
-              <div><h3 class="section-title mb-3">ROI &amp; Stoploss</h3>
-              <div class="font-mono text-[12px] space-y-0">
-                  <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">Stoploss</span><span class="text-down font-medium">-10.0%</span></div>
-                  <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">Trailing Stop</span><span class="text-up font-medium">Yes</span></div>
-                  <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">Trailing Positive</span><span class="text-white font-medium">0.02</span></div>
-                  <div class="flex justify-between py-1.5"><span class="text-muted">Trailing Offset</span><span class="text-white font-medium">0.03</span></div>
-              </div></div>
-              <div><h3 class="section-title mb-3">Whitelist (24 pairs)</h3>
-              <div class="flex flex-wrap gap-1.5">
-                  <span class="text-[9px] px-2 py-0.5 rounded bg-cyan-500/8 text-cyan-400 border border-cyan-500/20 font-medium">BTC/USDT</span>
-                  <span class="text-[9px] px-2 py-0.5 rounded bg-cyan-500/8 text-cyan-400 border border-cyan-500/20 font-medium">ETH/USDT</span>
-                  <span class="text-[9px] px-2 py-0.5 rounded bg-cyan-500/8 text-cyan-400 border border-cyan-500/20 font-medium">SOL/USDT</span>
-                  <span class="text-[9px] px-2 py-0.5 rounded bg-cyan-500/8 text-cyan-400 border border-cyan-500/20 font-medium">XRP/USDT</span>
-                  <span class="text-[9px] px-2 py-0.5 rounded bg-cyan-500/8 text-cyan-400 border border-cyan-500/20 font-medium">AVAX/USDT</span>
-                  <span class="text-[9px] px-2 py-0.5 rounded bg-cyan-500/8 text-cyan-400 border border-cyan-500/20 font-medium">DOGE/USDT</span>
-                  <span class="text-[9px] px-2 py-0.5 rounded bg-cyan-500/8 text-cyan-400 border border-cyan-500/20 font-medium">LINK/USDT</span>
-                  <span class="text-[9px] px-2 py-0.5 rounded bg-cyan-500/8 text-cyan-400 border border-cyan-500/20 font-medium">BNB/USDT</span>
-              </div></div>
-              <div><h3 class="section-title mb-3">Active Locks</h3>
-              <table class="w-full text-[12px] font-mono"><thead class="text-muted text-[10px] uppercase tracking-wide"><tr><th class="text-left py-2">Pair</th><th class="text-left py-2">Reason</th><th class="text-right py-2">Until</th></tr></thead>
-              <tbody class="divide-y divide-white/[0.05]">
-                  <tr><td class="py-2 text-white font-medium">SOL/USDT</td><td class="py-2 text-muted">StoplossGuard</td><td class="py-2 text-right text-down">14m left</td></tr>
-              </tbody></table></div>
-          </div>
-
-          <!-- TAB: SYSTEM -->
-          <div id="drawer-system" class="drawer-tab-content p-5 flex flex-col gap-5" style="display:none">
-              <div><h3 class="section-title mb-3">System Info</h3>
-              <div class="space-y-3">
-                  <div><div class="flex justify-between text-[12px] font-mono mb-1.5"><span class="text-muted">CPU</span><span class="text-white font-medium">14%</span></div><div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-white/70 rounded-full" style="width:14%"></div></div></div>
-                  <div><div class="flex justify-between text-[12px] font-mono mb-1.5"><span class="text-muted">RAM</span><span class="text-yellow-400 font-medium">82%</span></div><div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-yellow-400 rounded-full" style="width:82%"></div></div></div>
-              </div></div>
-              <div><h3 class="section-title mb-3">Bot Health</h3>
-              <div class="font-mono text-[12px] space-y-0">
-                  <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">Last Process</span><span class="text-white font-medium">1.2s ago</span></div>
-                  <div class="flex justify-between py-1.5 border-b border-white/8"><span class="text-muted">DB Sync</span><span class="text-up font-medium">OK</span></div>
-                  <div class="flex justify-between py-1.5"><span class="text-muted">Exchange Latency</span><span class="text-up font-medium">32ms</span></div>
-              </div></div>
-          </div>
-
-          <!-- TAB: LOG -->
-          <div id="drawer-log" class="drawer-tab-content flex flex-col" style="display:none">
-              <div class="flex items-center gap-2 px-5 py-3 l-b bg-black/40 shrink-0">
-                  <div class="flex gap-1">
-                      <button class="px-2 py-1 text-[10px] font-bold uppercase bg-white/10 text-white rounded" title="Show all log levels">ALL</button>
-                      <button class="px-2 py-1 text-[10px] font-bold uppercase text-muted hover:text-white l-bd transition-colors rounded" title="Show info messages only">INFO</button>
-                      <button class="px-2 py-1 text-[10px] font-bold uppercase text-muted hover:text-white l-bd transition-colors rounded" title="Show buy and sell signals">BUY/SELL</button>
-                      <button class="px-2 py-1 text-[10px] font-bold uppercase text-muted hover:text-white l-bd transition-colors rounded" title="Show warnings only">WARN</button>
-                      <button class="px-2 py-1 text-[10px] font-bold uppercase text-muted hover:text-white l-bd transition-colors rounded" title="Show errors only">ERROR</button>
-                  </div>
-                  <div class="ml-auto flex items-center gap-3 text-[11px] font-mono text-muted">
-                      <button class="hover:text-white transition-colors flex items-center gap-1" title="Pin to bottom — auto-scroll"><i data-lucide="pin" class="w-3 h-3"></i> Pin</button>
-                      <button class="hover:text-white transition-colors flex items-center gap-1" title="Refresh logs"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Refresh</button>
-                      <span>50 entries</span>
-                  </div>
-              </div>
-              <div class="flex-1 overflow-y-auto font-mono text-[11px] text-muted bg-[#060606] p-4 leading-relaxed min-h-[400px]">
-                  <div class="mb-1.5"><span class="text-white/35 mr-2">14:05:00</span> <span class="text-yellow-500 font-medium">WARN</span> High volatility detected on SOL/USDT.</div>
-                  <div class="mb-1.5"><span class="text-white/35 mr-2">14:03:00</span> <span class="text-blue-400 font-medium">INFO</span> DB heartbeat synchronized.</div>
-                  <div class="mb-1.5"><span class="text-white/35 mr-2">14:02:12</span> <span class="text-up font-bold">FILL</span> Order Filled at 64,220.00.</div>
-                  <div class="mb-1.5"><span class="text-white/35 mr-2">14:02:12</span> <span class="text-yellow-500 font-medium">HTTP</span> Binance API /order sent. Latency 32ms.</div>
-                  <div class="mb-1.5"><span class="text-white/35 mr-2">14:02:11</span> <span class="text-up font-bold">BUY</span> Executing LONG on BTC/USDT (Size: 0.50).</div>
-                  <div class="mb-1.5"><span class="text-white/35 mr-2">14:02:11</span> <span class="text-blue-400 font-medium">INFO</span> TrendFollowerV3_BTC evaluated rules.</div>
-                  <div class="mb-1.5"><span class="text-white/35 mr-2">14:01:00</span> <span class="text-blue-400 font-medium">INFO</span> Processing candle for BTC/USDT [1h].</div>
-                  <div class="mb-1.5"><span class="text-white/35 mr-2">14:00:00</span> <span class="text-blue-400 font-medium">INFO</span> Heartbeat: 6 open trades, $24,500 balance.</div>
-                  <div class="mb-1.5"><span class="text-white/35 mr-2">13:58:10</span> <span class="text-down font-bold">SELL</span> Exiting SHORT ETH/USDT — trailing_stop triggered.</div>
-                  <div class="mb-1.5"><span class="text-white/35 mr-2">13:55:00</span> <span class="text-white/30">DEBUG</span> Pair analysis complete for 24 pairs.</div>
-              </div>
-          </div>
-
-          <!-- TAB: BACKTEST -->
-          <div id="drawer-backtest" class="drawer-tab-content p-5 flex flex-col gap-5" style="display:none">
-              <div class="bg-black l-bd rounded p-5 font-mono text-[12px] uppercase tracking-wider">
-                  <h3 class="section-title mb-4">Run Backtest — TrendFollowerV3</h3>
-                  <div class="space-y-4">
-                      <div><div class="text-white/45 mb-1.5 text-[11px]">Strategy Name</div><input type="text" class="w-full bg-black l-bd px-3 py-2 text-white outline-none focus:border-white/30 rounded text-[13px]" value="TrendFollowerV3"></div>
-                      <div class="flex gap-3">
-                          <div class="w-1/2"><div class="text-white/45 mb-1.5 text-[11px]">Timeframe</div><select class="w-full bg-black l-bd px-3 py-2 text-white/80 appearance-none rounded text-[13px]"><option>1h</option><option>4h</option></select></div>
-                          <div class="w-1/2"><div class="text-white/45 mb-1.5 text-[11px]">Fee %</div><input type="text" class="w-full bg-black l-bd px-3 py-2 text-white outline-none rounded text-[13px]" value="0.001"></div>
+          <!-- ═══ TAB: BACKTEST (results list) ═══ -->
+          <div id="drawer-backtest" class="drawer-tab-content p-4 flex flex-col gap-4" style="display:none">
+              <h3 class="section-title flex items-center gap-2">Backtest History <span class="text-white/30">(TrendFollowerV3)</span></h3>
+              <div class="space-y-2.5">
+                  <!-- Run 1 -->
+                  <div class="bg-surface l-bd rounded p-3 hover:bg-white/[0.04] cursor-pointer transition-colors">
+                      <div class="flex justify-between items-center mb-2">
+                          <span class="text-white font-mono text-[12px] font-bold">Run #12 — 2024-03-28</span>
+                          <span class="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded">PROFITABLE</span>
                       </div>
-                      <div><div class="text-white/45 mb-1.5 text-[11px]">Timerange</div><input type="text" class="w-full bg-black l-bd px-3 py-2 text-white outline-none focus:border-white/30 rounded text-[13px]" value="20240101-20241231"></div>
-                      <button class="w-full bg-white text-black font-bold py-2.5 hover:bg-white/85 transition-colors rounded text-[13px]" title="Start backtesting with selected parameters">Execute Backtest</button>
-                  </div>
-              </div>
-              <div class="grid grid-cols-3 gap-3">
-                  <div class="bg-black l-bd rounded p-4"><div class="kpi-label">Total Profit</div><div class="kpi-value text-up text-xl">+142.5%</div><div class="text-white/35 text-[10px] font-mono mt-1">+$21,400</div></div>
-                  <div class="bg-black l-bd rounded p-4"><div class="kpi-label">Max Drawdown</div><div class="kpi-value text-down text-xl">-18.4%</div><div class="text-white/35 text-[10px] font-mono mt-1">-$2,100</div></div>
-                  <div class="bg-black l-bd rounded p-4"><div class="kpi-label">Win Rate</div><div class="kpi-value text-xl">64.2%</div><div class="text-white/35 text-[10px] font-mono mt-1">142W / 88L</div></div>
-              </div>
-          </div>
-
-          <!-- TAB: HYPEROPT -->
-          <div id="drawer-hyperopt" class="drawer-tab-content p-5 flex flex-col gap-5" style="display:none">
-              <div class="bg-black l-bd rounded p-5 font-mono text-[12px] uppercase tracking-wider">
-                  <h3 class="section-title mb-4">Hyperopt — TrendFollowerV3</h3>
-                  <div class="grid grid-cols-3 gap-3 mb-4">
-                      <div class="l-bd rounded p-3 bg-white/5"><span class="text-white/45 block mb-1.5 text-[11px]">Epochs</span><input type="text" value="3000" class="bg-transparent border-none text-white w-full text-[13px] outline-none"></div>
-                      <div class="l-bd rounded p-3 bg-white/5"><span class="text-white/45 block mb-1.5 text-[11px]">Loss Func</span><input type="text" value="SharpeHyperOptLoss" class="bg-transparent border-none text-white w-full text-[13px] outline-none"></div>
-                      <div class="l-bd rounded p-3 bg-white/5"><span class="text-white/45 block mb-1.5 text-[11px]">Space</span><input type="text" value="buy sell trailing" class="bg-transparent border-none text-white w-full text-[13px] outline-none"></div>
-                  </div>
-                  <button class="w-full bg-white/10 l-bd hover:bg-white hover:text-black transition-colors font-bold text-[12px] py-2.5 uppercase tracking-widest rounded" title="Start hyperparameter optimization">Run Optimizer</button>
-              </div>
-              <div class="flex-1 bg-black l-bd rounded p-4 font-mono text-[12px] text-muted leading-relaxed min-h-[200px] overflow-y-auto">
-                  [1/3000] Epoch evaluated. Objective: -0.1245<br>
-                  [2/3000] Epoch evaluated. Objective: -0.1555 (NEW BEST)<br>
-                  [3/3000] Epoch evaluated. Objective: -0.1422<br>
-              </div>
-          </div>
-
-          <!-- TAB: FREQAI -->
-          <div id="drawer-freqai" class="drawer-tab-content flex items-center justify-center flex-col text-muted font-mono tracking-widest text-[13px] min-h-[300px]" style="display:none">
-              <i data-lucide="brain-circuit" class="w-12 h-12 mb-5 text-white/20"></i>
-              FreqAI Model Training — TrendFollowerV3
-              <p class="text-[11px] text-white/30 mt-2">Model type: LightGBMRegressor · Status: Idle</p>
-          </div>
-
-          <!-- TAB: EDIT BOT -->
-          <div id="drawer-edit" class="drawer-tab-content p-5 flex flex-col gap-5" style="display:none">
-              <div class="font-mono text-[12px] uppercase tracking-wider space-y-4">
-                  <div><div class="text-white/45 mb-1.5 text-[11px]">Strategy</div><select class="w-full bg-black l-bd px-3 py-2 text-white/80 appearance-none rounded text-[13px]"><option>TrendFollowerV3</option><option>MeanReversionV2</option><option>ScalpBotV1</option></select></div>
-                  <div><div class="text-white/45 mb-1.5 text-[11px]">Stake Amount (USDT)</div><input type="text" class="w-full bg-black l-bd px-3 py-2 text-white outline-none rounded text-[13px]" value="100.00"></div>
-                  <div><div class="text-white/45 mb-1.5 text-[11px]">Max Open Trades</div><input type="text" class="w-full bg-black l-bd px-3 py-2 text-white outline-none rounded text-[13px]" value="10"></div>
-                  <div><div class="text-white/45 mb-1.5 text-[11px]">Stoploss %</div><input type="text" class="w-full bg-black l-bd px-3 py-2 text-white outline-none rounded text-[13px]" value="-10.0"></div>
-                  <div><div class="text-white/45 mb-1.5 text-[11px]">Trailing Stop</div><select class="w-full bg-black l-bd px-3 py-2 text-white/80 appearance-none rounded text-[13px]"><option>Yes</option><option>No</option></select></div>
-                  <div><div class="text-white/45 mb-1.5 text-[11px]">Whitelist</div>
-                      <div class="flex flex-wrap gap-1.5 mb-2">
-                          <span class="text-[9px] px-2 py-0.5 rounded bg-cyan-500/8 text-cyan-400 border border-cyan-500/20 font-medium flex items-center gap-1">BTC/USDT <button class="text-white/40 hover:text-white">×</button></span>
-                          <span class="text-[9px] px-2 py-0.5 rounded bg-cyan-500/8 text-cyan-400 border border-cyan-500/20 font-medium flex items-center gap-1">ETH/USDT <button class="text-white/40 hover:text-white">×</button></span>
-                          <span class="text-[9px] px-2 py-0.5 rounded bg-cyan-500/8 text-cyan-400 border border-cyan-500/20 font-medium flex items-center gap-1">SOL/USDT <button class="text-white/40 hover:text-white">×</button></span>
+                      <div class="grid grid-cols-5 gap-3 text-[11px] font-mono">
+                          <div><span class="text-muted block">Profit</span><span class="text-up font-bold">+142.5%</span></div>
+                          <div><span class="text-muted block">Drawdown</span><span class="text-down font-bold">-18.4%</span></div>
+                          <div><span class="text-muted block">Win Rate</span><span class="text-white">64.2%</span></div>
+                          <div><span class="text-muted block">Trades</span><span class="text-white">230</span></div>
+                          <div><span class="text-muted block">Timerange</span><span class="text-muted">Jan-Dec 2024</span></div>
                       </div>
-                      <input type="text" placeholder="Add pair..." class="w-full bg-black l-bd px-3 py-2 text-white outline-none rounded text-[13px]">
                   </div>
-                  <button class="w-full bg-white text-black font-bold py-2.5 hover:bg-white/85 transition-colors rounded text-[13px]" title="Save bot configuration changes">Save Changes</button>
+                  <!-- Run 2 -->
+                  <div class="bg-surface l-bd rounded p-3 hover:bg-white/[0.04] cursor-pointer transition-colors">
+                      <div class="flex justify-between items-center mb-2">
+                          <span class="text-white font-mono text-[12px] font-bold">Run #11 — 2024-03-25</span>
+                          <span class="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded">PROFITABLE</span>
+                      </div>
+                      <div class="grid grid-cols-5 gap-3 text-[11px] font-mono">
+                          <div><span class="text-muted block">Profit</span><span class="text-up font-bold">+98.2%</span></div>
+                          <div><span class="text-muted block">Drawdown</span><span class="text-down font-bold">-22.1%</span></div>
+                          <div><span class="text-muted block">Win Rate</span><span class="text-white">61.8%</span></div>
+                          <div><span class="text-muted block">Trades</span><span class="text-white">185</span></div>
+                          <div><span class="text-muted block">Timerange</span><span class="text-muted">Jun-Dec 2024</span></div>
+                      </div>
+                  </div>
+                  <!-- Run 3 -->
+                  <div class="bg-surface l-bd rounded p-3 hover:bg-white/[0.04] cursor-pointer transition-colors">
+                      <div class="flex justify-between items-center mb-2">
+                          <span class="text-white font-mono text-[12px] font-bold">Run #10 — 2024-03-20</span>
+                          <span class="px-1.5 py-0.5 text-[9px] font-bold bg-down/12 text-down rounded">LOSS</span>
+                      </div>
+                      <div class="grid grid-cols-5 gap-3 text-[11px] font-mono">
+                          <div><span class="text-muted block">Profit</span><span class="text-down font-bold">-12.4%</span></div>
+                          <div><span class="text-muted block">Drawdown</span><span class="text-down font-bold">-38.2%</span></div>
+                          <div><span class="text-muted block">Win Rate</span><span class="text-white">42.1%</span></div>
+                          <div><span class="text-muted block">Trades</span><span class="text-white">310</span></div>
+                          <div><span class="text-muted block">Timerange</span><span class="text-muted">Jan-Dec 2023</span></div>
+                      </div>
+                  </div>
               </div>
           </div>
 
-      </div>
+          <!-- ═══ TAB: HYPEROPT (results list) ═══ -->
+          <div id="drawer-hyperopt" class="drawer-tab-content p-4 flex flex-col gap-4" style="display:none">
+              <h3 class="section-title flex items-center gap-2">Hyperopt Runs <span class="text-white/30">(TrendFollowerV3)</span></h3>
+              <div class="space-y-2.5">
+                  <div class="bg-surface l-bd rounded p-3 hover:bg-white/[0.04] cursor-pointer transition-colors">
+                      <div class="flex justify-between items-center mb-2">
+                          <span class="text-white font-mono text-[12px] font-bold">Opt #5 — SharpeHyperOptLoss</span>
+                          <span class="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded">BEST: -0.1555</span>
+                      </div>
+                      <div class="grid grid-cols-5 gap-3 text-[11px] font-mono">
+                          <div><span class="text-muted block">Epochs</span><span class="text-white">3000</span></div>
+                          <div><span class="text-muted block">Space</span><span class="text-white">buy sell</span></div>
+                          <div><span class="text-muted block">Profit</span><span class="text-up font-bold">+168%</span></div>
+                          <div><span class="text-muted block">Drawdown</span><span class="text-down font-bold">-14.2%</span></div>
+                          <div><span class="text-muted block">Date</span><span class="text-muted">2024-03-28</span></div>
+                      </div>
+                  </div>
+                  <div class="bg-surface l-bd rounded p-3 hover:bg-white/[0.04] cursor-pointer transition-colors">
+                      <div class="flex justify-between items-center mb-2">
+                          <span class="text-white font-mono text-[12px] font-bold">Opt #4 — CalmarHyperOptLoss</span>
+                          <span class="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded">BEST: -0.2140</span>
+                      </div>
+                      <div class="grid grid-cols-5 gap-3 text-[11px] font-mono">
+                          <div><span class="text-muted block">Epochs</span><span class="text-white">5000</span></div>
+                          <div><span class="text-muted block">Space</span><span class="text-white">buy sell trailing</span></div>
+                          <div><span class="text-muted block">Profit</span><span class="text-up font-bold">+210%</span></div>
+                          <div><span class="text-muted block">Drawdown</span><span class="text-down font-bold">-9.8%</span></div>
+                          <div><span class="text-muted block">Date</span><span class="text-muted">2024-03-22</span></div>
+                      </div>
+                  </div>
+              </div>
+          </div>
 
-      <!-- FOOTER -->
-      <div class="px-5 py-3 l-b bg-black flex gap-2 shrink-0">
-          <button onclick="switchDrawerTab('drawer-edit', document.querySelectorAll('.drawer-tab-btn')[9])" class="flex-1 py-2 rounded l-bd bg-black hover:bg-white/5 text-muted text-xs font-medium text-center transition-colors" title="Switch to Edit Bot tab">Edit Bot Settings</button>
-          <button onclick="closeBotDrawer()" class="flex-1 py-2 rounded bg-white text-black text-xs font-bold text-center hover:bg-white/85 transition-colors" title="Close this panel">Close Panel</button>
+          <!-- ═══ TAB: FREQAI (model results) ═══ -->
+          <div id="drawer-freqai" class="drawer-tab-content p-4 flex flex-col gap-4" style="display:none">
+              <h3 class="section-title flex items-center gap-2">FreqAI Models <span class="text-white/30">(TrendFollowerV3)</span></h3>
+              <div class="bg-surface l-bd rounded p-3">
+                  <div class="flex justify-between items-center mb-2">
+                      <span class="text-white font-mono text-[12px] font-bold">LightGBMRegressor — v3</span>
+                      <span class="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded">ACTIVE</span>
+                  </div>
+                  <div class="grid grid-cols-4 gap-3 text-[11px] font-mono">
+                      <div><span class="text-muted block">Features</span><span class="text-white">42</span></div>
+                      <div><span class="text-muted block">Training</span><span class="text-white">2024-03-27</span></div>
+                      <div><span class="text-muted block">Accuracy</span><span class="text-up font-bold">72.4%</span></div>
+                      <div><span class="text-muted block">Predictions</span><span class="text-white">1,240</span></div>
+                  </div>
+              </div>
+              <div class="bg-surface l-bd rounded p-3 opacity-60">
+                  <div class="flex justify-between items-center mb-2">
+                      <span class="text-white font-mono text-[12px] font-bold">LightGBMRegressor — v2</span>
+                      <span class="px-1.5 py-0.5 text-[9px] font-bold text-muted l-bd rounded">ARCHIVED</span>
+                  </div>
+                  <div class="grid grid-cols-4 gap-3 text-[11px] font-mono">
+                      <div><span class="text-muted block">Features</span><span class="text-white">38</span></div>
+                      <div><span class="text-muted block">Training</span><span class="text-white">2024-03-15</span></div>
+                      <div><span class="text-muted block">Accuracy</span><span class="text-white">68.1%</span></div>
+                      <div><span class="text-muted block">Predictions</span><span class="text-white">890</span></div>
+                  </div>
+              </div>
+          </div>
+
+          <!-- ═══ TAB: SYSTEM & LOG (merged) ═══ -->
+          <div id="drawer-system" class="drawer-tab-content p-4 flex flex-col gap-3" style="display:none">
+              <!-- System Status -->
+              <div class="grid grid-cols-2 gap-2.5">
+                  <div class="bg-surface l-bd rounded p-3">
+                      <div class="kpi-label mb-2">System Resources</div>
+                      <div class="space-y-2.5">
+                          <div><div class="flex justify-between text-[11px] font-mono mb-1"><span class="text-muted">CPU</span><span class="text-white font-medium">14%</span></div><div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-white/70 rounded-full" style="width:14%"></div></div></div>
+                          <div><div class="flex justify-between text-[11px] font-mono mb-1"><span class="text-muted">RAM</span><span class="text-yellow-400 font-medium">82%</span></div><div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-yellow-400 rounded-full" style="width:82%"></div></div></div>
+                      </div>
+                  </div>
+                  <div class="bg-surface l-bd rounded p-3">
+                      <div class="kpi-label mb-2">Bot Health</div>
+                      <div class="space-y-1.5 font-mono text-[11px]">
+                          <div class="flex justify-between"><span class="text-muted">Last Process</span><span class="text-white">1.2s ago</span></div>
+                          <div class="flex justify-between"><span class="text-muted">DB Sync</span><span class="text-up font-bold">OK</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Exchange Lat.</span><span class="text-up font-bold">32ms</span></div>
+                          <div class="flex justify-between"><span class="text-muted">FT Version</span><span class="text-white">2024.3</span></div>
+                      </div>
+                  </div>
+              </div>
+              <!-- Log Section -->
+              <div class="flex-1 bg-surface l-bd rounded flex flex-col min-h-[300px]">
+                  <div class="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06] shrink-0">
+                      <div class="flex gap-1">
+                          <button class="px-2 py-0.5 text-[9px] font-bold uppercase bg-white/10 text-white rounded" title="Show all log levels">ALL</button>
+                          <button class="px-2 py-0.5 text-[9px] font-bold uppercase text-muted hover:text-white transition-colors rounded" title="Show info messages only">INFO</button>
+                          <button class="px-2 py-0.5 text-[9px] font-bold uppercase text-muted hover:text-white transition-colors rounded" title="Show buy and sell signals">BUY/SELL</button>
+                          <button class="px-2 py-0.5 text-[9px] font-bold uppercase text-muted hover:text-white transition-colors rounded" title="Show warnings only">WARN</button>
+                          <button class="px-2 py-0.5 text-[9px] font-bold uppercase text-muted hover:text-white transition-colors rounded" title="Show errors only">ERROR</button>
+                      </div>
+                      <div class="ml-auto flex items-center gap-2 text-[10px] font-mono text-muted">
+                          <button class="hover:text-white transition-colors flex items-center gap-1" title="Pin to bottom — auto-scroll"><i data-lucide="pin" class="w-3 h-3"></i> Pin</button>
+                          <button class="hover:text-white transition-colors flex items-center gap-1" title="Refresh logs"><i data-lucide="refresh-cw" class="w-3 h-3"></i></button>
+                          <span>50 entries</span>
+                      </div>
+                  </div>
+                  <div class="flex-1 overflow-y-auto font-mono text-[11px] text-muted bg-[#060606] p-3 leading-relaxed">
+                      <div class="mb-1"><span class="text-white/30 mr-2">14:05:00</span><span class="text-yellow-500">WARN</span> High volatility detected on SOL/USDT.</div>
+                      <div class="mb-1"><span class="text-white/30 mr-2">14:03:00</span><span class="text-blue-400">INFO</span> DB heartbeat synchronized.</div>
+                      <div class="mb-1"><span class="text-white/30 mr-2">14:02:12</span><span class="text-up font-bold">FILL</span> Order Filled at 64,220.00.</div>
+                      <div class="mb-1"><span class="text-white/30 mr-2">14:02:12</span><span class="text-yellow-500">HTTP</span> Binance API /order sent. Latency 32ms.</div>
+                      <div class="mb-1"><span class="text-white/30 mr-2">14:02:11</span><span class="text-up font-bold">BUY </span> Executing LONG on BTC/USDT (Size: 0.50).</div>
+                      <div class="mb-1"><span class="text-white/30 mr-2">14:02:11</span><span class="text-blue-400">INFO</span> TrendFollowerV3_BTC evaluated rules.</div>
+                      <div class="mb-1"><span class="text-white/30 mr-2">14:01:00</span><span class="text-blue-400">INFO</span> Processing candle for BTC/USDT [1h].</div>
+                      <div class="mb-1"><span class="text-white/30 mr-2">14:00:00</span><span class="text-blue-400">INFO</span> Heartbeat: 6 open trades, $24,500 balance.</div>
+                      <div class="mb-1"><span class="text-white/30 mr-2">13:58:10</span><span class="text-down font-bold">SELL</span> Exiting SHORT ETH/USDT — trailing_stop.</div>
+                      <div class="mb-1"><span class="text-white/30 mr-2">13:55:00</span><span class="text-white/25">DEBUG</span> Pair analysis complete for 24 pairs.</div>
+                  </div>
+              </div>
+          </div>
+
       </div>
   </aside>
 

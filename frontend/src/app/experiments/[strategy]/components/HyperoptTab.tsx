@@ -991,19 +991,19 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                 </button>
               </div>
               <div className="grid grid-cols-4 gap-2 text-[10px]">
-                <div className="bg-muted/30 border border-border rounded px-2 py-1">
+                <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
                   <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Sampler</div>
                   <div className="text-foreground font-mono truncate">{uniqueSamplers}</div>
                 </div>
-                <div className="bg-muted/30 border border-border rounded px-2 py-1">
+                <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
                   <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Loss Function</div>
                   <div className="text-foreground font-mono truncate">{uniqueLoss}</div>
                 </div>
-                <div className="bg-muted/30 border border-border rounded px-2 py-1">
+                <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
                   <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Spaces</div>
                   <div className="text-foreground font-mono truncate">{uniqueSpaces}</div>
                 </div>
-                <div className="bg-muted/30 border border-border rounded px-2 py-1">
+                <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
                   <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Best Profit</div>
                   <div className={`font-mono ${(sortedResults[0]?.profitPct ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                     {(sortedResults[0]?.profitPct ?? 0) >= 0 ? '+' : ''}{(sortedResults[0]?.profitPct ?? 0).toFixed(2)}%
@@ -1012,52 +1012,39 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
               </div>
             </div>
 
-            {/* Best Epoch Summary Metrics */}
+            {/* Best Epoch Summary Metrics — uses same MetricCard layout as BacktestTab */}
             {(() => {
-              // Find the best epoch (lowest loss / highest profit)
               const best = sortedResults[0];
               if (!best) return null;
               const profitOk = best.profitPct >= 0;
+              // Reusable MetricCard matching BacktestTab exactly
+              const MC = ({ label, value, sub, positive }: { label: string; value: string; sub?: string; positive?: boolean | null }) => {
+                const valColor = positive === true ? "text-emerald-400" : positive === false ? "text-rose-400" : "text-foreground";
+                return (
+                  <div className="bg-muted/50 border border-border rounded-lg p-2.5">
+                    <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">{label}</div>
+                    <div className={`text-sm font-bold tabular-nums ${valColor}`}>{value}</div>
+                    {sub && <div className="text-[10px] text-muted-foreground tabular-nums">{sub}</div>}
+                  </div>
+                );
+              };
               return (
-                <div className="px-4 py-3 border-b border-border">
-                  <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Best Epoch Summary</div>
-                  <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
-                    <div className="bg-muted/50 border border-border rounded-lg p-2">
-                      <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Total Trades</div>
-                      <div className="text-sm font-bold tabular-nums text-foreground">{best.trades}</div>
-                    </div>
-                    <div className="bg-muted/50 border border-border rounded-lg p-2">
-                      <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Win Rate</div>
-                      <div className="text-sm font-bold tabular-nums text-foreground">{(best.winRate * 100).toFixed(1)}%</div>
-                    </div>
-                    <div className="bg-muted/50 border border-border rounded-lg p-2">
-                      <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Total Profit</div>
-                      <div className={`text-sm font-bold tabular-nums ${profitOk ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {profitOk ? '+' : ''}{best.profitPct.toFixed(2)}%
-                      </div>
-                    </div>
-                    <div className="bg-muted/50 border border-border rounded-lg p-2">
-                      <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Profit $</div>
-                      <div className={`text-sm font-bold tabular-nums ${profitOk ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {fmt$(best.profitAbs)}
-                      </div>
-                    </div>
-                    <div className="bg-muted/50 border border-border rounded-lg p-2">
-                      <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Max Drawdown</div>
-                      <div className="text-sm font-bold tabular-nums text-rose-400">-{Math.abs(best.maxDrawdown).toFixed(2)}%</div>
-                    </div>
-                    <div className="bg-muted/50 border border-border rounded-lg p-2">
-                      <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Sharpe</div>
-                      <div className="text-sm font-bold tabular-nums text-foreground">{fmtNum(best.sharpe)}</div>
-                    </div>
-                    <div className="bg-muted/50 border border-border rounded-lg p-2">
-                      <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Sortino</div>
-                      <div className="text-sm font-bold tabular-nums text-foreground">{fmtNum(best.sortino)}</div>
-                    </div>
-                    <div className="bg-muted/50 border border-border rounded-lg p-2">
-                      <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Avg Duration</div>
-                      <div className="text-sm font-bold tabular-nums text-foreground">{best.avgDuration || '—'}</div>
-                    </div>
+                <div className="px-4 py-3 border-b border-border flex flex-col gap-2">
+                  {/* Row 1: Core Metrics (6-grid — same as BacktestTab Row 1) */}
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    <MC label="Total Trades" value={String(best.trades)} />
+                    <MC label="Win Rate" value={`${(best.winRate * 100).toFixed(1)}%`} positive={best.winRate > 0.6 ? true : best.winRate < 0.4 ? false : null} />
+                    <MC label="Total Profit" value={`${profitOk ? '+' : ''}${best.profitPct.toFixed(2)}%`} sub={fmt$(best.profitAbs)} positive={profitOk} />
+                    <MC label="Max Drawdown" value={`-${Math.abs(best.maxDrawdown).toFixed(2)}%`} positive={false} />
+                    <MC label="Sharpe" value={fmtNum(best.sharpe)} positive={best.sharpe > 1 ? true : best.sharpe < 0 ? false : null} />
+                    <MC label="Sortino" value={fmtNum(best.sortino)} positive={best.sortino > 1 ? true : best.sortino < 0 ? false : null} />
+                  </div>
+                  {/* Row 2: Extra (4-grid — same as BacktestTab Row 4) */}
+                  <div className="grid grid-cols-4 gap-2">
+                    <MC label="Avg Duration" value={best.avgDuration || "—"} />
+                    <MC label="Loss" value={best.loss.toFixed(5)} positive={best.loss < 0 ? true : false} />
+                    <MC label="Profit $" value={fmt$(best.profitAbs)} positive={profitOk} />
+                    <MC label="Epochs" value={String(best.epochs)} />
                   </div>
                 </div>
               );

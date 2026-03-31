@@ -28,6 +28,15 @@
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
 
+  /* SORTABLE TABLE HEADERS */
+  th.sortable { cursor: pointer; user-select: none; position: relative; white-space: nowrap; }
+  th.sortable:hover { color: #fff; background: rgba(255,255,255,0.04); }
+  th.sortable::after { content: '⇅'; margin-left: 4px; opacity: 0.25; font-size: 10px; }
+  th.sortable:hover::after { opacity: 0.6; }
+  th.sortable.sort-asc::after { content: '↑'; opacity: 0.9; color: #fff; }
+  th.sortable.sort-desc::after { content: '↓'; opacity: 0.9; color: #fff; }
+  th.sortable.sort-asc, th.sortable.sort-desc { color: #fff; background: rgba(255,255,255,0.04); }
+
   /* NEW COMPONENTS */
   :root { --drawer-left: 680px; }
   .drawer { position: fixed; top: 0; height: 100vh; left: var(--drawer-left); right: 0; width: auto; background: #0C0C0C; border-left: 1px solid rgba(255,255,255,0.10); transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), left 0.25s ease; z-index: 60; display: flex; flex-direction: column; box-shadow: -10px 0 40px rgba(0,0,0,0.85); }
@@ -203,21 +212,9 @@
           <div id="drawer-trades" class="drawer-tab-content p-4 flex flex-col gap-4" style="display:none">
               <div>
                   <h3 class="section-title mb-2 flex items-center gap-2">Open Positions <span class="text-white/30">(6)</span></h3>
-                  <div class="flex items-center gap-1.5 mb-2">
-                      <input type="text" placeholder="Pair..." class="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-mono text-white placeholder:text-white/25 w-20 focus:outline-none focus:border-white/30">
-                      <select class="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-mono text-muted cursor-pointer focus:outline-none">
-                          <option>All</option><option>LONG</option><option>SHORT</option>
-                      </select>
-                      <div class="ml-auto flex items-center gap-1">
-                          <span class="text-[9px] text-muted uppercase">Sort:</span>
-                          <select class="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-mono text-muted cursor-pointer focus:outline-none">
-                              <option>P&L ↓</option><option>P&L ↑</option><option>Pair</option><option>Duration</option>
-                          </select>
-                      </div>
-                  </div>
                   <div class="overflow-x-auto">
                   <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr>
-                      <th class="text-left py-1.5 px-1">Pair</th><th class="text-left py-1.5 px-1">Side</th><th class="text-right py-1.5 px-1">Leverage</th><th class="text-right py-1.5 px-1">Entry</th><th class="text-right py-1.5 px-1">Current</th><th class="text-right py-1.5 px-1">Stake</th><th class="text-right py-1.5 px-1">P&amp;L</th><th class="text-right py-1.5 px-1">P&amp;L %</th><th class="text-right py-1.5 px-1">Duration</th><th class="text-left py-1.5 px-1">Enter Tag</th><th class="text-right py-1.5 px-1">SL</th>
+                      <th class="text-left py-1.5 px-1 sortable">Pair</th><th class="text-left py-1.5 px-1 sortable">Side</th><th class="text-right py-1.5 px-1 sortable">Leverage</th><th class="text-right py-1.5 px-1 sortable">Entry</th><th class="text-right py-1.5 px-1 sortable">Current</th><th class="text-right py-1.5 px-1 sortable">Stake</th><th class="text-right py-1.5 px-1 sortable">P&amp;L</th><th class="text-right py-1.5 px-1 sortable">P&amp;L %</th><th class="text-right py-1.5 px-1 sortable">Duration</th><th class="text-left py-1.5 px-1 sortable">Enter Tag</th><th class="text-right py-1.5 px-1 sortable">SL</th>
                   </tr></thead>
                   <tbody class="divide-y divide-white/[0.04]">
                       <tr class="hover:bg-white/[0.02]"><td class="py-1.5 px-1 text-white font-medium">BTC/USDT</td><td class="py-1.5 px-1"><span class="bg-up/12 text-up px-1 py-0.5 rounded text-[9px] font-bold">LONG</span></td><td class="py-1.5 px-1 text-right">10x</td><td class="py-1.5 px-1 text-right">64,220</td><td class="py-1.5 px-1 text-right font-medium">65,110</td><td class="py-1.5 px-1 text-right">100</td><td class="py-1.5 px-1 text-right text-up font-bold">+$445</td><td class="py-1.5 px-1 text-right text-up">+1.38%</td><td class="py-1.5 px-1 text-right text-muted">2h14m</td><td class="py-1.5 px-1 text-muted">ema_cross</td><td class="py-1.5 px-1 text-right text-down">-10%</td></tr>
@@ -227,24 +224,8 @@
               </div>
               <div>
                   <h3 class="section-title mb-2 flex items-center gap-2">Closed Trades <span class="text-white/30">(last 10)</span></h3>
-                  <div class="flex items-center gap-1.5 mb-2">
-                      <input type="text" placeholder="Pair..." class="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-mono text-white placeholder:text-white/25 w-20 focus:outline-none focus:border-white/30">
-                      <select class="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-mono text-muted cursor-pointer focus:outline-none">
-                          <option>All</option><option>LONG</option><option>SHORT</option>
-                      </select>
-                      <select class="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-mono text-muted cursor-pointer focus:outline-none">
-                          <option>All Exits</option><option>roi</option><option>stoploss</option><option>trailing</option>
-                      </select>
-                      <div class="ml-auto flex items-center gap-1">
-                          <span class="text-[9px] text-muted uppercase">Sort:</span>
-                          <select class="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-mono text-muted cursor-pointer focus:outline-none">
-                              <option>Date ↓</option><option>P&L ↓</option><option>P&L ↑</option><option>Pair</option>
-                          </select>
-                      </div>
-                  </div>
-                  <div class="overflow-x-auto">
                   <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr>
-                      <th class="text-left py-1.5 px-1">Pair</th><th class="text-left py-1.5 px-1">Side</th><th class="text-right py-1.5 px-1">Lev</th><th class="text-right py-1.5 px-1">Entry</th><th class="text-right py-1.5 px-1">Exit</th><th class="text-right py-1.5 px-1">Stake</th><th class="text-right py-1.5 px-1">P&amp;L</th><th class="text-right py-1.5 px-1">P&amp;L %</th><th class="text-right py-1.5 px-1">Duration</th><th class="text-left py-1.5 px-1">Enter Tag</th><th class="text-left py-1.5 px-1">Exit Reason</th>
+                      <th class="text-left py-1.5 px-1 sortable">Pair</th><th class="text-left py-1.5 px-1 sortable">Side</th><th class="text-right py-1.5 px-1 sortable">Lev</th><th class="text-right py-1.5 px-1 sortable">Entry</th><th class="text-right py-1.5 px-1 sortable">Exit</th><th class="text-right py-1.5 px-1 sortable">Stake</th><th class="text-right py-1.5 px-1 sortable">P&amp;L</th><th class="text-right py-1.5 px-1 sortable">P&amp;L %</th><th class="text-right py-1.5 px-1 sortable">Duration</th><th class="text-left py-1.5 px-1 sortable">Enter Tag</th><th class="text-left py-1.5 px-1 sortable">Exit Reason</th>
                   </tr></thead>
                   <tbody class="divide-y divide-white/[0.04]">
                       <tr class="hover:bg-white/[0.02]"><td class="py-1.5 px-1 text-white font-medium">SOL/USDT</td><td class="py-1.5 px-1"><span class="text-up text-[9px] font-bold">LONG</span></td><td class="py-1.5 px-1 text-right">3x</td><td class="py-1.5 px-1 text-right">144.20</td><td class="py-1.5 px-1 text-right">156.40</td><td class="py-1.5 px-1 text-right">100</td><td class="py-1.5 px-1 text-right text-up font-bold">+$610</td><td class="py-1.5 px-1 text-right text-up">+8.46%</td><td class="py-1.5 px-1 text-right text-muted">18h</td><td class="py-1.5 px-1 text-muted">ema_cross</td><td class="py-1.5 px-1 text-muted">trailing_stop</td></tr>
@@ -267,17 +248,6 @@
               <!-- Pair Performance -->
               <div class="bg-surface l-bd rounded p-3">
                   <h3 class="section-title mb-2">Per-Pair Performance</h3>
-                  <div class="flex items-center gap-1.5 mb-2">
-                      <input type="text" placeholder="Pair..." class="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-mono text-white placeholder:text-white/25 w-20 focus:outline-none focus:border-white/30">
-                      <div class="ml-auto flex items-center gap-1">
-                          <span class="text-[9px] text-muted uppercase">Sort:</span>
-                          <select class="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-mono text-muted cursor-pointer focus:outline-none">
-                              <option>Profit ↓</option><option>Profit ↑</option><option>Trades ↓</option><option>Win% ↓</option><option>Pair</option>
-                          </select>
-                      </div>
-                  </div>
-                  <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr><th class="text-left py-1.5">Pair</th><th class="text-right py-1.5">Trades</th><th class="text-right py-1.5">Wins</th><th class="text-right py-1.5">Losses</th><th class="text-right py-1.5">Win%</th><th class="text-right py-1.5">Profit</th><th class="text-right py-1.5">Avg P&amp;L</th></tr></thead>
-                  <tbody class="divide-y divide-white/[0.04]">
                       <tr class="hover:bg-white/[0.02]"><td class="py-1.5 text-white font-medium">BTC/USDT</td><td class="py-1.5 text-right">128</td><td class="py-1.5 text-right text-up">94</td><td class="py-1.5 text-right text-down">34</td><td class="py-1.5 text-right">73.4%</td><td class="py-1.5 text-right text-up font-bold">+$1,840</td><td class="py-1.5 text-right text-up">+$14.4</td></tr>
                       <tr class="hover:bg-white/[0.02]"><td class="py-1.5 text-white font-medium">SOL/USDT</td><td class="py-1.5 text-right">32</td><td class="py-1.5 text-right text-up">25</td><td class="py-1.5 text-right text-down">7</td><td class="py-1.5 text-right">78.1%</td><td class="py-1.5 text-right text-up font-bold">+$2,140</td><td class="py-1.5 text-right text-up">+$66.9</td></tr>
                       <tr class="hover:bg-white/[0.02]"><td class="py-1.5 text-white font-medium">ETH/USDT</td><td class="py-1.5 text-right">95</td><td class="py-1.5 text-right text-up">66</td><td class="py-1.5 text-right text-down">29</td><td class="py-1.5 text-right">69.5%</td><td class="py-1.5 text-right text-up font-bold">+$620</td><td class="py-1.5 text-right text-up">+$6.5</td></tr>
@@ -289,7 +259,7 @@
               <div class="grid grid-cols-2 gap-2.5">
                   <div class="bg-surface l-bd rounded p-3">
                       <h3 class="section-title mb-2">Entry Tags</h3>
-                      <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr><th class="text-left py-1">Tag</th><th class="text-right py-1">N</th><th class="text-right py-1">Win%</th><th class="text-right py-1">Profit</th></tr></thead>
+                      <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr><th class="text-left py-1 sortable">Tag</th><th class="text-right py-1 sortable">N</th><th class="text-right py-1 sortable">Win%</th><th class="text-right py-1 sortable">Profit</th></tr></thead>
                       <tbody class="divide-y divide-white/[0.04]">
                           <tr><td class="py-1 text-white/80">rsi_oversold</td><td class="py-1 text-right">185</td><td class="py-1 text-right">76%</td><td class="py-1 text-right text-up font-bold">+$2,100</td></tr>
                           <tr><td class="py-1 text-white/80">ema_cross</td><td class="py-1 text-right">140</td><td class="py-1 text-right">71%</td><td class="py-1 text-right text-up font-bold">+$1,240</td></tr>
@@ -298,7 +268,7 @@
                   </div>
                   <div class="bg-surface l-bd rounded p-3">
                       <h3 class="section-title mb-2">Exit Reasons</h3>
-                      <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr><th class="text-left py-1">Reason</th><th class="text-right py-1">N</th><th class="text-right py-1">Win%</th><th class="text-right py-1">Profit</th></tr></thead>
+                      <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr><th class="text-left py-1 sortable">Reason</th><th class="text-right py-1 sortable">N</th><th class="text-right py-1 sortable">Win%</th><th class="text-right py-1 sortable">Profit</th></tr></thead>
                       <tbody class="divide-y divide-white/[0.04]">
                           <tr><td class="py-1 text-white/80">trailing_stop</td><td class="py-1 text-right">210</td><td class="py-1 text-right">92%</td><td class="py-1 text-right text-up font-bold">+$3,800</td></tr>
                           <tr><td class="py-1 text-white/80">roi</td><td class="py-1 text-right">120</td><td class="py-1 text-right">100%</td><td class="py-1 text-right text-up font-bold">+$1,900</td></tr>
@@ -354,7 +324,7 @@
               <!-- Active Locks -->
               <div class="bg-surface l-bd rounded p-3">
                   <h3 class="section-title mb-2">Active Locks</h3>
-                  <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr><th class="text-left py-1">Pair</th><th class="text-left py-1">Reason</th><th class="text-right py-1">Until</th></tr></thead>
+                  <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr><th class="text-left py-1 sortable">Pair</th><th class="text-left py-1 sortable">Reason</th><th class="text-right py-1 sortable">Until</th></tr></thead>
                   <tbody class="divide-y divide-white/[0.04]">
                       <tr><td class="py-1.5 text-white font-medium">SOL/USDT</td><td class="py-1.5 text-muted">StoplossGuard</td><td class="py-1.5 text-right text-down">14m left</td></tr>
                   </tbody></table>
@@ -1029,35 +999,20 @@
                   
                   <!-- TAB: OPEN TRADES -->
                   <div id="trades-open" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto flex flex-col">
-                      <div class="flex items-center gap-2 px-5 py-2 bg-black/30 border-b border-white/[0.06] shrink-0">
-                          <input type="text" placeholder="Filter pair..." class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-white placeholder:text-white/25 w-28 focus:outline-none focus:border-white/30">
-                          <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
-                              <option>All Sides</option><option>LONG</option><option>SHORT</option>
-                          </select>
-                          <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
-                              <option>All Bots</option><option>TrendFollowerV3_BTC</option><option>ScalpBot_XRP</option>
-                          </select>
-                          <div class="ml-auto flex items-center gap-2">
-                              <span class="text-[10px] text-muted uppercase tracking-wider">Sort:</span>
-                              <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
-                                  <option>P&L ↓</option><option>P&L ↑</option><option>Date ↓</option><option>Date ↑</option><option>Pair A-Z</option><option>Duration ↓</option>
-                              </select>
-                          </div>
-                      </div>
                       <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
                            <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
                                <tr>
-                                   <th class="px-5 py-3.5 font-medium">Date & Time</th>
-                                   <th class="px-5 py-3.5 font-medium">Pair</th>
-                                   <th class="px-5 py-3.5 font-medium">Bot Logic</th>
-                                   <th class="px-5 py-3.5 font-medium text-center">Side</th>
-                                   <th class="px-5 py-3.5 font-medium text-right">Size</th>
-                                   <th class="px-5 py-3.5 font-medium text-right">Entry</th>
-                                   <th class="px-5 py-3.5 font-medium text-right">Mark Price</th>
-                                   <th class="px-5 py-3.5 font-medium text-right bg-black/20">Profit %</th>
-                                   <th class="px-5 py-3.5 font-medium text-right bg-black/20">Value</th>
-                                   <th class="px-5 py-3.5 font-medium text-right">Fee</th>
-                                   <th class="px-5 py-3.5 font-medium">Age</th>
+                                   <th class="px-5 py-3.5 font-medium sortable sort-desc">Date & Time</th>
+                                   <th class="px-5 py-3.5 font-medium sortable">Pair</th>
+                                   <th class="px-5 py-3.5 font-medium sortable">Bot Logic</th>
+                                   <th class="px-5 py-3.5 font-medium text-center sortable">Side</th>
+                                   <th class="px-5 py-3.5 font-medium text-right sortable">Size</th>
+                                   <th class="px-5 py-3.5 font-medium text-right sortable">Entry</th>
+                                   <th class="px-5 py-3.5 font-medium text-right sortable">Mark Price</th>
+                                   <th class="px-5 py-3.5 font-medium text-right bg-black/20 sortable">Profit %</th>
+                                   <th class="px-5 py-3.5 font-medium text-right bg-black/20 sortable">Value</th>
+                                   <th class="px-5 py-3.5 font-medium text-right sortable">Fee</th>
+                                   <th class="px-5 py-3.5 font-medium sortable">Age</th>
                                    <th class="px-5 py-3.5 font-medium border-l border-white/8 text-center">Actions</th>
                                </tr>
                            </thead>
@@ -1123,38 +1078,19 @@
                   </div>
 
                   <div id="trades-closed" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto flex flex-col" style="display:none;">
-                      <div class="flex items-center gap-2 px-5 py-2 bg-black/30 border-b border-white/[0.06] shrink-0">
-                          <input type="text" placeholder="Filter pair..." class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-white placeholder:text-white/25 w-28 focus:outline-none focus:border-white/30">
-                          <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
-                              <option>All Sides</option><option>LONG</option><option>SHORT</option>
-                          </select>
-                          <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
-                              <option>All Exits</option><option>roi</option><option>stoploss</option><option>trailing_stop</option><option>exit_signal</option>
-                          </select>
-                          <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
-                              <option>All Bots</option><option>TrendFollowerV3_BTC</option><option>ScalpBot_XRP</option>
-                          </select>
-                          <div class="ml-auto flex items-center gap-2">
-                              <span class="text-[10px] text-muted uppercase tracking-wider">Sort:</span>
-                              <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
-                                  <option>Date ↓</option><option>Date ↑</option><option>P&L ↓</option><option>P&L ↑</option><option>Pair A-Z</option><option>Duration ↓</option>
-                              </select>
-                          </div>
-                      </div>
-                      <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
                            <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
                                <tr>
-                                   <th class="px-5 py-3.5 font-medium">Date</th>
-                                   <th class="px-5 py-3.5 font-medium">Pair</th>
-                                   <th class="px-5 py-3.5 font-medium">Bot</th>
-                                   <th class="px-5 py-3.5 font-medium text-center">Side</th>
-                                   <th class="px-5 py-3.5 font-medium text-right">Entry</th>
-                                   <th class="px-5 py-3.5 font-medium text-right">Exit</th>
-                                   <th class="px-5 py-3.5 font-medium text-right bg-black/20">Profit %</th>
-                                   <th class="px-5 py-3.5 font-medium text-right bg-black/20">Value</th>
-                                   <th class="px-5 py-3.5 font-medium text-right">Fee</th>
-                                   <th class="px-5 py-3.5 font-medium">Duration</th>
-                                   <th class="px-5 py-3.5 font-medium">Exit Reason</th>
+                                   <th class="px-5 py-3.5 font-medium sortable">Date</th>
+                                   <th class="px-5 py-3.5 font-medium sortable">Pair</th>
+                                   <th class="px-5 py-3.5 font-medium sortable">Bot</th>
+                                   <th class="px-5 py-3.5 font-medium text-center sortable">Side</th>
+                                   <th class="px-5 py-3.5 font-medium text-right sortable">Entry</th>
+                                   <th class="px-5 py-3.5 font-medium text-right sortable">Exit</th>
+                                   <th class="px-5 py-3.5 font-medium text-right bg-black/20 sortable">Profit %</th>
+                                   <th class="px-5 py-3.5 font-medium text-right bg-black/20 sortable">Value</th>
+                                   <th class="px-5 py-3.5 font-medium text-right sortable">Fee</th>
+                                   <th class="px-5 py-3.5 font-medium sortable">Duration</th>
+                                   <th class="px-5 py-3.5 font-medium sortable">Exit Reason</th>
                                </tr>
                            </thead>
                            <tbody class="font-mono text-white/85 divide-y divide-white/[0.05]">
@@ -1190,31 +1126,18 @@
 
                   <!-- TAB: WHITELIST MATRIX -->
                   <div id="trades-whitelist" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto flex flex-col" style="display:none;">
-                      <div class="flex items-center gap-2 px-5 py-2 bg-black/30 border-b border-white/[0.06] shrink-0">
-                          <input type="text" placeholder="Filter pair..." class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-white placeholder:text-white/25 w-28 focus:outline-none focus:border-white/30">
-                          <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
-                              <option>All Status</option><option>ACTIVE</option><option>LOCKED</option><option>COOLDOWN</option>
-                          </select>
-                          <div class="ml-auto flex items-center gap-2">
-                              <span class="text-[10px] text-muted uppercase tracking-wider">Sort:</span>
-                              <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
-                                  <option>Pair A-Z</option><option>Trades ↓</option><option>P&L ↓</option><option>Volatility ↓</option>
-                              </select>
-                          </div>
-                      </div>
-                      <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
                            <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
                                <tr>
-                                   <th class="px-5 py-3.5 font-medium">Pair</th>
-                                   <th class="px-5 py-3.5 font-medium text-center">Status</th>
-                                   <th class="px-5 py-3.5 font-medium">Assigned Bots</th>
-                                   <th class="px-5 py-3.5 font-medium text-right">Price</th>
-                                   <th class="px-5 py-3.5 font-medium text-right">24h Change</th>
-                                   <th class="px-5 py-3.5 font-medium text-right">Spread</th>
-                                   <th class="px-5 py-3.5 font-medium text-right">24h Vol</th>
-                                   <th class="px-5 py-3.5 font-medium text-right">Volatility</th>
-                                   <th class="px-5 py-3.5 font-medium text-center">Open Pos</th>
-                                   <th class="px-5 py-3.5 font-medium text-center">Lock</th>
+                                   <th class="px-5 py-3.5 font-medium sortable">Pair</th>
+                                   <th class="px-5 py-3.5 font-medium text-center sortable">Status</th>
+                                   <th class="px-5 py-3.5 font-medium sortable">Assigned Bots</th>
+                                   <th class="px-5 py-3.5 font-medium text-right sortable">Price</th>
+                                   <th class="px-5 py-3.5 font-medium text-right sortable">24h Change</th>
+                                   <th class="px-5 py-3.5 font-medium text-right sortable">Spread</th>
+                                   <th class="px-5 py-3.5 font-medium text-right sortable">24h Vol</th>
+                                   <th class="px-5 py-3.5 font-medium text-right sortable">Volatility</th>
+                                   <th class="px-5 py-3.5 font-medium text-center sortable">Open Pos</th>
+                                   <th class="px-5 py-3.5 font-medium text-center sortable">Lock</th>
                                    <th class="px-5 py-3.5 font-medium border-l border-white/8 text-center">Controls</th>
                                </tr>
                            </thead>
@@ -1299,30 +1222,17 @@
                   </div>
 
                   <div id="trades-performance" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto flex flex-col" style="display:none;">
-                      <div class="flex items-center gap-2 px-5 py-2 bg-black/30 border-b border-white/[0.06] shrink-0">
-                          <input type="text" placeholder="Filter pair..." class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-white placeholder:text-white/25 w-28 focus:outline-none focus:border-white/30">
-                          <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
-                              <option>All Bots</option><option>TrendFollowerV3_BTC</option><option>ScalpBot_XRP</option>
-                          </select>
-                          <div class="ml-auto flex items-center gap-2">
-                              <span class="text-[10px] text-muted uppercase tracking-wider">Sort:</span>
-                              <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
-                                  <option>Profit ↓</option><option>Profit ↑</option><option>Trades ↓</option><option>Win Rate ↓</option><option>Pair A-Z</option>
-                              </select>
-                          </div>
-                      </div>
-                      <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
                            <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
                                <tr>
-                                   <th class="px-5 py-3.5 font-medium">Pair</th>
-                                   <th class="px-5 py-3.5 font-medium text-right">Trades</th>
-                                   <th class="px-5 py-3.5 font-medium text-right">Wins</th>
-                                   <th class="px-5 py-3.5 font-medium text-right">Losses</th>
-                                   <th class="px-5 py-3.5 font-medium text-right">Win Rate</th>
-                                   <th class="px-5 py-3.5 font-medium text-right bg-black/20">Profit %</th>
-                                   <th class="px-5 py-3.5 font-medium text-right bg-black/20">Profit Abs</th>
-                                   <th class="px-5 py-3.5 font-medium text-right">Avg Profit</th>
-                                   <th class="px-5 py-3.5 font-medium text-right">Total Fees</th>
+                                   <th class="px-5 py-3.5 font-medium sortable">Pair</th>
+                                   <th class="px-5 py-3.5 font-medium text-right sortable">Trades</th>
+                                   <th class="px-5 py-3.5 font-medium text-right sortable">Wins</th>
+                                   <th class="px-5 py-3.5 font-medium text-right sortable">Losses</th>
+                                   <th class="px-5 py-3.5 font-medium text-right sortable">Win Rate</th>
+                                   <th class="px-5 py-3.5 font-medium text-right bg-black/20 sortable">Profit %</th>
+                                   <th class="px-5 py-3.5 font-medium text-right bg-black/20 sortable">Profit Abs</th>
+                                   <th class="px-5 py-3.5 font-medium text-right sortable">Avg Profit</th>
+                                   <th class="px-5 py-3.5 font-medium text-right sortable">Total Fees</th>
                                </tr>
                            </thead>
                            <tbody class="font-mono text-white/85 divide-y divide-white/[0.05]">
@@ -1387,23 +1297,12 @@
 
                   <!-- TAB: ENTRY / EXIT TAGS -->
                   <div id="trades-tags" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto flex flex-col" style="display:none;">
-                      <div class="flex items-center gap-2 px-5 py-2 bg-black/30 border-b border-white/[0.06] shrink-0">
-                          <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
-                              <option>All Bots</option><option>TrendFollowerV3_BTC</option><option>ScalpBot_XRP</option>
-                          </select>
-                          <div class="ml-auto flex items-center gap-2">
-                              <span class="text-[10px] text-muted uppercase tracking-wider">Sort:</span>
-                              <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
-                                  <option>Profit ↓</option><option>Profit ↑</option><option>Trades ↓</option><option>Win Rate ↓</option><option>Tag A-Z</option>
-                              </select>
-                          </div>
-                      </div>
                       <div class="flex h-full">
                           <!-- Entry Tags -->
                           <div class="flex-1 border-r border-white/8 overflow-y-auto">
                               <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
                                    <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
-                                       <tr><th class="px-5 py-3.5 font-medium" colspan="6">Entry Tags</th></tr>
+                                       <tr><th class="px-5 py-3.5 font-medium sortable" colspan="6">Entry Tags</th></tr>
                                        <tr class="bg-black/20">
                                            <th class="px-5 py-2.5 font-medium">Tag</th>
                                            <th class="px-5 py-2.5 font-medium text-right">Entries</th>
@@ -1426,7 +1325,7 @@
                           <div class="flex-1 overflow-y-auto">
                               <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
                                    <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
-                                       <tr><th class="px-5 py-3.5 font-medium" colspan="6">Exit Reasons</th></tr>
+                                       <tr><th class="px-5 py-3.5 font-medium sortable" colspan="6">Exit Reasons</th></tr>
                                        <tr class="bg-black/20">
                                            <th class="px-5 py-2.5 font-medium">Reason</th>
                                            <th class="px-5 py-2.5 font-medium text-right">Exits</th>
@@ -1687,40 +1586,25 @@
 
           <!-- Fleet Table -->
           <div class="flex-1 bg-surface l-bd rounded-md shadow-xl overflow-hidden flex flex-col">
-              <div class="flex items-center gap-2 px-5 py-2 bg-black/30 border-b border-white/[0.06] shrink-0">
-                  <input type="text" placeholder="Search bots..." class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-white placeholder:text-white/25 w-36 focus:outline-none focus:border-white/30">
-                  <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
-                      <option>All Status</option><option>Running</option><option>Paused</option><option>Stopped</option>
-                  </select>
-                  <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
-                      <option>All Exchanges</option><option>Binance</option><option>Bybit</option><option>OKX</option>
-                  </select>
-                  <div class="ml-auto flex items-center gap-2">
-                      <span class="text-[10px] text-muted uppercase tracking-wider">Sort:</span>
-                      <select class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] font-mono text-muted cursor-pointer focus:outline-none">
-                          <option>P&L ↓</option><option>P&L ↑</option><option>Name A-Z</option><option>Trades ↓</option><option>Win Rate ↓</option><option>Drawdown ↑</option>
-                      </select>
-                  </div>
-              </div>
               <div class="flex-1 overflow-x-auto overflow-y-auto">
                   <table class="w-full text-left border-collapse whitespace-nowrap text-[12px]">
                       <thead class="sticky top-0 bg-surface l-b font-mono text-[10px] uppercase tracking-widest text-muted z-10 shadow-lg">
                           <tr>
                               <th class="px-3 py-3 font-medium w-8"><input type="checkbox" class="rounded" title="Select all"></th>
-                              <th class="px-3 py-3 font-medium">Status</th>
+                              <th class="px-3 py-3 font-medium sortable">Status</th>
                               <th class="px-4 py-3 font-medium">Bot Name</th>
-                              <th class="px-3 py-3 font-medium">Strategy</th>
-                              <th class="px-3 py-3 font-medium">Exchange</th>
-                              <th class="px-3 py-3 font-medium text-right">Balance</th>
-                              <th class="px-3 py-3 font-medium text-right bg-black/20">Today P&L</th>
-                              <th class="px-3 py-3 font-medium text-right bg-black/20">Total P&L</th>
-                              <th class="px-3 py-3 font-medium text-right bg-black/20">P&L %</th>
-                              <th class="px-3 py-3 font-medium text-right">Win Rate</th>
-                              <th class="px-3 py-3 font-medium text-right">Trades</th>
-                              <th class="px-3 py-3 font-medium text-right">Open</th>
-                              <th class="px-3 py-3 font-medium text-right">Drawdown</th>
-                              <th class="px-3 py-3 font-medium text-right">Avg Dur</th>
-                              <th class="px-3 py-3 font-medium text-center">Actions</th>
+                              <th class="px-3 py-3 font-medium sortable">Strategy</th>
+                              <th class="px-3 py-3 font-medium sortable">Exchange</th>
+                              <th class="px-3 py-3 font-medium text-right sortable">Balance</th>
+                              <th class="px-3 py-3 font-medium text-right bg-black/20 sortable">Today P&L</th>
+                              <th class="px-3 py-3 font-medium text-right bg-black/20 sortable">Total P&L</th>
+                              <th class="px-3 py-3 font-medium text-right bg-black/20 sortable">P&L %</th>
+                              <th class="px-3 py-3 font-medium text-right sortable">Win Rate</th>
+                              <th class="px-3 py-3 font-medium text-right sortable">Trades</th>
+                              <th class="px-3 py-3 font-medium text-right sortable">Open</th>
+                              <th class="px-3 py-3 font-medium text-right sortable">Drawdown</th>
+                              <th class="px-3 py-3 font-medium text-right sortable">Avg Dur</th>
+                              <th class="px-3 py-3 font-medium text-center sortable">Actions</th>
                           </tr>
                       </thead>
                       <tbody class="font-mono text-white/85 divide-y divide-white/[0.05]">

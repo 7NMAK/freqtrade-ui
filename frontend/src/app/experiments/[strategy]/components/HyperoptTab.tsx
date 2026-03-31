@@ -360,7 +360,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                   id: results.length + 1,
                   loss: Number(p.objective ?? 0),
                   trades: bestMatch ? Number(bestMatch[2]) : Number(p.total_trades ?? 0),
-                  winRate: bestMatch ? 100 : Number(p.win_rate ?? 0), // If all wins
+                  winRate: 0,  // Will be computed below from W/D/L output
                   profitPct: bestMatch ? Number(bestMatch[5]) : Number(p.profit_pct ?? 0),
                   profitAbs: bestMatch ? Number(bestMatch[4]) : Number(p.profit_abs ?? 0),
                   maxDrawdown: Number(p.max_drawdown ?? 0),
@@ -380,7 +380,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                 if (wdlMatch) {
                   const wins = Number(wdlMatch[1]);
                   const total = wins + Number(wdlMatch[2]) + Number(wdlMatch[3]);
-                  newResult.winRate = total > 0 ? (wins / total) * 100 : 0;
+                  newResult.winRate = total > 0 ? wins / total : 0;  // Store as decimal 0-1
                 }
                 if (bestMatch) {
                   addLog('INFO', `Best: epoch ${bestMatch[1]} — ${bestMatch[2]} trades, ${bestMatch[5]}% profit, objective ${bestMatch[7]}`);
@@ -564,7 +564,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
   };
 
   const SortArrow = ({ col }: { col: typeof sortBy }) =>
-    sortBy === col ? <span className="ml-0.5">{sortDir === 'desc' ? '↓' : '↑'}</span> : null;
+    sortBy === col ? <span className="ml-0.5 text-primary">{sortDir === 'desc' ? '↓' : '↑'}</span> : null;
 
   return (
     <div className="flex gap-6 pb-12">
@@ -907,7 +907,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                 {fmtPctRatio(winner.profitPct / 100)}
               </div>
               <div className="text-[10px] text-muted-foreground">
-                Sharpe {fmtNum(winner.sharpe)} · WR {winner.winRate.toFixed(1)}%
+                Sharpe {winner.sharpe !== 0 ? fmtNum(winner.sharpe) : '—'} · WR {winner.winRate > 0 ? `${(winner.winRate * 100).toFixed(1)}%` : '—'}
               </div>
             </div>
             <div className="flex gap-1.5 shrink-0">

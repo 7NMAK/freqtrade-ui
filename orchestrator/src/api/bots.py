@@ -1893,9 +1893,14 @@ for fn in sorted(os.listdir(d)):
     try:
         ep = json.loads(last)
         rk = ep.get("results_metrics", {})
-        stats = {"tt": rk.get("total_trades",0), "pt": rk.get("profit_total",0),
+        tt = rk.get("total_trades", 0)
+        wins = rk.get("wins", 0)
+        wr = rk.get("winrate", 0)
+        if wr == 0 and tt > 0:
+            wr = wins / tt
+        stats = {"tt": tt, "pt": rk.get("profit_total",0),
                  "pa": rk.get("profit_total_abs",0), "md": rk.get("max_drawdown_account", rk.get("max_drawdown",0)),
-                 "wr": rk.get("winrate",0), "pf": rk.get("profit_factor",0),
+                 "wr": wr, "pf": rk.get("profit_factor",0),
                  "sh": rk.get("sharpe", rk.get("sharpe_ratio",0)),
                  "so": rk.get("sortino", rk.get("sortino_ratio",0))}
     except: pass

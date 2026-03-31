@@ -20,6 +20,12 @@
 .DS_Store
 *.pem
 
+# macOS Finder duplicates (prevents "file 2.ext" and "folder 2" from being committed)
+*\ 2
+*\ 2.*
+*\ 3
+*\ 3.*
+
 # debug
 npm-debug.log*
 yarn-debug.log*

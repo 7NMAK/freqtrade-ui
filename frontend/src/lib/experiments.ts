@@ -151,7 +151,7 @@ export type RunStatus = "pending" | "running" | "completed" | "failed" | "promot
 
 // ── Experiment Strategy Status ────────────────────────────────────────────
 
-export type StrategyTestStatus = "Draft" | "Testing" | "Optimized" | "Paper" | "Live";
+export type StrategyTestStatus = "Draft" | "Backtested" | "Optimized" | "Paper" | "Live" | "Retired";
 
 // ── Date formatting (YYYY-MM-DD HH:mm:ss per architecture) ───────────────
 

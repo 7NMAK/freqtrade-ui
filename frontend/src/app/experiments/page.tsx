@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import { useToast } from "@/components/ui/Toast";
-import Tooltip from "@/components/ui/Tooltip";
+
 import { Input } from "@/components/ui/input";
 import {
   fmtDateTime,
@@ -52,13 +52,15 @@ function computePipelineSteps(completedRunTypes: string[]): Record<string, StepS
   return steps;
 }
 
-// ── Compute status from pipeline steps ────────────────────────────────
+// ── Compute lifecycle status from completed run types ─────────────────
 
-function computeStatus(steps: Record<string, StepState>, testCount: number): StrategyTestStatus {
+function computeStatus(completedRunTypes: string[], testCount: number): StrategyTestStatus {
   if (testCount === 0) return "Draft";
-  const completed = Object.values(steps).filter(s => s === "completed").length;
-  if (completed >= 5) return "Optimized";
-  if (completed >= 2) return "Testing";
+  const types = new Set(completedRunTypes);
+  if (types.has("live")) return "Live";
+  if (types.has("paper")) return "Paper";
+  if (types.has("hyperopt") || types.has("oos_validation") || types.has("freqai")) return "Optimized";
+  if (types.has("backtest")) return "Backtested";
   return "Draft";
 }
 
@@ -66,11 +68,12 @@ function computeStatus(steps: Record<string, StepState>, testCount: number): Str
 
 function StatusBadge({ status }: { status: StrategyTestStatus }) {
   const cls: Record<string, string> = {
-    Draft: "bg-muted text-muted-foreground",
-    Testing: "bg-amber/10 text-amber-500 border border-amber-500/25",
-    Optimized: "bg-primary/10 text-primary border border-primary/30",
-    Paper: "bg-purple/10 text-purple border border-purple/25",
-    Live: "bg-green/10 text-emerald-500 border border-emerald-500/25",
+    Draft: "bg-zinc-800/60 text-zinc-400",
+    Backtested: "bg-blue-500/10 text-blue-400 border border-blue-500/25",
+    Optimized: "bg-amber-500/10 text-amber-400 border border-amber-500/25",
+    Paper: "bg-purple-500/10 text-purple-400 border border-purple-500/25",
+    Live: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/25",
+    Retired: "bg-zinc-700/40 text-zinc-500 border border-zinc-600/25",
   };
   return (
     <span
@@ -107,12 +110,7 @@ function MiniPipeline({ steps }: { steps: Record<string, StepState> }) {
 
         return (
           <div key={step.key} className="flex items-center gap-[3px]">
-            <Tooltip
-              content={`${step.label}${state === "completed" ? " ✓" : state === "active" ? " ●" : state === "skipped" ? " ⊘" : " ○"}`}
-              position="bottom"
-            >
-              <div className={dotClass} />
-            </Tooltip>
+            <div className={dotClass} />
             {idx < PIPELINE_STEPS.length - 1 && (
               <div className={connectorClass} />
             )}
@@ -142,9 +140,10 @@ export default function ExperimentsPage() {
         const data = (res as unknown as { items?: Experiment[] }).items || (res as unknown as Experiment[]);
         if (Array.isArray(data)) {
           const mapped: UIExperiment[] = data.map((exp: Experiment) => {
-            const pipelineSteps = computePipelineSteps(exp.completed_run_types ?? []);
+            const completedTypes = exp.completed_run_types ?? [];
+            const pipelineSteps = computePipelineSteps(completedTypes);
             const testCount = exp.run_count ?? 0;
-            const status = computeStatus(pipelineSteps, testCount);
+            const status = computeStatus(completedTypes, testCount);
             return {
               id: exp.id,
               strategyName: exp.strategy_name || exp.name || "Unknown",

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef, Fragment } from 'react';
 
 interface LogEntry {
   ts: string;
@@ -1150,8 +1150,8 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                       const hoId = `HO-${runDate.getFullYear()}${String(runDate.getMonth()+1).padStart(2,'0')}${String(runDate.getDate()).padStart(2,'0')}-${String(runDate.getHours()).padStart(2,'0')}${String(runDate.getMinutes()).padStart(2,'0')}`;
                       const isExpanded = hoExpandedId === run.filename;
                       return (
-                        <>
-                        <tr key={run.filename} className={`border-t border-border hover:bg-muted/30 transition-colors cursor-pointer ${isExpanded ? 'bg-muted/20' : ''}`} onClick={() => setHoExpandedId(isExpanded ? null : run.filename)}>
+                        <Fragment key={run.filename}>
+                        <tr className={`border-t border-border hover:bg-muted/30 transition-colors cursor-pointer ${isExpanded ? 'bg-muted/20' : ''}`} onClick={() => setHoExpandedId(isExpanded ? null : run.filename)}>
                           <td className="px-3 py-2">
                             <span className="text-[9px] font-mono px-1 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded whitespace-nowrap">{hoId}</span>
                           </td>
@@ -1183,23 +1183,23 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                           <td className="px-3 py-2 whitespace-nowrap">
                             <div className="flex items-center justify-center gap-2">
                               <button
-                                onClick={async () => {
+                                onClick={async (e) => {
+                                  e.stopPropagation();
                                   addLog('INFO', `Loading results from ${run.filename}...`);
                                   await fetchResults();
                                   toast.success('Results loaded');
-                                  // Scroll to results section
                                   document.querySelector('[data-ho-results]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                 }}
                                 className="text-[10px] px-2 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded hover:bg-primary/20 transition-all"
                               >Load</button>
                               {isConfirming ? (
                                 <button
-                                  onClick={() => { setHoConfirmDelete(null); handleDeleteRun(run.filename); }}
+                                  onClick={(e) => { e.stopPropagation(); setHoConfirmDelete(null); handleDeleteRun(run.filename); }}
                                   className="text-[10px] px-1.5 py-0.5 bg-rose-500/20 border border-rose-500/50 text-rose-400 rounded hover:bg-rose-500/30 transition-all animate-pulse"
                                 >Confirm?</button>
                               ) : (
                                 <button
-                                  onClick={() => setHoConfirmDelete(run.filename)}
+                                  onClick={(e) => { e.stopPropagation(); setHoConfirmDelete(run.filename); }}
                                   className="text-[10px] px-1.5 py-0.5 bg-rose-500/10 border border-rose-500/20 text-rose-400/70 rounded hover:bg-rose-500/20 hover:text-rose-400 transition-all"
                                 >Delete</button>
                               )}
@@ -1220,7 +1220,7 @@ export default function HyperoptTab({ strategy, botId = 2, onNavigateToTab }: Hy
                             </td>
                           </tr>
                         )}
-                        </>
+                        </Fragment>
                       );
                     })}
                   </tbody>

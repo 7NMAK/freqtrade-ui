@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, Fragment } from "react";
 import Tooltip from "@/components/ui/Tooltip";
 import Toggle from "@/components/ui/Toggle";
 import { INPUT, SELECT, LABEL, fmt$, fmtPctRatio, fmtNum } from "@/lib/design";
@@ -164,13 +164,12 @@ function ResultsPanel({ data }: { data: FTStrategyResult }) {
   const totalPages = Math.ceil(sortedTrades.length / tradesPerPage);
   const pagedTrades = sortedTrades.slice((tradesPage - 1) * tradesPerPage, tradesPage * tradesPerPage);
 
-  // Generate unique test ID from backtest_start field
+  // Generate unique test ID from strategy name + date range
   const testId = useMemo(() => {
-    try {
-      const d = new Date(data.backtest_start);
-      return `BT-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;
-    } catch { return 'BT-unknown'; }
-  }, [data.backtest_start]);
+    const s = data.backtest_start?.replace(/[^0-9]/g, '').slice(0, 8) || '00000000';
+    const e = data.backtest_end?.replace(/[^0-9]/g, '').slice(0, 8) || '00000000';
+    return `BT-${s}-${e}`;
+  }, [data.backtest_start, data.backtest_end]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -594,8 +593,8 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
                 const btId = `BT-${runDate.getFullYear()}${String(runDate.getMonth()+1).padStart(2,'0')}${String(runDate.getDate()).padStart(2,'0')}-${String(runDate.getHours()).padStart(2,'0')}${String(runDate.getMinutes()).padStart(2,'0')}`;
 
                 return (
-                  <>
-                  <tr key={entryKey} className={`border-t border-border hover:bg-muted/30 transition-colors cursor-pointer ${isExpanded ? 'bg-muted/20' : ''}`} onClick={() => setExpandedId(isExpanded ? null : entryKey)}>
+                  <Fragment key={entryKey}>
+                  <tr className={`border-t border-border hover:bg-muted/30 transition-colors cursor-pointer ${isExpanded ? 'bg-muted/20' : ''}`} onClick={() => setExpandedId(isExpanded ? null : entryKey)}>
                     <td className="px-3 py-2">
                       <span className="text-[9px] font-mono px-1 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded whitespace-nowrap">{btId}</span>
                     </td>
@@ -629,7 +628,7 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
                     <td className="px-3 py-2 whitespace-nowrap">
                       <div className="flex items-center justify-center gap-2">
                         <button
-                          onClick={() => onLoad(entry)}
+                          onClick={(e) => { e.stopPropagation(); onLoad(entry); }}
                           className="text-[10px] px-2 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded hover:bg-primary/20 transition-all"
                         >Load</button>
                         {isConfirming ? (
@@ -648,7 +647,7 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
                   </tr>
                   {isExpanded && (
                     <tr key={`${entryKey}-expand`} className="bg-muted/10">
-                      <td colSpan={10} className="px-4 py-2">
+                      <td colSpan={11} className="px-4 py-2">
                         <div className="flex flex-wrap gap-x-6 gap-y-1 text-[10px]">
                           <span className="text-muted-foreground">Strategy: <span className="text-foreground font-mono">{entry.strategy}</span></span>
                           <span className="text-muted-foreground">Timeframe: <span className="text-foreground font-mono">{entry.timeframe || '—'}</span></span>
@@ -659,7 +658,7 @@ function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
                       </td>
                     </tr>
                   )}
-                  </>
+                  </Fragment>
                 );
               })}
             </tbody>

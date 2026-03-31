@@ -1889,9 +1889,9 @@ async def bot_hyperopt_start(bot_id: int, body: dict[str, Any], request: Request
         cmd += ["--timeframe", body["timeframe"]]
     # Always add --ignore-missing-spaces so strategies without all spaces don't error
     cmd += ["--ignore-missing-spaces"]
-    # If user toggled "Disable param export", prevent FT from writing StrategyName.json
-    if body.get("disable_param_export"):
-        cmd += ["--disable-param-export"]
+    # Always disable param export — the wrapper strategy (_HO_) writes a JSON with
+    # the wrong strategy_name, which breaks FT on next load of the real strategy.
+    cmd += ["--disable-param-export"]
 
     # ── Sampler injection via temp strategy wrapper ──
     # FT reads sampler from strategy's generate_estimator() method, not a CLI flag.

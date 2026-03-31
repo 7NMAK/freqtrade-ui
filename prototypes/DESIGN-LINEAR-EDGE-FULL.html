@@ -302,22 +302,22 @@
                                <rect x="172" y="35" width="5" height="30" rx="0.5" fill="rgba(255,255,255,0.18)"/>
                                <rect x="186" y="40" width="5" height="20" rx="0.5" fill="rgba(255,255,255,0.15)"/>
                                <!-- P&L thin line with dots -->
-                               <polyline points="7,50 21,50 35,50 49,50 63,50 77,50 91,50 105,50 119,48 133,55 147,72 161,30 175,38 189,25" fill="none" stroke="#22c55e" stroke-width="1.2" stroke-linejoin="round"/>
+                               <polyline points="7,50 21,50 35,50 49,50 63,50 77,50 91,50 105,50 119,48 133,55 147,72 161,30 175,38 189,25" fill="none" stroke="#22c55e" stroke-width="0.4" stroke-linejoin="round"/>
                                <!-- Dots on the line -->
-                               <circle cx="7" cy="50" r="2" fill="#22c55e"/>
-                               <circle cx="21" cy="50" r="2" fill="#22c55e"/>
-                               <circle cx="35" cy="50" r="2" fill="#22c55e"/>
-                               <circle cx="49" cy="50" r="2" fill="#22c55e"/>
-                               <circle cx="63" cy="50" r="2" fill="#22c55e"/>
-                               <circle cx="77" cy="50" r="2" fill="#22c55e"/>
-                               <circle cx="91" cy="50" r="2" fill="#22c55e"/>
-                               <circle cx="105" cy="50" r="2" fill="#22c55e"/>
-                               <circle cx="119" cy="48" r="2" fill="#22c55e"/>
-                               <circle cx="133" cy="55" r="2" fill="#ef4444"/>
-                               <circle cx="147" cy="72" r="2" fill="#ef4444"/>
-                               <circle cx="161" cy="30" r="2" fill="#22c55e"/>
-                               <circle cx="175" cy="38" r="2" fill="#ef4444"/>
-                               <circle cx="189" cy="25" r="2" fill="#22c55e"/>
+                               <circle cx="7" cy="50" r="1.2" fill="#22c55e"/>
+                               <circle cx="21" cy="50" r="1.2" fill="#22c55e"/>
+                               <circle cx="35" cy="50" r="1.2" fill="#22c55e"/>
+                               <circle cx="49" cy="50" r="1.2" fill="#22c55e"/>
+                               <circle cx="63" cy="50" r="1.2" fill="#22c55e"/>
+                               <circle cx="77" cy="50" r="1.2" fill="#22c55e"/>
+                               <circle cx="91" cy="50" r="1.2" fill="#22c55e"/>
+                               <circle cx="105" cy="50" r="1.2" fill="#22c55e"/>
+                               <circle cx="119" cy="48" r="1.2" fill="#22c55e"/>
+                               <circle cx="133" cy="55" r="1.2" fill="#ef4444"/>
+                               <circle cx="147" cy="72" r="1.2" fill="#ef4444"/>
+                               <circle cx="161" cy="30" r="1.2" fill="#22c55e"/>
+                               <circle cx="175" cy="38" r="1.2" fill="#ef4444"/>
+                               <circle cx="189" cy="25" r="1.2" fill="#22c55e"/>
                            </svg>
                            <!-- X-axis -->
                            <div class="flex justify-between text-[9px] font-mono text-white/25 mt-1">
@@ -640,6 +640,20 @@
         document.getElementById('bot-drawer').classList.remove('open');
         document.getElementById('drawer-backdrop').classList.remove('open');
     }
+
+    function toggleActionMenu(btn, e) {
+        e.stopPropagation();
+        const dropdown = btn.nextElementSibling;
+        const wasOpen = dropdown.classList.contains('open');
+        // Close all other dropdowns first
+        document.querySelectorAll('.action-dropdown.open').forEach(d => d.classList.remove('open'));
+        if (!wasOpen) dropdown.classList.add('open');
+    }
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.action-dropdown.open').forEach(d => d.classList.remove('open'));
+    });
   </script>
 </body>
 </html>

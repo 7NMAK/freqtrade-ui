@@ -532,13 +532,13 @@ class FTClient:
         """GET /api/v1/backtest/history — backtest history."""
         return await self._get("/api/v1/backtest/history")
 
-    async def backtest_history_result(self, result_id: str) -> dict:
+    async def backtest_history_result(self, filename: str, strategy: str) -> dict:
         """GET /api/v1/backtest/history/result — specific result."""
-        return await self._get("/api/v1/backtest/history/result", id=result_id)
+        return await self._get("/api/v1/backtest/history/result", filename=filename, strategy=strategy)
 
-    async def backtest_history_delete(self, result_id: str) -> dict:
-        """DELETE /api/v1/backtest/history/{id} — delete backtest result."""
-        return await self._delete(f"/api/v1/backtest/history/{result_id}")
+    async def backtest_history_delete(self, strategy: str, filename: str) -> dict:
+        """DELETE /api/v1/backtest/history/result — delete backtest result (FT expects query params)."""
+        return await self._request("DELETE", "/api/v1/backtest/history/result", params={"strategy": strategy, "filename": filename})
 
     # ── Cleanup ──────────────────────────────────────────────────
 

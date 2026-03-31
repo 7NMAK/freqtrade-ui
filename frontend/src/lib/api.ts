@@ -498,8 +498,8 @@ export const botHyperoptRuns = (id: number) =>
 export const botHyperoptHistoryDelete = (id: number, filename: string) =>
   request<{ status: string }>(`/api/bots/${id}/hyperopt/history/${encodeURIComponent(filename)}`, { method: "DELETE" });
 
-export const botBacktestHistoryDelete = (id: number, filename: string) =>
-  request<{ status: string }>(`/api/bots/${id}/backtest/history/${encodeURIComponent(filename)}`, { method: "DELETE" });
+export const botBacktestHistoryDelete = (id: number, filename: string, strategy: string) =>
+  request<{ status: string }>(`/api/bots/${id}/backtest/history/result?filename=${encodeURIComponent(filename)}&strategy=${encodeURIComponent(strategy)}`, { method: "DELETE" });
 
 export const botBacktestHistory = async (id: number) => {
   const raw = await request<
@@ -510,8 +510,8 @@ export const botBacktestHistory = async (id: number) => {
   return { results: Array.isArray(raw) ? raw : (raw.results ?? []) };
 };
 
-export const botBacktestHistoryResult = (id: number, filename: string) =>
-  request<Record<string, unknown>>(`/api/bots/${id}/backtest/history/result?id=${encodeURIComponent(filename)}`);
+export const botBacktestHistoryResult = (id: number, filename: string, strategy: string) =>
+  request<Record<string, unknown>>(`/api/bots/${id}/backtest/history/result?filename=${encodeURIComponent(filename)}&strategy=${encodeURIComponent(strategy)}`);
 
 export const botListData = (id: number) =>
   request<{ data: Array<{ pair: string; timeframe: string; candle_type?: string; start: string; end: string; candle_count: number; format?: string }>; output?: string }>(

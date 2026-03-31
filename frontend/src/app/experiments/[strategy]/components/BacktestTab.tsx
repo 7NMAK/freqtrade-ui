@@ -583,7 +583,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
   // Delete a backtest history entry
   const handleDeleteHistory = useCallback(async (entry: HistoryEntry) => {
     try {
-      await botBacktestHistoryDelete(backtestBotId, entry.filename);
+      await botBacktestHistoryDelete(backtestBotId, entry.filename, entry.strategy);
       toast.success('Backtest deleted');
       // Clear displayed result if it came from the deleted file
       if (btResult) {
@@ -599,6 +599,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
   // Auto-load: cache first, then fetch history and auto-load latest
   useEffect(() => {
     // 1. Instant load from cache
+    let loadedFromCache = false;
     try {
       const cached = sessionStorage.getItem(BT_CACHE_KEY);
       if (cached) {
@@ -606,12 +607,43 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
         if (parsed?.total_trades) {
           setBtResult(parsed);
           addLog('INFO', `Loaded cached result: ${parsed.strategy_name} — ${parsed.total_trades} trades`);
+          loadedFromCache = true;
         }
       }
     } catch { /* no cache */ }
-    // 2. Fetch history list
-    fetchHistory();
-  }, [BT_CACHE_KEY, fetchHistory, addLog]);
+    // 2. Fetch history list, then auto-load latest if we don't have a result
+    (async () => {
+      try {
+        const res = await botBacktestHistory(backtestBotId);
+        const entries = res.results || [];
+        setHistory(entries);
+        // If no cache and we have history, auto-load the most recent entry for this strategy
+        if (!loadedFromCache && entries.length > 0) {
+          const latest = entries
+            .filter((e: HistoryEntry) => e.strategy === strategy)
+            .sort((a: HistoryEntry, b: HistoryEntry) => b.backtest_start_time - a.backtest_start_time)[0];
+          if (latest) {
+            addLog('INFO', `Auto-loading latest: ${latest.filename}...`);
+            try {
+              const data = await botBacktestHistoryResult(backtestBotId, latest.filename, latest.strategy);
+              if (data) {
+                const raw = (data as Record<string, unknown>).backtest_result ?? data;
+                const result = extractResult(raw as Record<string, unknown>);
+                if (result) {
+                  setBtResult(result);
+                  try { sessionStorage.setItem(BT_CACHE_KEY, JSON.stringify(result)); } catch { /* */ }
+                  addLog('INFO', `Loaded: ${result.strategy_name} — ${result.total_trades} trades`);
+                }
+              }
+            } catch (err) {
+              addLog('WARNING', `Auto-load failed: ${err instanceof Error ? err.message : String(err)}`);
+            }
+          }
+        }
+      } catch { /* history fetch failed */ }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Extract strategy result from FT's nested response
   const extractResult = useCallback((backtestResult: Record<string, unknown>): FTStrategyResult | null => {
@@ -801,7 +833,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2 }: BacktestTab
     addLog("INFO", `Loading result: ${entry.filename}...`);
     try {
       // Use the specific history result endpoint with the filename
-      const res = await botBacktestHistoryResult(backtestBotId, entry.filename);
+      const res = await botBacktestHistoryResult(backtestBotId, entry.filename, entry.strategy);
       if (res) {
         const raw = res as Record<string, unknown>;
         // FT returns the result wrapped in backtest_result or directly

@@ -1575,22 +1575,26 @@ async def bot_backtest_history(bot_id: int, request: Request, db: AsyncSession =
 
 
 @router.get("/{bot_id}/backtest/history/result")
-async def bot_backtest_history_result(bot_id: int, request: Request, db: AsyncSession = Depends(get_db), id: str = ""):
-    """GET /api/v1/backtest/history/result — specific result."""
+async def bot_backtest_history_result(bot_id: int, request: Request, db: AsyncSession = Depends(get_db), filename: str = "", strategy: str = ""):
+    """GET /api/v1/backtest/history/result — specific result. Requires filename and strategy."""
+    if not filename or not strategy:
+        raise HTTPException(400, "Both 'filename' and 'strategy' query params are required")
     client = await _get_bot_client(bot_id, request, db)
     try:
-        return await client.backtest_history_result(id)
+        return await client.backtest_history_result(filename=filename, strategy=strategy)
     except FTClientError as e:
         detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
         raise HTTPException(502, detail=detail)
 
 
-@router.delete("/{bot_id}/backtest/history/{result_id}")
-async def bot_backtest_history_delete(bot_id: int, result_id: str, request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
-    """DELETE /api/v1/backtest/history/{id} — delete backtest result."""
+@router.delete("/{bot_id}/backtest/history/result")
+async def bot_backtest_history_delete_via_ft(bot_id: int, request: Request, db: AsyncSession = Depends(get_db), filename: str = "", strategy: str = "") -> dict[str, Any]:
+    """DELETE /api/v1/backtest/history/result — delete backtest result via FT API."""
+    if not filename or not strategy:
+        raise HTTPException(400, "Both 'filename' and 'strategy' query params are required")
     client = await _get_bot_client(bot_id, request, db)
     try:
-        return await client.backtest_history_delete(result_id)
+        return await client.backtest_history_delete(strategy=strategy, filename=filename)
     except FTClientError as e:
         detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
         raise HTTPException(502, detail=detail)
@@ -1896,27 +1900,6 @@ async def bot_hyperopt_runs(bot_id: int, request: Request, db: AsyncSession = De
         raise HTTPException(502, f"Hyperopt-runs failed: {e}")
 
 
-@router.delete("/{bot_id}/backtest/history/{filename:path}")
-async def bot_backtest_history_delete(bot_id: int, filename: str, request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
-    """Delete a specific backtest result file."""
-    import docker
-    manager = request.app.state.bot_manager
-    bot = await manager.get_bot(db, bot_id)
-    if not bot:
-        raise HTTPException(404, "Bot not found")
-    # Sanitize filename to prevent path traversal
-    if ".." in filename or "/" in filename:
-        raise HTTPException(400, "Invalid filename")
-    try:
-        dk = docker.from_env()
-        container = dk.containers.get(bot.container_id or bot.name)
-        filepath = f"/freqtrade/user_data/backtest_results/{filename}"
-        result = container.exec_run(["rm", "-f", filepath], detach=False)
-        # Also remove associated .meta file if present
-        container.exec_run(["rm", "-f", f"{filepath}.meta"], detach=False)
-        return {"status": "deleted", "filename": filename, "exit_code": result.exit_code}
-    except Exception as e:
-        raise HTTPException(502, f"Delete failed: {e}")
 
 
 @router.delete("/{bot_id}/hyperopt/history/{filename:path}")

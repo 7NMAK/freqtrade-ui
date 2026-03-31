@@ -116,6 +116,9 @@ function buildFreqAIConfig(opts: {
     },
     dry_run_wallet: 10000,
     stake_amount: "unlimited",
+    enable_protections: false,
+    cache: "none",
+    export: "none",
   };
 }
 

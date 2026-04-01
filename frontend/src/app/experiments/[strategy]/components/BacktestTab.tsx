@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback, Fragment } from "react";
 import Tooltip from "@/components/ui/Tooltip";
 import Toggle from "@/components/ui/Toggle";
-import { INPUT, SELECT, LABEL, fmt$, fmtPctRatio, fmtNum } from "@/lib/design";
+import { INPUT, SELECT, LABEL, fmt$, fmtPctRatio, fmtNum, SECTION_CARD, SECTION_TITLE, METRIC_CARD, BTN_PRIMARY, CHIP } from "@/lib/design";
 import { botLogs, botBacktestResults, botBacktestStart, botBacktestDelete, botBacktestHistory, botBacktestHistoryResult, botBacktestHistoryDelete, createExperimentRun } from "@/lib/api";
 import { useToast } from "@/components/ui/Toast";
 
@@ -117,7 +117,7 @@ function fmtDuration(minutes: number): string {
 function MetricCard({ label, value, sub, positive }: { label: string; value: string; sub?: string; positive?: boolean | null }) {
   const valColor = positive === true ? "text-emerald-400" : positive === false ? "text-rose-400" : "text-foreground";
   return (
-    <div className="bg-muted/50 border border-border rounded-lg p-2.5">
+    <div className={METRIC_CARD}>
       <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">{label}</div>
       <div className={`text-sm font-bold tabular-nums ${valColor}`}>{value}</div>
       {sub && <div className="text-[10px] text-muted-foreground tabular-nums">{sub}</div>}
@@ -1132,8 +1132,8 @@ export default function BacktestTab({ strategy, backtestBotId = 2, experimentId 
     <div className="grid grid-cols-[360px_minmax(0,1fr)] gap-4 min-h-0 max-w-full">
 
       {/* ═══════════ LEFT PANEL: FORM ═══════════ */}
-      <div className="bg-card border border-border rounded-[10px] p-4 overflow-y-auto flex flex-col gap-[10px]">
-        <div className="text-sm font-semibold text-foreground flex items-center gap-2">⚙️ Test Configuration</div>
+      <div className={`${SECTION_CARD} overflow-y-auto flex flex-col gap-[10px]`}>
+        <div className={SECTION_TITLE}>⚙️ Test Configuration</div>
 
         <div>
           <label className={LABEL}>Test Name</label>
@@ -1222,7 +1222,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2, experimentId 
           <label className={LABEL}>Export</label>
           <div className="flex gap-[6px]">
             {["none", "trades", "signals"].map((val) => (
-              <label key={val} className={`inline-flex items-center gap-[4px] py-[4px] px-[10px] rounded-btn text-xs cursor-pointer border transition-all select-none ${exportType === val ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-primary" : "bg-muted/50 border-border text-muted-foreground hover:border-[#2e2e48]"}`}>
+              <label key={val} className={CHIP(exportType === val)}>
                 <input type="radio" name="export" value={val} checked={exportType === val} onChange={(e) => setExportType(e.target.value)} className="hidden" />
                 {val.charAt(0).toUpperCase() + val.slice(1)}
               </label>
@@ -1238,7 +1238,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2, experimentId 
               { label: "Week", checked: breakdownWeek, set: setBreakdownWeek },
               { label: "Month", checked: breakdownMonth, set: setBreakdownMonth },
             ] as const).map((item) => (
-              <span key={item.label} onClick={() => item.set(!item.checked)} className={`inline-flex items-center gap-[4px] py-[4px] px-[10px] rounded-btn text-xs cursor-pointer border transition-all select-none ${item.checked ? "bg-[rgba(99,102,241,0.12)] border-[rgba(99,102,241,0.3)] text-primary" : "bg-muted/50 border-border text-muted-foreground hover:border-[#2e2e48]"}`}>
+              <span key={item.label} onClick={() => item.set(!item.checked)} className={CHIP(item.checked)}>
                 {item.label}
               </span>
             ))}
@@ -1247,7 +1247,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2, experimentId 
 
         {/* Action Buttons */}
         <div className="flex gap-[6px] mt-1">
-          <button onClick={handleStart} disabled={isRunning} className="flex-1 h-[32px] rounded-btn text-xs font-semibold border bg-primary border-primary text-white hover:bg-[#5558e6] transition-all disabled:opacity-50">
+          <button onClick={handleStart} disabled={isRunning} className={`flex-1 ${BTN_PRIMARY}`}>
             {isRunning ? "⏳ Running..." : "▶ Start Backtest"}
           </button>
           <button onClick={handleStop} disabled={!isRunning} className="h-[32px] px-3 rounded-btn text-xs font-semibold border bg-[rgba(239,68,68,0.08)] border-[rgba(239,68,68,0.25)] text-rose-500 hover:bg-[rgba(239,68,68,0.15)] transition-all disabled:opacity-50">

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { INPUT, SELECT, LABEL } from '@/lib/design';
+import { INPUT, SELECT, LABEL, BTN_ACTION } from '@/lib/design';
 import { getExperimentRuns, type ExperimentRun } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 
@@ -325,19 +325,19 @@ export default function AllTestsOverlay({ onClose, strategy, experimentId, onNav
                       <div className="flex items-center gap-2">
                         <button
                           onClick={(e) => { e.stopPropagation(); onNavigateToTab?.(5); onClose(); }}
-                          className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-primary/40 text-primary hover:bg-primary/10 transition-all"
+                          className={`${BTN_ACTION} border-primary/40 text-primary hover:bg-primary/10`}
                         >→ Verify</button>
                         <button
                           onClick={(e) => { e.stopPropagation(); setPromotedId(run.id); toast.success(`Promoted run #${run.id}`); }}
-                          className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-all"
+                          className={`${BTN_ACTION} border-amber-500/40 text-amber-400 hover:bg-amber-500/10`}
                         >Promote ★</button>
                         <button
                           onClick={(e) => { e.stopPropagation(); onClose(); onOpenOverlay?.('compare'); }}
-                          className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-border text-muted-foreground hover:bg-muted transition-all"
+                          className={`${BTN_ACTION} border-border text-muted-foreground hover:bg-muted`}
                         >Compare</button>
                         <button
                           onClick={(e) => { e.stopPropagation(); onClose(); onOpenOverlay?.('analysis'); }}
-                          className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-border text-muted-foreground hover:bg-muted transition-all"
+                          className={`${BTN_ACTION} border-border text-muted-foreground hover:bg-muted`}
                         >→ Analysis</button>
                         <div className="flex-1" />
                         <div className="text-[10px] text-muted-foreground">

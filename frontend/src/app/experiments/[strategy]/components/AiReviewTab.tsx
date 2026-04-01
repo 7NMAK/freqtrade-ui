@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { SELECT, LABEL } from '@/lib/design';
+import { SELECT, LABEL, SECTION_CARD, SECTION_TITLE, BTN_PRIMARY, BTN_SECONDARY, LAYOUT_2COL } from '@/lib/design';
 import { useToast } from '@/components/ui/Toast';
 import {
   AI_MODELS,
@@ -294,11 +294,11 @@ export default function AiReviewTab({ strategy, botId = 2, experimentId, onNavig
   }, [strategy, botId, experimentId, scope, selectedModel, currentModel, toast]);
 
   return (
-    <div className="flex gap-6 pb-12">
+    <div className={LAYOUT_2COL}>
       {/* LEFT PANEL: FORM (380px) */}
-      <div className="w-[380px] flex-shrink-0 space-y-4">
-        <div className="bg-card border border-border rounded-card p-4">
-          <h3 className="text-xs font-semibold text-foreground mb-4">AI Strategy Analyst</h3>
+      <div className="space-y-4">
+        <div className={SECTION_CARD}>
+          <div className={SECTION_TITLE}>AI Strategy Analyst</div>
 
           <div className="space-y-4">
             {/* Scope */}
@@ -331,7 +331,7 @@ export default function AiReviewTab({ strategy, botId = 2, experimentId, onNavig
             <button
               onClick={handleRunAnalysis}
               disabled={isRunning}
-              className="w-full h-[34px] inline-flex items-center justify-center gap-[6px] rounded-btn text-xs font-medium border bg-primary border-primary text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className={`w-full ${BTN_PRIMARY}`}
             >
               {isRunning ? (
                 <>
@@ -346,8 +346,8 @@ export default function AiReviewTab({ strategy, botId = 2, experimentId, onNavig
         </div>
 
         {/* Verdict Thresholds Reference */}
-        <div className="bg-card border border-border rounded-card p-4">
-          <h3 className="text-xs font-semibold text-foreground mb-3">Verdict Rules (Hardcoded)</h3>
+        <div className={SECTION_CARD}>
+          <div className={SECTION_TITLE}>Verdict Rules (Hardcoded)</div>
           <div className="space-y-2">
             {(Object.entries(VERDICT_THRESHOLDS) as [AiVerdict, typeof VERDICT_THRESHOLDS[AiVerdict]][]).map(([key, val]) => {
               const cfg = verdictConfig(key);
@@ -366,8 +366,8 @@ export default function AiReviewTab({ strategy, botId = 2, experimentId, onNavig
 
         {/* Analysis History */}
         {history.length > 0 && (
-          <div className="bg-card border border-border rounded-card p-4">
-            <h3 className="text-xs font-semibold text-foreground mb-3">History ({history.length})</h3>
+          <div className={SECTION_CARD}>
+            <div className={SECTION_TITLE}>History ({history.length})</div>
             <div className="space-y-1.5">
               {history.map((h, i) => {
                 const cfg = verdictConfig(h.verdict);
@@ -395,7 +395,7 @@ export default function AiReviewTab({ strategy, botId = 2, experimentId, onNavig
       {/* RIGHT PANEL: RESULTS */}
       <div className="flex-1 min-w-0">
         {!result ? (
-          <div className="bg-card border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[400px]">
+          <div className={`${SECTION_CARD} flex flex-col items-center justify-center min-h-[400px]`}>
             <div className="text-[32px] mb-3 opacity-30">AI</div>
             <div className="text-sm font-semibold text-muted-foreground mb-1">No AI analysis yet</div>
             <div className="text-xs text-muted-foreground text-center max-w-[280px]">
@@ -465,8 +465,8 @@ export default function AiReviewTab({ strategy, botId = 2, experimentId, onNavig
 
             {/* Top Concerns */}
             {result.topConcerns.length > 0 && (
-              <div className="bg-card border border-border rounded-card p-4">
-                <h3 className="text-xs font-semibold text-foreground mb-3">Top Concerns</h3>
+              <div className={SECTION_CARD}>
+                <div className={SECTION_TITLE}>Top Concerns</div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
@@ -502,8 +502,8 @@ export default function AiReviewTab({ strategy, botId = 2, experimentId, onNavig
 
             {/* Recommendations */}
             {(result.bestHyperopt || result.bestFreqAI || result.recommendation) && (
-              <div className="bg-card border border-border rounded-card p-4">
-                <h3 className="text-xs font-semibold text-foreground mb-3">Recommendation</h3>
+              <div className={SECTION_CARD}>
+                <div className={SECTION_TITLE}>Recommendation</div>
                 {result.recommendation && (
                   <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{result.recommendation}</p>
                 )}
@@ -526,13 +526,13 @@ export default function AiReviewTab({ strategy, botId = 2, experimentId, onNavig
             <div className="flex gap-2">
               <button
                 onClick={() => onNavigateToTab?.(5)}
-                className="flex-1 h-[36px] inline-flex items-center justify-center gap-1.5 rounded-btn text-xs font-semibold bg-primary text-white hover:bg-[#5558e6] transition-colors"
+                className={`flex-1 ${BTN_PRIMARY}`}
               >
                 Use this recommendation →
               </button>
               <button
                 onClick={() => onNavigateToTab?.(2)}
-                className="flex-1 h-[36px] inline-flex items-center justify-center gap-1.5 rounded-btn text-xs font-medium border border-border text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+                className={`flex-1 ${BTN_SECONDARY}`}
               >
                 Choose myself
               </button>

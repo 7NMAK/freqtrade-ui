@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { SELECT, LABEL, fmt$, fmtPctRatio } from '@/lib/design';
+import { SELECT, LABEL, fmt$, fmtPctRatio, SECTION_TITLE, BTN_ACTION } from '@/lib/design';
 import {
   getExperimentRuns,
   botBacktestResults,
@@ -216,7 +216,7 @@ export default function AnalysisOverlay({ onClose, strategy, experimentId, botId
           {/* ═══ Enter Tag Stats ═══ */}
           {activeView === 'enter_tag' && (
             <div>
-              <h3 className="text-xs font-semibold text-foreground mb-3">Enter Tag Stats</h3>
+              <div className={SECTION_TITLE}>Enter Tag Stats</div>
               {enterTagStats.length > 0 ? (
                 <div className="border border-border rounded-card overflow-hidden">
                   <table className="w-full text-xs">
@@ -266,7 +266,7 @@ export default function AnalysisOverlay({ onClose, strategy, experimentId, botId
           {/* ═══ Exit Reason Stats ═══ */}
           {activeView === 'exit_reason' && (
             <div>
-              <h3 className="text-xs font-semibold text-foreground mb-3">Exit Reason Stats</h3>
+              <div className={SECTION_TITLE}>Exit Reason Stats</div>
               {exitReasonStats.length > 0 ? (
                 <div className="border border-border rounded-card overflow-hidden">
                   <table className="w-full text-xs">
@@ -330,7 +330,7 @@ export default function AnalysisOverlay({ onClose, strategy, experimentId, botId
                     a.href = url; a.download = `trades_${strategy}.csv`;
                     a.click(); URL.revokeObjectURL(url);
                   }}
-                  className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+                  className={`${BTN_ACTION} border-border text-muted-foreground hover:bg-muted hover:text-foreground`}
                 >
                   📥 Export CSV
                 </button>
@@ -421,7 +421,7 @@ export default function AnalysisOverlay({ onClose, strategy, experimentId, botId
           {/* ═══ Rejected Signals ═══ */}
           {activeView === 'rejected' && (
             <div>
-              <h3 className="text-xs font-semibold text-foreground mb-3">Rejected Signals</h3>
+              <div className={SECTION_TITLE}>Rejected Signals</div>
               <div className="grid grid-cols-3 gap-3 mb-4">
                 <div className="bg-card border border-border rounded-card p-3 text-center">
                   <div className="text-lg font-bold text-foreground tabular-nums">{trades.length + rejectedSignals}</div>
@@ -447,7 +447,7 @@ export default function AnalysisOverlay({ onClose, strategy, experimentId, botId
           {/* ═══ Indicator Analysis ═══ */}
           {activeView === 'indicator' && (
             <div>
-              <h3 className="text-xs font-semibold text-foreground mb-3">Indicator Analysis</h3>
+              <div className={SECTION_TITLE}>Indicator Analysis</div>
               <div className="text-xs text-muted-foreground p-6 border border-border rounded-card text-center">
                 Indicator analysis requires running FT with &quot;--export signals&quot; flag and
                 analyzing indicator values at entry/exit points.
@@ -461,7 +461,7 @@ export default function AnalysisOverlay({ onClose, strategy, experimentId, botId
           {/* ═══ Signal Analysis ═══ */}
           {activeView === 'signal' && (
             <div>
-              <h3 className="text-xs font-semibold text-foreground mb-3">Signal Analysis</h3>
+              <div className={SECTION_TITLE}>Signal Analysis</div>
               {btData && (
                 <div className="grid grid-cols-4 gap-3 mb-4">
                   <div className="bg-card border border-border rounded-card p-3 text-center">

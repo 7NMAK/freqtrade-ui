@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import Tooltip from '@/components/ui/Tooltip';
-import { INPUT, SELECT, LABEL } from '@/lib/design';
+import { INPUT, SELECT, LABEL, SECTION_CARD, BTN_PRIMARY } from '@/lib/design';
 import { useToast } from '@/components/ui/Toast';
 import {
   botLookaheadAnalysis,
@@ -291,7 +291,7 @@ export default function ValidationTab({
   return (
     <div className="space-y-4 pb-12">
       {/* ===== SECTION 1: VERIFICATION BACKTEST ===== */}
-      <div className="bg-card border border-border rounded-card p-4">
+      <div className={SECTION_CARD}>
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xs font-semibold text-foreground">1. Verification Backtest (Out-of-Sample)</span>
         </div>
@@ -406,7 +406,7 @@ export default function ValidationTab({
           <button
             onClick={handleRunVerification}
             disabled={isRunningVerification || !selectedRunId}
-            className="w-full h-[34px] inline-flex items-center justify-center gap-[6px] px-[14px] rounded-btn text-xs font-medium border bg-primary border-primary text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`w-full ${BTN_PRIMARY}`}
           >
             {isRunningVerification ? (
               <>
@@ -422,7 +422,7 @@ export default function ValidationTab({
         {/* ===== VERIFICATION RESULTS ===== */}
         {!verificationResult ? (
           <div className="border-t border-border pt-4 mt-4">
-            <div className="bg-card border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[200px]">
+            <div className={`${SECTION_CARD} flex flex-col items-center justify-center min-h-[200px]`}>
               <div className="text-[32px] mb-3 opacity-30">✓</div>
               <div className="text-sm font-semibold text-muted-foreground mb-1">No verification yet</div>
               <div className="text-xs text-muted-foreground text-center max-w-[280px]">
@@ -550,7 +550,7 @@ export default function ValidationTab({
       </div>
 
       {/* ===== SECTION 2: LOOKAHEAD ANALYSIS ===== */}
-      <div className="bg-card border border-border rounded-card p-4">
+      <div className={SECTION_CARD}>
         <div className="flex items-center gap-2 mb-3">
           <span className="text-xs font-semibold text-foreground">
             2. Lookahead Analysis{' '}
@@ -574,7 +574,7 @@ export default function ValidationTab({
         <button
           onClick={handleRunLookahead}
           disabled={isRunningLookahead}
-          className="h-[34px] inline-flex items-center gap-[6px] px-[14px] rounded-btn text-xs font-medium border bg-primary border-primary text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed mb-3"
+          className={`${BTN_PRIMARY} mb-3`}
         >
           {isRunningLookahead ? (
             <>
@@ -624,7 +624,7 @@ export default function ValidationTab({
             )}
           </div>
         ) : (
-          <div className="bg-card border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[150px]">
+          <div className={`${SECTION_CARD} flex flex-col items-center justify-center min-h-[150px]`}>
             <div className="text-[32px] mb-3 opacity-30">⚡</div>
             <div className="text-sm font-semibold text-muted-foreground mb-1">No lookahead analysis yet</div>
             <div className="text-xs text-muted-foreground text-center max-w-[280px]">
@@ -635,7 +635,7 @@ export default function ValidationTab({
       </div>
 
       {/* ===== SECTION 3: RECURSIVE ANALYSIS ===== */}
-      <div className="bg-card border border-border rounded-card p-4">
+      <div className={SECTION_CARD}>
         <div className="flex items-center gap-2 mb-3">
           <span className="text-xs font-semibold text-foreground">
             3. Recursive Analysis{' '}
@@ -659,7 +659,7 @@ export default function ValidationTab({
         <button
           onClick={handleRunRecursive}
           disabled={isRunningRecursive}
-          className="h-[34px] inline-flex items-center gap-[6px] px-[14px] rounded-btn text-xs font-medium border bg-primary border-primary text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed mb-3"
+          className={`${BTN_PRIMARY} mb-3`}
         >
           {isRunningRecursive ? (
             <>
@@ -709,7 +709,7 @@ export default function ValidationTab({
             )}
           </div>
         ) : (
-          <div className="bg-card border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[150px]">
+          <div className={`${SECTION_CARD} flex flex-col items-center justify-center min-h-[150px]`}>
             <div className="text-[32px] mb-3 opacity-30">🔄</div>
             <div className="text-sm font-semibold text-muted-foreground mb-1">No recursive analysis yet</div>
             <div className="text-xs text-muted-foreground text-center max-w-[280px]">

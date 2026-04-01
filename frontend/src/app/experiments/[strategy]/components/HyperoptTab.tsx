@@ -9,7 +9,7 @@ interface LogEntry {
 }
 import Tooltip from '@/components/ui/Tooltip';
 import Toggle from '@/components/ui/Toggle';
-import { INPUT, LABEL, fmtPctRatio, fmtNum, fmt$ } from '@/lib/design';
+import { INPUT, LABEL, fmtPctRatio, fmtNum, fmt$, SECTION_CARD, SECTION_TITLE, BTN_PRIMARY, LAYOUT_2COL } from '@/lib/design';
 import { useToast } from '@/components/ui/Toast';
 import {
   LOSS_FUNCTIONS,
@@ -586,12 +586,12 @@ export default function HyperoptTab({ strategy, botId = 2, experimentId, onNavig
     sortBy === col ? <span className="ml-0.5 text-primary">{sortDir === 'desc' ? '↓' : '↑'}</span> : null;
 
   return (
-    <div className="flex gap-6 pb-12">
+    <div className={LAYOUT_2COL}>
       {/* ══════════════ LEFT PANEL: FORM (380px) ══════════════ */}
-      <div className="w-[380px] flex-shrink-0 space-y-4">
+      <div className="space-y-4">
         {/* Basic Config */}
-        <div className="bg-card border border-border rounded-card p-4">
-          <h3 className="text-xs font-semibold text-foreground mb-4">Hyperopt Configuration</h3>
+        <div className={SECTION_CARD}>
+          <div className={SECTION_TITLE}>Hyperopt Configuration</div>
           <div className="space-y-3">
             <div>
               <label className={LABEL}>Test Name</label>
@@ -623,8 +623,8 @@ export default function HyperoptTab({ strategy, botId = 2, experimentId, onNavig
         </div>
 
         {/* Space Presets */}
-        <div className="bg-card border border-border rounded-card p-4">
-          <h3 className="text-xs font-semibold text-foreground mb-3">Optimization Spaces</h3>
+        <div className={SECTION_CARD}>
+          <div className={SECTION_TITLE}>Optimization Spaces</div>
 
           {/* Preset buttons */}
           <div className="flex flex-wrap gap-1.5 mb-3">
@@ -663,10 +663,10 @@ export default function HyperoptTab({ strategy, botId = 2, experimentId, onNavig
         </div>
 
         {/* Loss Functions */}
-        <div className="bg-card border border-border rounded-card p-4">
-          <h3 className="text-xs font-semibold text-foreground mb-3">
+        <div className={SECTION_CARD}>
+          <div className={SECTION_TITLE}>
             Loss Functions ({selectedLossFunctions.length}/{LOSS_FUNCTIONS.length})
-          </h3>
+          </div>
           <div className="flex flex-wrap gap-1.5">
             {LOSS_FUNCTIONS.map((lf) => (
               <Tooltip key={lf.value} content={lf.tip}>
@@ -690,10 +690,10 @@ export default function HyperoptTab({ strategy, botId = 2, experimentId, onNavig
         </div>
 
         {/* Samplers */}
-        <div className="bg-card border border-border rounded-card p-4">
-          <h3 className="text-xs font-semibold text-foreground mb-3">
+        <div className={SECTION_CARD}>
+          <div className={SECTION_TITLE}>
             Samplers ({selectedSamplers.length}/{SAMPLERS.length})
-          </h3>
+          </div>
           <div className="flex flex-wrap gap-1.5">
             {SAMPLERS.map((s) => (
               <Tooltip key={s.value} content={s.tip}>
@@ -729,7 +729,7 @@ export default function HyperoptTab({ strategy, botId = 2, experimentId, onNavig
         </div>
 
         {/* Advanced */}
-        <div className="bg-card border border-border rounded-card p-4">
+        <div className={SECTION_CARD}>
           <button
             onClick={() => setShowAdvanced(!showAdvanced)}
             className="text-xs font-semibold text-foreground flex items-center gap-1 w-full"
@@ -782,7 +782,7 @@ export default function HyperoptTab({ strategy, botId = 2, experimentId, onNavig
             <button
               onClick={handleRunBatch}
               disabled={isRunning || selectedLossFunctions.length === 0 || selectedSamplers.length === 0}
-              className="w-full h-[34px] inline-flex items-center justify-center gap-[6px] rounded-btn text-xs font-medium border bg-primary border-primary text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className={`w-full ${BTN_PRIMARY}`}
             >
               {isRunning ? (
                 <>
@@ -797,7 +797,7 @@ export default function HyperoptTab({ strategy, botId = 2, experimentId, onNavig
             <button
               onClick={handleRunSingle}
               disabled={isRunning || selectedLossFunctions.length === 0 || selectedSamplers.length === 0}
-              className="w-full h-[34px] inline-flex items-center justify-center gap-[6px] rounded-btn text-xs font-medium border bg-primary border-primary text-white hover:bg-[#5558e6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className={`w-full ${BTN_PRIMARY}`}
             >
               {isRunning ? (
                 <>

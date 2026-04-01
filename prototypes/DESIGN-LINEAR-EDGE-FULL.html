@@ -2079,9 +2079,13 @@
                              <div class="flex-1"><label class="builder-label">Fee</label><input type="text" class="builder-input w-full" placeholder="exchange default"></div>
                           </div>
                           <!-- Flags — DS §7.18 .builder-toggle -->
-                          <div class="l-t pt-3 flex flex-col gap-2.5">
-                              <div class="flex items-center justify-between"><label class="builder-label mb-0">Enable Protections</label><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
-                              <div class="flex items-center justify-between"><label class="builder-label mb-0">Dry Run Wallet</label><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                          <div class="l-t pt-3"><label class="builder-label">Flags</label>
+                              <div class="flex flex-col gap-2.5 mt-1">
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Enable Protections</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Dry Run Wallet</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Position Stacking</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Enable Shorts</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                              </div>
                           </div>
                           <!-- --breakdown -->
                           <div class="l-t pt-3">
@@ -2569,8 +2573,8 @@
               <div id="tab-freqai" class="exp-tab h-full flex flex-row gap-3">
                   <!-- ■ CONFIG PANEL (Left) — EDITABLE -->
                   <div class="w-[400px] flex flex-col gap-0 bg-surface l-bd rounded-md shadow-xl shrink-0 h-full overflow-hidden">
-                      <div class="px-4 py-3 l-b shrink-0"><h3 class="section-title">FreqAI Configuration</h3></div>
-                      <div class="p-3 flex flex-col gap-3 text-[11px] flex-1">
+                      <div class="h-10 l-b flex items-center px-4 bg-black/40 shrink-0"><h3 class="section-title">FreqAI Configuration</h3></div>
+                      <div class="p-4 flex flex-col gap-3.5 flex-1 overflow-y-auto">
                           <div><label class="builder-label">Source HO Epoch</label><select class="builder-select w-full"><option>HO #147 — Sharpe — +42.12%</option><option>HO #92 — Sortino — +38.40%</option></select></div>
                           <div class="flex gap-2">
                              <div class="flex-1"><label class="builder-label">Train Start</label><input type="date" class="builder-input w-full" value="2022-01-01"></div>

@@ -15,6 +15,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..auth import require_auth
 from ..database import get_db
 from ..models.test_job import TestJob
+from ..models.experiment import Experiment
+from ..models.bot_instance import BotInstance
 
 router = APIRouter()
 
@@ -118,6 +120,23 @@ async def submit_job(body: SubmitJobRequest, db: AsyncSession = Depends(get_db))
     The job will be picked up by the JobRunner and executed server-side.
     Returns the job ID for progress tracking.
     """
+    # H2 FIX: Validate experiment exists
+    exp_check = await db.execute(
+        select(Experiment).where(Experiment.id == body.experiment_id)
+    )
+    if not exp_check.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail=f"Experiment #{body.experiment_id} not found")
+
+    # H2 FIX: Validate bot exists
+    bot_check = await db.execute(
+        select(BotInstance).where(
+            BotInstance.id == body.bot_id,
+            BotInstance.is_deleted.is_(False),
+        )
+    )
+    if not bot_check.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail=f"Bot #{body.bot_id} not found")
+
     # Validate: no running jobs for same bot (FT only supports 1 backtest at a time)
     existing = await db.execute(
         select(func.count())

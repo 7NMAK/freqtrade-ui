@@ -2112,10 +2112,11 @@
                           <div class="flex gap-1.5 l-t pt-3">
                               <button class="flex-1 py-2 text-[11px] font-bold uppercase tracking-wider bg-white text-black rounded hover:bg-white/85 transition-colors" title="Start backtesting run">▶ Start Backtest</button>
                               <button class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider l-bd rounded text-down hover:bg-down/10 transition-colors" title="Stop running backtest">⏹</button>
+                              <button class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider l-bd rounded text-muted hover:text-white hover:bg-white/5 transition-colors" title="Reset configuration to defaults">↺</button>
                           </div>
                           <!-- Progress (inline in scroll) -->
                           <div class="l-t pt-3">
-                              <div class="flex justify-between text-[11px] font-mono mb-1.5"><span class="text-muted">Progress</span><span class="text-white font-bold">Completed · 142 trades</span></div>
+                              <div class="flex justify-between text-[11px] font-mono mb-1.5"><span class="text-muted">Progress</span><span class="text-white font-bold">Completed · 142 trades · ETA —</span></div>
                               <div class="w-full h-1.5 bg-white/10 rounded-full"><div class="h-full bg-up rounded-full transition-all" style="width: 100%"></div></div>
                           </div>
                           <!-- Terminal Output (inline, scrolls with config) -->
@@ -2269,23 +2270,23 @@
                           <div><label class="builder-label">Strategy</label><select class="builder-select w-full"><option>AlphaTrend_V5</option><option>TrendFollowerV3</option><option>MeanReversion_V2</option></select></div>
                           <!-- --hyperopt-loss -->
                           <div class="l-t"><label class="builder-label">Loss Function</label>
-                              <div class="flex flex-wrap gap-1.5 mt-1">
-                                  <button class="builder-pill selected" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">SharpeHyperOptLoss</button>
-                                  <button class="builder-pill" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">SortinoHyperOptLoss</button>
-                                  <button class="builder-pill" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">CalmarHyperOptLoss</button>
-                                  <button class="builder-pill" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">MaxDrawDownHyperOptLoss</button>
-                                  <button class="builder-pill" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">OnlyProfitHyperOptLoss</button>
-                                  <button class="builder-pill" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">ProfitDrawDownHyperOptLoss</button>
+                              <div class="grid grid-cols-3 gap-1.5 mt-1">
+                                  <button class="builder-pill selected text-[10px] px-2.5 py-1.5 text-center" onclick="this.classList.toggle('selected')">✓ Sharpe</button>
+                                  <button class="builder-pill text-[10px] px-2.5 py-1.5 text-center" onclick="this.classList.toggle('selected')">Sortino</button>
+                                  <button class="builder-pill text-[10px] px-2.5 py-1.5 text-center" onclick="this.classList.toggle('selected')">Calmar</button>
+                                  <button class="builder-pill text-[10px] px-2.5 py-1.5 text-center" onclick="this.classList.toggle('selected')">MaxDrawDown</button>
+                                  <button class="builder-pill text-[10px] px-2.5 py-1.5 text-center" onclick="this.classList.toggle('selected')">OnlyProfit</button>
+                                  <button class="builder-pill text-[10px] px-2.5 py-1.5 text-center" onclick="this.classList.toggle('selected')">ProfitDD</button>
                               </div>
                           </div>
                           <!-- --sampler -->
                           <div class="l-t pt-3"><label class="builder-label">Sampler</label>
-                              <div class="flex flex-wrap gap-1.5 mt-1">
-                                  <button class="builder-pill selected" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">TPESampler</button>
-                                  <button class="builder-pill" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">RandomSampler</button>
-                                  <button class="builder-pill" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">CmaEsSampler</button>
-                                  <button class="builder-pill" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">NSGAIISampler</button>
-                                  <button class="builder-pill" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">QMCSampler</button>
+                              <div class="grid grid-cols-3 gap-1.5 mt-1">
+                                  <button class="builder-pill selected text-[10px] px-2.5 py-1.5 text-center" onclick="this.classList.toggle('selected')">✓ TPE</button>
+                                  <button class="builder-pill text-[10px] px-2.5 py-1.5 text-center" onclick="this.classList.toggle('selected')">Random</button>
+                                  <button class="builder-pill text-[10px] px-2.5 py-1.5 text-center" onclick="this.classList.toggle('selected')">CmaEs</button>
+                                  <button class="builder-pill text-[10px] px-2.5 py-1.5 text-center" onclick="this.classList.toggle('selected')">NSGAII</button>
+                                  <button class="builder-pill text-[10px] px-2.5 py-1.5 text-center" onclick="this.classList.toggle('selected')">QMC</button>
                               </div>
                           </div>
                           <!-- --epochs / --min-trades -->
@@ -2342,6 +2343,7 @@
                           <div class="flex gap-1.5 l-t pt-3">
                               <button class="flex-1 py-2 text-[11px] font-bold uppercase tracking-wider bg-white text-black rounded hover:bg-white/85 transition-colors" title="Start hyperopt optimization">▶ Start Hyperopt</button>
                               <button class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider l-bd rounded text-down hover:bg-down/10 transition-colors" title="Stop running hyperopt">⏹</button>
+                              <button class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider l-bd rounded text-muted hover:text-white hover:bg-white/5 transition-colors" title="Reset configuration to defaults">↺</button>
                           </div>
                           <!-- Progress (inline in scroll) -->
                           <div class="l-t pt-3">
@@ -2551,7 +2553,7 @@
               <!-- TAB: FREQAI -->
               <div id="tab-freqai" class="exp-tab h-full flex flex-row gap-3">
                   <!-- ■ CONFIG PANEL (Left) — EDITABLE -->
-                  <div class="w-[300px] flex flex-col gap-0 bg-surface l-bd rounded shrink-0 h-full overflow-y-auto">
+                  <div class="w-[400px] flex flex-col gap-0 bg-surface l-bd rounded-md shadow-xl shrink-0 h-full overflow-hidden">
                       <div class="px-4 py-3 l-b shrink-0"><h3 class="section-title">FreqAI Configuration</h3></div>
                       <div class="p-3 flex flex-col gap-3 text-[11px] flex-1">
                           <div><label class="builder-label">Source HO Epoch</label><select class="builder-select w-full"><option>HO #147 — Sharpe — +42.12%</option><option>HO #92 — Sortino — +38.40%</option></select></div>
@@ -2589,17 +2591,25 @@
                               </div>
                           </div>
                           <!-- Advanced -->
-                          <div class="l-t pt-3 bg-surface l-bd rounded p-2.5 text-[11px] font-mono space-y-1">
-                              <div class="flex justify-between"><span class="text-muted">Matrix Total</span><span class="text-white font-bold">8 runs</span></div>
-                              <div class="flex justify-between"><span class="text-muted">Est. Time</span><span class="text-muted">~2h 30m</span></div>
+                          <!-- Matrix Calculation -->
+                          <div class="l-t pt-3">
+                              <label class="builder-label">Matrix Calculation</label>
+                              <div class="mt-1 builder-card space-y-1.5 text-[11px] font-mono">
+                                  <div class="flex items-center gap-1.5 text-[#60a5fa]">
+                                      <span class="px-1.5 py-0.5 bg-[#60a5fa]/10 border border-[#60a5fa]/25 rounded text-[10px]">ℹ</span>
+                                      <span><span class="text-white font-bold">2</span> models × <span class="text-white font-bold">2</span> outlier × <span class="text-white font-bold">2</span> PCA × <span class="text-white font-bold">2</span> noise = <span class="text-up font-bold">16</span> tests</span>
+                                  </div>
+                                  <div class="flex justify-between"><span class="text-muted">Est. Time</span><span class="text-muted">~5h 20m</span></div>
+                              </div>
                           </div>
                           <div class="flex gap-1.5 l-t pt-3">
-                              <button class="flex-1 py-2 text-[11px] font-bold uppercase tracking-wider bg-white text-black rounded hover:bg-white/85 transition-colors" title="Start FreqAI matrix run">▶ Run Matrix (8)</button>
+                              <button class="flex-1 py-2 text-[11px] font-bold uppercase tracking-wider bg-white text-black rounded hover:bg-white/85 transition-colors" title="Start FreqAI matrix run">▶ Run Matrix (16)</button>
                               <button class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider l-bd rounded text-down hover:bg-down/10 transition-colors" title="Stop running">⏹</button>
+                              <button class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider l-bd rounded text-muted hover:text-white hover:bg-white/5 transition-colors" title="Reset configuration to defaults">↺</button>
                           </div>
                           <!-- Progress (inline in scroll) -->
                           <div class="l-t pt-3">
-                              <div class="flex justify-between text-[11px] font-mono mb-1.5"><span class="text-muted">Progress</span><span class="text-white font-bold">5/8 runs complete</span></div>
+                              <div class="flex justify-between text-[11px] font-mono mb-1.5"><span class="text-muted">Progress</span><span class="text-white font-bold">5/8 runs · ETA ~1h 20m</span></div>
                               <div class="w-full h-1.5 bg-white/10 rounded-full"><div class="h-full bg-up rounded-full transition-all" style="width: 62.5%"></div></div>
                           </div>
                           <!-- Terminal Output (inline, scrolls with config) -->

@@ -276,49 +276,49 @@ function ResultsPanel({ data }: { data: FTStrategyResult }) {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="bg-muted/50 text-muted-foreground">
-                    <th onClick={() => handleTradeSort('trade_id')} className="text-left px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground transition-colors">#<TradeSortArrow col="trade_id" /></th>
-                    <th onClick={() => handleTradeSort('pair')} className="text-left px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground transition-colors">Pair<TradeSortArrow col="pair" /></th>
-                    <th className="text-left px-2 py-1.5 font-semibold">Side</th>
-                    <th className="text-right px-2 py-1.5 font-semibold">Stake</th>
-                    <th className="text-right px-2 py-1.5 font-semibold">Open</th>
-                    <th className="text-right px-2 py-1.5 font-semibold">Close</th>
-                    <th onClick={() => handleTradeSort('close_profit')} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground transition-colors">Profit%<TradeSortArrow col="close_profit" /></th>
-                    <th onClick={() => handleTradeSort('close_profit_abs')} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground transition-colors">Profit$<TradeSortArrow col="close_profit_abs" /></th>
-                    <th onClick={() => handleTradeSort('open_date')} className="text-left px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground transition-colors">Open Date<TradeSortArrow col="open_date" /></th>
-                    <th onClick={() => handleTradeSort('close_date')} className="text-left px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground transition-colors">Close Date<TradeSortArrow col="close_date" /></th>
-                    <th onClick={() => handleTradeSort('trade_duration')} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground transition-colors">Duration<TradeSortArrow col="trade_duration" /></th>
-                    <th className="text-left px-2 py-1.5 font-semibold">Enter Tag</th>
-                    <th className="text-left px-2 py-1.5 font-semibold">Exit Reason</th>
+                    <th onClick={() => handleTradeSort('trade_id')} className="text-left px-3 py-2 font-semibold cursor-pointer hover:text-foreground transition-colors">#<TradeSortArrow col="trade_id" /></th>
+                    <th onClick={() => handleTradeSort('pair')} className="text-left px-3 py-2 font-semibold cursor-pointer hover:text-foreground transition-colors">Pair<TradeSortArrow col="pair" /></th>
+                    <th className="text-left px-3 py-2 font-semibold">Side</th>
+                    <th className="text-right px-3 py-2 font-semibold">Stake</th>
+                    <th className="text-right px-3 py-2 font-semibold">Open</th>
+                    <th className="text-right px-3 py-2 font-semibold">Close</th>
+                    <th onClick={() => handleTradeSort('close_profit')} className="text-right px-3 py-2 font-semibold cursor-pointer hover:text-foreground transition-colors">Profit%<TradeSortArrow col="close_profit" /></th>
+                    <th onClick={() => handleTradeSort('close_profit_abs')} className="text-right px-3 py-2 font-semibold cursor-pointer hover:text-foreground transition-colors">Profit$<TradeSortArrow col="close_profit_abs" /></th>
+                    <th onClick={() => handleTradeSort('open_date')} className="text-left px-3 py-2 font-semibold cursor-pointer hover:text-foreground transition-colors">Open Date<TradeSortArrow col="open_date" /></th>
+                    <th onClick={() => handleTradeSort('close_date')} className="text-left px-3 py-2 font-semibold cursor-pointer hover:text-foreground transition-colors">Close Date<TradeSortArrow col="close_date" /></th>
+                    <th onClick={() => handleTradeSort('trade_duration')} className="text-right px-3 py-2 font-semibold cursor-pointer hover:text-foreground transition-colors">Duration<TradeSortArrow col="trade_duration" /></th>
+                    <th className="text-left px-3 py-2 font-semibold">Enter Tag</th>
+                    <th className="text-left px-3 py-2 font-semibold">Exit Reason</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pagedTrades.map((t) => (
                     <tr key={t.trade_id} className="border-t border-border hover:bg-muted/30">
-                      <td className="px-2 py-1.5 tabular-nums text-muted-foreground">{t.trade_id}</td>
-                      <td className="px-2 py-1.5 font-mono text-foreground">{t.pair}</td>
-                      <td className="px-2 py-1.5">
+                      <td className="px-3 py-2 tabular-nums text-muted-foreground">{t.trade_id}</td>
+                      <td className="px-3 py-2 font-mono text-foreground">{t.pair}</td>
+                      <td className="px-3 py-2">
                         <span className={t.is_short ? "text-rose-400" : "text-emerald-400"}>
                           {t.is_short ? "Short" : "Long"}
                         </span>
                       </td>
-                      <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">${t.stake_amount.toFixed(0)}</td>
-                      <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">{t.open_rate.toFixed(2)}</td>
-                      <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">{t.close_rate.toFixed(2)}</td>
-                      <td className={`px-2 py-1.5 text-right tabular-nums ${t.close_profit >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                      <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">${t.stake_amount.toFixed(0)}</td>
+                      <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{t.open_rate.toFixed(2)}</td>
+                      <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{t.close_rate.toFixed(2)}</td>
+                      <td className={`px-3 py-2 text-right tabular-nums ${t.close_profit >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                         {fmtPctRatio(t.close_profit)}
                       </td>
-                      <td className={`px-2 py-1.5 text-right tabular-nums ${t.close_profit_abs >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                      <td className={`px-3 py-2 text-right tabular-nums ${t.close_profit_abs >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                         {fmt$(t.close_profit_abs)}
                       </td>
-                      <td className="px-2 py-1.5 text-muted-foreground whitespace-nowrap">
+                      <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
                         {t.open_date ? t.open_date.replace("T", " ").substring(0, 16) : "—"}
                       </td>
-                      <td className="px-2 py-1.5 text-muted-foreground whitespace-nowrap">
+                      <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
                         {t.close_date ? t.close_date.replace("T", " ").substring(0, 16) : "—"}
                       </td>
-                      <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">{fmtDuration(t.trade_duration)}</td>
-                      <td className="px-2 py-1.5 text-muted-foreground">{t.enter_tag || "—"}</td>
-                      <td className="px-2 py-1.5 text-muted-foreground">{t.exit_reason || "—"}</td>
+                      <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{fmtDuration(t.trade_duration)}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{t.enter_tag || "—"}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{t.exit_reason || "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1303,7 +1303,7 @@ export default function BacktestTab({ strategy, backtestBotId = 2, experimentId 
       </div>
 
       {/* ═══════════ RIGHT PANEL: RESULTS ═══════════ */}
-      <div className="bg-card border border-border rounded-[10px] p-4 overflow-y-auto flex flex-col gap-4 min-h-[400px]">
+      <div className="bg-card border border-border rounded-card p-4 overflow-y-auto flex flex-col gap-4 min-h-[400px]">
         {btResult ? (
           <>
             <ResultsPanel data={btResult} />

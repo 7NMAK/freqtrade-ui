@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import Tooltip from "@/components/ui/Tooltip";
 import Toggle from "@/components/ui/Toggle";
-import { INPUT, SELECT, LABEL, SECTION_CARD, SECTION_TITLE, BTN_PRIMARY, LAYOUT_2COL } from "@/lib/design";
+import { INPUT, SELECT, LABEL, SECTION_CARD, SECTION_TITLE, METRIC_CARD, BTN_PRIMARY, LAYOUT_2COL } from "@/lib/design";
 import { FREQAI_MODELS, OUTLIER_METHODS } from "@/lib/experiments";
 import { useToast } from "@/components/ui/Toast";
 import {
@@ -804,7 +804,7 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
 
         {/* Progress Display */}
         {isRunning && (
-          <div className="bg-card border border-primary/30 rounded-[10px] p-4">
+          <div className="bg-card border border-primary/30 rounded-card p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-foreground">
                 FreqAI Batch: {completedCount}/{matrixTotal} completed
@@ -841,7 +841,7 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
 
         {/* Winner Banner */}
         {winner && !isRunning && (
-          <div className="bg-[rgba(34,197,94,0.06)] border border-emerald-500/20 rounded-[10px] p-4 flex items-center gap-4">
+          <div className="bg-[rgba(34,197,94,0.06)] border border-emerald-500/20 rounded-card p-4 flex items-center gap-4">
             <span className="text-2xl">🏆</span>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-semibold text-emerald-400 mb-0.5">Best FreqAI Result</div>
@@ -864,9 +864,57 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
           </div>
         )}
 
+        {/* Config Summary + Metric Cards (matches Hyperopt/Backtest layout) */}
+        {winner && !isRunning && (() => {
+          const profitOk = winner.profitPct >= 0;
+          const MC = ({ label, value, sub, positive }: { label: string; value: string; sub?: string; positive?: boolean | null }) => {
+            const valColor = positive === true ? "text-emerald-400" : positive === false ? "text-rose-400" : "text-foreground";
+            return (
+              <div className={METRIC_CARD}>
+                <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">{label}</div>
+                <div className={`text-sm font-bold tabular-nums ${valColor}`}>{value}</div>
+                {sub && <div className="text-[10px] text-muted-foreground tabular-nums">{sub}</div>}
+              </div>
+            );
+          };
+          return (
+            <>
+              {/* Config Summary Bar */}
+              <div className="grid grid-cols-4 gap-2 text-[10px]">
+                <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
+                  <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Model</div>
+                  <div className="text-foreground font-mono truncate">{winner.model}</div>
+                </div>
+                <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
+                  <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Outlier</div>
+                  <div className="text-foreground font-mono truncate">{winner.outlier}</div>
+                </div>
+                <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
+                  <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">PCA</div>
+                  <div className="text-foreground font-mono">{winner.pca ? "Enabled" : "Disabled"}</div>
+                </div>
+                <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
+                  <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Noise Filter</div>
+                  <div className="text-foreground font-mono">{winner.noise ? "Enabled" : "Disabled"}</div>
+                </div>
+              </div>
+
+              {/* Core Metrics (6-grid — same as BacktestTab Row 1) */}
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                <MC label="Total Trades" value={String(winner.trades)} />
+                <MC label="Win Rate" value={`${winner.winRate.toFixed(1)}%`} positive={winner.winRate > 60 ? true : winner.winRate < 40 ? false : null} />
+                <MC label="Total Profit" value={`${profitOk ? '+' : ''}${winner.profitPct.toFixed(2)}%`} positive={profitOk} />
+                <MC label="Max Drawdown" value={`-${Math.abs(winner.maxDrawdown).toFixed(2)}%`} positive={false} />
+                <MC label="Sharpe" value={winner.sharpe.toFixed(2)} positive={winner.sharpe > 1 ? true : winner.sharpe < 0 ? false : null} />
+                <MC label="Sortino" value={winner.sortino.toFixed(2)} positive={winner.sortino > 1 ? true : winner.sortino < 0 ? false : null} />
+              </div>
+            </>
+          );
+        })()}
+
         {/* Results Master Table */}
         {sortedResults.length > 0 ? (
-          <div className="bg-card border border-border rounded-[10px] overflow-hidden">
+          <div className="bg-card border border-border rounded-card overflow-hidden">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
               <span className="text-xs font-semibold text-foreground">FreqAI Results ({sortedResults.length})</span>
               <button onClick={() => { setResults([]); try { localStorage.removeItem(RESULTS_KEY); } catch {} toast.info("Results cleared"); }} className="text-[10px] text-muted-foreground hover:text-rose-400 transition">Clear All</button>
@@ -875,37 +923,37 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
               <table className="w-full text-xs whitespace-nowrap">
                 <thead>
                   <tr className="bg-muted/50 text-muted-foreground">
-                    <th className="text-left px-2 py-1.5 font-semibold">#</th>
-                    <th className="text-left px-2 py-1.5 font-semibold">Model</th>
-                    <th className="text-left px-2 py-1.5 font-semibold">Outlier</th>
-                    <th className="text-center px-2 py-1.5 font-semibold">PCA</th>
-                    <th className="text-center px-2 py-1.5 font-semibold">Noise</th>
-                    <th onClick={() => handleSort("trades")} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Trades<SortArrow col="trades" /></th>
-                    <th onClick={() => handleSort("winRate")} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Win Rate<SortArrow col="winRate" /></th>
-                    <th onClick={() => handleSort("profitPct")} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Profit%<SortArrow col="profitPct" /></th>
-                    <th onClick={() => handleSort("maxDrawdown")} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Max DD<SortArrow col="maxDrawdown" /></th>
-                    <th onClick={() => handleSort("sharpe")} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Sharpe<SortArrow col="sharpe" /></th>
-                    <th onClick={() => handleSort("sortino")} className="text-right px-2 py-1.5 font-semibold cursor-pointer hover:text-foreground">Sortino<SortArrow col="sortino" /></th>
-                    <th className="text-right px-2 py-1.5 font-semibold">Actions</th>
+                    <th className="text-left px-3 py-2 font-semibold">#</th>
+                    <th className="text-left px-3 py-2 font-semibold">Model</th>
+                    <th className="text-left px-3 py-2 font-semibold">Outlier</th>
+                    <th className="text-center px-3 py-2 font-semibold">PCA</th>
+                    <th className="text-center px-3 py-2 font-semibold">Noise</th>
+                    <th onClick={() => handleSort("trades")} className="text-right px-3 py-2 font-semibold cursor-pointer hover:text-foreground">Trades<SortArrow col="trades" /></th>
+                    <th onClick={() => handleSort("winRate")} className="text-right px-3 py-2 font-semibold cursor-pointer hover:text-foreground">Win Rate<SortArrow col="winRate" /></th>
+                    <th onClick={() => handleSort("profitPct")} className="text-right px-3 py-2 font-semibold cursor-pointer hover:text-foreground">Profit%<SortArrow col="profitPct" /></th>
+                    <th onClick={() => handleSort("maxDrawdown")} className="text-right px-3 py-2 font-semibold cursor-pointer hover:text-foreground">Max DD<SortArrow col="maxDrawdown" /></th>
+                    <th onClick={() => handleSort("sharpe")} className="text-right px-3 py-2 font-semibold cursor-pointer hover:text-foreground">Sharpe<SortArrow col="sharpe" /></th>
+                    <th onClick={() => handleSort("sortino")} className="text-right px-3 py-2 font-semibold cursor-pointer hover:text-foreground">Sortino<SortArrow col="sortino" /></th>
+                    <th className="text-right px-3 py-2 font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedResults.map((r, idx) => (
                     <tr key={r.id} className={`border-t border-border hover:bg-muted/20 ${idx === 0 ? "bg-emerald-500/5" : ""}`}>
-                      <td className="px-2 py-1.5 tabular-nums text-muted-foreground">{idx === 0 ? "★" : ""}{r.id}</td>
-                      <td className="px-2 py-1.5 font-medium text-foreground">{r.model.replace("Regressor", "Reg").replace("Classifier", "Cls")}</td>
-                      <td className="px-2 py-1.5 text-muted-foreground">{r.outlier}</td>
-                      <td className="px-2 py-1.5 text-center">{r.pca ? <span className="text-emerald-400">On</span> : <span className="text-muted-foreground">Off</span>}</td>
-                      <td className="px-2 py-1.5 text-center">{r.noise ? <span className="text-amber-400">On</span> : <span className="text-muted-foreground">Off</span>}</td>
-                      <td className="px-2 py-1.5 text-right tabular-nums">{r.trades}</td>
-                      <td className="px-2 py-1.5 text-right tabular-nums">{r.winRate.toFixed(1)}%</td>
-                      <td className={`px-2 py-1.5 text-right tabular-nums font-medium ${r.profitPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                      <td className="px-3 py-2 tabular-nums text-muted-foreground">{idx === 0 ? "★" : ""}{r.id}</td>
+                      <td className="px-3 py-2 font-medium text-foreground">{r.model.replace("Regressor", "Reg").replace("Classifier", "Cls")}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{r.outlier}</td>
+                      <td className="px-3 py-2 text-center">{r.pca ? <span className="text-emerald-400">On</span> : <span className="text-muted-foreground">Off</span>}</td>
+                      <td className="px-3 py-2 text-center">{r.noise ? <span className="text-amber-400">On</span> : <span className="text-muted-foreground">Off</span>}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">{r.trades}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">{r.winRate.toFixed(1)}%</td>
+                      <td className={`px-3 py-2 text-right tabular-nums font-medium ${r.profitPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                         {r.profitPct >= 0 ? "+" : ""}{r.profitPct.toFixed(2)}%
                       </td>
-                      <td className="px-2 py-1.5 text-right tabular-nums text-rose-400">{r.maxDrawdown.toFixed(2)}%</td>
-                      <td className="px-2 py-1.5 text-right tabular-nums">{r.sharpe.toFixed(2)}</td>
-                      <td className="px-2 py-1.5 text-right tabular-nums">{r.sortino.toFixed(2)}</td>
-                      <td className="px-2 py-1.5">
+                      <td className="px-3 py-2 text-right tabular-nums text-rose-400">{r.maxDrawdown.toFixed(2)}%</td>
+                      <td className="px-3 py-2 text-right tabular-nums">{r.sharpe.toFixed(2)}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">{r.sortino.toFixed(2)}</td>
+                      <td className="px-3 py-2">
                         <div className="flex gap-1 justify-end">
                           <button onClick={() => onNavigateToTab?.(5)} className="px-1.5 py-0.5 text-[9px] border border-primary/30 text-primary rounded hover:bg-primary/10 transition">→ Verify</button>
                           <button onClick={handlePromote} className="px-1.5 py-0.5 text-[9px] border border-amber-500/30 text-amber-400 rounded hover:bg-amber-500/10 transition">Promote</button>
@@ -918,7 +966,7 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
             </div>
           </div>
         ) : (
-          <div className="bg-card border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[400px]">
+          <div className={`${SECTION_CARD} flex flex-col items-center justify-center min-h-[400px]`}>
             <div className="text-[32px] mb-3 opacity-30">🧠</div>
             <div className="text-sm font-semibold text-muted-foreground mb-1">No FreqAI results yet</div>
             <div className="text-xs text-muted-foreground text-center max-w-[280px]">
@@ -929,7 +977,7 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
 
         {/* Log Panel */}
         {logs.length > 0 && (
-          <div className="bg-card border border-border rounded-[10px] overflow-hidden">
+          <div className="bg-card border border-border rounded-card overflow-hidden">
             <div className="px-4 py-2 border-b border-border flex items-center justify-between">
               <span className="text-xs font-semibold text-foreground">Logs ({logs.length})</span>
               <button onClick={() => setLogs([])} className="text-[10px] text-muted-foreground hover:text-foreground transition">Clear</button>

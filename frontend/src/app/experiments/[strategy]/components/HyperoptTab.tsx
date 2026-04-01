@@ -9,7 +9,7 @@ interface LogEntry {
 }
 import Tooltip from '@/components/ui/Tooltip';
 import Toggle from '@/components/ui/Toggle';
-import { INPUT, LABEL, fmtPctRatio, fmtNum, fmt$, SECTION_CARD, SECTION_TITLE, BTN_PRIMARY, LAYOUT_2COL } from '@/lib/design';
+import { INPUT, LABEL, fmtPctRatio, fmtNum, fmt$, SECTION_CARD, SECTION_TITLE, METRIC_CARD, BTN_PRIMARY, LAYOUT_2COL } from '@/lib/design';
 import { useToast } from '@/components/ui/Toast';
 import {
   LOSS_FUNCTIONS,
@@ -1075,7 +1075,7 @@ export default function HyperoptTab({ strategy, botId = 2, experimentId, onNavig
               const MC = ({ label, value, sub, positive }: { label: string; value: string; sub?: string; positive?: boolean | null }) => {
                 const valColor = positive === true ? "text-emerald-400" : positive === false ? "text-rose-400" : "text-foreground";
                 return (
-                  <div className="bg-muted/50 border border-border rounded-lg p-2.5">
+                  <div className={METRIC_CARD}>
                     <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">{label}</div>
                     <div className={`text-sm font-bold tabular-nums ${valColor}`}>{value}</div>
                     {sub && <div className="text-[10px] text-muted-foreground tabular-nums">{sub}</div>}
@@ -1196,7 +1196,7 @@ export default function HyperoptTab({ strategy, botId = 2, experimentId, onNavig
           </div>
           );
         })() : (
-          <div className="bg-card border border-border rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[200px]">
+          <div className={`${SECTION_CARD} flex flex-col items-center justify-center min-h-[200px]`}>
             <div className="text-[32px] mb-3 opacity-30">⚡</div>
             <div className="text-sm font-semibold text-muted-foreground mb-1">No hyperopt results yet</div>
             <div className="text-xs text-muted-foreground text-center max-w-[280px]">

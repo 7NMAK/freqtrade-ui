@@ -2052,51 +2052,55 @@
           <div class="flex-1 p-4 overflow-hidden relative">
               <!-- TAB: BACKTEST -->
               <div id="tab-backtest" class="exp-tab active h-full flex flex-row gap-3">
-                  <!-- ■ CONFIG (Left) — REAL FreqTrade CLI params -->
-                  <div class="w-[300px] flex flex-col gap-0 bg-surface l-bd rounded shrink-0 h-full overflow-y-auto">
-                      <div class="px-4 py-3 l-b shrink-0"><h3 class="section-title">Backtest Configuration</h3></div>
-                      <div class="p-3 flex flex-col gap-3 text-[11px] flex-1">
-                          <!-- CLI Parameters -->
-                          <div><div class="kpi-label mb-1">--strategy</div><select class="w-full bg-surface l-bd px-2 py-1.5 text-white appearance-none rounded text-[11px] font-mono"><option>AlphaTrend_V5</option><option>TrendFollowerV3</option><option>MeanReversion_V2</option></select></div>
+                  <!-- ■ CONFIG (Left) — DS §7.5 Widget Card + §7.18 Builder Form Controls -->
+                  <div class="w-[320px] flex flex-col gap-0 bg-surface l-bd rounded-md shadow-xl shrink-0 h-full overflow-hidden">
+                      <div class="h-10 l-b flex items-center px-4 bg-black/40 shrink-0"><h3 class="section-title">Backtest Configuration</h3></div>
+                      <div class="p-4 flex flex-col gap-3.5 flex-1 overflow-y-auto">
+                          <!-- --strategy -->
+                          <div><label class="builder-label">--strategy</label><select class="builder-select w-full"><option>AlphaTrend_V5</option><option>TrendFollowerV3</option><option>MeanReversion_V2</option></select></div>
+                          <!-- --timerange -->
                           <div class="flex gap-2">
-                             <div class="flex-1"><div class="kpi-label mb-1">--timerange start</div><input type="date" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="2024-01-01"></div>
-                             <div class="flex-1"><div class="kpi-label mb-1">--timerange end</div><input type="date" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="2025-01-01"></div>
+                             <div class="flex-1"><label class="builder-label">--timerange start</label><input type="date" class="builder-input w-full" value="2024-01-01"></div>
+                             <div class="flex-1"><label class="builder-label">--timerange end</label><input type="date" class="builder-input w-full" value="2025-01-01"></div>
                           </div>
+                          <!-- --timeframe -->
                           <div class="flex gap-2">
-                             <div class="flex-1"><div class="kpi-label mb-1">--timeframe</div><select class="w-full bg-surface l-bd px-2 py-1.5 text-white appearance-none rounded text-[11px] font-mono"><option>1h</option><option>4h</option><option>15m</option><option>5m</option><option>1d</option></select></div>
-                             <div class="flex-1"><div class="kpi-label mb-1">--timeframe-detail</div><select class="w-full bg-surface l-bd px-2 py-1.5 text-white appearance-none rounded text-[11px] font-mono"><option>None</option><option>5m</option><option>1m</option></select></div>
+                             <div class="flex-1"><label class="builder-label">--timeframe</label><select class="builder-select w-full"><option>1h</option><option>4h</option><option>15m</option><option>5m</option><option>1d</option></select></div>
+                             <div class="flex-1"><label class="builder-label">--timeframe-detail</label><select class="builder-select w-full"><option>None</option><option>5m</option><option>1m</option></select></div>
                           </div>
+                          <!-- --starting-capital / --stake-amount -->
                           <div class="flex gap-2">
-                             <div class="flex-1"><div class="kpi-label mb-1">--starting-capital</div><input type="number" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="10000"></div>
-                             <div class="flex-1"><div class="kpi-label mb-1">--stake-amount</div><input type="text" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="unlimited"></div>
+                             <div class="flex-1"><label class="builder-label">--starting-capital</label><input type="number" class="builder-input w-full" value="10000"></div>
+                             <div class="flex-1"><label class="builder-label">--stake-amount</label><input type="text" class="builder-input w-full" value="unlimited"></div>
                           </div>
+                          <!-- --max-open-trades / --fee -->
                           <div class="flex gap-2">
-                             <div class="flex-1"><div class="kpi-label mb-1">--max-open-trades</div><input type="number" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="3"></div>
-                             <div class="flex-1"><div class="kpi-label mb-1">--fee</div><input type="text" class="w-full bg-surface l-bd px-2 py-1.5 text-muted outline-none rounded text-[11px] font-mono" placeholder="exchange default"></div>
+                             <div class="flex-1"><label class="builder-label">--max-open-trades</label><input type="number" class="builder-input w-full" value="3"></div>
+                             <div class="flex-1"><label class="builder-label">--fee</label><input type="text" class="builder-input w-full" placeholder="exchange default"></div>
                           </div>
-                          <!-- Flags -->
-                          <div class="l-t pt-2.5 flex flex-col gap-1.5">
-                              <label class="flex items-center justify-between text-muted cursor-pointer"><span>--enable-protections</span><input type="checkbox" checked class="accent-[#22c55e] w-3.5 h-3.5"></label>
-                              <label class="flex items-center justify-between text-muted cursor-pointer"><span>--dry-run-wallet</span><input type="checkbox" class="accent-[#22c55e] w-3.5 h-3.5"></label>
+                          <!-- Flags — DS §7.18 .builder-toggle -->
+                          <div class="l-t pt-3 flex flex-col gap-2.5">
+                              <div class="flex items-center justify-between"><label class="builder-label mb-0">--enable-protections</label><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                              <div class="flex items-center justify-between"><label class="builder-label mb-0">--dry-run-wallet</label><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
                           </div>
-                          <!-- Breakdown -->
-                          <div class="l-t pt-2.5">
-                              <div class="kpi-label mb-1.5">--breakdown</div>
-                              <div class="flex gap-3">
-                                  <label class="flex items-center gap-1 text-muted cursor-pointer"><input type="checkbox" class="accent-[#22c55e] w-3 h-3"><span>day</span></label>
-                                  <label class="flex items-center gap-1 text-muted cursor-pointer"><input type="checkbox" class="accent-[#22c55e] w-3 h-3"><span>week</span></label>
-                                  <label class="flex items-center gap-1 text-muted cursor-pointer"><input type="checkbox" checked class="accent-[#22c55e] w-3 h-3"><span>month</span></label>
+                          <!-- --breakdown -->
+                          <div class="l-t pt-3">
+                              <label class="builder-label">--breakdown</label>
+                              <div class="flex gap-2 mt-1">
+                                  <button class="builder-pill" onclick="this.classList.toggle('selected')">day</button>
+                                  <button class="builder-pill" onclick="this.classList.toggle('selected')">week</button>
+                                  <button class="builder-pill selected" onclick="this.classList.toggle('selected')">month</button>
                               </div>
                           </div>
-                          <!-- Cache -->
-                          <div class="l-t pt-2.5">
-                              <div class="kpi-label mb-1">--cache</div>
-                              <select class="w-full bg-surface l-bd px-2 py-1.5 text-white appearance-none rounded text-[11px] font-mono"><option>day</option><option>none</option><option>week</option><option>month</option></select>
+                          <!-- --cache -->
+                          <div class="l-t pt-3">
+                              <label class="builder-label">--cache</label>
+                              <select class="builder-select w-full"><option>day</option><option>none</option><option>week</option><option>month</option></select>
                           </div>
-                          <!-- Strategy Config Preview (from strategy, read-only) -->
-                          <div class="l-t pt-2.5">
-                              <div class="kpi-label mb-1.5">Strategy Config <span class="text-muted text-[8px] normal-case">(read from strategy)</span></div>
-                              <div class="bg-black/30 l-bd rounded p-2 space-y-1 text-[10px] font-mono">
+                          <!-- Strategy Config Preview (read-only) -->
+                          <div class="l-t pt-3">
+                              <label class="builder-label">Strategy Config <span class="text-muted text-[8px] normal-case font-normal">(read from strategy)</span></label>
+                              <div class="builder-card space-y-1.5 text-[11px] font-mono">
                                   <div class="flex justify-between"><span class="text-muted">stoploss</span><span class="text-down font-bold">-0.03</span></div>
                                   <div class="flex justify-between"><span class="text-muted">trailing_stop</span><span class="text-up">enabled</span></div>
                                   <div class="flex justify-between"><span class="text-muted">trailing_stop_positive</span><span class="text-white">0.01</span></div>
@@ -2105,15 +2109,15 @@
                               </div>
                           </div>
                           <!-- Run -->
-                          <div class="flex gap-1.5 l-t pt-2.5">
-                              <button class="flex-1 py-2 text-[11px] font-bold uppercase tracking-wider bg-white text-black rounded hover:bg-white/85 transition-colors">▶ Start Backtest</button>
-                              <button class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider l-bd rounded text-down hover:bg-down/10 transition-colors">⏹</button>
+                          <div class="flex gap-1.5 l-t pt-3">
+                              <button class="flex-1 py-2 text-[11px] font-bold uppercase tracking-wider bg-white text-black rounded hover:bg-white/85 transition-colors" title="Start backtesting run">▶ Start Backtest</button>
+                              <button class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider l-bd rounded text-down hover:bg-down/10 transition-colors" title="Stop running backtest">⏹</button>
                           </div>
                       </div>
-                      <!-- Terminal -->
-                      <div class="flex-1 l-t flex flex-col min-h-[80px]">
-                          <div class="px-3 py-2 flex justify-between items-center shrink-0"><span class="section-title">Terminal</span><span class="text-[9px] text-up font-mono animate-pulse">Running...</span></div>
-                          <div class="flex-1 px-3 pb-2 font-mono text-[10px] text-muted overflow-y-auto leading-relaxed">
+                      <!-- Terminal — DS §7.5 bottom section -->
+                      <div class="h-[120px] l-t flex flex-col shrink-0">
+                          <div class="px-4 py-2 flex justify-between items-center shrink-0 bg-black/40"><span class="section-title">Terminal</span><span class="text-[9px] text-up font-mono animate-pulse">Running...</span></div>
+                          <div class="flex-1 px-4 py-2 font-mono text-[10px] text-muted overflow-y-auto leading-relaxed bg-black">
                               <div>21:14:02 INFO  Loading data for 5 pairs...</div>
                               <div>21:14:05 INFO  Data loaded. Backtesting AlphaTrend_V5...</div>
                               <div class="text-white">21:14:10 INFO  Epoch 1/1 (100%) - Completed</div>
@@ -2250,69 +2254,72 @@
               </div>
 
               <!-- TAB: HYPEROPT -->
-              <div id="tab-hyperopt" class="exp-tab h-full flex flex-row gap-3">
-                  <!-- ■ CONFIG PANEL (Left) — EDITABLE -->
-                  <div class="w-[300px] flex flex-col gap-0 bg-surface l-bd rounded shrink-0 h-full overflow-y-auto">
-                      <div class="px-4 py-3 l-b shrink-0"><h3 class="section-title">Hyperopt Configuration</h3></div>
-                      <div class="p-3 flex flex-col gap-3 text-[11px] flex-1">
+               <div id="tab-hyperopt" class="exp-tab h-full flex flex-row gap-3">
+                  <!-- ■ CONFIG PANEL (Left) — DS §7.5 + §7.18 -->
+                  <div class="w-[320px] flex flex-col gap-0 bg-surface l-bd rounded-md shadow-xl shrink-0 h-full overflow-hidden">
+                      <div class="h-10 l-b flex items-center px-4 bg-black/40 shrink-0"><h3 class="section-title">Hyperopt Configuration</h3></div>
+                      <div class="p-4 flex flex-col gap-3.5 flex-1 overflow-y-auto">
                           <div class="flex gap-2">
-                             <div class="flex-1"><div class="kpi-label mb-1">Epochs</div><input type="number" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="200"></div>
-                             <div class="flex-1"><div class="kpi-label mb-1">Min Trades</div><input type="number" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="80"></div>
+                             <div class="flex-1"><label class="builder-label">Epochs</label><input type="number" class="builder-input w-full" value="200"></div>
+                             <div class="flex-1"><label class="builder-label">Min Trades</label><input type="number" class="builder-input w-full" value="80"></div>
                           </div>
                           <div class="flex gap-2">
-                             <div class="flex-1"><div class="kpi-label mb-1">Start Date</div><input type="date" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="2022-01-01"></div>
-                             <div class="flex-1"><div class="kpi-label mb-1">End Date</div><input type="date" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="2024-01-01"></div>
+                             <div class="flex-1"><label class="builder-label">Start Date</label><input type="date" class="builder-input w-full" value="2022-01-01"></div>
+                             <div class="flex-1"><label class="builder-label">End Date</label><input type="date" class="builder-input w-full" value="2024-01-01"></div>
                           </div>
                           <div class="flex gap-2">
-                             <div class="flex-1"><div class="kpi-label mb-1">Timeframe</div><select class="w-full bg-surface l-bd px-2 py-1.5 text-white appearance-none rounded text-[11px] font-mono"><option>1h</option><option>4h</option><option>15m</option></select></div>
-                             <div class="flex-1"><div class="kpi-label mb-1">Jobs</div><select class="w-full bg-surface l-bd px-2 py-1.5 text-white appearance-none rounded text-[11px] font-mono"><option>-1 (all)</option><option>1</option><option>2</option><option>4</option></select></div>
+                             <div class="flex-1"><label class="builder-label">Timeframe</label><select class="builder-select w-full"><option>1h</option><option>4h</option><option>15m</option></select></div>
+                             <div class="flex-1"><label class="builder-label">Jobs</label><select class="builder-select w-full"><option>-1 (all)</option><option>1</option><option>2</option><option>4</option></select></div>
                           </div>
                           <div class="flex gap-2">
-                             <div class="flex-1"><div class="kpi-label mb-1">Random State</div><input type="number" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="42"></div>
+                             <div class="flex-1"><label class="builder-label">Random State</label><input type="number" class="builder-input w-full" value="42"></div>
                              <div class="flex-1"></div>
                           </div>
-                          <!-- Spaces -->
-                          <div class="l-t pt-3"><div class="kpi-label mb-1.5">Spaces</div>
-                              <div class="flex flex-col gap-1.5">
-                                  <label class="flex items-center justify-between text-muted cursor-pointer"><span>buy</span><input type="checkbox" checked class="accent-[#22c55e] w-3.5 h-3.5"></label>
-                                  <label class="flex items-center justify-between text-muted cursor-pointer"><span>sell</span><input type="checkbox" checked class="accent-[#22c55e] w-3.5 h-3.5"></label>
-                                  <label class="flex items-center justify-between text-muted cursor-pointer"><span>roi</span><input type="checkbox" class="accent-[#22c55e] w-3.5 h-3.5"></label>
-                                  <label class="flex items-center justify-between text-muted cursor-pointer"><span>stoploss</span><input type="checkbox" class="accent-[#22c55e] w-3.5 h-3.5"></label>
-                                  <label class="flex items-center justify-between text-muted cursor-pointer"><span>trailing</span><input type="checkbox" class="accent-[#22c55e] w-3.5 h-3.5"></label>
-                                  <label class="flex items-center justify-between text-muted cursor-pointer"><span>protection</span><input type="checkbox" class="accent-[#22c55e] w-3.5 h-3.5"></label>
+                          <!-- Spaces — DS §7.18 builder-toggle -->
+                          <div class="l-t pt-3"><label class="builder-label">Spaces</label>
+                              <div class="flex flex-col gap-2.5 mt-1">
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">buy</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">sell</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">roi</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">stoploss</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">trailing</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">protection</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
                               </div>
                           </div>
-                          <!-- Loss Functions -->
-                          <div class="l-t pt-3"><div class="kpi-label mb-1.5">Loss Functions</div>
-                              <div class="flex flex-col gap-1.5">
-                                  <label class="flex items-center justify-between text-muted cursor-pointer"><span>SharpeHyperOptLoss</span><input type="checkbox" checked class="accent-[#22c55e] w-3.5 h-3.5"></label>
-                                  <label class="flex items-center justify-between text-muted cursor-pointer"><span>SortinoHyperOptLoss</span><input type="checkbox" checked class="accent-[#22c55e] w-3.5 h-3.5"></label>
-                                  <label class="flex items-center justify-between text-muted cursor-pointer"><span>CalmarHyperOptLoss</span><input type="checkbox" class="accent-[#22c55e] w-3.5 h-3.5"></label>
-                                  <label class="flex items-center justify-between text-muted cursor-pointer"><span>MaxDrawDownHyperOptLoss</span><input type="checkbox" class="accent-[#22c55e] w-3.5 h-3.5"></label>
+                          <!-- Loss Functions — DS §7.18 builder-pill -->
+                          <div class="l-t pt-3"><label class="builder-label">Loss Functions</label>
+                              <div class="flex flex-wrap gap-1.5 mt-1">
+                                  <button class="builder-pill selected" onclick="this.classList.toggle('selected')">SharpeHyperOptLoss</button>
+                                  <button class="builder-pill selected" onclick="this.classList.toggle('selected')">SortinoHyperOptLoss</button>
+                                  <button class="builder-pill" onclick="this.classList.toggle('selected')">CalmarHyperOptLoss</button>
+                                  <button class="builder-pill" onclick="this.classList.toggle('selected')">MaxDrawDownHyperOptLoss</button>
                               </div>
                           </div>
-                          <!-- Samplers -->
-                          <div class="l-t pt-3"><div class="kpi-label mb-1.5">Samplers</div>
-                              <div class="flex flex-col gap-1.5">
-                                  <label class="flex items-center justify-between text-muted cursor-pointer"><span>TPE</span><input type="checkbox" checked class="accent-[#22c55e] w-3.5 h-3.5"></label>
-                                  <label class="flex items-center justify-between text-muted cursor-pointer"><span>CMA-ES</span><input type="checkbox" class="accent-[#22c55e] w-3.5 h-3.5"></label>
-                                  <label class="flex items-center justify-between text-muted cursor-pointer"><span>Random</span><input type="checkbox" class="accent-[#22c55e] w-3.5 h-3.5"></label>
+                          <!-- Samplers — DS §7.18 builder-pill -->
+                          <div class="l-t pt-3"><label class="builder-label">Samplers</label>
+                              <div class="flex flex-wrap gap-1.5 mt-1">
+                                  <button class="builder-pill selected" onclick="this.classList.toggle('selected')">TPE</button>
+                                  <button class="builder-pill" onclick="this.classList.toggle('selected')">CMA-ES</button>
+                                  <button class="builder-pill" onclick="this.classList.toggle('selected')">Random</button>
                               </div>
                           </div>
-                          <!-- Batch info + Run -->
-                          <div class="l-t pt-3 bg-surface l-bd rounded p-2.5 text-[11px] font-mono space-y-1">
-                              <div class="flex justify-between"><span class="text-muted">Batch Total</span><span class="text-white font-bold">2 runs</span></div>
-                              <div class="flex justify-between"><span class="text-muted">Est. Time</span><span class="text-muted">~45 min</span></div>
+                          <!-- Batch info -->
+                          <div class="l-t pt-3">
+                              <div class="builder-card text-[11px] font-mono space-y-1.5">
+                                  <div class="flex justify-between"><span class="text-muted">Batch Total</span><span class="text-white font-bold">2 runs</span></div>
+                                  <div class="flex justify-between"><span class="text-muted">Est. Time</span><span class="text-muted">~45 min</span></div>
+                              </div>
                           </div>
+                          <!-- Run -->
                           <div class="flex gap-1.5">
-                              <button class="flex-1 py-2 text-[11px] font-bold uppercase tracking-wider bg-white text-black rounded hover:bg-white/85 transition-colors">▶ Run Batch (2)</button>
-                              <button class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider l-bd rounded text-down hover:bg-down/10 transition-colors">⏹</button>
+                              <button class="flex-1 py-2 text-[11px] font-bold uppercase tracking-wider bg-white text-black rounded hover:bg-white/85 transition-colors" title="Run hyperopt batch">▶ Run Batch (2)</button>
+                              <button class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider l-bd rounded text-down hover:bg-down/10 transition-colors" title="Stop running hyperopt">⏹</button>
                           </div>
                       </div>
-                      <!-- Terminal -->
-                      <div class="flex-1 l-t flex flex-col min-h-[80px]">
-                          <div class="px-3 py-2 flex justify-between items-center shrink-0"><span class="section-title">Terminal</span><span class="text-[9px] text-up font-mono animate-pulse">Epoch 147/200...</span></div>
-                          <div class="flex-1 px-3 pb-2 font-mono text-[10px] text-muted overflow-y-auto leading-relaxed">
+                      <!-- Terminal — DS §7.5 -->
+                      <div class="h-[120px] l-t flex flex-col shrink-0">
+                          <div class="px-4 py-2 flex justify-between items-center shrink-0 bg-black/40"><span class="section-title">Terminal</span><span class="text-[9px] text-up font-mono animate-pulse">Epoch 147/200...</span></div>
+                          <div class="flex-1 px-4 py-2 font-mono text-[10px] text-muted overflow-y-auto leading-relaxed bg-black">
                               <div>22:01:10 INFO  Starting HO batch: 2 runs (SharpeHyperOptLoss×TPE, SortinoHyperOptLoss×TPE)</div>
                               <div>22:01:12 INFO  [Run 1/2] SharpeHyperOptLoss · TPE · 200 epochs</div>
                               <div class="text-white">22:15:40 INFO  Epoch 147/200 — New best: -0.1555 (Profit: +42.12%)</div>

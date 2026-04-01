@@ -475,6 +475,26 @@ async def generate_config(
             "password": decrypt(bot.api_password) or "",
             "CORS_origins": ["*"],
         },
+        "entry_pricing": {
+            "price_side": "same",
+            "use_order_book": True,
+            "order_book_top": 1,
+            "price_last_balance": 0.0,
+            "check_depth_of_market": {"enabled": False, "bids_to_ask_delta": 1},
+        },
+        "exit_pricing": {
+            "price_side": "same",
+            "use_order_book": True,
+            "order_book_top": 1,
+        },
+        "unfilledtimeout": {
+            "entry": 10,
+            "exit": 10,
+            "exit_timeout_count": 0,
+            "unit": "minutes",
+        },
+        "tradable_balance_ratio": 0.99,
+        "cancel_open_orders_on_exit": False,
         "initial_state": "running",
         "force_entry_enable": True,
         "internals": {"process_throttle_secs": 5},
@@ -663,19 +683,45 @@ async def launch_paper_bot(
     """
     import docker
     import json as _json
+    import os
     from pathlib import Path
     from ..models.strategy_version import StrategyVersion
+    from ..models.strategy import Strategy
     from ..crypto import encrypt
 
     strategy_name = body.strategy_name
     version_id = body.strategy_version_id
 
-    # ── 1. Load strategy version (optional — for risk_config/freqai_config) ──
+    # ── 0. Sanitize strategy name (prevent injection) ──
+    if not re.match(r'^[a-zA-Z0-9_]+$', strategy_name):
+        raise HTTPException(400, "Strategy name must contain only letters, numbers, and underscores")
+
+    # ── 0b. Verify strategy .py file exists ──
+    strategy_file = Path("/opt/freqtrade/user_data/strategies") / f"{strategy_name}.py"
+    if not strategy_file.exists():
+        raise HTTPException(404, f"Strategy file '{strategy_name}.py' not found in user_data/strategies/")
+
+    # ── 1. Load strategy version (auto-resolve if not provided) ──
     version = None
     if version_id:
         version = await db.get(StrategyVersion, version_id)
         if not version:
             raise HTTPException(404, f"Strategy version {version_id} not found")
+    else:
+        # Auto-resolve: find the latest version for this strategy
+        strat_row = (await db.execute(
+            select(Strategy).where(Strategy.name == strategy_name, Strategy.is_deleted.is_(False))
+        )).scalar_one_or_none()
+        if strat_row:
+            latest_ver = (await db.execute(
+                select(StrategyVersion)
+                .where(StrategyVersion.strategy_id == strat_row.id)
+                .order_by(StrategyVersion.version_number.desc())
+                .limit(1)
+            )).scalar_one_or_none()
+            if latest_ver:
+                version = latest_ver
+                version_id = latest_ver.id
 
     # ── 2. Find free port ──
     try:
@@ -728,8 +774,8 @@ async def launch_paper_bot(
             "enabled": True,
             "listen_ip_address": "0.0.0.0",
             "listen_port": 8080,  # internal port (mapped to free_port externally)
-            "username": "novakus",
-            "password": "Freqtrade2026",
+            "username": os.environ.get("ORCH_ADMIN_USERNAME", "freqtrader"),
+            "password": os.environ.get("ORCH_ADMIN_PASSWORD", "freqtrader"),
             "CORS_origins": ["*"],
         },
         "entry_pricing": {
@@ -782,9 +828,11 @@ async def launch_paper_bot(
     config_path = config_dir / f"{container_name}.json"
     config_path.write_text(_json.dumps(config, indent=2))
 
-    # ── 6. Ensure dbs directory exists ──
+    # ── 6. Ensure dbs + logs directories exist ──
     dbs_dir = Path("/opt/freqtrade/user_data/dbs")
     dbs_dir.mkdir(parents=True, exist_ok=True)
+    logs_dir = Path("/opt/freqtrade/user_data/logs")
+    logs_dir.mkdir(parents=True, exist_ok=True)
     db_path = f"sqlite:////freqtrade/user_data/dbs/{container_name}.sqlite"
 
     # ── 7. Create Docker container ──
@@ -793,7 +841,7 @@ async def launch_paper_bot(
             image="freqtradeorg/freqtrade:stable_freqai",
             name=container_name,
             detach=True,
-            restart_policy={"Name": "unless-stopped"},
+            restart_policy={"Name": "on-failure", "MaximumRetryCount": 5},
             volumes={
                 "/opt/freqtrade/user_data": {
                     "bind": "/freqtrade/user_data",
@@ -832,7 +880,7 @@ async def launch_paper_bot(
         existing_row.container_id = container_name
         existing_row.api_url = f"http://{container_name}"
         existing_row.api_port = 8080
-        existing_row.api_password = encrypt("Freqtrade2026") or ""
+        existing_row.api_password = encrypt(os.environ.get("ORCH_ADMIN_PASSWORD", "freqtrader")) or ""
         existing_row.strategy_name = strategy_name
         existing_row.strategy_version_id = version_id
         existing_row.is_dry_run = True
@@ -855,8 +903,8 @@ async def launch_paper_bot(
             docker_image="freqtradeorg/freqtrade:stable_freqai",
             api_url=f"http://{container_name}",
             api_port=8080,
-            api_username="novakus",
-            api_password=encrypt("Freqtrade2026") or "",
+            api_username=os.environ.get("ORCH_ADMIN_USERNAME", "freqtrader"),
+            api_password=encrypt(os.environ.get("ORCH_ADMIN_PASSWORD", "freqtrader")) or "",
             strategy_name=strategy_name,
             strategy_version_id=version_id,
             is_dry_run=True,

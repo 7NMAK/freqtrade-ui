@@ -85,7 +85,7 @@ export const FREQAI_MODELS = [
 // ── FreqAI Outlier Detection (§24) ────────────────────────────────────────
 
 export const OUTLIER_METHODS = [
-  { value: "none", label: "None", configKey: "", tip: "No outlier removal — use all data for training" },
+  { value: "none", label: "Baseline", configKey: "", tip: "No outlier filtering — trains on all data. Use as control group to compare against DI/SVM/DBSCAN results" },
   { value: "di", label: "DI", configKey: "feature_parameters.DI_threshold", tip: "Dissimilarity Index — measures how different new data is from training data. DI > threshold = outlier" },
   { value: "svm", label: "SVM", configKey: "feature_parameters.use_SVM_to_remove_outliers", tip: "Support Vector Machine draws boundary around 'normal' data — anything outside is outlier" },
   { value: "dbscan", label: "DBSCAN", configKey: "feature_parameters.use_DBSCAN_to_remove_outliers", tip: "Density-Based Spatial Clustering — finds groups of similar data, isolated points are outliers" },

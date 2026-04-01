@@ -2053,39 +2053,39 @@
               <!-- TAB: BACKTEST -->
               <div id="tab-backtest" class="exp-tab active h-full flex flex-row gap-3">
                   <!-- ■ CONFIG (Left) — DS §7.5 Widget Card + §7.18 Builder Form Controls -->
-                  <div class="w-[320px] flex flex-col gap-0 bg-surface l-bd rounded-md shadow-xl shrink-0 h-full overflow-hidden">
+                  <div class="w-[400px] flex flex-col gap-0 bg-surface l-bd rounded-md shadow-xl shrink-0 h-full overflow-hidden">
                       <div class="h-10 l-b flex items-center px-4 bg-black/40 shrink-0"><h3 class="section-title">Backtest Configuration</h3></div>
                       <div class="p-4 flex flex-col gap-3.5 flex-1 overflow-y-auto">
                           <!-- --strategy -->
-                          <div><label class="builder-label">--strategy</label><select class="builder-select w-full"><option>AlphaTrend_V5</option><option>TrendFollowerV3</option><option>MeanReversion_V2</option></select></div>
+                          <div><label class="builder-label">Strategy</label><select class="builder-select w-full"><option>AlphaTrend_V5</option><option>TrendFollowerV3</option><option>MeanReversion_V2</option></select></div>
                           <!-- --timerange -->
                           <div class="flex gap-2">
-                             <div class="flex-1"><label class="builder-label">--timerange start</label><input type="date" class="builder-input w-full" value="2024-01-01"></div>
-                             <div class="flex-1"><label class="builder-label">--timerange end</label><input type="date" class="builder-input w-full" value="2025-01-01"></div>
+                             <div class="flex-1"><label class="builder-label">Timerange Start</label><input type="date" class="builder-input w-full" value="2024-01-01"></div>
+                             <div class="flex-1"><label class="builder-label">Timerange End</label><input type="date" class="builder-input w-full" value="2025-01-01"></div>
                           </div>
                           <!-- --timeframe -->
                           <div class="flex gap-2">
-                             <div class="flex-1"><label class="builder-label">--timeframe</label><select class="builder-select w-full"><option>1h</option><option>4h</option><option>15m</option><option>5m</option><option>1d</option></select></div>
-                             <div class="flex-1"><label class="builder-label">--timeframe-detail</label><select class="builder-select w-full"><option>None</option><option>5m</option><option>1m</option></select></div>
+                             <div class="flex-1"><label class="builder-label">Timeframe</label><select class="builder-select w-full"><option>1h</option><option>4h</option><option>15m</option><option>5m</option><option>1d</option></select></div>
+                             <div class="flex-1"><label class="builder-label">Timeframe Detail</label><select class="builder-select w-full"><option>None</option><option>5m</option><option>1m</option></select></div>
                           </div>
                           <!-- --starting-capital / --stake-amount -->
                           <div class="flex gap-2">
-                             <div class="flex-1"><label class="builder-label">--starting-capital</label><input type="number" class="builder-input w-full" value="10000"></div>
-                             <div class="flex-1"><label class="builder-label">--stake-amount</label><input type="text" class="builder-input w-full" value="unlimited"></div>
+                             <div class="flex-1"><label class="builder-label">Starting Capital</label><input type="number" class="builder-input w-full" value="10000"></div>
+                             <div class="flex-1"><label class="builder-label">Stake Amount</label><input type="text" class="builder-input w-full" value="unlimited"></div>
                           </div>
                           <!-- --max-open-trades / --fee -->
                           <div class="flex gap-2">
-                             <div class="flex-1"><label class="builder-label">--max-open-trades</label><input type="number" class="builder-input w-full" value="3"></div>
-                             <div class="flex-1"><label class="builder-label">--fee</label><input type="text" class="builder-input w-full" placeholder="exchange default"></div>
+                             <div class="flex-1"><label class="builder-label">Max Open Trades</label><input type="number" class="builder-input w-full" value="3"></div>
+                             <div class="flex-1"><label class="builder-label">Fee</label><input type="text" class="builder-input w-full" placeholder="exchange default"></div>
                           </div>
                           <!-- Flags — DS §7.18 .builder-toggle -->
                           <div class="l-t pt-3 flex flex-col gap-2.5">
-                              <div class="flex items-center justify-between"><label class="builder-label mb-0">--enable-protections</label><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
-                              <div class="flex items-center justify-between"><label class="builder-label mb-0">--dry-run-wallet</label><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                              <div class="flex items-center justify-between"><label class="builder-label mb-0">Enable Protections</label><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                              <div class="flex items-center justify-between"><label class="builder-label mb-0">Dry Run Wallet</label><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
                           </div>
                           <!-- --breakdown -->
                           <div class="l-t pt-3">
-                              <label class="builder-label">--breakdown</label>
+                              <label class="builder-label">Breakdown</label>
                               <div class="flex gap-2 mt-1">
                                   <button class="builder-pill" onclick="this.classList.toggle('selected')">day</button>
                                   <button class="builder-pill" onclick="this.classList.toggle('selected')">week</button>
@@ -2094,7 +2094,7 @@
                           </div>
                           <!-- --cache -->
                           <div class="l-t pt-3">
-                              <label class="builder-label">--cache</label>
+                              <label class="builder-label">Cache</label>
                               <select class="builder-select w-full"><option>day</option><option>none</option><option>week</option><option>month</option></select>
                           </div>
                           <!-- Strategy Config Preview (read-only) -->
@@ -2254,146 +2254,224 @@
               </div>
 
               <!-- TAB: HYPEROPT -->
-               <div id="tab-hyperopt" class="exp-tab h-full flex flex-row gap-3">
-                  <!-- ■ CONFIG PANEL (Left) — DS §7.5 + §7.18 -->
-                  <div class="w-[320px] flex flex-col gap-0 bg-surface l-bd rounded-md shadow-xl shrink-0 h-full overflow-hidden">
+              <div id="tab-hyperopt" class="exp-tab h-full flex flex-row gap-3">
+                  <!-- ■ CONFIG (Left) — ALL 20 real FreqTrade CLI params, DS §7.5+§7.18 -->
+                  <div class="w-[400px] flex flex-col gap-0 bg-surface l-bd rounded-md shadow-xl shrink-0 h-full overflow-hidden">
                       <div class="h-10 l-b flex items-center px-4 bg-black/40 shrink-0"><h3 class="section-title">Hyperopt Configuration</h3></div>
                       <div class="p-4 flex flex-col gap-3.5 flex-1 overflow-y-auto">
+                          <!-- --strategy -->
+                          <div><label class="builder-label">Strategy</label><select class="builder-select w-full"><option>AlphaTrend_V5</option><option>TrendFollowerV3</option><option>MeanReversion_V2</option></select></div>
+                          <!-- --hyperopt-loss -->
+                          <div><label class="builder-label">Loss Function</label><select class="builder-select w-full"><option>SharpeHyperOptLoss</option><option>SortinoHyperOptLoss</option><option>CalmarHyperOptLoss</option><option>MaxDrawDownHyperOptLoss</option><option>OnlyProfitHyperOptLoss</option><option>ProfitDrawDownHyperOptLoss</option></select></div>
+                          <!-- --epochs / --min-trades -->
                           <div class="flex gap-2">
                              <div class="flex-1"><label class="builder-label">Epochs</label><input type="number" class="builder-input w-full" value="200"></div>
                              <div class="flex-1"><label class="builder-label">Min Trades</label><input type="number" class="builder-input w-full" value="80"></div>
                           </div>
+                          <!-- --timerange -->
                           <div class="flex gap-2">
-                             <div class="flex-1"><label class="builder-label">Start Date</label><input type="date" class="builder-input w-full" value="2022-01-01"></div>
-                             <div class="flex-1"><label class="builder-label">End Date</label><input type="date" class="builder-input w-full" value="2024-01-01"></div>
+                             <div class="flex-1"><label class="builder-label">Timerange Start</label><input type="date" class="builder-input w-full" value="2022-01-01"></div>
+                             <div class="flex-1"><label class="builder-label">Timerange End</label><input type="date" class="builder-input w-full" value="2024-01-01"></div>
                           </div>
+                          <!-- --timeframe / --jobs -->
                           <div class="flex gap-2">
-                             <div class="flex-1"><label class="builder-label">Timeframe</label><select class="builder-select w-full"><option>1h</option><option>4h</option><option>15m</option></select></div>
-                             <div class="flex-1"><label class="builder-label">Jobs</label><select class="builder-select w-full"><option>-1 (all)</option><option>1</option><option>2</option><option>4</option></select></div>
+                             <div class="flex-1"><label class="builder-label">Timeframe</label><select class="builder-select w-full"><option>1h</option><option>4h</option><option>15m</option><option>5m</option><option>1d</option></select></div>
+                             <div class="flex-1"><label class="builder-label">Jobs</label><select class="builder-select w-full"><option>-1 (all CPUs)</option><option>1</option><option>2</option><option>4</option><option>8</option></select></div>
                           </div>
+                          <!-- --max-open-trades / --stake-amount -->
                           <div class="flex gap-2">
+                             <div class="flex-1"><label class="builder-label">Max Open Trades</label><input type="number" class="builder-input w-full" value="3"></div>
+                             <div class="flex-1"><label class="builder-label">Stake Amount</label><input type="text" class="builder-input w-full" value="unlimited"></div>
+                          </div>
+                          <!-- --fee / --random-state -->
+                          <div class="flex gap-2">
+                             <div class="flex-1"><label class="builder-label">Fee</label><input type="text" class="builder-input w-full" placeholder="exchange default"></div>
                              <div class="flex-1"><label class="builder-label">Random State</label><input type="number" class="builder-input w-full" value="42"></div>
-                             <div class="flex-1"></div>
                           </div>
-                          <!-- Spaces — DS §7.18 builder-toggle -->
+                          <!-- --early-stop / --pairs -->
+                          <div class="flex gap-2">
+                             <div class="flex-1"><label class="builder-label">Early Stop</label><input type="number" class="builder-input w-full" placeholder="disabled" value="50"></div>
+                             <div class="flex-1"><label class="builder-label">Pairs</label><input type="text" class="builder-input w-full" placeholder="all whitelist"></div>
+                          </div>
+                          <!-- --spaces toggles -->
                           <div class="l-t pt-3"><label class="builder-label">Spaces</label>
+                              <div class="flex flex-wrap gap-1.5 mt-1">
+                                  <button class="builder-pill selected" onclick="this.classList.toggle('selected')">buy</button>
+                                  <button class="builder-pill selected" onclick="this.classList.toggle('selected')">sell</button>
+                                  <button class="builder-pill" onclick="this.classList.toggle('selected')">roi</button>
+                                  <button class="builder-pill" onclick="this.classList.toggle('selected')">stoploss</button>
+                                  <button class="builder-pill" onclick="this.classList.toggle('selected')">trailing</button>
+                                  <button class="builder-pill" onclick="this.classList.toggle('selected')">protection</button>
+                              </div>
+                          </div>
+                          <!-- Flags — toggles -->
+                          <div class="l-t pt-3"><label class="builder-label">Flags</label>
                               <div class="flex flex-col gap-2.5 mt-1">
-                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">buy</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
-                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">sell</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
-                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">roi</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
-                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">stoploss</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
-                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">trailing</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
-                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">protection</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
-                              </div>
-                          </div>
-                          <!-- Loss Functions — DS §7.18 builder-pill -->
-                          <div class="l-t pt-3"><label class="builder-label">Loss Functions</label>
-                              <div class="flex flex-wrap gap-1.5 mt-1">
-                                  <button class="builder-pill selected" onclick="this.classList.toggle('selected')">SharpeHyperOptLoss</button>
-                                  <button class="builder-pill selected" onclick="this.classList.toggle('selected')">SortinoHyperOptLoss</button>
-                                  <button class="builder-pill" onclick="this.classList.toggle('selected')">CalmarHyperOptLoss</button>
-                                  <button class="builder-pill" onclick="this.classList.toggle('selected')">MaxDrawDownHyperOptLoss</button>
-                              </div>
-                          </div>
-                          <!-- Samplers — DS §7.18 builder-pill -->
-                          <div class="l-t pt-3"><label class="builder-label">Samplers</label>
-                              <div class="flex flex-wrap gap-1.5 mt-1">
-                                  <button class="builder-pill selected" onclick="this.classList.toggle('selected')">TPE</button>
-                                  <button class="builder-pill" onclick="this.classList.toggle('selected')">CMA-ES</button>
-                                  <button class="builder-pill" onclick="this.classList.toggle('selected')">Random</button>
-                              </div>
-                          </div>
-                          <!-- Batch info -->
-                          <div class="l-t pt-3">
-                              <div class="builder-card text-[11px] font-mono space-y-1.5">
-                                  <div class="flex justify-between"><span class="text-muted">Batch Total</span><span class="text-white font-bold">2 runs</span></div>
-                                  <div class="flex justify-between"><span class="text-muted">Est. Time</span><span class="text-muted">~45 min</span></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Enable Protections</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Position Stacking</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Disable Max Positions</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Print All Results</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
                               </div>
                           </div>
                           <!-- Run -->
-                          <div class="flex gap-1.5">
-                              <button class="flex-1 py-2 text-[11px] font-bold uppercase tracking-wider bg-white text-black rounded hover:bg-white/85 transition-colors" title="Run hyperopt batch">▶ Run Batch (2)</button>
+                          <div class="flex gap-1.5 l-t pt-3">
+                              <button class="flex-1 py-2 text-[11px] font-bold uppercase tracking-wider bg-white text-black rounded hover:bg-white/85 transition-colors" title="Start hyperopt optimization">▶ Start Hyperopt</button>
                               <button class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider l-bd rounded text-down hover:bg-down/10 transition-colors" title="Stop running hyperopt">⏹</button>
                           </div>
                       </div>
-                      <!-- Terminal — DS §7.5 -->
+                      <!-- Terminal -->
                       <div class="h-[120px] l-t flex flex-col shrink-0">
                           <div class="px-4 py-2 flex justify-between items-center shrink-0 bg-black/40"><span class="section-title">Terminal</span><span class="text-[9px] text-up font-mono animate-pulse">Epoch 147/200...</span></div>
                           <div class="flex-1 px-4 py-2 font-mono text-[10px] text-muted overflow-y-auto leading-relaxed bg-black">
-                              <div>22:01:10 INFO  Starting HO batch: 2 runs (SharpeHyperOptLoss×TPE, SortinoHyperOptLoss×TPE)</div>
-                              <div>22:01:12 INFO  [Run 1/2] SharpeHyperOptLoss · TPE · 200 epochs</div>
-                              <div class="text-white">22:15:40 INFO  Epoch 147/200 — New best: -0.1555 (Profit: +42.12%)</div>
-                              <div class="text-up">22:22:01 INFO  ✓ Run 1 complete — Best epoch #147: +42.12%</div>
+                              <div>22:01:10 INFO  Loading strategy AlphaTrend_V5...</div>
+                              <div>22:01:12 INFO  Hyperopt: SharpeHyperOptLoss / TPE / 200 epochs</div>
+                              <div>22:01:14 INFO  Loading data for 5 pairs, timerange: 2022-01-01 to 2024-01-01</div>
+                              <div class="text-white">22:15:40 INFO  Epoch 147/200 — New best: loss=-0.1555 (Profit: +42.12%, Trades: 142)</div>
+                              <div class="text-up">22:22:01 INFO  ✓ Optimization complete — Best epoch #147: +42.12%</div>
                           </div>
                       </div>
                   </div>
-                  <!-- ■ RESULTS PANEL (Right) -->
+                  <!-- ■ RESULTS (Right) — Tabbed Master Table like Backtest -->
                   <div class="flex-1 flex flex-col gap-3 min-w-0 overflow-y-auto pr-1">
                       <!-- Progress -->
-                      <div class="bg-surface l-bd rounded p-3">
-                          <div class="flex justify-between text-[11px] font-mono mb-2"><span class="text-muted">Batch Progress</span><span class="text-white font-bold">Run 1/2 · Epoch 147/200</span></div>
+                      <div class="bg-surface l-bd rounded-md p-3 shadow-xl">
+                          <div class="flex justify-between text-[11px] font-mono mb-2"><span class="text-muted">Progress</span><span class="text-white font-bold">Epoch 147/200 · ETA ~8 min</span></div>
                           <div class="w-full h-1.5 bg-white/10 rounded-full"><div class="h-full bg-up rounded-full transition-all" style="width: 73.5%"></div></div>
                       </div>
                       <!-- Best Epoch Card -->
-                      <h3 class="section-title">Best Epoch</h3>
-                      <div class="bg-surface l-bd rounded p-3 border-l-2 border-l-up">
-                          <div class="flex justify-between items-center mb-2"><span class="text-white font-mono text-[12px] font-bold">Epoch #147 · SharpeHyperOptLoss · TPE</span><div class="flex items-center gap-2"><span class="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded">BEST: -0.1555</span><button class="bot-ctrl px-2 w-auto text-[10px]" title="Deploy params to strategy">Deploy</button></div></div>
-                          <div class="grid grid-cols-6 gap-2 text-[11px] font-mono">
+                      <div class="bg-surface l-bd rounded-md p-3 shadow-xl border-l-2 border-l-up">
+                          <div class="flex justify-between items-center mb-2"><span class="text-white font-mono text-[12px] font-bold">★ Best Epoch #147 · SharpeHyperOptLoss</span><div class="flex items-center gap-2"><span class="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded border border-up/25">BEST: -0.1555</span><button class="bot-ctrl px-2 w-auto text-[10px]" title="Deploy these params to strategy file">Deploy</button></div></div>
+                          <div class="grid grid-cols-7 gap-2 text-[11px] font-mono">
                               <div><span class="text-muted block text-[9px]">Profit</span><span class="text-up font-bold">+42.12%</span></div>
+                              <div><span class="text-muted block text-[9px]">Profit $</span><span class="text-up font-bold">+$4,212</span></div>
                               <div><span class="text-muted block text-[9px]">Trades</span><span class="text-white">142</span></div>
-                              <div><span class="text-muted block text-[9px]">Win Rate</span><span class="text-white">72.4%</span></div>
+                              <div><span class="text-muted block text-[9px]">Win Rate</span><span class="text-up">72.4%</span></div>
                               <div><span class="text-muted block text-[9px]">Sharpe</span><span class="text-white">3.92</span></div>
                               <div><span class="text-muted block text-[9px]">Max DD</span><span class="text-down font-bold">-2.1%</span></div>
-                              <div><span class="text-muted block text-[9px]">Avg Duration</span><span class="text-muted">4h 22m</span></div>
+                              <div><span class="text-muted block text-[9px]">Avg Dur.</span><span class="text-muted">4h 22m</span></div>
                           </div>
                       </div>
-                      <!-- Convergence Chart -->
-                      <div class="bg-surface l-bd rounded flex flex-col overflow-hidden">
-                          <div class="flex items-center justify-between px-3 py-2"><h3 class="section-title">Convergence</h3>
+                      <!-- Convergence Chart — DS §7.14 SVG -->
+                      <div class="h-[160px] bg-surface l-bd rounded-md flex flex-col overflow-hidden shadow-xl">
+                          <div class="flex items-center justify-between px-4 py-2 shrink-0">
+                              <h3 class="section-title text-white/50 whitespace-nowrap">Convergence</h3>
                               <div class="flex items-center gap-3 text-[9px] font-mono text-muted"><span class="flex items-center gap-1"><span class="w-3 h-[2px] bg-[#22c55e] rounded inline-block"></span>Best Obj.</span><span class="flex items-center gap-1"><span class="w-3 h-[2px] bg-[#3b82f6] rounded inline-block"></span>Current</span></div>
                           </div>
-                          <div class="px-3 pb-2 h-[100px] relative">
+                          <div class="flex-1 px-4 pb-2 relative">
                               <div class="absolute inset-0 l-grid opacity-20"></div>
+                              <div class="absolute left-1 top-0 bottom-4 flex flex-col justify-between text-[9px] font-mono text-white/25"><span>0.0</span><span>-0.1</span><span>-0.2</span></div>
                               <svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 200 100">
+                                  <line x1="0" y1="50" x2="200" y2="50" stroke="rgba(255,255,255,0.08)" stroke-width="0.5" stroke-dasharray="3,3"/>
                                   <polyline points="0,10 20,35 40,50 60,55 80,62 100,70 120,78 140,82 160,88 180,90 200,92" fill="none" stroke="#3b82f6" stroke-width="0.5" stroke-linejoin="round" opacity="0.4"/>
+                                  <defs><linearGradient id="ho-conv" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#22c55e" stop-opacity="0.12"/><stop offset="100%" stop-color="#22c55e" stop-opacity="0.02"/></linearGradient></defs>
+                                  <polygon points="0,10 20,10 40,10 60,15 80,15 100,20 120,20 140,20 160,20 180,20 200,20 200,100 0,100" fill="url(#ho-conv)"/>
                                   <polyline points="0,10 20,10 40,10 60,15 80,15 100,20 120,20 140,20 160,20 180,20 200,20" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linejoin="round"/>
                                   <circle cx="0" cy="10" r="1.5" fill="#22c55e"/><circle cx="60" cy="15" r="1.5" fill="#22c55e"/><circle cx="100" cy="20" r="1.5" fill="#22c55e"/>
                               </svg>
-                              <div class="flex justify-between text-[8px] font-mono text-muted mt-0.5"><span>0</span><span>50</span><span>100</span><span>150</span><span>200</span></div>
+                              <div class="flex justify-between text-[9px] font-mono text-white/25 mt-0.5"><span>0</span><span>50</span><span>100</span><span>150</span><span>200</span></div>
                           </div>
                       </div>
-                      <!-- Epoch Results Table -->
-                      <h3 class="section-title">Epoch Results (200)</h3>
-                      <div class="overflow-x-auto max-h-[300px] overflow-y-auto">
-                          <table class="w-full text-[11px] font-mono whitespace-nowrap">
-                              <thead class="sticky top-0 bg-black z-10"><tr class="text-muted text-[9px] uppercase tracking-wider">
-                                  <th class="text-left px-2 py-1.5 font-semibold">Epoch</th><th class="text-left px-2 py-1.5 font-semibold">Sampler</th><th class="text-left px-2 py-1.5 font-semibold">Loss Fn</th><th class="text-right px-2 py-1.5 font-semibold">profit_%</th><th class="text-right px-2 py-1.5 font-semibold">Trades</th><th class="text-right px-2 py-1.5 font-semibold">Win%</th><th class="text-right px-2 py-1.5 font-semibold">Sharpe</th><th class="text-right px-2 py-1.5 font-semibold">Max DD</th><th class="text-right px-2 py-1.5 font-semibold">Objective</th>
-                              </tr></thead>
-                              <tbody class="divide-y divide-white/[0.04]">
-                                  <tr class="hover:bg-white/[0.03] bg-up/[0.02]"><td class="px-2 py-1.5 text-up font-bold">★147</td><td class="px-2 py-1.5">TPE</td><td class="px-2 py-1.5 text-muted">Sharpe</td><td class="px-2 py-1.5 text-right text-up font-bold">+42.12%</td><td class="px-2 py-1.5 text-right">142</td><td class="px-2 py-1.5 text-right">72.4%</td><td class="px-2 py-1.5 text-right">3.92</td><td class="px-2 py-1.5 text-right text-down">-2.1%</td><td class="px-2 py-1.5 text-right text-up font-bold">-0.1555</td></tr>
-                                  <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">92</td><td class="px-2 py-1.5">TPE</td><td class="px-2 py-1.5 text-muted">Sortino</td><td class="px-2 py-1.5 text-right text-up font-bold">+38.40%</td><td class="px-2 py-1.5 text-right">128</td><td class="px-2 py-1.5 text-right">68.1%</td><td class="px-2 py-1.5 text-right">3.44</td><td class="px-2 py-1.5 text-right text-down">-3.2%</td><td class="px-2 py-1.5 text-right text-muted">-0.1422</td></tr>
-                                  <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">31</td><td class="px-2 py-1.5">TPE</td><td class="px-2 py-1.5 text-muted">Sharpe</td><td class="px-2 py-1.5 text-right text-up font-bold">+35.80%</td><td class="px-2 py-1.5 text-right">110</td><td class="px-2 py-1.5 text-right">65.2%</td><td class="px-2 py-1.5 text-right">2.88</td><td class="px-2 py-1.5 text-right text-down">-4.1%</td><td class="px-2 py-1.5 text-right text-muted">-0.1245</td></tr>
-                                  <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">5</td><td class="px-2 py-1.5">TPE</td><td class="px-2 py-1.5 text-muted">Sortino</td><td class="px-2 py-1.5 text-right text-down font-bold">-8.20%</td><td class="px-2 py-1.5 text-right">22</td><td class="px-2 py-1.5 text-right">45.5%</td><td class="px-2 py-1.5 text-right text-down">-0.22</td><td class="px-2 py-1.5 text-right text-down">-12.4%</td><td class="px-2 py-1.5 text-right text-muted">0.8220</td></tr>
-                              </tbody>
-                          </table>
+                      <!-- Tabbed Results Engine -->
+                      <div class="flex-1 bg-surface l-bd rounded-md flex flex-col min-h-[250px] overflow-hidden shadow-xl">
+                          <div class="h-10 l-b flex items-center bg-black/40 shrink-0 overflow-x-auto whitespace-nowrap">
+                              <button onclick="switchHoTab('ho-epochs', this)" class="h-full px-4 font-bold text-[11px] uppercase tracking-wide border-b-2 border-white text-white ho-tab-btn shrink-0">Epoch Results (200)</button>
+                              <button onclick="switchHoTab('ho-params', this)" class="h-full px-4 font-bold text-[11px] uppercase tracking-wide text-muted hover:text-white transition-colors ho-tab-btn shrink-0">Best Parameters</button>
+                              <button onclick="switchHoTab('ho-importance', this)" class="h-full px-4 font-bold text-[11px] uppercase tracking-wide text-muted hover:text-white transition-colors ho-tab-btn shrink-0">Param Importance</button>
+                              <button onclick="switchHoTab('ho-compare', this)" class="h-full px-4 font-bold text-[11px] uppercase tracking-wide text-muted hover:text-white transition-colors ho-tab-btn shrink-0">Compare Runs</button>
+                              <button onclick="switchHoTab('ho-history', this)" class="h-full px-4 font-bold text-[11px] uppercase tracking-wide text-muted hover:text-white transition-colors ho-tab-btn shrink-0">Run History</button>
+                          </div>
+                          <!-- TAB: Epoch Results -->
+                          <div id="ho-epochs" class="ho-tab-content flex-1 overflow-x-auto overflow-y-auto">
+                              <table class="w-full text-[11px] font-mono whitespace-nowrap">
+                                  <thead class="sticky top-0 bg-black z-10"><tr class="text-muted text-[9px] uppercase tracking-wider">
+                                      <th class="text-left px-2 py-1.5 font-semibold">Epoch</th><th class="text-left px-2 py-1.5 font-semibold">Sampler</th><th class="text-left px-2 py-1.5 font-semibold">Loss Fn</th><th class="text-right px-2 py-1.5 font-semibold">Trades</th><th class="text-right px-2 py-1.5 font-semibold">Avg Profit</th><th class="text-right px-2 py-1.5 font-semibold">Total Profit</th><th class="text-right px-2 py-1.5 font-semibold">Win%</th><th class="text-right px-2 py-1.5 font-semibold">Avg Dur.</th><th class="text-right px-2 py-1.5 font-semibold">Max DD</th><th class="text-right px-2 py-1.5 font-semibold">Objective</th>
+                                  </tr></thead>
+                                  <tbody class="divide-y divide-white/[0.04]">
+                                      <tr class="hover:bg-white/[0.03] bg-up/[0.02]"><td class="px-2 py-1.5 text-up font-bold">★147</td><td class="px-2 py-1.5">TPE</td><td class="px-2 py-1.5 text-muted">Sharpe</td><td class="px-2 py-1.5 text-right">142</td><td class="px-2 py-1.5 text-right text-up">+0.30%</td><td class="px-2 py-1.5 text-right text-up font-bold">+42.12%</td><td class="px-2 py-1.5 text-right">72.4%</td><td class="px-2 py-1.5 text-right text-muted">4h 22m</td><td class="px-2 py-1.5 text-right text-down">-2.1%</td><td class="px-2 py-1.5 text-right text-up font-bold">-0.1555</td></tr>
+                                      <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">*142</td><td class="px-2 py-1.5">TPE</td><td class="px-2 py-1.5 text-muted">Sharpe</td><td class="px-2 py-1.5 text-right">138</td><td class="px-2 py-1.5 text-right text-up">+0.28%</td><td class="px-2 py-1.5 text-right text-up font-bold">+38.10%</td><td class="px-2 py-1.5 text-right">70.2%</td><td class="px-2 py-1.5 text-right text-muted">4h 45m</td><td class="px-2 py-1.5 text-right text-down">-2.8%</td><td class="px-2 py-1.5 text-right text-muted">-0.1480</td></tr>
+                                      <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">92</td><td class="px-2 py-1.5">TPE</td><td class="px-2 py-1.5 text-muted">Sharpe</td><td class="px-2 py-1.5 text-right">128</td><td class="px-2 py-1.5 text-right text-up">+0.25%</td><td class="px-2 py-1.5 text-right text-up font-bold">+32.40%</td><td class="px-2 py-1.5 text-right">68.1%</td><td class="px-2 py-1.5 text-right text-muted">5h 10m</td><td class="px-2 py-1.5 text-right text-down">-3.2%</td><td class="px-2 py-1.5 text-right text-muted">-0.1422</td></tr>
+                                      <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">31</td><td class="px-2 py-1.5">TPE</td><td class="px-2 py-1.5 text-muted">Sharpe</td><td class="px-2 py-1.5 text-right">110</td><td class="px-2 py-1.5 text-right text-up">+0.22%</td><td class="px-2 py-1.5 text-right text-up font-bold">+24.80%</td><td class="px-2 py-1.5 text-right">65.2%</td><td class="px-2 py-1.5 text-right text-muted">5h 55m</td><td class="px-2 py-1.5 text-right text-down">-4.1%</td><td class="px-2 py-1.5 text-right text-muted">-0.1245</td></tr>
+                                      <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">*5</td><td class="px-2 py-1.5">Random</td><td class="px-2 py-1.5 text-muted">Sharpe</td><td class="px-2 py-1.5 text-right">22</td><td class="px-2 py-1.5 text-right text-down">-0.37%</td><td class="px-2 py-1.5 text-right text-down font-bold">-8.20%</td><td class="px-2 py-1.5 text-right text-down">45.5%</td><td class="px-2 py-1.5 text-right text-muted">8h 10m</td><td class="px-2 py-1.5 text-right text-down">-12.4%</td><td class="px-2 py-1.5 text-right text-muted">0.8220</td></tr>
+                                  </tbody>
+                              </table>
+                          </div>
+                          <!-- TAB: Best Parameters -->
+                          <div id="ho-params" class="ho-tab-content flex-1 overflow-y-auto p-4" style="display:none">
+                              <div class="flex justify-between items-center mb-3"><h3 class="section-title">Optimized Parameters (#147)</h3><div class="flex gap-1.5"><button class="px-2.5 py-1 l-bd rounded text-[10px] text-muted hover:text-white hover:bg-white/5 transition-colors font-mono" title="Copy parameters as JSON" onclick="navigator.clipboard.writeText(JSON.stringify({buy_rsi:28,buy_ema_short:12,buy_ema_long:26,sell_rsi:72,sell_ema_short:8,sell_profit_offset:0.012},null,2))">📋 Copy JSON</button><button class="px-2.5 py-1 l-bd rounded text-[10px] text-muted hover:text-white hover:bg-white/5 transition-colors font-mono" title="Export parameters as CSV">⬇ Export CSV</button></div></div>
+                              <div class="grid grid-cols-2 gap-3">
+                                  <div class="builder-card space-y-2 text-[11px] font-mono">
+                                      <div class="text-[9px] text-muted uppercase tracking-widest font-bold mb-1">Buy Parameters</div>
+                                      <div class="flex justify-between"><span class="text-muted">buy_rsi</span><span class="text-white font-bold">28</span></div>
+                                      <div class="flex justify-between"><span class="text-muted">buy_ema_short</span><span class="text-white font-bold">12</span></div>
+                                      <div class="flex justify-between"><span class="text-muted">buy_ema_long</span><span class="text-white font-bold">26</span></div>
+                                  </div>
+                                  <div class="builder-card space-y-2 text-[11px] font-mono">
+                                      <div class="text-[9px] text-muted uppercase tracking-widest font-bold mb-1">Sell Parameters</div>
+                                      <div class="flex justify-between"><span class="text-muted">sell_rsi</span><span class="text-white font-bold">72</span></div>
+                                      <div class="flex justify-between"><span class="text-muted">sell_ema_short</span><span class="text-white font-bold">8</span></div>
+                                      <div class="flex justify-between"><span class="text-muted">sell_profit_offset</span><span class="text-white font-bold">0.012</span></div>
+                                  </div>
+                              </div>
+                              <div class="builder-card space-y-2 text-[11px] font-mono mt-3">
+                                  <div class="text-[9px] text-muted uppercase tracking-widest font-bold mb-1">ROI Table</div>
+                                  <div class="flex justify-between"><span class="text-muted">0 min</span><span class="text-white font-bold">10.0%</span></div>
+                                  <div class="flex justify-between"><span class="text-muted">30 min</span><span class="text-white font-bold">5.0%</span></div>
+                                  <div class="flex justify-between"><span class="text-muted">60 min</span><span class="text-white font-bold">2.0%</span></div>
+                                  <div class="flex justify-between"><span class="text-muted">120 min</span><span class="text-white font-bold">0%</span></div>
+                              </div>
+                              <div class="builder-card space-y-2 text-[11px] font-mono mt-3">
+                                  <div class="text-[9px] text-muted uppercase tracking-widest font-bold mb-1">Stoploss / Trailing</div>
+                                  <div class="flex justify-between"><span class="text-muted">stoploss</span><span class="text-down font-bold">-0.03</span></div>
+                                  <div class="flex justify-between"><span class="text-muted">trailing_stop</span><span class="text-up">True</span></div>
+                                  <div class="flex justify-between"><span class="text-muted">trailing_stop_positive</span><span class="text-white font-bold">0.01</span></div>
+                                  <div class="flex justify-between"><span class="text-muted">trailing_stop_positive_offset</span><span class="text-white font-bold">0.02</span></div>
+                                  <div class="flex justify-between"><span class="text-muted">trailing_only_offset_is_reached</span><span class="text-up">True</span></div>
+                              </div>
+                          </div>
+                          <!-- TAB: Parameter Importance -->
+                          <div id="ho-importance" class="ho-tab-content flex-1 overflow-y-auto p-4" style="display:none">
+                              <h3 class="section-title mb-3">Parameter Importance (Impact on Objective)</h3>
+                              <div class="space-y-2.5">
+                                  <div class="flex items-center gap-3 text-[11px] font-mono"><span class="w-[140px] text-muted truncate">buy_rsi</span><div class="flex-1 h-2 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-up rounded-full" style="width:92%"></div></div><span class="text-up font-bold w-12 text-right">92%</span></div>
+                                  <div class="flex items-center gap-3 text-[11px] font-mono"><span class="w-[140px] text-muted truncate">sell_profit_offset</span><div class="flex-1 h-2 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-up rounded-full" style="width:78%"></div></div><span class="text-up font-bold w-12 text-right">78%</span></div>
+                                  <div class="flex items-center gap-3 text-[11px] font-mono"><span class="w-[140px] text-muted truncate">buy_ema_long</span><div class="flex-1 h-2 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-white rounded-full" style="width:64%"></div></div><span class="text-white font-bold w-12 text-right">64%</span></div>
+                                  <div class="flex items-center gap-3 text-[11px] font-mono"><span class="w-[140px] text-muted truncate">sell_rsi</span><div class="flex-1 h-2 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-white rounded-full" style="width:55%"></div></div><span class="text-white font-bold w-12 text-right">55%</span></div>
+                                  <div class="flex items-center gap-3 text-[11px] font-mono"><span class="w-[140px] text-muted truncate">buy_ema_short</span><div class="flex-1 h-2 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-white/60 rounded-full" style="width:41%"></div></div><span class="text-muted font-bold w-12 text-right">41%</span></div>
+                                  <div class="flex items-center gap-3 text-[11px] font-mono"><span class="w-[140px] text-muted truncate">sell_ema_short</span><div class="flex-1 h-2 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-white/60 rounded-full" style="width:28%"></div></div><span class="text-muted font-bold w-12 text-right">28%</span></div>
+                              </div>
+                          </div>
+                          <!-- TAB: Compare Runs -->
+                          <div id="ho-compare" class="ho-tab-content flex-1 overflow-x-auto overflow-y-auto" style="display:none">
+                              <table class="w-full text-[11px] font-mono whitespace-nowrap">
+                                  <thead class="sticky top-0 bg-black z-10"><tr class="text-muted text-[9px] uppercase tracking-wider">
+                                      <th class="text-left px-2 py-1.5 font-semibold">Metric</th><th class="text-right px-2 py-1.5 font-semibold">Run #1 (Sharpe)</th><th class="text-right px-2 py-1.5 font-semibold">Run #2 (Sortino)</th><th class="text-right px-2 py-1.5 font-semibold">Run #3 (Calmar)</th><th class="text-right px-2 py-1.5 font-semibold">Delta Best</th>
+                                  </tr></thead>
+                                  <tbody class="divide-y divide-white/[0.04]">
+                                      <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">Total Profit</td><td class="px-2 py-1.5 text-right text-up font-bold">+42.12%</td><td class="px-2 py-1.5 text-right text-up">+38.40%</td><td class="px-2 py-1.5 text-right text-up">+35.10%</td><td class="px-2 py-1.5 text-right text-up">+3.72%</td></tr>
+                                      <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">Trades</td><td class="px-2 py-1.5 text-right font-bold">142</td><td class="px-2 py-1.5 text-right">128</td><td class="px-2 py-1.5 text-right">98</td><td class="px-2 py-1.5 text-right">+14</td></tr>
+                                      <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">Win Rate</td><td class="px-2 py-1.5 text-right text-up font-bold">72.4%</td><td class="px-2 py-1.5 text-right text-up">68.1%</td><td class="px-2 py-1.5 text-right text-up">74.5%</td><td class="px-2 py-1.5 text-right text-down">-2.1%</td></tr>
+                                      <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">Sharpe Ratio</td><td class="px-2 py-1.5 text-right font-bold">3.92</td><td class="px-2 py-1.5 text-right">3.44</td><td class="px-2 py-1.5 text-right">2.98</td><td class="px-2 py-1.5 text-right text-up">+0.48</td></tr>
+                                      <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">Sortino Ratio</td><td class="px-2 py-1.5 text-right">4.15</td><td class="px-2 py-1.5 text-right font-bold">4.88</td><td class="px-2 py-1.5 text-right">3.62</td><td class="px-2 py-1.5 text-right text-down">-0.73</td></tr>
+                                      <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">Max Drawdown</td><td class="px-2 py-1.5 text-right text-down">-2.1%</td><td class="px-2 py-1.5 text-right text-down">-3.2%</td><td class="px-2 py-1.5 text-right text-down font-bold">-1.8%</td><td class="px-2 py-1.5 text-right text-down">-0.3%</td></tr>
+                                      <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">Avg Duration</td><td class="px-2 py-1.5 text-right">4h 22m</td><td class="px-2 py-1.5 text-right">5h 10m</td><td class="px-2 py-1.5 text-right">3h 45m</td><td class="px-2 py-1.5 text-right text-muted">—</td></tr>
+                                      <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">Objective</td><td class="px-2 py-1.5 text-right text-up font-bold">-0.1555</td><td class="px-2 py-1.5 text-right text-muted">-0.1422</td><td class="px-2 py-1.5 text-right text-muted">-0.1180</td><td class="px-2 py-1.5 text-right text-up">-0.0133</td></tr>
+                                  </tbody>
+                              </table>
+                          </div>
+                          <!-- TAB: Run History -->
+                          <div id="ho-history" class="ho-tab-content flex-1 overflow-x-auto overflow-y-auto" style="display:none">
+                              <table class="w-full text-[11px] font-mono whitespace-nowrap">
+                                  <thead class="sticky top-0 bg-black z-10"><tr class="text-muted text-[9px] uppercase tracking-wider">
+                                      <th class="text-left px-2 py-1.5 font-semibold">#</th><th class="text-left px-2 py-1.5 font-semibold">Date</th><th class="text-left px-2 py-1.5 font-semibold">Strategy</th><th class="text-left px-2 py-1.5 font-semibold">Loss Fn</th><th class="text-right px-2 py-1.5 font-semibold">Epochs</th><th class="text-right px-2 py-1.5 font-semibold">Best Epoch</th><th class="text-right px-2 py-1.5 font-semibold">Profit</th><th class="text-right px-2 py-1.5 font-semibold">Trades</th><th class="text-right px-2 py-1.5 font-semibold">Objective</th><th class="text-center px-2 py-1.5 font-semibold">Actions</th>
+                                  </tr></thead>
+                                  <tbody class="divide-y divide-white/[0.04]">
+                                      <tr class="hover:bg-white/[0.03] bg-up/[0.02]"><td class="px-2 py-1.5 text-up font-bold">★1</td><td class="px-2 py-1.5 text-muted">2026-03-30 22:22</td><td class="px-2 py-1.5 text-white">AlphaTrend_V5</td><td class="px-2 py-1.5">Sharpe</td><td class="px-2 py-1.5 text-right">200</td><td class="px-2 py-1.5 text-right">#147</td><td class="px-2 py-1.5 text-right text-up font-bold">+42.1%</td><td class="px-2 py-1.5 text-right">142</td><td class="px-2 py-1.5 text-right text-up">-0.1555</td><td class="px-2 py-1.5 text-center"><button class="px-2 py-0.5 l-bd rounded text-[9px] text-muted hover:text-white hover:bg-white/5 transition-colors" title="Load this run results">Load</button> <button class="px-2 py-0.5 l-bd rounded text-[9px] text-down/60 hover:text-down hover:bg-down/10 transition-colors" title="Delete this run">Del</button></td></tr>
+                                      <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">2</td><td class="px-2 py-1.5 text-muted">2026-03-29 18:40</td><td class="px-2 py-1.5 text-white">AlphaTrend_V5</td><td class="px-2 py-1.5">Sortino</td><td class="px-2 py-1.5 text-right">200</td><td class="px-2 py-1.5 text-right">#92</td><td class="px-2 py-1.5 text-right text-up font-bold">+38.4%</td><td class="px-2 py-1.5 text-right">128</td><td class="px-2 py-1.5 text-right text-muted">-0.1422</td><td class="px-2 py-1.5 text-center"><button class="px-2 py-0.5 l-bd rounded text-[9px] text-muted hover:text-white hover:bg-white/5 transition-colors" title="Load this run results">Load</button> <button class="px-2 py-0.5 l-bd rounded text-[9px] text-down/60 hover:text-down hover:bg-down/10 transition-colors" title="Delete this run">Del</button></td></tr>
+                                      <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">3</td><td class="px-2 py-1.5 text-muted">2026-03-28 10:15</td><td class="px-2 py-1.5 text-white">TrendFollowerV3</td><td class="px-2 py-1.5">Calmar</td><td class="px-2 py-1.5 text-right">100</td><td class="px-2 py-1.5 text-right">#64</td><td class="px-2 py-1.5 text-right text-up font-bold">+35.1%</td><td class="px-2 py-1.5 text-right">98</td><td class="px-2 py-1.5 text-right text-muted">-0.1180</td><td class="px-2 py-1.5 text-center"><button class="px-2 py-0.5 l-bd rounded text-[9px] text-muted hover:text-white hover:bg-white/5 transition-colors" title="Load this run results">Load</button> <button class="px-2 py-0.5 l-bd rounded text-[9px] text-down/60 hover:text-down hover:bg-down/10 transition-colors" title="Delete this run">Del</button></td></tr>
+                                  </tbody>
+                              </table>
+                          </div>
                       </div>
-                      <!-- Best Parameters -->
-                      <h3 class="section-title">Best Parameters (#147)</h3>
-                      <div class="bg-surface l-bd rounded p-3 space-y-1.5 text-[11px] font-mono">
-                          <div class="flex justify-between"><span class="text-muted">buy_rsi</span><span class="text-white">28</span></div>
-                          <div class="flex justify-between"><span class="text-muted">buy_ema_short</span><span class="text-white">12</span></div>
-                          <div class="flex justify-between"><span class="text-muted">buy_ema_long</span><span class="text-white">26</span></div>
-                          <div class="flex justify-between"><span class="text-muted">sell_rsi</span><span class="text-white">72</span></div>
-                          <div class="flex justify-between"><span class="text-muted">sell_ema_short</span><span class="text-white">8</span></div>
-                          <div class="flex justify-between"><span class="text-muted">sell_profit_offset</span><span class="text-white">0.012</span></div>
-                      </div>
-                      <!-- HO Run History -->
-                      <h3 class="section-title">Run History</h3>
-                      <table class="w-full text-[11px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[9px] uppercase tracking-wider"><th class="text-left px-2 py-1.5 font-semibold">#</th><th class="text-left px-2 py-1.5 font-semibold">Loss Fn</th><th class="text-left px-2 py-1.5 font-semibold">Sampler</th><th class="text-right px-2 py-1.5 font-semibold">Best Epoch</th><th class="text-right px-2 py-1.5 font-semibold">Profit</th><th class="text-right px-2 py-1.5 font-semibold">Objective</th><th class="text-center px-2 py-1.5 font-semibold">Actions</th></tr></thead>
-                      <tbody class="divide-y divide-white/[0.04]">
-                          <tr class="hover:bg-white/[0.03] bg-up/[0.02]"><td class="px-2 py-1.5 text-up font-bold">★1</td><td class="px-2 py-1.5">Sharpe</td><td class="px-2 py-1.5">TPE</td><td class="px-2 py-1.5 text-right">#147</td><td class="px-2 py-1.5 text-right text-up font-bold">+42.1%</td><td class="px-2 py-1.5 text-right text-up">-0.1555</td><td class="px-2 py-1.5 text-center"><button class="px-2 py-0.5 l-bd rounded text-[9px] text-muted hover:text-white hover:bg-white/5 transition-colors">Load</button> <button class="px-2 py-0.5 l-bd rounded text-[9px] text-down/60 hover:text-down hover:bg-down/10 transition-colors">Del</button></td></tr>
-                          <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">2</td><td class="px-2 py-1.5">Sortino</td><td class="px-2 py-1.5">TPE</td><td class="px-2 py-1.5 text-right">#92</td><td class="px-2 py-1.5 text-right text-up font-bold">+38.4%</td><td class="px-2 py-1.5 text-right text-muted">-0.1422</td><td class="px-2 py-1.5 text-center"><button class="px-2 py-0.5 l-bd rounded text-[9px] text-muted hover:text-white hover:bg-white/5 transition-colors">Load</button> <button class="px-2 py-0.5 l-bd rounded text-[9px] text-down/60 hover:text-down hover:bg-down/10 transition-colors">Del</button></td></tr>
-                      </tbody></table>
                   </div>
               </div>
 

@@ -154,8 +154,8 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
   const [labelPeriod, setLabelPeriod] = useState("24");
 
   // Model matrix
-  const [selectedModels, setSelectedModels] = useState<Set<string>>(new Set(FREQAI_MODELS.map((m) => m.value)));
-  const [selectedOutliers, setSelectedOutliers] = useState<Set<string>>(new Set(OUTLIER_METHODS.map((m) => m.value)));
+  const [selectedModels, setSelectedModels] = useState<Set<string>>(new Set(["LightGBMRegressor"]));
+  const [selectedOutliers, setSelectedOutliers] = useState<Set<string>>(new Set(["di"]));
   const [pcaEnabled, setPcaEnabled] = useState(true);
   const [noiseEnabled, setNoiseEnabled] = useState(true);
 
@@ -174,15 +174,13 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
   // ── Running State ─────────────────────────────────────────────────
   const [isRunning, setIsRunning] = useState(false);
   const RESULTS_KEY = useMemo(() => `freqai_results_${strategy}`, [strategy]);
-  const [results, setResults] = useState<FreqAIResult[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const saved = localStorage.getItem(`freqai_results_${strategy}`);
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
+  const QUEUE_KEY = useMemo(() => `freqai_queue_${strategy}`, [strategy]);
+  const [results, setResults] = useState<FreqAIResult[]>([]);
   const [completedCount, setCompletedCount] = useState(0);
   const [currentRunLabel, setCurrentRunLabel] = useState("");
+  const [currentRunProgress, setCurrentRunProgress] = useState(0);
+  const [runTimes, setRunTimes] = useState<number[]>([]);
+  const runStartRef = useRef<number>(0);
   const abortRef = useRef(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
 
@@ -217,59 +215,55 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
     setSelectedOutliers(s);
   };
 
-  // ── Load Existing Results on Mount ────────────────────────────────
+  // ── Load history from DB on mount (always) ────────────────────────
   useEffect(() => {
     if (!experimentId) return;
 
-    // Skip DB load if we already have localStorage results (preserves in-progress matrix data)
-    if (results.length > 0) {
-      addLog("INFO", `Using ${results.length} cached results from localStorage`);
-    } else {
-      getExperimentRuns(experimentId, { run_type: "freqai", status: "completed" })
-        .then((runs) => {
-          if (Array.isArray(runs) && runs.length > 0) {
-            const mapped: FreqAIResult[] = runs.map((r, i) => {
-              let model = "Unknown";
-              let outlier = "none";
-              let pca = false;
-              let noise = false;
-              if (r.raw_output) {
-                try {
-                  const raw = JSON.parse(r.raw_output);
-                  model = raw.model || model;
-                  outlier = raw.outlier || outlier;
-                  pca = raw.pca ?? false;
-                  noise = raw.noise ?? false;
-                } catch { /* ignore */ }
-              }
-              return {
-                id: r.id ?? i + 1,
-                model,
-                outlier,
-                pca,
-                noise,
-                status: "completed" as const,
-                trades: r.total_trades ?? 0,
-                winRate: r.win_rate ?? 0,
-                profitPct: r.profit_pct ?? 0,
-                maxDrawdown: r.max_drawdown ?? 0,
-                sharpe: r.sharpe_ratio ?? 0,
-                sortino: r.sortino_ratio ?? 0,
-                startedAt: r.created_at ?? "",
-                finishedAt: "",
-                trainingDuration: "",
-                featureImportance: [],
-                predictionAccuracy: 0,
-              };
-            });
-            setResults(mapped);
-            addLog("INFO", `Loaded ${mapped.length} existing FreqAI results from DB`);
-          }
-        })
-        .catch((err) => {
-          addLog("WARNING", `Failed to load existing results: ${err}`);
-        });
-    }
+    // Always load from DB — single source of truth
+    getExperimentRuns(experimentId, { run_type: "freqai", status: "completed" })
+      .then((runs) => {
+        if (Array.isArray(runs) && runs.length > 0) {
+          const mapped: FreqAIResult[] = runs.map((r, i) => {
+            let model = "Unknown";
+            let outlier = "none";
+            let pca = false;
+            let noise = false;
+            if (r.raw_output) {
+              try {
+                const raw = JSON.parse(r.raw_output);
+                model = raw.model || model;
+                outlier = raw.outlier || outlier;
+                pca = raw.pca ?? false;
+                noise = raw.noise ?? false;
+              } catch { /* ignore */ }
+            }
+            return {
+              id: r.id ?? i + 1,
+              model,
+              outlier,
+              pca,
+              noise,
+              status: "completed" as const,
+              trades: r.total_trades ?? 0,
+              winRate: r.win_rate ?? 0,
+              profitPct: r.profit_pct ?? 0,
+              maxDrawdown: r.max_drawdown ?? 0,
+              sharpe: r.sharpe_ratio ?? 0,
+              sortino: r.sortino_ratio ?? 0,
+              startedAt: r.created_at ?? "",
+              finishedAt: "",
+              trainingDuration: "",
+              featureImportance: [],
+              predictionAccuracy: 0,
+            };
+          });
+          setResults(mapped);
+          addLog("INFO", `Loaded ${mapped.length} FreqAI results from history`);
+        }
+      })
+      .catch((err) => {
+        addLog("WARNING", `Failed to load results: ${err}`);
+      });
 
     // Load hyperopt runs for dropdown
     getExperimentRuns(experimentId, { run_type: "hyperopt", status: "completed" })
@@ -284,8 +278,28 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
         }
       })
       .catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally exclude results.length to prevent DB load overwriting localStorage
-  }, [experimentId, addLog]);
+
+    // Resume: check if FT bot has an active backtest (page was closed mid-run)
+    botBacktestResults(botId)
+      .then((raw) => {
+        const r = raw as unknown as Record<string, unknown>;
+        if (r.running === true) {
+          addLog("INFO", "Detected active backtest — resuming polling...");
+          setIsRunning(true);
+          setCurrentRunLabel("Resuming previous run...");
+          pollUntilDone().then((result) => {
+            if (result) {
+              addLog("INFO", "Resumed run completed. Results saved on next fresh matrix run.");
+              toast.info("Previous FreqAI run completed. Start a new matrix to continue.");
+            }
+            setIsRunning(false);
+            setCurrentRunLabel("");
+          });
+        }
+      })
+      .catch(() => { /* no active backtest — normal */ });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [experimentId, botId, addLog]);
 
   // ── Build Matrix Queue ────────────────────────────────────────────
   const buildQueue = useCallback((): QueueItem[] => {
@@ -339,11 +353,17 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
         const progress = raw.progress as number | undefined;
 
         if (step) {
-          const pct = progress != null ? ` (${(progress * 100).toFixed(0)}%)` : "";
-          setCurrentRunLabel(`${step}${pct}`);
+          const pct = progress != null ? (progress * 100) : 0;
+          setCurrentRunProgress(pct);
+          setCurrentRunLabel((prev) => {
+            // Preserve the [X/Y] prefix, update the step info
+            const prefix = prev.match(/^\[\d+\/\d+\]/);
+            return `${prefix ? prefix[0] + ' ' : ''}${step} (${pct.toFixed(0)}%)`;
+          });
         }
 
         if (running === false && step && (step === "finished" || step === "done" || (step === "backtest" && progress === 1))) {
+          setCurrentRunProgress(100);
           return raw;
         }
         if (step === "error" || (raw.status as string)?.toLowerCase()?.includes("error")) {
@@ -444,8 +464,13 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
     setIsRunning(true);
     abortRef.current = false;
     setCompletedCount(0);
+    setCurrentRunProgress(0);
+    setRunTimes([]);
     addLog("INFO", `Starting FreqAI matrix: ${queue.length} combinations for ${strategy}`);
     toast.info(`Starting ${queue.length} FreqAI runs...`);
+
+    // Save queue to localStorage for resume-on-reopen awareness
+    try { localStorage.setItem(QUEUE_KEY, JSON.stringify({ total: queue.length, started: Date.now() })); } catch {}
 
     const startTime = Date.now();
 
@@ -458,6 +483,8 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
       const item = queue[i];
       const label = `${item.model.replace("Regressor", "Reg").replace("Classifier", "Cls")}+${item.outlier}+PCA${item.pca ? "1" : "0"}+N${item.noise ? "1" : "0"}`;
       setCurrentRunLabel(`[${i + 1}/${queue.length}] ${label} — starting...`);
+      setCurrentRunProgress(0);
+      runStartRef.current = Date.now();
       addLog("INFO", `[${i + 1}/${queue.length}] Starting: ${label}`);
 
       try {
@@ -474,6 +501,10 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
 
         // Parse result
         const result = parseResult(raw, item, i);
+        // Track run time for ETA
+        const runDuration = Date.now() - runStartRef.current;
+        setRunTimes((prev) => [...prev, runDuration]);
+
         setResults((prev) => {
           const next = [...prev, result];
           try { localStorage.setItem(RESULTS_KEY, JSON.stringify(next)); } catch { /* quota */ }
@@ -518,9 +549,11 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
     const elapsed = Math.round((Date.now() - startTime) / 1000 / 60);
     setIsRunning(false);
     setCurrentRunLabel("");
+    setCurrentRunProgress(0);
+    try { localStorage.removeItem(QUEUE_KEY); } catch {}
     addLog("INFO", `Matrix complete: ${queue.length} runs in ~${elapsed}min`);
     toast.success(`FreqAI matrix complete: ${queue.length} runs in ~${elapsed}min`);
-  }, [buildQueue, strategy, botId, experimentId, pollUntilDone, parseResult, addLog, toast, RESULTS_KEY]);
+  }, [buildQueue, strategy, botId, experimentId, pollUntilDone, parseResult, addLog, toast, RESULTS_KEY, QUEUE_KEY]);
 
   // ── Stop Handler ──────────────────────────────────────────────────
   const handleStop = useCallback(async () => {
@@ -775,17 +808,34 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
           <div className="bg-card border border-primary/30 rounded-[10px] p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-foreground">
-                FreqAI Batch: {completedCount}/{matrixTotal} completed ({matrixTotal > 0 ? Math.round((completedCount / matrixTotal) * 100) : 0}%)
+                FreqAI Batch: {completedCount}/{matrixTotal} completed
               </span>
-              <span className="text-[10px] text-muted-foreground">
-                {currentRunLabel}
-              </span>
+              {runTimes.length > 0 && (() => {
+                const avgMs = runTimes.reduce((a, b) => a + b, 0) / runTimes.length;
+                const remainingRuns = matrixTotal - completedCount;
+                const etaMin = Math.round((avgMs * remainingRuns) / 60000);
+                return <span className="text-[10px] text-muted-foreground">ETA ~{etaMin}min</span>;
+              })()}
             </div>
-            <div className="w-full h-2 bg-muted rounded-full overflow-hidden mb-3">
+            {/* Batch progress */}
+            <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mb-2">
               <div
-                className="h-full bg-primary rounded-full transition-all duration-500"
+                className="h-full bg-primary/60 rounded-full transition-all duration-500"
                 style={{ width: `${matrixTotal > 0 ? (completedCount / matrixTotal) * 100 : 0}%` }}
               />
+            </div>
+            {/* Current run progress */}
+            <div className="flex items-center gap-2 mb-1">
+              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary rounded-full transition-all duration-300"
+                  style={{ width: `${currentRunProgress}%` }}
+                />
+              </div>
+              <span className="text-[10px] tabular-nums text-primary font-medium w-8 text-right">{currentRunProgress.toFixed(0)}%</span>
+            </div>
+            <div className="text-[10px] text-muted-foreground truncate">
+              {currentRunLabel}
             </div>
           </div>
         )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { SELECT, LABEL, SECTION_CARD, SECTION_TITLE, BTN_PRIMARY, BTN_SECONDARY, LAYOUT_2COL } from '@/lib/design';
 import { useToast } from '@/components/ui/Toast';
 import {
@@ -123,6 +123,32 @@ export default function AiReviewTab({ strategy, botId, experimentId, onNavigateT
   const [result, setResult] = useState<AiAnalysisResult | null>(null);
   const [history, setHistory] = useState<AiAnalysisResult[]>([]);
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
+
+  // H1 FIX: Load AI review history from localStorage on mount
+  const storageKey = `ai-review-history:${strategy}`;
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved) as AiAnalysisResult[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setHistory(parsed);
+          setResult(parsed[0]); // show most recent
+        }
+      }
+    } catch { /* corrupt data — ignore */ }
+  }, [storageKey]);
+
+  // H1 FIX: Persist history to localStorage whenever it changes
+  useEffect(() => {
+    if (history.length > 0) {
+      try {
+        // Keep max 20 entries to avoid bloating localStorage
+        const trimmed = history.slice(0, 20);
+        localStorage.setItem(storageKey, JSON.stringify(trimmed));
+      } catch { /* quota exceeded — ignore */ }
+    }
+  }, [history, storageKey]);
 
   // Get model cost
   const currentModel = AI_MODELS.find(m => m.value === selectedModel);

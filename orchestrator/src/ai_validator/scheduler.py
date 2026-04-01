@@ -160,6 +160,13 @@ class AIValidationScheduler:
             except Exception as exc:
                 logger.error("Validation failed for bot %d (%s): %s", bot.id, bot.name, exc)
 
+        # H4 FIX: Check for recently closed trades and record accuracy
+        for bot in bots:
+            try:
+                await self._check_closed_trades(bot)
+            except Exception as exc:
+                logger.error("Accuracy tracking failed for bot %d: %s", bot.id, exc)
+
     async def _process_bot(self, bot: BotInstance) -> None:
         """Run validation cycle for one bot."""
         # Hourly rate limit per bot
@@ -301,6 +308,82 @@ class AIValidationScheduler:
             cost,
         )
         return cost
+
+    async def _check_closed_trades(self, bot: BotInstance) -> None:
+        """
+        H4 FIX: Check for recently closed trades that have AI validations
+        but no accuracy records yet. Record outcomes via AccuracyTracker.
+
+        This closes the feedback loop so the accuracy chart populates.
+        """
+        # Get or create collector (reuses FT client)
+        if bot.id not in self._collectors:
+            return  # bot hasn't been processed for signals yet — skip
+
+        collector = self._collectors[bot.id]
+        ft = collector.ft
+
+        try:
+            # Fetch recent closed trades from FT (last 20)
+            trades_resp = await ft.trades(limit=20, offset=0)
+            trades_list = trades_resp.get("trades", [])
+
+            if not trades_list:
+                return
+
+            # Filter to closed trades only
+            closed_trades = [
+                t for t in trades_list
+                if not t.get("is_open", True) and t.get("close_profit_abs") is not None
+            ]
+
+            if not closed_trades:
+                return
+
+            async with async_session() as db:
+                from .models import AIAccuracy
+
+                for trade in closed_trades:
+                    ft_trade_id = trade.get("trade_id")
+                    if not ft_trade_id:
+                        continue
+
+                    # Check if we already have accuracy records for this trade
+                    existing = await db.execute(
+                        select(AIAccuracy.id)
+                        .join(AIValidation, AIAccuracy.validation_id == AIValidation.id)
+                        .where(AIValidation.ft_trade_id == ft_trade_id)
+                        .limit(1)
+                    )
+                    if existing.scalar_one_or_none() is not None:
+                        continue  # already tracked
+
+                    # Check if this trade has an AI validation record
+                    val_result = await db.execute(
+                        select(AIValidation)
+                        .where(AIValidation.ft_trade_id == ft_trade_id)
+                        .limit(1)
+                    )
+                    validation = val_result.scalar_one_or_none()
+                    if not validation:
+                        continue  # no AI validation for this trade
+
+                    # Record the accuracy outcome
+                    await self.tracker.record_outcome(
+                        db=db,
+                        trade_id=ft_trade_id,
+                        actual_result=trade,
+                    )
+                    logger.info(
+                        "Accuracy recorded for closed trade %s (bot %d)",
+                        ft_trade_id, bot.id,
+                    )
+
+        except Exception as exc:
+            logger.warning(
+                "Failed to check closed trades for accuracy (bot %d): %s",
+                bot.id, exc,
+            )
 
     @staticmethod
     def _next_midnight_utc() -> datetime:

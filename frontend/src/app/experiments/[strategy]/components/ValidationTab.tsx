@@ -10,6 +10,8 @@ import {
   botBacktestStart,
   botBacktestResults,
   getExperimentRuns,
+  getExperiments,
+  launchPaperBot,
 } from '@/lib/api';
 import { VERIFICATION_CRITERIA } from '@/lib/experiments';
 
@@ -42,6 +44,7 @@ export default function ValidationTab({
   onNavigateToTab,
 }: ValidationTabProps) {
   const toast = useToast();
+  const [launching, setLaunching] = useState(false);
 
   // ── Source data — from API ────────────────────────────────────────
   const [sourceRuns, setSourceRuns] = useState<Array<{
@@ -499,29 +502,30 @@ export default function ValidationTab({
             {verificationResult.verdict === 'PASS' && (
               <div className="flex gap-2">
                 <button
-                  onClick={() => { onNavigateToTab?.(6); toast.success('Navigate to Paper Trading setup'); }}
-                  className="flex-1 h-[34px] inline-flex items-center justify-center gap-[6px] rounded-btn text-xs font-medium border bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-                >
-                  → Paper Trading
-                </button>
-                <button
+                  disabled={launching}
                   onClick={async () => {
+                    if (!confirm(`Launch paper trading bot for ${strategy}?\n\nThis will create a new Docker container and start paper trading immediately.`)) return;
+                    setLaunching(true);
                     try {
-                      const { getExperiments, activateStrategyVersion } = await import('@/lib/api');
                       const res = await getExperiments();
-                      const exp = (res.items || []).find((e) => e.strategy_name === strategy || e.name === strategy);
-                      if (exp && exp.best_version_id) {
-                        await activateStrategyVersion(exp.strategy_id, exp.best_version_id);
-                        toast.success(`Activated version ${exp.best_version_id} for ${strategy} ★`);
-                      } else {
-                        toast.info('No version to activate yet');
-                      }
+                      const exp = (res.items || []).find((e: { strategy_name?: string; name?: string }) => e.strategy_name === strategy || e.name === strategy);
+                      const versionId = exp?.best_version_id || undefined;
+                      const result = await launchPaperBot({
+                        strategy_name: strategy,
+                        strategy_version_id: versionId,
+                        pair_whitelist: ['BTC/USDT:USDT'],
+                        description: `Paper test from validation — ${strategy}${versionId ? ` v${versionId}` : ''}`,
+                      });
+                      toast.success(`🚀 ${result.message}`);
                     } catch (err) {
-                      toast.error(`Promote failed: ${err instanceof Error ? err.message : String(err)}`);
+                      toast.error(`Launch failed: ${err instanceof Error ? err.message : String(err)}`);
+                    } finally {
+                      setLaunching(false);
                     }
                   }}
-                  className="flex-1 h-[34px] inline-flex items-center justify-center gap-[6px] rounded-btn text-xs font-medium border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-colors">
-                  Promote to Version ★
+                  className="flex-1 h-[34px] inline-flex items-center justify-center gap-[6px] rounded-btn text-xs font-medium border bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+                >
+                  {launching ? '⏳ Launching...' : '🚀 Launch Paper Trading'}
                 </button>
               </div>
             )}
@@ -736,10 +740,29 @@ export default function ValidationTab({
             </div>
             {allPassed && (
               <button
-                onClick={() => { onNavigateToTab?.(6); toast.success('All checks passed! Ready for paper trading.'); }}
-                className="ml-auto px-3 py-1.5 rounded-btn text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                disabled={launching}
+                onClick={async () => {
+                  if (!confirm(`Launch paper trading for ${strategy}? This creates a new Docker container.`)) return;
+                  setLaunching(true);
+                  try {
+                    const res = await getExperiments();
+                    const exp = (res.items || []).find((e: { strategy_name?: string; name?: string }) => e.strategy_name === strategy || e.name === strategy);
+                    const versionId = exp?.best_version_id || undefined;
+                    const result = await launchPaperBot({
+                      strategy_name: strategy,
+                      strategy_version_id: versionId,
+                      pair_whitelist: ['BTC/USDT:USDT'],
+                    });
+                    toast.success(`🚀 ${result.message}`);
+                  } catch (err) {
+                    toast.error(`Launch failed: ${err instanceof Error ? err.message : String(err)}`);
+                  } finally {
+                    setLaunching(false);
+                  }
+                }}
+                className="ml-auto px-3 py-1.5 rounded-btn text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
               >
-                → Paper Trading
+                {launching ? '⏳ Launching...' : '🚀 Launch Paper Trading'}
               </button>
             )}
           </div>

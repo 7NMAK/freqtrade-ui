@@ -1028,3 +1028,34 @@ export const activateStrategyVersion = (strategyId: number, versionId: number) =
     `/api/experiments/strategies/${strategyId}/versions/${versionId}/activate`,
     { method: "POST" }
   );
+
+// ── Launch Paper Trading Bot ─────────────────────────────────
+
+export interface LaunchPaperParams {
+  strategy_name: string;
+  strategy_version_id?: number;
+  pair_whitelist?: string[];
+  description?: string;
+  max_open_trades?: number;
+  stake_amount?: string;
+  dry_run_wallet?: number;
+  timeframe?: string;
+  trading_mode?: string;
+}
+
+export interface LaunchPaperResult {
+  bot_id: number;
+  container_name: string;
+  port: number;
+  config_path: string;
+  strategy: string;
+  version_id: number | null;
+  status: string;
+  message: string;
+}
+
+export const launchPaperBot = (params: LaunchPaperParams) =>
+  request<LaunchPaperResult>("/api/bots/launch-paper", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });

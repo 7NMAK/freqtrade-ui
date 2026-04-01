@@ -615,6 +615,249 @@ async def apply_config(
     return result
 
 
+# ── NEW: Launch Paper Trading Bot ─────────────────────────────
+
+class LaunchPaperRequest(BaseModel):
+    """Request to launch a new paper trading bot for a strategy + version."""
+    strategy_name: str = Field(..., min_length=1, max_length=200)
+    strategy_version_id: int | None = None
+    pair_whitelist: list[str] = Field(default_factory=lambda: ["BTC/USDT:USDT"])
+    description: str | None = None
+    max_open_trades: int = 3
+    stake_amount: str = "unlimited"
+    dry_run_wallet: float = 10000.0
+    timeframe: str = "5m"
+    trading_mode: str = "futures"
+
+
+def _find_free_port(dk: Any, start: int = 8082, end: int = 8200) -> int:
+    """Scan Docker containers to find a free host port in [start, end)."""
+    used_ports: set[int] = set()
+    for c in dk.containers.list(all=True):
+        ports = c.attrs.get("NetworkSettings", {}).get("Ports", {}) or {}
+        for bindings in ports.values():
+            if bindings:
+                for b in bindings:
+                    try:
+                        used_ports.add(int(b["HostPort"]))
+                    except (KeyError, ValueError, TypeError):
+                        pass
+    for port in range(start, end):
+        if port not in used_ports:
+            return port
+    raise ValueError(f"No free port found in range {start}-{end}")
+
+
+@router.post("/launch-paper", status_code=201)
+async def launch_paper_bot(
+    body: LaunchPaperRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    auth_payload: dict[str, Any] = Depends(require_auth),
+) -> dict[str, Any]:
+    """
+    Launch a new paper trading bot for a strategy.
+
+    Creates a Docker container, writes config, registers in DB.
+    The bot starts trading immediately in dry_run mode.
+    """
+    import docker
+    import json as _json
+    from pathlib import Path
+    from ..models.strategy_version import StrategyVersion
+    from ..crypto import encrypt
+
+    strategy_name = body.strategy_name
+    version_id = body.strategy_version_id
+
+    # ── 1. Load strategy version (optional — for risk_config/freqai_config) ──
+    version = None
+    if version_id:
+        version = await db.get(StrategyVersion, version_id)
+        if not version:
+            raise HTTPException(404, f"Strategy version {version_id} not found")
+
+    # ── 2. Find free port ──
+    try:
+        dk = docker.from_env()
+    except Exception as e:
+        raise HTTPException(502, f"Cannot connect to Docker: {e}")
+
+    try:
+        free_port = _find_free_port(dk)
+    except ValueError as e:
+        raise HTTPException(503, str(e))
+
+    # ── 3. Build container name ──
+    suffix = f"v{version_id}" if version_id else "default"
+    container_name = f"ft-{strategy_name.lower().replace('_', '-')}-{suffix}"
+
+    # Check if container already exists
+    try:
+        existing = dk.containers.get(container_name)
+        if existing.status == "running":
+            raise HTTPException(
+                409,
+                f"Paper bot '{container_name}' already running (port {free_port}). "
+                f"Stop it first or use a different version.",
+            )
+        # If stopped/exited, remove it so we can recreate
+        existing.remove(force=True)
+    except docker.errors.NotFound:
+        pass  # Good — doesn't exist yet
+
+    # ── 4. Generate config.json ──
+    config = {
+        "trading_mode": body.trading_mode,
+        "margin_mode": "isolated",
+        "max_open_trades": body.max_open_trades,
+        "stake_currency": "USDT",
+        "stake_amount": body.stake_amount,
+        "timeframe": body.timeframe,
+        "dry_run": True,
+        "dry_run_wallet": body.dry_run_wallet,
+        "exchange": {
+            "name": "binance",
+            "key": "",
+            "secret": "",
+            "pair_whitelist": body.pair_whitelist,
+            "pair_blacklist": [],
+        },
+        "pairlists": [{"method": "StaticPairList"}],
+        "api_server": {
+            "enabled": True,
+            "listen_ip_address": "0.0.0.0",
+            "listen_port": 8080,  # internal port (mapped to free_port externally)
+            "username": "novakus",
+            "password": "Freqtrade2026",
+            "CORS_origins": ["*"],
+        },
+        "initial_state": "running",
+        "force_entry_enable": True,
+        "internals": {"process_throttle_secs": 5},
+    }
+
+    # Merge risk_config from strategy version (hyperopt params)
+    if version and version.risk_config:
+        risk = version.risk_config
+        if "stoploss" in risk:
+            config["stoploss"] = risk["stoploss"]
+        if "roi" in risk:
+            config["minimal_roi"] = risk["roi"]
+        if risk.get("trailing_stop"):
+            config["trailing_stop"] = True
+            for k in ["trailing_stop_positive", "trailing_stop_positive_offset",
+                       "trailing_only_offset_is_reached"]:
+                if k in risk:
+                    config[k] = risk[k]
+
+    # Merge FreqAI config from strategy version
+    if version and version.freqai_config:
+        config["freqai"] = version.freqai_config
+        config["freqaimodel"] = version.freqai_config.get("model_name", "LightGBMRegressor")
+
+    # ── 5. Write config to disk ──
+    config_dir = Path("/opt/freqtrade/user_data/configs")
+    config_dir.mkdir(parents=True, exist_ok=True)
+    config_path = config_dir / f"{container_name}.json"
+    config_path.write_text(_json.dumps(config, indent=2))
+
+    # ── 6. Ensure dbs directory exists ──
+    dbs_dir = Path("/opt/freqtrade/user_data/dbs")
+    dbs_dir.mkdir(parents=True, exist_ok=True)
+    db_path = f"sqlite:////freqtrade/user_data/dbs/{container_name}.sqlite"
+
+    # ── 7. Create Docker container ──
+    try:
+        container = dk.containers.run(
+            image="freqtradeorg/freqtrade:stable_freqai",
+            name=container_name,
+            detach=True,
+            restart_policy={"Name": "unless-stopped"},
+            volumes={
+                "/opt/freqtrade/user_data": {
+                    "bind": "/freqtrade/user_data",
+                    "mode": "rw",
+                },
+            },
+            ports={"8080/tcp": ("127.0.0.1", free_port)},
+            command=(
+                f"trade "
+                f"--config /freqtrade/user_data/configs/{container_name}.json "
+                f"--strategy {strategy_name} "
+                f"--db-url {db_path} "
+                f"--logfile /freqtrade/user_data/logs/{container_name}.log"
+            ),
+        )
+    except Exception as e:
+        # Clean up config file on failure
+        config_path.unlink(missing_ok=True)
+        raise HTTPException(502, f"Failed to create container: {e}")
+
+    # ── 8. Connect to ft_network ──
+    try:
+        network = dk.networks.get("ft_network")
+        network.connect(container)
+    except Exception:
+        pass  # Network might not exist or already connected
+
+    # ── 9. Register in orchestrator DB ──
+    bot = BotInstance(
+        name=container_name,
+        container_id=container_name,
+        docker_image="freqtradeorg/freqtrade:stable_freqai",
+        api_url=f"http://{container_name}",
+        api_port=8080,
+        api_username="novakus",
+        api_password=encrypt("Freqtrade2026") or "",
+        strategy_name=strategy_name,
+        strategy_version_id=version_id,
+        is_dry_run=True,
+        status=BotStatus.RUNNING,
+        ft_mode="trade",
+        config_path=str(config_path),
+        description=body.description or f"Paper trading {strategy_name} (v{version_id or 'default'})",
+        stake_currency="USDT",
+        stake_amount=body.stake_amount,
+        max_open_trades=body.max_open_trades,
+        timeframe=body.timeframe,
+        pair_whitelist=body.pair_whitelist,
+        pair_blacklist=[],
+        trading_mode=body.trading_mode,
+        margin_mode="isolated",
+    )
+    db.add(bot)
+    await db.flush()
+
+    # Audit log
+    actor = auth_payload.get("sub", "user")
+    db.add(AuditLog(
+        action="bot.launch_paper",
+        actor=actor,
+        target_type="bot",
+        target_id=bot.id,
+        target_name=bot.name,
+        details=_json.dumps({
+            "strategy": strategy_name,
+            "version_id": version_id,
+            "port": free_port,
+            "container": container_name,
+        }),
+    ))
+    await db.commit()
+
+    return {
+        "bot_id": bot.id,
+        "container_name": container_name,
+        "port": free_port,
+        "config_path": str(config_path),
+        "strategy": strategy_name,
+        "version_id": version_id,
+        "status": "running",
+        "message": f"Paper bot '{container_name}' launched on port {free_port}",
+    }
+
+
 # ── NEW: Drain Endpoint (V2) ──────────────────────────────────
 
 @router.post("/{bot_id}/drain")

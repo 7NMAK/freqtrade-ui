@@ -655,6 +655,31 @@ export const updateAIConfig = (data: Record<string, unknown>) =>
     body: JSON.stringify(data),
   });
 
+// ── AI Strategy Review (Experiments → AI Review tab) ────────────────────────
+
+export interface StrategyReviewParams {
+  strategy: string;
+  model: "claude" | "grok";
+  system_prompt: string;
+  user_prompt: string;
+  scope: string;
+}
+
+export interface StrategyReviewResult {
+  analysis: Record<string, unknown>;
+  cost_usd: number;
+  tokens_used: number;
+  model: string;
+  strategy: string;
+  scope: string;
+}
+
+export const strategyReview = (params: StrategyReviewParams) =>
+  request<StrategyReviewResult>("/api/ai/strategy-review", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+
 // ── AI Hyperopt ─────────────────────────────────────────────────────────────
 
 export const submitHyperoptPreAnalyze = (data: {

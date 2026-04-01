@@ -375,10 +375,15 @@ async def patch_ai_config(
 
 # ── Strategy Review (for Experiments AI Review tab) ────────────────────────────
 
+# H3 FIX: In-memory rate limiter — max 10 strategy reviews per hour
+_review_timestamps: list[datetime] = []
+_REVIEW_MAX_PER_HOUR = 10
+
+
 class StrategyReviewRequest(BaseModel):
     """Request body for AI strategy review."""
     strategy: str
-    model: str = "claude-sonnet"
+    model: str = "claude"          # C2 FIX: only "claude" or "grok"
     system_prompt: str
     user_prompt: str
     scope: str = "all"
@@ -393,10 +398,18 @@ async def strategy_review(
     """
     Run AI strategy review via OpenRouter.
 
-    Proxies the request to the configured LLM (OpenRouter) and returns
+    Proxies the request to the configured LLM (Claude or Grok) and returns
     the parsed analysis result. Used by the Experiments → AI Review tab.
+
+    Fixes applied:
+    - C2: Only routes to "claude" or "grok" (no GPT-4o/Llama)
+    - C3: Logs cost to DB for accurate cost tracking
+    - H3: Rate limited to 10/hour
+    - M1: Uses max_tokens=2500 for strategy reviews (larger than signal validations)
     """
     import logging
+    import json
+    import re
     logger = logging.getLogger(__name__)
 
     if not settings.ai_openrouter_api_key:
@@ -405,21 +418,32 @@ async def strategy_review(
             detail="OpenRouter API key not configured. Set ORCH_AI_OPENROUTER_API_KEY in .env",
         )
 
+    # H3 FIX: Rate limiting — max 10 strategy reviews per hour
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(hours=1)
+    _review_timestamps[:] = [t for t in _review_timestamps if t > cutoff]
+    if len(_review_timestamps) >= _REVIEW_MAX_PER_HOUR:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit: max {_REVIEW_MAX_PER_HOUR} strategy reviews per hour. Try again later.",
+        )
+
+    # C2 FIX: Only "claude" or "grok" — reject anything else
+    advisor = body.model.lower().strip()
+    if advisor not in ("claude", "grok"):
+        advisor = "claude"  # safe fallback
+
     try:
         from ..ai_validator.llm_gateway import LLMGateway
 
         gateway = LLMGateway(api_key=settings.ai_openrouter_api_key)
 
-        # Map frontend model names to advisor keys
-        # gateway.query() expects "claude" or "grok" — it handles primary/fallback internally
-        advisor = "claude"
-        if "grok" in body.model.lower():
-            advisor = "grok"
-
+        # M1 FIX: Strategy reviews need more output tokens than signal validations
         result = await gateway.query(
             model=advisor,
             system_prompt=body.system_prompt,
             user_content=body.user_prompt,
+            max_tokens=2500,  # M1: 2500 for reviews vs 1000 for signal validations
         )
 
         # result is a dict with: content, tokens_used, cost_usd, model_used
@@ -432,8 +456,6 @@ async def strategy_review(
         analysis = raw_content
         if isinstance(raw_content, str):
             try:
-                import json
-                import re
                 json_match = re.search(r'\{[\s\S]*\}', raw_content)
                 if json_match:
                     analysis = json.loads(json_match.group(0))
@@ -441,11 +463,53 @@ async def strategy_review(
                 logger.warning("AI response for strategy %s was not valid JSON", body.strategy)
                 analysis = raw_content
 
+        # C3 FIX: Log cost via raw SQL to avoid FK constraint on bot_id
+        # Uses ft_trade_id=-1 as sentinel for strategy reviews
+        # The /api/ai/cost endpoint sums total_cost_usd from this table
+        try:
+            from sqlalchemy import text
+            await db.execute(text(
+                "INSERT INTO ai_validations "
+                "(bot_id, ft_trade_id, pair, freqai_direction, freqai_confidence, "
+                "claude_direction, claude_confidence, grok_direction, grok_confidence, "
+                "combined_confidence, agreement_pct, all_agree, strong_disagree, "
+                "claude_tokens_used, grok_tokens_used, total_cost_usd) "
+                "VALUES ("
+                "(SELECT id FROM bot_instances WHERE is_deleted = false LIMIT 1), "
+                ":ft_trade_id, :pair, 'neutral', 0.0, "
+                ":claude_dir, 0.0, :grok_dir, 0.0, "
+                "0.0, 0.0, true, false, "
+                ":claude_tokens, :grok_tokens, :cost)"
+            ), {
+                "ft_trade_id": -1,
+                "pair": f"review:{body.strategy[:40]}",
+                "claude_dir": "neutral" if advisor == "claude" else "n/a",
+                "grok_dir": "neutral" if advisor == "grok" else "n/a",
+                "claude_tokens": tokens_used if advisor == "claude" else 0,
+                "grok_tokens": tokens_used if advisor == "grok" else 0,
+                "cost": cost_usd,
+            })
+            await db.commit()
+        except Exception as db_exc:
+            logger.warning("Failed to log strategy review cost: %s", db_exc)
+            try:
+                await db.rollback()
+            except Exception:
+                pass
+
+        # H3 FIX: Record successful review for rate limiting
+        _review_timestamps.append(now)
+
+        logger.info(
+            "Strategy review complete: %s | model=%s | tokens=%d | cost=$%.4f",
+            body.strategy, advisor, tokens_used, cost_usd,
+        )
+
         return {
             "analysis": analysis,
             "cost_usd": cost_usd,
             "tokens_used": tokens_used,
-            "model": body.model,
+            "model": advisor,
             "strategy": body.strategy,
             "scope": body.scope,
         }
@@ -455,3 +519,4 @@ async def strategy_review(
     except Exception as exc:
         logger.error("Strategy review failed for %s: %s", body.strategy, exc)
         raise HTTPException(status_code=502, detail=f"AI analysis failed: {exc}")
+

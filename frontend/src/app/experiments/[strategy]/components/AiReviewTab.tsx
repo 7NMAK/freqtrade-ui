@@ -8,6 +8,7 @@ import {
   VERDICT_THRESHOLDS,
   type AiVerdict,
 } from '@/lib/experiments';
+import { strategyReview, getExperimentRuns, botBacktestResults } from '@/lib/api';
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -113,7 +114,7 @@ Be specific with concerns. Reference actual metrics from the data.
 Return ONLY valid JSON, no markdown wrapping.`;
 }
 
-export default function AiReviewTab({ strategy, botId = 2, experimentId, onNavigateToTab }: AiReviewTabProps) {
+export default function AiReviewTab({ strategy, botId, experimentId, onNavigateToTab }: AiReviewTabProps) {
   const toast = useToast();
 
   const [scope, setScope] = useState<'all' | 'selected' | 'backtest' | 'hyperopt' | 'freqai'>('all');
@@ -139,7 +140,6 @@ export default function AiReviewTab({ strategy, botId = 2, experimentId, onNavig
 
       if (experimentId) {
         // Fetch experiment runs to provide as context
-        const { getExperimentRuns } = await import('@/lib/api');
         const runs = await getExperimentRuns(experimentId);
         if (Array.isArray(runs) && runs.length > 0) {
           // Filter by scope
@@ -169,9 +169,8 @@ export default function AiReviewTab({ strategy, botId = 2, experimentId, onNavig
         }
       }
 
-      if (!contextData || contextData === '[]') {
+      if ((!contextData || contextData === '[]') && botId) {
         // Fallback: try to get backtest results directly
-        const { botBacktestResults } = await import('@/lib/api');
         try {
           const btRes = await botBacktestResults(botId);
           if (btRes?.backtest_result?.strategy) {
@@ -186,34 +185,14 @@ export default function AiReviewTab({ strategy, botId = 2, experimentId, onNavig
         return;
       }
 
-      // Call the AI analysis endpoint via our backend proxy
-      // The backend should proxy to OpenRouter with the configured API key
-      const { default: apiRequest } = await import('@/lib/api').then(m => {
-        // Use the base request mechanism
-        return { default: async (prompt: string, model: string) => {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/ai/strategy-review`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${m.getToken()}`,
-            },
-            body: JSON.stringify({
-              strategy,
-              model,
-              system_prompt: buildSystemPrompt(strategy),
-              user_prompt: `Here are the test results for strategy "${strategy}":\n\n${prompt}`,
-              scope,
-            }),
-          });
-          if (!res.ok) {
-            const text = await res.text();
-            throw new Error(text || `AI request failed: ${res.status}`);
-          }
-          return res.json();
-        }};
+      // C1 FIX: Use proper API wrapper instead of raw fetch
+      const aiResponse = await strategyReview({
+        strategy,
+        model: selectedModel as 'claude' | 'grok',
+        system_prompt: buildSystemPrompt(strategy),
+        user_prompt: `Here are the test results for strategy "${strategy}":\n\n${contextData}`,
+        scope,
       });
-
-      const aiResponse = await apiRequest(contextData, selectedModel);
 
       // Parse the response — expect JSON with our structure
       let parsed: Record<string, unknown>;

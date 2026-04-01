@@ -133,22 +133,27 @@ class LLMGateway:
         response.update(token_data)
         return response
 
-    async def query(self, model: str, system_prompt: str, user_content: str) -> dict:
+    async def query(
+        self, model: str, system_prompt: str, user_content: str,
+        max_tokens: int = 1000,
+    ) -> dict:
         """
-        Query a single advisor (for use by HyperoptAdvisor).
+        Query a single advisor (for use by HyperoptAdvisor / strategy-review).
         model: 'claude' or 'grok'
+        max_tokens: Max output tokens (default 1000 for signals, use 2500 for reviews)
         Returns raw LLM response dict (content + usage metadata).
         """
-        return await self._query_with_fallback(model, system_prompt, user_content)
+        return await self._query_with_fallback(model, system_prompt, user_content, max_tokens=max_tokens)
 
     async def _query_with_fallback(
-        self, advisor: str, system: str, prompt: str
+        self, advisor: str, system: str, prompt: str,
+        max_tokens: int = 1000,
     ) -> dict:
         """Try primary model, fall back to secondary if primary fails."""
         models = self.MODELS[advisor]
         for model_id in [models["primary"], models["fallback"]]:
             try:
-                return await self._call_with_retry(model_id, system, prompt)
+                return await self._call_with_retry(model_id, system, prompt, max_tokens=max_tokens)
             except (httpx.HTTPError, json.JSONDecodeError, KeyError) as exc:
                 if model_id == models["fallback"]:
                     raise  # both failed — propagate
@@ -160,14 +165,15 @@ class LLMGateway:
         raise RuntimeError(f"All models failed for {advisor}")  # pragma: no cover
 
     async def _call_with_retry(
-        self, model: str, system: str, prompt: str
+        self, model: str, system: str, prompt: str,
+        max_tokens: int = 1000,
     ) -> dict:
         """Call OpenRouter with exponential backoff retry."""
         last_exc: Exception | None = None
 
         for attempt, delay in enumerate(self._RETRY_DELAYS, start=1):
             try:
-                return await self._call_openrouter(model, system, prompt)
+                return await self._call_openrouter(model, system, prompt, max_tokens=max_tokens)
             except httpx.HTTPStatusError as exc:
                 if exc.response.status_code == 429:
                     # Rate limited — back off
@@ -198,7 +204,10 @@ class LLMGateway:
 
         raise last_exc or RuntimeError("Max retries exceeded")
 
-    async def _call_openrouter(self, model: str, system: str, prompt: str) -> dict:
+    async def _call_openrouter(
+        self, model: str, system: str, prompt: str,
+        max_tokens: int = 1000,
+    ) -> dict:
         """Make a single HTTP call to OpenRouter. Raises on non-2xx or bad JSON."""
         t0 = time.monotonic()
         async with httpx.AsyncClient(timeout=self.timeout) as client:
@@ -217,7 +226,7 @@ class LLMGateway:
                         {"role": "user", "content": prompt},
                     ],
                     "temperature": 0.3,  # low temp for consistent, structured output
-                    "max_tokens": 1000,
+                    "max_tokens": max_tokens,
                     "response_format": {"type": "json_object"},
                 },
             )

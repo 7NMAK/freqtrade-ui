@@ -130,10 +130,8 @@ export type AiVerdict = keyof typeof VERDICT_THRESHOLDS;
 // ── AI Models for OpenRouter ──────────────────────────────────────────────
 
 export const AI_MODELS = [
-  { value: "claude-sonnet", label: "Claude Sonnet", cost: "~$0.02-0.05", desc: "Fastest, good enough for most" },
-  { value: "claude-opus", label: "Claude Opus", cost: "~$0.10-0.20", desc: "Most precise, for important decisions" },
-  { value: "gpt-4o", label: "GPT-4o", cost: "~$0.03-0.08", desc: "OpenAI alternative" },
-  { value: "llama-405b", label: "Llama 3.1 405B", cost: "~$0.01-0.03", desc: "Cheapest option" },
+  { value: "claude", label: "Claude Sonnet 4.5", cost: "~$0.02-0.05", desc: "Best for detailed analysis" },
+  { value: "grok", label: "Grok 4.1 Fast", cost: "~$0.01-0.02", desc: "Fast second opinion" },
 ] as const;
 
 // ── Verification Pass/Fail Criteria ───────────────────────────────────────

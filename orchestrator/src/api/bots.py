@@ -821,32 +821,59 @@ async def launch_paper_bot(
     except Exception:
         pass  # Network might not exist or already connected
 
-    # ── 9. Register in orchestrator DB ──
-    bot = BotInstance(
-        name=container_name,
-        container_id=container_name,
-        docker_image="freqtradeorg/freqtrade:stable_freqai",
-        api_url=f"http://{container_name}",
-        api_port=8080,
-        api_username="novakus",
-        api_password=encrypt("Freqtrade2026") or "",
-        strategy_name=strategy_name,
-        strategy_version_id=version_id,
-        is_dry_run=True,
-        status=BotStatus.RUNNING,
-        ft_mode="trade",
-        config_path=str(config_path),
-        description=body.description or f"Paper trading {strategy_name} (v{version_id or 'default'})",
-        stake_currency="USDT",
-        stake_amount=body.stake_amount,
-        max_open_trades=body.max_open_trades,
-        timeframe=body.timeframe,
-        pair_whitelist=body.pair_whitelist,
-        pair_blacklist=[],
-        trading_mode=body.trading_mode,
-        margin_mode="isolated",
-    )
-    db.add(bot)
+    # ── 9. Register in orchestrator DB (revive if soft-deleted) ──
+    existing_row = (await db.execute(
+        select(BotInstance).where(BotInstance.name == container_name)
+    )).scalar_one_or_none()
+
+    if existing_row:
+        # Revive soft-deleted or update existing
+        existing_row.is_deleted = False
+        existing_row.container_id = container_name
+        existing_row.api_url = f"http://{container_name}"
+        existing_row.api_port = 8080
+        existing_row.api_password = encrypt("Freqtrade2026") or ""
+        existing_row.strategy_name = strategy_name
+        existing_row.strategy_version_id = version_id
+        existing_row.is_dry_run = True
+        existing_row.status = BotStatus.RUNNING
+        existing_row.ft_mode = "trade"
+        existing_row.config_path = str(config_path)
+        existing_row.description = body.description or f"Paper trading {strategy_name} (v{version_id or 'default'})"
+        existing_row.pair_whitelist = body.pair_whitelist
+        existing_row.trading_mode = body.trading_mode
+        existing_row.timeframe = body.timeframe
+        existing_row.max_open_trades = body.max_open_trades
+        existing_row.stake_amount = body.stake_amount
+        existing_row.is_healthy = True
+        existing_row.consecutive_failures = 0
+        bot = existing_row
+    else:
+        bot = BotInstance(
+            name=container_name,
+            container_id=container_name,
+            docker_image="freqtradeorg/freqtrade:stable_freqai",
+            api_url=f"http://{container_name}",
+            api_port=8080,
+            api_username="novakus",
+            api_password=encrypt("Freqtrade2026") or "",
+            strategy_name=strategy_name,
+            strategy_version_id=version_id,
+            is_dry_run=True,
+            status=BotStatus.RUNNING,
+            ft_mode="trade",
+            config_path=str(config_path),
+            description=body.description or f"Paper trading {strategy_name} (v{version_id or 'default'})",
+            stake_currency="USDT",
+            stake_amount=body.stake_amount,
+            max_open_trades=body.max_open_trades,
+            timeframe=body.timeframe,
+            pair_whitelist=body.pair_whitelist,
+            pair_blacklist=[],
+            trading_mode=body.trading_mode,
+            margin_mode="isolated",
+        )
+        db.add(bot)
     await db.flush()
 
     # Audit log

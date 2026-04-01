@@ -154,7 +154,7 @@ export default function StrategyWorkspacePage() {
       .then((res) => {
         const items = res.items || [];
         const exp = items.find(
-          (e) => e.strategy_name === strategyName || e.name === strategyName
+          (e) => e.strategy_name === strategyName || e.name?.includes(strategyName)
         );
         if (exp) {
           setExperimentId(exp.id);
@@ -164,9 +164,9 @@ export default function StrategyWorkspacePage() {
           const steps: Record<PipelineStepKey, StepState> = {
             backtest: types.has("backtest") ? "completed" : "pending",
             hyperopt: types.has("hyperopt") ? "completed" : "pending",
-            freqai: types.has("freqai") ? "completed" : "skipped",
+            freqai: types.has("freqai") ? "completed" : "pending",
             verify: types.has("oos_validation") || types.has("verification") ? "completed" : "pending",
-            ai_review: types.has("ai_pre") || types.has("ai_post") ? "completed" : "skipped",
+            ai_review: types.has("ai_pre") || types.has("ai_post") ? "completed" : "pending",
             paper: "pending",
             live: "pending",
           };
@@ -227,7 +227,15 @@ export default function StrategyWorkspacePage() {
       .catch(() => { /* silent */ });
   }, [experimentId]);
 
-  if (!strategyData) return null;
+  if (!strategyData) {
+    return (
+      <AppShell title={`Experiments / ${strategyName}`}>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-sm text-muted-foreground animate-pulse">Loading experiment data...</div>
+        </div>
+      </AppShell>
+    );
+  }
 
   // Tab definitions — numbered 1-5 like prototype
   const tabs: Array<{ key: Tab; num: number; label: string }> = [
@@ -317,9 +325,9 @@ export default function StrategyWorkspacePage() {
 
         {/* ── Tab Content (scrollable) ── */}
         <div className="flex-1 overflow-y-auto p-6">
-          {activeTab === "backtest" && <BacktestTab strategy={strategyName} experimentId={experimentId} />}
-          {activeTab === "hyperopt" && <HyperoptTab strategy={strategyName} experimentId={experimentId} onNavigateToTab={handleNavigateToTab} />}
-          {activeTab === "freqai" && <FreqAITab strategy={strategyName} experimentId={experimentId} onNavigateToTab={handleNavigateToTab} />}
+          {activeTab === "backtest" && <BacktestTab strategy={strategyName} backtestBotId={2} experimentId={experimentId} />}
+          {activeTab === "hyperopt" && <HyperoptTab strategy={strategyName} botId={2} experimentId={experimentId} onNavigateToTab={handleNavigateToTab} />}
+          {activeTab === "freqai" && <FreqAITab strategy={strategyName} botId={2} experimentId={experimentId} onNavigateToTab={handleNavigateToTab} />}
           {activeTab === "ai_review" && <AiReviewTab strategy={strategyName} experimentId={experimentId} onNavigateToTab={handleNavigateToTab} />}
           {activeTab === "validation" && <ValidationTab strategy={strategyName} experimentId={experimentId} onNavigateToTab={handleNavigateToTab} />}
         </div>
@@ -358,7 +366,7 @@ export default function StrategyWorkspacePage() {
                     <td className="px-2 py-1 text-muted-foreground">{run.sampler ?? '—'}</td>
                     <td className="px-2 py-1 text-muted-foreground">{run.created_at ? new Date(run.created_at).toLocaleDateString() : '—'}</td>
                     <td className="px-2 py-1 text-right tabular-nums">{run.total_trades ?? '—'}</td>
-                    <td className="px-2 py-1 text-right tabular-nums">{run.win_rate != null ? `${(run.win_rate * 100).toFixed(1)}%` : '—'}</td>
+                    <td className="px-2 py-1 text-right tabular-nums">{run.win_rate != null ? `${run.win_rate.toFixed(1)}%` : '—'}</td>
                     <td className={`px-2 py-1 text-right tabular-nums font-medium ${(run.profit_pct ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{run.profit_pct != null ? `${run.profit_pct >= 0 ? '+' : ''}${run.profit_pct.toFixed(2)}%` : '—'}</td>
                     <td className="px-2 py-1 text-right tabular-nums text-rose-400">{run.max_drawdown != null ? `-${Math.abs(run.max_drawdown).toFixed(2)}%` : '—'}</td>
                     <td className="px-2 py-1 text-right tabular-nums">{run.sharpe_ratio?.toFixed(2) ?? '—'}</td>

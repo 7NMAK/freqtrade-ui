@@ -299,7 +299,7 @@ export default function AllTestsOverlay({ onClose, strategy, experimentId, onNav
                   </td>
                   <td className="py-[6px] px-[10px] text-xs text-right tabular-nums">{run.total_trades ?? '—'}</td>
                   <td className="py-[6px] px-[10px] text-xs text-right tabular-nums">
-                    {run.win_rate != null ? `${(run.win_rate * 100).toFixed(1)}%` : '—'}
+                    {run.win_rate != null ? `${run.win_rate.toFixed(1)}%` : '—'}
                   </td>
                   <td className={`py-[6px] px-[10px] text-xs text-right tabular-nums font-medium ${profitColor(run.profit_pct)}`}>
                     {formatProfit(run.profit_pct)}

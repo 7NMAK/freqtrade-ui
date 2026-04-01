@@ -299,7 +299,7 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
       })
       .catch(() => { /* no active backtest — normal */ });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [experimentId, botId, addLog]);
+  }, [experimentId, botId, addLog, toast]);
 
   // ── Build Matrix Queue ────────────────────────────────────────────
   const buildQueue = useCallback((): QueueItem[] => {
@@ -574,7 +574,7 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
     try {
       const res = await getExperiments();
       const data = (res as unknown as { items?: Array<{ strategy_name: string; name: string; strategy_id: number; best_version_id: number | null }> }).items || [];
-      const exp = data.find((e) => e.strategy_name === strategy || e.name === strategy);
+      const exp = data.find((e) => e.strategy_name === strategy || e.name?.includes(strategy));
       if (exp && exp.best_version_id) {
         await activateStrategyVersion(exp.strategy_id, exp.best_version_id);
         toast.success(`Activated version for ${strategy} ★`);
@@ -603,9 +603,8 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
   const SortArrow = ({ col }: { col: SortKey }) =>
     sortBy === col ? <span className="ml-0.5 text-primary">{sortDir === "desc" ? "↓" : "↑"}</span> : null;
 
-  // Suppress unused vars that are used by form but not yet wired everywhere
-  void selectedHyperopt; void setSelectedHyperopt; void testNamePrefix; void setTestNamePrefix;
-  void outlierProtectionPct; void setOutlierProtectionPct; void reverseTrainTest; void setReverseTrainTest;
+  // Suppress unused vars that are used by form but not yet wired to backend
+  void reverseTrainTest; void setReverseTrainTest;
 
   // ══════════════════════════════════════════════════════════════════
   // RENDER

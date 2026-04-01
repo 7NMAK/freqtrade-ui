@@ -43,9 +43,9 @@ function computePipelineSteps(completedRunTypes: string[]): Record<string, StepS
   const steps: Record<string, StepState> = {
     backtest: types.has("backtest") ? "completed" : "pending",
     hyperopt: types.has("hyperopt") ? "completed" : "pending",
-    freqai: types.has("freqai") ? "completed" : "skipped",
+    freqai: types.has("freqai") ? "completed" : "pending",
     verify: types.has("oos_validation") || types.has("verification") ? "completed" : "pending",
-    ai_review: types.has("ai_pre") || types.has("ai_post") ? "completed" : "skipped",
+    ai_review: types.has("ai_pre") || types.has("ai_post") ? "completed" : "pending",
     paper: "pending",
     live: "pending",
   };

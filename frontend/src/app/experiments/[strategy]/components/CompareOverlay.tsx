@@ -21,7 +21,7 @@ interface MetricRow {
 
 const METRICS: MetricRow[] = [
   { label: 'Total Trades', key: 'total_trades', format: (v) => v != null ? String(v) : '—', higherBetter: true },
-  { label: 'Win Rate', key: 'win_rate', format: (v) => v != null ? `${(v * 100).toFixed(1)}%` : '—', higherBetter: true },
+  { label: 'Win Rate', key: 'win_rate', format: (v) => v != null ? `${v.toFixed(1)}%` : '—', higherBetter: true },
   { label: 'Avg Profit per Trade', key: 'profit_mean', format: (v) => v != null ? `${v >= 0 ? '+' : ''}${(v * 100).toFixed(2)}%` : '—', higherBetter: true },
   { label: 'Total Profit %', key: 'profit_pct', format: (v) => v != null ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}%` : '—', higherBetter: true },
   { label: 'Max Drawdown', key: 'max_drawdown', format: (v) => v != null ? `-${Math.abs(v).toFixed(2)}%` : '—', higherBetter: false },

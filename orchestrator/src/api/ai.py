@@ -95,6 +95,8 @@ async def list_validations(
 ) -> list[AIValidationOut]:
     """List recent AI validations, optionally filtered by bot."""
     q = select(AIValidation).order_by(AIValidation.created_at.desc())
+    # Exclude strategy-review cost records (sentinel ft_trade_id=-1)
+    q = q.where(AIValidation.ft_trade_id >= 0)
 
     if bot_id is not None:
         q = q.where(AIValidation.bot_id == bot_id)
@@ -184,7 +186,10 @@ async def get_agreement_rate(
             func.count(AIValidation.id).label("total"),
             func.sum(func.cast(AIValidation.all_agree, sa.Integer)).label("all_agree"),
             func.sum(func.cast(AIValidation.strong_disagree, sa.Integer)).label("strong_disagree"),
-        ).where(AIValidation.created_at >= cutoff)
+        ).where(
+            AIValidation.created_at >= cutoff,
+            AIValidation.ft_trade_id >= 0,  # exclude strategy-review cost records
+        )
     )
     row = result.one()
 

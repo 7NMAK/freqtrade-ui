@@ -924,7 +924,8 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
             try {
               const d = new Date(sortedResults[0]?.startedAt || Date.now());
               return `AI-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;
-            } catch (_e) { return 'AI-unknown'; }
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            } catch (_) { return 'AI-unknown'; }
           })();
           return (
           <div className="bg-card border border-border rounded-card overflow-hidden">

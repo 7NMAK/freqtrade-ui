@@ -3023,8 +3023,58 @@
                   </div>
               </div>
 
-              <!-- TAB: PAIRS (placeholder) -->
-              <div id="an-pairs" class="an-tab h-full flex flex-col gap-3 overflow-y-auto pr-1"></div>
+              <!-- TAB: PAIRS -->
+              <div id="an-pairs" class="an-tab h-full flex flex-col gap-3 overflow-y-auto pr-1">
+                  <!-- KPI Row -->
+                  <div class="grid grid-cols-7 gap-2 shrink-0">
+                      <div class="bg-surface p-3 l-bd rounded"><div class="kpi-label">Total Pairs</div><div class="kpi-value text-lg">18</div></div>
+                      <div class="bg-surface p-3 l-bd rounded border-l-2 border-l-up"><div class="kpi-label">Best Pair</div><div class="kpi-value text-up text-lg">SOL/USDT</div><div class="text-[9px] text-up font-mono">+$4,820</div></div>
+                      <div class="bg-surface p-3 l-bd rounded border-l-2 border-l-down"><div class="kpi-label">Worst Pair</div><div class="kpi-value text-down text-lg">DOGE/USDT</div><div class="text-[9px] text-down font-mono">-$340</div></div>
+                      <div class="bg-surface p-3 l-bd rounded"><div class="kpi-label">Most Traded</div><div class="kpi-value text-lg">BTC/USDT</div><div class="text-[9px] text-muted font-mono">312 trades</div></div>
+                      <div class="bg-surface p-3 l-bd rounded"><div class="kpi-label">Profitable</div><div class="kpi-value text-up text-lg">14/18</div><div class="text-[9px] text-muted font-mono">77.8%</div></div>
+                      <div class="bg-surface p-3 l-bd rounded"><div class="kpi-label">Avg/Pair</div><div class="kpi-value text-lg">71 trades</div></div>
+                      <div class="bg-surface p-3 l-bd rounded"><div class="kpi-label">Concentration</div><div class="kpi-value text-lg">31.7%</div><div class="text-[9px] text-muted font-mono">BTC dominance</div></div>
+                  </div>
+                  <!-- Top/Bottom Pairs Visual -->
+                  <div class="grid grid-cols-2 gap-3 shrink-0">
+                      <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
+                          <div class="h-10 l-b flex items-center px-4 bg-black/40"><h3 class="section-title">Top 5 Pairs</h3></div>
+                          <div class="p-3 space-y-2">
+                              <div class="flex items-center gap-2 text-[11px] font-mono"><span class="w-20 text-white shrink-0">SOL/USDT</span><div class="flex-1 h-4 bg-white/[0.04] rounded-sm overflow-hidden"><div class="h-full bg-up/40 rounded-sm" style="width:100%"></div></div><span class="text-up font-bold w-16 text-right">+$4,820</span></div>
+                              <div class="flex items-center gap-2 text-[11px] font-mono"><span class="w-20 text-white shrink-0">BTC/USDT</span><div class="flex-1 h-4 bg-white/[0.04] rounded-sm overflow-hidden"><div class="h-full bg-up/35 rounded-sm" style="width:85%"></div></div><span class="text-up font-bold w-16 text-right">+$4,102</span></div>
+                              <div class="flex items-center gap-2 text-[11px] font-mono"><span class="w-20 text-white shrink-0">ETH/USDT</span><div class="flex-1 h-4 bg-white/[0.04] rounded-sm overflow-hidden"><div class="h-full bg-up/30 rounded-sm" style="width:72%"></div></div><span class="text-up font-bold w-16 text-right">+$3,470</span></div>
+                              <div class="flex items-center gap-2 text-[11px] font-mono"><span class="w-20 text-white shrink-0">AVAX/USDT</span><div class="flex-1 h-4 bg-white/[0.04] rounded-sm overflow-hidden"><div class="h-full bg-up/25 rounded-sm" style="width:55%"></div></div><span class="text-up font-bold w-16 text-right">+$2,650</span></div>
+                              <div class="flex items-center gap-2 text-[11px] font-mono"><span class="w-20 text-white shrink-0">LINK/USDT</span><div class="flex-1 h-4 bg-white/[0.04] rounded-sm overflow-hidden"><div class="h-full bg-up/20 rounded-sm" style="width:40%"></div></div><span class="text-up font-bold w-16 text-right">+$1,930</span></div>
+                          </div>
+                      </div>
+                      <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
+                          <div class="h-10 l-b flex items-center px-4 bg-black/40"><h3 class="section-title">Bottom 5 Pairs</h3></div>
+                          <div class="p-3 space-y-2">
+                              <div class="flex items-center gap-2 text-[11px] font-mono"><span class="w-20 text-white shrink-0">DOGE/USDT</span><div class="flex-1 h-4 bg-white/[0.04] rounded-sm overflow-hidden"><div class="h-full bg-down/40 rounded-sm" style="width:100%"></div></div><span class="text-down font-bold w-16 text-right">-$340</span></div>
+                              <div class="flex items-center gap-2 text-[11px] font-mono"><span class="w-20 text-white shrink-0">XRP/USDT</span><div class="flex-1 h-4 bg-white/[0.04] rounded-sm overflow-hidden"><div class="h-full bg-down/30 rounded-sm" style="width:65%"></div></div><span class="text-down font-bold w-16 text-right">-$220</span></div>
+                              <div class="flex items-center gap-2 text-[11px] font-mono"><span class="w-20 text-white shrink-0">SHIB/USDT</span><div class="flex-1 h-4 bg-white/[0.04] rounded-sm overflow-hidden"><div class="h-full bg-down/20 rounded-sm" style="width:35%"></div></div><span class="text-down font-bold w-16 text-right">-$120</span></div>
+                              <div class="flex items-center gap-2 text-[11px] font-mono"><span class="w-20 text-white shrink-0">TRX/USDT</span><div class="flex-1 h-4 bg-white/[0.04] rounded-sm overflow-hidden"><div class="h-full bg-down/15 rounded-sm" style="width:20%"></div></div><span class="text-down w-16 text-right">-$68</span></div>
+                              <div class="flex items-center gap-2 text-[11px] font-mono"><span class="w-20 text-white shrink-0">ADA/USDT</span><div class="flex-1 h-4 bg-white/[0.04] rounded-sm overflow-hidden"><div class="h-full bg-up/10 rounded-sm" style="width:5%"></div></div><span class="text-muted w-16 text-right">+$12</span></div>
+                          </div>
+                      </div>
+                  </div>
+                  <!-- Pair Performance Table -->
+                  <div class="bg-surface l-bd rounded-md flex flex-col shadow-xl overflow-hidden shrink-0" style="max-height:340px">
+                      <div class="h-10 l-b flex items-center px-4 bg-black/40 shrink-0"><h3 class="section-title">Pair Performance</h3></div>
+                      <div class="flex-1 overflow-y-auto">
+                      <table class="w-full text-[11px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-black z-10"><tr class="text-muted text-[9px] uppercase tracking-wider"><th class="text-left px-3 py-1.5 font-semibold">Pair</th><th class="text-right px-3 py-1.5 font-semibold">Trades</th><th class="text-right px-3 py-1.5 font-semibold">Win %</th><th class="text-right px-3 py-1.5 font-semibold">Profit $</th><th class="text-right px-3 py-1.5 font-semibold">Profit %</th><th class="text-right px-3 py-1.5 font-semibold">Avg Dur.</th><th class="text-right px-3 py-1.5 font-semibold">Best</th><th class="text-right px-3 py-1.5 font-semibold">Worst</th></tr></thead>
+                      <tbody class="divide-y divide-white/[0.04]">
+                          <tr class="hover:bg-white/[0.03]"><td class="px-3 py-1.5 text-white font-bold">SOL/USDT</td><td class="px-3 py-1.5 text-right">98</td><td class="px-3 py-1.5 text-right text-up">74.5%</td><td class="px-3 py-1.5 text-right text-up font-bold">+$4,820</td><td class="px-3 py-1.5 text-right text-up">+8.12%</td><td class="px-3 py-1.5 text-right text-muted">2h 10m</td><td class="px-3 py-1.5 text-right text-up">+$320</td><td class="px-3 py-1.5 text-right text-down">-$85</td></tr>
+                          <tr class="hover:bg-white/[0.03]"><td class="px-3 py-1.5 text-white font-bold">BTC/USDT</td><td class="px-3 py-1.5 text-right">312</td><td class="px-3 py-1.5 text-right text-up">71.2%</td><td class="px-3 py-1.5 text-right text-up">+$4,102</td><td class="px-3 py-1.5 text-right text-up">+5.40%</td><td class="px-3 py-1.5 text-right text-muted">3h 15m</td><td class="px-3 py-1.5 text-right text-up">+$410</td><td class="px-3 py-1.5 text-right text-down">-$120</td></tr>
+                          <tr class="hover:bg-white/[0.03]"><td class="px-3 py-1.5 text-white font-bold">ETH/USDT</td><td class="px-3 py-1.5 text-right">205</td><td class="px-3 py-1.5 text-right text-up">69.8%</td><td class="px-3 py-1.5 text-right text-up">+$3,470</td><td class="px-3 py-1.5 text-right text-up">+4.85%</td><td class="px-3 py-1.5 text-right text-muted">2h 50m</td><td class="px-3 py-1.5 text-right text-up">+$280</td><td class="px-3 py-1.5 text-right text-down">-$95</td></tr>
+                          <tr class="hover:bg-white/[0.03]"><td class="px-3 py-1.5 text-white">AVAX/USDT</td><td class="px-3 py-1.5 text-right">76</td><td class="px-3 py-1.5 text-right text-up">68.4%</td><td class="px-3 py-1.5 text-right text-up">+$2,650</td><td class="px-3 py-1.5 text-right text-up">+3.92%</td><td class="px-3 py-1.5 text-right text-muted">1h 55m</td><td class="px-3 py-1.5 text-right text-up">+$210</td><td class="px-3 py-1.5 text-right text-down">-$72</td></tr>
+                          <tr class="hover:bg-white/[0.03]"><td class="px-3 py-1.5 text-white">LINK/USDT</td><td class="px-3 py-1.5 text-right">64</td><td class="px-3 py-1.5 text-right text-up">67.2%</td><td class="px-3 py-1.5 text-right text-up">+$1,930</td><td class="px-3 py-1.5 text-right text-up">+2.88%</td><td class="px-3 py-1.5 text-right text-muted">3h 22m</td><td class="px-3 py-1.5 text-right text-up">+$185</td><td class="px-3 py-1.5 text-right text-down">-$60</td></tr>
+                          <tr class="hover:bg-white/[0.03]"><td class="px-3 py-1.5 text-white">DOGE/USDT</td><td class="px-3 py-1.5 text-right">45</td><td class="px-3 py-1.5 text-right text-down">42.2%</td><td class="px-3 py-1.5 text-right text-down font-bold">-$340</td><td class="px-3 py-1.5 text-right text-down">-1.20%</td><td class="px-3 py-1.5 text-right text-muted">4h 10m</td><td class="px-3 py-1.5 text-right text-up">+$45</td><td class="px-3 py-1.5 text-right text-down">-$110</td></tr>
+                          <tr class="hover:bg-white/[0.03]"><td class="px-3 py-1.5 text-white">XRP/USDT</td><td class="px-3 py-1.5 text-right">38</td><td class="px-3 py-1.5 text-right text-down">44.7%</td><td class="px-3 py-1.5 text-right text-down">-$220</td><td class="px-3 py-1.5 text-right text-down">-0.85%</td><td class="px-3 py-1.5 text-right text-muted">5h 30m</td><td class="px-3 py-1.5 text-right text-up">+$32</td><td class="px-3 py-1.5 text-right text-down">-$88</td></tr>
+                      </tbody></table>
+                      </div>
+                  </div>
+              </div>
               <!-- TAB: EXITS (placeholder) -->
               <div id="an-exits" class="an-tab h-full flex flex-col gap-3 overflow-y-auto pr-1"></div>
               <!-- TAB: JOURNAL (placeholder) -->

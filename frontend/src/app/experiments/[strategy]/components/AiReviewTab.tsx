@@ -194,17 +194,16 @@ export default function AiReviewTab({ strategy, botId, experimentId, onNavigateT
         scope,
       });
 
-      // Parse the response — expect JSON with our structure
+      // Parse the response — aiResponse is typed as StrategyReviewResult
       let parsed: Record<string, unknown>;
-      if (typeof aiResponse === 'string') {
-        // Try to extract JSON from the response
-        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+      const rawAnalysis = aiResponse.analysis;
+      if (typeof rawAnalysis === 'string') {
+        // If analysis came back as a string, try to extract JSON
+        const jsonMatch = (rawAnalysis as string).match(/\{[\s\S]*\}/);
         if (!jsonMatch) throw new Error('AI response did not contain valid JSON');
         parsed = JSON.parse(jsonMatch[0]);
-      } else if (aiResponse.analysis) {
-        parsed = typeof aiResponse.analysis === 'string' ? JSON.parse(aiResponse.analysis) : aiResponse.analysis;
       } else {
-        parsed = aiResponse;
+        parsed = rawAnalysis as Record<string, unknown>;
       }
 
       // Apply hardcoded verdict thresholds (never trust AI's verdict directly)
@@ -258,7 +257,7 @@ export default function AiReviewTab({ strategy, botId, experimentId, onNavigateT
         model: selectedModel,
         cost: aiResponse.cost_usd ?? 0,
         timestamp: new Date().toISOString(),
-        rawResponse: typeof aiResponse === 'string' ? aiResponse : JSON.stringify(aiResponse, null, 2),
+        rawResponse: JSON.stringify(aiResponse, null, 2),
       };
 
       setResult(analysisResult);

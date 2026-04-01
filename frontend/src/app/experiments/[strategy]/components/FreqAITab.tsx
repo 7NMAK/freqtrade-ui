@@ -924,7 +924,7 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
             try {
               const d = new Date(sortedResults[0]?.startedAt || Date.now());
               return `AI-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;
-            } catch { return 'AI-unknown'; }
+            } catch (_e) { return 'AI-unknown'; }
           })();
           return (
           <div className="bg-card border border-border rounded-card overflow-hidden">
@@ -1003,7 +1003,7 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
             )}
           </div>
           );
-        })()) : (
+        })() : (
           <div className={`${SECTION_CARD} flex flex-col items-center justify-center min-h-[400px]`}>
             <div className="text-[32px] mb-3 opacity-30">🧠</div>
             <div className="text-sm font-semibold text-muted-foreground mb-1">No FreqAI results yet</div>

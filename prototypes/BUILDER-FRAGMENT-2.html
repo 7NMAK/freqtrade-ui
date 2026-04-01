@@ -1,0 +1,386 @@
+
+              <!-- ═══ STEP 5: RISK MANAGEMENT ═══ -->
+              <div class="builder-step-panel" id="builder-panel-5">
+                <div class="space-y-5">
+                  <!-- Risk cards grid -->
+                  <div class="grid grid-cols-3 gap-3">
+                    <div class="builder-card">
+                      <div class="text-[11px] font-bold text-white mb-1 flex items-center gap-1.5">🛑 Stoploss</div>
+                      <div class="text-[10px] text-muted mb-2 leading-snug">Maximum loss before FT closes the trade.</div>
+                      <div class="flex items-center gap-2">
+                        <input type="number" class="builder-num-input flex-1" value="-0.035" step="0.005" id="b-stoploss">
+                        <span class="text-[10px] text-muted">(-3.5%)</span>
+                      </div>
+                    </div>
+                    <div class="builder-card">
+                      <div class="text-[11px] font-bold text-white mb-1 flex items-center gap-1.5">📏 Stake Amount</div>
+                      <div class="text-[10px] text-muted mb-2 leading-snug">Amount per trade in quote currency.</div>
+                      <div class="flex items-center gap-2">
+                        <input type="number" class="builder-num-input flex-1" value="1000" step="100" id="b-stake">
+                        <span class="text-[10px] text-muted">USDT</span>
+                      </div>
+                    </div>
+                    <div class="builder-card">
+                      <div class="text-[11px] font-bold text-white mb-1 flex items-center gap-1.5">📊 Max Open Trades</div>
+                      <div class="text-[10px] text-muted mb-2 leading-snug">Maximum concurrent open trades per bot.</div>
+                      <div class="flex items-center gap-2">
+                        <input type="number" class="builder-num-input flex-1" value="3" step="1" id="b-max-trades">
+                        <span class="text-[10px] text-muted">trades</span>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Stoploss Type -->
+                  <div>
+                    <label class="builder-label">Stoploss Type <span class="normal-case tracking-normal font-normal text-muted">— §4: 5 stoploss types</span></label>
+                    <div class="flex flex-wrap gap-2 mb-3" id="b-sl-type-pills">
+                      <div class="builder-pill" onclick="setBuilderSlType('fixed',this)">Fixed</div>
+                      <div class="builder-pill selected" onclick="setBuilderSlType('trailing',this)">Trailing</div>
+                      <div class="builder-pill" onclick="setBuilderSlType('trailing_offset',this)">Trailing + Offset</div>
+                      <div class="builder-pill" onclick="setBuilderSlType('custom_callback',this)">Custom Callback</div>
+                      <div class="builder-pill" onclick="setBuilderSlType('on_exchange',this)">On Exchange</div>
+                    </div>
+                    <!-- Trailing params -->
+                    <div class="builder-card space-y-3" id="b-sl-trailing-params">
+                      <div>
+                        <div class="text-[10px] text-muted mb-1">Trailing Stop Positive</div>
+                        <div class="flex items-center gap-2">
+                          <input type="number" class="builder-num-input flex-1" value="0.01" step="0.005" id="b-trailing-pos">
+                          <span class="text-[10px] text-muted">(1%)</span>
+                        </div>
+                      </div>
+                      <div>
+                        <div class="text-[10px] text-muted mb-1">Trailing Stop Positive Offset</div>
+                        <div class="flex items-center gap-2">
+                          <input type="number" class="builder-num-input flex-1" value="0.02" step="0.005" id="b-trailing-offset">
+                          <span class="text-[10px] text-muted">(2%)</span>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <div class="builder-toggle on" onclick="this.classList.toggle('on')" id="b-trailing-only-offset"><div class="dot"></div></div>
+                        <span class="text-[10px] text-muted">Only use positive stoploss after offset is reached</span>
+                      </div>
+                    </div>
+                    <!-- Custom callback info (hidden by default) -->
+                    <div class="builder-card" id="b-sl-custom-info" style="display:none">
+                      <div class="text-[11px] text-muted leading-relaxed">Uses the <span class="font-mono text-white/70">custom_stoploss()</span> callback for dynamic stoploss logic. Enable it in Step 6: Callbacks and configure the preset there.</div>
+                    </div>
+                    <!-- On Exchange params (hidden by default) -->
+                    <div class="builder-card space-y-3" id="b-sl-exchange-params" style="display:none">
+                      <div class="flex items-center gap-2">
+                        <div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div>
+                        <span class="text-[10px] text-muted">stoploss_on_exchange</span>
+                      </div>
+                      <div class="grid grid-cols-3 gap-3">
+                        <div>
+                          <div class="text-[10px] text-muted mb-1">Limit Ratio</div>
+                          <input type="number" class="builder-num-input w-full" value="0.99" step="0.01" min="0.9" max="1">
+                        </div>
+                        <div>
+                          <div class="text-[10px] text-muted mb-1">Update Interval (sec)</div>
+                          <input type="number" class="builder-num-input w-full" value="60" step="10" min="10">
+                        </div>
+                        <div>
+                          <div class="text-[10px] text-muted mb-1">Price Type</div>
+                          <select class="builder-select w-full" style="height:32px;font-size:11px"><option>last</option><option>mark</option><option>index</option></select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Minimal ROI -->
+                  <div>
+                    <label class="builder-label">Minimal ROI <span class="normal-case tracking-normal font-normal text-muted">— Return targets at minutes elapsed</span></label>
+                    <div class="builder-card overflow-hidden" style="padding:0">
+                      <table class="w-full" style="border-collapse:collapse">
+                        <thead>
+                          <tr class="l-b">
+                            <th class="text-left px-3 py-2 text-[10px] text-muted uppercase tracking-widest font-bold">Minutes</th>
+                            <th class="text-left px-3 py-2 text-[10px] text-muted uppercase tracking-widest font-bold">Min ROI (%)</th>
+                            <th class="text-left px-3 py-2 text-[10px] text-muted uppercase tracking-widest font-bold"></th>
+                          </tr>
+                        </thead>
+                        <tbody id="b-roi-table">
+                          <tr class="l-b"><td class="px-3 py-1.5"><input type="number" class="builder-num-input w-full" value="0"></td><td class="px-3 py-1.5"><input type="number" class="builder-num-input w-full" value="10" step="1"></td><td class="px-3 py-1.5 text-[10px] text-muted">At entry: 10%</td></tr>
+                          <tr class="l-b"><td class="px-3 py-1.5"><input type="number" class="builder-num-input w-full" value="30"></td><td class="px-3 py-1.5"><input type="number" class="builder-num-input w-full" value="5" step="1"></td><td class="px-3 py-1.5 text-[10px] text-muted">After 30m: 5%</td></tr>
+                          <tr class="l-b"><td class="px-3 py-1.5"><input type="number" class="builder-num-input w-full" value="60"></td><td class="px-3 py-1.5"><input type="number" class="builder-num-input w-full" value="2" step="1"></td><td class="px-3 py-1.5 text-[10px] text-muted">After 1h: 2%</td></tr>
+                          <tr class="l-b"><td class="px-3 py-1.5"><input type="number" class="builder-num-input w-full" value="120"></td><td class="px-3 py-1.5"><input type="number" class="builder-num-input w-full" value="0" step="1"></td><td class="px-3 py-1.5 text-[10px] text-muted">After 2h: 0% (any profit)</td></tr>
+                        </tbody>
+                      </table>
+                      <div class="px-3 py-2 text-[11px] text-white/50 cursor-pointer hover:bg-white/[0.03] transition-colors" onclick="addRoiRow()">+ Add ROI level</div>
+                    </div>
+                  </div>
+                  <!-- Protections -->
+                  <div>
+                    <label class="builder-label">FT Protections <span class="normal-case tracking-normal font-normal text-muted">— per-bot safety handled by FreqTrade</span></label>
+                    <div class="grid grid-cols-3 gap-3">
+                      <div class="builder-card">
+                        <div class="text-[11px] font-bold text-white mb-2">StoplossGuard</div>
+                        <div class="flex items-center gap-2">
+                          <div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div>
+                          <span class="text-[10px] text-muted">3 SL in 1h → lock 30m</span>
+                        </div>
+                      </div>
+                      <div class="builder-card">
+                        <div class="text-[11px] font-bold text-white mb-2">MaxDrawdown</div>
+                        <div class="flex items-center gap-2">
+                          <div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div>
+                          <span class="text-[10px] text-muted">5% DD in 48h → lock 12h</span>
+                        </div>
+                      </div>
+                      <div class="builder-card">
+                        <div class="text-[11px] font-bold text-white mb-2">CooldownPeriod</div>
+                        <div class="flex items-center gap-2">
+                          <div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div>
+                          <span class="text-[10px] text-muted">5 candles cooldown</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ═══ STEP 6: CALLBACKS (19) ═══ -->
+              <div class="builder-step-panel" id="builder-panel-6">
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between mb-2">
+                    <div>
+                      <label class="builder-label" style="margin-bottom:0">Strategy Callbacks <span class="normal-case tracking-normal font-normal text-muted">— §3: 19 IStrategy callbacks</span></label>
+                      <div class="text-[10px] text-muted mt-1" id="b-cb-count">0 of 19 callbacks enabled</div>
+                    </div>
+                    <button class="h-7 px-2.5 l-bd rounded text-[10px] text-muted hover:text-white transition-colors" onclick="disableAllCallbacks()">Disable All</button>
+                  </div>
+                  <div id="b-callbacks-list"></div>
+                </div>
+              </div>
+
+              <!-- ═══ STEP 7: CONFIG ═══ -->
+              <div class="builder-step-panel" id="builder-panel-7">
+                <div class="space-y-6">
+                  <div>
+                    <label class="builder-label">Strategy Interface <span class="normal-case tracking-normal font-normal text-muted">— §2 IStrategy class attributes</span></label>
+                    <div class="grid grid-cols-2 gap-3">
+                      <div class="builder-card">
+                        <div class="text-[11px] font-bold text-white mb-1">Startup Candle Count</div>
+                        <div class="text-[10px] text-muted mb-2 leading-snug">Number of candles needed before strategy starts generating signals.</div>
+                        <input type="number" class="builder-num-input w-full" value="200" min="0" step="10" id="b-startup-candles">
+                      </div>
+                      <div class="builder-card">
+                        <div class="text-[11px] font-bold text-white mb-1">Process Only New Candles</div>
+                        <div class="text-[10px] text-muted mb-2 leading-snug">Only process indicators/signals when a new candle appears. Recommended: True.</div>
+                        <div class="builder-toggle on" onclick="this.classList.toggle('on')" id="b-process-new"><div class="dot"></div></div>
+                      </div>
+                      <div class="builder-card">
+                        <div class="text-[11px] font-bold text-white mb-1">Strategy Version</div>
+                        <div class="text-[10px] text-muted mb-2 leading-snug">Strategy version string for tracking changes.</div>
+                        <input type="text" class="builder-input" value="1" placeholder="e.g. 1" id="b-strategy-version" style="height:32px">
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Order Types -->
+                  <div>
+                    <label class="builder-label">Order Types <span class="normal-case tracking-normal font-normal text-muted">— market or limit for each order type</span></label>
+                    <div class="builder-card overflow-hidden" style="padding:0">
+                      <table class="w-full" style="border-collapse:collapse">
+                        <thead><tr class="l-b"><th class="text-left px-3 py-2 text-[10px] text-muted uppercase tracking-widest font-bold">Order Type</th><th class="text-left px-3 py-2 text-[10px] text-muted uppercase tracking-widest font-bold">Value</th></tr></thead>
+                        <tbody>
+                          <tr class="l-b"><td class="px-3 py-1.5 text-[11px] text-muted font-mono">entry</td><td class="px-3 py-1.5"><select class="builder-select" style="height:28px;font-size:11px"><option selected>market</option><option>limit</option></select></td></tr>
+                          <tr class="l-b"><td class="px-3 py-1.5 text-[11px] text-muted font-mono">exit</td><td class="px-3 py-1.5"><select class="builder-select" style="height:28px;font-size:11px"><option selected>market</option><option>limit</option></select></td></tr>
+                          <tr class="l-b"><td class="px-3 py-1.5 text-[11px] text-muted font-mono">emergency_exit</td><td class="px-3 py-1.5"><select class="builder-select" style="height:28px;font-size:11px"><option selected>market</option><option>limit</option></select></td></tr>
+                          <tr class="l-b"><td class="px-3 py-1.5 text-[11px] text-muted font-mono">force_entry</td><td class="px-3 py-1.5"><select class="builder-select" style="height:28px;font-size:11px"><option selected>market</option><option>limit</option></select></td></tr>
+                          <tr class="l-b"><td class="px-3 py-1.5 text-[11px] text-muted font-mono">force_exit</td><td class="px-3 py-1.5"><select class="builder-select" style="height:28px;font-size:11px"><option selected>market</option><option>limit</option></select></td></tr>
+                          <tr><td class="px-3 py-1.5 text-[11px] text-muted font-mono">stoploss</td><td class="px-3 py-1.5"><select class="builder-select" style="height:28px;font-size:11px"><option selected>market</option><option>limit</option></select></td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <!-- Order TIF -->
+                  <div>
+                    <label class="builder-label">Order Time in Force <span class="normal-case tracking-normal font-normal text-muted">— GTC / FOK / IOC / PO</span></label>
+                    <div class="grid grid-cols-2 gap-3">
+                      <div class="builder-card">
+                        <div class="text-[10px] text-muted mb-1">Entry</div>
+                        <select class="builder-select w-full" style="height:32px;font-size:11px">
+                          <option selected>GTC (Good Till Cancelled)</option><option>FOK (Fill or Kill)</option><option>IOC (Immediate or Cancel)</option><option>PO (Post Only)</option>
+                        </select>
+                      </div>
+                      <div class="builder-card">
+                        <div class="text-[10px] text-muted mb-1">Exit</div>
+                        <select class="builder-select w-full" style="height:32px;font-size:11px">
+                          <option selected>GTC (Good Till Cancelled)</option><option>FOK (Fill or Kill)</option><option>IOC (Immediate or Cancel)</option><option>PO (Post Only)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Informative Pairs -->
+                  <div>
+                    <label class="builder-label">Informative Pairs <span class="normal-case tracking-normal font-normal text-muted">— additional pairs/timeframes for multi-timeframe analysis</span></label>
+                    <div class="builder-card">
+                      <div id="b-info-pairs-list"></div>
+                      <div class="flex items-center gap-2">
+                        <input type="text" class="builder-input flex-1" style="height:32px" placeholder="BTC/USDT:USDT" id="b-info-pair-input">
+                        <select class="builder-select" style="height:32px;font-size:11px" id="b-info-tf-input">
+                          <option>1m</option><option>5m</option><option>15m</option><option selected>1h</option><option>4h</option><option>1d</option>
+                        </select>
+                        <button class="h-8 px-3 rounded bg-white text-black text-[11px] font-bold" onclick="addInfoPair()">Add</button>
+                      </div>
+                      <div class="text-[10px] text-muted mt-2">No informative pairs added. Add pairs here for multi-timeframe or cross-pair analysis.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ═══ STEP 8: REVIEW ═══ -->
+              <div class="builder-step-panel" id="builder-panel-8">
+                <!-- Success banner -->
+                <div class="rounded-md px-4 py-3 mb-4 flex items-center gap-2.5" style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.15)">
+                  <span class="text-xl">✅</span>
+                  <div>
+                    <div class="text-[12px] font-bold text-up">Strategy ready to save</div>
+                    <div class="text-[10px] text-muted">Review your configuration below. You can Save as Draft or Save &amp; Backtest immediately.</div>
+                  </div>
+                </div>
+                <!-- Review grid -->
+                <div class="grid grid-cols-2 gap-3" id="b-review-grid">
+                  <div class="builder-card">
+                    <div class="text-[11px] font-bold text-white mb-2">Basics</div>
+                    <div class="space-y-0.5" id="b-review-basics"></div>
+                  </div>
+                  <div class="builder-card">
+                    <div class="text-[11px] font-bold text-white mb-2">Indicators (<span id="b-review-ind-count">5</span>)</div>
+                    <div class="space-y-0.5" id="b-review-indicators"></div>
+                  </div>
+                  <div class="builder-card">
+                    <div class="text-[11px] font-bold text-white mb-2">Entry (Long)</div>
+                    <div class="space-y-0.5" id="b-review-entry"></div>
+                  </div>
+                  <div class="builder-card">
+                    <div class="text-[11px] font-bold text-white mb-2">Risk</div>
+                    <div class="space-y-0.5" id="b-review-risk"></div>
+                  </div>
+                  <div class="builder-card">
+                    <div class="text-[11px] font-bold text-white mb-2">Callbacks (<span id="b-review-cb-count">0</span>)</div>
+                    <div class="space-y-0.5" id="b-review-callbacks"></div>
+                  </div>
+                  <div class="builder-card">
+                    <div class="text-[11px] font-bold text-white mb-2">Config</div>
+                    <div class="space-y-0.5" id="b-review-config"></div>
+                  </div>
+                </div>
+              </div>
+
+            </div><!-- /wizard body -->
+
+            <!-- WIZARD FOOTER -->
+            <div class="px-5 py-3 l-t bg-surface shrink-0">
+              <div class="flex justify-between items-center">
+                <button class="h-8 px-3.5 rounded-md l-bd bg-white/5 text-muted text-[11px] font-medium hover:bg-white/10 transition-colors flex items-center gap-1.5" id="b-prev-btn" onclick="prevBuilderStep()" style="visibility:hidden">← Previous</button>
+                <div class="flex gap-2">
+                  <button class="h-8 px-3.5 rounded-md l-bd bg-white/5 text-muted text-[11px] font-medium hover:bg-white/10 transition-colors flex items-center gap-1.5" onclick="alert('Strategy saved as Draft.')">Save as Draft</button>
+                  <button class="h-8 px-3.5 rounded-md text-[11px] font-bold flex items-center gap-1.5 transition-colors" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#F5F5F5" onclick="document.getElementById('deploy-modal').style.display='flex'">Deploy to Bot</button>
+                  <button class="h-8 px-4 rounded-md bg-white text-black text-[11px] font-bold hover:bg-white/90 transition-colors flex items-center gap-1.5" id="b-next-btn" onclick="nextBuilderStep()">Next: Indicators →</button>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /left pane -->
+
+          <!-- RIGHT PANE: Code Preview -->
+          <div class="flex flex-col shrink-0" style="width:420px">
+            <div class="px-4 py-3 l-b flex items-center justify-between bg-surface shrink-0">
+              <div class="flex items-center gap-2">
+                <div class="flex rounded p-0.5" style="background:rgba(255,255,255,0.06)">
+                  <button class="px-2.5 py-1 text-[10px] font-bold rounded transition-all bg-white/10 text-white" id="b-preview-tab" onclick="setCodeTab('preview')">Preview</button>
+                  <button class="px-2.5 py-1 text-[10px] font-bold rounded transition-all text-muted" id="b-editor-tab" onclick="setCodeTab('editor')">Editor</button>
+                </div>
+                <span class="text-[11px] font-bold text-white" id="b-code-filename">MyNewStrategy.py</span>
+              </div>
+              <div class="flex gap-1.5">
+                <button class="h-7 px-2.5 rounded l-bd bg-white/5 text-muted text-[10px] hover:text-white transition-colors" onclick="copyBuilderCode()">Copy</button>
+                <button class="h-7 px-2.5 rounded l-bd bg-white/5 text-muted text-[10px] hover:text-white transition-colors" onclick="downloadBuilderCode()">Download .py</button>
+              </div>
+            </div>
+            <div class="flex-1 overflow-auto p-5" id="b-code-preview">
+              <pre class="font-mono text-[11px] leading-[1.7] text-muted whitespace-pre" style="tab-size:4" id="b-code-content"></pre>
+            </div>
+            <div class="flex-1 overflow-auto p-5" id="b-code-editor" style="display:none">
+              <textarea class="w-full h-full bg-black text-white/85 font-mono text-[12px] leading-[1.7] border-0 outline-none resize-none p-0" spellcheck="false" id="b-code-textarea"></textarea>
+            </div>
+          </div>
+
+        </div><!-- /flex -->
+
+        <!-- DEPLOY MODAL -->
+        <div class="deploy-modal" id="deploy-modal" style="display:none" onclick="this.style.display='none'">
+          <div class="deploy-modal-body" onclick="event.stopPropagation()">
+            <h2 class="text-[14px] font-bold text-white mb-4">Deploy <span id="deploy-strat-name">MyNewStrategy</span></h2>
+            <!-- Tabs -->
+            <div class="flex gap-2 mb-5 pb-4 l-b">
+              <button class="h-8 px-4 rounded text-[11px] font-bold bg-white text-black" id="deploy-tab-new" onclick="setDeployTab('new')">Create New Bot</button>
+              <button class="h-8 px-4 rounded text-[11px] font-bold l-bd text-muted hover:text-white transition-colors" id="deploy-tab-existing" onclick="setDeployTab('existing')">Deploy to Existing Bot</button>
+            </div>
+            <!-- New bot tab -->
+            <div id="deploy-new-content" class="space-y-4 mb-5">
+              <div>
+                <label class="builder-label">Bot Name</label>
+                <input type="text" class="builder-input" value="MyNewStrategy-bot" id="deploy-bot-name">
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="builder-label">Exchange</label>
+                  <select class="builder-select w-full"><option>binance</option><option>bybit</option><option>okx</option><option>hyperliquid</option></select>
+                </div>
+                <div>
+                  <label class="builder-label">Timeframe</label>
+                  <select class="builder-select w-full"><option>1m</option><option>5m</option><option>15m</option><option selected>1h</option><option>4h</option><option>1d</option></select>
+                </div>
+              </div>
+              <div>
+                <label class="builder-label">Trading Pairs</label>
+                <textarea class="builder-input" style="height:60px;resize:none;padding:8px 12px" placeholder="BTC/USDT:USDT, ETH/USDT:USDT">BTC/USDT:USDT</textarea>
+                <div class="text-[9px] text-muted mt-1">Comma-separated list of pairs</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <input type="checkbox" checked id="deploy-dry-run" class="accent-emerald-500 cursor-pointer">
+                <label for="deploy-dry-run" class="text-[11px] text-muted cursor-pointer">Paper Trading (Dry Run)</label>
+              </div>
+            </div>
+            <!-- Existing bot tab -->
+            <div id="deploy-existing-content" class="space-y-4 mb-5" style="display:none">
+              <div>
+                <label class="builder-label">Select Bot</label>
+                <select class="builder-select w-full">
+                  <option>alpha-btc-bot (running, paper)</option>
+                  <option>momentum-eth (stopped, live)</option>
+                  <option>scalp-xrp (running, live)</option>
+                </select>
+              </div>
+              <div class="builder-card">
+                <div class="text-[10px] text-muted uppercase font-bold mb-2">Current Config</div>
+                <div class="space-y-1 text-[11px] text-muted">
+                  <div>Exchange: Binance</div><div>Strategy: TrendFollowerV3</div><div>Status: running</div><div>Mode: Paper Trading</div>
+                </div>
+              </div>
+              <div class="space-y-2">
+                <div class="text-[11px] font-bold text-white">How to replace strategy?</div>
+                <label class="flex items-center gap-2 p-3 builder-card cursor-pointer hover:border-white/20 transition-all">
+                  <input type="radio" name="deploy-replace" value="graceful" checked class="accent-emerald-500">
+                  <div><div class="text-[11px] font-bold text-white">Graceful Drain</div><div class="text-[9px] text-muted">Stop new entries, wait for exits, then switch</div></div>
+                </label>
+                <label class="flex items-center gap-2 p-3 builder-card cursor-pointer hover:border-white/20 transition-all">
+                  <input type="radio" name="deploy-replace" value="force" class="accent-emerald-500">
+                  <div><div class="text-[11px] font-bold text-white">Force Replace</div><div class="text-[9px] text-muted">Force exit all positions (market orders) and switch immediately</div></div>
+                </label>
+                <label class="flex items-center gap-2 p-3 builder-card cursor-pointer hover:border-white/20 transition-all">
+                  <input type="radio" name="deploy-replace" value="save-only" class="accent-emerald-500">
+                  <div><div class="text-[11px] font-bold text-white">Save Only</div><div class="text-[9px] text-muted">Update version reference, manual restart later</div></div>
+                </label>
+              </div>
+            </div>
+            <!-- Action buttons -->
+            <div class="flex gap-2 pt-4 l-t">
+              <button class="flex-1 h-9 rounded l-bd bg-white/5 text-muted text-[11px] font-bold hover:bg-white/10 transition-colors" onclick="document.getElementById('deploy-modal').style.display='none'">Cancel</button>
+              <button class="flex-1 h-9 rounded bg-white text-black text-[11px] font-bold hover:bg-white/90 transition-colors" onclick="alert('Strategy deployed successfully!');document.getElementById('deploy-modal').style.display='none'">Deploy</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /END STRATEGY BUILDER -->

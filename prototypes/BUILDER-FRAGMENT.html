@@ -1,0 +1,273 @@
+
+      <!-- ═══════════════ PAGE: STRATEGY BUILDER ═══════════════ -->
+      <div id="page-builder" class="page-view flex-1 overflow-hidden flex-col">
+
+        <div class="flex flex-1 overflow-hidden">
+
+          <!-- LEFT PANE: Wizard -->
+          <div class="flex-1 flex flex-col overflow-hidden" style="border-right:1px solid rgba(255,255,255,0.10)">
+
+            <!-- STEP BAR -->
+            <div class="h-12 l-b flex items-center px-5 gap-1 bg-surface shrink-0 overflow-x-auto" id="builder-step-bar">
+              <div class="flex items-center gap-1 cursor-pointer" onclick="goBuilderStep(1)">
+                <div class="builder-step-num active" id="bstep-1">1</div>
+                <span class="text-[11px] font-medium text-white whitespace-nowrap" id="bstep-label-1">Basics</span>
+              </div>
+              <div class="w-4 h-px bg-white/10 shrink-0"></div>
+              <div class="flex items-center gap-1 cursor-pointer" onclick="goBuilderStep(2)">
+                <div class="builder-step-num" id="bstep-2">2</div>
+                <span class="text-[11px] font-medium text-muted whitespace-nowrap" id="bstep-label-2">Indicators</span>
+              </div>
+              <div class="w-4 h-px bg-white/10 shrink-0"></div>
+              <div class="flex items-center gap-1 cursor-pointer" onclick="goBuilderStep(3)">
+                <div class="builder-step-num" id="bstep-3">3</div>
+                <span class="text-[11px] font-medium text-muted whitespace-nowrap" id="bstep-label-3">Entry</span>
+              </div>
+              <div class="w-4 h-px bg-white/10 shrink-0"></div>
+              <div class="flex items-center gap-1 cursor-pointer" onclick="goBuilderStep(4)">
+                <div class="builder-step-num" id="bstep-4">4</div>
+                <span class="text-[11px] font-medium text-muted whitespace-nowrap" id="bstep-label-4">Exit</span>
+              </div>
+              <div class="w-4 h-px bg-white/10 shrink-0"></div>
+              <div class="flex items-center gap-1 cursor-pointer" onclick="goBuilderStep(5)">
+                <div class="builder-step-num" id="bstep-5">5</div>
+                <span class="text-[11px] font-medium text-muted whitespace-nowrap" id="bstep-label-5">Risk</span>
+              </div>
+              <div class="w-4 h-px bg-white/10 shrink-0"></div>
+              <div class="flex items-center gap-1 cursor-pointer" onclick="goBuilderStep(6)">
+                <div class="builder-step-num" id="bstep-6">6</div>
+                <span class="text-[11px] font-medium text-muted whitespace-nowrap" id="bstep-label-6">Callbacks</span>
+              </div>
+              <div class="w-4 h-px bg-white/10 shrink-0"></div>
+              <div class="flex items-center gap-1 cursor-pointer" onclick="goBuilderStep(7)">
+                <div class="builder-step-num" id="bstep-7">7</div>
+                <span class="text-[11px] font-medium text-muted whitespace-nowrap" id="bstep-label-7">Config</span>
+              </div>
+              <div class="w-4 h-px bg-white/10 shrink-0"></div>
+              <div class="flex items-center gap-1 cursor-pointer" onclick="goBuilderStep(8)">
+                <div class="builder-step-num" id="bstep-8">8</div>
+                <span class="text-[11px] font-medium text-muted whitespace-nowrap" id="bstep-label-8">Review</span>
+              </div>
+            </div>
+
+            <!-- WIZARD BODY -->
+            <div class="flex-1 overflow-y-auto p-6" id="builder-wizard-body">
+
+              <!-- ═══ STEP 1: BASICS ═══ -->
+              <div class="builder-step-panel active" id="builder-panel-1">
+                <div class="space-y-5">
+                  <!-- Strategy Name -->
+                  <div>
+                    <label class="builder-label">Strategy Name <span class="text-down">*</span></label>
+                    <input type="text" class="builder-input" id="b-strat-name" value="MyNewStrategy" placeholder="e.g. TrendFollowerV3">
+                  </div>
+                  <!-- Description -->
+                  <div>
+                    <label class="builder-label">Description</label>
+                    <textarea class="builder-input" style="height:60px;resize:vertical;padding:8px 12px" id="b-description" placeholder="What does this strategy do?">EMA crossover strategy with RSI filter for BTC perpetual futures.</textarea>
+                  </div>
+                  <!-- Exchange + Timeframe -->
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="builder-label">Exchange</label>
+                      <select class="builder-select w-full" id="b-exchange">
+                        <option>Binance (Futures)</option><option>Hyperliquid</option><option>Bitget (Futures)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="builder-label">Timeframe <span class="text-down">*</span></label>
+                      <select class="builder-select w-full" id="b-timeframe">
+                        <option>1m</option><option>3m</option><option>5m</option><option>15m</option><option>30m</option>
+                        <option selected>1h</option><option>2h</option><option>4h</option><option>6h</option><option>8h</option>
+                        <option>12h</option><option>1d</option><option>3d</option><option>1w</option><option>1M</option>
+                      </select>
+                    </div>
+                  </div>
+                  <!-- Trading Pairs -->
+                  <div>
+                    <label class="builder-label">Trading Pairs <span class="text-down">*</span> <span class="normal-case tracking-normal font-normal text-muted">— click to add</span></label>
+                    <div class="flex flex-wrap gap-2" id="b-pairs-container">
+                      <div class="builder-pill selected" onclick="toggleBuilderPill(this)">₿ BTC/USDT:USDT <span class="pill-x text-down font-bold ml-1">×</span></div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)">Ξ ETH/USDT:USDT</div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)">◎ SOL/USDT:USDT</div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)">DOGE/USDT:USDT</div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)">AVAX/USDT:USDT</div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)">LINK/USDT:USDT</div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)">ARB/USDT:USDT</div>
+                      <div class="builder-pill" style="border-style:dashed" onclick="this.style.display='none';document.getElementById('b-add-pair').style.display='flex'">+ Add pair</div>
+                      <div id="b-add-pair" class="items-center gap-1.5" style="display:none">
+                        <input type="text" class="builder-input" style="width:140px;height:32px" placeholder="e.g. XRP/USDT:USDT" id="b-pair-input">
+                        <button class="h-8 px-3 rounded bg-white text-black text-[11px] font-bold" onclick="addBuilderPair()">Add</button>
+                        <button class="h-8 px-2 rounded l-bd text-muted text-[11px]" onclick="this.parentElement.style.display='none';this.parentElement.previousElementSibling.style.display=''">Cancel</button>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Trading Mode & Leverage -->
+                  <div>
+                    <label class="builder-label">Trading Mode & Leverage <span class="normal-case tracking-normal font-normal text-muted">— §10 Leverage / Futures</span></label>
+                    <div class="grid grid-cols-3 gap-3">
+                      <div>
+                        <div class="text-[10px] text-muted mb-1">Trading Mode</div>
+                        <select class="builder-select w-full" id="b-trading-mode" onchange="toggleFuturesFields()">
+                          <option>spot</option><option selected>futures</option>
+                        </select>
+                      </div>
+                      <div>
+                        <div class="text-[10px] text-muted mb-1">Margin Mode</div>
+                        <select class="builder-select w-full" id="b-margin-mode">
+                          <option selected>Isolated</option><option>Cross</option>
+                        </select>
+                      </div>
+                      <div>
+                        <div class="text-[10px] text-muted mb-1">Leverage</div>
+                        <select class="builder-select w-full" id="b-leverage">
+                          <option>1x (no leverage)</option><option>3x</option><option>5x</option><option selected>10x</option>
+                          <option>20x</option><option>50x</option><option>75x</option><option>100x</option><option>125x</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2 mt-3" id="b-liq-buffer-row">
+                      <span class="text-[10px] text-muted">Liquidation Buffer</span>
+                      <input type="number" class="builder-num-input" value="0.05" step="0.01" min="0" max="0.5" id="b-liq-buffer">
+                      <span class="text-[10px] text-muted">(5% buffer before liquidation)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ═══ STEP 2: INDICATORS ═══ -->
+              <div class="builder-step-panel" id="builder-panel-2">
+                <div>
+                  <label class="builder-label">Select Indicators <span class="normal-case tracking-normal font-normal text-muted">— these will be calculated in populate_indicators()</span></label>
+                  <input type="text" class="builder-input mb-4" placeholder="Search indicators... (EMA, RSI, Bollinger, MACD, ATR...)" id="b-indicator-search" oninput="filterBuilderIndicators()">
+                  <!-- Trend -->
+                  <div class="mb-4 indicator-group" data-group="trend">
+                    <div class="text-[10px] text-muted uppercase tracking-widest font-bold mb-2">Trend</div>
+                    <div class="flex flex-wrap gap-2">
+                      <div class="builder-pill selected" onclick="toggleBuilderPill(this)" data-ind="EMA (20)">📈 EMA (20) <span class="pill-x text-down font-bold ml-1">×</span></div>
+                      <div class="builder-pill selected" onclick="toggleBuilderPill(this)" data-ind="EMA (50)">📈 EMA (50) <span class="pill-x text-down font-bold ml-1">×</span></div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)" data-ind="SMA">📈 SMA</div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)" data-ind="WMA">📈 WMA</div>
+                      <div class="builder-pill selected" onclick="toggleBuilderPill(this)" data-ind="ADX">📈 ADX <span class="pill-x text-down font-bold ml-1">×</span></div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)" data-ind="Supertrend">📈 Supertrend</div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)" data-ind="Ichimoku">📈 Ichimoku</div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)" data-ind="PSAR">📈 PSAR</div>
+                    </div>
+                  </div>
+                  <!-- Momentum -->
+                  <div class="mb-4 indicator-group" data-group="momentum">
+                    <div class="text-[10px] text-muted uppercase tracking-widest font-bold mb-2">Momentum</div>
+                    <div class="flex flex-wrap gap-2">
+                      <div class="builder-pill selected" onclick="toggleBuilderPill(this)" data-ind="RSI (14)">🔄 RSI (14) <span class="pill-x text-down font-bold ml-1">×</span></div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)" data-ind="MACD">🔄 MACD</div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)" data-ind="Stochastic">🔄 Stochastic</div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)" data-ind="CCI">🔄 CCI</div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)" data-ind="Williams %R">🔄 Williams %R</div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)" data-ind="MFI">🔄 MFI</div>
+                    </div>
+                  </div>
+                  <!-- Volatility -->
+                  <div class="mb-4 indicator-group" data-group="volatility">
+                    <div class="text-[10px] text-muted uppercase tracking-widest font-bold mb-2">Volatility</div>
+                    <div class="flex flex-wrap gap-2">
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)" data-ind="Bollinger Bands">📊 Bollinger Bands</div>
+                      <div class="builder-pill selected" onclick="toggleBuilderPill(this)" data-ind="ATR (14)">📊 ATR (14) <span class="pill-x text-down font-bold ml-1">×</span></div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)" data-ind="Keltner Channel">📊 Keltner Channel</div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)" data-ind="Donchian Channel">📊 Donchian Channel</div>
+                    </div>
+                  </div>
+                  <!-- Volume -->
+                  <div class="mb-4 indicator-group" data-group="volume">
+                    <div class="text-[10px] text-muted uppercase tracking-widest font-bold mb-2">Volume</div>
+                    <div class="flex flex-wrap gap-2">
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)" data-ind="OBV">📦 OBV</div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)" data-ind="VWAP">📦 VWAP</div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)" data-ind="Volume SMA">📦 Volume SMA</div>
+                      <div class="builder-pill" onclick="toggleBuilderPill(this)" data-ind="CMF">📦 CMF</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ═══ STEP 3: ENTRY CONDITIONS ═══ -->
+              <div class="builder-step-panel" id="builder-panel-3">
+                <div class="space-y-6">
+                  <!-- Long -->
+                  <div>
+                    <label class="builder-label">Long Entry Conditions <span class="normal-case tracking-normal font-normal text-muted">— populate_entry_trend() buy signals</span></label>
+                    <div class="space-y-2" id="b-long-conditions">
+                      <div class="flex items-center gap-2 p-3 rounded-md builder-card flex-wrap">
+                        <span class="text-[10px] text-muted w-7">IF</span>
+                        <select class="builder-select"><option>EMA (20)</option><option>EMA (50)</option><option>RSI</option><option>ADX</option><option>ATR</option><option>close</option></select>
+                        <select class="builder-select"><option>crosses above</option><option>crosses below</option><option selected>&gt;</option><option>&lt;</option><option>=</option></select>
+                        <select class="builder-select"><option selected>EMA (50)</option><option>EMA (20)</option><option>value</option></select>
+                        <button class="text-down text-[11px] ml-auto" onclick="this.closest('.flex').remove();updateBuilderCode()">✕</button>
+                      </div>
+                      <div class="text-[10px] font-bold text-white/50 text-center">AND</div>
+                      <div class="flex items-center gap-2 p-3 rounded-md builder-card flex-wrap">
+                        <span class="text-[10px] text-muted w-7">AND</span>
+                        <select class="builder-select"><option>EMA (20)</option><option>EMA (50)</option><option selected>RSI</option><option>ADX</option><option>ATR</option><option>close</option></select>
+                        <select class="builder-select"><option>crosses above</option><option>crosses below</option><option>&gt;</option><option selected>&lt;</option><option>=</option></select>
+                        <input type="number" class="builder-num-input" value="70">
+                        <button class="text-down text-[11px] ml-auto" onclick="this.closest('.flex').remove();updateBuilderCode()">✕</button>
+                      </div>
+                      <div class="text-[10px] font-bold text-white/50 text-center">AND</div>
+                      <div class="flex items-center gap-2 p-3 rounded-md builder-card flex-wrap">
+                        <span class="text-[10px] text-muted w-7">AND</span>
+                        <select class="builder-select"><option>EMA (20)</option><option>EMA (50)</option><option>RSI</option><option selected>ADX</option><option>ATR</option><option>close</option></select>
+                        <select class="builder-select"><option>crosses above</option><option>crosses below</option><option selected>&gt;</option><option>&lt;</option><option>=</option></select>
+                        <input type="number" class="builder-num-input" value="25">
+                        <button class="text-down text-[11px] ml-auto" onclick="this.closest('.flex').remove();updateBuilderCode()">✕</button>
+                      </div>
+                    </div>
+                    <div class="builder-pill mt-2" style="border-style:dashed;display:inline-flex" onclick="addBuilderCondition('b-long-conditions')">+ Add condition</div>
+                  </div>
+                  <!-- Short -->
+                  <div>
+                    <label class="builder-label">Short Entry Conditions <span class="normal-case tracking-normal font-normal text-muted">— optional, leave empty for long-only</span></label>
+                    <div class="space-y-2" id="b-short-conditions">
+                      <div class="flex items-center gap-2 p-3 rounded-md builder-card flex-wrap">
+                        <span class="text-[10px] text-muted w-7">IF</span>
+                        <select class="builder-select"><option selected>EMA (20)</option><option>EMA (50)</option><option>RSI</option><option>ADX</option><option>ATR</option><option>close</option></select>
+                        <select class="builder-select"><option>crosses above</option><option selected>crosses below</option><option>&gt;</option><option>&lt;</option><option>=</option></select>
+                        <select class="builder-select"><option selected>EMA (50)</option><option>EMA (20)</option><option>value</option></select>
+                        <button class="text-down text-[11px] ml-auto" onclick="this.closest('.flex').remove();updateBuilderCode()">✕</button>
+                      </div>
+                      <div class="text-[10px] font-bold text-white/50 text-center">AND</div>
+                      <div class="flex items-center gap-2 p-3 rounded-md builder-card flex-wrap">
+                        <span class="text-[10px] text-muted w-7">AND</span>
+                        <select class="builder-select"><option>EMA (20)</option><option>EMA (50)</option><option selected>RSI</option><option>ADX</option><option>ATR</option><option>close</option></select>
+                        <select class="builder-select"><option>crosses above</option><option>crosses below</option><option selected>&gt;</option><option>&lt;</option><option>=</option></select>
+                        <input type="number" class="builder-num-input" value="30">
+                        <button class="text-down text-[11px] ml-auto" onclick="this.closest('.flex').remove();updateBuilderCode()">✕</button>
+                      </div>
+                    </div>
+                    <div class="builder-pill mt-2" style="border-style:dashed;display:inline-flex" onclick="addBuilderCondition('b-short-conditions')">+ Add condition</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ═══ STEP 4: EXIT CONDITIONS ═══ -->
+              <div class="builder-step-panel" id="builder-panel-4">
+                <div class="space-y-5">
+                  <div>
+                    <label class="builder-label">Custom Exit Conditions <span class="normal-case tracking-normal font-normal text-muted">— populate_exit_trend() signals (optional — stoploss/ROI also exits)</span></label>
+                    <div class="space-y-2" id="b-exit-conditions">
+                      <div class="flex items-center gap-2 p-3 rounded-md builder-card flex-wrap">
+                        <span class="text-[10px] text-muted" style="width:55px">EXIT IF</span>
+                        <select class="builder-select"><option selected>EMA (20)</option><option>EMA (50)</option><option>RSI</option><option>ADX</option><option>ATR</option><option>close</option></select>
+                        <select class="builder-select"><option>crosses above</option><option selected>crosses below</option><option>&gt;</option><option>&lt;</option><option>=</option></select>
+                        <select class="builder-select"><option selected>EMA (50)</option><option>EMA (20)</option><option>value</option></select>
+                        <button class="text-down text-[11px] ml-auto" onclick="this.closest('.flex').remove();updateBuilderCode()">✕</button>
+                      </div>
+                    </div>
+                    <div class="builder-pill mt-2" style="border-style:dashed;display:inline-flex" onclick="addBuilderCondition('b-exit-conditions')">+ Add exit condition</div>
+                  </div>
+                  <!-- Info box -->
+                  <div class="builder-card">
+                    <div class="text-[11px] font-bold text-white mb-1.5 flex items-center gap-1.5">💡 Exit Strategy Note</div>
+                    <div class="text-[11px] text-muted leading-relaxed">FreqTrade exits trades through multiple mechanisms: custom exit signals (above), stoploss, trailing_stop, and minimal_roi (configured in Step 5: Risk). You don't need custom exit signals if your stoploss/ROI config handles exits well. Many profitable strategies rely only on stoploss + trailing_stop.</div>
+                  </div>
+                </div>
+              </div>
+

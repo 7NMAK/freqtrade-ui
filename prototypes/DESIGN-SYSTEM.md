@@ -45,15 +45,15 @@
 | `bg-black` | Sidebar, top bar, dropdown menus |
 | `bg-black/40` | Tab bars, header rows |
 | `bg-black/20` | Sub-headers, secondary thead rows |
-| `bg-surface` | Cards, widget containers |
+| `bg-surface` | Cards, widget containers, **content panels** (wizard body, code preview, strategy grid) |
 | `bg-white/10` | Active nav buttons, active toggle |
 | `bg-white/[0.04]` | Table row hover |
 | `bg-white/[0.015]` | Alternating table row stripe |
 | `bg-white/6` | Subtle button hover |
 | `bg-white/8` | Sidebar toggle hover |
 | `bg-white/[0.02]` | Faint table row background |
-| `bg-white/[0.03]` | Drawer section background |
-| `bg-white/[0.06]` | Dropdown separator line |
+| `bg-white/[0.03]` | Drawer section background, strategy card rest bg |
+| `bg-white/[0.06]` | Dropdown separator line, builder card bg, strategy card hover bg |
 | `bg-up/5` | Profit cell highlight |
 | `bg-up/15` | Active profit toggle (Abs $) |
 | `bg-down/5` | Loss cell highlight |
@@ -88,8 +88,8 @@
 | `#0C0C0C` | Surface/cards |
 | `#060606` | Darkest card background (rare) |
 | `#1A0000` | Danger card tint (stopped bot bg) |
-| `#1a1a1a` | Bot control buttons, action menu buttons |
-| `#151515` | Action dropdown panel background |
+| `#1a1a1a` | Bot control buttons, action menu buttons, **builder input/select bg** |
+| `#151515` | Action dropdown panel background, **custom dropdown options panel bg** |
 | `#2a2a2a` | Button hover background |
 | `#22c55e` | Profit green (up) |
 | `#ef4444` | Loss red (down) |
@@ -390,14 +390,14 @@ Grid overlay:       .l-grid class, opacity-20
 ```
 LAYOUT MODES:
   Fleet row (bot list):  p-4 l-b (flat row inside shared container, border-bottom)
-  Grid card (strategy):  l-bd rounded-md (individual card in CSS grid, border all sides)
+  Grid card (strategy):  .strat-card rounded-md (uses .strat-card CSS for bg/border/hover)
 
 SHARED TOKENS (MUST be identical in both modes):
-  Background:  NO background on the card itself (transparent/inherit)
-  Hover:       hover:bg-white/[0.03] transition-colors
+  Background:  Fleet rows: transparent. Strategy grid: .strat-card CSS (see §7.19)
+  Hover:       Fleet: hover:bg-white/[0.03]. Strategy: .strat-card:hover CSS (see §7.19)
   Cursor:      group cursor-pointer
   ⚠ DO NOT USE bg-surface on individual cards
-  ⚠ DO NOT USE hover:border-white/22, hover:-translate-y, shadow-xl per-card
+  ⚠ DO NOT USE hover:-translate-y, shadow-xl per-card
   ⚠ Cards MUST be dark at rest, lighten on hover (dark → light)
   ⚠ NEVER light at rest darkening on hover (light → dark is WRONG)
 
@@ -444,6 +444,125 @@ BACKTEST:  bg-blue-500/12 text-blue-400 border border-blue-500/25
 AI_TESTED: bg-purple-500/12 text-purple-400 border border-purple-500/25
 DRAFT:     bg-white/5 text-muted border border-white/10
 RETIRED:   bg-down/12 text-down border border-down/25 (card opacity-50)
+```
+
+### 7.17 Custom Dropdown (replaces native `<select>`)
+
+> **RULE**: All `<select>` elements in forms MUST be converted to custom dropdowns using `initCustomSelects()`. Native browser dropdowns are NOT allowed.
+
+```
+Wrapper:     .custom-select — position: relative; display: inline-block
+Trigger:     .custom-select-trigger
+             height: 36px; padding: 0 32px 0 10px; border-radius: 6px
+             border: 1px solid rgba(255,255,255,0.22)
+             background: #1a1a1a; color: #F5F5F5
+             font: 12px 'JetBrains Mono', monospace
+             ::after pseudo — '▾' arrow, right: 10px, color: #9CA3AF
+             :hover — border-color: rgba(255,255,255,0.30)
+Small:       .custom-select-trigger.sm — height: 28px, font-size: 11px
+Options:     .custom-select-options
+             background: #151515; border: 1px solid rgba(255,255,255,0.15)
+             border-radius: 8px; padding: 4px; z-index: 40
+             box-shadow: 0 8px 30px rgba(0,0,0,0.6)
+             max-height: 240px; overflow-y: auto
+             .open class to show; animation: fadeIn 0.12s
+             .up class flips above trigger (viewport-aware)
+Option:      .custom-select-option
+             padding: 7px 10px; font: 12px JetBrains Mono; color: #d4d4d8
+             border-radius: 5px; :hover bg: rgba(255,255,255,0.08)
+             .active — bg: rgba(255,255,255,0.10); font-weight: 600
+             .sm — padding: 5px 8px; font-size: 11px
+Behavior:    Click trigger to toggle; click option to select + close
+             Click outside closes all open dropdowns
+             Viewport-aware: flips .up when near bottom
+Init:        initCustomSelects() — converts all select.builder-select
+             Called on: page load, step navigation, deploy modal open
+```
+
+### 7.18 Builder Form Controls
+
+> **RULE**: All builder form elements use these specific tokens for readability on `bg-surface`.
+
+```
+.builder-input:
+  height: 36px; padding: 0 12px; border-radius: 6px
+  border: 1px solid rgba(255,255,255,0.22)
+  background: #1a1a1a; color: #F5F5F5
+  font: 12px 'JetBrains Mono', monospace
+  :focus — border-color: rgba(255,255,255,0.30)
+  ::placeholder — color: #9CA3AF (WCAG 7.7:1 on #1a1a1a)
+
+.builder-select:
+  Same as .builder-input but with cursor: pointer
+  -webkit-appearance: none; appearance: none
+  ⚠ Visually hidden — replaced by .custom-select-trigger at runtime
+
+.builder-num-input:
+  width: 80px; height: 32px; text-align: center
+  Same border/bg/font as .builder-input
+
+.builder-label:
+  font-size: 11px; color: #9CA3AF
+  text-transform: uppercase; letter-spacing: 0.08em
+  font-weight: 700; margin-bottom: 6px
+  ⚠ MUST be 11px (not 10px) for readability
+
+.builder-card:
+  background: rgba(255,255,255,0.06)
+  border: 1px solid rgba(255,255,255,0.18)
+  border-radius: 6px; padding: 16px
+  ⚠ Uses 0.06/0.18 (not 0.02/0.10) for contrast on bg-surface
+
+.builder-pill:
+  padding: 6px 14px; border-radius: 8px
+  border: 1px solid rgba(255,255,255,0.18)
+  font-size: 11px; color: #9CA3AF
+  :hover — border-color: rgba(255,255,255,0.22); color: #F5F5F5
+  .selected — border: rgba(255,255,255,0.25); bg: rgba(255,255,255,0.08); color: #F5F5F5
+
+.builder-toggle:
+  width: 36px; height: 20px; border-radius: 10px
+  background: rgba(255,255,255,0.10)
+  .on — bg: rgba(34,197,94,0.12); dot bg: #22c55e; dot position: left: 18px
+
+.builder-cb-section:
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 6px
+  .enabled — border: rgba(255,255,255,0.22); bg: rgba(255,255,255,0.03)
+  .expanded.enabled .cb-body — display: block
+```
+
+### 7.19 Strategy Card CSS
+
+> **RULE**: Strategy grid cards use `.strat-card` class instead of `l-bd` for enhanced contrast on `bg-surface`.
+
+```css
+.strat-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.strat-card:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.20);
+}
+```
+⚠ Still follows dark→light hover rule (§7.15)
+⚠ Container (`strat-cards-container`) MUST have `bg-surface` for contrast
+
+### 7.20 Content Panel Background
+
+> **RULE**: Scrollable content areas within split-pane layouts MUST use `bg-surface` to provide contrast for nested form elements.
+
+```
+Applies to:
+  - Builder wizard body (#builder-wizard-body)
+  - Builder code preview (#b-code-preview)
+  - Builder code editor (#b-code-editor)
+  - Strategy grid container (#strat-cards-container)
+
+Pattern:  flex-1 overflow-y-auto p-5 bg-surface
+Reason:   Form elements (inputs, cards, pills) need bg-surface (#0C0C0C) as base
+          to achieve visible contrast with their #1a1a1a backgrounds and 0.22 borders.
+          On bare #000, these elements are nearly invisible (1.1:1 contrast).
 ```
 
 ---
@@ -791,3 +910,4 @@ This Design System defines **visual presentation only**. For API endpoints, data
 | 2026-03-31 | v1.0 — Initial extraction from production prototype |
 | 2026-03-31 | v1.1 — Added 46 missing tokens: hex colors, JS functions, element IDs, icons, API cross-refs |
 | 2026-03-31 | v1.2 — Added §7.15 Entity Card (NO bg-surface on cards, dark→light hover, merged identity+profit row, chart+action wrapper), §7.16 Strategy Lifecycle Badges |
+| 2026-03-31 | v1.3 — Added §7.17 Custom Dropdown, §7.18 Builder Form Controls, §7.19 Strategy Card CSS, §7.20 Content Panel Background. Updated bg-surface usage, hex table, §7.15 strat-card notes |

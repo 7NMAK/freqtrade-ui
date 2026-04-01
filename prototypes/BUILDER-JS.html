@@ -1,0 +1,299 @@
+
+    // ═══════════════ STRATEGY BUILDER JS ═══════════════
+
+    let builderStep = 1;
+    const builderStepLabels = {1:'Basics',2:'Indicators',3:'Entry',4:'Exit',5:'Risk',6:'Callbacks',7:'Config',8:'Review'};
+    const nextLabels = {1:'Next: Indicators →',2:'Next: Entry →',3:'Next: Exit →',4:'Next: Risk →',5:'Next: Callbacks →',6:'Next: Config →',7:'Next: Review →'};
+
+    // Callback definitions (all 19)
+    const callbackDefs = [
+      {key:'bot_start',name:'bot_start',desc:'Called once when the bot starts. Use for one-time initialization.',hasParams:false},
+      {key:'bot_loop_start',name:'bot_loop_start',desc:'Called at the start of every bot iteration (each candle tick).',hasParams:false},
+      {key:'custom_stake_amount',name:'custom_stake_amount',desc:'Customize stake amount per trade. Override default stake_amount.',hasParams:true,paramType:'stake'},
+      {key:'custom_exit',name:'custom_exit',desc:'Custom exit logic on every candle. Return string to exit, empty to hold.',hasParams:false},
+      {key:'custom_stoploss',name:'custom_stoploss',desc:'Dynamic stoploss adjusted based on trade state, profit, time.',hasParams:true,paramType:'stoploss'},
+      {key:'custom_roi',name:'custom_roi',desc:'Custom ROI table generation. Override minimal_roi dynamically.',hasParams:false},
+      {key:'custom_entry_price',name:'custom_entry_price',desc:'Customize entry price for limit orders. Use offset from current.',hasParams:true,paramType:'offset'},
+      {key:'custom_exit_price',name:'custom_exit_price',desc:'Customize exit price for limit orders. Use offset from current.',hasParams:true,paramType:'offset'},
+      {key:'check_entry_timeout',name:'check_entry_timeout',desc:'Called when entry order not filled within timeout. Return True to cancel.',hasParams:true,paramType:'time'},
+      {key:'check_exit_timeout',name:'check_exit_timeout',desc:'Called when exit order not filled within timeout. Return True to cancel.',hasParams:true,paramType:'time'},
+      {key:'confirm_trade_entry',name:'confirm_trade_entry',desc:'Called before placing entry order. Return False to abort entry.',hasParams:false},
+      {key:'confirm_trade_exit',name:'confirm_trade_exit',desc:'Called before placing exit order. Return False to abort exit.',hasParams:false},
+      {key:'adjust_trade_position',name:'adjust_trade_position',desc:'DCA / position adjustment. Return positive to increase, negative to decrease.',hasParams:true,paramType:'dca'},
+      {key:'adjust_order_price',name:'adjust_order_price',desc:'Called for open orders every iteration. Return new price or None.',hasParams:false},
+      {key:'leverage',name:'leverage',desc:'Return leverage for a given trade. Called when opening in futures mode.',hasParams:true,paramType:'leverage'},
+      {key:'order_filled',name:'order_filled',desc:'Called when an order is filled. Use for notifications or logging.',hasParams:false},
+      {key:'adjust_entry_price',name:'adjust_entry_price',desc:'Return updated entry price or None to cancel open entry orders.',hasParams:false},
+      {key:'adjust_exit_price',name:'adjust_exit_price',desc:'Return updated exit price or None to cancel open exit orders.',hasParams:false},
+      {key:'plot_annotations',name:'plot_annotations',desc:'Return plot annotations for visual debugging in FreqUI.',hasParams:false}
+    ];
+    const enabledCallbacks = {};
+    callbackDefs.forEach(cb => enabledCallbacks[cb.key] = false);
+
+    function initBuilderCallbacks() {
+      const container = document.getElementById('b-callbacks-list');
+      if (!container || container.children.length > 0) return;
+      callbackDefs.forEach(cb => {
+        let paramHTML = '';
+        if (cb.paramType === 'stake') paramHTML = `<div class="mt-2 flex gap-2"><button class="builder-pill selected" style="font-size:10px">Fixed Amount</button><button class="builder-pill" style="font-size:10px">% of Balance</button><button class="builder-pill" style="font-size:10px">Kelly Criterion</button></div><div class="flex items-center gap-2 mt-2"><span class="text-[10px] text-muted">Amount:</span><input type="number" class="builder-num-input" value="100"><span class="text-[10px] text-muted">USDT</span></div>`;
+        else if (cb.paramType === 'stoploss') paramHTML = `<div class="mt-2 flex gap-2"><button class="builder-pill" style="font-size:10px">Time-Based</button><button class="builder-pill selected" style="font-size:10px">Profit-Based</button><button class="builder-pill" style="font-size:10px">ATR-Based</button></div><div class="text-[10px] text-muted mt-2 leading-snug">Locks in profit as it grows: 5% default, then 3% at 5% profit, then 2% at 10% profit.</div>`;
+        else if (cb.paramType === 'offset') paramHTML = `<div class="flex items-center gap-2 mt-2"><span class="text-[10px] text-muted">${cb.key.includes('entry')?'Entry':'Exit'} offset:</span><input type="number" class="builder-num-input" value="0.002" step="0.001"><span class="text-[10px] text-muted">(0.2%)</span></div>`;
+        else if (cb.paramType === 'time') paramHTML = `<div class="flex items-center gap-2 mt-2"><span class="text-[10px] text-muted">Cancel after:</span><input type="number" class="builder-num-input" value="30" step="5" min="1"><span class="text-[10px] text-muted">minutes</span></div>`;
+        else if (cb.paramType === 'dca') paramHTML = `<div class="flex items-center gap-4 mt-2"><div class="flex items-center gap-2"><span class="text-[10px] text-muted">DCA levels:</span><input type="number" class="builder-num-input" style="width:60px" value="3" min="1" max="10"></div><div class="flex items-center gap-2"><span class="text-[10px] text-muted">Multiplier:</span><input type="number" class="builder-num-input" style="width:60px" value="1.5" step="0.1" min="1"><span class="text-[10px] text-muted">x</span></div></div><div class="text-[10px] text-muted leading-snug mt-1">Adds to position when loss exceeds 5% per level.</div>`;
+        else if (cb.paramType === 'leverage') paramHTML = `<div class="mt-2 flex gap-2"><button class="builder-pill selected" style="font-size:10px">Fixed</button><button class="builder-pill" style="font-size:10px">Dynamic (ATR-based)</button></div><div class="flex items-center gap-2 mt-2"><span class="text-[10px] text-muted">Leverage:</span><input type="number" class="builder-num-input" style="width:60px" value="10" min="1" max="125"><span class="text-[10px] text-muted">x</span></div>`;
+
+        const div = document.createElement('div');
+        div.className = 'builder-cb-section';
+        div.setAttribute('data-cb', cb.key);
+        div.innerHTML = `<div class="flex items-center gap-3 px-4 py-3 cursor-pointer select-none" onclick="toggleCbExpand(this.parentElement)"><span class="builder-collapse-arrow">▶</span><div class="flex-1 min-w-0"><div class="text-[11px] font-bold text-white font-mono">${cb.name}()</div><div class="text-[10px] text-muted leading-snug mt-0.5" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cb.desc}</div></div><div onclick="event.stopPropagation()"><div class="builder-toggle" onclick="toggleCbEnable(this)"><div class="dot"></div></div></div></div>${cb.hasParams ? `<div class="cb-body px-4 pb-3 l-t" style="border-color:rgba(255,255,255,0.05)">${paramHTML}</div>` : `<div class="cb-body px-4 pb-3 l-t" style="border-color:rgba(255,255,255,0.05)"><div class="text-[10px] text-muted leading-snug">${cb.desc}</div></div>`}`;
+        container.appendChild(div);
+      });
+    }
+
+    function toggleCbExpand(section) {
+      section.classList.toggle('expanded');
+      section.querySelector('.builder-collapse-arrow').classList.toggle('open');
+    }
+
+    function toggleCbEnable(toggle) {
+      toggle.classList.toggle('on');
+      const section = toggle.closest('.builder-cb-section');
+      const key = section.getAttribute('data-cb');
+      enabledCallbacks[key] = toggle.classList.contains('on');
+      section.classList.toggle('enabled', enabledCallbacks[key]);
+      const count = Object.values(enabledCallbacks).filter(Boolean).length;
+      const el = document.getElementById('b-cb-count');
+      if (el) el.textContent = `${count} of 19 callbacks enabled`;
+      updateBuilderCode();
+    }
+
+    function disableAllCallbacks() {
+      document.querySelectorAll('.builder-cb-section').forEach(s => {
+        s.classList.remove('enabled','expanded');
+        const t = s.querySelector('.builder-toggle');
+        if (t) t.classList.remove('on');
+        s.querySelector('.builder-collapse-arrow').classList.remove('open');
+        enabledCallbacks[s.getAttribute('data-cb')] = false;
+      });
+      const el = document.getElementById('b-cb-count');
+      if (el) el.textContent = '0 of 19 callbacks enabled';
+      updateBuilderCode();
+    }
+
+    function goBuilderStep(n) {
+      builderStep = n;
+      // Update panels
+      document.querySelectorAll('.builder-step-panel').forEach(p => p.classList.remove('active'));
+      const panel = document.getElementById('builder-panel-' + n);
+      if (panel) panel.classList.add('active');
+      // Update step bar
+      for (let i = 1; i <= 8; i++) {
+        const num = document.getElementById('bstep-' + i);
+        const label = document.getElementById('bstep-label-' + i);
+        if (!num) continue;
+        num.className = 'builder-step-num';
+        if (i < n) { num.classList.add('done'); num.textContent = '✓'; }
+        else if (i === n) { num.classList.add('active'); num.textContent = i; }
+        else { num.textContent = i; }
+        if (label) { label.className = `text-[11px] font-medium whitespace-nowrap ${i === n ? 'text-white' : i < n ? 'text-up' : 'text-muted'}`; }
+      }
+      // Footer
+      document.getElementById('b-prev-btn').style.visibility = n === 1 ? 'hidden' : 'visible';
+      const nextBtn = document.getElementById('b-next-btn');
+      if (n < 8) { nextBtn.textContent = nextLabels[n]; nextBtn.className = 'h-8 px-4 rounded-md bg-white text-black text-[11px] font-bold hover:bg-white/90 transition-colors flex items-center gap-1.5'; nextBtn.onclick = nextBuilderStep; }
+      else { nextBtn.textContent = 'Save & Backtest →'; nextBtn.style.background = '#22c55e'; nextBtn.className = 'h-8 px-4 rounded-md text-white text-[11px] font-bold hover:opacity-90 transition-colors flex items-center gap-1.5'; nextBtn.style.background='#22c55e'; nextBtn.onclick = () => alert('Strategy saved!'); }
+      // Init callbacks on step 6
+      if (n === 6) initBuilderCallbacks();
+      // Populate review on step 8
+      if (n === 8) populateReview();
+      updateBuilderCode();
+    }
+
+    function nextBuilderStep() { if (builderStep < 8) goBuilderStep(builderStep + 1); }
+    function prevBuilderStep() { if (builderStep > 1) goBuilderStep(builderStep - 1); }
+
+    function toggleBuilderPill(el) {
+      el.classList.toggle('selected');
+      let x = el.querySelector('.pill-x');
+      if (el.classList.contains('selected') && !x) {
+        x = document.createElement('span'); x.className='pill-x text-down font-bold ml-1'; x.textContent='×'; el.appendChild(x);
+      } else if (!el.classList.contains('selected') && x) { x.remove(); }
+      updateBuilderCode();
+    }
+
+    function addBuilderPair() {
+      const input = document.getElementById('b-pair-input');
+      if (!input.value.trim()) return;
+      let pair = input.value.trim().toUpperCase();
+      if (!pair.includes(':')) pair = pair.includes('/') ? `${pair}:USDT` : `${pair}/USDT:USDT`;
+      const container = document.getElementById('b-pairs-container');
+      const pill = document.createElement('div');
+      pill.className = 'builder-pill selected'; pill.onclick = function(){ toggleBuilderPill(this); };
+      pill.innerHTML = `${pair} <span class="pill-x text-down font-bold ml-1">×</span>`;
+      container.insertBefore(pill, container.querySelector('[style*="dashed"]'));
+      input.value = '';
+      document.getElementById('b-add-pair').style.display = 'none';
+      container.querySelector('[style*="dashed"]').style.display = '';
+    }
+
+    function toggleFuturesFields() {
+      const mode = document.getElementById('b-trading-mode').value;
+      const isFutures = mode === 'futures';
+      document.getElementById('b-margin-mode').disabled = !isFutures;
+      document.getElementById('b-leverage').disabled = !isFutures;
+      document.getElementById('b-liq-buffer-row').style.display = isFutures ? 'flex' : 'none';
+    }
+
+    function filterBuilderIndicators() {
+      const q = document.getElementById('b-indicator-search').value.toLowerCase();
+      document.querySelectorAll('.indicator-group').forEach(g => {
+        let anyVisible = false;
+        g.querySelectorAll('.builder-pill').forEach(p => {
+          const name = (p.getAttribute('data-ind') || p.textContent).toLowerCase();
+          const visible = !q || name.includes(q);
+          p.style.display = visible ? '' : 'none';
+          if (visible) anyVisible = true;
+        });
+        g.style.display = anyVisible ? '' : 'none';
+      });
+    }
+
+    function addBuilderCondition(containerId) {
+      const container = document.getElementById(containerId);
+      if (container.children.length > 0) {
+        const and = document.createElement('div');
+        and.className = 'text-[10px] font-bold text-white/50 text-center'; and.textContent = 'AND';
+        container.appendChild(and);
+      }
+      const row = document.createElement('div');
+      row.className = 'flex items-center gap-2 p-3 rounded-md builder-card flex-wrap';
+      row.innerHTML = `<span class="text-[10px] text-muted w-7">AND</span><select class="builder-select"><option>EMA (20)</option><option>EMA (50)</option><option>RSI</option><option>ADX</option><option>ATR</option><option>close</option></select><select class="builder-select"><option>crosses above</option><option>crosses below</option><option selected>&gt;</option><option>&lt;</option><option>=</option></select><input type="number" class="builder-num-input" value="0"><button class="text-down text-[11px] ml-auto" onclick="this.closest('.flex').previousElementSibling?.remove();this.closest('.flex').remove();updateBuilderCode()">✕</button>`;
+      container.appendChild(row);
+    }
+
+    function setBuilderSlType(type, btn) {
+      document.querySelectorAll('#b-sl-type-pills .builder-pill').forEach(p => p.classList.remove('selected'));
+      btn.classList.add('selected');
+      document.getElementById('b-sl-trailing-params').style.display = (type==='trailing'||type==='trailing_offset') ? '' : 'none';
+      document.getElementById('b-sl-custom-info').style.display = type==='custom_callback' ? '' : 'none';
+      document.getElementById('b-sl-exchange-params').style.display = type==='on_exchange' ? '' : 'none';
+      updateBuilderCode();
+    }
+
+    function addRoiRow() {
+      const tbody = document.getElementById('b-roi-table');
+      const tr = document.createElement('tr');
+      tr.className = 'l-b';
+      tr.innerHTML = `<td class="px-3 py-1.5"><input type="number" class="builder-num-input w-full" value="0"></td><td class="px-3 py-1.5"><input type="number" class="builder-num-input w-full" value="0" step="1"></td><td class="px-3 py-1.5 text-[10px] text-muted">New level</td>`;
+      tbody.appendChild(tr);
+    }
+
+    function addInfoPair() {
+      const pair = document.getElementById('b-info-pair-input').value.trim().toUpperCase();
+      if (!pair) return;
+      const tf = document.getElementById('b-info-tf-input').value;
+      const list = document.getElementById('b-info-pairs-list');
+      const div = document.createElement('div');
+      div.className = 'flex items-center gap-2 text-[11px] mb-1.5';
+      div.innerHTML = `<span class="font-mono text-muted">${pair}</span><span class="text-muted">/</span><span class="font-mono text-white/70">${tf}</span><button class="ml-auto text-down text-[10px] hover:underline" onclick="this.parentElement.remove()">remove</button>`;
+      list.appendChild(div);
+      document.getElementById('b-info-pair-input').value = '';
+    }
+
+    function setCodeTab(tab) {
+      document.getElementById('b-code-preview').style.display = tab === 'preview' ? '' : 'none';
+      document.getElementById('b-code-editor').style.display = tab === 'editor' ? '' : 'none';
+      document.getElementById('b-preview-tab').className = `px-2.5 py-1 text-[10px] font-bold rounded transition-all ${tab==='preview'?'bg-white/10 text-white':'text-muted'}`;
+      document.getElementById('b-editor-tab').className = `px-2.5 py-1 text-[10px] font-bold rounded transition-all ${tab==='editor'?'bg-white/10 text-white':'text-muted'}`;
+      if (tab === 'editor') document.getElementById('b-code-textarea').value = document.getElementById('b-code-content').textContent;
+    }
+
+    function setDeployTab(tab) {
+      document.getElementById('deploy-new-content').style.display = tab === 'new' ? '' : 'none';
+      document.getElementById('deploy-existing-content').style.display = tab === 'existing' ? '' : 'none';
+      document.getElementById('deploy-tab-new').className = `h-8 px-4 rounded text-[11px] font-bold ${tab==='new'?'bg-white text-black':'l-bd text-muted hover:text-white transition-colors'}`;
+      document.getElementById('deploy-tab-existing').className = `h-8 px-4 rounded text-[11px] font-bold ${tab==='existing'?'bg-white text-black':'l-bd text-muted hover:text-white transition-colors'}`;
+    }
+
+    function updateBuilderCode() {
+      const name = (document.getElementById('b-strat-name')?.value || 'MyStrategy').replace(/[^a-zA-Z0-9_]/g,'');
+      document.getElementById('b-code-filename').textContent = name + '.py';
+      document.getElementById('deploy-strat-name').textContent = name;
+      const tf = document.getElementById('b-timeframe')?.value || '1h';
+      const sl = document.getElementById('b-stoploss')?.value || '-0.035';
+      const trailing = document.getElementById('b-sl-trailing-params')?.style.display !== 'none';
+      const tp = document.getElementById('b-trailing-pos')?.value || '0.01';
+      const to = document.getElementById('b-trailing-offset')?.value || '0.02';
+      // Collect selected indicators
+      const inds = [];
+      document.querySelectorAll('#builder-panel-2 .builder-pill.selected').forEach(p => {
+        const ind = p.getAttribute('data-ind'); if (ind) inds.push(ind);
+      });
+      const indMap = {'EMA (20)':'df["ema_20"] = ta.EMA(df, timeperiod=20)','EMA (50)':'df["ema_50"] = ta.EMA(df, timeperiod=50)','SMA':'df["sma"] = ta.SMA(df, timeperiod=30)','WMA':'df["wma"] = ta.WMA(df, timeperiod=30)','ADX':'df["adx"] = ta.ADX(df, timeperiod=14)','RSI (14)':'df["rsi"] = ta.RSI(df, timeperiod=14)','MACD':'df["macd"], df["macd_signal"], df["macd_hist"] = ta.MACD(df)','Stochastic':'df["stoch_k"], df["stoch_d"] = ta.STOCH(df)','CCI':'df["cci"] = ta.CCI(df, timeperiod=14)','Williams %R':'df["willr"] = ta.WILLR(df, timeperiod=14)','MFI':'df["mfi"] = ta.MFI(df, timeperiod=14)','Bollinger Bands':'df["bb_upper"], df["bb_mid"], df["bb_lower"] = ta.BBANDS(df, timeperiod=20)','ATR (14)':'df["atr"] = ta.ATR(df, timeperiod=14)','OBV':'df["obv"] = ta.OBV(df)','PSAR':'df["psar"] = ta.SAR(df)','Supertrend':'# Supertrend requires custom implementation','Ichimoku':'# Ichimoku requires custom implementation','Keltner Channel':'# Keltner Channel requires custom implementation','Donchian Channel':'# Donchian Channel requires custom implementation','VWAP':'# VWAP requires custom implementation','Volume SMA':'df["volume_sma"] = ta.SMA(df["volume"], timeperiod=20)','CMF':'# CMF requires custom implementation'};
+      const indLines = inds.map(i => '        ' + (indMap[i]||`# ${i}`)).join('\n');
+      // ROI
+      const roiRows = [];
+      document.querySelectorAll('#b-roi-table tr').forEach(tr => {
+        const inputs = tr.querySelectorAll('input');
+        if (inputs.length >= 2) roiRows.push(`        "${inputs[0].value}": ${(parseFloat(inputs[1].value)/100).toFixed(4)}`);
+      });
+      // Enabled callbacks
+      const cbNames = Object.entries(enabledCallbacks).filter(([,v])=>v).map(([k])=>k);
+
+      let code = `# --- Generated by FreqTrade Strategy Builder ---\n# Strategy: ${name}\n# Generated: ${new Date().toISOString().slice(0,10)}\n\nfrom freqtrade.strategy import IStrategy\nfrom pandas import DataFrame\nimport talib.abstract as ta\n\n\nclass ${name}(IStrategy):\n    """\n    ${document.getElementById('b-description')?.value || 'Strategy generated by FreqTrade Strategy Builder.'}\n    """\n\n    # -- ROI table --\n    minimal_roi = {\n${roiRows.join(',\n')}\n    }\n\n    # -- Stoploss --\n    stoploss = ${sl}\n`;
+      if (trailing) code += `\n    # -- Trailing stop --\n    trailing_stop = True\n    trailing_stop_positive = ${tp}\n    trailing_stop_positive_offset = ${to}\n    trailing_only_offset_is_reached = True\n`;
+      code += `\n    # -- Config --\n    timeframe = "${tf}"\n    can_short = True\n    startup_candle_count = ${document.getElementById('b-startup-candles')?.value || '200'}\n    process_only_new_candles = True\n\n    def populate_indicators(self, df: DataFrame,\n                             metadata: dict) -> DataFrame:\n${indLines || '        pass'}\n\n        return df\n\n    def populate_entry_trend(self, df: DataFrame,\n                              metadata: dict) -> DataFrame:\n        # Long entry\n        df.loc[\n            (df["ema_20"] > df["ema_50"]) &\n            (df["rsi"] < 70) &\n            (df["adx"] > 25),\n            "enter_long"\n        ] = 1\n\n        # Short entry\n        df.loc[\n            (df["ema_20"] < df["ema_50"]) &\n            (df["rsi"] > 30),\n            "enter_short"\n        ] = 1\n\n        return df\n\n    def populate_exit_trend(self, df: DataFrame,\n                             metadata: dict) -> DataFrame:\n        # Exit long\n        df.loc[\n            (df["ema_20"] < df["ema_50"]),\n            "exit_long"\n        ] = 1\n\n        return df\n\n    def leverage(self, pair, current_time,\n                current_rate, proposed_leverage,\n                max_leverage, entry_tag,\n                side, **kwargs) -> float:\n        return ${(document.getElementById('b-leverage')?.value||'10x').replace(/[^0-9]/g,'')}.0\n`;
+      cbNames.forEach(cb => {
+        if (cb === 'leverage') return; // already generated
+        code += `\n    def ${cb}(self, **kwargs):\n        """${(callbackDefs.find(c=>c.key===cb)||{}).desc || cb}"""\n        pass\n`;
+      });
+      code += `\n    @staticmethod\n    def version() -> str:\n        return "${document.getElementById('b-strategy-version')?.value || '1'}"`;
+
+      // Syntax highlight for preview
+      const highlighted = code
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/(#[^\n]*)/g,'<span class="py-cmt">$1</span>')
+        .replace(/"""[\s\S]*?"""/g, m => `<span class="py-str">${m}</span>`)
+        .replace(/"([^"\\]|\\.)*"/g,'<span class="py-str">$&</span>')
+        .replace(/\b(class|def|return|if|elif|else|for|from|import|True|False|None|self|and|or|not|in|is|pass|lambda)\b/g,'<span class="py-kw">$&</span>')
+        .replace(/\b(\d+\.?\d*)\b/g,'<span class="py-num">$&</span>')
+        .replace(/@(\w+)/g,'<span class="py-dec">@$1</span>');
+
+      document.getElementById('b-code-content').innerHTML = highlighted;
+    }
+
+    function copyBuilderCode() {
+      const code = document.getElementById('b-code-content').textContent;
+      navigator.clipboard.writeText(code).then(() => alert('Code copied to clipboard.'));
+    }
+
+    function downloadBuilderCode() {
+      const code = document.getElementById('b-code-content').textContent;
+      const name = document.getElementById('b-strat-name')?.value || 'MyStrategy';
+      const blob = new Blob([code], {type:'text/plain'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name + '.py'; a.click(); URL.revokeObjectURL(a.href);
+    }
+
+    function populateReview() {
+      const name = document.getElementById('b-strat-name')?.value || 'MyStrategy';
+      const rv = (l,v,c) => `<div class="flex justify-between py-0.5 text-[11px]"><span class="text-muted">${l}</span><span class="font-mono font-medium ${c||'text-white'}">${v}</span></div>`;
+      // Basics
+      document.getElementById('b-review-basics').innerHTML = rv('Name',name)+rv('Exchange',document.getElementById('b-exchange')?.value||'')+rv('Timeframe',document.getElementById('b-timeframe')?.value||'')+rv('trading_mode',document.getElementById('b-trading-mode')?.value||'')+rv('Leverage',document.getElementById('b-leverage')?.value||'');
+      // Indicators
+      const inds = []; document.querySelectorAll('#builder-panel-2 .builder-pill.selected').forEach(p=>{const i=p.getAttribute('data-ind');if(i)inds.push(i);});
+      document.getElementById('b-review-ind-count').textContent = inds.length;
+      document.getElementById('b-review-indicators').innerHTML = rv('Selected',inds.join(', '));
+      // Risk
+      document.getElementById('b-review-risk').innerHTML = rv('stoploss',`${(parseFloat(document.getElementById('b-stoploss')?.value||0)*100).toFixed(1)}%`,'text-down')+rv('stake_amount','$'+(document.getElementById('b-stake')?.value||'1000'))+rv('max_open_trades',document.getElementById('b-max-trades')?.value||'3');
+      // Callbacks
+      const cbs = Object.entries(enabledCallbacks).filter(([,v])=>v).map(([k])=>k);
+      document.getElementById('b-review-cb-count').textContent = cbs.length;
+      document.getElementById('b-review-callbacks').innerHTML = cbs.length ? cbs.map(c=>`<div class="text-[11px] text-muted font-mono py-0.5">${c}()</div>`).join('') : '<div class="text-[10px] text-muted">None enabled</div>';
+      // Config
+      document.getElementById('b-review-config').innerHTML = rv('startup_candle_count',document.getElementById('b-startup-candles')?.value||'200')+rv('process_only_new_candles','True')+rv('version',document.getElementById('b-strategy-version')?.value||'1');
+      // Entry
+      document.getElementById('b-review-entry').innerHTML = rv('Conditions','EMA(20) > EMA(50) AND RSI < 70 AND ADX > 25');
+    }
+
+    // Init code preview on page load
+    setTimeout(() => { updateBuilderCode(); }, 200);

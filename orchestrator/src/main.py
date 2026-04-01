@@ -63,6 +63,11 @@ async def lifespan(app: FastAPI):
     app.state.heartbeat.set_kill_switch(app.state.kill_switch)
     heartbeat_task = asyncio.create_task(app.state.heartbeat.run())
 
+    # Start JobRunner (background test job worker)
+    from .services.job_runner import JobRunner
+    app.state.job_runner = JobRunner(app.state.bot_manager)
+    job_runner_task = asyncio.create_task(app.state.job_runner.run())
+
     # Validate AI configuration at startup (enforces weight sum, API key, cost limit)
     if settings.ai_validation_enabled or settings.ai_hyperopt_enabled:
         from .ai_validator.config import AIValidatorConfig
@@ -126,6 +131,15 @@ async def lifespan(app: FastAPI):
         await heartbeat_task
     except asyncio.CancelledError:
         pass
+
+    # Shutdown JobRunner
+    app.state.job_runner.stop()
+    job_runner_task.cancel()
+    try:
+        await job_runner_task
+    except asyncio.CancelledError:
+        pass
+
     await engine.dispose()
 
 
@@ -165,6 +179,10 @@ app.include_router(logs_router, prefix="/api/logs", tags=["logs"], dependencies=
 app.include_router(exchange_profiles_router, prefix="/api/exchange-profiles", tags=["exchange-profiles"], dependencies=[Depends(_auth_dep)])
 app.include_router(backtest_results_router, prefix="/api/backtest-results", tags=["backtest-results"], dependencies=[Depends(_auth_dep)])
 app.include_router(experiments_router, prefix="/api/experiments", tags=["experiments"], dependencies=[Depends(_auth_dep)])
+
+# Jobs (background test queue)
+from .api.jobs import router as jobs_router
+app.include_router(jobs_router, prefix="/api/jobs", tags=["jobs"], dependencies=[Depends(_auth_dep)])
 
 # AI Validation Layer routes
 from .api.ai import router as ai_router

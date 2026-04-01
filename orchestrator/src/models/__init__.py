@@ -7,6 +7,7 @@ from .exchange_profile import ExchangeProfile
 from .backtest_result import BacktestResult
 from .experiment import Experiment
 from .experiment_run import ExperimentRun
+from .test_job import TestJob
 from .risk_event import RiskEvent, KillType, KillTrigger
 from .audit_log import AuditLog
 
@@ -20,5 +21,6 @@ __all__ = [
     "Experiment",
     "ExperimentRun",
     "RiskEvent", "KillType", "KillTrigger",
+    "TestJob",
     "AuditLog",
 ]

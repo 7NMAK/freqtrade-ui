@@ -1059,3 +1059,78 @@ export const launchPaperBot = (params: LaunchPaperParams) =>
     method: "POST",
     body: JSON.stringify(params),
   });
+
+// ── Background Test Jobs ─────────────────────────────────────────────────────
+// Server-side job queue — tests run even if you close the browser
+
+export interface SubmitJobParams {
+  experiment_id: number;
+  bot_id: number;
+  job_type: "backtest" | "hyperopt" | "freqai_matrix";
+  strategy: string;
+  config: Record<string, unknown>;
+  matrix_total?: number;
+}
+
+export interface TestJobStatus {
+  id: number;
+  experiment_id: number;
+  bot_id: number;
+  job_type: string;
+  strategy: string;
+  status: "queued" | "running" | "completed" | "failed" | "cancelled";
+  progress: number;
+  current_step: string | null;
+  total_trades: number | null;
+  profit_pct: number | null;
+  win_rate: number | null;
+  max_drawdown: number | null;
+  sharpe_ratio: number | null;
+  sortino_ratio: number | null;
+  matrix_total: number | null;
+  matrix_completed: number | null;
+  matrix_results: Array<Record<string, unknown>> | null;
+  error_message: string | null;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+export interface TestJobProgress {
+  id: number;
+  status: string;
+  progress: number;
+  current_step: string | null;
+  matrix_completed: number | null;
+  matrix_total: number | null;
+}
+
+export const submitTestJob = (params: SubmitJobParams) =>
+  request<{ id: number; status: string }>("/api/jobs", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+
+export const getTestJob = (jobId: number) =>
+  request<TestJobStatus>(`/api/jobs/${jobId}`);
+
+export const getTestJobProgress = (jobId: number) =>
+  request<TestJobProgress>(`/api/jobs/${jobId}/progress`);
+
+export const cancelTestJob = (jobId: number) =>
+  request<{ detail: string }>(`/api/jobs/${jobId}`, { method: "DELETE" });
+
+export const listTestJobs = (filters?: {
+  experiment_id?: number;
+  bot_id?: number;
+  status?: string;
+  limit?: number;
+}) => {
+  const params = new URLSearchParams();
+  if (filters?.experiment_id) params.set("experiment_id", String(filters.experiment_id));
+  if (filters?.bot_id) params.set("bot_id", String(filters.bot_id));
+  if (filters?.status) params.set("status", filters.status);
+  if (filters?.limit) params.set("limit", String(filters.limit));
+  const qs = params.toString();
+  return request<TestJobStatus[]>(`/api/jobs${qs ? `?${qs}` : ""}`);
+};

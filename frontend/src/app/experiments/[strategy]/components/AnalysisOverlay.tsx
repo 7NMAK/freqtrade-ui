@@ -312,9 +312,9 @@ export default function AnalysisOverlay({ onClose, strategy, experimentId, botId
           {activeView === 'trading_list' && (
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-semibold text-foreground">
+                <div className="text-xs font-semibold text-foreground">
                   Trading List ({trades.length} trades)
-                </h3>
+                </div>
                 <button
                   onClick={() => {
                     const headers = ['trade_id','pair','is_short','stake_amount','open_rate','close_rate','fee_open','fee_close','close_profit_abs','enter_tag','exit_reason'];

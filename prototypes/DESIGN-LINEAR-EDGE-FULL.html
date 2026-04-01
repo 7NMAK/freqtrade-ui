@@ -2268,9 +2268,26 @@
                           <!-- --strategy -->
                           <div><label class="builder-label">Strategy</label><select class="builder-select w-full"><option>AlphaTrend_V5</option><option>TrendFollowerV3</option><option>MeanReversion_V2</option></select></div>
                           <!-- --hyperopt-loss -->
-                          <div><label class="builder-label">Loss Function</label><select class="builder-select w-full"><option>SharpeHyperOptLoss</option><option>SortinoHyperOptLoss</option><option>CalmarHyperOptLoss</option><option>MaxDrawDownHyperOptLoss</option><option>OnlyProfitHyperOptLoss</option><option>ProfitDrawDownHyperOptLoss</option></select></div>
+                          <div class="l-t"><label class="builder-label">Loss Function</label>
+                              <div class="flex flex-wrap gap-1.5 mt-1">
+                                  <button class="builder-pill selected" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">SharpeHyperOptLoss</button>
+                                  <button class="builder-pill" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">SortinoHyperOptLoss</button>
+                                  <button class="builder-pill" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">CalmarHyperOptLoss</button>
+                                  <button class="builder-pill" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">MaxDrawDownHyperOptLoss</button>
+                                  <button class="builder-pill" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">OnlyProfitHyperOptLoss</button>
+                                  <button class="builder-pill" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">ProfitDrawDownHyperOptLoss</button>
+                              </div>
+                          </div>
                           <!-- --sampler -->
-                          <div><label class="builder-label">Sampler</label><select class="builder-select w-full"><option>TPESampler (default)</option><option>RandomSampler</option><option>CmaEsSampler</option><option>NSGAIISampler</option><option>QMCSampler</option></select></div>
+                          <div class="l-t pt-3"><label class="builder-label">Sampler</label>
+                              <div class="flex flex-wrap gap-1.5 mt-1">
+                                  <button class="builder-pill selected" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">TPESampler</button>
+                                  <button class="builder-pill" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">RandomSampler</button>
+                                  <button class="builder-pill" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">CmaEsSampler</button>
+                                  <button class="builder-pill" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">NSGAIISampler</button>
+                                  <button class="builder-pill" onclick="this.parentNode.querySelectorAll('.builder-pill').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">QMCSampler</button>
+                              </div>
+                          </div>
                           <!-- --epochs / --min-trades -->
                           <div class="flex gap-2">
                              <div class="flex-1"><label class="builder-label">Epochs</label><input type="number" class="builder-input w-full" value="200"></div>
@@ -2537,38 +2554,38 @@
                   <div class="w-[300px] flex flex-col gap-0 bg-surface l-bd rounded shrink-0 h-full overflow-y-auto">
                       <div class="px-4 py-3 l-b shrink-0"><h3 class="section-title">FreqAI Configuration</h3></div>
                       <div class="p-3 flex flex-col gap-3 text-[11px] flex-1">
-                          <div><div class="kpi-label mb-1">Source HO Epoch</div><select class="w-full bg-surface l-bd px-2 py-1.5 text-white appearance-none rounded text-[11px] font-mono"><option>HO #147 — Sharpe — +42.12%</option><option>HO #92 — Sortino — +38.40%</option></select></div>
+                          <div><label class="builder-label">Source HO Epoch</label><select class="builder-select w-full"><option>HO #147 — Sharpe — +42.12%</option><option>HO #92 — Sortino — +38.40%</option></select></div>
                           <div class="flex gap-2">
-                             <div class="flex-1"><div class="kpi-label mb-1">Train Start</div><input type="date" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="2022-01-01"></div>
-                             <div class="flex-1"><div class="kpi-label mb-1">Train End</div><input type="date" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="2023-06-30"></div>
+                             <div class="flex-1"><label class="builder-label">Train Start</label><input type="date" class="builder-input w-full" value="2022-01-01"></div>
+                             <div class="flex-1"><label class="builder-label">Train End</label><input type="date" class="builder-input w-full" value="2023-06-30"></div>
                           </div>
                           <div class="flex gap-2">
-                             <div class="flex-1"><div class="kpi-label mb-1">BT Start</div><input type="date" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="2023-07-01"></div>
-                             <div class="flex-1"><div class="kpi-label mb-1">BT End</div><input type="date" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="2024-01-01"></div>
+                             <div class="flex-1"><label class="builder-label">BT Start</label><input type="date" class="builder-input w-full" value="2023-07-01"></div>
+                             <div class="flex-1"><label class="builder-label">BT End</label><input type="date" class="builder-input w-full" value="2024-01-01"></div>
                           </div>
                           <div class="flex gap-2">
-                             <div class="flex-1"><div class="kpi-label mb-1">Feature Period</div><input type="number" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="20"></div>
-                             <div class="flex-1"><div class="kpi-label mb-1">Label Period</div><input type="number" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="24"></div>
+                             <div class="flex-1"><label class="builder-label">Feature Period</label><input type="number" class="builder-input w-full" value="20"></div>
+                             <div class="flex-1"><label class="builder-label">Label Period</label><input type="number" class="builder-input w-full" value="24"></div>
                           </div>
                           <!-- ML Models -->
-                          <div class="l-t pt-3"><div class="kpi-label mb-1.5">ML Models</div>
-                              <div class="flex flex-col gap-1.5">
-                                  <label class="flex items-center justify-between text-muted cursor-pointer"><span>LightGBM-Regressor</span><input type="checkbox" checked class="accent-[#22c55e] w-3.5 h-3.5"></label>
-                                  <label class="flex items-center justify-between text-muted cursor-pointer"><span>XGBoost-Regressor</span><input type="checkbox" checked class="accent-[#22c55e] w-3.5 h-3.5"></label>
-                                  <label class="flex items-center justify-between text-muted cursor-pointer"><span>CatBoost-Regressor</span><input type="checkbox" class="accent-[#22c55e] w-3.5 h-3.5"></label>
-                                  <label class="flex items-center justify-between text-muted cursor-pointer"><span>LightGBM-Classifier</span><input type="checkbox" class="accent-[#22c55e] w-3.5 h-3.5"></label>
+                          <div class="l-t pt-3"><label class="builder-label">ML Models</label>
+                              <div class="flex flex-col gap-2.5">
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">LightGBM-Regressor</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">XGBoost-Regressor</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">CatBoost-Regressor</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">LightGBM-Classifier</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
                               </div>
                           </div>
                           <!-- Outlier Detection -->
-                          <div class="l-t pt-3"><div class="kpi-label mb-1.5">Outlier Detection</div>
+                          <div class="l-t pt-3"><label class="builder-label">Outlier Detection</label>
                               <div class="flex gap-2 mb-2">
-                                <div class="flex-1"><div class="text-muted text-[10px] mb-0.5">Method</div><select class="w-full bg-surface l-bd px-2 py-1.5 text-white appearance-none rounded text-[11px] font-mono"><option>DI</option><option>SVM</option><option>None</option></select></div>
-                                <div class="flex-1"><div class="text-muted text-[10px] mb-0.5">DI Threshold</div><input type="number" step="0.1" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="0.9"></div>
+                                <div class="flex-1"><label class="builder-label">Method</label><select class="builder-select w-full"><option>DI</option><option>SVM</option><option>None</option></select></div>
+                                <div class="flex-1"><label class="builder-label">DI Threshold</label><input type="number" step="0.1" class="builder-input w-full" value="0.9"></div>
                               </div>
-                              <div class="flex flex-col gap-1.5">
-                                  <label class="flex items-center justify-between text-muted cursor-pointer"><span>Use PCA</span><input type="checkbox" class="accent-[#22c55e] w-3.5 h-3.5"></label>
-                                  <label class="flex items-center justify-between text-muted cursor-pointer"><span>Add Noise</span><input type="checkbox" checked class="accent-[#22c55e] w-3.5 h-3.5"></label>
-                                  <label class="flex items-center justify-between text-muted cursor-pointer"><span>Correlated Pairs</span><input type="checkbox" checked class="accent-[#22c55e] w-3.5 h-3.5"></label>
+                              <div class="flex flex-col gap-2.5 mt-2">
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Use PCA</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Add Noise</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Correlated Pairs</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
                               </div>
                           </div>
                           <!-- Advanced -->
@@ -2576,16 +2593,41 @@
                               <div class="flex justify-between"><span class="text-muted">Matrix Total</span><span class="text-white font-bold">8 runs</span></div>
                               <div class="flex justify-between"><span class="text-muted">Est. Time</span><span class="text-muted">~2h 30m</span></div>
                           </div>
-                          <button class="w-full py-2 text-[11px] font-bold uppercase tracking-wider bg-white text-black rounded hover:bg-white/85 transition-colors">▶ Run Matrix (8)</button>
+                          <div class="flex gap-1.5 l-t pt-3">
+                              <button class="flex-1 py-2 text-[11px] font-bold uppercase tracking-wider bg-white text-black rounded hover:bg-white/85 transition-colors" title="Start FreqAI matrix run">▶ Run Matrix (8)</button>
+                              <button class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider l-bd rounded text-down hover:bg-down/10 transition-colors" title="Stop running">⏹</button>
+                          </div>
+                          <!-- Progress (inline in scroll) -->
+                          <div class="l-t pt-3">
+                              <div class="flex justify-between text-[11px] font-mono mb-1.5"><span class="text-muted">Progress</span><span class="text-white font-bold">5/8 runs complete</span></div>
+                              <div class="w-full h-1.5 bg-white/10 rounded-full"><div class="h-full bg-up rounded-full transition-all" style="width: 62.5%"></div></div>
+                          </div>
+                          <!-- Terminal Output (inline, scrolls with config) -->
+                          <div class="l-t pt-3">
+                              <label class="builder-label">Terminal Output</label>
+                              <div class="mt-1 bg-black rounded p-3 font-mono text-[10px] text-muted leading-relaxed l-bd max-h-[300px] overflow-y-auto">
+                                  <div>14:10:02 INFO  Loading FreqAI configuration...</div>
+                                  <div>14:10:03 INFO  Source: HO #147 (SharpeHyperOptLoss)</div>
+                                  <div>14:10:04 INFO  Models: LightGBM-R, XGBoost-R</div>
+                                  <div>14:10:05 INFO  Outlier: DI (threshold=0.9), Noise=On</div>
+                                  <div>14:10:06 INFO  Matrix: 8 total runs</div>
+                                  <div>14:10:08 INFO  [1/8] LightGBM-R · DI · NoPCA · Noise — training...</div>
+                                  <div class="text-white">14:12:30 INFO  [1/8] Complete — profit: +52.4%, trades: 156</div>
+                                  <div>14:12:31 INFO  [2/8] XGBoost-R · DI · NoPCA · Noise — training...</div>
+                                  <div class="text-white">14:15:10 INFO  [2/8] Complete — profit: +48.1%, trades: 142</div>
+                                  <div>14:15:11 INFO  [3/8] LightGBM-R · SVM · NoPCA · Noise — training...</div>
+                                  <div class="text-white">14:18:22 INFO  [3/8] Complete — profit: +44.8%, trades: 130</div>
+                                  <div>14:18:23 INFO  [4/8] XGBoost-R · SVM · NoPCA · Noise — training...</div>
+                                  <div class="text-up">14:21:45 INFO  [4/8] Complete — profit: +40.2%, trades: 118</div>
+                                  <div>14:21:46 INFO  [5/8] LightGBM-R · DI · PCA · Noise — training...</div>
+                                  <div class="text-white">14:25:10 INFO  [5/8] Complete — profit: +38.9%, trades: 112</div>
+                              </div>
+                          </div>
                       </div>
                   </div>
                   <!-- ■ RESULTS PANEL (Right) -->
                   <div class="flex-1 flex flex-col gap-3 min-w-0 overflow-y-auto pr-1">
-                      <!-- Progress -->
-                      <div class="bg-surface l-bd rounded p-3">
-                          <div class="flex justify-between text-[11px] font-mono mb-1.5"><span class="text-muted">Progress</span><span class="text-white font-bold">5/8 runs complete</span></div>
-                          <div class="w-full h-1.5 bg-white/10 rounded-full"><div class="h-full bg-up rounded-full transition-all" style="width: 62.5%"></div></div>
-                      </div>
+
                       <!-- Best Result Card -->
                       <h3 class="section-title">Best Result</h3>
                       <div class="bg-surface l-bd rounded p-3 border-l-2 border-l-up">
@@ -2683,21 +2725,21 @@
                       <div class="bg-surface l-bd rounded p-3 text-[11px] font-mono space-y-2">
                           <div class="kpi-label mb-2">Source & Period</div>
                           <div><div class="text-muted text-[10px] mb-0.5">Source Test</div><select class="w-full bg-surface l-bd px-2 py-1.5 text-white appearance-none rounded text-[11px] font-mono"><option>BT #1 — +42.12%, HO #147</option><option>BT #2 — +21.4%</option></select></div>
-                          <div><div class="text-muted text-[10px] mb-0.5">Verification Name</div><input type="text" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="OOS verify BT #1"></div>
+                          <div><div class="text-muted text-[10px] mb-0.5">Verification Name</div><input type="text" class="builder-input w-full" value="OOS verify BT #1"></div>
                           <div class="flex gap-2">
-                             <div class="flex-1"><div class="text-muted text-[10px] mb-0.5">OOS Start</div><input type="date" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="2025-01-01"></div>
-                             <div class="flex-1"><div class="text-muted text-[10px] mb-0.5">OOS End</div><input type="date" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="2025-06-01"></div>
+                             <div class="flex-1"><div class="text-muted text-[10px] mb-0.5">OOS Start</div><input type="date" class="builder-input w-full" value="2025-01-01"></div>
+                             <div class="flex-1"><div class="text-muted text-[10px] mb-0.5">OOS End</div><input type="date" class="builder-input w-full" value="2025-06-01"></div>
                           </div>
                       </div>
                       <div class="bg-surface l-bd rounded p-3 text-[11px] font-mono space-y-2">
                           <div class="kpi-label mb-2">Pass/Fail Thresholds</div>
                           <div class="flex gap-2">
-                             <div class="flex-1"><div class="text-muted text-[10px] mb-0.5">Min Profit %</div><input type="number" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="70"></div>
-                             <div class="flex-1"><div class="text-muted text-[10px] mb-0.5">Max DD %</div><input type="number" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="150"></div>
+                             <div class="flex-1"><div class="text-muted text-[10px] mb-0.5">Min Profit %</div><input type="number" class="builder-input w-full" value="70"></div>
+                             <div class="flex-1"><div class="text-muted text-[10px] mb-0.5">Max DD %</div><input type="number" class="builder-input w-full" value="150"></div>
                           </div>
                           <div class="flex gap-2">
-                             <div class="flex-1"><div class="text-muted text-[10px] mb-0.5">Min Trades %</div><input type="number" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="50"></div>
-                             <div class="flex-1"><div class="text-muted text-[10px] mb-0.5">Min Win Rate %</div><input type="number" class="w-full bg-surface l-bd px-2 py-1.5 text-white outline-none rounded text-[11px] font-mono" value="50"></div>
+                             <div class="flex-1"><div class="text-muted text-[10px] mb-0.5">Min Trades %</div><input type="number" class="builder-input w-full" value="50"></div>
+                             <div class="flex-1"><div class="text-muted text-[10px] mb-0.5">Min Win Rate %</div><input type="number" class="builder-input w-full" value="50"></div>
                           </div>
                       </div>
                   </div>

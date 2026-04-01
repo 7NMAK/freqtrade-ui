@@ -188,6 +188,10 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
   const [sortBy, setSortBy] = useState<SortKey>("sharpe");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
+  // ── Pagination ─────────────────────────────────────────────────────
+  const resultsPerPage = 25;
+  const [resultsPage, setResultsPage] = useState(1);
+
   // ── Hyperopt options ──────────────────────────────────────────────
   const [hyperoptOptions, setHyperoptOptions] = useState<Array<{ id: number; label: string }>>([]);
 
@@ -913,11 +917,28 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
         })()}
 
         {/* Results Master Table */}
-        {sortedResults.length > 0 ? (
+        {sortedResults.length > 0 ? (() => {
+          const totalResPages = Math.ceil(sortedResults.length / resultsPerPage);
+          const pagedResults = sortedResults.slice((resultsPage - 1) * resultsPerPage, resultsPage * resultsPerPage);
+          const aiTestId = (() => {
+            try {
+              const d = new Date(sortedResults[0]?.startedAt || Date.now());
+              return `AI-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;
+            } catch { return 'AI-unknown'; }
+          })();
+          return (
           <div className="bg-card border border-border rounded-card overflow-hidden">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <span className="text-xs font-semibold text-foreground">FreqAI Results ({sortedResults.length})</span>
-              <button onClick={() => { setResults([]); try { localStorage.removeItem(RESULTS_KEY); } catch {} toast.info("Results cleared"); }} className="text-[10px] text-muted-foreground hover:text-rose-400 transition">Clear All</button>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono px-1.5 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded">{aiTestId}</span>
+                <span className="text-xs font-semibold text-foreground">FreqAI Results ({sortedResults.length})</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className={`text-lg font-bold tabular-nums ${(sortedResults[0]?.profitPct ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {(sortedResults[0]?.profitPct ?? 0) >= 0 ? '+' : ''}{(sortedResults[0]?.profitPct ?? 0).toFixed(2)}%
+                </div>
+                <button onClick={() => { setResults([]); setResultsPage(1); try { localStorage.removeItem(RESULTS_KEY); } catch {} toast.info("Results cleared"); }} className="text-[10px] text-muted-foreground hover:text-rose-400 transition">Clear All</button>
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-xs whitespace-nowrap">
@@ -938,9 +959,11 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedResults.map((r, idx) => (
-                    <tr key={r.id} className={`border-t border-border hover:bg-muted/20 ${idx === 0 ? "bg-emerald-500/5" : ""}`}>
-                      <td className="px-3 py-2 tabular-nums text-muted-foreground">{idx === 0 ? "★" : ""}{r.id}</td>
+                  {pagedResults.map((r, idx) => {
+                    const globalIdx = (resultsPage - 1) * resultsPerPage + idx;
+                    return (
+                    <tr key={r.id} className={`border-t border-border hover:bg-muted/20 ${globalIdx === 0 ? "bg-emerald-500/5" : ""}`}>
+                      <td className="px-3 py-2 tabular-nums text-muted-foreground">{globalIdx === 0 ? <span className="text-amber-400">★</span> : globalIdx + 1}</td>
                       <td className="px-3 py-2 font-medium text-foreground">{r.model.replace("Regressor", "Reg").replace("Classifier", "Cls")}</td>
                       <td className="px-3 py-2 text-muted-foreground">{r.outlier}</td>
                       <td className="px-3 py-2 text-center">{r.pca ? <span className="text-emerald-400">On</span> : <span className="text-muted-foreground">Off</span>}</td>
@@ -960,12 +983,27 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
+            {totalResPages > 1 && (
+              <div className="flex items-center justify-between px-3 py-2 border-t border-border bg-muted/30">
+                <span className="text-xs text-muted-foreground">
+                  Showing {(resultsPage - 1) * resultsPerPage + 1}-{Math.min(resultsPage * resultsPerPage, sortedResults.length)} of {sortedResults.length}
+                </span>
+                <div className="flex gap-1">
+                  <button onClick={() => setResultsPage(p => Math.max(1, p - 1))} disabled={resultsPage === 1}
+                    className="px-2 py-1 text-xs border border-border rounded bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all">← Prev</button>
+                  <button onClick={() => setResultsPage(p => Math.min(totalResPages, p + 1))} disabled={resultsPage === totalResPages}
+                    className="px-2 py-1 text-xs border border-border rounded bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all">Next →</button>
+                </div>
+              </div>
+            )}
           </div>
-        ) : (
+          );
+        })()) : (
           <div className={`${SECTION_CARD} flex flex-col items-center justify-center min-h-[400px]`}>
             <div className="text-[32px] mb-3 opacity-30">🧠</div>
             <div className="text-sm font-semibold text-muted-foreground mb-1">No FreqAI results yet</div>
@@ -974,6 +1012,71 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
             </div>
           </div>
         )}
+
+        {/* ── FreqAI History ── */}
+        {results.length > 0 && (() => {
+          // Group results by date (matrix run = same day batch)
+          const grouped = new Map<string, FreqAIResult[]>();
+          for (const r of results) {
+            const d = r.startedAt ? new Date(r.startedAt) : new Date();
+            const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+            if (!grouped.has(key)) grouped.set(key, []);
+            grouped.get(key)!.push(r);
+          }
+          const batches = Array.from(grouped.entries())
+            .map(([dateStr, items]) => {
+              const best = [...items].sort((a, b) => b.profitPct - a.profitPct)[0];
+              const d = new Date(items[0].startedAt || Date.now());
+              const batchId = `AI-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;
+              return { batchId, dateStr, items, best, totalTrades: items.reduce((s, r) => s + r.trades, 0) };
+            })
+            .sort((a, b) => b.dateStr.localeCompare(a.dateStr));
+
+          if (batches.length <= 1) return null; // Only show when there's actual history (>1 batch)
+          return (
+            <div>
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                FreqAI History ({batches.length} runs)
+              </div>
+              <div className="border border-border rounded-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-muted/50 text-muted-foreground">
+                        <th className="text-center px-3 py-2 font-semibold w-[32px]">#</th>
+                        <th className="text-left px-3 py-2 font-semibold w-[90px]">ID</th>
+                        <th className="text-left px-3 py-2 font-semibold">Run Date</th>
+                        <th className="text-right px-3 py-2 font-semibold">Models</th>
+                        <th className="text-right px-3 py-2 font-semibold">Trades</th>
+                        <th className="text-right px-3 py-2 font-semibold">Best Profit</th>
+                        <th className="text-right px-3 py-2 font-semibold">Win Rate</th>
+                        <th className="text-right px-3 py-2 font-semibold">Sharpe</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {batches.map((batch, idx) => (
+                        <tr key={batch.batchId} className="border-t border-border hover:bg-muted/30 transition-colors">
+                          <td className="px-3 py-2 text-center text-[10px] text-muted-foreground tabular-nums">{idx + 1}</td>
+                          <td className="px-3 py-2">
+                            <span className="text-[9px] font-mono px-1 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded whitespace-nowrap">{batch.batchId}</span>
+                          </td>
+                          <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{batch.dateStr}</td>
+                          <td className="px-3 py-2 text-right tabular-nums">{batch.items.length}</td>
+                          <td className="px-3 py-2 text-right tabular-nums">{batch.totalTrades}</td>
+                          <td className={`px-3 py-2 text-right tabular-nums font-medium ${batch.best.profitPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            {batch.best.profitPct >= 0 ? '+' : ''}{batch.best.profitPct.toFixed(2)}%
+                          </td>
+                          <td className="px-3 py-2 text-right tabular-nums">{batch.best.winRate.toFixed(1)}%</td>
+                          <td className="px-3 py-2 text-right tabular-nums">{batch.best.sharpe.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Log Panel */}
         {logs.length > 0 && (

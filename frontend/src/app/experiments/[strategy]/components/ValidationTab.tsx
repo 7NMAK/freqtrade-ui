@@ -508,7 +508,7 @@ export default function ValidationTab({
                     setLaunching(true);
                     try {
                       const res = await getExperiments();
-                      const exp = (res.items || []).find((e: { strategy_name?: string; name?: string }) => e.strategy_name === strategy || e.name === strategy);
+                      const exp = (res.items || []).find((e) => e.strategy_name === strategy || e.name === strategy);
                       const versionId = exp?.best_version_id || undefined;
                       const result = await launchPaperBot({
                         strategy_name: strategy,
@@ -746,7 +746,7 @@ export default function ValidationTab({
                   setLaunching(true);
                   try {
                     const res = await getExperiments();
-                    const exp = (res.items || []).find((e: { strategy_name?: string; name?: string }) => e.strategy_name === strategy || e.name === strategy);
+                    const exp = (res.items || []).find((e) => e.strategy_name === strategy || e.name === strategy);
                     const versionId = exp?.best_version_id || undefined;
                     const result = await launchPaperBot({
                       strategy_name: strategy,

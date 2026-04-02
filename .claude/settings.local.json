@@ -69,7 +69,9 @@
       "Bash(node_modules/.bin/tsc --noEmit --pretty false)",
       "Bash(node_modules/.bin/tsc --noEmit --pretty false --incremental false)",
       "Bash(rm:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(curl -s http://localhost:3001)"
     ]
   }
 }

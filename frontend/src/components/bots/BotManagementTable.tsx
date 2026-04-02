@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { startBot, stopBot, botPause, drainBot } from "@/lib/api";
 import { useToast } from "@/components/ui/Toast";
+import ConfirmDialog, { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { profitColor, fmt } from "@/lib/format";
 import type { Bot, FTProfit } from "@/types";
 import BotRegisterModal from "./BotRegisterModal";
@@ -17,6 +18,7 @@ interface BotManagementTableProps {
 
 export default function BotManagementTable({ bots, botProfits, onRefresh }: BotManagementTableProps) {
   const toast = useToast();
+  const [confirmProps, confirmDlg] = useConfirmDialog();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const [registerOpen, setRegisterOpen] = useState(false);
@@ -142,10 +144,9 @@ export default function BotManagementTable({ bots, botProfits, onRefresh }: BotM
                                 label="Drain"
                                 loading={actionLoading === loadingKey("Drain")}
                                 disabled={actionLoading !== null}
-                                onClick={() => {
-                                  if (window.confirm("Stop new entries and wait for open positions to close?")) {
-                                    handleAction("Drain", bot.id, () => drainBot(bot.id));
-                                  }
+                                onClick={async () => {
+                                  const ok = await confirmDlg({ title: "Drain Bot", message: "Stop new entries and wait for open positions to close naturally.", confirmLabel: "Start Drain", variant: "warning" });
+                                  if (ok) handleAction("Drain", bot.id, () => drainBot(bot.id));
                                 }}
                                 className="border-amber-500/30 text-amber-500 bg-amber-500/10 hover:bg-amber/[0.18]"
                               />
@@ -175,6 +176,7 @@ export default function BotManagementTable({ bots, botProfits, onRefresh }: BotM
       <BotRegisterModal open={registerOpen} onClose={() => setRegisterOpen(false)} onSuccess={onRefresh} />
       <BotEditModal open={!!editBot} bot={editBot} onClose={() => setEditBot(null)} onSuccess={onRefresh} />
       <BotDeleteDialog open={!!deleteBot} bot={deleteBot} onClose={() => setDeleteBot(null)} onSuccess={onRefresh} />
+      <ConfirmDialog {...confirmProps} />
     </>
   );
 }

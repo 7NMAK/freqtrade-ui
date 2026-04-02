@@ -66,7 +66,7 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
         const deployable = strats.filter((s) => ["deployable", "backtest", "ai_tested"].includes(s.lifecycle));
         setStrategies(deployable);
       } catch (err) {
-        console.error("Failed to load strategies:", err);
+        toast.error(err instanceof Error ? err.message : "Failed to load strategies.");
       } finally {
         setStrategiesLoading(false);
       }
@@ -76,7 +76,7 @@ export default function BotRegisterModal({ open, onClose, onSuccess }: BotRegist
         const profs = await getExchangeProfiles();
         setProfiles(profs.items || []);
       } catch (err) {
-        console.error("Failed to load profiles:", err);
+        toast.error(err instanceof Error ? err.message : "Failed to load exchange profiles.");
       } finally {
         setProfilesLoading(false);
       }

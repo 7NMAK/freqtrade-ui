@@ -4,12 +4,14 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { REFRESH_INTERVALS } from "@/lib/constants";
 import AppShell from "@/components/layout/AppShell";
 import { useToast } from "@/components/ui/Toast";
+import ConfirmDialog, { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import {
   getBots,
   botStatus,
   botProfit,
   botDaily,
   botForceExit,
+  botForceEnter,
   botStats,
   portfolioProfit,
   portfolioBalance,
@@ -21,6 +23,7 @@ import {
   botDeleteTrade,
   botReloadTrade,
   botCancelOpenOrder,
+  botConfig,
   botWeekly,
   botMonthly,
   botPerformance,
@@ -39,6 +42,7 @@ import {
   botPause,
   softKill,
   hardKill,
+  botPairCandles,
 } from "@/lib/api";
 import type {
   Bot,
@@ -57,6 +61,7 @@ import type {
   FTLocksResponse,
   FTBalance,
   FTHealth,
+  FTShowConfig,
 } from "@/types";
 
 // Dashboard sub-components
@@ -90,6 +95,7 @@ function fmtDurationSec(seconds: number | string | undefined): string {
 
 export default function DashboardPage() {
   const toast = useToast();
+  const [confirmProps, confirmDlg] = useConfirmDialog();
 
   // ── Core State ────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(true);
@@ -157,6 +163,7 @@ export default function DashboardPage() {
   const [exitData, setExitData] = useState<FTExit[]>([]);
   const [whitelistData, setWhitelistData] = useState<FTWhitelist | null>(null);
   const [locksData, setLocksData] = useState<FTLocksResponse | null>(null);
+  const [pairMarketData, setPairMarketData] = useState<Record<string, { change24h: number; volume: number; volatility: number }>>({});
 
   // Right sidebar data (aggregated from first running bot)
   const [balanceData, setBalanceData] = useState<FTBalance | null>(null);
@@ -182,6 +189,7 @@ export default function DashboardPage() {
   const [singleLocksData, setSingleLocksData] = useState<FTLocksResponse | null>(null);
   const [singleBalanceData, setSingleBalanceData] = useState<FTBalance | null>(null);
   const [singleHealthData, setSingleHealthData] = useState<FTHealth | null>(null);
+  const [singleConfigData, setSingleConfigData] = useState<FTShowConfig | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
   // Edit/delete modals
@@ -200,7 +208,13 @@ export default function DashboardPage() {
       setBots(botList);
 
       const runningBots = botList.filter((b) => b.status === "running");
-      const tradeBots = runningBots.filter((b) => b.ft_mode !== "webserver" && !b.is_utility);
+      const tradeBots = runningBots.filter((b) => {
+        if (b.ft_mode === "webserver") return false;
+        if (b.is_utility === true) return false;
+        return true;
+      });
+      // If no trade bots found but we have running bots, use ALL running bots as fallback
+      const effectiveTradeBots = tradeBots.length > 0 ? tradeBots : runningBots;
 
       // Portfolio balance
       try {
@@ -239,10 +253,10 @@ export default function DashboardPage() {
       } catch { /* non-blocking */ }
 
       // BUG 7 fix: If portfolio trades returned no closed trades, fetch per-bot
-      if (allClosed.length === 0 && tradeBots.length > 0) {
+      if (allClosed.length === 0 && effectiveTradeBots.length > 0) {
         try {
           const perBotResults = await Promise.allSettled(
-            tradeBots.map(async (bot) => {
+            effectiveTradeBots.map(async (bot) => {
               const result = await botTrades(bot.id, 200);
               return result.trades
                 .filter((t) => !t.is_open)
@@ -255,18 +269,34 @@ export default function DashboardPage() {
         } catch { /* non-blocking */ }
       }
 
+      // Fetch open trades from botStatus (more reliable current_profit data)
+      const openTradesFromStatus: FTTrade[] = [];
+      await Promise.allSettled(
+        effectiveTradeBots.map(async (bot) => {
+          try {
+            const status = await botStatus(bot.id);
+            for (const t of status) {
+              (t as unknown as Record<string, unknown>)._bot_id = bot.id;
+              (t as unknown as Record<string, unknown>)._bot_name = bot.name;
+            }
+            openTradesFromStatus.push(...status);
+          } catch { /* ignore */ }
+        })
+      );
+
       if (m.current) {
-        setOpenTrades(allOpen);
+        // Use botStatus open trades if available (they have current_profit fields)
+        const effectiveOpen = openTradesFromStatus.length > 0 ? openTradesFromStatus : allOpen;
+        setOpenTrades(effectiveOpen);
         setClosedTrades(allClosed);
 
-        // BUG 3 fix: Open P&L with fallback for field names
-        const openPnlSum = allOpen.reduce((s, t) => {
-          // Try current_profit_abs first, fallback to profit_abs
+        // Open P&L with fallback for field names
+        const openPnlSum = effectiveOpen.reduce((s, t) => {
           const pnl = t.current_profit_abs ?? (t as unknown as Record<string, unknown>).profit_abs as number ?? 0;
           return s + pnl;
         }, 0);
         setTotalPnlOpen(openPnlSum);
-        const totalStake = allOpen.reduce((s, t) => s + t.stake_amount, 0);
+        const totalStake = effectiveOpen.reduce((s, t) => s + t.stake_amount, 0);
         setTotalPnlOpenPct(totalStake > 0 ? (openPnlSum / totalStake) * 100 : null);
       }
 
@@ -296,7 +326,7 @@ export default function DashboardPage() {
       let firstLocks: FTLocksResponse | null = null;
 
       await Promise.allSettled(
-        tradeBots.map(async (bot) => {
+        effectiveTradeBots.map(async (bot) => {
           try {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const [p, d, , st, perf, ent, ex, wl, lk] = await Promise.allSettled([
@@ -317,7 +347,7 @@ export default function DashboardPage() {
             if (st.status === "fulfilled") {
               const stats = st.value;
               // Profit factor: use from stats; also accumulate winning/losing for fallback calculation
-              if (stats.profit_factor != null && stats.profit_factor > 0) {
+              if (stats.profit_factor != null) {
                 aggPF = aggPF != null ? Math.max(aggPF, stats.profit_factor) : stats.profit_factor;
               }
               // Accumulate winning/losing profit for fallback profit factor
@@ -333,6 +363,11 @@ export default function DashboardPage() {
               }
               if (stats.max_drawdown_abs != null) {
                 aggMaxDDAbs = aggMaxDDAbs != null ? Math.max(aggMaxDDAbs, stats.max_drawdown_abs) : stats.max_drawdown_abs;
+              }
+              // FIX 2: use negtrade_account_drawdown as additional fallback for max drawdown
+              if (stats.negtrade_account_drawdown != null && stats.negtrade_account_drawdown < 0) {
+                const statsMaxDD = stats.negtrade_account_drawdown; // already negative ratio
+                aggMaxDD = aggMaxDD != null ? Math.min(aggMaxDD, statsMaxDD) : statsMaxDD;
               }
               if (stats.trading_volume != null) aggVolume += stats.trading_volume;
               if (stats.durations.wins != null) { aggDurTotal += stats.durations.wins; aggDurCount++; }
@@ -377,6 +412,91 @@ export default function DashboardPage() {
         }
       }
 
+      // FALLBACK: compute performance stats from closed trades if API returned empty
+      if (allPerf.length === 0 && allClosed.length > 0) {
+        const pairMap = new Map<string, { count: number; profitSum: number; profitRatioSum: number }>();
+        for (const t of allClosed) {
+          const cur = pairMap.get(t.pair) ?? { count: 0, profitSum: 0, profitRatioSum: 0 };
+          cur.count++;
+          cur.profitSum += (t.close_profit_abs ?? 0);
+          cur.profitRatioSum += (t.close_profit ?? 0);
+          pairMap.set(t.pair, cur);
+        }
+        for (const [pair, s] of Array.from(pairMap.entries())) {
+          allPerf.push({
+            pair,
+            trades: s.count,
+            count: s.count,
+            close_profit_abs: s.profitSum,
+            profit_abs: s.profitSum,
+            profit_ratio: s.count > 0 ? s.profitRatioSum / s.count : 0,
+            profit: s.profitRatioSum,
+          });
+        }
+      }
+
+      // FALLBACK: compute entry/exit stats from closed trades if API returned empty
+      if (allEntries.length === 0 && allClosed.length > 0) {
+        const tagMap = new Map<string, { entries: number; wins: number; losses: number; draws: number; profitSum: number; avgProfitSum: number }>();
+        for (const t of allClosed) {
+          const tag = t.enter_tag || "(no tag)";
+          const cur = tagMap.get(tag) ?? { entries: 0, wins: 0, losses: 0, draws: 0, profitSum: 0, avgProfitSum: 0 };
+          cur.entries++;
+          const pnl = t.close_profit_abs ?? 0;
+          if (pnl > 0) cur.wins++;
+          else if (pnl < 0) cur.losses++;
+          else cur.draws++;
+          cur.profitSum += pnl;
+          cur.avgProfitSum += (t.close_profit ?? 0);
+          tagMap.set(tag, cur);
+        }
+        for (const [tag, s] of Array.from(tagMap.entries())) {
+          const total = s.wins + s.losses + s.draws;
+          allEntries.push({
+            enter_tag: tag,
+            entries: s.entries,
+            wins: s.wins,
+            losses: s.losses,
+            draws: s.draws,
+            winrate: total > 0 ? s.wins / total : 0,
+            profit_factor: s.losses > 0 ? Math.abs(s.wins / s.losses) : s.wins,
+            profit_ratio: s.entries > 0 ? s.profitSum / s.entries : 0,
+            profit_abs: s.profitSum,
+            avg_profit: s.entries > 0 ? (s.avgProfitSum / s.entries) * 100 : 0,
+          });
+        }
+      }
+      if (allExits.length === 0 && allClosed.length > 0) {
+        const reasonMap = new Map<string, { exits: number; wins: number; losses: number; draws: number; profitSum: number; avgProfitSum: number }>();
+        for (const t of allClosed) {
+          const reason = t.exit_reason || "(unknown)";
+          const cur = reasonMap.get(reason) ?? { exits: 0, wins: 0, losses: 0, draws: 0, profitSum: 0, avgProfitSum: 0 };
+          cur.exits++;
+          const pnl = t.close_profit_abs ?? 0;
+          if (pnl > 0) cur.wins++;
+          else if (pnl < 0) cur.losses++;
+          else cur.draws++;
+          cur.profitSum += pnl;
+          cur.avgProfitSum += (t.close_profit ?? 0);
+          reasonMap.set(reason, cur);
+        }
+        for (const [reason, s] of Array.from(reasonMap.entries())) {
+          const total = s.wins + s.losses + s.draws;
+          allExits.push({
+            exit_reason: reason,
+            exits: s.exits,
+            wins: s.wins,
+            losses: s.losses,
+            draws: s.draws,
+            winrate: total > 0 ? s.wins / total : 0,
+            profit_factor: s.losses > 0 ? Math.abs(s.wins / s.losses) : s.wins,
+            profit_ratio: s.exits > 0 ? s.profitSum / s.exits : 0,
+            profit_abs: s.profitSum,
+            avg_profit: s.exits > 0 ? (s.avgProfitSum / s.exits) * 100 : 0,
+          });
+        }
+      }
+
       if (m.current) {
         setBotProfits(profits);
         setSparklines(sparks);
@@ -400,10 +520,14 @@ export default function DashboardPage() {
         // BUG 2 fix: fallback profit factor from winning/losing profit
         const finalPF = aggPF ?? (aggLosingProfit > 0 ? aggWinningProfit / aggLosingProfit : null);
         // BUG 6 fix: don't convert 0 volume to null — show $0
-        const finalVolume = tradeBots.length > 0 ? aggVolume : null;
+        // FIX 3: if volume is 0 but trades exist, compute from open trade stakes
+        const finalVolume = effectiveTradeBots.length > 0 ? (aggVolume > 0 ? aggVolume :
+          // Fallback: compute volume from open trade stakes
+          openTradesFromStatus.reduce((s, t) => s + t.stake_amount * (t.leverage || 1), 0) || null
+        ) : null;
 
         setAggStats({
-          profitFactor: finalPF != null && finalPF > 0 ? finalPF : (tradeBots.length > 0 ? 0 : null),
+          profitFactor: finalPF ?? (effectiveTradeBots.length > 0 ? 0 : null),
           sharpeRatio: aggSharpe,
           maxDrawdown: aggMaxDD != null ? aggMaxDD * 100 : null,
           maxDrawdownAbs: aggMaxDDAbs,
@@ -417,14 +541,107 @@ export default function DashboardPage() {
       }
 
       // Daily P&L chart
+      let fetchedDaily: FTDailyItem[] = [];
       try {
         const daily = await portfolioDaily();
-        if (m.current) setDailyData(daily.data ?? []);
+        fetchedDaily = daily.data ?? [];
+        if (m.current) setDailyData(fetchedDaily);
       } catch { if (m.current) setDailyData([]); }
 
+      // FIX D: Compute Sharpe from daily data (FT /stats does not return sharpe_ratio for live)
+      if (m.current && fetchedDaily.length >= 1) {
+        let computedSharpe: number | null = null;
+        const returns = fetchedDaily.map(d => {
+          const base = d.starting_balance !== 0 ? Math.abs(d.starting_balance) : (totalEquity || 10000);
+          return d.abs_profit / base;
+        });
+        if (returns.length === 1) {
+          // Only 1 day: use the raw return as an approximation
+          computedSharpe = returns[0] * Math.sqrt(252);
+        } else {
+          const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+          const variance = returns.reduce((s, r) => s + (r - mean) ** 2, 0) / returns.length;
+          const std = Math.sqrt(variance);
+          computedSharpe = std > 0 ? (mean / std) * Math.sqrt(252) : null;
+        }
+
+        // FIX E: Compute Max Drawdown from daily equity curve
+        let computedMaxDD: number | null = null;
+        if (fetchedDaily.length >= 1) {
+          let peak = 0;
+          let maxDd = 0;
+          let cumulative = 0;
+          for (const d of fetchedDaily) {
+            cumulative += d.abs_profit;
+            if (cumulative > peak) peak = cumulative;
+            const dd = peak > 0 ? (peak - cumulative) / peak : 0;
+            if (dd > maxDd) maxDd = dd;
+          }
+          // If only 1 day and it's negative, max drawdown = that day's loss pct
+          if (fetchedDaily.length === 1 && fetchedDaily[0].abs_profit < 0) {
+            const base = fetchedDaily[0].starting_balance !== 0 ? Math.abs(fetchedDaily[0].starting_balance) : (totalEquity || 10000);
+            computedMaxDD = (fetchedDaily[0].abs_profit / base) * 100; // already negative
+          } else {
+            computedMaxDD = maxDd > 0 ? -maxDd * 100 : null;
+          }
+        }
+
+        // Update aggStats with computed values as fallbacks
+        setAggStats(prev => ({
+          ...prev,
+          sharpeRatio: prev.sharpeRatio ?? computedSharpe,
+          maxDrawdown: prev.maxDrawdown ?? computedMaxDD,
+        }));
+      }
+
+      // FIX 4: Fetch real market data for whitelist pairs via botPairCandles
+      const wlData = firstWhitelist as FTWhitelist | null;
+      if (m.current && wlData && wlData.whitelist.length > 0 && effectiveTradeBots.length > 0) {
+        const firstBotForCandles = effectiveTradeBots[0].id;
+        const marketResults: Record<string, { change24h: number; volume: number; volatility: number }> = {};
+        await Promise.allSettled(
+          wlData.whitelist.map(async (pair: string) => {
+            try {
+              const candles = await botPairCandles(firstBotForCandles, pair, "1d", 2);
+              if (candles && candles.data && candles.data.length >= 1) {
+                // Find column indexes
+                const cols = candles.columns;
+                const closeIdx = cols.indexOf("close");
+                const highIdx = cols.indexOf("high");
+                const lowIdx = cols.indexOf("low");
+                const volumeIdx = cols.indexOf("volume");
+
+                if (candles.data.length >= 2) {
+                  const yesterday = candles.data[candles.data.length - 2];
+                  const today = candles.data[candles.data.length - 1];
+                  const todayClose = (today[closeIdx] as number) ?? 0;
+                  const yesterdayClose = (yesterday[closeIdx] as number) ?? 0;
+                  const change24h = yesterdayClose > 0 ? ((todayClose - yesterdayClose) / yesterdayClose) * 100 : 0;
+                  const vol = (today[volumeIdx] as number) ?? 0;
+                  const high = (today[highIdx] as number) ?? 0;
+                  const low = (today[lowIdx] as number) ?? 0;
+                  const volatility = todayClose > 0 ? ((high - low) / todayClose) * 100 : 0;
+                  marketResults[pair] = { change24h, volume: vol, volatility };
+                } else {
+                  // Only 1 candle available
+                  const today = candles.data[0];
+                  const todayClose = (today[closeIdx] as number) ?? 0;
+                  const vol = (today[volumeIdx] as number) ?? 0;
+                  const high = (today[highIdx] as number) ?? 0;
+                  const low = (today[lowIdx] as number) ?? 0;
+                  const volatility = todayClose > 0 ? ((high - low) / todayClose) * 100 : 0;
+                  marketResults[pair] = { change24h: 0, volume: vol, volatility };
+                }
+              }
+            } catch { /* non-blocking per pair */ }
+          })
+        );
+        if (m.current) setPairMarketData(marketResults);
+      }
+
       // Weekly + Monthly for chart toggles (from first running bot)
-      if (tradeBots.length > 0) {
-        const firstBotId = tradeBots[0].id;
+      if (effectiveTradeBots.length > 0) {
+        const firstBotId = effectiveTradeBots[0].id;
         Promise.allSettled([
           botWeekly(firstBotId, 12),
           botMonthly(firstBotId, 12),
@@ -491,7 +708,8 @@ export default function DashboardPage() {
       botLocks(botId),
       botBalance(botId),
       botHealth(botId),
-    ]).then(([st, tr, perf, ent, ex, stats, sys, logs, lk, bal, health]) => {
+      botConfig(botId),
+    ]).then(([st, tr, perf, ent, ex, stats, sys, logs, lk, bal, health, cfg]) => {
       if (!m.current || stale()) return;
       if (st.status === "fulfilled") { setSingleBotOpenTrades(st.value.filter((t) => t.is_open)); }
       if (tr.status === "fulfilled") { setSingleBotClosedTrades(tr.value.trades.filter((t) => !t.is_open)); }
@@ -504,6 +722,7 @@ export default function DashboardPage() {
       if (lk.status === "fulfilled") setSingleLocksData(lk.value);
       if (bal.status === "fulfilled") setSingleBalanceData(bal.value);
       if (health.status === "fulfilled") setSingleHealthData(health.value);
+      if (cfg.status === "fulfilled") setSingleConfigData(cfg.value);
       setDetailLoading(false);
     });
 
@@ -534,7 +753,8 @@ export default function DashboardPage() {
   }
 
   async function handleStopBot(botId: number) {
-    if (!window.confirm("Stop the bot?")) return;
+    const ok = await confirmDlg({ title: "Stop Bot", message: "Stop this bot? It will stop trading but remain registered.", confirmLabel: "Stop", variant: "warning" });
+    if (!ok) return;
     await handleBotAction("Stop", botId, () => stopBot(botId));
   }
 
@@ -547,7 +767,8 @@ export default function DashboardPage() {
   }
 
   async function handleForceExitAllBot(botId: number) {
-    if (!window.confirm("Force exit ALL open trades on this bot?")) return;
+    const ok = await confirmDlg({ title: "Force Exit All", message: "Force exit ALL open trades on this bot at market price? Cannot be undone.", confirmLabel: "Force Exit All", variant: "danger" });
+    if (!ok) return;
     await handleBotAction("Force exit all", botId, () => botForceExit(botId, "all"));
   }
 
@@ -556,17 +777,20 @@ export default function DashboardPage() {
   }
 
   async function handleSoftKillBot(botId: number) {
-    if (!window.confirm("Soft Kill: exit all trades, keep bot alive?")) return;
+    const ok = await confirmDlg({ title: "Soft Kill", message: "Exit all open trades gracefully and keep the bot process alive?", confirmLabel: "Soft Kill", variant: "warning" });
+    if (!ok) return;
     await handleBotAction("Soft Kill", botId, () => softKill(botId, "Manual soft kill from dashboard"));
   }
 
   async function handleHardKillBot(botId: number) {
-    if (!window.confirm("HARD KILL: Force stop bot + container? This is destructive!")) return;
+    const ok = await confirmDlg({ title: "HARD KILL", message: "This will FORCE STOP the bot AND its container immediately. Cannot be undone. Continue?", confirmLabel: "Hard Kill", variant: "danger" });
+    if (!ok) return;
     await handleBotAction("Hard Kill", botId, () => hardKill(botId, "Manual hard kill from dashboard"));
   }
 
   async function handleDrainBot(botId: number) {
-    if (!window.confirm("Stop new entries and wait for open positions to close?")) return;
+    const ok = await confirmDlg({ title: "Drain Bot", message: "Stop accepting new entries and wait for positions to close naturally?", confirmLabel: "Start Drain", variant: "warning" });
+    if (!ok) return;
     await handleBotAction("Drain", botId, () => drainBot(botId));
   }
 
@@ -621,9 +845,39 @@ export default function DashboardPage() {
     }
   }
 
+  async function handleForceEnter(trade: FTTrade) {
+    if (!trade._bot_id) {
+      toast.error("Cannot determine which bot owns this trade.");
+      return;
+    }
+    const ok = await confirmDlg({
+      title: "Increase Position",
+      message: `Add another entry to your existing ${trade.pair} position at market price?`,
+      confirmLabel: "Increase",
+      variant: "warning",
+    });
+    if (!ok) return;
+    const loadId = toast.loading(`Increasing position for ${trade.pair}...`);
+    try {
+      await botForceEnter(trade._bot_id, trade.pair, trade.is_short ? "short" : "long");
+      toast.dismiss(loadId);
+      toast.success(`Position increase submitted for ${trade.pair}.`);
+      await loadPortfolioData(false);
+    } catch (err) {
+      toast.dismiss(loadId);
+      toast.error(err instanceof Error ? `Increase failed: ${err.message}` : "Increase position failed.");
+    }
+  }
+
   async function handleDeleteTrade(trade: FTTrade) {
     if (!trade._bot_id) return;
-    if (!window.confirm(`Delete trade #${trade.trade_id} (${trade.pair})?`)) return;
+    const ok = await confirmDlg({
+      title: "Delete Trade",
+      message: `Delete trade #${trade.trade_id} (${trade.pair})? This cannot be undone.`,
+      confirmLabel: "Delete",
+      variant: "danger",
+    });
+    if (!ok) return;
     const loadId = toast.loading(`Deleting trade #${trade.trade_id}...`);
     try {
       await botDeleteTrade(trade._bot_id, trade.trade_id);
@@ -668,28 +922,32 @@ export default function DashboardPage() {
 
   const selectedBot = bots.find((b) => b.id === selectedBotId) ?? null;
 
-  // Today's P&L from daily data — with fallback when today's entry is missing
+  // Today's P&L from daily data — with fallback to closed trades and open P&L
+  const today = new Date().toISOString().slice(0, 10);
   const todayPnl = (() => {
-    if (dailyData.length === 0) return null;
-    const last = dailyData[dailyData.length - 1];
-    if (!last) return null;
-    // Check if the last entry is actually today
-    const today = new Date().toISOString().slice(0, 10);
-    const lastDate = last.date?.slice(0, 10);
-    if (lastDate === today || !lastDate) {
-      return last.abs_profit ?? 0;
+    // Try daily data first
+    if (dailyData.length > 0) {
+      const last = dailyData[dailyData.length - 1];
+      if (last?.date === today) return last.abs_profit;
     }
-    // Last entry isn't today — return 0 (no trades closed today yet)
-    return 0;
+    // Fallback: sum of closed trades today
+    const todayClosed = closedTrades.filter(t => t.close_date?.startsWith(today));
+    if (todayClosed.length > 0) return todayClosed.reduce((s, t) => s + (t.close_profit_abs ?? 0), 0);
+    // Fallback: sum of open trades P&L
+    const openPnl = openTrades.reduce((s, t) => s + (t.current_profit_abs ?? (t as unknown as Record<string, unknown>).profit_abs as number ?? 0), 0);
+    return openPnl;
   })();
   const todayPnlPct = (() => {
-    if (dailyData.length === 0) return null;
-    const last = dailyData[dailyData.length - 1];
-    if (!last) return null;
-    const today = new Date().toISOString().slice(0, 10);
-    const lastDate = last.date?.slice(0, 10);
-    if (lastDate === today || !lastDate) {
-      return last.rel_profit ?? 0;
+    if (dailyData.length > 0) {
+      const last = dailyData[dailyData.length - 1];
+      if (last?.date === today) return last.rel_profit ?? 0;
+    }
+    // Fallback: compute from closed trades today
+    const todayClosed = closedTrades.filter(t => t.close_date?.startsWith(today));
+    if (todayClosed.length > 0) {
+      const totalStake = todayClosed.reduce((s, t) => s + t.stake_amount, 0);
+      const totalProfit = todayClosed.reduce((s, t) => s + (t.close_profit_abs ?? 0), 0);
+      return totalStake > 0 ? totalProfit / totalStake : 0;
     }
     return 0;
   })();
@@ -794,10 +1052,12 @@ export default function DashboardPage() {
               locksData={locksData}
               loading={loading}
               onForceExit={handleForceExit}
+              onForceEnter={handleForceEnter}
               onReloadTrade={handleReloadTrade}
               onDeleteTrade={handleDeleteTrade}
               onCancelOrder={handleCancelOpenOrder}
               exitingTradeId={exitingTradeId}
+              pairMarketData={pairMarketData}
             />
           </div>
 
@@ -811,6 +1071,7 @@ export default function DashboardPage() {
             totalFees={aggStats.totalFees}
             fundingFees={aggStats.fundingFees}
             healthData={mainHealthData}
+            exchangeName={bots.find(b => b.status === "running")?.exchange_name}
             loading={loading}
           />
         </div>
@@ -828,7 +1089,7 @@ export default function DashboardPage() {
         entryData={singleEntryData}
         exitData={singleExitData}
         statsData={singleStatsData}
-        configData={null as import("@/types").FTShowConfig | null}
+        configData={singleConfigData}
         sysinfoData={singleSysinfoData}
         logsData={singleLogsData}
         locksData={singleLocksData}
@@ -841,6 +1102,12 @@ export default function DashboardPage() {
         onEdit={() => selectedBot && setEditBot(selectedBot)}
         onDelete={() => selectedBot && setDeleteBot(selectedBot)}
         onDuplicate={() => selectedBot && handleDuplicateBot(selectedBot)}
+        onPause={() => selectedBot && handlePauseBot(selectedBot.id)}
+        onReload={() => selectedBot && handleReloadBot(selectedBot.id)}
+        onForceExitAll={() => selectedBot && handleForceExitAllBot(selectedBot.id)}
+        onStopBuy={() => selectedBot && handleStopBuyBot(selectedBot.id)}
+        onSoftKill={() => selectedBot && handleSoftKillBot(selectedBot.id)}
+        onHardKill={() => selectedBot && handleHardKillBot(selectedBot.id)}
       />
 
       {/* EDIT & DELETE MODALS */}
@@ -856,6 +1123,7 @@ export default function DashboardPage() {
         onClose={() => setDeleteBot(null)}
         onSuccess={async () => { if (deleteBot) await handleDeleteBotConfirm(deleteBot); }}
       />
+      <ConfirmDialog {...confirmProps} />
     </AppShell>
   );
 }

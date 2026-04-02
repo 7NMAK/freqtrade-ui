@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import AppShell from "@/components/layout/AppShell";
 import { useToast } from "@/components/ui/Toast";
+import ConfirmDialog, { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import {
   getBots,
   getStrategies,
@@ -257,10 +258,7 @@ export default function StrategiesPage() {
   }
 
   /* ─── Confirmation dialog ─── */
-  const [confirmAction, setConfirmAction] = useState<{
-    message: string;
-    onConfirm: () => void;
-  } | null>(null);
+  const [confirmProps, confirmDlg] = useConfirmDialog();
 
   useEffect(() => {
     mountedRef.current = true;
@@ -305,22 +303,18 @@ export default function StrategiesPage() {
       await Promise.allSettled(
         linkedBots.flatMap((bot) => [
           botProfit(bot.id)
-            .then((p) => { profits[bot.id] = p; })
-            .catch(() => {}),
+            .then((p) => { profits[bot.id] = p; }),
           botStats(bot.id)
-            .then((s) => { stats[bot.id] = s; })
-            .catch(() => {}),
+            .then((s) => { stats[bot.id] = s; }),
           botConfig(bot.id)
-            .then((c) => { configs[bot.id] = c; })
-            .catch(() => {}),
+            .then((c) => { configs[bot.id] = c; }),
           botBacktestResults(bot.id)
             .then((r) => {
               if (r.backtest_result?.strategy) {
                 const keys = Object.keys(r.backtest_result.strategy);
                 if (keys.length > 0) btResults[bot.id] = r.backtest_result.strategy[keys[0]];
               }
-            })
-            .catch(() => {}),
+            }),
         ])
       );
       if (mountedRef.current) {
@@ -676,12 +670,10 @@ export default function StrategiesPage() {
             <button
               type="button"
               className={btnPromote}
-              onClick={(e) => {
+              onClick={async (e) => {
                 stop(e);
-                setConfirmAction({
-                  message: t("confirmGoLive", { name: strat.name }),
-                  onConfirm: () => handleTransition(strat, "live"),
-                });
+                const ok = await confirmDlg({ title: "Go Live", message: t("confirmGoLive", { name: strat.name }), confirmLabel: "Go Live", variant: "warning" });
+                if (ok) handleTransition(strat, "live");
               }}
             >
               {t("goLive")} &rarr;
@@ -1021,22 +1013,19 @@ export default function StrategiesPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() =>
-                        setConfirmAction({
-                          message: `Stop bot "${selectedBot.name}"?`,
-                          onConfirm: async () => {
-                            const id = toast.loading("Stopping bot...");
-                            try {
-                              await stopBot(selectedBot.id);
-                              toast.dismiss(id);
-                              toast.success(`${selectedBot.name} stopped`);
-                            } catch (err) {
-                              toast.dismiss(id);
-                              toast.error(err instanceof Error ? err.message : "Stop failed");
-                            }
-                          },
-                        })
-                      }
+                      onClick={async () => {
+                        const ok = await confirmDlg({ title: "Stop Bot", message: `Stop bot "${selectedBot.name}"?`, confirmLabel: "Stop", variant: "danger" });
+                        if (!ok) return;
+                        const id = toast.loading("Stopping bot...");
+                        try {
+                          await stopBot(selectedBot.id);
+                          toast.dismiss(id);
+                          toast.success(`${selectedBot.name} stopped`);
+                        } catch (err) {
+                          toast.dismiss(id);
+                          toast.error(err instanceof Error ? err.message : "Stop failed");
+                        }
+                      }}
                       className="px-3 py-1.5 rounded-md border border-rose-500/20 bg-rose-500/10 text-rose-500 text-xs font-semibold hover:border-rose-500/40 transition-all cursor-pointer"
                     >
                       Stop
@@ -1046,12 +1035,10 @@ export default function StrategiesPage() {
                 {(selectedStrat.lifecycle === "live" || selectedStrat.lifecycle === "paper") && (
                   <button
                     type="button"
-                    onClick={() =>
-                      setConfirmAction({
-                        message: t("confirmRetire", { name: selectedStrat.name }),
-                        onConfirm: () => handleTransition(selectedStrat, "retired"),
-                      })
-                    }
+                    onClick={async () => {
+                      const ok = await confirmDlg({ title: "Retire Strategy", message: t("confirmRetire", { name: selectedStrat.name }), confirmLabel: "Retire", variant: "danger" });
+                      if (ok) handleTransition(selectedStrat, "retired");
+                    }}
                     className="px-3 py-1.5 rounded-md border border-rose-500/20 bg-rose-500/10 text-rose-500 text-xs font-semibold hover:border-rose-500/40 transition-all cursor-pointer"
                   >
                     Retire
@@ -1059,12 +1046,10 @@ export default function StrategiesPage() {
                 )}
                 <button
                   type="button"
-                  onClick={() =>
-                    setConfirmAction({
-                      message: t("confirmDelete", { name: selectedStrat.name }),
-                      onConfirm: () => handleDelete(selectedStrat),
-                    })
-                  }
+                  onClick={async () => {
+                    const ok = await confirmDlg({ title: "Delete Strategy", message: t("confirmDelete", { name: selectedStrat.name }), confirmLabel: "Delete", variant: "danger" });
+                    if (ok) handleDelete(selectedStrat);
+                  }}
                   className="px-3 py-1.5 rounded-md border border-rose-500/20 bg-rose-500/10 text-rose-500 text-xs font-semibold hover:border-rose-500/40 transition-all cursor-pointer"
                 >
                   Delete
@@ -1233,42 +1218,7 @@ export default function StrategiesPage() {
       {/* ═══════════════════════════════════════════════════════════════════════
          CONFIRM DIALOG
          ═══════════════════════════════════════════════════════════════════════ */}
-      {confirmAction && (
-        <div
-          role="dialog" aria-modal="true" className="fixed inset-0 bg-black/60 z-[700] flex items-center justify-center"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setConfirmAction(null);
-          }}
-        >
-          <div className="bg-card border border-border rounded-2xl p-8 max-w-[420px] w-[90%]">
-            <div className="text-base font-bold text-foreground mb-3">
-              {tc("confirm")}
-            </div>
-            <div className="text-sm text-muted-foreground mb-6">
-              {confirmAction.message}
-            </div>
-            <div className="flex gap-2 justify-end">
-              <button
-                type="button"
-                onClick={() => setConfirmAction(null)}
-                className="px-5 py-2 rounded-md border border-border bg-muted/50 text-muted-foreground cursor-pointer text-xs hover:bg-muted transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  confirmAction.onConfirm();
-                  setConfirmAction(null);
-                }}
-                className="px-5 py-2 rounded-md border-none bg-red text-white cursor-pointer text-xs font-semibold hover:bg-red-dim transition-all"
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog {...confirmProps} />
     </AppShell>
   );
 }

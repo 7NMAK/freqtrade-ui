@@ -76,8 +76,7 @@ export default function ExchangeProfilesSection({
       const data = await getExchangeProfiles();
       // API returns { total, items }
       setProfiles(data.items || []);
-    } catch (err) {
-      console.error("Failed to load exchange profiles:", err);
+    } catch {
       toast.error("Failed to load exchange profiles");
     } finally {
       setLoading(false);
@@ -197,7 +196,6 @@ export default function ExchangeProfilesSection({
       await loadProfiles();
       closeModal();
     } catch (err) {
-      console.error("Failed to save profile:", err);
       toast.error(err instanceof Error ? err.message : "Failed to save profile");
     } finally {
       setSubmitting(false);
@@ -212,7 +210,6 @@ export default function ExchangeProfilesSection({
       await loadProfiles();
       setDeleteConfirming(null);
     } catch (err) {
-      console.error("Failed to delete profile:", err);
       toast.error(err instanceof Error ? err.message : "Failed to delete profile");
     } finally {
       setSubmitting(false);

@@ -17,15 +17,17 @@ interface RightSidebarProps {
   fundingFees: number | null;
   /** Health data from FT API */
   healthData?: FTHealth | null;
+  /** Exchange name from bot config */
+  exchangeName?: string;
   loading: boolean;
 }
 
 function LogEntry({ log }: { log: string[] }) {
-  // FT logs format can be [timestamp, module, level, message] (4 elements)
-  // or [id, timestamp, module, level, message] (5 elements)
+  // FT logs format: [id, timestamp, module, level, message] (5 elements)
+  // or [timestamp, module, level, message] (4 elements)
   let timestamp: string, level: string, message: string;
   if (log.length >= 5) {
-    [, , timestamp, level, message] = log;
+    [, timestamp, , level, message] = log;
   } else if (log.length === 4) {
     [timestamp, , level, message] = log;
   } else {
@@ -66,6 +68,7 @@ export default function RightSidebar({
   totalFees,
   fundingFees,
   healthData,
+  exchangeName,
   loading,
 }: RightSidebarProps) {
   const logEndRef = useRef<HTMLDivElement>(null);
@@ -118,7 +121,7 @@ export default function RightSidebar({
           ) : (
             <>
               {balanceData.currencies
-                .filter((c) => c.balance > 0 || c.est_stake > 0)
+                .filter((c) => c.balance > 0 || c.used > 0 || c.est_stake > 0 || c.free > 0)
                 .slice(0, 8)
                 .map((c) => (
                   <div key={c.currency} className="flex items-center">
@@ -126,7 +129,7 @@ export default function RightSidebar({
                     <span className="text-white font-medium">{fmt(c.balance, c.balance < 1 ? 4 : 2)}</span>
                     {c.est_stake > 0 && c.currency !== balanceData.stake && (
                       <span className="text-white/30 text-[10px] ml-auto">
-                        &asymp; ${fmt(c.est_stake, 0)}
+                        ≈ ${fmt(c.est_stake, 0)}
                       </span>
                     )}
                     {c.currency === balanceData.stake && (
@@ -220,17 +223,13 @@ export default function RightSidebar({
             </div>
             <div className="grid grid-cols-2 gap-3 text-[11px] font-mono">
               <div className="flex justify-between">
-                <span className="text-[#9CA3AF]">Binance</span>
+                <span className="text-[#9CA3AF]">{exchangeName || "Exchange"}</span>
                 <span className={healthData?.last_process ? "text-[#22c55e]" : loading ? "text-[#9CA3AF] animate-pulse" : "text-[#9CA3AF]"}>
                   {healthData?.last_process ? (() => {
                     const diff = (Date.now() - new Date(healthData.last_process).getTime()) / 1000;
-                    return isNaN(diff) ? "N/A" : `${Math.round(diff * 1000)}ms`;
+                    return isNaN(diff) ? "N/A" : `${diff.toFixed(1)}s ago`;
                   })() : loading ? "..." : "N/A"}
                 </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#9CA3AF]">Kraken</span>
-                <span className="text-[#9CA3AF]">N/A</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#9CA3AF]">FT Process</span>

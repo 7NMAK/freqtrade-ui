@@ -20,10 +20,12 @@ interface TradeTableProps {
   locksData: FTLocksResponse | null;
   loading: boolean;
   onForceExit: (trade: FTTrade, ordertype: string) => void;
+  onForceEnter: (trade: FTTrade) => void;
   onReloadTrade: (trade: FTTrade) => void;
   onDeleteTrade: (trade: FTTrade) => void;
   onCancelOrder: (trade: FTTrade) => void;
   exitingTradeId: string | null;
+  pairMarketData?: Record<string, { change24h: number; volume: number; volatility: number }>;
 }
 
 function fmtDuration(openDate: string, closeDate?: string | null): string {
@@ -126,6 +128,7 @@ function FilterDropdown({
 function ActionDropdown({
   trade,
   onForceExit,
+  onForceEnter,
   onReloadTrade,
   onDeleteTrade,
   onCancelOrder,
@@ -133,6 +136,7 @@ function ActionDropdown({
 }: {
   trade: FTTrade;
   onForceExit: (trade: FTTrade, ordertype: string) => void;
+  onForceEnter: (trade: FTTrade) => void;
   onReloadTrade: (trade: FTTrade) => void;
   onDeleteTrade: (trade: FTTrade) => void;
   onCancelOrder: (trade: FTTrade) => void;
@@ -192,26 +196,26 @@ function ActionDropdown({
               className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-[#d4d4d8] rounded-[5px] hover:bg-white/[0.06] hover:text-white transition-colors text-left"
               onClick={() => { onForceExit(trade, "limit"); setOpen(false); }}
             >
-              <LogOut className="w-3.5 h-3.5 text-[#9CA3AF]" /> Forceexit limit
+              <LogOut className="w-3.5 h-3.5 text-[#9CA3AF]" /> Force Exit (Limit)
             </button>
             <button
               className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-[#d4d4d8] rounded-[5px] hover:bg-white/[0.06] hover:text-white transition-colors text-left"
               onClick={() => { onForceExit(trade, "market"); setOpen(false); }}
             >
-              <Zap className="w-3.5 h-3.5 text-[#9CA3AF]" /> Forceexit market
+              <Zap className="w-3.5 h-3.5 text-[#9CA3AF]" /> Force Exit (Market)
             </button>
             <button
               className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-[#d4d4d8] rounded-[5px] hover:bg-white/[0.06] hover:text-white transition-colors text-left"
               onClick={() => { onForceExit(trade, "partial"); setOpen(false); }}
             >
-              <Scissors className="w-3.5 h-3.5 text-[#9CA3AF]" /> Forceexit partial
+              <Scissors className="w-3.5 h-3.5 text-[#9CA3AF]" /> Force Exit (Partial)
             </button>
             <div className="h-px bg-white/[0.06] mx-2 my-1" />
             <button
               className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-[#d4d4d8] rounded-[5px] hover:bg-white/[0.06] hover:text-white transition-colors text-left"
-              onClick={() => { onForceExit(trade, "increase"); setOpen(false); }}
+              onClick={() => { onForceEnter(trade); setOpen(false); }}
             >
-              <PlusCircle className="w-3.5 h-3.5 text-[#9CA3AF]" /> Increase position
+              <PlusCircle className="w-3.5 h-3.5 text-[#9CA3AF]" /> Increase Position
             </button>
             <button
               className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-[#d4d4d8] rounded-[5px] hover:bg-white/[0.06] hover:text-white transition-colors text-left"
@@ -286,10 +290,12 @@ export default function TradeTable({
   locksData,
   loading,
   onForceExit,
+  onForceEnter,
   onReloadTrade,
   onDeleteTrade,
   onCancelOrder,
   exitingTradeId,
+  pairMarketData,
 }: TradeTableProps) {
   const [activeTab, setActiveTab] = useState<TradeTab>("open");
   const [columnFilters, setColumnFilters] = useState<ColumnFilters>({});
@@ -401,7 +407,7 @@ export default function TradeTable({
       }
     } else if (activeTab === "performance") {
       csv = "Pair,Trades,Profit %,Profit Abs\n";
-      for (const p of perfData) csv += `${p.pair},${p.trades},${(p.profit_ratio * 100).toFixed(2)},${p.profit_abs}\n`;
+      for (const p of perfData) csv += `${p.pair},${p.count ?? p.trades ?? 0},${(p.profit_ratio * 100).toFixed(2)},${p.profit_abs}\n`;
     } else if (activeTab === "entries") {
       csv = "Tag,Trades,Wins,Losses,Win Rate,Avg Profit,Total P&L\n";
       for (const e of entryData) csv += `${e.enter_tag},${e.entries},${e.wins},${e.losses},${(e.winrate * 100).toFixed(1)},${e.avg_profit},${e.profit_abs}\n`;
@@ -543,6 +549,7 @@ export default function TradeTable({
                             <ActionDropdown
                               trade={trade}
                               onForceExit={onForceExit}
+                              onForceEnter={onForceEnter}
                               onReloadTrade={onReloadTrade}
                               onDeleteTrade={onDeleteTrade}
                               onCancelOrder={onCancelOrder}
@@ -695,10 +702,27 @@ export default function TradeTable({
                           </td>
                           <td className="px-5 py-3 text-[#9CA3AF] font-sans text-[11px]">{row.assignedBots || "\u2014"}</td>
                           <td className="px-5 py-3 text-right">{row.price > 0 ? fmt(row.price, row.price < 1 ? 4 : 2) : "\u2014"}</td>
+                          <td className={`px-5 py-3 text-right ${(pairMarketData?.[row.pair]?.change24h ?? 0) >= 0 ? "text-[#22c55e] font-medium" : "text-[#ef4444] font-medium"}`}>
+                            {pairMarketData?.[row.pair]?.change24h != null ? `${pairMarketData[row.pair].change24h >= 0 ? "+" : ""}${pairMarketData[row.pair].change24h.toFixed(2)}%` : "\u2014"}
+                          </td>
                           <td className="px-5 py-3 text-right text-[#9CA3AF]">{"\u2014"}</td>
-                          <td className="px-5 py-3 text-right text-[#9CA3AF]">{"\u2014"}</td>
-                          <td className="px-5 py-3 text-right text-[#9CA3AF]">{"\u2014"}</td>
-                          <td className="px-5 py-3 text-right text-[#9CA3AF]">{"\u2014"}</td>
+                          <td className="px-5 py-3 text-right text-[#9CA3AF]">
+                            {pairMarketData?.[row.pair]?.volume != null ? (() => {
+                              const v = pairMarketData[row.pair].volume;
+                              if (v >= 1_000_000_000) return `$${(v / 1_000_000_000).toFixed(1)}B`;
+                              if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(0)}M`;
+                              if (v >= 1_000) return `$${(v / 1_000).toFixed(0)}K`;
+                              return `$${v.toFixed(0)}`;
+                            })() : "\u2014"}
+                          </td>
+                          <td className="px-5 py-3 text-right">
+                            {pairMarketData?.[row.pair]?.volatility != null ? (() => {
+                              const vol = pairMarketData[row.pair].volatility;
+                              const volColor = vol > 5 ? "text-[#ef4444]" : vol > 2 ? "text-yellow-400" : "text-[#22c55e]";
+                              const volLabel = vol > 5 ? "High" : vol > 2 ? "Med" : "Low";
+                              return <span className={volColor}>{volLabel}</span>;
+                            })() : "\u2014"}
+                          </td>
                           <td className="px-5 py-3 text-center font-bold">{row.openCount}</td>
                           <td className="px-5 py-3 text-center">
                             {row.lock ? (
@@ -726,7 +750,7 @@ export default function TradeTable({
                 <thead className="sticky top-0 bg-[#0C0C0C] border-b border-white/[0.10] font-mono text-[11px] uppercase tracking-widest text-[#9CA3AF] z-10 shadow-lg">
                   <tr>
                     <SortHeader label="Pair" sortKey="pair" {...perfSort} />
-                    <SortHeader label="Trades" sortKey="trades" {...perfSort} align="right" />
+                    <SortHeader label="Trades" sortKey="count" {...perfSort} align="right" />
                     <SortHeader label="Wins" sortKey="_wins" {...perfSort} align="right" />
                     <SortHeader label="Losses" sortKey="_losses" {...perfSort} align="right" />
                     <SortHeader label="Win Rate" sortKey="_winrate" {...perfSort} align="right" />
@@ -748,13 +772,14 @@ export default function TradeTable({
                       const wins = pairClosed.filter((t) => (t.close_profit_abs ?? 0) >= 0).length;
                       const losses = pairClosed.filter((t) => (t.close_profit_abs ?? 0) < 0).length;
                       const winrate = pairClosed.length > 0 ? wins / pairClosed.length : 0;
-                      const avgProfit = p.trades > 0 ? (p.profit_ratio * 100) / p.trades : 0;
+                      const tradeCount = p.count ?? p.trades ?? 0;
+                      const avgProfit = tradeCount > 0 ? (p.profit_ratio * 100) / tradeCount : 0;
                       const totalFees = pairClosed.reduce((acc, t) => acc + (t.fee_open + t.fee_close) * t.stake_amount, 0);
                       const wrColor = winrate >= 0.6 ? "text-[#22c55e]" : winrate < 0.45 ? "text-[#ef4444]" : "text-white";
                       return (
                         <tr key={p.pair} className={`hover:bg-white/[0.04] transition-colors ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}>
                           <td className="px-5 py-3 font-bold text-white">{p.pair}</td>
-                          <td className="px-5 py-3 text-right">{p.trades}</td>
+                          <td className="px-5 py-3 text-right">{p.count ?? p.trades ?? 0}</td>
                           <td className="px-5 py-3 text-right text-[#22c55e]">{wins}</td>
                           <td className="px-5 py-3 text-right text-[#ef4444]">{losses}</td>
                           <td className={`px-5 py-3 text-right font-medium ${wrColor}`}>{fmt(winrate * 100, 1)}%</td>
@@ -798,8 +823,9 @@ export default function TradeTable({
                     <tr><td colSpan={10} className="px-5 py-8 text-center text-[#9CA3AF]">No entry tag data</td></tr>
                   ) : (
                     entrySort.sorted.map((e, idx) => {
-                      const wrColor = e.winrate >= 0.6 ? "text-[#22c55e]" : e.winrate < 0.45 ? "text-[#ef4444]" : "text-white";
-                      const pnlColor = e.profit_abs >= 0 ? "text-[#22c55e]" : "text-[#ef4444]";
+                      const wr = e.winrate ?? 0;
+                      const wrColor = wr >= 0.6 ? "text-[#22c55e]" : wr < 0.45 ? "text-[#ef4444]" : "text-white";
+                      const pnlColor = (e.profit_abs ?? 0) >= 0 ? "text-[#22c55e]" : "text-[#ef4444]";
                       // Derive avg duration & best pair from closed trades with this enter_tag
                       const tagTrades = closedTrades.filter((t) => t.enter_tag === e.enter_tag);
                       const avgDurationMs = tagTrades.length > 0
@@ -821,17 +847,18 @@ export default function TradeTable({
                         if (profit > bestProfit) { bestPair = pair; bestProfit = profit; }
                       }
                       // Expectancy = profit_abs / entries (avg profit per trade in $)
-                      const expectancy = e.entries > 0 ? e.profit_abs / e.entries : 0;
+                      const entries = e.entries ?? 0;
+                      const expectancy = entries > 0 ? (e.profit_abs ?? 0) / entries : 0;
                       const expColor = expectancy >= 0 ? "text-[#22c55e]" : "text-[#ef4444]";
                       return (
                         <tr key={e.enter_tag} className={`hover:bg-white/[0.04] ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}>
                           <td className="px-5 py-3 text-white font-medium">{e.enter_tag}</td>
-                          <td className="px-5 py-3 text-right">{e.entries}</td>
-                          <td className="px-5 py-3 text-right text-[#22c55e]">{e.wins}</td>
-                          <td className="px-5 py-3 text-right text-[#ef4444]">{e.losses}</td>
-                          <td className={`px-5 py-3 text-right font-medium ${wrColor}`}>{fmt(e.winrate * 100, 1)}%</td>
-                          <td className={`px-5 py-3 text-right ${pnlColor}`}>{e.avg_profit >= 0 ? "+" : ""}{fmt(e.avg_profit, 2)}%</td>
-                          <td className={`px-5 py-3 text-right font-bold ${pnlColor}`}>{fmtMoney(e.profit_abs)}</td>
+                          <td className="px-5 py-3 text-right">{entries}</td>
+                          <td className="px-5 py-3 text-right text-[#22c55e]">{e.wins ?? 0}</td>
+                          <td className="px-5 py-3 text-right text-[#ef4444]">{e.losses ?? 0}</td>
+                          <td className={`px-5 py-3 text-right font-medium ${wrColor}`}>{fmt(wr * 100, 1)}%</td>
+                          <td className={`px-5 py-3 text-right ${pnlColor}`}>{(e.avg_profit ?? 0) >= 0 ? "+" : ""}{fmt(e.avg_profit ?? 0, 2)}%</td>
+                          <td className={`px-5 py-3 text-right font-bold ${pnlColor}`}>{fmtMoney(e.profit_abs ?? 0)}</td>
                           <td className="px-5 py-3 text-right text-[#9CA3AF]">{avgDurStr}</td>
                           <td className="px-5 py-3 text-white/70">{bestPair}</td>
                           <td className={`px-5 py-3 text-right font-bold ${expColor}`}>{fmtMoney(expectancy)}</td>
@@ -865,8 +892,9 @@ export default function TradeTable({
                     <tr><td colSpan={10} className="px-5 py-8 text-center text-[#9CA3AF]">No exit reason data</td></tr>
                   ) : (
                     exitSort.sorted.map((e, idx) => {
-                      const wrColor = e.winrate >= 0.6 ? "text-[#22c55e]" : e.winrate < 0.45 ? "text-[#ef4444]" : "text-white";
-                      const pnlColor = e.profit_abs >= 0 ? "text-[#22c55e]" : "text-[#ef4444]";
+                      const wr = e.winrate ?? 0;
+                      const wrColor = wr >= 0.6 ? "text-[#22c55e]" : wr < 0.45 ? "text-[#ef4444]" : "text-white";
+                      const pnlColor = (e.profit_abs ?? 0) >= 0 ? "text-[#22c55e]" : "text-[#ef4444]";
                       // Derive avg duration & best pair from closed trades with this exit_reason
                       const reasonTrades = closedTrades.filter((t) => t.exit_reason === e.exit_reason);
                       const avgDurationMs = reasonTrades.length > 0
@@ -888,17 +916,18 @@ export default function TradeTable({
                         if (profit > bestProfit) { bestPair = pair; bestProfit = profit; }
                       }
                       // Expectancy = profit_abs / exits (avg profit per trade in $)
-                      const expectancy = e.exits > 0 ? e.profit_abs / e.exits : 0;
+                      const exits = e.exits ?? 0;
+                      const expectancy = exits > 0 ? (e.profit_abs ?? 0) / exits : 0;
                       const expColor = expectancy >= 0 ? "text-[#22c55e]" : "text-[#ef4444]";
                       return (
                         <tr key={e.exit_reason} className={`hover:bg-white/[0.04] ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}>
                           <td className="px-5 py-3 text-white font-medium">{e.exit_reason}</td>
-                          <td className="px-5 py-3 text-right">{e.exits}</td>
-                          <td className="px-5 py-3 text-right text-[#22c55e]">{e.wins}</td>
-                          <td className="px-5 py-3 text-right text-[#ef4444]">{e.losses}</td>
-                          <td className={`px-5 py-3 text-right font-medium ${wrColor}`}>{fmt(e.winrate * 100, 1)}%</td>
-                          <td className={`px-5 py-3 text-right ${pnlColor}`}>{e.avg_profit >= 0 ? "+" : ""}{fmt(e.avg_profit, 2)}%</td>
-                          <td className={`px-5 py-3 text-right font-bold ${pnlColor}`}>{fmtMoney(e.profit_abs)}</td>
+                          <td className="px-5 py-3 text-right">{exits}</td>
+                          <td className="px-5 py-3 text-right text-[#22c55e]">{e.wins ?? 0}</td>
+                          <td className="px-5 py-3 text-right text-[#ef4444]">{e.losses ?? 0}</td>
+                          <td className={`px-5 py-3 text-right font-medium ${wrColor}`}>{fmt(wr * 100, 1)}%</td>
+                          <td className={`px-5 py-3 text-right ${pnlColor}`}>{(e.avg_profit ?? 0) >= 0 ? "+" : ""}{fmt(e.avg_profit ?? 0, 2)}%</td>
+                          <td className={`px-5 py-3 text-right font-bold ${pnlColor}`}>{fmtMoney(e.profit_abs ?? 0)}</td>
                           <td className="px-5 py-3 text-right text-[#9CA3AF]">{avgDurStr}</td>
                           <td className="px-5 py-3 text-white/70">{bestPair}</td>
                           <td className={`px-5 py-3 text-right font-bold ${expColor}`}>{fmtMoney(expectancy)}</td>

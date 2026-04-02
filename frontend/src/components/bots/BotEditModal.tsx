@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { updateBot, getStrategies, getExchangeProfiles } from "@/lib/api";
 import { useToast } from "@/components/ui/Toast";
+import ConfirmDialog, { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { Bot, Strategy, ExchangeProfile } from "@/types";
 
 interface BotEditModalProps {
@@ -18,6 +19,7 @@ const STAKE_CURRENCIES = ["USDT", "BUSD", "BTC", "ETH"];
 
 export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditModalProps) {
   const toast = useToast();
+  const [confirmProps, confirmDlg] = useConfirmDialog();
   const [submitting, setSubmitting] = useState(false);
 
   // Expanded sections
@@ -78,7 +80,7 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
         );
         setStrategies(deployable);
       } catch (err) {
-        console.error("Failed to load strategies:", err);
+        toast.error(err instanceof Error ? err.message : "Failed to load strategies.");
       } finally {
         setStrategiesLoading(false);
       }
@@ -87,7 +89,7 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
         const profs = await getExchangeProfiles();
         setProfiles(profs.items || []);
       } catch (err) {
-        console.error("Failed to load profiles:", err);
+        toast.error(err instanceof Error ? err.message : "Failed to load exchange profiles.");
       }
     };
     loadData();
@@ -231,14 +233,14 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
 
     const needsRestart = requiresRestart();
 
-    if (
-      needsRestart &&
-      !dryRun &&
-      !window.confirm(
-        "This change requires a restart and you are in LIVE mode. Continue?"
-      )
-    ) {
-      return;
+    if (needsRestart && !dryRun) {
+      const ok = await confirmDlg({
+        title: "⚠️ Live Mode Restart Required",
+        message: "This change requires a bot restart and you are in LIVE mode. Real money trading will be affected. Continue?",
+        confirmLabel: "Continue",
+        variant: "danger",
+      });
+      if (!ok) return;
     }
 
     setSubmitting(true);
@@ -576,6 +578,7 @@ export default function BotEditModal({ open, bot, onClose, onSuccess }: BotEditM
           </div>
         </form>
       </div>
+      <ConfirmDialog {...confirmProps} />
     </div>
   );
 }

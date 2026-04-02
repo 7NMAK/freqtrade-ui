@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X } from "lucide-react";
+import { X, Play, Square, Pause, RefreshCw, PlusCircle, XSquare, PlusSquare, ShieldAlert, Zap } from "lucide-react";
 import { fmt, fmtMoney, profitColor } from "@/lib/format";
 import type {
   Bot,
@@ -57,13 +57,20 @@ interface BotDetailPanelProps {
   onEdit: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
+  onPause?: () => void;
+  onReload?: () => void;
+  onForceEnter?: () => void;
+  onForceExitAll?: () => void;
+  onStopBuy?: () => void;
+  onSoftKill?: () => void;
+  onHardKill?: () => void;
 }
 
 // Status Badge helper
 function StatusBadge({ status, isDryRun }: { status: string; isDryRun: boolean }) {
   if (status === "draining") {
     return (
-      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 uppercase tracking-wide border border-amber-500-500/20 animate-pulse">
+      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 uppercase tracking-wide border border-amber-500/20 animate-pulse">
         Draining
       </span>
     );
@@ -77,7 +84,7 @@ function StatusBadge({ status, isDryRun }: { status: string; isDryRun: boolean }
   }
   if (isDryRun) {
     return (
-      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 uppercase tracking-wide border border-amber-500-500/20">
+      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 uppercase tracking-wide border border-amber-500/20">
         Paper
       </span>
     );
@@ -113,6 +120,13 @@ export default function BotDetailPanel({
   onEdit,
   onDelete,
   onDuplicate,
+  onPause,
+  onReload,
+  onForceEnter,
+  onForceExitAll,
+  onStopBuy,
+  onSoftKill,
+  onHardKill,
 }: BotDetailPanelProps) {
   const [detailTab, setDetailTab] = useState<DetailTab>("overview");
 
@@ -139,69 +153,39 @@ export default function BotDetailPanel({
           isOpen ? "right-0" : "-right-[560px]"
         }`}
       >
-        {/* Header */}
-        <div className="px-6 py-5 border-b border-border flex items-center gap-3.5 flex-shrink-0">
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-8 h-8 rounded-lg border border-border bg-muted/50 flex items-center justify-center text-muted-foreground text-base transition-all hover:bg-muted hover:text-foreground cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
-          <div className="text-base font-bold text-foreground flex-1 truncate">
-            {bot.name}
+        {/* Header — matches prototype drawer */}
+        <div className="px-4 pb-3 border-b border-border bg-black flex flex-col gap-3 flex-shrink-0 pt-4">
+          <div className="flex justify-between items-start">
+            <div>
+              <div className="flex items-center gap-2.5 mb-1">
+                <h2 className="text-base font-bold tracking-tight text-foreground font-mono">{bot.name}</h2>
+                <StatusBadge status={bot.status} isDryRun={bot.is_dry_run} />
+              </div>
+              <p className="text-[11px] text-muted-foreground font-mono uppercase tracking-wide">
+                Strategy: {bot.strategy_name ?? "N/A"} &middot; {bot.exchange_name ?? "Exchange"} &middot; {isRunning ? "Running" : isDraining ? "Draining" : "Stopped"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="hover:text-foreground text-muted-foreground p-1.5 hover:bg-white/10 rounded transition-colors cursor-pointer"
+              title="Close drawer"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <StatusBadge status={bot.status} isDryRun={bot.is_dry_run} />
-          {/* Action Buttons */}
-          <div className="flex gap-1.5 flex-wrap">
-            <button
-              type="button"
-              onClick={onEdit}
-              className="inline-flex items-center justify-center rounded-md text-[10px] uppercase font-bold tracking-wider transition-colors focus-visible:outline-none border border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground h-7 px-3 cursor-pointer"
-            >
-              Edit
-            </button>
-            <button
-              type="button"
-              onClick={onDuplicate}
-              className="inline-flex items-center justify-center rounded-md text-[10px] uppercase font-bold tracking-wider transition-colors focus-visible:outline-none border border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground h-7 px-3 cursor-pointer"
-            >
-              Duplicate
-            </button>
-            {!isRunning && !isDraining && (
-              <button
-                type="button"
-                onClick={onStart}
-                className="inline-flex items-center justify-center rounded-md text-[10px] uppercase font-bold tracking-wider transition-colors focus-visible:outline-none border border-emerald-500/20 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 h-7 px-3 cursor-pointer"
-              >
-                Start
-              </button>
-            )}
-            {(isRunning || isDraining) && (
-              <button
-                type="button"
-                onClick={onStop}
-                className="inline-flex items-center justify-center rounded-md text-[10px] uppercase font-bold tracking-wider transition-colors focus-visible:outline-none border border-rose-500/20 bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 h-7 px-3 cursor-pointer"
-              >
-                Stop
-              </button>
-            )}
-            {isRunning && !isDraining && (
-              <button
-                type="button"
-                onClick={onDrain}
-                className="inline-flex items-center justify-center rounded-md text-[10px] uppercase font-bold tracking-wider transition-colors focus-visible:outline-none border border-amber-500/20 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 h-7 px-3 cursor-pointer"
-              >
-                Drain
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={onDelete}
-              className="inline-flex items-center justify-center rounded-md text-[10px] uppercase font-bold tracking-wider transition-colors focus-visible:outline-none border border-rose-500/20 bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 h-7 px-3 cursor-pointer"
-            >
-              Delete
-            </button>
+          {/* 9 Action Buttons — icon-only, matching prototype */}
+          <div className="flex items-center gap-1 flex-wrap">
+            <button type="button" onClick={onStart} className="w-7 h-7 rounded border border-border bg-muted/50 flex items-center justify-center text-emerald-500 hover:bg-emerald-500/20 transition-colors cursor-pointer" title="Start Bot"><Play className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onStop} className="w-7 h-7 rounded border border-border bg-muted/50 flex items-center justify-center text-rose-500 hover:bg-rose-500/20 transition-colors cursor-pointer" title="Stop Bot"><Square className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onPause ?? onDrain} className="w-7 h-7 rounded border border-border bg-muted/50 flex items-center justify-center text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors cursor-pointer" title="Pause (Stopbuy)"><Pause className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onReload ?? onEdit} className="w-7 h-7 rounded border border-border bg-muted/50 flex items-center justify-center text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors cursor-pointer" title="Reload Config"><RefreshCw className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onForceEnter ?? (() => {})} className="w-7 h-7 rounded border border-border bg-muted/50 flex items-center justify-center text-emerald-500 hover:bg-emerald-500/20 transition-colors cursor-pointer" title="Force open a new trade"><PlusCircle className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onForceExitAll ?? (() => {})} className="w-7 h-7 rounded border border-border bg-muted/50 flex items-center justify-center text-rose-500 hover:bg-rose-500/20 transition-colors cursor-pointer" title="Force Exit All"><XSquare className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onStopBuy ?? (() => {})} className="w-7 h-7 rounded border border-border bg-muted/50 flex items-center justify-center text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors cursor-pointer" title="Toggle Stopbuy"><PlusSquare className="w-3.5 h-3.5" /></button>
+            <span className="w-px h-4 bg-white/15 mx-1" />
+            <button type="button" onClick={onSoftKill ?? (() => {})} className="w-7 h-7 rounded border border-border bg-muted/50 flex items-center justify-center text-yellow-500 hover:bg-yellow-500/20 transition-colors cursor-pointer" title="Soft Kill"><ShieldAlert className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onHardKill ?? (() => {})} className="w-7 h-7 rounded border border-border bg-muted/50 flex items-center justify-center text-rose-500 hover:bg-rose-500/20 transition-colors cursor-pointer" title="Hard Kill"><Zap className="w-3.5 h-3.5" /></button>
           </div>
         </div>
 
@@ -261,22 +245,12 @@ export default function BotDetailPanel({
           )}
         </div>
 
-        {/* Bottom actions */}
+        {/* Bottom actions — Edit, Duplicate, Delete, Close */}
         <div className="px-6 py-4 border-t border-border flex gap-2 flex-shrink-0">
-          <button
-            type="button"
-            onClick={onEdit}
-            className="flex-1 py-2.5 rounded-md border border-border bg-muted/50 text-muted-foreground text-xs font-medium text-center transition-all hover:bg-muted hover:border-border cursor-pointer"
-          >
-            Edit Bot Settings
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 py-2.5 rounded-md border-none bg-primary text-white text-xs font-semibold text-center transition-all hover:bg-primary-dim cursor-pointer"
-          >
-            Close Panel
-          </button>
+          <button type="button" onClick={onEdit} className="flex-1 py-2.5 rounded-md border border-border bg-muted/50 text-muted-foreground text-xs font-medium text-center transition-all hover:bg-muted cursor-pointer">Edit</button>
+          <button type="button" onClick={onDuplicate} className="flex-1 py-2.5 rounded-md border border-border bg-muted/50 text-muted-foreground text-xs font-medium text-center transition-all hover:bg-muted cursor-pointer">Duplicate</button>
+          <button type="button" onClick={onDelete} className="py-2.5 px-4 rounded-md border border-rose-500/20 bg-rose-500/10 text-rose-500 text-xs font-medium text-center transition-all hover:bg-rose-500/20 cursor-pointer">Delete</button>
+          <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-md border-none bg-primary text-white text-xs font-semibold text-center transition-all hover:bg-white/20 cursor-pointer">Close</button>
         </div>
       </div>
     </>
@@ -328,132 +302,87 @@ function DetailContent({
   switch (tab) {
     /* ─── Overview ─── */
     case "overview": {
+      const winCount = profit?.winning_trades ?? statsData?.wins ?? 0;
+      const lossCount = profit?.losing_trades ?? statsData?.losses ?? 0;
+      const totalCount = winCount + lossCount;
+      const winRate = totalCount > 0 ? (winCount / totalCount) * 100 : null;
+      const openPnl = openTrades.reduce((s, t) => s + (t.current_profit_abs ?? 0), 0);
+      // Expectancy
+      const expectancy = totalCount > 0 && statsData ? (statsData.profit_all_coin ?? 0) / totalCount : null;
+
       return (
-        <div className="space-y-6">
-          {/* Bot Config Info */}
-          <div>
-            <div className={sectionTitle}>Bot Configuration</div>
-            <div className={row}>
-              <span className={key}>Exchange</span>
-              <span className={val}>{bot.exchange_name ?? "—"}</span>
+        <div className="space-y-4">
+          {/* KPI Row — 4 columns matching prototype */}
+          <div className="grid grid-cols-4 gap-2.5">
+            <div className="bg-muted/10 border border-border/50 rounded p-3">
+              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Closed P&L</div>
+              <div className={`font-mono font-bold text-lg ${profitColor(profit?.profit_closed_coin)}`}>{fmtMoney(profit?.profit_closed_coin)}</div>
+              {profit?.profit_closed_percent != null && <div className={`text-[10px] font-mono mt-0.5 ${profitColor(profit.profit_closed_percent)}`}>{profit.profit_closed_percent >= 0 ? "+" : ""}{fmt(profit.profit_closed_percent, 1)}%</div>}
             </div>
-            <div className={row}>
-              <span className={key}>Strategy</span>
-              <span className={val}>{bot.strategy_name ?? "—"}</span>
+            <div className="bg-muted/10 border border-border/50 rounded p-3">
+              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Open P&L</div>
+              <div className={`font-mono font-bold text-lg ${profitColor(openPnl)}`}>{fmtMoney(openPnl)}</div>
+              <div className="text-muted-foreground/50 text-[10px] font-mono mt-0.5">{openTrades.length} position{openTrades.length !== 1 ? "s" : ""}</div>
             </div>
-            {configData && (
-              <>
-                <div className={row}>
-                  <span className={key}>Timeframe</span>
-                  <span className={val}>{configData.timeframe ?? "—"}</span>
-                </div>
-                <div className={row}>
-                  <span className={key}>Trading Mode</span>
-                  <span className={val}>{configData.trading_mode ?? "—"}</span>
-                </div>
-                <div className={row}>
-                  <span className={key}>Margin Mode</span>
-                  <span className={val}>{configData.margin_mode ?? "—"}</span>
-                </div>
-                <div className={row}>
-                  <span className={key}>Stake Currency</span>
-                  <span className={val}>{configData.stake_currency ?? "—"}</span>
-                </div>
-                <div className={row}>
-                  <span className={key}>Stake Amount</span>
-                  <span className={val}>{fmt(typeof configData.stake_amount === "number" ? configData.stake_amount : 0, 2)} {configData.stake_currency}</span>
-                </div>
-                <div className={row}>
-                  <span className={key}>Max Open Trades</span>
-                  <span className={val}>{configData.max_open_trades ?? "—"}</span>
-                </div>
-                <div className={row}>
-                  <span className={key}>Dry Run</span>
-                  <span className={val}>{configData.dry_run ? "Yes" : "No"}</span>
-                </div>
-                <div className={row}>
-                  <span className={key}>Pairs Count</span>
-                  <span className={val}>{configData.pair_whitelist?.length ?? 0}</span>
-                </div>
-              </>
-            )}
+            <div className="bg-muted/10 border border-border/50 rounded p-3">
+              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Win Rate</div>
+              <div className="font-mono font-bold text-lg text-foreground">{winRate != null ? `${fmt(winRate, 1)}%` : "—"}</div>
+              <div className="text-muted-foreground/50 text-[10px] font-mono mt-0.5">{winCount}W / {lossCount}L</div>
+            </div>
+            <div className="bg-muted/10 border border-border/50 rounded p-3">
+              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Trades</div>
+              <div className="font-mono font-bold text-lg text-foreground">{profit?.trade_count ?? totalCount}</div>
+              {statsData?.durations?.wins != null && <div className="text-muted-foreground/50 text-[10px] font-mono mt-0.5">{fmtDurSec(statsData.durations.wins)} avg hold</div>}
+            </div>
           </div>
 
-          {/* P&L Summary */}
-          {profit && (
-            <div>
-              <div className={sectionTitle}>P&L Summary</div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-muted/10 border border-border/50 rounded-xl p-3 shadow-sm">
-                  <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1 tracking-wider">Closed Profit</div>
-                  <div className={`text-sm font-black ${profitColor(profit.profit_closed_coin)}`}>
-                    {fmtMoney(profit.profit_closed_coin)}
-                  </div>
-                </div>
-                <div className="bg-muted/10 border border-border/50 rounded-xl p-3 shadow-sm">
-                  <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1 tracking-wider">Total Profit</div>
-                  <div className={`text-sm font-black ${profitColor(profit.profit_all_coin)}`}>
-                    {fmtMoney(profit.profit_all_coin)}
-                  </div>
-                </div>
-                <div className="bg-muted/10 border border-border/50 rounded-xl p-3 shadow-sm">
-                  <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1 tracking-wider">Trade Count</div>
-                  <div className="text-sm font-black text-foreground">{profit.trade_count}</div>
-                </div>
-                <div className="bg-muted/10 border border-border/50 rounded-xl p-3 shadow-sm">
-                  <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1 tracking-wider">Win Rate</div>
-                  <div className="text-sm font-black text-foreground">
-                    {(profit.winning_trades ?? 0) + (profit.losing_trades ?? 0) > 0
-                      ? (((profit.winning_trades ?? 0) / ((profit.winning_trades ?? 0) + (profit.losing_trades ?? 0))) * 100).toFixed(1) + "%"
-                      : "—"}
-                  </div>
-                </div>
+          {/* 2-column stats grid matching prototype */}
+          <div className="grid grid-cols-2 gap-2.5">
+            {/* Risk Metrics */}
+            <div className="bg-muted/10 border border-border/50 rounded p-3">
+              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-2">Risk Metrics</div>
+              <div className="space-y-1.5 font-mono text-[12px]">
+                <div className="flex justify-between"><span className="text-muted-foreground">Profit Factor</span><span className={`font-bold ${(statsData?.profit_factor ?? 0) > 1 ? "text-emerald-500" : "text-foreground"}`}>{statsData?.profit_factor != null ? fmt(statsData.profit_factor) : "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Max Drawdown</span><span className="text-rose-500 font-bold">{statsData?.max_drawdown != null ? fmt(statsData.max_drawdown * 100, 1) + "%" : "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Sharpe Ratio</span><span className="text-foreground">{statsData?.sharpe_ratio != null ? fmt(statsData.sharpe_ratio) : "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Sortino Ratio</span><span className="text-foreground">{statsData?.sortino_ratio != null ? fmt(statsData.sortino_ratio) : "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Expectancy</span><span className={profitColor(expectancy)}>{expectancy != null ? fmtMoney(expectancy) : "—"}</span></div>
               </div>
             </div>
-          )}
-
-          {/* Stats */}
-          {statsData && (
-            <div>
-              <div className={sectionTitle}>Advanced Stats</div>
-              <div className={row}>
-                <span className={key}>Profit Factor</span>
-                <span className={val}>{fmt(statsData.profit_factor)}</span>
+            {/* Bot Info */}
+            <div className="bg-muted/10 border border-border/50 rounded p-3">
+              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-2">Bot Info</div>
+              <div className="space-y-1.5 font-mono text-[12px]">
+                <div className="flex justify-between"><span className="text-muted-foreground">Exchange</span><span className="text-foreground">{bot.exchange_name ?? "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Mode</span><span className="text-foreground">{configData ? `${configData.trading_mode ?? "spot"} · ${configData.margin_mode ?? "—"}` : "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Timeframe</span><span className="text-foreground">{configData?.timeframe ?? "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Stake</span><span className="text-foreground">{configData ? `${fmt(typeof configData.stake_amount === "number" ? configData.stake_amount : 0, 0)} ${configData.stake_currency ?? ""}` : "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Max Trades</span><span className="text-foreground">{configData?.max_open_trades ?? "—"}</span></div>
               </div>
-              <div className={row}>
-                <span className={key}>Max Drawdown</span>
-                <span className={`${val} text-rose-500`}>
-                  {statsData.max_drawdown != null ? fmt(statsData.max_drawdown * 100, 1) + "%" : "—"}
-                </span>
-              </div>
-              {statsData.sharpe_ratio != null && (
-                <div className={row}>
-                  <span className={key}>Sharpe Ratio</span>
-                  <span className={val}>{fmt(statsData.sharpe_ratio)}</span>
-                </div>
-              )}
-              {statsData.sortino_ratio != null && (
-                <div className={row}>
-                  <span className={key}>Sortino Ratio</span>
-                  <span className={val}>{fmt(statsData.sortino_ratio)}</span>
-                </div>
-              )}
             </div>
-          )}
+          </div>
 
-          {/* Wallet Balance */}
+          {/* Wallet Balance — matching prototype */}
           {balanceData && (
-            <div>
-              <div className={sectionTitle}>Wallet Balance</div>
-              {balanceData.currencies && balanceData.currencies.length > 0 ? (
-                balanceData.currencies.slice(0, 5).map((c) => (
-                  <div key={c.currency} className={row}>
-                    <span className={key}>{c.currency}</span>
-                    <span className={val}>{fmt(c.free, 4)} (${fmt(c.est_stake, 2)})</span>
-                  </div>
-                ))
+            <div className="bg-muted/10 border border-border/50 rounded p-3">
+              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-2">Wallet Balance</div>
+              {balanceData.currencies && balanceData.currencies.filter(c => c.balance > 0 || c.used > 0 || c.est_stake > 0 || c.free > 0).length > 0 ? (
+                <div className="grid grid-cols-3 gap-4 font-mono text-[12px]">
+                  {balanceData.currencies.filter(c => c.balance > 0 || c.used > 0 || c.est_stake > 0 || c.free > 0).slice(0, 3).map((c) => (
+                    <div key={c.currency}>
+                      <span className="text-muted-foreground block text-[10px] mb-0.5">{c.currency}</span>
+                      <span className="text-foreground font-bold">{fmt(c.balance, c.balance < 1 ? 4 : 2)}</span>
+                    </div>
+                  ))}
+                  {balanceData.total > 0 && (
+                    <div>
+                      <span className="text-muted-foreground block text-[10px] mb-0.5">Total Est.</span>
+                      <span className="text-foreground font-bold">${fmt(balanceData.total, 0)}</span>
+                    </div>
+                  )}
+                </div>
               ) : (
-                <div className="text-center py-6 text-muted-foreground text-xs">No balance data</div>
+                <div className="text-center py-4 text-muted-foreground text-xs">No balance data</div>
               )}
             </div>
           )}
@@ -467,37 +396,46 @@ function DetailContent({
         <div className="space-y-6">
           {/* Open Trades */}
           <div>
-            <div className={sectionTitle}>Open Positions ({openTrades.length})</div>
+            <h3 className={`${sectionTitle} flex items-center gap-2`}>Open Positions <span className="text-muted-foreground/30">({openTrades.length})</span></h3>
             {openTrades.length === 0 ? (
               <div className="text-center py-6 text-muted-foreground text-xs">No open trades</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-muted-foreground border-b border-border">
-                      <th className="text-left py-2 font-medium">Pair</th>
-                      <th className="text-left py-2 font-medium">Side</th>
-                      <th className="text-right py-2 font-medium">Entry</th>
-                      <th className="text-right py-2 font-medium">Current</th>
-                      <th className="text-right py-2 font-medium">P&L</th>
+                <table className="w-full text-[13px] font-mono">
+                  <thead className="text-muted-foreground text-[11px] uppercase tracking-widest">
+                    <tr>
+                      <th className="text-left py-1.5 px-1 font-medium">Pair</th>
+                      <th className="text-left py-1.5 px-1 font-medium">Side</th>
+                      <th className="text-right py-1.5 px-1 font-medium">Lev</th>
+                      <th className="text-right py-1.5 px-1 font-medium">Entry</th>
+                      <th className="text-right py-1.5 px-1 font-medium">Current</th>
+                      <th className="text-right py-1.5 px-1 font-medium">Stake</th>
+                      <th className="text-right py-1.5 px-1 font-medium">P&L</th>
+                      <th className="text-right py-1.5 px-1 font-medium">P&L %</th>
+                      <th className="text-right py-1.5 px-1 font-medium">Duration</th>
+                      <th className="text-left py-1.5 px-1 font-medium">Enter Tag</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-border/30">
                     {openTrades.map((t) => {
                       const pnl = t.current_profit_abs ?? 0;
+                      const pct = t.current_profit != null ? t.current_profit * 100 : null;
+                      const ms = Date.now() - new Date(t.open_date).getTime();
+                      const durH = Math.floor(ms / 3600000);
+                      const durM = Math.floor((ms % 3600000) / 60000);
+                      const durStr = durH > 0 ? `${durH}h${durM.toString().padStart(2, "0")}m` : `${durM}m`;
                       return (
-                        <tr key={t.trade_id} className="border-b border-border/30">
-                          <td className="py-2 text-foreground font-medium">{t.pair}</td>
-                          <td className="py-2">
-                            <span className={t.is_short ? "text-rose-500" : "text-emerald-500"}>
-                              {t.is_short ? "SHORT" : "LONG"}
-                            </span>
-                          </td>
-                          <td className="py-2 text-right text-foreground">{fmt(t.open_rate, 4)}</td>
-                          <td className="py-2 text-right text-foreground">{fmt(t.current_rate, 4)}</td>
-                          <td className={`py-2 text-right font-semibold ${profitColor(pnl)}`}>
-                            {fmtMoney(pnl)}
-                          </td>
+                        <tr key={t.trade_id} className="hover:bg-white/[0.04]">
+                          <td className="py-1.5 px-1 text-foreground font-medium">{t.pair}</td>
+                          <td className="py-1.5 px-1"><span className={`${t.is_short ? "bg-rose-500/12 text-rose-500" : "bg-emerald-500/12 text-emerald-500"} px-1 py-0.5 rounded text-[9px] font-bold`}>{t.is_short ? "SHORT" : "LONG"}</span></td>
+                          <td className="py-1.5 px-1 text-right">{t.leverage > 1 ? `${t.leverage}x` : "1x"}</td>
+                          <td className="py-1.5 px-1 text-right">{fmt(t.open_rate, t.open_rate < 1 ? 4 : 0)}</td>
+                          <td className="py-1.5 px-1 text-right font-medium">{fmt(t.current_rate, t.current_rate < 1 ? 4 : 0)}</td>
+                          <td className="py-1.5 px-1 text-right">{fmt(t.stake_amount, 0)}</td>
+                          <td className={`py-1.5 px-1 text-right font-bold ${profitColor(pnl)}`}>{fmtMoney(pnl)}</td>
+                          <td className={`py-1.5 px-1 text-right ${profitColor(pct)}`}>{pct != null ? `${pct >= 0 ? "+" : ""}${fmt(pct, 2)}%` : "—"}</td>
+                          <td className="py-1.5 px-1 text-right text-muted-foreground">{durStr}</td>
+                          <td className="py-1.5 px-1 text-muted-foreground">{t.enter_tag ?? "—"}</td>
                         </tr>
                       );
                     })}
@@ -509,37 +447,48 @@ function DetailContent({
 
           {/* Closed Trades */}
           <div>
-            <div className={sectionTitle}>Closed Trades (Last 10)</div>
+            <h3 className={`${sectionTitle} flex items-center gap-2`}>Closed Trades <span className="text-muted-foreground/30">(last 10)</span></h3>
             {closedTrades.length === 0 ? (
               <div className="text-center py-6 text-muted-foreground text-xs">No closed trades</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-muted-foreground border-b border-border">
-                      <th className="text-left py-2 font-medium">Pair</th>
-                      <th className="text-left py-2 font-medium">Side</th>
-                      <th className="text-right py-2 font-medium">Entry</th>
-                      <th className="text-right py-2 font-medium">Exit</th>
-                      <th className="text-right py-2 font-medium">P&L</th>
+                <table className="w-full text-[13px] font-mono">
+                  <thead className="text-muted-foreground text-[11px] uppercase tracking-widest">
+                    <tr>
+                      <th className="text-left py-1.5 px-1 font-medium">Pair</th>
+                      <th className="text-left py-1.5 px-1 font-medium">Side</th>
+                      <th className="text-right py-1.5 px-1 font-medium">Lev</th>
+                      <th className="text-right py-1.5 px-1 font-medium">Entry</th>
+                      <th className="text-right py-1.5 px-1 font-medium">Exit</th>
+                      <th className="text-right py-1.5 px-1 font-medium">Stake</th>
+                      <th className="text-right py-1.5 px-1 font-medium">P&L</th>
+                      <th className="text-right py-1.5 px-1 font-medium">P&L %</th>
+                      <th className="text-right py-1.5 px-1 font-medium">Duration</th>
+                      <th className="text-left py-1.5 px-1 font-medium">Enter Tag</th>
+                      <th className="text-left py-1.5 px-1 font-medium">Exit Reason</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-border/30">
                     {closedTrades.slice(0, 10).map((t) => {
                       const pnl = t.close_profit_abs ?? 0;
+                      const pct = t.close_profit != null ? t.close_profit * 100 : null;
+                      const ms = t.close_date ? new Date(t.close_date).getTime() - new Date(t.open_date).getTime() : 0;
+                      const durH = Math.floor(ms / 3600000);
+                      const durM = Math.floor((ms % 3600000) / 60000);
+                      const durStr = ms > 0 ? (durH > 0 ? `${durH}h${durM.toString().padStart(2, "0")}m` : `${durM}m`) : "—";
                       return (
-                        <tr key={t.trade_id} className="border-b border-border/30">
-                          <td className="py-2 text-foreground font-medium">{t.pair}</td>
-                          <td className="py-2">
-                            <span className={t.is_short ? "text-rose-500" : "text-emerald-500"}>
-                              {t.is_short ? "SHORT" : "LONG"}
-                            </span>
-                          </td>
-                          <td className="py-2 text-right text-foreground">{fmt(t.open_rate, 4)}</td>
-                          <td className="py-2 text-right text-foreground">{fmt(t.close_rate, 4)}</td>
-                          <td className={`py-2 text-right font-semibold ${profitColor(pnl)}`}>
-                            {fmtMoney(pnl)}
-                          </td>
+                        <tr key={t.trade_id} className="hover:bg-white/[0.04]">
+                          <td className="py-1.5 px-1 text-foreground font-medium">{t.pair}</td>
+                          <td className="py-1.5 px-1"><span className={`${t.is_short ? "text-rose-500" : "text-emerald-500"} text-[9px] font-bold`}>{t.is_short ? "SHORT" : "LONG"}</span></td>
+                          <td className="py-1.5 px-1 text-right">{t.leverage > 1 ? `${t.leverage}x` : "1x"}</td>
+                          <td className="py-1.5 px-1 text-right">{fmt(t.open_rate, t.open_rate < 1 ? 4 : 0)}</td>
+                          <td className="py-1.5 px-1 text-right">{fmt(t.close_rate, t.close_rate != null && t.close_rate < 1 ? 4 : 0)}</td>
+                          <td className="py-1.5 px-1 text-right">{fmt(t.stake_amount, 0)}</td>
+                          <td className={`py-1.5 px-1 text-right font-bold ${profitColor(pnl)}`}>{fmtMoney(pnl)}</td>
+                          <td className={`py-1.5 px-1 text-right ${profitColor(pct)}`}>{pct != null ? `${pct >= 0 ? "+" : ""}${fmt(pct, 2)}%` : "—"}</td>
+                          <td className="py-1.5 px-1 text-right text-muted-foreground">{durStr}</td>
+                          <td className="py-1.5 px-1 text-muted-foreground">{t.enter_tag ?? "—"}</td>
+                          <td className="py-1.5 px-1 text-muted-foreground">{t.exit_reason ?? "—"}</td>
                         </tr>
                       );
                     })}
@@ -562,40 +511,59 @@ function DetailContent({
         const winrate = pairClosed.length > 0 ? wins / pairClosed.length : 0;
         return { ...p, wins, losses, winrate };
       });
+      // Derive best/worst pair, best tag, best exit for KPI summary
+      const bestPerf = enrichedPerf.length > 0 ? enrichedPerf.reduce((best, p) => p.profit_abs > best.profit_abs ? p : best, enrichedPerf[0]) : null;
+      const worstPerf = enrichedPerf.length > 0 ? enrichedPerf.reduce((worst, p) => p.profit_abs < worst.profit_abs ? p : worst, enrichedPerf[0]) : null;
+      const bestEntry = entryData.length > 0 ? entryData.reduce((best, e) => (e.profit_abs ?? 0) > (best.profit_abs ?? 0) ? e : best, entryData[0]) : null;
+      const bestExit = exitData.length > 0 ? exitData.reduce((best, e) => (e.profit_abs ?? 0) > (best.profit_abs ?? 0) ? e : best, exitData[0]) : null;
+
       return (
-        <div className="space-y-6">
-          {enrichedPerf && enrichedPerf.length > 0 ? (
-            <div>
-              <div className={sectionTitle}>Per-Pair Performance</div>
+        <div className="space-y-4">
+          {/* KPI Summary — 4 columns matching prototype */}
+          <div className="grid grid-cols-4 gap-2.5">
+            <div className="bg-muted/10 border border-border/50 rounded p-3 text-center">
+              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Best Pair</div>
+              <div className={`font-mono font-bold text-sm ${profitColor(bestPerf?.profit_abs)}`}>{bestPerf?.pair ?? "—"}</div>
+              {bestPerf && <div className={`text-[10px] font-mono ${profitColor(bestPerf.profit_abs)}`}>{fmtMoney(bestPerf.profit_abs)}</div>}
+            </div>
+            <div className="bg-muted/10 border border-border/50 rounded p-3 text-center">
+              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Worst Pair</div>
+              <div className={`font-mono font-bold text-sm ${profitColor(worstPerf?.profit_abs)}`}>{worstPerf?.pair ?? "—"}</div>
+              {worstPerf && <div className={`text-[10px] font-mono ${profitColor(worstPerf.profit_abs)}`}>{fmtMoney(worstPerf.profit_abs)}</div>}
+            </div>
+            <div className="bg-muted/10 border border-border/50 rounded p-3 text-center">
+              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Best Tag</div>
+              <div className={`font-mono font-bold text-sm ${profitColor(bestEntry?.profit_abs)}`}>{bestEntry?.enter_tag ?? "—"}</div>
+              {bestEntry && <div className={`text-[10px] font-mono ${profitColor(bestEntry.profit_abs)}`}>{fmtMoney(bestEntry.profit_abs)}</div>}
+            </div>
+            <div className="bg-muted/10 border border-border/50 rounded p-3 text-center">
+              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Best Exit</div>
+              <div className={`font-mono font-bold text-sm ${profitColor(bestExit?.profit_abs)}`}>{bestExit?.exit_reason ?? "—"}</div>
+              {bestExit && <div className={`text-[10px] font-mono ${profitColor(bestExit.profit_abs)}`}>{fmtMoney(bestExit.profit_abs)}</div>}
+            </div>
+          </div>
+
+          {/* Per-Pair Performance */}
+          {enrichedPerf.length > 0 ? (
+            <div className="bg-muted/10 border border-border/50 rounded p-3">
+              <h3 className={sectionTitle}>Per-Pair Performance</h3>
               <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-muted-foreground border-b border-border">
-                      <th className="text-left py-2 font-medium">Pair</th>
-                      <th className="text-right py-2 font-medium">Trades</th>
-                      <th className="text-right py-2 font-medium">W</th>
-                      <th className="text-right py-2 font-medium">L</th>
-                      <th className="text-right py-2 font-medium">WR%</th>
-                      <th className="text-right py-2 font-medium">Profit %</th>
-                      <th className="text-right py-2 font-medium">Profit $</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <table className="w-full text-[13px] font-mono whitespace-nowrap">
+                  <thead><tr className="text-muted-foreground text-[11px] uppercase tracking-widest">
+                    <th className="text-left px-2 py-1.5 font-semibold">Pair</th>
+                    <th className="text-right px-2 py-1.5 font-semibold">Trades</th>
+                    <th className="text-right px-2 py-1.5 font-semibold">profit_abs</th>
+                    <th className="text-right px-2 py-1.5 font-semibold">profit_ratio</th>
+                    <th className="text-right px-2 py-1.5 font-semibold">Win Rate</th>
+                  </tr></thead>
+                  <tbody className="divide-y divide-border/30">
                     {enrichedPerf.map((p) => (
-                      <tr key={p.pair} className="border-b border-border/30">
-                        <td className="py-2 text-foreground font-medium">{p.pair}</td>
-                        <td className="py-2 text-right text-muted-foreground">{p.count}</td>
-                        <td className="py-2 text-right text-emerald-500">{p.wins}</td>
-                        <td className="py-2 text-right text-rose-500">{p.losses}</td>
-                        <td className={`py-2 text-right font-medium ${p.winrate >= 0.6 ? "text-emerald-500" : p.winrate < 0.45 ? "text-rose-500" : "text-foreground"}`}>
-                          {fmt(p.winrate * 100, 1)}%
-                        </td>
-                        <td className={`py-2 text-right font-semibold ${profitColor(p.profit_ratio)}`}>
-                          {p.profit_ratio >= 0 ? "+" : ""}{fmt(p.profit_ratio * 100, 1)}%
-                        </td>
-                        <td className={`py-2 text-right font-semibold ${profitColor(p.profit_abs)}`}>
-                          {fmtMoney(p.profit_abs)}
-                        </td>
+                      <tr key={p.pair} className="hover:bg-white/[0.04]">
+                        <td className="px-2 py-1.5 text-foreground">{p.pair}</td>
+                        <td className="px-2 py-1.5 text-right">{p.count ?? p.trades ?? 0}</td>
+                        <td className={`px-2 py-1.5 text-right font-bold ${profitColor(p.profit_abs)}`}>{fmtMoney(p.profit_abs)}</td>
+                        <td className={`px-2 py-1.5 text-right ${profitColor(p.profit_ratio)}`}>{p.profit_ratio >= 0 ? "+" : ""}{fmt(p.profit_ratio * 100, 2)}%</td>
+                        <td className={`px-2 py-1.5 text-right ${p.winrate >= 0.6 ? "text-emerald-500" : p.winrate < 0.45 ? "text-rose-500" : "text-foreground"}`}>{fmt(p.winrate * 100, 1)}%</td>
                       </tr>
                     ))}
                   </tbody>
@@ -606,83 +574,55 @@ function DetailContent({
             <div className="text-center py-6 text-muted-foreground text-xs">No performance data</div>
           )}
 
-          {entryData && entryData.length > 0 && (
-            <div>
-              <div className={sectionTitle}>Entry Tag Analysis</div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-muted-foreground border-b border-border">
-                      <th className="text-left py-2 font-medium">Tag</th>
-                      <th className="text-right py-2 font-medium">Trades</th>
-                      <th className="text-right py-2 font-medium">W</th>
-                      <th className="text-right py-2 font-medium">L</th>
-                      <th className="text-right py-2 font-medium">WR%</th>
-                      <th className="text-right py-2 font-medium">Avg %</th>
-                      <th className="text-right py-2 font-medium">P&L</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {entryData.map((e) => (
-                      <tr key={e.enter_tag ?? "untagged"} className="border-b border-border/30">
-                        <td className="py-2 text-foreground font-medium">{e.enter_tag ?? "untagged"}</td>
-                        <td className="py-2 text-right text-muted-foreground">{e.entries}</td>
-                        <td className="py-2 text-right text-emerald-500">{e.wins}</td>
-                        <td className="py-2 text-right text-rose-500">{e.losses}</td>
-                        <td className={`py-2 text-right font-medium ${e.winrate >= 0.6 ? "text-emerald-500" : e.winrate < 0.45 ? "text-rose-500" : "text-foreground"}`}>
-                          {fmt(e.winrate * 100, 1)}%
-                        </td>
-                        <td className={`py-2 text-right ${profitColor(e.avg_profit)}`}>
-                          {e.avg_profit >= 0 ? "+" : ""}{fmt(e.avg_profit, 2)}%
-                        </td>
-                        <td className={`py-2 text-right font-semibold ${profitColor(e.profit_abs)}`}>
-                          {fmtMoney(e.profit_abs)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {exitData && exitData.length > 0 && (
-            <div>
-              <div className={sectionTitle}>Exit Reason Analysis</div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-muted-foreground border-b border-border">
-                      <th className="text-left py-2 font-medium">Reason</th>
-                      <th className="text-right py-2 font-medium">Exits</th>
-                      <th className="text-right py-2 font-medium">W</th>
-                      <th className="text-right py-2 font-medium">L</th>
-                      <th className="text-right py-2 font-medium">WR%</th>
-                      <th className="text-right py-2 font-medium">Avg %</th>
-                      <th className="text-right py-2 font-medium">P&L</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {exitData.map((e) => (
-                      <tr key={e.exit_reason ?? "untagged"} className="border-b border-border/30">
-                        <td className="py-2 text-foreground font-medium">{e.exit_reason ?? "untagged"}</td>
-                        <td className="py-2 text-right text-muted-foreground">{e.exits}</td>
-                        <td className="py-2 text-right text-emerald-500">{e.wins}</td>
-                        <td className="py-2 text-right text-rose-500">{e.losses}</td>
-                        <td className={`py-2 text-right font-medium ${e.winrate >= 0.6 ? "text-emerald-500" : e.winrate < 0.45 ? "text-rose-500" : "text-foreground"}`}>
-                          {fmt(e.winrate * 100, 1)}%
-                        </td>
-                        <td className={`py-2 text-right ${profitColor(e.avg_profit)}`}>
-                          {e.avg_profit >= 0 ? "+" : ""}{fmt(e.avg_profit, 2)}%
-                        </td>
-                        <td className={`py-2 text-right font-semibold ${profitColor(e.profit_abs)}`}>
-                          {fmtMoney(e.profit_abs)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+          {/* Entry / Exit Analysis side by side — matching prototype */}
+          {(entryData.length > 0 || exitData.length > 0) && (
+            <div className="grid grid-cols-2 gap-2.5">
+              {entryData.length > 0 && (
+                <div className="bg-muted/10 border border-border/50 rounded p-3">
+                  <h3 className={sectionTitle}>Entry Tags</h3>
+                  <table className="w-full text-[13px] font-mono whitespace-nowrap">
+                    <thead><tr className="text-muted-foreground text-[11px] uppercase tracking-widest">
+                      <th className="text-left px-2 py-1.5 font-semibold">Tag</th>
+                      <th className="text-right px-2 py-1.5 font-semibold">Trades</th>
+                      <th className="text-right px-2 py-1.5 font-semibold">WR%</th>
+                      <th className="text-right px-2 py-1.5 font-semibold">P&L</th>
+                    </tr></thead>
+                    <tbody className="divide-y divide-border/30">
+                      {entryData.map((e) => (
+                        <tr key={e.enter_tag ?? "untagged"} className="hover:bg-white/[0.04]">
+                          <td className="px-2 py-1.5 text-foreground">{e.enter_tag ?? "untagged"}</td>
+                          <td className="px-2 py-1.5 text-right">{e.entries ?? 0}</td>
+                          <td className={`px-2 py-1.5 text-right ${(e.winrate ?? 0) >= 0.6 ? "text-emerald-500" : (e.winrate ?? 0) < 0.45 ? "text-rose-500" : "text-foreground"}`}>{fmt((e.winrate ?? 0) * 100, 1)}%</td>
+                          <td className={`px-2 py-1.5 text-right font-bold ${profitColor(e.profit_abs)}`}>{fmtMoney(e.profit_abs ?? 0)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {exitData.length > 0 && (
+                <div className="bg-muted/10 border border-border/50 rounded p-3">
+                  <h3 className={sectionTitle}>Exit Reasons</h3>
+                  <table className="w-full text-[13px] font-mono whitespace-nowrap">
+                    <thead><tr className="text-muted-foreground text-[11px] uppercase tracking-widest">
+                      <th className="text-left px-2 py-1.5 font-semibold">Reason</th>
+                      <th className="text-right px-2 py-1.5 font-semibold">Exits</th>
+                      <th className="text-right px-2 py-1.5 font-semibold">WR%</th>
+                      <th className="text-right px-2 py-1.5 font-semibold">P&L</th>
+                    </tr></thead>
+                    <tbody className="divide-y divide-border/30">
+                      {exitData.map((e) => (
+                        <tr key={e.exit_reason ?? "untagged"} className="hover:bg-white/[0.04]">
+                          <td className="px-2 py-1.5 text-foreground">{e.exit_reason ?? "untagged"}</td>
+                          <td className="px-2 py-1.5 text-right">{e.exits ?? 0}</td>
+                          <td className={`px-2 py-1.5 text-right ${(e.winrate ?? 0) >= 0.6 ? "text-emerald-500" : (e.winrate ?? 0) < 0.45 ? "text-rose-500" : "text-foreground"}`}>{fmt((e.winrate ?? 0) * 100, 1)}%</td>
+                          <td className={`px-2 py-1.5 text-right font-bold ${profitColor(e.profit_abs)}`}>{fmtMoney(e.profit_abs ?? 0)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -698,6 +638,16 @@ function DetailContent({
               <div>
                 <div className={sectionTitle}>Core Config</div>
                 <div className={row}>
+                  <span className={key}>Strategy</span>
+                  <span className={val}>{configData.strategy ?? "—"}</span>
+                </div>
+                {configData.strategy_version && (
+                  <div className={row}>
+                    <span className={key}>Strategy Version</span>
+                    <span className={val}>{configData.strategy_version}</span>
+                  </div>
+                )}
+                <div className={row}>
                   <span className={key}>Exchange</span>
                   <span className={val}>{typeof configData.exchange === "string" ? configData.exchange : "—"}</span>
                 </div>
@@ -710,9 +660,37 @@ function DetailContent({
                   <span className={val}>{configData.stake_currency ?? "—"}</span>
                 </div>
                 <div className={row}>
+                  <span className={key}>Stake Amount</span>
+                  <span className={val}>{fmt(typeof configData.stake_amount === "number" ? configData.stake_amount : 0, 2)} {configData.stake_currency}</span>
+                </div>
+                {configData.max_open_trades != null && (
+                  <div className={row}>
+                    <span className={key}>Max Open Trades</span>
+                    <span className={val}>{configData.max_open_trades}</span>
+                  </div>
+                )}
+                <div className={row}>
                   <span className={key}>Dry Run</span>
                   <span className={val}>{configData.dry_run ? "Yes" : "No"}</span>
                 </div>
+                {configData.trading_mode && (
+                  <div className={row}>
+                    <span className={key}>Trading Mode</span>
+                    <span className={val}>{configData.trading_mode}</span>
+                  </div>
+                )}
+                {configData.margin_mode && (
+                  <div className={row}>
+                    <span className={key}>Margin Mode</span>
+                    <span className={val}>{configData.margin_mode}</span>
+                  </div>
+                )}
+                {configData.available_capital != null && (
+                  <div className={row}>
+                    <span className={key}>Available Capital</span>
+                    <span className={val}>{fmt(configData.available_capital, 2)} {configData.stake_currency}</span>
+                  </div>
+                )}
               </div>
 
               {configData.pair_whitelist && configData.pair_whitelist.length > 0 && (
@@ -849,11 +827,11 @@ function DetailContent({
               <div className="bg-muted/50 border border-border rounded p-2 max-h-[300px] overflow-y-auto">
                 <div className="font-mono text-[10px] space-y-1">
                   {logsData.logs.slice(-30).map((log, idx) => {
-                    // Handle both 4-element and 5-element log tuples
+                    // FT logs format: [id, timestamp, module, level, message]
                     const arr = log as string[];
                     let timestamp: string, level: string, message: string;
                     if (arr.length >= 5) {
-                      [, , timestamp, level, message] = arr;
+                      [, timestamp, , level, message] = arr;
                     } else if (arr.length === 4) {
                       [timestamp, , level, message] = arr;
                     } else {

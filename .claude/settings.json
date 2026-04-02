@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"export default function\\\\|Props\\\\|interface.*Props\" src/app/experiments/\\\\[strategy\\\\]/components/*.tsx)",
+      "Bash(grep -v \"^--$\")"
+    ]
+  }
+}

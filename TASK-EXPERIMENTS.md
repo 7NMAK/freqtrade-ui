@@ -189,9 +189,9 @@ frontend/src/app/experiments/
 Container: `h-14 bg-black l-b flex items-center px-5 gap-4 shrink-0`
 
 LEFT side (flex items-center gap-3 flex-1 min-w-0):
-- Back button: `flex items-center gap-1.5 px-2.5 py-1 l-bd bg-white/[0.03] hover:bg-white/[0.06] text-muted text-[11px] rounded transition-colors shrink-0` — ArrowLeft icon w-3.5 h-3.5 + "Back"
+- Back button: `flex items-center gap-1.5 px-2.5 py-1 l-bd bg-white/[0.03] hover:bg-white/[0.06] text-muted text-[11px] rounded transition-colors shrink-0` title="Back to Strategies" — Lucide `ArrowLeft` (data-lucide="arrow-left") icon w-3.5 h-3.5 + "Back"
 - Divider: `h-5 w-px bg-white/10`
-- Flask icon: `w-4 h-4 text-white/40 shrink-0`
+- Flask icon: Lucide `FlaskConical` (data-lucide="flask-conical") `w-4 h-4 text-white/40 shrink-0`
 - Strategy name: `text-[13px] font-bold text-white truncate`
 - Status badge: `px-2 py-0.5 bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 text-[9px] uppercase font-bold tracking-wider rounded shrink-0`
 
@@ -219,10 +219,11 @@ States:
 ### 3. Tab Bar (design line 2045–2052)
 Container: `l-b flex items-end px-1 bg-black/50 shrink-0 overflow-x-auto gap-0`
 
-5 tabs: Backtest, Hyperopt, FreqAI, AI Review, Validation
-Each tab: `h-9 px-3.5 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap`
+5 tabs: Backtest (active by default), Hyperopt, FreqAI, AI Review, Validation
+Each tab: `h-9 px-3.5 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap exp-nav` (exp-nav class on ALL tab buttons)
 Active: `border-b-2 border-up text-white`
 Inactive: `border-b-2 border-transparent text-muted hover:text-white transition-colors`
+**Default state:** Backtest tab = active, all other tabs hidden
 
 ### 4. Tab Content Area
 Container: `flex-1 p-4 overflow-hidden relative`
@@ -302,16 +303,20 @@ Widgets (EXACT order):
 
 5. **Master Table** — `flex-1 bg-surface l-bd rounded-md flex flex-col min-h-[250px] overflow-hidden`
    Tab bar: `h-10 l-b flex items-center bg-black/40 shrink-0 border-b-2 border-transparent overflow-x-auto whitespace-nowrap` with 5 sub-tabs:
-   Each sub-tab button: `h-full px-4 font-bold text-[11px] uppercase tracking-wide shrink-0`
+   Each sub-tab button: `h-full px-4 font-bold text-[11px] uppercase tracking-wide bt-tab-btn shrink-0` (NOTE: `bt-tab-btn` class on Backtest sub-tab buttons!)
    Active: `border-b-2 border-up text-white` | Inactive: `text-muted hover:text-white transition-colors`
-   Each tab content panel: `flex-1 overflow-x-auto overflow-y-auto` (some have `p-0`, some have `p-4`)
+   Each tab content panel: `bt-tab-content flex-1 overflow-x-auto overflow-y-auto` (some have `p-0`, some have `p-4`)
+   **⚠ Backtest tab bar has `border-b-2 border-transparent` in its container classes, Hyperopt tab bar does NOT:**
+   - Backtest: `h-10 l-b flex items-center bg-black/40 shrink-0 border-b-2 border-transparent overflow-x-auto whitespace-nowrap`
+   - Hyperopt: `h-10 l-b flex items-center bg-black/40 shrink-0 overflow-x-auto whitespace-nowrap`
 
    Sub-tabs:
    - **Closed Trades** — columns: Date (sortable **sort-desc**), Pair (sortable **filterable**), Side (sortable **filterable**, text-center), Entry (sortable, text-right), Exit (sortable, text-right), Profit % (sortable, text-right), Value (sortable, text-right), Fee (sortable, text-right), Duration (sortable), Exit Reason (sortable **filterable**)
    - **Per-Pair** — columns: Pair (sortable **filterable**), Trades (sortable, text-right), profit_abs (sortable **sort-desc**, text-right), profit_ratio (sortable, text-right), Win Rate (sortable, text-right), Avg Profit (sortable, text-right), Avg Dur. (sortable, text-right)
    - **Entry Tags** — columns: Tag (sortable **filterable**), Trades (sortable, text-right), Wins (sortable, text-right), Losses (sortable, text-right), Win Rate (sortable, text-right), Avg P&L % (sortable, text-right), Total P&L (sortable **sort-desc**, text-right), Avg Dur. (sortable, text-right), Best Pair (sortable **filterable**), Expectancy (sortable, text-right) — **Tag column uses colored badges** (see CRITICAL DETAILS → Entry Tag Badges)
-   - **Exit Reasons** — columns: Reason (sortable **filterable**), Exits (sortable, text-right), Wins (sortable, text-right), Losses (sortable, text-right), Win Rate (sortable, text-right), Avg P&L % (sortable, text-right), Total P&L (sortable **sort-desc**, text-right), Avg Dur. (sortable, text-right), Best Pair (sortable **filterable**), Expectancy (sortable, text-right)
+   - **Exit Reasons** — columns: Reason (sortable **filterable**), Exits (sortable, text-right), Wins (sortable, text-right), Losses (sortable, text-right), Win Rate (sortable, text-right), Avg P&L % (sortable, text-right), Total P&L (sortable **sort-desc**, text-right), Avg Dur. (sortable, text-right), Best Pair (sortable **filterable**), Expectancy (sortable, text-right) — **Reason column uses `text-white`** (plain text, NOT badge styled like Entry Tags!) — Losses column: 0=`text-muted`, positive=`text-down`
    - **History** — columns: # (sortable), Run Date (sortable **sort-desc**), TF (sortable **filterable**), Timerange (sortable), Trades (sortable, text-right), Profit (sortable, text-right), Win% (sortable, text-right), Sharpe (sortable, text-right), Actions (text-center, NO sortable) — Load/Del buttons (see CRITICAL DETAILS → History Table Action Buttons)
+     **Per-row value colors:** Best row: #=`text-up font-bold` with ★ prefix, bg-up/[0.02]. All rows: Run Date=`text-muted`, TF=no color, Timerange=`text-muted`, Profit positive=`text-up font-bold`, Profit negative=`text-down font-bold`, Sharpe negative=`text-down`, non-best #=`text-muted`
 
    Table styling: `text-[13px] font-mono whitespace-nowrap`
    Header: row classes: `text-muted text-[11px] uppercase tracking-widest`
@@ -367,11 +372,14 @@ Form fields (EXACT order):
    Recharts line chart showing best objective over epochs + trades/epoch bars
 
 3. **Tabbed Results** — `flex-1 bg-surface l-bd rounded-md flex flex-col min-h-[250px] overflow-hidden shadow-xl`, 5 sub-tabs:
+   Sub-tab buttons: `h-full px-4 font-bold text-[11px] uppercase tracking-wide ho-tab-btn shrink-0` (NOTE: `ho-tab-btn` class on Hyperopt buttons!)
+   Tab content panels: `ho-tab-content` class
    - **Epoch Results** — columns: Epoch (sortable), Trades (sortable, text-right), Avg Profit (sortable, text-right), Total Profit (sortable **sort-desc**, text-right), Profit $ (sortable, text-right), Avg Dur. (sortable, text-right), Win% (sortable, text-right), Max DD (sortable, text-right), Objective (sortable, text-right)
      **Row patterns:** Best row = `bg-up/[0.02]`, Epoch cell `text-up font-bold` with ★ prefix. Previous-best rows use `*` prefix (e.g., *142, *31). Regular rows: Epoch cell `text-muted`. Colors: Avg Profit positive=`text-up` negative=`text-down`, Total Profit=`text-up font-bold`/`text-down`, Profit $=same, Avg Dur=`text-muted`, Max DD=`text-down`, Objective best=`text-up font-bold` others=`text-muted`.
    - **Best Parameters** — formatted Python dict display with Copy Python/Copy JSON/CSV buttons (see CRITICAL DETAILS → Hyperopt Best Parameters Tab for full layout + color coding)
    - **Param Importance** — horizontal bar chart with color-coded importance levels (see CRITICAL DETAILS → Hyperopt Param Importance Tab for exact classes)
-   - **Compare Runs** — metric comparison table: Metric (text-left), Run #1 (text-right), Run #2 (text-right), Run #3 (text-right), Δ Best (text-right). **NO sortable/filterable on any column.** Metric column = `text-muted`. Best value per row gets `font-bold`. Profit values=`text-up`/`text-down`. Δ Best: positive=`text-up`, negative=`text-down`, neutral=`text-muted`. Max DD all values `text-down`, best gets `font-bold`. Avg Duration all plain, Δ=`text-muted` "—".
+   - **Compare Runs** — metric comparison table: Metric (text-left), Run #1 (text-right), Run #2 (text-right), Run #3 (text-right), Δ Best (text-right). **NO sortable/filterable on any column.** Metric column = `text-muted`. Best value per row gets `font-bold`. Profit/Win Rate values=`text-up`. Max DD all values `text-down`, best gets `font-bold`. Sharpe/Sortino/Trades: best gets `font-bold` only, no color. Avg Duration: all plain, Δ=`text-muted` "—". Objective row: best=`text-up font-bold`, non-best=`text-muted` (explicitly muted, not just plain).
+     **Δ Best column rules (EXACT from design):** percentage metrics (Profit, Win Rate): positive=`text-up`, negative=`text-down`. Raw count metrics (Trades): NO color class even when positive. Ratio metrics (Sharpe, Sortino): positive=`text-up`, negative=`text-down`. Max DD Δ: `text-down`. Objective Δ: `text-up`. Avg Duration Δ: `text-muted` "—".
    - **Run History** — columns: # (sortable), Date (sortable **sort-desc**), Strategy (sortable **filterable**), Loss Fn (sortable **filterable**), Epochs (sortable, text-right), Best (sortable, text-right), Profit (sortable, text-right), Trades (sortable, text-right), Objective (sortable, text-right), Actions (text-center, NO sortable)
      Actions: Load button + Del button (same styles as Backtest History — see CRITICAL DETAILS → History Table Action Buttons)
 
@@ -398,6 +406,16 @@ Form fields:
 
 2. **Matrix Results** — standalone `<h3 class="section-title">Matrix Results</h3>` + `<div class="overflow-x-auto">` wrapper around table
    Columns: ★ (sortable), Model (sortable **filterable**), Outlier (sortable **filterable**), PCA (sortable **filterable**), Noise (sortable **filterable**), profit_% (sortable sort-desc), Sharpe (sortable), Max DD (sortable), Trades (sortable), Win% (sortable)
+   **Per-column value color patterns:**
+   - ★ column: best row = `text-up font-bold` (★1), rest = `text-muted`
+   - Model: no color class (inherits white)
+   - Outlier: `text-muted` for all values
+   - PCA: "On" = `text-up`, "Off" = `text-muted`
+   - Noise: "Yes" = `text-up`, "No" = `text-muted`
+   - profit_%: positive = `text-up font-bold`, negative = `text-down font-bold`
+   - Sharpe: negative = `text-down`, positive/neutral = no color
+   - Max DD: always `text-down`
+   - Trades, Win%: no color class
 
 ---
 
@@ -477,7 +495,7 @@ Form fields:
 
 Overlay container: `absolute inset-0 bg-surface z-30 flex flex-col` (hidden by default, toggle with state)
 Header: `h-10 bg-black l-b flex items-center px-4 gap-3 shrink-0`
-- Title: `text-[12px] font-bold text-white uppercase tracking-wider`
+- Title: `<span class="exp-overlay-title text-[12px] font-bold text-white uppercase tracking-wider"></span>` (NOTE: `exp-overlay-title` class — title text set dynamically: "All Tests", "Compare", "Analysis")
 - Spacer: `flex-1`
 - Close button: `px-3 py-1 l-bd bg-white/[0.03] hover:bg-white/[0.06] text-muted text-[11px] rounded transition-colors` → "✕ Close"
 
@@ -497,6 +515,7 @@ Header: `bg-surface l-b text-[11px] uppercase tracking-widest text-muted` — ce
 Columns: # (sortable), Type (sortable filterable), Name (sortable), Date (sortable sort-desc), Profit% (text-right sortable), Sharpe (text-right sortable), Trades (text-right sortable), Status (text-center sortable filterable), Actions (text-center)
 Body: `divide-y divide-white/[0.05] text-white/70` — cells `px-4 py-2`
 Type badge: `px-1.5 py-0.5 rounded text-[8px] bg-white/5 border border-white/10 text-white/50` — "HO", "BT", "FAI"
+**Per-column value colors:** #=`text-muted`, Name=`text-white/80`, Date=`text-white/40`, Profit% positive=`text-up font-bold`
 Status cell content: `<span class="text-[8px] text-up font-bold">✓</span>` (simple styled checkmark)
 Actions: Promote button `text-[9px] px-2 py-0.5 bg-up/10 border border-up/20 text-up rounded hover:bg-up/20` or Load button `text-[9px] px-2 py-0.5 bg-white/5 border border-white/10 text-white/50 rounded hover:bg-white/10`
 
@@ -527,6 +546,7 @@ Table: `w-full text-left border-collapse whitespace-nowrap text-[13px] font-mono
 Header: `bg-surface l-b text-[11px] uppercase tracking-widest text-muted` — cells `px-3 py-2.5`
 Columns: # (sortable), Pair (sortable filterable), Side (sortable filterable), Profit% (text-right sortable sort-desc), Profit$ (text-right sortable), Open (sortable), Close (sortable), Duration (text-right sortable), Exit (sortable filterable)
 Body: `divide-y divide-white/[0.05] text-white/70` — cells `px-3 py-2`
+**Per-column value colors:** #=`text-muted`, Pair=`text-white/80`, Side: Long=`text-up`, Short=`text-down`. Profit%: positive=`text-up font-bold`, negative=`text-down font-bold`. Profit$: positive=`text-up`, negative=`text-down`. Open/Close=`text-muted`. Duration=`text-muted`. **Exit=`text-white/25`** (dimmer than body text!)
 
 ---
 
@@ -854,9 +874,11 @@ Inside the warning, "NOT overlap" is styled with `<b class="text-yellow-400">NOT
 Full classes: `bg-up/[0.04] border border-up/15 rounded-md px-4 py-3 text-center shadow-xl`
 
 ### Pipeline Connector Types (detail):
-- Completed → Completed: `w-5 h-px bg-up/50` (solid green)
-- Skipped: `w-5 h-px border-t border-dashed border-white/15` (dashed white)
-- Active → Pending: `w-5 h-px bg-white/15` (solid dim white)
+Connector color is FROM the step, not the arrow destination:
+- FROM Completed: `w-5 h-px bg-up/50` (solid green — even if next step is Skipped!)
+- FROM Skipped: `w-5 h-px border-t border-dashed border-white/15` (dashed white)
+- FROM Active: `w-5 h-px bg-white/15` (solid dim white)
+- Last step: NO connector
 
 ### Header Buttons — transition-colors:
 ALL header buttons (Back, All Tests, Compare, Analysis, + New Test) have `transition-colors` class.
@@ -882,6 +904,119 @@ Most sub-sections follow: `<div class="l-t pt-3">` → builder-label → content
 
 ### shrink-0 Classes (prevent flex shrinking):
 These elements MUST have `shrink-0`: Back button, Flask icon, Status badge, sub-tab buttons, chart header toggle container, all header/panel headers
+
+### Button Title Attributes (ALL buttons with tooltips):
+Every button below has a `title="..."` attribute. DO NOT omit these.
+
+**Backtest Tab:**
+- ▶ Start Backtest: `title="Start backtesting run"`
+- ⏹ Stop: `title="Stop running backtest"`
+- ↺ Reset: `title="Reset configuration to defaults"`
+- Deploy: `title="Deploy params to live"`
+- Chart toggle buttons: NO title attributes (unlike Hyperopt!)
+- History Load/Del buttons: NO title attributes (unlike Hyperopt!)
+
+**Hyperopt Tab:**
+- ▶ Start Hyperopt: `title="Start hyperopt optimization"`
+- ⏹ Stop: `title="Stop running hyperopt"`
+- ↺ Reset: `title="Reset configuration to defaults"`
+- Deploy: `title="Deploy params to strategy file"`
+- Chart toggles: Epochs=`title="Show by epoch number"`, Time=`title="Show by elapsed time"`, Loss=`title="Show objective loss"`, Profit%=`title="Show profit percentage"`
+- Copy Python: `title="Copy as Python dict"`
+- Copy JSON: `title="Copy as JSON"`
+- CSV: `title="Export CSV"`
+- Load (History): `title="Load results"`
+- Del (History): `title="Delete run"`
+
+**FreqAI Tab:**
+- ▶ Run Matrix (N): `title="Start FreqAI matrix run"`
+- ⏹ Stop: `title="Stop running"`
+- ↺ Reset: `title="Reset configuration to defaults"`
+- Deploy: `title="Deploy to live"`
+
+**Validation Tab:**
+- ▶ Run Verification: `title="Run all validation checks"`
+- ⏹ Stop: `title="Stop running"`
+- ↺ Reset: `title="Reset configuration to defaults"`
+- → Paper: `title="Promote to paper trading"`
+- → Live: `title="Promote to live trading"`
+
+**Header:**
+- Back: `title="Back to Strategies"`
+
+### Form Default Values and Select Options (EXACT from design):
+
+**Backtest Config:**
+- Strategy select: options `AlphaTrend_V5` (default), `TrendFollowerV3`, `MeanReversion_V2`
+- Timerange Start: `value="2024-01-01"`
+- Timerange End: `value="2025-01-01"`
+- Timeframe select: options `1h` (default), `4h`, `15m`, `5m`, `1d`
+- Timeframe Detail select: options `None` (default), `5m`, `1m`
+- Starting Capital: `value="10000"`
+- Stake Amount: `value="unlimited"` (type="text")
+- Max Open Trades: `value="3"`
+- Fee: `placeholder="exchange default"` (no default value)
+- Cache select: options `day` (default), `none`, `week`, `month`
+
+**Hyperopt Config:**
+- Strategy select: same options as Backtest
+- Epochs: `value="200"`
+- Min Trades: `value="80"`
+- Timerange Start: `value="2022-01-01"`
+- Timerange End: `value="2024-01-01"`
+- Timeframe select: same options as Backtest
+- Jobs select: options `-1 (all CPUs)` (default), `1`, `2`, `4`, `8`
+- Max Open Trades: `value="3"`
+- Stake Amount: `value="unlimited"`
+- Fee: `placeholder="exchange default"`
+- Random State: `value="42"`
+- Early Stop: `value="50"` (placeholder="disabled" also present)
+- Pairs: `placeholder="all whitelist"`
+
+**FreqAI Config:**
+- Source HO Epoch select: options `HO #147 — Sharpe — +42.12%` (default), `HO #92 — Sortino — +38.40%`
+- Train Start: `value="2022-01-01"`
+- Train End: `value="2023-06-30"`
+- BT Start: `value="2023-07-01"`
+- BT End: `value="2024-01-01"`
+- Feature Period: `value="20"`
+- Label Period: `value="24"`
+- Outlier Method select: options `DI` (default), `SVM`, `None`
+- DI Threshold: `value="0.9"` (step="0.1")
+
+**Validation Config:**
+- Source Test select: options `BT #1 — +42.12%, HO #147` (default), `BT #2 — +21.4%`, `FAI — LightGBM-R — +52.4%`
+- Verification Name: `value="OOS verify BT #1"` (type="text")
+- OOS Start: `value="2025-01-01"`
+- OOS End: `value="2025-06-01"`
+- Min Profit %: `value="70"`
+- Max DD %: `value="150"`
+- Min Trades %: `value="50"`
+- Min Win Rate %: `value="50"`
+
+**AI Review:**
+- Model select: options `Claude Sonnet 4` (default), `GPT-4o`, `Gemini 2.5 Pro`
+
+### Sub-Tab Visibility Defaults:
+
+**Backtest sub-tabs:** `bt-tab-content` class on each panel
+- Closed Trades: VISIBLE (no display:none — default active)
+- Per-Pair, Entry Tags, Exit Reasons, History: `style="display:none"` (hidden)
+
+**Hyperopt sub-tabs:** `ho-tab-content` class on each panel
+- Epoch Results: VISIBLE (default active)
+- Best Parameters, Param Importance, Compare Runs, Run History: `style="display:none"`
+
+**Overlays:** `exp-overlay-panel` class on each panel
+- All Tests: VISIBLE (when overlay is shown)
+- Compare, Analysis: `style="display:none"` within the overlay
+
+### Pipeline Connector Pattern (corrected):
+Connector color is determined by the FROM step, regardless of what follows:
+- FROM Completed step: `w-5 h-px bg-up/50` (even if next step is Skipped!)
+- FROM Skipped step: `w-5 h-px border-t border-dashed border-white/15`
+- FROM Active step: `w-5 h-px bg-white/15`
+- Last step (Pending): NO connector
 
 ---
 

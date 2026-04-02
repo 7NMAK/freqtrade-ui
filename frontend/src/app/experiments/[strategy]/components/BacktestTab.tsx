@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, useCallback, Fragment } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
   ComposedChart,
   Bar,
@@ -52,10 +52,6 @@ interface HistoryEntry {
   timeframe?: string; timeframe_detail?: string | null; backtest_start_ts?: number; backtest_end_ts?: number;
 }
 
-interface HistoryStats {
-  total_trades: number; profit_total_abs: number; profit_total: number;
-  max_drawdown_account: number; wins: number; losses: number; profit_factor: number; winrate: number;
-}
 
 function fmtDuration(minutes: number): string {
   if (minutes < 60) return `${minutes}m`;

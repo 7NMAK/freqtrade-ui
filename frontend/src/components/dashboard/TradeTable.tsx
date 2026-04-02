@@ -169,7 +169,7 @@ function useSortable<T>(data: T[], defaultKey?: string) {
     });
   }, [data, sortKey, sortDir]);
 
-  return { sorted, sortKey, sortDir, onSort };
+  return { sorted, currentSort: sortKey, currentDir: sortDir, onSort };
 }
 
 export default function TradeTable({

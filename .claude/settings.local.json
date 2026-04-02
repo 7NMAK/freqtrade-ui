@@ -62,7 +62,8 @@
       "Bash(ssh root@204.168.187.107 'TOKEN=$\\(curl -s -X POST http://127.0.0.1:8081/api/v1/token/login -u \"\"novakus:$FT_API_PASSWORD\"\" | python3 -c \"\"import sys,json; print\\(json.load\\(sys.stdin\\)[\\\\\"\"access_token\\\\\"\"]\\)\"\"\\) && curl -s -X POST http://127.0.0.1:8081/api/v1/backtest -H \"\"Authorization: Bearer $TOKEN\"\" -H \"\"Content-Type: application/json\"\" -d \"\"{\\\\\"\"strategy\\\\\"\": \\\\\"\"SampleStrategy\\\\\"\", \\\\\"\"timerange\\\\\"\": \\\\\"\"20240101-20250101\\\\\"\", \\\\\"\"max_open_trades\\\\\"\": 3, \\\\\"\"stake_amount\\\\\"\": \\\\\"\"100\\\\\"\", \\\\\"\"dry_run_wallet\\\\\"\": 10000, \\\\\"\"enable_protections\\\\\"\": false}\"\" | python3 -m json.tool')",
       "Bash(ssh root@204.168.187.107 'curl -s http://127.0.0.1:8081/api/v1/backtest -u \"\"novakus:$FT_API_PASSWORD\"\" -H \"\"Authorization: Bearer $\\(curl -s -X POST http://127.0.0.1:8081/api/v1/token/login -u novakus:$FT_API_PASSWORD | python3 -c \\\\\"\"import sys,json; print\\(json.load\\(sys.stdin\\)[\\\\\\\\\\\\\"\"access_token\\\\\\\\\\\\\"\"]\\)\\\\\"\"\\)\"\" | python3 -m json.tool')",
       "Bash(ssh root@204.168.187.107:*)",
-      "Bash(ssh root@204.168.187.107 'docker exec orchestrator grep -A 5 \"\"async def list_bots\"\" /app/src/api/bots.py')"
+      "Bash(ssh root@204.168.187.107 'docker exec orchestrator grep -A 5 \"\"async def list_bots\"\" /app/src/api/bots.py')",
+      "Bash(echo \"EXIT: $?\")"
     ]
   }
 }

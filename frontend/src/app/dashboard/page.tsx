@@ -182,7 +182,6 @@ export default function DashboardPage() {
   const [singleEntryData, setSingleEntryData] = useState<FTEntry[]>([]);
   const [singleExitData, setSingleExitData] = useState<FTExit[]>([]);
   const [singleStatsData, setSingleStatsData] = useState<FTStats | null>(null);
-  const [_singleConfigData, setSingleConfigData] = useState<Record<string, unknown> | null>(null);
   const [singleSysinfoData, setSingleSysinfoData] = useState<FTSysinfo | null>(null);
   const [singleLogsData, setSingleLogsData] = useState<FTLogsResponse | null>(null);
   const [singleLocksData, setSingleLocksData] = useState<FTLocksResponse | null>(null);
@@ -277,7 +276,8 @@ export default function DashboardPage() {
       await Promise.allSettled(
         tradeBots.map(async (bot) => {
           try {
-            const [p, d, _s, st, perf, ent, ex, wl, lk] = await Promise.allSettled([
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const [p, d, , st, perf, ent, ex, wl, lk] = await Promise.allSettled([
               botProfit(bot.id),
               botDaily(bot.id, 7),
               botStatus(bot.id),
@@ -751,7 +751,7 @@ export default function DashboardPage() {
         entryData={singleEntryData}
         exitData={singleExitData}
         statsData={singleStatsData}
-        configData={_singleConfigData as import("@/types").FTShowConfig | null}
+        configData={null as import("@/types").FTShowConfig | null}
         sysinfoData={singleSysinfoData}
         logsData={singleLogsData}
         locksData={singleLocksData}

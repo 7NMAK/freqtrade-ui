@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, Fragment } from "react";
 import {
   ComposedChart,
   Bar,
@@ -9,8 +9,67 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
-  Tooltip,
+  Tooltip as RechartsTooltip,
 } from "recharts";
+import { botLogs, botBacktestResults, botBacktestStart, botBacktestDelete, botBacktestHistory, botBacktestHistoryResult, botBacktestHistoryDelete, createExperimentRun } from "@/lib/api";
+import { useToast } from "@/components/ui/Toast";
+
+// ── Types ────────────────────────────────────────────────────────────────
+interface BacktestTabProps {
+  strategy: string;
+  backtestBotId?: number;
+  experimentId?: number;
+}
+
+interface LogEntry { ts: string; level: string; msg: string; }
+
+interface FTStrategyResult {
+  strategy_name: string; total_trades: number; trade_count_long: number; trade_count_short: number;
+  profit_total: number; profit_total_abs: number; profit_mean: number; profit_median: number;
+  profit_factor: number; wins: number; losses: number; draws: number; winrate: number;
+  sharpe: number; sortino: number; calmar: number; expectancy: number; expectancy_ratio: number;
+  max_drawdown_account: number; max_drawdown_abs: number; starting_balance: number; final_balance: number;
+  stake_currency: string; backtest_start: string; backtest_end: string; backtest_days: number;
+  timeframe: string; timeframe_detail: string | null; stoploss: number; max_open_trades_setting: number;
+  trading_mode: string; holding_avg: string; backtest_best_day: number; backtest_worst_day: number;
+  backtest_best_day_abs: number; backtest_worst_day_abs: number; winning_days: number; losing_days: number;
+  draw_days: number; max_consecutive_wins: number; max_consecutive_losses: number; cagr: number; sqn: number;
+  results_per_pair: Array<{ key: string; trades: number; profit_mean: number; profit_total: number; profit_total_abs: number }>;
+  exit_reason_summary: Array<{ exit_reason: string; trades: number; profit_mean: number; profit_total: number; profit_total_abs: number; wins: number; losses: number }>;
+  periodic_breakdown?: Record<string, Array<{ date: string; trades: number; profit_abs: number }>>;
+  trades?: FTTradeEntry[];
+}
+
+interface FTTradeEntry {
+  trade_id: number; pair: string; is_short: boolean; stake_amount: number;
+  open_rate: number; close_rate: number; fee_open: number; fee_close: number;
+  close_profit: number; close_profit_abs: number; open_date: string; close_date: string;
+  trade_duration: number; enter_tag: string; exit_reason: string;
+}
+
+interface HistoryEntry {
+  filename: string; strategy: string; run_id: string; backtest_start_time: number;
+  timeframe?: string; timeframe_detail?: string | null; backtest_start_ts?: number; backtest_end_ts?: number;
+}
+
+interface HistoryStats {
+  total_trades: number; profit_total_abs: number; profit_total: number;
+  max_drawdown_account: number; wins: number; losses: number; profit_factor: number; winrate: number;
+}
+
+function fmtDuration(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours < 24) return `${hours}h ${mins}m`;
+  const days = Math.floor(hours / 24);
+  const rem = hours % 24;
+  return `${days}d ${rem}h`;
+}
+
+function fmt$(v: number): string { return `${v >= 0 ? '+' : ''}$${Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }
+function fmtPctR(v: number): string { return `${v >= 0 ? '+' : ''}${(v * 100).toFixed(2)}%`; }
+function fmtN(v: number): string { return v.toFixed(2); }
 
 // ── Toggle ──────────────────────────────────────────────────────────────
 function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
@@ -42,116 +101,16 @@ function Pill({
   );
 }
 
-// ── Mock chart data ─────────────────────────────────────────────────────
-const chartData = [
-  { month: "01-15", profit: 10200, trades: 12 },
-  { month: "02-15", profit: 10550, trades: 14 },
-  { month: "03-15", profit: 10980, trades: 10 },
-  { month: "04-15", profit: 11200, trades: 13 },
-  { month: "05-15", profit: 11750, trades: 11 },
-  { month: "06-15", profit: 11400, trades: 15 },
-  { month: "07-15", profit: 12100, trades: 9 },
-  { month: "08-15", profit: 12650, trades: 12 },
-  { month: "09-15", profit: 13100, trades: 11 },
-  { month: "10-15", profit: 13500, trades: 14 },
-  { month: "11-15", profit: 13850, trades: 10 },
-  { month: "12-15", profit: 14212, trades: 11 },
-];
-
-// ── Mock trade rows ─────────────────────────────────────────────────────
-const mockTrades = [
-  {
-    date: "2024-12-28 14:30",
-    pair: "BTC/USDT:USDT",
-    side: "LONG" as const,
-    entry: 42150.2,
-    exit: 43612.8,
-    profitPct: 3.47,
-    value: 346.8,
-    fee: 4.21,
-    duration: "6h 12m",
-    exitReason: "roi",
-    winner: true,
-  },
-  {
-    date: "2024-12-22 08:15",
-    pair: "ETH/USDT:USDT",
-    side: "SHORT" as const,
-    entry: 2285.4,
-    exit: 2198.6,
-    profitPct: 3.8,
-    value: 380.2,
-    fee: 3.85,
-    duration: "4h 45m",
-    exitReason: "trailing_stop_loss",
-    winner: true,
-  },
-  {
-    date: "2024-12-18 19:00",
-    pair: "BTC/USDT:USDT",
-    side: "LONG" as const,
-    entry: 43800.0,
-    exit: 43450.5,
-    profitPct: -0.8,
-    value: -79.7,
-    fee: 4.38,
-    duration: "2h 10m",
-    exitReason: "stoploss",
-    winner: false,
-  },
-  {
-    date: "2024-12-15 03:22",
-    pair: "ETH/USDT:USDT",
-    side: "LONG" as const,
-    entry: 2180.0,
-    exit: 2248.6,
-    profitPct: 3.15,
-    value: 314.6,
-    fee: 3.64,
-    duration: "8h 30m",
-    exitReason: "roi",
-    winner: true,
-  },
-];
-
-// ── Mock per-pair rows ──────────────────────────────────────────────────
-const mockPerPair = [
-  { pair: "BTC/USDT:USDT", trades: 80, profitAbs: 2812.4, profitRatio: 28.12, winRate: 74.2, avgProfit: 2.41, avgDur: "4h 10m" },
-  { pair: "ETH/USDT:USDT", trades: 52, profitAbs: 1180.6, profitRatio: 11.81, winRate: 69.8, avgProfit: 1.92, avgDur: "5h 02m" },
-  { pair: "SOL/USDT:USDT", trades: 10, profitAbs: 219.0, profitRatio: 2.19, winRate: 70.0, avgProfit: 2.19, avgDur: "3h 45m" },
-];
-
-// ── Mock entry tags ─────────────────────────────────────────────────────
-const mockEntryTags = [
-  { tag: "alpha_signal", trades: 58, wins: 44, losses: 14, winRate: 75.9, avgPnl: 2.84, totalPnl: 1648.2, avgDur: "4h 15m", bestPair: "BTC/USDT:USDT", expectancy: 28.42 },
-  { tag: "trend_follow", trades: 42, wins: 30, losses: 12, winRate: 71.4, avgPnl: 2.12, totalPnl: 890.4, avgDur: "5h 30m", bestPair: "ETH/USDT:USDT", expectancy: 21.2 },
-  { tag: "mean_revert", trades: 24, wins: 16, losses: 8, winRate: 66.7, avgPnl: 1.85, totalPnl: 444.0, avgDur: "3h 45m", bestPair: "BTC/USDT:USDT", expectancy: 18.5 },
-  { tag: "momentum", trades: 12, wins: 8, losses: 4, winRate: 66.7, avgPnl: 2.95, totalPnl: 354.0, avgDur: "2h 50m", bestPair: "SOL/USDT:USDT", expectancy: 29.5 },
-  { tag: "breakout", trades: 6, wins: 4, losses: 2, winRate: 66.7, avgPnl: 14.57, totalPnl: 875.4, avgDur: "6h 10m", bestPair: "BTC/USDT:USDT", expectancy: 145.9 },
-];
-
-// ── Mock exit reasons ───────────────────────────────────────────────────
-const mockExitReasons = [
-  { reason: "roi", trades: 68, wins: 68, losses: 0, winRate: 100.0, avgPnl: 3.12, totalPnl: 2121.6, avgDur: "5h 20m", bestPair: "BTC/USDT:USDT", expectancy: 31.2 },
-  { reason: "trailing_stop_loss", trades: 34, wins: 24, losses: 10, winRate: 70.6, avgPnl: 1.85, totalPnl: 629.0, avgDur: "4h 10m", bestPair: "ETH/USDT:USDT", expectancy: 18.5 },
-  { reason: "stoploss", trades: 28, wins: 0, losses: 28, winRate: 0.0, avgPnl: -1.42, totalPnl: -397.6, avgDur: "1h 45m", bestPair: "BTC/USDT:USDT", expectancy: -14.2 },
-  { reason: "exit_signal", trades: 12, wins: 10, losses: 2, winRate: 83.3, avgPnl: 4.92, totalPnl: 1859.0, avgDur: "8h 15m", bestPair: "BTC/USDT:USDT", expectancy: 154.9 },
-];
-
-// ── Mock history ────────────────────────────────────────────────────────
-const mockHistory = [
-  { id: 1, runDate: "2025-01-02 14:30", tf: "1h", timerange: "2024-01-01 → 2025-01-01", trades: 142, profit: 42.12, winPct: 72.4, sharpe: 3.92, best: true },
-  { id: 2, runDate: "2024-12-28 09:15", tf: "4h", timerange: "2024-01-01 → 2024-12-28", trades: 86, profit: 18.45, winPct: 65.1, sharpe: 1.82, best: false },
-  { id: 3, runDate: "2024-12-20 16:45", tf: "1h", timerange: "2024-06-01 → 2024-12-20", trades: 64, profit: -4.22, winPct: 48.3, sharpe: -0.31, best: false },
-  { id: 4, runDate: "2024-12-15 11:00", tf: "15m", timerange: "2024-09-01 → 2024-12-15", trades: 210, profit: 28.91, winPct: 61.4, sharpe: 2.14, best: false },
-];
+// (mock data removed — tables are driven by btResult and filteredHistory)
 
 // ══════════════════════════════════════════════════════════════════════════
 // BACKTEST TAB
 // ══════════════════════════════════════════════════════════════════════════
-export default function BacktestTab() {
+export default function BacktestTab({ strategy: propStrategy, backtestBotId = 2, experimentId }: BacktestTabProps) {
+  const toast = useToast();
+
   // ── Config state ──────────────────────────────────────────────────────
-  const [strategy, setStrategy] = useState("AlphaTrend_V5");
+  const [strategy] = useState(propStrategy);
   const [timerangeStart, setTimerangeStart] = useState("2024-01-01");
   const [timerangeEnd, setTimerangeEnd] = useState("2025-01-01");
   const [timeframe, setTimeframe] = useState("1h");
@@ -176,6 +135,263 @@ export default function BacktestTab() {
   const [chartPeriod, setChartPeriod] = useState<"days" | "weeks" | "months">("days");
   const [chartMode, setChartMode] = useState<"abs" | "rel">("abs");
 
+  // ── API / Running state ───────────────────────────────────────────────
+  const [isRunning, setIsRunning] = useState(false);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [btProgress, setBtProgress] = useState("");
+  const logEndRef = useRef<HTMLDivElement>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [btResult, setBtResult] = useState<FTStrategyResult | null>(null);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const BT_CACHE_KEY = `bt-result-${strategy}`;
+
+  // ── Trades pagination ──────────────────────────────────────────────────
+  const [tradesPage, setTradesPage] = useState(1);
+  const tradesPerPage = 20;
+
+  const addLog = useCallback((level: string, msg: string) => {
+    setLogs((prev) => {
+      const next = [...prev, { ts: new Date().toLocaleTimeString(), level, msg }];
+      return next.length > 200 ? next.slice(-200) : next;
+    });
+  }, []);
+
+  useEffect(() => { logEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [logs]);
+
+  // ── Extract result from FT nested response ─────────────────────────────
+  const extractResult = useCallback((backtestResult: Record<string, unknown>): FTStrategyResult | null => {
+    const strategyMap = backtestResult.strategy as Record<string, Record<string, unknown>> | undefined;
+    if (!strategyMap) return null;
+    const firstKey = Object.keys(strategyMap)[0];
+    if (!firstKey) return null;
+    const raw = strategyMap[firstKey];
+    const rawTrades = (raw.trades as Array<Record<string, unknown>>) || [];
+    const trades: FTTradeEntry[] = rawTrades.map((t, i) => ({
+      trade_id: Number(t.trade_id ?? i + 1), pair: String(t.pair ?? ''), is_short: Boolean(t.is_short),
+      stake_amount: Number(t.stake_amount ?? 0), open_rate: Number(t.open_rate ?? 0), close_rate: Number(t.close_rate ?? 0),
+      fee_open: Number(t.fee_open ?? 0), fee_close: Number(t.fee_close ?? 0),
+      close_profit: Number(t.profit_ratio ?? t.close_profit ?? 0), close_profit_abs: Number(t.profit_abs ?? t.close_profit_abs ?? 0),
+      open_date: String(t.open_date ?? ''), close_date: String(t.close_date ?? ''),
+      trade_duration: Number(t.trade_duration ?? 0), enter_tag: String(t.enter_tag ?? ''), exit_reason: String(t.exit_reason ?? ''),
+    }));
+    const wins = Number(raw.wins ?? 0); const losses = Number(raw.losses ?? 0); const totalTrades = Number(raw.total_trades ?? 0);
+    const winrate = Number(raw.winrate ?? (totalTrades > 0 ? wins / totalTrades : 0));
+    return {
+      strategy_name: String(raw.strategy_name ?? firstKey), total_trades: totalTrades,
+      trade_count_long: Number(raw.trade_count_long ?? 0), trade_count_short: Number(raw.trade_count_short ?? 0),
+      profit_total: Number(raw.profit_total ?? 0), profit_total_abs: Number(raw.profit_total_abs ?? 0),
+      profit_mean: Number(raw.profit_mean ?? 0), profit_median: Number(raw.profit_median ?? 0),
+      profit_factor: Number(raw.profit_factor ?? 0), wins, losses, draws: Number(raw.draws ?? 0), winrate,
+      sharpe: Number(raw.sharpe ?? raw.sharpe_ratio ?? 0), sortino: Number(raw.sortino ?? raw.sortino_ratio ?? 0),
+      calmar: Number(raw.calmar ?? raw.calmar_ratio ?? 0), expectancy: Number(raw.expectancy ?? 0),
+      expectancy_ratio: Number(raw.expectancy_ratio ?? 0), max_drawdown_account: Number(raw.max_drawdown_account ?? 0),
+      max_drawdown_abs: Number(raw.max_drawdown_abs ?? 0), starting_balance: Number(raw.starting_balance ?? 0),
+      final_balance: Number(raw.final_balance ?? 0), stake_currency: String(raw.stake_currency ?? 'USDT'),
+      backtest_start: String(raw.backtest_start ?? ''), backtest_end: String(raw.backtest_end ?? ''),
+      backtest_days: Number(raw.backtest_days ?? 0), timeframe: String(raw.timeframe ?? ''),
+      timeframe_detail: raw.timeframe_detail as string | null ?? null, stoploss: Number(raw.stoploss ?? 0),
+      max_open_trades_setting: Number(raw.max_open_trades_setting ?? raw.max_open_trades ?? 0),
+      trading_mode: String(raw.trading_mode ?? ''), holding_avg: String(raw.holding_avg ?? raw.holding_avg_s ?? ''),
+      backtest_best_day: Number(raw.backtest_best_day ?? 0), backtest_worst_day: Number(raw.backtest_worst_day ?? 0),
+      backtest_best_day_abs: Number(raw.backtest_best_day_abs ?? 0), backtest_worst_day_abs: Number(raw.backtest_worst_day_abs ?? 0),
+      winning_days: Number(raw.winning_days ?? 0), losing_days: Number(raw.losing_days ?? 0), draw_days: Number(raw.draw_days ?? 0),
+      max_consecutive_wins: Number(raw.max_consecutive_wins ?? 0), max_consecutive_losses: Number(raw.max_consecutive_losses ?? 0),
+      cagr: Number(raw.cagr ?? 0), sqn: Number(raw.sqn ?? 0),
+      results_per_pair: (raw.results_per_pair as FTStrategyResult['results_per_pair']) ?? [],
+      exit_reason_summary: (raw.exit_reason_summary as FTStrategyResult['exit_reason_summary']) ?? [],
+      periodic_breakdown: (raw.periodic_breakdown as FTStrategyResult['periodic_breakdown']) ?? undefined,
+      trades,
+    };
+  }, []);
+
+  // ── Fetch history ──────────────────────────────────────────────────────
+  const fetchHistory = useCallback(async () => {
+    try { const res = await botBacktestHistory(backtestBotId); setHistory(res.results || []); } catch { /* not critical */ }
+  }, [backtestBotId]);
+
+  // ── Delete history entry ───────────────────────────────────────────────
+  const handleDeleteHistory = useCallback(async (entry: HistoryEntry) => {
+    try {
+      await botBacktestHistoryDelete(backtestBotId, entry.filename, entry.strategy);
+      toast.success('Backtest deleted');
+      if (btResult) { setBtResult(null); try { sessionStorage.removeItem(BT_CACHE_KEY); } catch { /* */ } }
+      fetchHistory();
+    } catch (err) { toast.error(`Delete failed: ${err instanceof Error ? err.message : String(err)}`); }
+  }, [backtestBotId, toast, fetchHistory, btResult, BT_CACHE_KEY]);
+
+  // ── Mount: load cache → fetch history → auto-load latest → resume ─────
+  useEffect(() => {
+    let loadedFromCache = false;
+    try {
+      const cached = sessionStorage.getItem(BT_CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached) as FTStrategyResult;
+        const firstTrade = parsed?.trades?.[0];
+        const cacheValid = parsed?.total_trades && (!firstTrade || (firstTrade.close_profit !== undefined && !isNaN(firstTrade.close_profit)));
+        if (cacheValid) { setBtResult(parsed); addLog('INFO', `Loaded cached result: ${parsed.strategy_name} — ${parsed.total_trades} trades`); loadedFromCache = true; }
+        else { sessionStorage.removeItem(BT_CACHE_KEY); }
+      }
+    } catch { /* no cache */ }
+    (async () => {
+      try {
+        const res = await botBacktestHistory(backtestBotId);
+        const entries = res.results || [];
+        setHistory(entries);
+        if (!loadedFromCache && entries.length > 0) {
+          const latest = entries.filter((e: HistoryEntry) => e.strategy === strategy).sort((a: HistoryEntry, b: HistoryEntry) => b.backtest_start_time - a.backtest_start_time)[0];
+          if (latest) {
+            addLog('INFO', `Auto-loading latest: ${latest.filename}...`);
+            try {
+              const data = await botBacktestHistoryResult(backtestBotId, latest.filename, latest.strategy);
+              if (data) {
+                const rawD = (data as Record<string, unknown>).backtest_result ?? data;
+                const result = extractResult(rawD as Record<string, unknown>);
+                if (result) { setBtResult(result); try { sessionStorage.setItem(BT_CACHE_KEY, JSON.stringify(result)); } catch { /* */ } addLog('INFO', `Loaded: ${result.strategy_name} — ${result.total_trades} trades`); }
+              }
+            } catch (err) { addLog('WARNING', `Auto-load failed: ${err instanceof Error ? err.message : String(err)}`); }
+          }
+        }
+      } catch { /* history fetch failed */ }
+      try {
+        const btStatus = await botBacktestResults(backtestBotId);
+        const r = btStatus as unknown as Record<string, unknown>;
+        if (r.running === true) { addLog('INFO', '🔄 Detected active backtest from previous session — resuming polling...'); setIsRunning(true); setBtProgress('Resuming...'); }
+      } catch { /* no active backtest — normal */ }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Poll while running ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (!isRunning) { if (pollRef.current) clearInterval(pollRef.current); return; }
+    let lastLogCount = -1;
+    let notStartedCount = 0;
+    const poll = async () => {
+      try {
+        const logRes = await botLogs(backtestBotId, 50);
+        if (logRes?.logs) {
+          if (lastLogCount === -1) { lastLogCount = logRes.logs.length; }
+          else { const newLogs = logRes.logs.slice(lastLogCount); lastLogCount = logRes.logs.length; for (const entry of newLogs) { addLog(entry[3] || "INFO", entry[4] || entry.join(" ")); } }
+        }
+      } catch { /* log fetch failed */ }
+      try {
+        const btRes = await botBacktestResults(backtestBotId);
+        if (btRes) {
+          const raw = btRes as unknown as Record<string, unknown>;
+          const step = (raw.step as string) || ""; const progress = raw.progress as number | undefined;
+          const ftRunning = raw.running as boolean | undefined; const ftStatus = (raw.status_msg as string) || "";
+          if (ftRunning === false && raw.backtest_result) {
+            setBtProgress("✓ Backtest complete"); addLog("INFO", "Extracting results...");
+            const result = extractResult(raw.backtest_result as Record<string, unknown>);
+            if (result) {
+              addLog("INFO", `Result: ${result.strategy_name || "?"} — ${result.total_trades} trades`);
+              setBtResult(result); try { sessionStorage.setItem(BT_CACHE_KEY, JSON.stringify(result)); } catch { /* quota */ }
+              if (experimentId) {
+                createExperimentRun(experimentId, {
+                  run_type: "backtest", total_trades: result.total_trades,
+                  win_rate: result.winrate != null ? result.winrate * 100 : undefined,
+                  profit_pct: result.profit_total != null ? result.profit_total * 100 : undefined,
+                  profit_abs: result.profit_total_abs, max_drawdown: result.max_drawdown_account != null ? result.max_drawdown_account * 100 : undefined,
+                  sharpe_ratio: result.sharpe, sortino_ratio: result.sortino, calmar_ratio: result.calmar,
+                }).catch(() => { /* failed to record */ });
+              }
+            }
+            setIsRunning(false); fetchHistory();
+          } else if (step === "error" || ftStatus.toLowerCase().includes("error")) {
+            setBtProgress("✗ Error"); addLog("ERROR", ftStatus || "Backtest failed"); setIsRunning(false);
+          } else if (raw.status === "not_started" && ftRunning === false) {
+            notStartedCount++;
+            if (notStartedCount >= 5) { addLog("ERROR", `Backtest stuck at 'not_started'. Check strategy file and data.`); setBtProgress("✗ Failed to start"); setIsRunning(false); }
+          } else if (step) {
+            notStartedCount = 0;
+            const pct = progress != null ? ` (${(progress * 100).toFixed(0)}%)` : "";
+            setBtProgress(`${step}${pct}`);
+          }
+        }
+      } catch (pollErr) { addLog("ERROR", `[poll] status error: ${pollErr instanceof Error ? pollErr.message : String(pollErr)}`); }
+    };
+    poll();
+    pollRef.current = setInterval(poll, 3000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [isRunning, backtestBotId, strategy, experimentId, addLog, extractResult, fetchHistory, BT_CACHE_KEY]);
+
+  // ── Handlers ───────────────────────────────────────────────────────────
+  const handleStart = async () => {
+    setLogs([]); setBtProgress(""); setBtResult(null); setTradesPage(1);
+    addLog("INFO", `Starting backtest: ${strategy} — ${timerangeStart} → ${timerangeEnd}`);
+    toast.info("Starting backtest...");
+    const timerange = `${timerangeStart.replace(/-/g, "")}-${timerangeEnd.replace(/-/g, "")}`;
+    const params: Record<string, unknown> = {
+      strategy, timerange, max_open_trades: parseInt(maxOpenTrades, 10) || 3,
+      stake_amount: stakeAmount === "unlimited" ? "unlimited" : parseFloat(stakeAmount) || "unlimited",
+      dry_run_wallet: parseFloat(startingCapital) || 10000, enable_protections: enableProtections, cache,
+    };
+    if (timeframe !== "1h") params.timeframe = timeframe;
+    if (timeframeDetail !== "None") params.timeframe_detail = timeframeDetail;
+    if (fee) params.fee = parseFloat(fee) / 100;
+    if (breakdownSelected) params.breakdown = breakdownSelected;
+    try {
+      await botBacktestStart(backtestBotId, params);
+      addLog("INFO", "Backtest job submitted — polling for results..."); toast.success("Backtest submitted"); setIsRunning(true);
+    } catch (err) { const msg = err instanceof Error ? err.message : String(err); addLog("ERROR", `Failed: ${msg}`); toast.error(`Backtest failed: ${msg}`); }
+  };
+
+  const handleStop = async () => {
+    try { addLog("WARNING", "Aborting backtest..."); await botBacktestDelete(backtestBotId); addLog("WARNING", "Backtest aborted"); }
+    catch { addLog("WARNING", "Stop requested (may have already finished)"); }
+    setIsRunning(false); setBtProgress("");
+  };
+
+  const handleReset = () => {
+    setTimerangeStart("2024-01-01"); setTimerangeEnd("2025-01-01"); setTimeframe("1h"); setTimeframeDetail("None");
+    setMaxOpenTrades("3"); setStartingCapital("10000"); setStakeAmount("unlimited"); setFee("");
+    setEnableProtections(true); setDryRunWallet(false); setPositionStacking(false); setEnableShorts(false);
+    setBreakdownSelected("month"); setCache("day");
+  };
+
+  const handleLoadHistory = async (entry: HistoryEntry) => {
+    addLog("INFO", `Loading result: ${entry.filename}...`);
+    try {
+      const res = await botBacktestHistoryResult(backtestBotId, entry.filename, entry.strategy);
+      if (res) {
+        const raw = res as Record<string, unknown>;
+        const backtestData = (raw.backtest_result ?? raw) as Record<string, unknown>;
+        if (backtestData.strategy) {
+          const result = extractResult(backtestData);
+          if (result) { setBtResult(result); try { sessionStorage.setItem(BT_CACHE_KEY, JSON.stringify(result)); } catch { /* */ } addLog("INFO", `Loaded: ${result.strategy_name} — ${result.total_trades} trades`); return; }
+        }
+      }
+      addLog("WARNING", "Could not parse result");
+    } catch (err) { addLog("ERROR", `Failed to load: ${err instanceof Error ? err.message : String(err)}`); }
+  };
+
+  // ── Computed values from btResult ──────────────────────────────────────
+  const r = btResult;
+  const profitPositive = r ? r.profit_total_abs >= 0 : true;
+  const trades = useMemo(() => r?.trades || [], [r]);
+  const sortedTrades = useMemo(() => [...trades].sort((a, b) => b.trade_id - a.trade_id), [trades]);
+  const totalTradePages = Math.ceil(sortedTrades.length / tradesPerPage);
+  const pagedTrades = sortedTrades.slice((tradesPage - 1) * tradesPerPage, tradesPage * tradesPerPage);
+
+  // Build chart data from periodic_breakdown or trades
+  const chartData = useMemo(() => {
+    if (r?.periodic_breakdown) {
+      const key = Object.keys(r.periodic_breakdown)[0];
+      const data = r.periodic_breakdown[key] || [];
+      let balance = r.starting_balance;
+      return data.map(d => { balance += d.profit_abs; return { month: d.date, profit: Math.round(balance), trades: d.trades }; });
+    }
+    return [];
+  }, [r]);
+
+  // History entries for current strategy
+  const filteredHistory = useMemo(() =>
+    history.filter(e => e.strategy === strategy).sort((a, b) => b.backtest_start_time - a.backtest_start_time),
+  [history, strategy]);
+
+  // Suppress unused vars for flags that are used in UI but not yet in API params
+  void dryRunWallet; void positionStacking; void enableShorts; void chartPeriod; void chartMode;
+
   return (
     <div className="h-full flex flex-row gap-3">
       {/* ════════════════════════════════════════════════════════════════ */}
@@ -192,15 +408,12 @@ export default function BacktestTab() {
           {/* 1. Strategy */}
           <div>
             <label className="builder-label">Strategy</label>
-            <select
-              className="builder-select w-full"
+            <input
+              type="text"
+              className="builder-input w-full opacity-70 cursor-default"
               value={strategy}
-              onChange={(e) => setStrategy(e.target.value)}
-            >
-              <option>AlphaTrend_V5</option>
-              <option>TrendFollowerV3</option>
-              <option>MeanReversion_V2</option>
-            </select>
+              readOnly
+            />
           </div>
 
           {/* 2. Timerange */}
@@ -378,18 +591,23 @@ export default function BacktestTab() {
           {/* 10. Run buttons */}
           <div className="flex gap-1.5 l-t pt-3">
             <button
-              className="flex-1 bg-white text-black hover:bg-white/85 py-2 text-[11px] font-bold uppercase tracking-wider rounded transition-colors"
+              onClick={handleStart}
+              disabled={isRunning}
+              className="flex-1 bg-white text-black hover:bg-white/85 py-2 text-[11px] font-bold uppercase tracking-wider rounded transition-colors disabled:opacity-50"
               title="Start backtesting run"
             >
-              ▶ Start Backtest
+              {isRunning ? "⏳ Running..." : "▶ Start Backtest"}
             </button>
             <button
-              className="px-3 l-bd text-down hover:bg-down/10 py-2 text-[11px] font-bold uppercase tracking-wider rounded transition-colors"
+              onClick={handleStop}
+              disabled={!isRunning}
+              className="px-3 l-bd text-down hover:bg-down/10 py-2 text-[11px] font-bold uppercase tracking-wider rounded transition-colors disabled:opacity-50"
               title="Stop running backtest"
             >
               ⏹ Stop
             </button>
             <button
+              onClick={handleReset}
               className="px-3 l-bd text-muted hover:text-white hover:bg-white/5 py-2 text-[11px] font-bold uppercase tracking-wider rounded transition-colors"
               title="Reset configuration to defaults"
             >
@@ -402,35 +620,39 @@ export default function BacktestTab() {
             <div className="flex justify-between text-[11px] font-mono mb-1.5">
               <span className="text-muted">Progress</span>
               <span className="text-white font-bold">
-                Completed · 142 trades · ETA —
+                {btProgress || (r ? `Completed · ${r.total_trades} trades` : 'Ready')}
               </span>
             </div>
             <div className="w-full h-1.5 bg-white/10 rounded-full">
               <div
-                className="h-full bg-up rounded-full transition-all"
-                style={{ width: "100%" }}
+                className={`h-full rounded-full transition-all ${isRunning ? 'bg-blue-500 animate-pulse' : 'bg-up'}`}
+                style={{ width: isRunning ? '60%' : (r ? '100%' : '0%') }}
               />
             </div>
           </div>
 
           {/* 12. Terminal Output */}
           <div className="l-t pt-3">
-            <label className="builder-label">Terminal Output</label>
+            <div className="flex items-center justify-between">
+              <label className="builder-label">Terminal Output</label>
+              <div className="flex items-center gap-2">
+                {isRunning && <span className="w-1.5 h-1.5 rounded-full bg-up animate-pulse" />}
+                {logs.length > 0 && <button onClick={() => { setLogs([]); setBtProgress(''); }} className="text-[9px] text-muted hover:text-white">Clear</button>}
+              </div>
+            </div>
             <div className="mt-1 bg-black rounded p-3 font-mono text-[10px] text-muted leading-relaxed l-bd max-h-[300px] overflow-y-auto">
-              <div>[2025-01-02 14:30:01] Loading strategy AlphaTrend_V5...</div>
-              <div>[2025-01-02 14:30:02] Loading data for BTC/USDT:USDT, ETH/USDT:USDT</div>
-              <div className="text-white">
-                [2025-01-02 14:30:03] Using timeframe: 1h, timerange: 20240101-20250101
-              </div>
-              <div>[2025-01-02 14:30:04] Running backtesting with 365 days of data...</div>
-              <div>[2025-01-02 14:30:12] Processing candles... 100%</div>
-              <div className="text-white">
-                [2025-01-02 14:30:15] Found 142 trades in backtest period
-              </div>
-              <div>[2025-01-02 14:30:15] Calculating statistics...</div>
-              <div className="text-up font-bold">
-                [2025-01-02 14:30:16] Backtesting complete. Total profit: +42.12%
-              </div>
+              {logs.length === 0 ? (
+                <div className="text-muted/50">Logs will appear here when backtest starts...</div>
+              ) : (
+                logs.map((entry, i) => (
+                  <div key={i} className="flex gap-1.5">
+                    <span className="text-muted/60 shrink-0">{entry.ts}</span>
+                    <span className={`shrink-0 w-[38px] ${entry.level === 'ERROR' ? 'text-down' : entry.level === 'WARNING' ? 'text-yellow-500' : 'text-muted/60'}`}>{entry.level.substring(0, 4)}</span>
+                    <span className="text-muted break-all">{entry.msg}</span>
+                  </div>
+                ))
+              )}
+              <div ref={logEndRef} />
             </div>
           </div>
         </div>
@@ -441,143 +663,83 @@ export default function BacktestTab() {
       {/* ════════════════════════════════════════════════════════════════ */}
       <div className="flex-1 flex flex-col gap-3 min-w-0 overflow-y-auto pr-1">
         {/* 1. Winner Banner */}
-        <div className="bg-up/[0.04] l-bd rounded-md p-3 shadow-xl border-l-2 border-l-up relative overflow-hidden">
-          {/* Decorative circle */}
+        {r ? (
+        <div className={`${profitPositive ? 'bg-up/[0.04] border-l-up' : 'bg-down/[0.04] border-l-down'} l-bd rounded-md p-3 shadow-xl border-l-2 relative overflow-hidden`}>
           <div className="absolute top-0 right-0 w-24 h-24 bg-up/[0.03] rounded-full -translate-y-8 translate-x-8" />
-
-          {/* Title row */}
           <div className="flex justify-between items-center mb-2 relative z-10">
             <span className="text-white font-mono text-[12px] font-bold">
-              ★ AlphaTrend_V5 · 1h · 142 trades
+              ★ {r.strategy_name} · {r.timeframe} · {r.total_trades} trades
             </span>
             <div className="flex items-center gap-2">
-              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded border border-up/25">
-                COMPLETED
+              <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded border ${isRunning ? 'bg-blue-500/12 text-blue-400 border-blue-500/25' : 'bg-up/12 text-up border-up/25'}`}>
+                {isRunning ? 'RUNNING' : 'COMPLETED'}
               </span>
-              <button
-                title="Deploy params to live"
-                className="h-7 px-3 rounded-md text-[10px] font-bold flex items-center gap-1.5 transition-colors hover:border-up/30 hover:text-up"
-                style={{
-                  background: "rgba(255,255,255,0.08)",
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  color: "#F5F5F5",
-                }}
-              >
-                Deploy
-              </button>
             </div>
           </div>
-
-          {/* KPI row */}
           <div className="grid grid-cols-7 gap-2 text-[11px] font-mono relative z-10">
-            <div>
-              <span className="text-muted block text-[9px]">Profit</span>
-              <span className="text-up font-bold">+42.12%</span>
-            </div>
-            <div>
-              <span className="text-muted block text-[9px]">Profit $</span>
-              <span className="text-up font-bold">+$4,212</span>
-            </div>
-            <div>
-              <span className="text-muted block text-[9px]">Trades</span>
-              <span className="text-white">142</span>
-            </div>
-            <div>
-              <span className="text-muted block text-[9px]">Win Rate</span>
-              <span className="text-up">72.4%</span>
-            </div>
-            <div>
-              <span className="text-muted block text-[9px]">Sharpe</span>
-              <span className="text-white">3.92</span>
-            </div>
-            <div>
-              <span className="text-muted block text-[9px]">Max DD</span>
-              <span className="text-down font-bold">-2.1%</span>
-            </div>
-            <div>
-              <span className="text-muted block text-[9px]">Duration</span>
-              <span className="text-muted">365 days</span>
-            </div>
+            <div><span className="text-muted block text-[9px]">Profit</span><span className={profitPositive ? 'text-up font-bold' : 'text-down font-bold'}>{fmtPctR(r.profit_total)}</span></div>
+            <div><span className="text-muted block text-[9px]">Profit $</span><span className={profitPositive ? 'text-up font-bold' : 'text-down font-bold'}>{fmt$(r.profit_total_abs)}</span></div>
+            <div><span className="text-muted block text-[9px]">Trades</span><span className="text-white">{r.total_trades}</span></div>
+            <div><span className="text-muted block text-[9px]">Win Rate</span><span className="text-up">{(r.winrate * 100).toFixed(1)}%</span></div>
+            <div><span className="text-muted block text-[9px]">Sharpe</span><span className="text-white">{fmtN(r.sharpe)}</span></div>
+            <div><span className="text-muted block text-[9px]">Max DD</span><span className="text-down font-bold">-{(r.max_drawdown_account * 100).toFixed(2)}%</span></div>
+            <div><span className="text-muted block text-[9px]">Duration</span><span className="text-muted">{r.backtest_days} days</span></div>
           </div>
         </div>
+        ) : (
+        <div className="bg-surface l-bd rounded-md p-6 flex flex-col items-center justify-center min-h-[80px]">
+          <div className="text-[28px] mb-2 opacity-30">📊</div>
+          <div className="text-[11px] text-muted">No backtest results yet — configure and start a backtest</div>
+        </div>
+        )}
 
         {/* 2. KPI Cards */}
         <div className="grid grid-cols-6 gap-2">
           <div className="bg-surface p-2.5 l-bd rounded">
             <div className="kpi-label">Total Profit</div>
-            <div className="kpi-value text-up">+$4,212</div>
-            <div className="text-[9px] font-mono text-up">+42.12%</div>
+            <div className={`kpi-value ${profitPositive ? 'text-up' : 'text-down'}`}>{r ? fmt$(r.profit_total_abs) : '—'}</div>
+            <div className={`text-[9px] font-mono ${profitPositive ? 'text-up' : 'text-down'}`}>{r ? fmtPctR(r.profit_total) : ''}</div>
           </div>
           <div className="bg-surface p-2.5 l-bd rounded">
             <div className="kpi-label">Win Rate</div>
-            <div className="kpi-value text-up">72.4%</div>
-            <div className="text-[9px] font-mono text-muted">102W 40L</div>
+            <div className="kpi-value text-up">{r ? `${(r.winrate * 100).toFixed(1)}%` : '—'}</div>
+            <div className="text-[9px] font-mono text-muted">{r ? `${r.wins}W ${r.losses}L` : ''}</div>
           </div>
           <div className="bg-surface p-2.5 l-bd rounded">
             <div className="kpi-label">Trades</div>
-            <div className="kpi-value">142</div>
-            <div className="text-[9px] font-mono text-muted">80L 62S</div>
+            <div className="kpi-value">{r ? r.total_trades : '—'}</div>
+            <div className="text-[9px] font-mono text-muted">{r ? `${r.trade_count_long}L ${r.trade_count_short}S` : ''}</div>
           </div>
           <div className="bg-surface p-2.5 l-bd rounded">
             <div className="kpi-label">Max Drawdown</div>
-            <div className="kpi-value text-down">-2.11%</div>
-            <div className="text-[9px] font-mono text-down">-$211</div>
+            <div className="kpi-value text-down">{r ? `-${(r.max_drawdown_account * 100).toFixed(2)}%` : '—'}</div>
+            <div className="text-[9px] font-mono text-down">{r ? fmt$(r.max_drawdown_abs) : ''}</div>
           </div>
           <div className="bg-surface p-2.5 l-bd rounded">
             <div className="kpi-label">Sharpe Ratio</div>
-            <div className="kpi-value">3.92</div>
+            <div className="kpi-value">{r ? fmtN(r.sharpe) : '—'}</div>
           </div>
           <div className="bg-surface p-2.5 l-bd rounded">
             <div className="kpi-label">Sortino Ratio</div>
-            <div className="kpi-value">4.15</div>
+            <div className="kpi-value">{r ? fmtN(r.sortino) : '—'}</div>
           </div>
         </div>
 
         {/* 3. Advanced Stats */}
         <div className="grid grid-cols-2 gap-2">
           <div className="bg-surface l-bd rounded p-2.5 space-y-1.5 text-[11px] font-mono">
-            <div className="flex justify-between">
-              <span className="text-muted">Profit Factor</span>
-              <span className="text-up">2.58</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted">Expectancy</span>
-              <span className="text-up">$29.66</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted">SQN</span>
-              <span className="text-white">5.12</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted">Calmar</span>
-              <span className="text-white">19.96</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted">CAGR</span>
-              <span className="text-up">42.12%</span>
-            </div>
+            <div className="flex justify-between"><span className="text-muted">Profit Factor</span><span className={r && r.profit_factor > 1 ? 'text-up' : 'text-down'}>{r ? fmtN(r.profit_factor) : '—'}</span></div>
+            <div className="flex justify-between"><span className="text-muted">Expectancy</span><span className={r && r.expectancy > 0 ? 'text-up' : 'text-down'}>{r ? fmt$(r.expectancy) : '—'}</span></div>
+            <div className="flex justify-between"><span className="text-muted">SQN</span><span className="text-white">{r ? fmtN(r.sqn) : '—'}</span></div>
+            <div className="flex justify-between"><span className="text-muted">Calmar</span><span className="text-white">{r ? fmtN(r.calmar) : '—'}</span></div>
+            <div className="flex justify-between"><span className="text-muted">CAGR</span><span className="text-up">{r ? fmtPctR(r.cagr) : '—'}</span></div>
           </div>
           <div className="bg-surface l-bd rounded p-2.5 space-y-1.5 text-[11px] font-mono">
-            <div className="flex justify-between">
-              <span className="text-muted">Starting Balance</span>
-              <span className="text-white">$10,000</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted">Final Balance</span>
-              <span className="text-up font-bold">$14,212</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted">Best Day</span>
-              <span className="text-up">+$412</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted">Worst Day</span>
-              <span className="text-down">-$156</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted">Avg Duration</span>
-              <span className="text-white">4h 23m</span>
-            </div>
+            <div className="flex justify-between"><span className="text-muted">Starting Balance</span><span className="text-white">{r ? `$${r.starting_balance.toLocaleString()}` : '—'}</span></div>
+            <div className="flex justify-between"><span className="text-muted">Final Balance</span><span className={r && r.final_balance > r.starting_balance ? 'text-up font-bold' : 'text-down font-bold'}>{r ? `$${r.final_balance.toLocaleString()}` : '—'}</span></div>
+            <div className="flex justify-between"><span className="text-muted">Best Day</span><span className="text-up">{r ? fmt$(r.backtest_best_day_abs) : '—'}</span></div>
+            <div className="flex justify-between"><span className="text-muted">Worst Day</span><span className="text-down">{r ? fmt$(r.backtest_worst_day_abs) : '—'}</span></div>
+            <div className="flex justify-between"><span className="text-muted">Avg Duration</span><span className="text-white">{r ? (r.holding_avg || '—') : '—'}</span></div>
           </div>
         </div>
 
@@ -683,7 +845,7 @@ export default function BacktestTab() {
                 />
                 <XAxis dataKey="month" hide />
                 <YAxis hide />
-                <Tooltip
+                <RechartsTooltip
                   contentStyle={{
                     background: "#0C0C0C",
                     border: "1px solid rgba(255,255,255,0.1)",
@@ -765,18 +927,20 @@ export default function BacktestTab() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.05]">
-                  {mockTrades.map((t, i) => (
+                  {pagedTrades.length === 0 ? (
+                    <tr><td colSpan={10} className="px-2 py-8 text-center text-muted text-[11px]">No trades to display</td></tr>
+                  ) : pagedTrades.map((t) => (
                     <tr
-                      key={i}
-                      className={`hover:bg-white/[0.04] ${t.winner ? "bg-up/[0.02]" : ""}`}
+                      key={t.trade_id}
+                      className={`hover:bg-white/[0.04] ${t.close_profit >= 0 ? "bg-up/[0.02]" : ""}`}
                     >
                       <td className="px-2 py-1.5">
-                        {t.winner && "★ "}
-                        {t.date}
+                        {t.close_profit >= 0 && "★ "}
+                        {t.close_date?.slice(0, 16) || '—'}
                       </td>
                       <td className="px-2 py-1.5">{t.pair}</td>
                       <td className="px-2 py-1.5 text-center">
-                        {t.side === "LONG" ? (
+                        {!t.is_short ? (
                           <span className="bg-up/12 text-up px-1 py-0.5 rounded text-[9px] font-bold">
                             LONG
                           </span>
@@ -787,42 +951,35 @@ export default function BacktestTab() {
                         )}
                       </td>
                       <td className="px-2 py-1.5 text-right">
-                        {t.entry.toLocaleString(undefined, {
-                          minimumFractionDigits: 1,
-                        })}
+                        {t.open_rate.toLocaleString(undefined, { minimumFractionDigits: 1 })}
                       </td>
                       <td className="px-2 py-1.5 text-right">
-                        {t.exit.toLocaleString(undefined, {
-                          minimumFractionDigits: 1,
-                        })}
+                        {t.close_rate.toLocaleString(undefined, { minimumFractionDigits: 1 })}
                       </td>
-                      <td
-                        className={`px-2 py-1.5 text-right ${
-                          t.profitPct >= 0 ? "text-up" : "text-down"
-                        }`}
-                      >
-                        {t.profitPct >= 0 ? "+" : ""}
-                        {t.profitPct.toFixed(2)}%
+                      <td className={`px-2 py-1.5 text-right ${t.close_profit >= 0 ? "text-up" : "text-down"}`}>
+                        {fmtPctR(t.close_profit)}
                       </td>
-                      <td
-                        className={`px-2 py-1.5 text-right ${
-                          t.value >= 0 ? "text-up" : "text-down"
-                        }`}
-                      >
-                        {t.value >= 0 ? "+" : ""}${Math.abs(t.value).toFixed(1)}
+                      <td className={`px-2 py-1.5 text-right ${t.close_profit_abs >= 0 ? "text-up" : "text-down"}`}>
+                        {fmt$(t.close_profit_abs)}
                       </td>
                       <td className="px-2 py-1.5 text-right text-muted">
-                        ${t.fee.toFixed(2)}
+                        ${(t.fee_open + t.fee_close).toFixed(4)}
                       </td>
-                      <td className="px-2 py-1.5">{t.duration}</td>
-                      <td className="px-2 py-1.5 text-muted">{t.exitReason}</td>
+                      <td className="px-2 py-1.5">{fmtDuration(t.trade_duration)}</td>
+                      <td className="px-2 py-1.5 text-muted">{t.exit_reason}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <button className="w-full py-1.5 text-[10px] text-muted font-mono hover:bg-white/5 transition-colors l-t">
-                Load More (138 remaining)
-              </button>
+              {totalTradePages > 1 && (
+                <div className="flex items-center justify-between px-3 py-1.5 l-t">
+                  <span className="text-[10px] text-muted font-mono">Page {tradesPage}/{totalTradePages} ({sortedTrades.length} trades)</span>
+                  <div className="flex gap-1">
+                    <button disabled={tradesPage <= 1} onClick={() => setTradesPage(p => p - 1)} className="px-2 py-0.5 l-bd rounded text-[9px] text-muted hover:text-white disabled:opacity-30">← Prev</button>
+                    <button disabled={tradesPage >= totalTradePages} onClick={() => setTradesPage(p => p + 1)} className="px-2 py-0.5 l-bd rounded text-[9px] text-muted hover:text-white disabled:opacity-30">Next →</button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -842,41 +999,26 @@ export default function BacktestTab() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.05]">
-                  {mockPerPair.map((p, i) => (
+                  {(r?.results_per_pair || []).map((p, i) => (
                     <tr key={i} className="hover:bg-white/[0.04]">
-                      <td className="px-2 py-1.5">{p.pair}</td>
+                      <td className="px-2 py-1.5">{p.key}</td>
                       <td className="px-2 py-1.5 text-right">{p.trades}</td>
-                      <td
-                        className={`px-2 py-1.5 text-right font-bold ${
-                          p.profitAbs >= 0 ? "text-up" : "text-down"
-                        }`}
-                      >
-                        {p.profitAbs >= 0 ? "+" : ""}${p.profitAbs.toFixed(1)}
+                      <td className={`px-2 py-1.5 text-right font-bold ${p.profit_total_abs >= 0 ? "text-up" : "text-down"}`}>
+                        {fmt$(p.profit_total_abs)}
                       </td>
-                      <td
-                        className={`px-2 py-1.5 text-right ${
-                          p.profitRatio >= 0 ? "text-up" : "text-down"
-                        }`}
-                      >
-                        {p.profitRatio >= 0 ? "+" : ""}
-                        {p.profitRatio.toFixed(2)}%
+                      <td className={`px-2 py-1.5 text-right ${p.profit_total >= 0 ? "text-up" : "text-down"}`}>
+                        {fmtPctR(p.profit_total)}
                       </td>
-                      <td className="px-2 py-1.5 text-right text-up">
-                        {p.winRate.toFixed(1)}%
+                      <td className="px-2 py-1.5 text-right text-muted">—</td>
+                      <td className={`px-2 py-1.5 text-right ${p.profit_mean >= 0 ? "text-up" : "text-down"}`}>
+                        {fmtPctR(p.profit_mean)}
                       </td>
-                      <td
-                        className={`px-2 py-1.5 text-right ${
-                          p.avgProfit >= 0 ? "text-up" : "text-down"
-                        }`}
-                      >
-                        {p.avgProfit >= 0 ? "+" : ""}
-                        {p.avgProfit.toFixed(2)}%
-                      </td>
-                      <td className="px-2 py-1.5 text-right text-muted">
-                        {p.avgDur}
-                      </td>
+                      <td className="px-2 py-1.5 text-right text-muted">—</td>
                     </tr>
                   ))}
+                  {(!r?.results_per_pair || r.results_per_pair.length === 0) && (
+                    <tr><td colSpan={7} className="px-2 py-8 text-center text-muted text-[11px]">No per-pair data</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -890,70 +1032,35 @@ export default function BacktestTab() {
                   <tr className="text-muted text-[11px] uppercase tracking-widest">
                     <th className="sortable filterable font-semibold px-2 py-1.5 text-left">Tag</th>
                     <th className="sortable font-semibold px-2 py-1.5 text-right">Trades</th>
-                    <th className="sortable font-semibold px-2 py-1.5 text-right">Wins</th>
-                    <th className="sortable font-semibold px-2 py-1.5 text-right">Losses</th>
-                    <th className="sortable font-semibold px-2 py-1.5 text-right">Win Rate</th>
-                    <th className="sortable font-semibold px-2 py-1.5 text-right">Avg P&L %</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Avg P&L</th>
                     <th className="sortable sort-desc font-semibold px-2 py-1.5 text-right">Total P&L</th>
-                    <th className="sortable font-semibold px-2 py-1.5 text-right">Avg Dur.</th>
-                    <th className="sortable filterable font-semibold px-2 py-1.5 text-left">Best Pair</th>
-                    <th className="sortable font-semibold px-2 py-1.5 text-right">Expectancy</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.05]">
-                  {mockEntryTags.map((t, i) => (
-                    <tr key={i} className="hover:bg-white/[0.04]">
-                      <td className="px-2 py-1.5">
-                        <span className="px-1.5 py-0.5 bg-blue-500/12 text-blue-400 rounded text-[9px]">
-                          {t.tag}
-                        </span>
-                      </td>
-                      <td className="px-2 py-1.5 text-right">{t.trades}</td>
-                      <td className="px-2 py-1.5 text-right text-up">{t.wins}</td>
-                      <td
-                        className={`px-2 py-1.5 text-right ${
-                          t.losses > 0 ? "text-down" : "text-muted"
-                        }`}
-                      >
-                        {t.losses}
-                      </td>
-                      <td className="px-2 py-1.5 text-right text-up">
-                        {t.winRate.toFixed(1)}%
-                      </td>
-                      <td
-                        className={`px-2 py-1.5 text-right ${
-                          t.avgPnl >= 0 ? "text-up" : "text-down"
-                        }`}
-                      >
-                        {t.avgPnl >= 0 ? "+" : ""}
-                        {t.avgPnl.toFixed(2)}%
-                      </td>
-                      <td
-                        className={`px-2 py-1.5 text-right font-bold ${
-                          t.totalPnl >= 0 ? "text-up" : "text-down"
-                        }`}
-                      >
-                        {t.totalPnl >= 0 ? "+" : ""}${t.totalPnl.toFixed(1)}
-                      </td>
-                      <td className="px-2 py-1.5 text-right text-muted">
-                        {t.avgDur}
-                      </td>
-                      <td className="px-2 py-1.5">{t.bestPair}</td>
-                      <td
-                        className={`px-2 py-1.5 text-right ${
-                          t.expectancy >= 0 ? "text-up" : "text-down"
-                        }`}
-                      >
-                        ${t.expectancy.toFixed(1)}
-                      </td>
-                    </tr>
-                  ))}
+                  {(() => {
+                    const tagMap = new Map<string, { count: number; totalProfit: number; totalProfitAbs: number }>();
+                    for (const t of trades) {
+                      const tag = t.enter_tag || '(none)';
+                      const existing = tagMap.get(tag) || { count: 0, totalProfit: 0, totalProfitAbs: 0 };
+                      existing.count++; existing.totalProfit += t.close_profit; existing.totalProfitAbs += t.close_profit_abs;
+                      tagMap.set(tag, existing);
+                    }
+                    const entries = Array.from(tagMap.entries()).sort((a, b) => b[1].totalProfitAbs - a[1].totalProfitAbs);
+                    if (entries.length === 0) return <tr><td colSpan={4} className="px-2 py-8 text-center text-muted text-[11px]">No entry tag data</td></tr>;
+                    return entries.map(([tag, data]) => (
+                      <tr key={tag} className="hover:bg-white/[0.04]">
+                        <td className="px-2 py-1.5"><span className="px-1.5 py-0.5 bg-blue-500/12 text-blue-400 rounded text-[9px]">{tag}</span></td>
+                        <td className="px-2 py-1.5 text-right">{data.count}</td>
+                        <td className={`px-2 py-1.5 text-right ${data.totalProfit / data.count >= 0 ? 'text-up' : 'text-down'}`}>{fmtPctR(data.totalProfit / data.count)}</td>
+                        <td className={`px-2 py-1.5 text-right font-bold ${data.totalProfitAbs >= 0 ? 'text-up' : 'text-down'}`}>{fmt$(data.totalProfitAbs)}</td>
+                      </tr>
+                    ));
+                  })()}
                 </tbody>
               </table>
             </div>
           )}
 
-          {/* ── Exit Reasons ── */}
           {btSubTab === "exit-reasons" && (
             <div className="bt-tab-content flex-1 overflow-auto">
               <table className="w-full text-[13px] font-mono whitespace-nowrap">
@@ -963,58 +1070,24 @@ export default function BacktestTab() {
                     <th className="sortable font-semibold px-2 py-1.5 text-right">Trades</th>
                     <th className="sortable font-semibold px-2 py-1.5 text-right">Wins</th>
                     <th className="sortable font-semibold px-2 py-1.5 text-right">Losses</th>
-                    <th className="sortable font-semibold px-2 py-1.5 text-right">Win Rate</th>
-                    <th className="sortable font-semibold px-2 py-1.5 text-right">Avg P&L %</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Avg P&L</th>
                     <th className="sortable sort-desc font-semibold px-2 py-1.5 text-right">Total P&L</th>
-                    <th className="sortable font-semibold px-2 py-1.5 text-right">Avg Dur.</th>
-                    <th className="sortable filterable font-semibold px-2 py-1.5 text-left">Best Pair</th>
-                    <th className="sortable font-semibold px-2 py-1.5 text-right">Expectancy</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.05]">
-                  {mockExitReasons.map((r, i) => (
+                  {(r?.exit_reason_summary || []).map((er, i) => (
                     <tr key={i} className="hover:bg-white/[0.04]">
-                      <td className="px-2 py-1.5 text-white">{r.reason}</td>
-                      <td className="px-2 py-1.5 text-right">{r.trades}</td>
-                      <td className="px-2 py-1.5 text-right text-up">{r.wins}</td>
-                      <td
-                        className={`px-2 py-1.5 text-right ${
-                          r.losses > 0 ? "text-down" : "text-muted"
-                        }`}
-                      >
-                        {r.losses}
-                      </td>
-                      <td className="px-2 py-1.5 text-right text-up">
-                        {r.winRate.toFixed(1)}%
-                      </td>
-                      <td
-                        className={`px-2 py-1.5 text-right ${
-                          r.avgPnl >= 0 ? "text-up" : "text-down"
-                        }`}
-                      >
-                        {r.avgPnl >= 0 ? "+" : ""}
-                        {r.avgPnl.toFixed(2)}%
-                      </td>
-                      <td
-                        className={`px-2 py-1.5 text-right font-bold ${
-                          r.totalPnl >= 0 ? "text-up" : "text-down"
-                        }`}
-                      >
-                        {r.totalPnl >= 0 ? "+" : ""}${Math.abs(r.totalPnl).toFixed(1)}
-                      </td>
-                      <td className="px-2 py-1.5 text-right text-muted">
-                        {r.avgDur}
-                      </td>
-                      <td className="px-2 py-1.5">{r.bestPair}</td>
-                      <td
-                        className={`px-2 py-1.5 text-right ${
-                          r.expectancy >= 0 ? "text-up" : "text-down"
-                        }`}
-                      >
-                        ${r.expectancy.toFixed(1)}
-                      </td>
+                      <td className="px-2 py-1.5 text-white">{er.exit_reason}</td>
+                      <td className="px-2 py-1.5 text-right">{er.trades}</td>
+                      <td className="px-2 py-1.5 text-right text-up">{er.wins}</td>
+                      <td className={`px-2 py-1.5 text-right ${er.losses > 0 ? "text-down" : "text-muted"}`}>{er.losses}</td>
+                      <td className={`px-2 py-1.5 text-right ${er.profit_mean >= 0 ? "text-up" : "text-down"}`}>{fmtPctR(er.profit_mean)}</td>
+                      <td className={`px-2 py-1.5 text-right font-bold ${er.profit_total_abs >= 0 ? "text-up" : "text-down"}`}>{fmt$(er.profit_total_abs)}</td>
                     </tr>
                   ))}
+                  {(!r?.exit_reason_summary || r.exit_reason_summary.length === 0) && (
+                    <tr><td colSpan={6} className="px-2 py-8 text-center text-muted text-[11px]">No exit reason data</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1029,51 +1102,29 @@ export default function BacktestTab() {
                     <th className="sortable font-semibold px-2 py-1.5 text-left">#</th>
                     <th className="sortable sort-desc font-semibold px-2 py-1.5 text-left">Run Date</th>
                     <th className="sortable filterable font-semibold px-2 py-1.5 text-left">TF</th>
-                    <th className="sortable font-semibold px-2 py-1.5 text-left">Timerange</th>
-                    <th className="sortable font-semibold px-2 py-1.5 text-right">Trades</th>
-                    <th className="sortable font-semibold px-2 py-1.5 text-right">Profit</th>
-                    <th className="sortable font-semibold px-2 py-1.5 text-right">Win%</th>
-                    <th className="sortable font-semibold px-2 py-1.5 text-right">Sharpe</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-left">Strategy</th>
                     <th className="font-semibold px-2 py-1.5 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.05]">
-                  {mockHistory.map((h) => (
-                    <tr
-                      key={h.id}
-                      className={`hover:bg-white/[0.04] ${h.best ? "bg-up/[0.02]" : ""}`}
-                    >
-                      <td className={`px-2 py-1.5 ${h.best ? "text-up font-bold" : "text-muted"}`}>
-                        {h.best && "★ "}{h.id}
+                  {filteredHistory.length === 0 ? (
+                    <tr><td colSpan={5} className="px-2 py-8 text-center text-muted text-[11px]">No backtest history</td></tr>
+                  ) : filteredHistory.map((h, i) => (
+                    <tr key={h.filename} className={`hover:bg-white/[0.04] ${i === 0 ? "bg-up/[0.02]" : ""}`}>
+                      <td className={`px-2 py-1.5 ${i === 0 ? "text-up font-bold" : "text-muted"}`}>
+                        {i === 0 && "★ "}{i + 1}
                       </td>
-                      <td className="px-2 py-1.5 text-muted">{h.runDate}</td>
-                      <td className="px-2 py-1.5">{h.tf}</td>
-                      <td className="px-2 py-1.5 text-muted">{h.timerange}</td>
-                      <td className="px-2 py-1.5 text-right">{h.trades}</td>
-                      <td
-                        className={`px-2 py-1.5 text-right font-bold ${
-                          h.profit >= 0 ? "text-up" : "text-down"
-                        }`}
-                      >
-                        {h.profit >= 0 ? "+" : ""}
-                        {h.profit.toFixed(2)}%
+                      <td className="px-2 py-1.5 text-muted">
+                        {new Date(h.backtest_start_time * 1000).toLocaleString()}
                       </td>
-                      <td className="px-2 py-1.5 text-right">
-                        {h.winPct.toFixed(1)}%
-                      </td>
-                      <td
-                        className={`px-2 py-1.5 text-right ${
-                          h.sharpe < 0 ? "text-down" : ""
-                        }`}
-                      >
-                        {h.sharpe.toFixed(2)}
-                      </td>
+                      <td className="px-2 py-1.5">{h.timeframe || '—'}</td>
+                      <td className="px-2 py-1.5 text-muted">{h.strategy}</td>
                       <td className="px-2 py-1.5 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <button className="px-2 py-0.5 l-bd rounded text-[9px] text-muted hover:text-white hover:bg-white/5 transition-colors">
+                          <button onClick={() => handleLoadHistory(h)} className="px-2 py-0.5 l-bd rounded text-[9px] text-muted hover:text-white hover:bg-white/5 transition-colors">
                             Load
                           </button>
-                          <button className="px-2 py-0.5 l-bd rounded text-[9px] text-down/60 hover:text-down hover:bg-down/10 transition-colors">
+                          <button onClick={() => handleDeleteHistory(h)} className="px-2 py-0.5 l-bd rounded text-[9px] text-down/60 hover:text-down hover:bg-down/10 transition-colors">
                             Del
                           </button>
                         </div>
@@ -1084,6 +1135,8 @@ export default function BacktestTab() {
               </table>
             </div>
           )}
+
+
         </div>
       </div>
     </div>

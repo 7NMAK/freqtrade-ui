@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(grep -n \"export default function\\\\|Props\\\\|interface.*Props\" src/app/experiments/\\\\[strategy\\\\]/components/*.tsx)",
-      "Bash(grep -v \"^--$\")"
+      "Bash(grep -v \"^--$\")",
+      "Bash(grep -r \"split\" /Users/novakus/Documents/BOT/frontend/src/components/ui/Toast*)",
+      "Bash(git remote:*)"
     ]
   }
 }

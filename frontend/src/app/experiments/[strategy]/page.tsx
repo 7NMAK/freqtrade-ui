@@ -309,7 +309,7 @@ export default function StrategyWorkspacePage() {
 
         {/* ══ Tab Content ══ */}
         <div className="flex-1 p-4 overflow-hidden relative">
-          {activeTab === "backtest" && <BacktestTab />}
+          {activeTab === "backtest" && <BacktestTab strategy={strategyName} backtestBotId={2} experimentId={experimentId} />}
           {activeTab === "hyperopt" && <HyperoptTab strategy={strategyName} botId={2} experimentId={experimentId} onNavigateToTab={handleNavigateToTab} />}
           {activeTab === "freqai" && <FreqAITab strategy={strategyName} botId={2} experimentId={experimentId} onNavigateToTab={handleNavigateToTab} />}
           {activeTab === "ai_review" && <AiReviewTab strategy={strategyName} experimentId={experimentId} onNavigateToTab={handleNavigateToTab} />}

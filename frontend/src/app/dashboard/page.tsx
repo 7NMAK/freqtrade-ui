@@ -72,12 +72,6 @@ import { registerBot, deleteBot as deleteBotApi } from "@/lib/api";
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
-function _isToday(dateStr: string | null | undefined): boolean {
-  if (!dateStr) return false;
-  const d = new Date(dateStr);
-  const now = new Date();
-  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
-}
 
 function fmtDurationSec(seconds: number | string | undefined): string {
   if (seconds == null) return "\u2014";

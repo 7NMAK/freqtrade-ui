@@ -1,1339 +1,1090 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, useCallback, Fragment } from "react";
-import Tooltip from "@/components/ui/Tooltip";
-import Toggle from "@/components/ui/Toggle";
-import { INPUT, SELECT, LABEL, fmt$, fmtPctRatio, fmtNum, SECTION_CARD, SECTION_TITLE, METRIC_CARD, BTN_PRIMARY, CHIP } from "@/lib/design";
-import { botLogs, botBacktestResults, botBacktestStart, botBacktestDelete, botBacktestHistory, botBacktestHistoryResult, botBacktestHistoryDelete, createExperimentRun } from "@/lib/api";
-import { useToast } from "@/components/ui/Toast";
+import { useState } from "react";
+import {
+  ComposedChart,
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
 
-interface BacktestTabProps {
-  strategy: string;
-  backtestBotId?: number;
-  experimentId?: number;
-}
-
-interface LogEntry {
-  ts: string;
-  level: string;
-  msg: string;
-}
-
-// ── FT result types (exact FT field names from §5/§8) ───────────────────
-interface FTStrategyResult {
-  strategy_name: string;
-  total_trades: number;
-  trade_count_long: number;
-  trade_count_short: number;
-  profit_total: number;
-  profit_total_abs: number;
-  profit_mean: number;
-  profit_median: number;
-  profit_factor: number;
-  wins: number;
-  losses: number;
-  draws: number;
-  winrate: number;
-  sharpe: number;
-  sortino: number;
-  calmar: number;
-  expectancy: number;
-  expectancy_ratio: number;
-  max_drawdown_account: number;
-  max_drawdown_abs: number;
-  starting_balance: number;
-  final_balance: number;
-  stake_currency: string;
-  backtest_start: string;
-  backtest_end: string;
-  backtest_days: number;
-  timeframe: string;
-  timeframe_detail: string | null;
-  stoploss: number;
-  max_open_trades_setting: number;
-  trading_mode: string;
-  holding_avg: string;
-  backtest_best_day: number;
-  backtest_worst_day: number;
-  backtest_best_day_abs: number;
-  backtest_worst_day_abs: number;
-  winning_days: number;
-  losing_days: number;
-  draw_days: number;
-  max_consecutive_wins: number;
-  max_consecutive_losses: number;
-  cagr: number;
-  sqn: number;
-  results_per_pair: Array<{ key: string; trades: number; profit_mean: number; profit_total: number; profit_total_abs: number }>;
-  exit_reason_summary: Array<{ exit_reason: string; trades: number; profit_mean: number; profit_total: number; profit_total_abs: number; wins: number; losses: number }>;
-  periodic_breakdown?: Record<string, Array<{ date: string; trades: number; profit_abs: number }>>;
-  trades?: FTTradeEntry[];
-}
-
-/** Individual trade in backtest results (exact FT field names per architecture doc) */
-interface FTTradeEntry {
-  trade_id: number;
-  pair: string;
-  is_short: boolean;
-  stake_amount: number;
-  open_rate: number;
-  close_rate: number;
-  fee_open: number;
-  fee_close: number;
-  close_profit: number;
-  close_profit_abs: number;
-  open_date: string;
-  close_date: string;
-  trade_duration: number; // minutes
-  enter_tag: string;
-  exit_reason: string;
-}
-
-interface HistoryEntry {
-  filename: string;
-  strategy: string;
-  run_id: string;
-  backtest_start_time: number;
-  timeframe?: string;
-  timeframe_detail?: string | null;
-  backtest_start_ts?: number;
-  backtest_end_ts?: number;
-}
-
-// Toggle, INPUT, SELECT, LABEL, fmt$, fmtPctRatio, fmtNum, fmtTimestamp imported from shared modules
-
-/** Format duration in minutes → Xd Xh Xm */
-function fmtDuration(minutes: number): string {
-  if (minutes < 60) return `${minutes}m`;
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  if (hours < 24) return `${hours}h ${mins}m`;
-  const days = Math.floor(hours / 24);
-  const rem = hours % 24;
-  return `${days}d ${rem}h`;
-}
-
-// ── Metric Card ─────────────────────────────────────────────────────
-function MetricCard({ label, value, sub, positive }: { label: string; value: string; sub?: string; positive?: boolean | null }) {
-  const valColor = positive === true ? "text-emerald-400" : positive === false ? "text-rose-400" : "text-foreground";
+// ── Toggle ──────────────────────────────────────────────────────────────
+function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   return (
-    <div className={METRIC_CARD}>
-      <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">{label}</div>
-      <div className={`text-sm font-bold tabular-nums ${valColor}`}>{value}</div>
-      {sub && <div className="text-[10px] text-muted-foreground tabular-nums">{sub}</div>}
+    <div className={`builder-toggle ${on ? "on" : ""}`} onClick={onToggle}>
+      <div className="dot" />
     </div>
   );
 }
 
+// ── Pill ────────────────────────────────────────────────────────────────
+function Pill({
+  label,
+  selected,
+  onClick,
+}: {
+  label: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      className={`builder-pill text-[10px] px-2.5 py-1.5 text-center ${selected ? "selected" : ""}`}
+      onClick={onClick}
+    >
+      {selected && "✓ "}
+      {label}
+    </button>
+  );
+}
+
+// ── Mock chart data ─────────────────────────────────────────────────────
+const chartData = [
+  { month: "01-15", profit: 10200, trades: 12 },
+  { month: "02-15", profit: 10550, trades: 14 },
+  { month: "03-15", profit: 10980, trades: 10 },
+  { month: "04-15", profit: 11200, trades: 13 },
+  { month: "05-15", profit: 11750, trades: 11 },
+  { month: "06-15", profit: 11400, trades: 15 },
+  { month: "07-15", profit: 12100, trades: 9 },
+  { month: "08-15", profit: 12650, trades: 12 },
+  { month: "09-15", profit: 13100, trades: 11 },
+  { month: "10-15", profit: 13500, trades: 14 },
+  { month: "11-15", profit: 13850, trades: 10 },
+  { month: "12-15", profit: 14212, trades: 11 },
+];
+
+// ── Mock trade rows ─────────────────────────────────────────────────────
+const mockTrades = [
+  {
+    date: "2024-12-28 14:30",
+    pair: "BTC/USDT:USDT",
+    side: "LONG" as const,
+    entry: 42150.2,
+    exit: 43612.8,
+    profitPct: 3.47,
+    value: 346.8,
+    fee: 4.21,
+    duration: "6h 12m",
+    exitReason: "roi",
+    winner: true,
+  },
+  {
+    date: "2024-12-22 08:15",
+    pair: "ETH/USDT:USDT",
+    side: "SHORT" as const,
+    entry: 2285.4,
+    exit: 2198.6,
+    profitPct: 3.8,
+    value: 380.2,
+    fee: 3.85,
+    duration: "4h 45m",
+    exitReason: "trailing_stop_loss",
+    winner: true,
+  },
+  {
+    date: "2024-12-18 19:00",
+    pair: "BTC/USDT:USDT",
+    side: "LONG" as const,
+    entry: 43800.0,
+    exit: 43450.5,
+    profitPct: -0.8,
+    value: -79.7,
+    fee: 4.38,
+    duration: "2h 10m",
+    exitReason: "stoploss",
+    winner: false,
+  },
+  {
+    date: "2024-12-15 03:22",
+    pair: "ETH/USDT:USDT",
+    side: "LONG" as const,
+    entry: 2180.0,
+    exit: 2248.6,
+    profitPct: 3.15,
+    value: 314.6,
+    fee: 3.64,
+    duration: "8h 30m",
+    exitReason: "roi",
+    winner: true,
+  },
+];
+
+// ── Mock per-pair rows ──────────────────────────────────────────────────
+const mockPerPair = [
+  { pair: "BTC/USDT:USDT", trades: 80, profitAbs: 2812.4, profitRatio: 28.12, winRate: 74.2, avgProfit: 2.41, avgDur: "4h 10m" },
+  { pair: "ETH/USDT:USDT", trades: 52, profitAbs: 1180.6, profitRatio: 11.81, winRate: 69.8, avgProfit: 1.92, avgDur: "5h 02m" },
+  { pair: "SOL/USDT:USDT", trades: 10, profitAbs: 219.0, profitRatio: 2.19, winRate: 70.0, avgProfit: 2.19, avgDur: "3h 45m" },
+];
+
+// ── Mock entry tags ─────────────────────────────────────────────────────
+const mockEntryTags = [
+  { tag: "alpha_signal", trades: 58, wins: 44, losses: 14, winRate: 75.9, avgPnl: 2.84, totalPnl: 1648.2, avgDur: "4h 15m", bestPair: "BTC/USDT:USDT", expectancy: 28.42 },
+  { tag: "trend_follow", trades: 42, wins: 30, losses: 12, winRate: 71.4, avgPnl: 2.12, totalPnl: 890.4, avgDur: "5h 30m", bestPair: "ETH/USDT:USDT", expectancy: 21.2 },
+  { tag: "mean_revert", trades: 24, wins: 16, losses: 8, winRate: 66.7, avgPnl: 1.85, totalPnl: 444.0, avgDur: "3h 45m", bestPair: "BTC/USDT:USDT", expectancy: 18.5 },
+  { tag: "momentum", trades: 12, wins: 8, losses: 4, winRate: 66.7, avgPnl: 2.95, totalPnl: 354.0, avgDur: "2h 50m", bestPair: "SOL/USDT:USDT", expectancy: 29.5 },
+  { tag: "breakout", trades: 6, wins: 4, losses: 2, winRate: 66.7, avgPnl: 14.57, totalPnl: 875.4, avgDur: "6h 10m", bestPair: "BTC/USDT:USDT", expectancy: 145.9 },
+];
+
+// ── Mock exit reasons ───────────────────────────────────────────────────
+const mockExitReasons = [
+  { reason: "roi", trades: 68, wins: 68, losses: 0, winRate: 100.0, avgPnl: 3.12, totalPnl: 2121.6, avgDur: "5h 20m", bestPair: "BTC/USDT:USDT", expectancy: 31.2 },
+  { reason: "trailing_stop_loss", trades: 34, wins: 24, losses: 10, winRate: 70.6, avgPnl: 1.85, totalPnl: 629.0, avgDur: "4h 10m", bestPair: "ETH/USDT:USDT", expectancy: 18.5 },
+  { reason: "stoploss", trades: 28, wins: 0, losses: 28, winRate: 0.0, avgPnl: -1.42, totalPnl: -397.6, avgDur: "1h 45m", bestPair: "BTC/USDT:USDT", expectancy: -14.2 },
+  { reason: "exit_signal", trades: 12, wins: 10, losses: 2, winRate: 83.3, avgPnl: 4.92, totalPnl: 1859.0, avgDur: "8h 15m", bestPair: "BTC/USDT:USDT", expectancy: 154.9 },
+];
+
+// ── Mock history ────────────────────────────────────────────────────────
+const mockHistory = [
+  { id: 1, runDate: "2025-01-02 14:30", tf: "1h", timerange: "2024-01-01 → 2025-01-01", trades: 142, profit: 42.12, winPct: 72.4, sharpe: 3.92, best: true },
+  { id: 2, runDate: "2024-12-28 09:15", tf: "4h", timerange: "2024-01-01 → 2024-12-28", trades: 86, profit: 18.45, winPct: 65.1, sharpe: 1.82, best: false },
+  { id: 3, runDate: "2024-12-20 16:45", tf: "1h", timerange: "2024-06-01 → 2024-12-20", trades: 64, profit: -4.22, winPct: 48.3, sharpe: -0.31, best: false },
+  { id: 4, runDate: "2024-12-15 11:00", tf: "15m", timerange: "2024-09-01 → 2024-12-15", trades: 210, profit: 28.91, winPct: 61.4, sharpe: 2.14, best: false },
+];
+
 // ══════════════════════════════════════════════════════════════════════════
-// RESULTS PANEL
+// BACKTEST TAB
 // ══════════════════════════════════════════════════════════════════════════
-function ResultsPanel({ data }: { data: FTStrategyResult }) {
-  const profitPositive = data.profit_total_abs >= 0;
-  const [tradesPage, setTradesPage] = useState(1);
-  const tradesPerPage = 20;
-  const trades = useMemo(() => data.trades || [], [data.trades]);
+export default function BacktestTab() {
+  // ── Config state ──────────────────────────────────────────────────────
+  const [strategy, setStrategy] = useState("AlphaTrend_V5");
+  const [timerangeStart, setTimerangeStart] = useState("2024-01-01");
+  const [timerangeEnd, setTimerangeEnd] = useState("2025-01-01");
+  const [timeframe, setTimeframe] = useState("1h");
+  const [timeframeDetail, setTimeframeDetail] = useState("None");
+  const [startingCapital, setStartingCapital] = useState("10000");
+  const [stakeAmount, setStakeAmount] = useState("unlimited");
+  const [maxOpenTrades, setMaxOpenTrades] = useState("3");
+  const [fee, setFee] = useState("");
+  const [enableProtections, setEnableProtections] = useState(true);
+  const [dryRunWallet, setDryRunWallet] = useState(false);
+  const [positionStacking, setPositionStacking] = useState(false);
+  const [enableShorts, setEnableShorts] = useState(false);
+  const [breakdownSelected, setBreakdownSelected] = useState("month");
+  const [cache, setCache] = useState("day");
 
-  // Sort state for trade columns
-  type TradeSortKey = 'trade_id' | 'pair' | 'close_profit' | 'close_profit_abs' | 'open_date' | 'close_date' | 'trade_duration';
-  const [tradeSortBy, setTradeSortBy] = useState<TradeSortKey>('trade_id');
-  const [tradeSortDir, setTradeSortDir] = useState<'asc' | 'desc'>('asc');
+  // ── Sub-tab state ─────────────────────────────────────────────────────
+  const [btSubTab, setBtSubTab] = useState<
+    "closed" | "per-pair" | "entry-tags" | "exit-reasons" | "history"
+  >("closed");
 
-  const handleTradeSort = (col: TradeSortKey) => {
-    if (tradeSortBy === col) {
-      setTradeSortDir(d => d === 'asc' ? 'desc' : 'asc');
-    } else {
-      setTradeSortBy(col);
-      setTradeSortDir('desc');
-    }
-    setTradesPage(1);
-  };
-  const TradeSortArrow = ({ col }: { col: TradeSortKey }) =>
-    tradeSortBy === col ? <span className="ml-0.5 text-primary">{tradeSortDir === 'desc' ? '↓' : '↑'}</span> : null;
-
-  const sortedTrades = useMemo(() => {
-    const copy = [...trades];
-    copy.sort((a, b) => {
-      const av = a[tradeSortBy] ?? 0;
-      const bv = b[tradeSortBy] ?? 0;
-      if (typeof av === 'string' && typeof bv === 'string') return tradeSortDir === 'desc' ? bv.localeCompare(av) : av.localeCompare(bv);
-      return tradeSortDir === 'desc' ? (Number(bv) - Number(av)) : (Number(av) - Number(bv));
-    });
-    return copy;
-  }, [trades, tradeSortBy, tradeSortDir]);
-
-  const totalPages = Math.ceil(sortedTrades.length / tradesPerPage);
-  const pagedTrades = sortedTrades.slice((tradesPage - 1) * tradesPerPage, tradesPage * tradesPerPage);
-
-  // Generate unique test ID from strategy name + date range
-  const testId = useMemo(() => {
-    const s = data.backtest_start?.replace(/[^0-9]/g, '').slice(0, 8) || '00000000';
-    const e = data.backtest_end?.replace(/[^0-9]/g, '').slice(0, 8) || '00000000';
-    return `BT-${s}-${e}`;
-  }, [data.backtest_start, data.backtest_end]);
+  // ── Chart toggle state ────────────────────────────────────────────────
+  const [chartPeriod, setChartPeriod] = useState<"days" | "weeks" | "months">("days");
+  const [chartMode, setChartMode] = useState<"abs" | "rel">("abs");
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Header with Unique ID */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono px-1.5 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded">{testId}</span>
-            <span className="text-sm font-semibold text-foreground">{data.strategy_name}</span>
+    <div className="h-full flex flex-row gap-3">
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* LEFT PANEL — Config                                            */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      <div className="w-[400px] flex flex-col gap-0 bg-surface l-bd rounded-md shadow-xl shrink-0 h-full overflow-hidden">
+        {/* Header */}
+        <div className="h-10 l-b flex items-center px-4 bg-black/40 shrink-0">
+          <span className="section-title">Backtest Configuration</span>
+        </div>
+
+        {/* Body */}
+        <div className="p-4 flex flex-col gap-3.5 flex-1 overflow-y-auto">
+          {/* 1. Strategy */}
+          <div>
+            <label className="builder-label">Strategy</label>
+            <select
+              className="builder-select w-full"
+              value={strategy}
+              onChange={(e) => setStrategy(e.target.value)}
+            >
+              <option>AlphaTrend_V5</option>
+              <option>TrendFollowerV3</option>
+              <option>MeanReversion_V2</option>
+            </select>
           </div>
-          <div className="text-[10px] text-muted-foreground mt-0.5">
-            {data.backtest_start} → {data.backtest_end} · {data.timeframe}{data.timeframe_detail ? ` (detail: ${data.timeframe_detail})` : ""} · {data.backtest_days} days
+
+          {/* 2. Timerange */}
+          <div>
+            <label className="builder-label">Timerange</label>
+            <div className="flex gap-2">
+              <input
+                type="date"
+                className="builder-input flex-1"
+                value={timerangeStart}
+                onChange={(e) => setTimerangeStart(e.target.value)}
+              />
+              <input
+                type="date"
+                className="builder-input flex-1"
+                value={timerangeEnd}
+                onChange={(e) => setTimerangeEnd(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* 3. Timeframe / Timeframe Detail */}
+          <div>
+            <label className="builder-label">Timeframe</label>
+            <div className="flex gap-2">
+              <select
+                className="builder-select flex-1"
+                value={timeframe}
+                onChange={(e) => setTimeframe(e.target.value)}
+              >
+                <option>1h</option>
+                <option>4h</option>
+                <option>15m</option>
+                <option>5m</option>
+                <option>1d</option>
+              </select>
+              <select
+                className="builder-select flex-1"
+                value={timeframeDetail}
+                onChange={(e) => setTimeframeDetail(e.target.value)}
+              >
+                <option>None</option>
+                <option>5m</option>
+                <option>1m</option>
+              </select>
+            </div>
+          </div>
+
+          {/* 4. Starting Capital / Stake Amount */}
+          <div>
+            <label className="builder-label">Position</label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                className="builder-input flex-1"
+                value={startingCapital}
+                onChange={(e) => setStartingCapital(e.target.value)}
+              />
+              <input
+                type="text"
+                className="builder-input flex-1"
+                value={stakeAmount}
+                onChange={(e) => setStakeAmount(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* 5. Max Open Trades / Fee */}
+          <div>
+            <label className="builder-label">Limits</label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                className="builder-input flex-1"
+                value={maxOpenTrades}
+                onChange={(e) => setMaxOpenTrades(e.target.value)}
+              />
+              <input
+                type="text"
+                className="builder-input flex-1"
+                placeholder="exchange default"
+                value={fee}
+                onChange={(e) => setFee(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* 6. Flags */}
+          <div className="l-t pt-3">
+            <label className="builder-label">Flags</label>
+            <div className="flex flex-col gap-2.5 mt-1">
+              <div className="flex items-center justify-between">
+                <span className="text-muted text-[11px]">Enable Protections</span>
+                <Toggle on={enableProtections} onToggle={() => setEnableProtections(!enableProtections)} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted text-[11px]">Dry Run Wallet</span>
+                <Toggle on={dryRunWallet} onToggle={() => setDryRunWallet(!dryRunWallet)} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted text-[11px]">Position Stacking</span>
+                <Toggle on={positionStacking} onToggle={() => setPositionStacking(!positionStacking)} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted text-[11px]">Enable Shorts</span>
+                <Toggle on={enableShorts} onToggle={() => setEnableShorts(!enableShorts)} />
+              </div>
+            </div>
+          </div>
+
+          {/* 7. Breakdown */}
+          <div className="l-t pt-3">
+            <label className="builder-label">Breakdown</label>
+            <div className="grid grid-cols-3 gap-1.5 mt-1">
+              {(["day", "week", "month"] as const).map((b) => (
+                <Pill
+                  key={b}
+                  label={b}
+                  selected={breakdownSelected === b}
+                  onClick={() => setBreakdownSelected(b)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* 8. Cache */}
+          <div className="l-t pt-3">
+            <label className="builder-label">Cache</label>
+            <select
+              className="builder-select w-full"
+              value={cache}
+              onChange={(e) => setCache(e.target.value)}
+            >
+              <option>day</option>
+              <option>none</option>
+              <option>week</option>
+              <option>month</option>
+            </select>
+          </div>
+
+          {/* 9. Strategy Config Preview */}
+          <div className="l-t pt-3">
+            <label className="builder-label">
+              Strategy Config{" "}
+              <span className="text-muted text-[8px] normal-case font-normal">
+                (read from strategy)
+              </span>
+            </label>
+            <div className="builder-card space-y-1.5 text-[11px] font-mono">
+              <div className="flex justify-between">
+                <span className="text-muted">stoploss</span>
+                <span className="text-down font-bold">-0.10</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted">trailing_stop</span>
+                <span className="text-up">true</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted">trailing_stop_positive</span>
+                <span className="text-white">0.01</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted">use_exit_signal</span>
+                <span className="text-up">true</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted">minimal_roi</span>
+                <span className="text-white text-[9px]">
+                  {`{"0": 0.05, "30": 0.02, "60": 0.01}`}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* 10. Run buttons */}
+          <div className="flex gap-1.5 l-t pt-3">
+            <button
+              className="flex-1 bg-white text-black hover:bg-white/85 py-2 text-[11px] font-bold uppercase tracking-wider rounded transition-colors"
+              title="Start backtesting run"
+            >
+              ▶ Start Backtest
+            </button>
+            <button
+              className="px-3 l-bd text-down hover:bg-down/10 py-2 text-[11px] font-bold uppercase tracking-wider rounded transition-colors"
+              title="Stop running backtest"
+            >
+              ⏹ Stop
+            </button>
+            <button
+              className="px-3 l-bd text-muted hover:text-white hover:bg-white/5 py-2 text-[11px] font-bold uppercase tracking-wider rounded transition-colors"
+              title="Reset configuration to defaults"
+            >
+              ↺ Reset
+            </button>
+          </div>
+
+          {/* 11. Progress */}
+          <div className="l-t pt-3">
+            <div className="flex justify-between text-[11px] font-mono mb-1.5">
+              <span className="text-muted">Progress</span>
+              <span className="text-white font-bold">
+                Completed · 142 trades · ETA —
+              </span>
+            </div>
+            <div className="w-full h-1.5 bg-white/10 rounded-full">
+              <div
+                className="h-full bg-up rounded-full transition-all"
+                style={{ width: "100%" }}
+              />
+            </div>
+          </div>
+
+          {/* 12. Terminal Output */}
+          <div className="l-t pt-3">
+            <label className="builder-label">Terminal Output</label>
+            <div className="mt-1 bg-black rounded p-3 font-mono text-[10px] text-muted leading-relaxed l-bd max-h-[300px] overflow-y-auto">
+              <div>[2025-01-02 14:30:01] Loading strategy AlphaTrend_V5...</div>
+              <div>[2025-01-02 14:30:02] Loading data for BTC/USDT:USDT, ETH/USDT:USDT</div>
+              <div className="text-white">
+                [2025-01-02 14:30:03] Using timeframe: 1h, timerange: 20240101-20250101
+              </div>
+              <div>[2025-01-02 14:30:04] Running backtesting with 365 days of data...</div>
+              <div>[2025-01-02 14:30:12] Processing candles... 100%</div>
+              <div className="text-white">
+                [2025-01-02 14:30:15] Found 142 trades in backtest period
+              </div>
+              <div>[2025-01-02 14:30:15] Calculating statistics...</div>
+              <div className="text-up font-bold">
+                [2025-01-02 14:30:16] Backtesting complete. Total profit: +42.12%
+              </div>
+            </div>
           </div>
         </div>
-        <div className={`text-lg font-bold tabular-nums ${profitPositive ? "text-emerald-400" : "text-rose-400"}`}>
-          {fmt$(data.profit_total_abs)}
-        </div>
       </div>
 
-      {/* Test Configuration Bar */}
-      <div className="grid grid-cols-6 gap-2 text-[10px]">
-        <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
-          <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Stoploss</div>
-          <div className="text-foreground font-mono">{(data.stoploss * 100).toFixed(1)}%</div>
-        </div>
-        <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
-          <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Max Trades</div>
-          <div className="text-foreground font-mono">{data.max_open_trades_setting}</div>
-        </div>
-        <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
-          <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Capital</div>
-          <div className="text-foreground font-mono">${data.starting_balance.toLocaleString()}</div>
-        </div>
-        <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
-          <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Mode</div>
-          <div className="text-foreground font-mono">{data.trading_mode || 'spot'}</div>
-        </div>
-        <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
-          <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Currency</div>
-          <div className="text-foreground font-mono">{data.stake_currency}</div>
-        </div>
-        <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
-          <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Timeframe</div>
-          <div className="text-foreground font-mono">{data.timeframe}{data.timeframe_detail ? ` / ${data.timeframe_detail}` : ''}</div>
-        </div>
-      </div>
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* RIGHT PANEL — Results                                          */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      <div className="flex-1 flex flex-col gap-3 min-w-0 overflow-y-auto pr-1">
+        {/* 1. Winner Banner */}
+        <div className="bg-up/[0.04] l-bd rounded-md p-3 shadow-xl border-l-2 border-l-up relative overflow-hidden">
+          {/* Decorative circle */}
+          <div className="absolute top-0 right-0 w-24 h-24 bg-up/[0.03] rounded-full -translate-y-8 translate-x-8" />
 
-      {/* Row 1: Core Metrics (6-grid per doc) */}
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-        <MetricCard label="Total Trades" value={String(data.total_trades)} sub={`${data.trade_count_long}L / ${data.trade_count_short}S`} />
-        <MetricCard label="Win Rate" value={`${(data.winrate * 100).toFixed(1)}%`} sub={`${data.wins}W ${data.losses}L ${data.draws}D`} positive={data.winrate > 0.6 ? true : data.winrate < 0.4 ? false : null} />
-        <MetricCard label="Total Profit" value={fmt$(data.profit_total_abs)} sub={fmtPctRatio(data.profit_total)} positive={profitPositive} />
-        <MetricCard label="Max Drawdown" value={`-${(data.max_drawdown_account * 100).toFixed(2)}%`} sub={fmt$(data.max_drawdown_abs)} positive={false} />
-        <MetricCard label="Sharpe" value={fmtNum(data.sharpe)} positive={data.sharpe > 1 ? true : data.sharpe < 0 ? false : null} />
-        <MetricCard label="Sortino" value={fmtNum(data.sortino)} positive={data.sortino > 1 ? true : data.sortino < 0 ? false : null} />
-      </div>
-
-      {/* Row 2: Risk/Return Ratios */}
-      <div className="grid grid-cols-5 gap-2">
-        <MetricCard label="Calmar" value={fmtNum(data.calmar)} positive={data.calmar > 1 ? true : data.calmar < 0 ? false : null} />
-        <MetricCard label="Profit Factor" value={fmtNum(data.profit_factor)} positive={data.profit_factor > 1 ? true : data.profit_factor < 1 ? false : null} />
-        <MetricCard label="SQN" value={fmtNum(data.sqn)} positive={data.sqn > 2 ? true : data.sqn < 0 ? false : null} />
-        <MetricCard label="Expectancy" value={fmt$(data.expectancy)} positive={data.expectancy > 0} />
-        <MetricCard label="CAGR" value={fmtPctRatio(data.cagr)} positive={data.cagr > 0} />
-      </div>
-
-      {/* Row 3: Balance + Extra Stats */}
-      <div className="grid grid-cols-4 gap-2">
-        <MetricCard label="Starting" value={`$${data.starting_balance.toLocaleString()}`} />
-        <MetricCard label="Final" value={`$${data.final_balance.toLocaleString()}`} positive={data.final_balance > data.starting_balance} />
-        <MetricCard label="Best Day" value={fmt$(data.backtest_best_day_abs)} sub={fmtPctRatio(data.backtest_best_day)} positive={true} />
-        <MetricCard label="Worst Day" value={fmt$(data.backtest_worst_day_abs)} sub={fmtPctRatio(data.backtest_worst_day)} positive={false} />
-      </div>
-
-      {/* Row 4: Extra */}
-      <div className="grid grid-cols-4 gap-2">
-        <MetricCard label="Avg Duration" value={data.holding_avg || "-"} />
-        <MetricCard label="Consec. Wins" value={String(data.max_consecutive_wins)} />
-        <MetricCard label="Consec. Losses" value={String(data.max_consecutive_losses)} />
-        <MetricCard label="Win/Draw/Loss Days" value={`${data.winning_days}/${data.draw_days}/${data.losing_days}`} />
-      </div>
-
-      {/* ── Equity Curve ── */}
-      <div>
-        <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Equity Curve</div>
-        <div className="border border-border rounded-lg p-3 bg-muted/20 min-h-[160px] flex items-center justify-center">
-          {data.periodic_breakdown && Object.keys(data.periodic_breakdown).length > 0 ? (
-            <EquityCurve breakdown={data.periodic_breakdown} startingBalance={data.starting_balance} />
-          ) : (
-            <span className="text-xs text-muted-foreground opacity-50">Equity curve requires periodic breakdown data (enable Month breakdown)</span>
-          )}
-        </div>
-      </div>
-
-      {/* ── Trades Table ── */}
-      {trades.length > 0 && (
-        <div>
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-            Trades ({trades.length})
+          {/* Title row */}
+          <div className="flex justify-between items-center mb-2 relative z-10">
+            <span className="text-white font-mono text-[12px] font-bold">
+              ★ AlphaTrend_V5 · 1h · 142 trades
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded border border-up/25">
+                COMPLETED
+              </span>
+              <button
+                title="Deploy params to live"
+                className="h-7 px-3 rounded-md text-[10px] font-bold flex items-center gap-1.5 transition-colors hover:border-up/30 hover:text-up"
+                style={{
+                  background: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  color: "#F5F5F5",
+                }}
+              >
+                Deploy
+              </button>
+            </div>
           </div>
-          <div className="border border-border rounded-lg overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="bg-muted/50 text-muted-foreground">
-                    <th onClick={() => handleTradeSort('trade_id')} className="text-left px-3 py-2 font-semibold cursor-pointer hover:text-foreground transition-colors">#<TradeSortArrow col="trade_id" /></th>
-                    <th onClick={() => handleTradeSort('pair')} className="text-left px-3 py-2 font-semibold cursor-pointer hover:text-foreground transition-colors">Pair<TradeSortArrow col="pair" /></th>
-                    <th className="text-left px-3 py-2 font-semibold">Side</th>
-                    <th className="text-right px-3 py-2 font-semibold">Stake</th>
-                    <th className="text-right px-3 py-2 font-semibold">Open</th>
-                    <th className="text-right px-3 py-2 font-semibold">Close</th>
-                    <th onClick={() => handleTradeSort('close_profit')} className="text-right px-3 py-2 font-semibold cursor-pointer hover:text-foreground transition-colors">Profit%<TradeSortArrow col="close_profit" /></th>
-                    <th onClick={() => handleTradeSort('close_profit_abs')} className="text-right px-3 py-2 font-semibold cursor-pointer hover:text-foreground transition-colors">Profit$<TradeSortArrow col="close_profit_abs" /></th>
-                    <th onClick={() => handleTradeSort('open_date')} className="text-left px-3 py-2 font-semibold cursor-pointer hover:text-foreground transition-colors">Open Date<TradeSortArrow col="open_date" /></th>
-                    <th onClick={() => handleTradeSort('close_date')} className="text-left px-3 py-2 font-semibold cursor-pointer hover:text-foreground transition-colors">Close Date<TradeSortArrow col="close_date" /></th>
-                    <th onClick={() => handleTradeSort('trade_duration')} className="text-right px-3 py-2 font-semibold cursor-pointer hover:text-foreground transition-colors">Duration<TradeSortArrow col="trade_duration" /></th>
-                    <th className="text-left px-3 py-2 font-semibold">Enter Tag</th>
-                    <th className="text-left px-3 py-2 font-semibold">Exit Reason</th>
+
+          {/* KPI row */}
+          <div className="grid grid-cols-7 gap-2 text-[11px] font-mono relative z-10">
+            <div>
+              <span className="text-muted block text-[9px]">Profit</span>
+              <span className="text-up font-bold">+42.12%</span>
+            </div>
+            <div>
+              <span className="text-muted block text-[9px]">Profit $</span>
+              <span className="text-up font-bold">+$4,212</span>
+            </div>
+            <div>
+              <span className="text-muted block text-[9px]">Trades</span>
+              <span className="text-white">142</span>
+            </div>
+            <div>
+              <span className="text-muted block text-[9px]">Win Rate</span>
+              <span className="text-up">72.4%</span>
+            </div>
+            <div>
+              <span className="text-muted block text-[9px]">Sharpe</span>
+              <span className="text-white">3.92</span>
+            </div>
+            <div>
+              <span className="text-muted block text-[9px]">Max DD</span>
+              <span className="text-down font-bold">-2.1%</span>
+            </div>
+            <div>
+              <span className="text-muted block text-[9px]">Duration</span>
+              <span className="text-muted">365 days</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. KPI Cards */}
+        <div className="grid grid-cols-6 gap-2">
+          <div className="bg-surface p-2.5 l-bd rounded">
+            <div className="kpi-label">Total Profit</div>
+            <div className="kpi-value text-up">+$4,212</div>
+            <div className="text-[9px] font-mono text-up">+42.12%</div>
+          </div>
+          <div className="bg-surface p-2.5 l-bd rounded">
+            <div className="kpi-label">Win Rate</div>
+            <div className="kpi-value text-up">72.4%</div>
+            <div className="text-[9px] font-mono text-muted">102W 40L</div>
+          </div>
+          <div className="bg-surface p-2.5 l-bd rounded">
+            <div className="kpi-label">Trades</div>
+            <div className="kpi-value">142</div>
+            <div className="text-[9px] font-mono text-muted">80L 62S</div>
+          </div>
+          <div className="bg-surface p-2.5 l-bd rounded">
+            <div className="kpi-label">Max Drawdown</div>
+            <div className="kpi-value text-down">-2.11%</div>
+            <div className="text-[9px] font-mono text-down">-$211</div>
+          </div>
+          <div className="bg-surface p-2.5 l-bd rounded">
+            <div className="kpi-label">Sharpe Ratio</div>
+            <div className="kpi-value">3.92</div>
+          </div>
+          <div className="bg-surface p-2.5 l-bd rounded">
+            <div className="kpi-label">Sortino Ratio</div>
+            <div className="kpi-value">4.15</div>
+          </div>
+        </div>
+
+        {/* 3. Advanced Stats */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-surface l-bd rounded p-2.5 space-y-1.5 text-[11px] font-mono">
+            <div className="flex justify-between">
+              <span className="text-muted">Profit Factor</span>
+              <span className="text-up">2.58</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted">Expectancy</span>
+              <span className="text-up">$29.66</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted">SQN</span>
+              <span className="text-white">5.12</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted">Calmar</span>
+              <span className="text-white">19.96</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted">CAGR</span>
+              <span className="text-up">42.12%</span>
+            </div>
+          </div>
+          <div className="bg-surface l-bd rounded p-2.5 space-y-1.5 text-[11px] font-mono">
+            <div className="flex justify-between">
+              <span className="text-muted">Starting Balance</span>
+              <span className="text-white">$10,000</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted">Final Balance</span>
+              <span className="text-up font-bold">$14,212</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted">Best Day</span>
+              <span className="text-up">+$412</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted">Worst Day</span>
+              <span className="text-down">-$156</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted">Avg Duration</span>
+              <span className="text-white">4h 23m</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 4. Profit Over Time Chart */}
+        <div className="h-[200px] bg-surface l-bd rounded-md flex flex-col overflow-hidden relative">
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-2.5 shrink-0 gap-3">
+            <span className="section-title text-white/50 whitespace-nowrap">
+              Profit Over Time
+            </span>
+            <div className="flex gap-0 shrink-0">
+              {/* Period toggles */}
+              <button
+                className={`px-3 py-1 text-[10px] font-bold uppercase ${
+                  chartPeriod === "days"
+                    ? "bg-white/10 text-white rounded-l"
+                    : "text-muted hover:text-white l-bd border-l-0 transition-colors"
+                } ${chartPeriod === "days" ? "" : chartPeriod === "weeks" ? "rounded-l-none" : ""}`}
+                onClick={() => setChartPeriod("days")}
+              >
+                Days
+              </button>
+              <button
+                className={`px-3 py-1 text-[10px] font-bold uppercase ${
+                  chartPeriod === "weeks"
+                    ? "bg-white/10 text-white"
+                    : "text-muted hover:text-white l-bd border-l-0 transition-colors"
+                }`}
+                onClick={() => setChartPeriod("weeks")}
+              >
+                Weeks
+              </button>
+              <button
+                className={`px-3 py-1 text-[10px] font-bold uppercase ${
+                  chartPeriod === "months"
+                    ? "bg-white/10 text-white rounded-r"
+                    : "text-muted hover:text-white l-bd border-l-0 rounded-r transition-colors"
+                }`}
+                onClick={() => setChartPeriod("months")}
+              >
+                Months
+              </button>
+
+              <div className="w-3" />
+
+              {/* Abs / Rel toggles */}
+              <button
+                className={`px-3 py-1 text-[10px] font-bold uppercase rounded-l ${
+                  chartMode === "abs"
+                    ? "bg-up/15 text-up border border-up/25"
+                    : "text-muted l-bd border-l-0 hover:text-white transition-colors"
+                }`}
+                onClick={() => setChartMode("abs")}
+              >
+                Abs $
+              </button>
+              <button
+                className={`px-3 py-1 text-[10px] font-bold uppercase rounded-r ${
+                  chartMode === "rel"
+                    ? "bg-up/15 text-up border border-up/25"
+                    : "text-muted l-bd border-l-0 hover:text-white transition-colors"
+                }`}
+                onClick={() => setChartMode("rel")}
+              >
+                Rel %
+              </button>
+            </div>
+          </div>
+
+          {/* Chart body */}
+          <div className="flex-1 px-5 pb-4 relative">
+            <div className="absolute inset-0 l-grid opacity-20" />
+            {/* Legend */}
+            <div className="absolute top-0 right-2 flex items-center gap-4 text-[9px] font-mono text-white/40 z-10">
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-[2px] bg-[#22c55e] rounded inline-block" />
+                Profit
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-2.5 bg-white/15 rounded-sm inline-block" />
+                Trade Count
+              </span>
+            </div>
+
+            {/* Y-axis labels */}
+            <div className="absolute left-1 top-0 bottom-4 flex flex-col justify-between text-[9px] font-mono text-white/25">
+              <span>14k</span>
+              <span>12k</span>
+              <span>10k</span>
+              <span>8k</span>
+            </div>
+
+            {/* Recharts */}
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart
+                data={chartData}
+                margin={{ top: 12, right: 0, bottom: 0, left: 24 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="rgba(255,255,255,0.04)"
+                  vertical={false}
+                />
+                <XAxis dataKey="month" hide />
+                <YAxis hide />
+                <Tooltip
+                  contentStyle={{
+                    background: "#0C0C0C",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: 6,
+                    fontSize: 11,
+                    fontFamily: "JetBrains Mono, monospace",
+                  }}
+                  labelStyle={{ color: "#9CA3AF" }}
+                  itemStyle={{ color: "#F5F5F5" }}
+                />
+                <Bar
+                  dataKey="trades"
+                  fill="rgba(255,255,255,0.15)"
+                  radius={[2, 2, 0, 0]}
+                  barSize={14}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="profit"
+                  stroke="#22c55e"
+                  strokeWidth={2}
+                  dot={false}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+
+            {/* X-axis labels */}
+            <div className="flex justify-between text-[9px] font-mono text-white/25 mt-1">
+              {chartData.map((d) => (
+                <span key={d.month}>{d.month}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* 5. Master Table */}
+        <div className="flex-1 bg-surface l-bd rounded-md flex flex-col min-h-[250px] overflow-hidden">
+          {/* Tab bar */}
+          <div className="h-10 l-b flex items-center bg-black/40 shrink-0 border-b-2 border-transparent overflow-x-auto whitespace-nowrap">
+            {(
+              [
+                { key: "closed", label: "Closed Trades" },
+                { key: "per-pair", label: "Per-Pair" },
+                { key: "entry-tags", label: "Entry Tags" },
+                { key: "exit-reasons", label: "Exit Reasons" },
+                { key: "history", label: "History" },
+              ] as const
+            ).map((tab) => (
+              <button
+                key={tab.key}
+                className={`h-full px-4 font-bold text-[11px] uppercase tracking-wide bt-tab-btn shrink-0 ${
+                  btSubTab === tab.key
+                    ? "border-b-2 border-up text-white"
+                    : "text-muted hover:text-white transition-colors"
+                }`}
+                onClick={() => setBtSubTab(tab.key)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* ── Closed Trades ── */}
+          {btSubTab === "closed" && (
+            <div className="bt-tab-content flex-1 overflow-auto">
+              <table className="w-full text-[13px] font-mono whitespace-nowrap">
+                <thead className="sticky top-0 bg-surface z-10">
+                  <tr className="text-muted text-[11px] uppercase tracking-widest">
+                    <th className="sortable sort-desc font-semibold px-2 py-1.5 text-left">Date</th>
+                    <th className="sortable filterable font-semibold px-2 py-1.5 text-left">Pair</th>
+                    <th className="sortable filterable font-semibold px-2 py-1.5 text-center">Side</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Entry</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Exit</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Profit%</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Value</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Fee</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-left">Duration</th>
+                    <th className="sortable filterable font-semibold px-2 py-1.5 text-left">Exit Reason</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {pagedTrades.map((t) => (
-                    <tr key={t.trade_id} className="border-t border-border hover:bg-muted/30">
-                      <td className="px-3 py-2 tabular-nums text-muted-foreground">{t.trade_id}</td>
-                      <td className="px-3 py-2 font-mono text-foreground">{t.pair}</td>
-                      <td className="px-3 py-2">
-                        <span className={t.is_short ? "text-rose-400" : "text-emerald-400"}>
-                          {t.is_short ? "Short" : "Long"}
-                        </span>
+                <tbody className="divide-y divide-white/[0.05]">
+                  {mockTrades.map((t, i) => (
+                    <tr
+                      key={i}
+                      className={`hover:bg-white/[0.04] ${t.winner ? "bg-up/[0.02]" : ""}`}
+                    >
+                      <td className="px-2 py-1.5">
+                        {t.winner && "★ "}
+                        {t.date}
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">${t.stake_amount.toFixed(0)}</td>
-                      <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{t.open_rate.toFixed(2)}</td>
-                      <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{t.close_rate.toFixed(2)}</td>
-                      <td className={`px-3 py-2 text-right tabular-nums ${t.close_profit >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                        {fmtPctRatio(t.close_profit)}
+                      <td className="px-2 py-1.5">{t.pair}</td>
+                      <td className="px-2 py-1.5 text-center">
+                        {t.side === "LONG" ? (
+                          <span className="bg-up/12 text-up px-1 py-0.5 rounded text-[9px] font-bold">
+                            LONG
+                          </span>
+                        ) : (
+                          <span className="bg-down/12 text-down px-1 py-0.5 rounded text-[9px] font-bold">
+                            SHORT
+                          </span>
+                        )}
                       </td>
-                      <td className={`px-3 py-2 text-right tabular-nums ${t.close_profit_abs >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                        {fmt$(t.close_profit_abs)}
+                      <td className="px-2 py-1.5 text-right">
+                        {t.entry.toLocaleString(undefined, {
+                          minimumFractionDigits: 1,
+                        })}
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
-                        {t.open_date ? t.open_date.replace("T", " ").substring(0, 16) : "—"}
+                      <td className="px-2 py-1.5 text-right">
+                        {t.exit.toLocaleString(undefined, {
+                          minimumFractionDigits: 1,
+                        })}
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
-                        {t.close_date ? t.close_date.replace("T", " ").substring(0, 16) : "—"}
+                      <td
+                        className={`px-2 py-1.5 text-right ${
+                          t.profitPct >= 0 ? "text-up" : "text-down"
+                        }`}
+                      >
+                        {t.profitPct >= 0 ? "+" : ""}
+                        {t.profitPct.toFixed(2)}%
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{fmtDuration(t.trade_duration)}</td>
-                      <td className="px-3 py-2 text-muted-foreground">{t.enter_tag || "—"}</td>
-                      <td className="px-3 py-2 text-muted-foreground">{t.exit_reason || "—"}</td>
+                      <td
+                        className={`px-2 py-1.5 text-right ${
+                          t.value >= 0 ? "text-up" : "text-down"
+                        }`}
+                      >
+                        {t.value >= 0 ? "+" : ""}${Math.abs(t.value).toFixed(1)}
+                      </td>
+                      <td className="px-2 py-1.5 text-right text-muted">
+                        ${t.fee.toFixed(2)}
+                      </td>
+                      <td className="px-2 py-1.5">{t.duration}</td>
+                      <td className="px-2 py-1.5 text-muted">{t.exitReason}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <button className="w-full py-1.5 text-[10px] text-muted font-mono hover:bg-white/5 transition-colors l-t">
+                Load More (138 remaining)
+              </button>
+            </div>
+          )}
+
+          {/* ── Per-Pair ── */}
+          {btSubTab === "per-pair" && (
+            <div className="bt-tab-content flex-1 overflow-auto">
+              <table className="w-full text-[13px] font-mono whitespace-nowrap">
+                <thead>
+                  <tr className="text-muted text-[11px] uppercase tracking-widest">
+                    <th className="sortable filterable font-semibold px-2 py-1.5 text-left">Pair</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Trades</th>
+                    <th className="sortable sort-desc font-semibold px-2 py-1.5 text-right">profit_abs</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">profit_ratio</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Win Rate</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Avg Profit</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Avg Dur.</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.05]">
+                  {mockPerPair.map((p, i) => (
+                    <tr key={i} className="hover:bg-white/[0.04]">
+                      <td className="px-2 py-1.5">{p.pair}</td>
+                      <td className="px-2 py-1.5 text-right">{p.trades}</td>
+                      <td
+                        className={`px-2 py-1.5 text-right font-bold ${
+                          p.profitAbs >= 0 ? "text-up" : "text-down"
+                        }`}
+                      >
+                        {p.profitAbs >= 0 ? "+" : ""}${p.profitAbs.toFixed(1)}
+                      </td>
+                      <td
+                        className={`px-2 py-1.5 text-right ${
+                          p.profitRatio >= 0 ? "text-up" : "text-down"
+                        }`}
+                      >
+                        {p.profitRatio >= 0 ? "+" : ""}
+                        {p.profitRatio.toFixed(2)}%
+                      </td>
+                      <td className="px-2 py-1.5 text-right text-up">
+                        {p.winRate.toFixed(1)}%
+                      </td>
+                      <td
+                        className={`px-2 py-1.5 text-right ${
+                          p.avgProfit >= 0 ? "text-up" : "text-down"
+                        }`}
+                      >
+                        {p.avgProfit >= 0 ? "+" : ""}
+                        {p.avgProfit.toFixed(2)}%
+                      </td>
+                      <td className="px-2 py-1.5 text-right text-muted">
+                        {p.avgDur}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between px-3 py-2 border-t border-border bg-muted/30">
-                <span className="text-xs text-muted-foreground">
-                  Showing {(tradesPage - 1) * tradesPerPage + 1}-{Math.min(tradesPage * tradesPerPage, trades.length)} of {trades.length}
-                </span>
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => setTradesPage(Math.max(1, tradesPage - 1))}
-                    disabled={tradesPage === 1}
-                    className="px-2 py-1 text-xs border border-border rounded bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all"
-                  >
-                    ← Prev
-                  </button>
-                  <button
-                    onClick={() => setTradesPage(Math.min(totalPages, tradesPage + 1))}
-                    disabled={tradesPage === totalPages}
-                    className="px-2 py-1 text-xs border border-border rounded bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all"
-                  >
-                    Next →
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+          )}
 
-      {/* ── Results per Pair ── */}
-      {data.results_per_pair && data.results_per_pair.length > 0 && (
-        <div>
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Results per Pair</div>
-          <div className="border border-border rounded-lg overflow-hidden">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="bg-muted/50 text-muted-foreground">
-                  <th className="text-left px-3 py-1.5 font-semibold">Pair</th>
-                  <th className="text-right px-3 py-1.5 font-semibold">Trades</th>
-                  <th className="text-right px-3 py-1.5 font-semibold">Avg Profit</th>
-                  <th className="text-right px-3 py-1.5 font-semibold">Total Profit</th>
-                  <th className="text-right px-3 py-1.5 font-semibold">Profit ($)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.results_per_pair.map((pair) => (
-                  <tr key={pair.key} className="border-t border-border hover:bg-muted/30">
-                    <td className="px-3 py-1.5 font-mono text-foreground">{pair.key}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums">{pair.trades}</td>
-                    <td className={`px-3 py-1.5 text-right tabular-nums ${pair.profit_mean >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{fmtPctRatio(pair.profit_mean)}</td>
-                    <td className={`px-3 py-1.5 text-right tabular-nums ${pair.profit_total >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{fmtPctRatio(pair.profit_total)}</td>
-                    <td className={`px-3 py-1.5 text-right tabular-nums font-medium ${pair.profit_total_abs >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{fmt$(pair.profit_total_abs)}</td>
+          {/* ── Entry Tags ── */}
+          {btSubTab === "entry-tags" && (
+            <div className="bt-tab-content flex-1 overflow-auto">
+              <table className="w-full text-[13px] font-mono whitespace-nowrap">
+                <thead>
+                  <tr className="text-muted text-[11px] uppercase tracking-widest">
+                    <th className="sortable filterable font-semibold px-2 py-1.5 text-left">Tag</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Trades</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Wins</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Losses</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Win Rate</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Avg P&L %</th>
+                    <th className="sortable sort-desc font-semibold px-2 py-1.5 text-right">Total P&L</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Avg Dur.</th>
+                    <th className="sortable filterable font-semibold px-2 py-1.5 text-left">Best Pair</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Expectancy</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+                </thead>
+                <tbody className="divide-y divide-white/[0.05]">
+                  {mockEntryTags.map((t, i) => (
+                    <tr key={i} className="hover:bg-white/[0.04]">
+                      <td className="px-2 py-1.5">
+                        <span className="px-1.5 py-0.5 bg-blue-500/12 text-blue-400 rounded text-[9px]">
+                          {t.tag}
+                        </span>
+                      </td>
+                      <td className="px-2 py-1.5 text-right">{t.trades}</td>
+                      <td className="px-2 py-1.5 text-right text-up">{t.wins}</td>
+                      <td
+                        className={`px-2 py-1.5 text-right ${
+                          t.losses > 0 ? "text-down" : "text-muted"
+                        }`}
+                      >
+                        {t.losses}
+                      </td>
+                      <td className="px-2 py-1.5 text-right text-up">
+                        {t.winRate.toFixed(1)}%
+                      </td>
+                      <td
+                        className={`px-2 py-1.5 text-right ${
+                          t.avgPnl >= 0 ? "text-up" : "text-down"
+                        }`}
+                      >
+                        {t.avgPnl >= 0 ? "+" : ""}
+                        {t.avgPnl.toFixed(2)}%
+                      </td>
+                      <td
+                        className={`px-2 py-1.5 text-right font-bold ${
+                          t.totalPnl >= 0 ? "text-up" : "text-down"
+                        }`}
+                      >
+                        {t.totalPnl >= 0 ? "+" : ""}${t.totalPnl.toFixed(1)}
+                      </td>
+                      <td className="px-2 py-1.5 text-right text-muted">
+                        {t.avgDur}
+                      </td>
+                      <td className="px-2 py-1.5">{t.bestPair}</td>
+                      <td
+                        className={`px-2 py-1.5 text-right ${
+                          t.expectancy >= 0 ? "text-up" : "text-down"
+                        }`}
+                      >
+                        ${t.expectancy.toFixed(1)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
-      {/* ── Exit Reason Summary ── */}
-      {data.exit_reason_summary && data.exit_reason_summary.length > 0 && (
-        <div>
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Exit Reasons</div>
-          <div className="border border-border rounded-lg overflow-hidden">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="bg-muted/50 text-muted-foreground">
-                  <th className="text-left px-3 py-1.5 font-semibold">Reason</th>
-                  <th className="text-right px-3 py-1.5 font-semibold">Trades</th>
-                  <th className="text-right px-3 py-1.5 font-semibold">W/L</th>
-                  <th className="text-right px-3 py-1.5 font-semibold">Profit ($)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.exit_reason_summary.map((r) => (
-                  <tr key={r.exit_reason} className="border-t border-border hover:bg-muted/30">
-                    <td className="px-3 py-1.5 font-mono text-foreground">{r.exit_reason}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums">{r.trades}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums">{r.wins}W / {r.losses}L</td>
-                    <td className={`px-3 py-1.5 text-right tabular-nums font-medium ${r.profit_total_abs >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{fmt$(r.profit_total_abs)}</td>
+          {/* ── Exit Reasons ── */}
+          {btSubTab === "exit-reasons" && (
+            <div className="bt-tab-content flex-1 overflow-auto">
+              <table className="w-full text-[13px] font-mono whitespace-nowrap">
+                <thead>
+                  <tr className="text-muted text-[11px] uppercase tracking-widest">
+                    <th className="sortable filterable font-semibold px-2 py-1.5 text-left">Reason</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Trades</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Wins</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Losses</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Win Rate</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Avg P&L %</th>
+                    <th className="sortable sort-desc font-semibold px-2 py-1.5 text-right">Total P&L</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Avg Dur.</th>
+                    <th className="sortable filterable font-semibold px-2 py-1.5 text-left">Best Pair</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Expectancy</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+                </thead>
+                <tbody className="divide-y divide-white/[0.05]">
+                  {mockExitReasons.map((r, i) => (
+                    <tr key={i} className="hover:bg-white/[0.04]">
+                      <td className="px-2 py-1.5 text-white">{r.reason}</td>
+                      <td className="px-2 py-1.5 text-right">{r.trades}</td>
+                      <td className="px-2 py-1.5 text-right text-up">{r.wins}</td>
+                      <td
+                        className={`px-2 py-1.5 text-right ${
+                          r.losses > 0 ? "text-down" : "text-muted"
+                        }`}
+                      >
+                        {r.losses}
+                      </td>
+                      <td className="px-2 py-1.5 text-right text-up">
+                        {r.winRate.toFixed(1)}%
+                      </td>
+                      <td
+                        className={`px-2 py-1.5 text-right ${
+                          r.avgPnl >= 0 ? "text-up" : "text-down"
+                        }`}
+                      >
+                        {r.avgPnl >= 0 ? "+" : ""}
+                        {r.avgPnl.toFixed(2)}%
+                      </td>
+                      <td
+                        className={`px-2 py-1.5 text-right font-bold ${
+                          r.totalPnl >= 0 ? "text-up" : "text-down"
+                        }`}
+                      >
+                        {r.totalPnl >= 0 ? "+" : ""}${Math.abs(r.totalPnl).toFixed(1)}
+                      </td>
+                      <td className="px-2 py-1.5 text-right text-muted">
+                        {r.avgDur}
+                      </td>
+                      <td className="px-2 py-1.5">{r.bestPair}</td>
+                      <td
+                        className={`px-2 py-1.5 text-right ${
+                          r.expectancy >= 0 ? "text-up" : "text-down"
+                        }`}
+                      >
+                        ${r.expectancy.toFixed(1)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
-// ══════════════════════════════════════════════════════════════════════════
-// EQUITY CURVE (SVG)
-// ══════════════════════════════════════════════════════════════════════════
-function EquityCurve({ breakdown, startingBalance }: { breakdown: Record<string, Array<{ date: string; trades: number; profit_abs: number }>>; startingBalance: number }) {
-  // Use the first available breakdown (month, week, or day)
-  const key = Object.keys(breakdown)[0];
-  const data = breakdown[key] || [];
-  if (data.length === 0) return <span className="text-xs text-muted-foreground opacity-50">No breakdown data</span>;
-
-  // Build cumulative equity series
-  let balance = startingBalance;
-  const points = data.map((d) => {
-    balance += d.profit_abs;
-    return { date: d.date, value: balance };
-  });
-
-  const values = points.map((p) => p.value);
-  const minVal = Math.min(...values) * 0.98;
-  const maxVal = Math.max(...values) * 1.02;
-  const range = maxVal - minVal || 1;
-
-  const W = 600;
-  const H = 140;
-  const padX = 0;
-  const padY = 5;
-
-  const linePoints = points.map((p, i) => {
-    const x = padX + (i / Math.max(points.length - 1, 1)) * (W - 2 * padX);
-    const y = padY + (1 - (p.value - minVal) / range) * (H - 2 * padY);
-    return `${x},${y}`;
-  }).join(" ");
-
-  // Gradient fill area
-  const firstX = padX;
-  const lastX = padX + ((points.length - 1) / Math.max(points.length - 1, 1)) * (W - 2 * padX);
-  const areaPoints = `${firstX},${H} ${linePoints} ${lastX},${H}`;
-
-  const isPositive = (points[points.length - 1]?.value ?? startingBalance) >= startingBalance;
-  const strokeColor = isPositive ? "#22c55e" : "#ef4444";
-  const fillId = isPositive ? "eq-grad-green" : "eq-grad-red";
-
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[140px]" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="eq-grad-green" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#22c55e" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#22c55e" stopOpacity="0.02" />
-        </linearGradient>
-        <linearGradient id="eq-grad-red" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ef4444" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#ef4444" stopOpacity="0.02" />
-        </linearGradient>
-      </defs>
-      <polygon points={areaPoints} fill={`url(#${fillId})`} />
-      <polyline points={linePoints} fill="none" stroke={strokeColor} strokeWidth="2" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════════════════
-// HISTORY PANEL
-// ══════════════════════════════════════════════════════════════════════════
-/** Lazy-loaded summary stats for a history entry */
-interface HistoryStats {
-  total_trades: number;
-  profit_total_abs: number;
-  profit_total: number;
-  max_drawdown_account: number;
-  wins: number;
-  losses: number;
-  profit_factor: number;
-  winrate: number;
-}
-
-function HistoryPanel({ entries, currentStrategy, onLoad, onDelete, botId }: {
-  entries: HistoryEntry[];
-  currentStrategy: string;
-  onLoad: (entry: HistoryEntry) => void;
-  onDelete: (entry: HistoryEntry) => void;
-  botId: number;
-}) {
-  const [page, setPage] = useState(1);
-  const [confirmId, setConfirmId] = useState<string | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [statsCache, setStatsCache] = useState<Map<string, HistoryStats | 'loading' | 'error'>>(new Map());
-  const perPage = 10;
-
-  useEffect(() => {
-    if (!confirmId) return;
-    const t = setTimeout(() => setConfirmId(null), 3000);
-    return () => clearTimeout(t);
-  }, [confirmId]);
-
-  const filtered = entries
-    .filter((e) => e.strategy === currentStrategy)
-    .sort((a, b) => b.backtest_start_time - a.backtest_start_time);
-
-  const paged = filtered.slice((page - 1) * perPage, page * perPage);
-
-  useEffect(() => {
-    paged.forEach(async (entry) => {
-      const key = entry.filename;
-      if (statsCache.has(key)) return;
-      setStatsCache(prev => new Map(prev).set(key, 'loading'));
-      try {
-        const data = await botBacktestHistoryResult(botId, entry.filename, entry.strategy);
-        const br = (data as Record<string, unknown>).backtest_result ?? data;
-        const stratMap = (br as Record<string, unknown>).strategy as Record<string, Record<string, unknown>> | undefined;
-        if (stratMap) {
-          const fk = Object.keys(stratMap)[0];
-          if (fk) {
-            const s = stratMap[fk];
-            const tt = Number(s.total_trades ?? 0);
-            const w = Number(s.wins ?? 0);
-            setStatsCache(prev => new Map(prev).set(key, {
-              total_trades: tt,
-              profit_total_abs: Number(s.profit_total_abs ?? 0),
-              profit_total: Number(s.profit_total ?? 0),
-              max_drawdown_account: Number(s.max_drawdown_account ?? 0),
-              wins: w,
-              losses: Number(s.losses ?? 0),
-              profit_factor: Number(s.profit_factor ?? 0),
-              winrate: Number(s.winrate ?? (tt > 0 ? w / tt : 0)),
-            }));
-            return;
-          }
-        }
-        setStatsCache(prev => new Map(prev).set(key, 'error'));
-      } catch {
-        setStatsCache(prev => new Map(prev).set(key, 'error'));
-      }
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, filtered.length, botId]);
-
-  if (filtered.length === 0) return null;
-  const totalPages = Math.ceil(filtered.length / perPage);
-
-  const fmtDate = (ts?: number) => {
-    if (!ts) return "—";
-    const ms = ts > 1e12 ? ts : ts * 1000;
-    return new Date(ms).toISOString().split("T")[0];
-  };
-
-  return (
-    <div>
-      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-        Backtest History ({filtered.length})
-      </div>
-      <div className="border border-border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="bg-muted/50 text-muted-foreground">
-                <th className="text-center px-2 py-2 font-semibold w-[32px]">#</th>
-                <th className="text-left px-3 py-2 font-semibold w-[90px]">ID</th>
-                <th className="text-left px-3 py-2 font-semibold">Run Date</th>
-                <th className="text-left px-3 py-2 font-semibold">Timeframe</th>
-                <th className="text-left px-3 py-2 font-semibold">Range</th>
-                <th className="text-right px-3 py-2 font-semibold">Trades</th>
-                <th className="text-right px-3 py-2 font-semibold">Profit</th>
-                <th className="text-right px-3 py-2 font-semibold">Profit %</th>
-                <th className="text-right px-3 py-2 font-semibold">Win Rate</th>
-                <th className="text-right px-3 py-2 font-semibold">Max DD</th>
-                <th className="text-right px-3 py-2 font-semibold">PF</th>
-                <th className="text-center px-3 py-2 font-semibold w-[120px]">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paged.map((entry, idx) => {
-                const runDate = new Date(entry.backtest_start_time * 1000);
-                const runStr = `${runDate.getFullYear()}-${String(runDate.getMonth()+1).padStart(2,'0')}-${String(runDate.getDate()).padStart(2,'0')} ${String(runDate.getHours()).padStart(2,'0')}:${String(runDate.getMinutes()).padStart(2,'0')}`;
-                const entryKey = `${entry.filename}-${entry.run_id}`;
-                const isConfirming = confirmId === entryKey;
-                const isExpanded = expandedId === entryKey;
-                const stats = statsCache.get(entry.filename);
-                const s = (stats && stats !== 'loading' && stats !== 'error') ? stats as HistoryStats : null;
-                const btId = `BT-${runDate.getFullYear()}${String(runDate.getMonth()+1).padStart(2,'0')}${String(runDate.getDate()).padStart(2,'0')}-${String(runDate.getHours()).padStart(2,'0')}${String(runDate.getMinutes()).padStart(2,'0')}`;
-
-                return (
-                  <Fragment key={entryKey}>
-                  <tr className={`border-t border-border hover:bg-muted/30 transition-colors cursor-pointer ${isExpanded ? 'bg-muted/20' : ''}`} onClick={() => setExpandedId(isExpanded ? null : entryKey)}>
-                    <td className="px-2 py-2 text-center text-[10px] text-muted-foreground tabular-nums">{(page - 1) * perPage + idx + 1}</td>
-                    <td className="px-3 py-2">
-                      <span className="text-[9px] font-mono px-1 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded whitespace-nowrap">{btId}</span>
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{runStr}</td>
-                    <td className="px-3 py-2 font-mono text-muted-foreground">{entry.timeframe || "—"}</td>
-                    <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{fmtDate(entry.backtest_start_ts)} → {fmtDate(entry.backtest_end_ts)}</td>
-                    {stats === 'loading' ? (
-                      <td colSpan={6} className="px-3 py-2 text-center text-muted-foreground/50 animate-pulse">Loading...</td>
-                    ) : s ? (
-                      <>
-                        <td className="px-3 py-2 text-right tabular-nums text-foreground">{s.total_trades}</td>
-                        <td className={`px-3 py-2 text-right tabular-nums font-medium ${s.profit_total_abs >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {fmt$(s.profit_total_abs)}
-                        </td>
-                        <td className={`px-3 py-2 text-right tabular-nums ${s.profit_total >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {fmtPctRatio(s.profit_total)}
-                        </td>
-                        <td className="px-3 py-2 text-right tabular-nums text-foreground">
-                          {(s.winrate * 100).toFixed(1)}%
-                        </td>
-                        <td className="px-3 py-2 text-right tabular-nums text-rose-400">
-                          -{(s.max_drawdown_account * 100).toFixed(1)}%
-                        </td>
-                        <td className={`px-3 py-2 text-right tabular-nums ${s.profit_factor > 1 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {s.profit_factor.toFixed(2)}
-                        </td>
-                      </>
-                    ) : (
-                      <td colSpan={6} className="px-3 py-2 text-center text-muted-foreground/30">—</td>
-                    )}
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onLoad(entry); }}
-                          className="text-[10px] px-2 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded hover:bg-primary/20 transition-all"
-                        >Load</button>
-                        {isConfirming ? (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setConfirmId(null); onDelete(entry); }}
-                            className="text-[10px] px-1.5 py-0.5 bg-rose-500/20 border border-rose-500/50 text-rose-400 rounded hover:bg-rose-500/30 transition-all animate-pulse"
-                          >Confirm?</button>
-                        ) : (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setConfirmId(entryKey); }}
-                            className="text-[10px] px-1.5 py-0.5 bg-rose-500/10 border border-rose-500/20 text-rose-400/70 rounded hover:bg-rose-500/20 hover:text-rose-400 transition-all"
-                          >Delete</button>
-                        )}
-                      </div>
-                    </td>
+          {/* ── History ── */}
+          {btSubTab === "history" && (
+            <div className="bt-tab-content flex-1 overflow-auto">
+              <table className="w-full text-[13px] font-mono whitespace-nowrap">
+                <thead>
+                  <tr className="text-muted text-[11px] uppercase tracking-widest">
+                    <th className="sortable font-semibold px-2 py-1.5 text-left">#</th>
+                    <th className="sortable sort-desc font-semibold px-2 py-1.5 text-left">Run Date</th>
+                    <th className="sortable filterable font-semibold px-2 py-1.5 text-left">TF</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-left">Timerange</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Trades</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Profit</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Win%</th>
+                    <th className="sortable font-semibold px-2 py-1.5 text-right">Sharpe</th>
+                    <th className="font-semibold px-2 py-1.5 text-center">Actions</th>
                   </tr>
-                  {isExpanded && (
-                    <tr key={`${entryKey}-expand`} className="bg-muted/10">
-                      <td colSpan={12} className="px-4 py-2">
-                        <div className="flex flex-wrap gap-x-6 gap-y-1 text-[10px]">
-                          <span className="text-muted-foreground">Strategy: <span className="text-foreground font-mono">{entry.strategy}</span></span>
-                          <span className="text-muted-foreground">Timeframe: <span className="text-foreground font-mono">{entry.timeframe || '—'}</span></span>
-                          {entry.timeframe_detail && <span className="text-muted-foreground">TF Detail: <span className="text-foreground font-mono">{entry.timeframe_detail}</span></span>}
-                          <span className="text-muted-foreground">Range: <span className="text-foreground font-mono">{fmtDate(entry.backtest_start_ts)} → {fmtDate(entry.backtest_end_ts)}</span></span>
-                          <span className="text-muted-foreground">File: <span className="text-foreground font-mono text-[9px]">{entry.filename}</span></span>
+                </thead>
+                <tbody className="divide-y divide-white/[0.05]">
+                  {mockHistory.map((h) => (
+                    <tr
+                      key={h.id}
+                      className={`hover:bg-white/[0.04] ${h.best ? "bg-up/[0.02]" : ""}`}
+                    >
+                      <td className={`px-2 py-1.5 ${h.best ? "text-up font-bold" : "text-muted"}`}>
+                        {h.best && "★ "}{h.id}
+                      </td>
+                      <td className="px-2 py-1.5 text-muted">{h.runDate}</td>
+                      <td className="px-2 py-1.5">{h.tf}</td>
+                      <td className="px-2 py-1.5 text-muted">{h.timerange}</td>
+                      <td className="px-2 py-1.5 text-right">{h.trades}</td>
+                      <td
+                        className={`px-2 py-1.5 text-right font-bold ${
+                          h.profit >= 0 ? "text-up" : "text-down"
+                        }`}
+                      >
+                        {h.profit >= 0 ? "+" : ""}
+                        {h.profit.toFixed(2)}%
+                      </td>
+                      <td className="px-2 py-1.5 text-right">
+                        {h.winPct.toFixed(1)}%
+                      </td>
+                      <td
+                        className={`px-2 py-1.5 text-right ${
+                          h.sharpe < 0 ? "text-down" : ""
+                        }`}
+                      >
+                        {h.sharpe.toFixed(2)}
+                      </td>
+                      <td className="px-2 py-1.5 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button className="px-2 py-0.5 l-bd rounded text-[9px] text-muted hover:text-white hover:bg-white/5 transition-colors">
+                            Load
+                          </button>
+                          <button className="px-2 py-0.5 l-bd rounded text-[9px] text-down/60 hover:text-down hover:bg-down/10 transition-colors">
+                            Del
+                          </button>
                         </div>
                       </td>
                     </tr>
-                  )}
-                  </Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-3 py-2 border-t border-border bg-muted/30">
-            <span className="text-xs text-muted-foreground">
-              Showing {(page - 1) * perPage + 1}-{Math.min(page * perPage, filtered.length)} of {filtered.length}
-            </span>
-            <div className="flex gap-1">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                className="px-2 py-1 text-xs border border-border rounded bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all">← Prev</button>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                className="px-2 py-1 text-xs border border-border rounded bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all">Next →</button>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════════════════
-// MAIN COMPONENT
-// ══════════════════════════════════════════════════════════════════════════
-export default function BacktestTab({ strategy, backtestBotId = 2, experimentId }: BacktestTabProps) {
-  const toast = useToast();
-  const [testName, setTestName] = useState(`${strategy} baseline ${new Date().toISOString().split("T")[0]}`);
-  const [description, setDescription] = useState("");
-  const [startDate, setStartDate] = useState("2024-01-01");
-  const [endDate, setEndDate] = useState("2025-01-01");
-  const [timeframeOverride, setTimeframeOverride] = useState("Use strategy default");
-  const [timeframeDetail, setTimeframeDetail] = useState("None");
-  const [maxOpenTrades, setMaxOpenTrades] = useState("");
-  const [startingCapital, setStartingCapital] = useState("10000");
-  const [stakeAmount, setStakeAmount] = useState("unlimited");
-  const [feeOverride, setFeeOverride] = useState("");
-  const [enableProtections, setEnableProtections] = useState(false);
-  const [cacheResults, setCacheResults] = useState(true);
-  const [enableFreqAI, setEnableFreqAI] = useState(false);
-  const [exportType, setExportType] = useState("none");
-  const [breakdownDay, setBreakdownDay] = useState(false);
-  const [breakdownWeek, setBreakdownWeek] = useState(false);
-  const [breakdownMonth, setBreakdownMonth] = useState(true);
-  const [isRunning, setIsRunning] = useState(false);
-
-  // ── Log window state ──────────────────────────────────────────────
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [btProgress, setBtProgress] = useState("");
-  const logEndRef = useRef<HTMLDivElement>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // ── Results + History state ────────────────────────────────────────
-  const [btResult, setBtResult] = useState<FTStrategyResult | null>(null);
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const BT_CACHE_KEY = `bt-result-${strategy}`;
-
-  const addLog = useCallback((level: string, msg: string) => {
-    setLogs((prev) => {
-      const next = [...prev, { ts: new Date().toLocaleTimeString(), level, msg }];
-      return next.length > 200 ? next.slice(-200) : next;
-    });
-  }, []);
-
-  // Auto-scroll log window
-  useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [logs]);
-
-  // Fetch history on mount and after backtest completes
-  const fetchHistory = useCallback(async () => {
-    try {
-      const res = await botBacktestHistory(backtestBotId);
-      setHistory(res.results || []);
-    } catch {
-      // History fetch failed — not critical
-    }
-  }, [backtestBotId]);
-
-  // Delete a backtest history entry
-  const handleDeleteHistory = useCallback(async (entry: HistoryEntry) => {
-    try {
-      await botBacktestHistoryDelete(backtestBotId, entry.filename, entry.strategy);
-      toast.success('Backtest deleted');
-      // Clear displayed result if it came from the deleted file
-      if (btResult) {
-        setBtResult(null);
-        try { sessionStorage.removeItem(BT_CACHE_KEY); } catch { /* */ }
-      }
-      fetchHistory();
-    } catch (err) {
-      toast.error(`Delete failed: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  }, [backtestBotId, toast, fetchHistory, btResult, BT_CACHE_KEY]);
-
-  // Auto-load: cache first, then fetch history and auto-load latest
-  useEffect(() => {
-    // 1. Instant load from cache (with validation)
-    let loadedFromCache = false;
-    try {
-      const cached = sessionStorage.getItem(BT_CACHE_KEY);
-      if (cached) {
-        const parsed = JSON.parse(cached) as FTStrategyResult;
-        // Validate cache: must have trades with close_profit (not NaN from old extraction)
-        const firstTrade = parsed?.trades?.[0];
-        const cacheValid = parsed?.total_trades && (!firstTrade || (firstTrade.close_profit !== undefined && !isNaN(firstTrade.close_profit)));
-        if (cacheValid) {
-          setBtResult(parsed);
-          addLog('INFO', `Loaded cached result: ${parsed.strategy_name} — ${parsed.total_trades} trades`);
-          loadedFromCache = true;
-        } else {
-          // Stale cache — clear it
-          sessionStorage.removeItem(BT_CACHE_KEY);
-        }
-      }
-    } catch { /* no cache */ }
-    // 2. Fetch history list, then auto-load latest if we don't have a result
-    (async () => {
-      try {
-        const res = await botBacktestHistory(backtestBotId);
-        const entries = res.results || [];
-        setHistory(entries);
-        // If no cache and we have history, auto-load the most recent entry for this strategy
-        if (!loadedFromCache && entries.length > 0) {
-          const latest = entries
-            .filter((e: HistoryEntry) => e.strategy === strategy)
-            .sort((a: HistoryEntry, b: HistoryEntry) => b.backtest_start_time - a.backtest_start_time)[0];
-          if (latest) {
-            addLog('INFO', `Auto-loading latest: ${latest.filename}...`);
-            try {
-              const data = await botBacktestHistoryResult(backtestBotId, latest.filename, latest.strategy);
-              if (data) {
-                const raw = (data as Record<string, unknown>).backtest_result ?? data;
-                const result = extractResult(raw as Record<string, unknown>);
-                if (result) {
-                  setBtResult(result);
-                  try { sessionStorage.setItem(BT_CACHE_KEY, JSON.stringify(result)); } catch { /* */ }
-                  addLog('INFO', `Loaded: ${result.strategy_name} — ${result.total_trades} trades`);
-                }
-              }
-            } catch (err) {
-              addLog('WARNING', `Auto-load failed: ${err instanceof Error ? err.message : String(err)}`);
-            }
-          }
-        }
-      } catch { /* history fetch failed */ }
-
-      // 3. Check if FT has a backtest currently running (page was closed mid-run)
-      try {
-        const btStatus = await botBacktestResults(backtestBotId);
-        const r = btStatus as unknown as Record<string, unknown>;
-        if (r.running === true) {
-          addLog('INFO', '🔄 Detected active backtest from previous session — resuming polling...');
-          setIsRunning(true);
-          setBtProgress('Resuming...');
-        }
-      } catch { /* no active backtest — normal */ }
-    })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Extract strategy result from FT's nested response
-  const extractResult = useCallback((backtestResult: Record<string, unknown>): FTStrategyResult | null => {
-    const strategyMap = backtestResult.strategy as Record<string, Record<string, unknown>> | undefined;
-    if (!strategyMap) return null;
-    const firstKey = Object.keys(strategyMap)[0];
-    if (!firstKey) return null;
-    const raw = strategyMap[firstKey];
-
-    // Normalize trades: FT uses profit_ratio/profit_abs, we use close_profit/close_profit_abs
-    const rawTrades = (raw.trades as Array<Record<string, unknown>>) || [];
-    const trades: FTTradeEntry[] = rawTrades.map((t, i) => ({
-      trade_id: Number(t.trade_id ?? i + 1),
-      pair: String(t.pair ?? ''),
-      is_short: Boolean(t.is_short),
-      stake_amount: Number(t.stake_amount ?? 0),
-      open_rate: Number(t.open_rate ?? 0),
-      close_rate: Number(t.close_rate ?? 0),
-      fee_open: Number(t.fee_open ?? 0),
-      fee_close: Number(t.fee_close ?? 0),
-      close_profit: Number(t.profit_ratio ?? t.close_profit ?? 0),
-      close_profit_abs: Number(t.profit_abs ?? t.close_profit_abs ?? 0),
-      open_date: String(t.open_date ?? ''),
-      close_date: String(t.close_date ?? ''),
-      trade_duration: Number(t.trade_duration ?? 0),
-      enter_tag: String(t.enter_tag ?? ''),
-      exit_reason: String(t.exit_reason ?? ''),
-    }));
-
-    const wins = Number(raw.wins ?? 0);
-    const losses = Number(raw.losses ?? 0);
-    const totalTrades = Number(raw.total_trades ?? 0);
-    // FT provides winrate directly; fallback to calculation
-    const winrate = Number(raw.winrate ?? (totalTrades > 0 ? wins / totalTrades : 0));
-
-    return {
-      strategy_name: String(raw.strategy_name ?? firstKey),
-      total_trades: totalTrades,
-      trade_count_long: Number(raw.trade_count_long ?? 0),
-      trade_count_short: Number(raw.trade_count_short ?? 0),
-      profit_total: Number(raw.profit_total ?? 0),
-      profit_total_abs: Number(raw.profit_total_abs ?? 0),
-      profit_mean: Number(raw.profit_mean ?? 0),
-      profit_median: Number(raw.profit_median ?? 0),
-      profit_factor: Number(raw.profit_factor ?? 0),
-      wins,
-      losses,
-      draws: Number(raw.draws ?? 0),
-      winrate,
-      sharpe: Number(raw.sharpe ?? raw.sharpe_ratio ?? 0),
-      sortino: Number(raw.sortino ?? raw.sortino_ratio ?? 0),
-      calmar: Number(raw.calmar ?? raw.calmar_ratio ?? 0),
-      expectancy: Number(raw.expectancy ?? 0),
-      expectancy_ratio: Number(raw.expectancy_ratio ?? 0),
-      max_drawdown_account: Number(raw.max_drawdown_account ?? 0),
-      max_drawdown_abs: Number(raw.max_drawdown_abs ?? 0),
-      starting_balance: Number(raw.starting_balance ?? 0),
-      final_balance: Number(raw.final_balance ?? 0),
-      stake_currency: String(raw.stake_currency ?? 'USDT'),
-      backtest_start: String(raw.backtest_start ?? ''),
-      backtest_end: String(raw.backtest_end ?? ''),
-      backtest_days: Number(raw.backtest_days ?? 0),
-      timeframe: String(raw.timeframe ?? ''),
-      timeframe_detail: raw.timeframe_detail as string | null ?? null,
-      stoploss: Number(raw.stoploss ?? 0),
-      max_open_trades_setting: Number(raw.max_open_trades_setting ?? raw.max_open_trades ?? 0),
-      trading_mode: String(raw.trading_mode ?? ''),
-      holding_avg: String(raw.holding_avg ?? raw.holding_avg_s ?? ''),
-      backtest_best_day: Number(raw.backtest_best_day ?? 0),
-      backtest_worst_day: Number(raw.backtest_worst_day ?? 0),
-      backtest_best_day_abs: Number(raw.backtest_best_day_abs ?? 0),
-      backtest_worst_day_abs: Number(raw.backtest_worst_day_abs ?? 0),
-      winning_days: Number(raw.winning_days ?? 0),
-      losing_days: Number(raw.losing_days ?? 0),
-      draw_days: Number(raw.draw_days ?? 0),
-      max_consecutive_wins: Number(raw.max_consecutive_wins ?? 0),
-      max_consecutive_losses: Number(raw.max_consecutive_losses ?? 0),
-      cagr: Number(raw.cagr ?? 0),
-      sqn: Number(raw.sqn ?? 0),
-      results_per_pair: (raw.results_per_pair as FTStrategyResult['results_per_pair']) ?? [],
-      exit_reason_summary: (raw.exit_reason_summary as FTStrategyResult['exit_reason_summary']) ?? [],
-      periodic_breakdown: (raw.periodic_breakdown as FTStrategyResult['periodic_breakdown']) ?? undefined,
-      trades,
-    };
-  }, []);
-
-  // Poll FT logs + backtest status while running
-  useEffect(() => {
-    if (!isRunning) {
-      if (pollRef.current) clearInterval(pollRef.current);
-      return;
-    }
-    let lastLogCount = -1; // -1 = skip initial batch (startup logs)
-    let notStartedCount = 0; // Track consecutive not_started polls
-    const poll = async () => {
-      try {
-        const logRes = await botLogs(backtestBotId, 50);
-        if (logRes && logRes.logs) {
-          if (lastLogCount === -1) {
-            lastLogCount = logRes.logs.length;
-          } else {
-            const newLogs = logRes.logs.slice(lastLogCount);
-            lastLogCount = logRes.logs.length;
-            for (const entry of newLogs) {
-              const level = entry[3] || "INFO";
-              const msg = entry[4] || entry.join(" ");
-              addLog(level, msg);
-            }
-          }
-        }
-      } catch {
-        // Log fetch failed
-      }
-      try {
-        const btRes = await botBacktestResults(backtestBotId);
-        if (btRes) {
-          const raw = btRes as unknown as Record<string, unknown>;
-          const step = (raw.step as string) || "";
-          const progress = raw.progress as number | undefined;
-          const ftRunning = raw.running as boolean | undefined;
-          const ftStatus = (raw.status_msg as string) || "";
-
-          addLog("INFO", `[poll] status=${raw.status} running=${ftRunning} step="${step}" hasResult=${!!raw.backtest_result}`);
-
-          if (ftRunning === false && raw.backtest_result) {
-            setBtProgress("\u2713 Backtest complete");
-            addLog("INFO", "Extracting results...");
-            const result = extractResult(raw.backtest_result as Record<string, unknown>);
-            if (result) {
-              addLog("INFO", `Result: ${result.strategy_name || "?"} \u2014 ${result.total_trades} trades`);
-              setBtResult(result);
-              try { sessionStorage.setItem(BT_CACHE_KEY, JSON.stringify(result)); } catch { /* quota */ }
-              // Record as experiment run for metrics tracking
-              if (experimentId) {
-                createExperimentRun(experimentId, {
-                  run_type: "backtest",
-                  total_trades: result.total_trades,
-                  win_rate: result.winrate != null ? result.winrate * 100 : undefined,
-                  profit_pct: result.profit_total != null ? result.profit_total * 100 : undefined,
-                  profit_abs: result.profit_total_abs,
-                  max_drawdown: result.max_drawdown_account != null ? result.max_drawdown_account * 100 : undefined,
-                  sharpe_ratio: result.sharpe,
-                  sortino_ratio: result.sortino,
-                  calmar_ratio: result.calmar,
-                }).catch(err => console.warn("Failed to record experiment run:", err));
-              }
-            } else {
-              addLog("WARNING", `extractResult null. backtest_result keys: ${JSON.stringify(Object.keys(raw.backtest_result as object))}`);
-            }
-            setIsRunning(false);
-            fetchHistory();
-          } else if (step === "error" || ftStatus.toLowerCase().includes("error")) {
-            setBtProgress("\u2717 Error");
-            addLog("ERROR", ftStatus || "Backtest failed");
-            setIsRunning(false);
-          } else if (raw.status === "not_started" && ftRunning === false) {
-            notStartedCount++;
-            if (notStartedCount >= 5) {
-              addLog("ERROR", `Backtest stuck at 'not_started' for ${notStartedCount * 3}s. The FT bot may not have the strategy "${strategy}" loaded, or the backtest config is invalid. Check: (1) strategy file exists in the bot's container, (2) data is downloaded for the requested timerange.`);
-              setBtProgress("\u2717 Failed to start");
-              setIsRunning(false);
-            }
-          } else if (step) {
-            notStartedCount = 0; // Reset — backtest is making progress
-            const pct = progress != null ? ` (${(progress * 100).toFixed(0)}%)` : "";
-            setBtProgress(`${step}${pct}`);
-          }
-        } else {
-          addLog("WARNING", "[poll] botBacktestResults returned falsy");
-        }
-      } catch (pollErr) {
-        addLog("ERROR", `[poll] status error: ${pollErr instanceof Error ? pollErr.message : String(pollErr)}`);
-      }
-    };
-    poll();
-    pollRef.current = setInterval(poll, 3000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [isRunning, backtestBotId, strategy, experimentId, addLog, extractResult, fetchHistory, BT_CACHE_KEY]);
-
-  // Timerange display (auto-generated from dates)
-  const timerangeDisplay = useMemo(() => {
-    return `${startDate.replace(/-/g, "")}-${endDate.replace(/-/g, "")}`;
-  }, [startDate, endDate]);
-
-  // Auto-generate description from current settings
-  const autoDescription = useMemo(() => {
-    const tf = timeframeOverride === "Use strategy default" ? "default TF" : timeframeOverride;
-    const tfDetail = timeframeDetail !== "None" ? `detail: ${timeframeDetail}` : null;
-    const parts = [
-      `${strategy} backtest`,
-      `${startDate} → ${endDate}`,
-      tf,
-      tfDetail,
-      maxOpenTrades ? `${maxOpenTrades} max trades` : null,
-      `$${startingCapital} capital`,
-      stakeAmount && stakeAmount !== 'unlimited' ? `stake: $${stakeAmount}` : 'stake: unlimited',
-      feeOverride ? `fee: ${feeOverride}%` : null,
-      enableFreqAI ? "FreqAI ON" : null,
-      enableProtections ? "Protections ON" : "Protections OFF",
-    ].filter(Boolean);
-    return parts.join(" · ");
-  }, [strategy, startDate, endDate, timeframeOverride, timeframeDetail, maxOpenTrades, startingCapital, stakeAmount, feeOverride, enableFreqAI, enableProtections]);
-
-  const handleStart = async () => {
-    setLogs([]);
-    setBtProgress("");
-    setBtResult(null);
-    addLog("INFO", `Starting backtest: ${strategy} — ${startDate} → ${endDate}`);
-    toast.info("Starting backtest...");
-
-    const timerange = `${startDate.replace(/-/g, "")}-${endDate.replace(/-/g, "")}`;
-    const params: Record<string, unknown> = {
-      strategy,
-      timerange,
-      max_open_trades: parseInt(maxOpenTrades, 10) || 3,
-      stake_amount: stakeAmount ? (stakeAmount === "unlimited" ? "unlimited" : parseFloat(stakeAmount) || "unlimited") : "unlimited",
-      dry_run_wallet: parseFloat(startingCapital) || 10000,
-      enable_protections: enableProtections,
-      cache: cacheResults ? "day" : "none",
-      export: exportType,
-    };
-
-    if (timeframeOverride !== "Use strategy default") params.timeframe = timeframeOverride;
-    if (timeframeDetail !== "Same as timeframe") params.timeframe_detail = timeframeDetail;
-    if (feeOverride) params.fee = parseFloat(feeOverride) / 100;
-    if (enableFreqAI) params.freqaimodel = "LightGBMRegressor";
-
-    const breakdowns: string[] = [];
-    if (breakdownDay) breakdowns.push("day");
-    if (breakdownWeek) breakdowns.push("week");
-    if (breakdownMonth) breakdowns.push("month");
-    if (breakdowns.length > 0) params.breakdown = breakdowns.join(" ");
-
-    try {
-      addLog("INFO", `POST /api/bots/${backtestBotId}/backtest — timerange=${timerange}`);
-      await botBacktestStart(backtestBotId, params);
-      addLog("INFO", "Backtest job submitted — polling for results...");
-      toast.success("Backtest submitted — polling for results");
-      setIsRunning(true);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      addLog("ERROR", `Failed to start backtest: ${msg}`);
-      toast.error(`Backtest failed: ${msg}`);
-    }
-  };
-
-  const handleStop = async () => {
-    try {
-      addLog("WARNING", "Aborting backtest...");
-      await botBacktestDelete(backtestBotId);
-      addLog("WARNING", "Backtest aborted by user");
-    } catch {
-      addLog("WARNING", "Backtest stop requested (may have already finished)");
-    }
-    setIsRunning(false);
-    setBtProgress("");
-  };
-
-  const handleReset = () => {
-    setTestName(`${strategy} baseline ${new Date().toISOString().split("T")[0]}`);
-    setDescription("");
-    setStartDate("2024-01-01");
-    setEndDate("2025-01-01");
-    setTimeframeOverride("Use strategy default");
-    setTimeframeDetail("None");
-    setMaxOpenTrades("");
-    setStartingCapital("10000");
-    setStakeAmount("");
-    setFeeOverride("");
-    setEnableProtections(false);
-    setCacheResults(true);
-    setEnableFreqAI(false);
-    setExportType("none");
-    setBreakdownDay(false);
-    setBreakdownWeek(false);
-    setBreakdownMonth(true);
-  };
-
-  // Load a past result from history
-  const handleLoadHistory = async (entry: HistoryEntry) => {
-    addLog("INFO", `Loading result: ${entry.filename}...`);
-    try {
-      // Use the specific history result endpoint with the filename
-      const res = await botBacktestHistoryResult(backtestBotId, entry.filename, entry.strategy);
-      if (res) {
-        const raw = res as Record<string, unknown>;
-        // FT returns the result wrapped in backtest_result or directly
-        const backtestData = (raw.backtest_result ?? raw) as Record<string, unknown>;
-        // If the response has a 'strategy' key, it's the standard FT format
-        if (backtestData.strategy) {
-          const result = extractResult(backtestData);
-          if (result) {
-            setBtResult(result);
-            try { sessionStorage.setItem(BT_CACHE_KEY, JSON.stringify(result)); } catch { /* quota */ }
-            addLog("INFO", `Loaded: ${result.strategy_name} — ${result.total_trades} trades`);
-            return;
-          }
-        }
-        // Try treating the whole response as the strategy result directly
-        const stratKeys = Object.keys(backtestData);
-        if (stratKeys.length > 0) {
-          const firstVal = backtestData[stratKeys[0]];
-          if (firstVal && typeof firstVal === 'object' && 'total_trades' in (firstVal as object)) {
-            setBtResult(firstVal as unknown as FTStrategyResult);
-            addLog("INFO", `Loaded: ${stratKeys[0]} — ${(firstVal as { total_trades: number }).total_trades} trades`);
-            return;
-          }
-        }
-      }
-      addLog("WARNING", "Could not parse result — the backtest data format was unexpected");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      addLog("ERROR", `Failed to load history result: ${msg}`);
-    }
-  };
-
-  return (
-    <div className="grid grid-cols-[360px_minmax(0,1fr)] gap-4 min-h-0 max-w-full">
-
-      {/* ═══════════ LEFT PANEL: FORM ═══════════ */}
-      <div className={`${SECTION_CARD} overflow-y-auto flex flex-col gap-[10px]`}>
-        <div className={SECTION_TITLE}>⚙️ Test Configuration</div>
-
-        <div>
-          <label className={LABEL}>Test Name</label>
-          <input type="text" value={testName} onChange={(e) => setTestName(e.target.value)} className={INPUT} />
+          )}
         </div>
-
-        <div>
-          <label className={LABEL}>Description (optional)</label>
-          <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={autoDescription} className={INPUT} />
-        </div>
-
-        <div>
-          <label className={LABEL}>Strategy</label>
-          <input type="text" value={strategy} readOnly className={`${INPUT} bg-muted/50 opacity-70 cursor-default`} />
-        </div>
-
-        <div className="grid grid-cols-2 gap-[8px]">
-          <div>
-            <label className={LABEL}>Start Date</label>
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={INPUT} />
-          </div>
-          <div>
-            <label className={LABEL}>End Date</label>
-            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={INPUT} />
-          </div>
-        </div>
-
-        <div>
-          <label className={LABEL}>Timerange</label>
-          <input type="text" value={timerangeDisplay} readOnly className={`${INPUT} bg-muted/50 opacity-70 cursor-default font-mono`} />
-        </div>
-
-        <div className="grid grid-cols-2 gap-[8px]">
-          <div>
-            <label className={LABEL}>Timeframe Override</label>
-            <select value={timeframeOverride} onChange={(e) => setTimeframeOverride(e.target.value)} className={SELECT}>
-              <option>Use strategy default</option>
-              <option>1m</option><option>5m</option><option>15m</option><option>30m</option>
-              <option>1h</option><option>4h</option><option>1d</option>
-            </select>
-          </div>
-          <div>
-            <label className={LABEL}>Timeframe Detail</label>
-            <select value={timeframeDetail} onChange={(e) => setTimeframeDetail(e.target.value)} className={SELECT}>
-              <option>None</option>
-              <option>1m</option><option>5m</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-[8px]">
-          <div>
-            <label className={LABEL}>Max Open Trades</label>
-            <input type="number" value={maxOpenTrades} onChange={(e) => setMaxOpenTrades(e.target.value)} className={INPUT} />
-          </div>
-          <div>
-            <label className={LABEL}>Starting Capital ($)</label>
-            <input type="number" value={startingCapital} onChange={(e) => setStartingCapital(e.target.value)} className={INPUT} />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-[8px]">
-          <div>
-            <label className={LABEL}>Stake Amount ($)</label>
-            <input type="text" value={stakeAmount} onChange={(e) => setStakeAmount(e.target.value)} placeholder="unlimited" className={INPUT} />
-          </div>
-          <div>
-            <label className={LABEL}>Fee Override (%)</label>
-            <input type="number" step="0.01" value={feeOverride} onChange={(e) => setFeeOverride(e.target.value)} placeholder="Exchange default" className={INPUT} />
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-[8px] mt-1">
-          <Tooltip content="Enable FT Protections — FT: --enable-protections">
-            <div><Toggle checked={enableProtections} onChange={setEnableProtections} label="Enable Protections" /></div>
-          </Tooltip>
-          <Tooltip content="Cache results to avoid re-computing — FT: --cache">
-            <div><Toggle checked={cacheResults} onChange={setCacheResults} label="Cache Results" /></div>
-          </Tooltip>
-          <Tooltip content="Use FreqAI model predictions in backtest — FT: --freqaimodel">
-            <div><Toggle checked={enableFreqAI} onChange={setEnableFreqAI} label="Enable FreqAI" /></div>
-          </Tooltip>
-        </div>
-
-        <div>
-          <label className={LABEL}>Export</label>
-          <div className="flex gap-[6px]">
-            {["none", "trades", "signals"].map((val) => (
-              <label key={val} className={CHIP(exportType === val)}>
-                <input type="radio" name="export" value={val} checked={exportType === val} onChange={(e) => setExportType(e.target.value)} className="hidden" />
-                {val.charAt(0).toUpperCase() + val.slice(1)}
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <label className={LABEL}>Breakdown</label>
-          <div className="flex gap-[6px]">
-            {([
-              { label: "Day", checked: breakdownDay, set: setBreakdownDay },
-              { label: "Week", checked: breakdownWeek, set: setBreakdownWeek },
-              { label: "Month", checked: breakdownMonth, set: setBreakdownMonth },
-            ] as const).map((item) => (
-              <span key={item.label} onClick={() => item.set(!item.checked)} className={CHIP(item.checked)}>
-                {item.label}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-[6px] mt-1">
-          <button onClick={handleStart} disabled={isRunning} className={`flex-1 ${BTN_PRIMARY}`}>
-            {isRunning ? "⏳ Running..." : "▶ Start Backtest"}
-          </button>
-          <button onClick={handleStop} disabled={!isRunning} className="h-[32px] px-3 rounded-btn text-xs font-semibold border bg-[rgba(239,68,68,0.08)] border-[rgba(239,68,68,0.25)] text-rose-500 hover:bg-[rgba(239,68,68,0.15)] transition-all disabled:opacity-50">
-            ⏹ Stop
-          </button>
-          <button onClick={handleReset} className="h-[32px] px-3 rounded-btn text-xs font-semibold border border-border bg-muted/50 text-muted-foreground hover:bg-muted transition-all">
-            ↻
-          </button>
-        </div>
-
-        {/* ═══════════ LOG WINDOW ═══════════ */}
-        <div className="flex flex-col mt-1 flex-1 min-h-[120px]">
-          <div className="flex items-center justify-between mb-[4px]">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.5px]">Log</span>
-            <div className="flex items-center gap-2">
-              {btProgress && (
-                <span className="text-xs text-primary font-medium">{btProgress}</span>
-              )}
-              {isRunning && (
-                <span className="w-[6px] h-[6px] rounded-full bg-green animate-pulse" />
-              )}
-              {logs.length > 0 && (
-                <button
-                  onClick={() => { setLogs([]); setBtProgress(""); }}
-                  className="text-[9px] text-muted-foreground hover:text-muted-foreground transition-colors"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="flex-1 bg-[#0d0d14] border border-border rounded-btn p-2 overflow-y-auto font-mono text-xs leading-[1.6] min-h-[100px] max-h-[220px]">
-            {logs.length === 0 ? (
-              <div className="text-muted-foreground text-xs opacity-50 select-none">
-                Logs will appear here when backtest starts...
-              </div>
-            ) : (
-              logs.map((entry, i) => (
-                <div key={i} className="flex gap-[6px]">
-                  <span className="text-muted-foreground shrink-0">{entry.ts}</span>
-                  <span className={`shrink-0 w-[38px] ${
-                    entry.level === "ERROR" ? "text-rose-500" :
-                    entry.level === "WARNING" ? "text-[#f59e0b]" :
-                    "text-muted-foreground"
-                  }`}>{entry.level.substring(0, 4)}</span>
-                  <span className="text-muted-foreground break-all">{entry.msg}</span>
-                </div>
-              ))
-            )}
-            <div ref={logEndRef} />
-          </div>
-        </div>
-      </div>
-
-      {/* ═══════════ RIGHT PANEL: RESULTS ═══════════ */}
-      <div className="bg-card border border-border rounded-card p-4 overflow-y-auto flex flex-col gap-4 min-h-[400px]">
-        {btResult ? (
-          <>
-            <ResultsPanel data={btResult} />
-            <HistoryPanel entries={history} currentStrategy={strategy} onLoad={handleLoadHistory} onDelete={handleDeleteHistory} botId={backtestBotId} />
-          </>
-        ) : (
-          <>
-            {/* Empty state */}
-            <div className="flex flex-col items-center justify-center flex-1 min-h-[200px]">
-              <div className="text-[32px] mb-3 opacity-30">📊</div>
-              <div className="text-sm font-semibold text-muted-foreground mb-1">No backtest results yet</div>
-              <div className="text-xs text-muted-foreground text-center max-w-[280px]">
-                Configure your test parameters and click &quot;Start Backtest&quot; to run a real FreqTrade backtest on the server.
-              </div>
-            </div>
-            {/* Still show history even without current result */}
-            <HistoryPanel entries={history} currentStrategy={strategy} onLoad={handleLoadHistory} onDelete={handleDeleteHistory} botId={backtestBotId} />
-          </>
-        )}
       </div>
     </div>
   );

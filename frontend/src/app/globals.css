@@ -18,7 +18,6 @@
     background: rgba(255, 255, 255, 0.15);
   }
 
-  /* PROTOTYPE-MATCHED DARK THEME — exact hex colors, no oklch */
   :root {
     --background: #000000;
     --foreground: #F5F5F5;
@@ -50,6 +49,88 @@
   * { @apply border-border; outline-color: var(--ring); }
 }
 
-/* Toggle Component */
-.toggle { position: relative; width: 36px; height: 18px; background: rgba(255,255,255,0.1); border-radius: 9px; cursor: pointer; transition: background 0.2s; border: 1px solid rgba(255,255,255,0.05); }
-.toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; background: #fff; border-radius: 50%; transition: transform 0.2s; }
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN SYSTEM — from DESIGN-LINEAR-EDGE-FULL.html
+   ═══════════════════════════════════════════════════════════════ */
+
+@layer utilities {
+  /* text-muted = #9CA3AF (overrides Tailwind's muted.DEFAULT for text) */
+  .text-muted { color: #9CA3AF; }
+}
+
+@layer components {
+  /* Borders */
+  .l-bd { border: 1px solid rgba(255,255,255,0.10); }
+  .l-b  { border-bottom: 1px solid rgba(255,255,255,0.10); }
+  .l-r  { border-right: 1px solid rgba(255,255,255,0.10); }
+  .l-t  { border-top: 1px solid rgba(255,255,255,0.10); }
+
+  /* Grid background for charts */
+  .l-grid { background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px); background-size: 24px 24px; }
+
+  /* Toggle */
+  .builder-toggle { width: 36px; height: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.10); background: #1a1a1a; cursor: pointer; position: relative; transition: all 0.2s; }
+  .builder-toggle.on { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.3); }
+  .builder-toggle .dot { width: 14px; height: 14px; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: all 0.2s; background: #9CA3AF; }
+  .builder-toggle.on .dot { left: 18px; background: #22c55e; }
+
+  /* Pill */
+  .builder-pill { padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.18); font-size: 11px; cursor: pointer; transition: all 0.15s; background: transparent; color: #9CA3AF; }
+  .builder-pill:hover { border-color: rgba(255,255,255,0.22); color: #F5F5F5; }
+  .builder-pill.selected { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.08); color: #F5F5F5; }
+
+  /* Input */
+  .builder-input { width: 100%; height: 36px; padding: 0 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.22); background: #1a1a1a; color: #F5F5F5; font-size: 12px; font-family: 'JetBrains Mono', monospace; outline: none; transition: border-color 0.15s; }
+  .builder-input:focus { border-color: rgba(255,255,255,0.30); }
+  .builder-input::placeholder { color: #9CA3AF; }
+
+  /* Select */
+  .builder-select { height: 36px; padding: 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.22); background: #1a1a1a; color: #F5F5F5; font-size: 12px; font-family: 'JetBrains Mono', monospace; outline: none; cursor: pointer; -webkit-appearance: none; appearance: none; }
+  .builder-select:focus { border-color: rgba(255,255,255,0.30); }
+
+  /* Label */
+  .builder-label { font-size: 11px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 6px; display: block; }
+
+  /* Card */
+  .builder-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.18); border-radius: 6px; padding: 16px; }
+
+  /* KPI */
+  .kpi-label { font-size: 11px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; margin-bottom: 4px; }
+  .kpi-value { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+
+  /* Section Title */
+  .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9CA3AF; }
+
+  /* Sortable Table Headers */
+  th.sortable { cursor: pointer; user-select: none; position: relative; white-space: nowrap; }
+  th.sortable:hover { color: #fff; background: rgba(255,255,255,0.04); }
+  th.sortable::after { content: '⇅'; margin-left: 4px; opacity: 0.25; font-size: 10px; }
+  th.sortable:hover::after { opacity: 0.6; }
+  th.sortable.sort-asc::after { content: '↑'; opacity: 0.9; color: #fff; }
+  th.sortable.sort-desc::after { content: '↓'; opacity: 0.9; color: #fff; }
+  th.sortable.sort-asc, th.sortable.sort-desc { color: #fff; background: rgba(255,255,255,0.04); }
+
+  /* Filterable Column Headers */
+  th.filterable { position: relative; cursor: pointer; }
+  th.filterable::before { content: ''; display: inline-block; width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid rgba(255,255,255,0.2); margin-right: 5px; vertical-align: middle; transition: border-color 0.15s; }
+  th.filterable:hover::before { border-top-color: rgba(255,255,255,0.6); }
+  th.filterable.filter-active::before { border-top-color: #22d3ee; }
+  th.filterable.filter-active { color: #22d3ee; }
+
+  /* Tab visibility */
+  .exp-tab { display: none !important; height: 100%; overflow-y: auto; overflow-x: hidden; }
+  .exp-tab.active { display: flex !important; }
+
+  /* Experiment nav tab buttons */
+  .exp-nav {}
+  .exp-overlay-panel {}
+  .exp-overlay-title {}
+
+  /* Backtest sub-tab buttons and content */
+  .bt-tab-btn {}
+  .bt-tab-content {}
+
+  /* Hyperopt sub-tab buttons and content */
+  .ho-tab-btn {}
+  .ho-tab-content {}
+}

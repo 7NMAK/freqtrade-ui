@@ -29,6 +29,13 @@ const config = {
         ring: "var(--ring)",
         background: "var(--background)",
         foreground: "var(--foreground)",
+        surface: "#0C0C0C",
+        up: "#22c55e",
+        down: "#ef4444",
+        muted: {
+          DEFAULT: "var(--muted)",
+          foreground: "var(--muted-foreground)",
+        },
         primary: {
           DEFAULT: "var(--primary)",
           foreground: "var(--primary-foreground)",
@@ -40,10 +47,6 @@ const config = {
         destructive: {
           DEFAULT: "var(--destructive)",
           foreground: "var(--destructive-foreground)",
-        },
-        muted: {
-          DEFAULT: "var(--muted)",
-          foreground: "var(--muted-foreground)",
         },
         accent: {
           DEFAULT: "var(--accent)",

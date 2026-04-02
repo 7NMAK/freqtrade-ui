@@ -1,773 +1,350 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useEffect } from 'react';
-import Tooltip from '@/components/ui/Tooltip';
-import { INPUT, SELECT, LABEL, SECTION_CARD, BTN_PRIMARY } from '@/lib/design';
-import { useToast } from '@/components/ui/Toast';
-import {
-  botLookaheadAnalysis,
-  botRecursiveAnalysis,
-  botBacktestStart,
-  botBacktestResults,
-  getExperimentRuns,
-  getExperiments,
-  launchPaperBot,
-} from '@/lib/api';
-import { VERIFICATION_CRITERIA } from '@/lib/experiments';
+import { useState } from "react";
 
-// ── Types ─────────────────────────────────────────────────────────────
-interface VerificationResult {
-  training: { profitPct: number; winRate: number; maxDD: number; sharpe: number; trades: number };
-  oos: { profitPct: number; winRate: number; maxDD: number; sharpe: number; trades: number };
-  verdict: 'PASS' | 'FAIL';
-  reasons: string[];
+// ── Local Toggle & Pill ─────────────────────────────────────────────
+function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
+  return <div className={`builder-toggle ${on ? 'on' : ''}`} onClick={onToggle}><div className="dot" /></div>;
+}
+function Pill({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
+  return <button className={`builder-pill text-[10px] px-2.5 py-1.5 text-center ${selected ? 'selected' : ''}`} onClick={onClick}>{selected && '✓ '}{label}</button>;
 }
 
-interface AnalysisResult {
-  status: 'PASS' | 'FAIL' | 'WARNING';
-  issues: Array<{ indicator: string; severity: string; description: string }>;
-  output: string;
-}
+// ── Mock Data ────────────────────────────────────────────────────────
+const MOCK_COMPARISON = [
+  { metric: "Profit %",       training: "+42.1%",  oos: "+31.2%",  oosClass: "text-up font-bold",  ratio: "74.1%",  ratioClass: "text-up",  threshold: ">70%",   status: "✓", statusClass: "text-up font-bold" },
+  { metric: "Max DD",         training: "-2.1%",   oos: "-2.8%",   oosClass: "text-down font-bold", ratio: "133%",   ratioClass: "",         threshold: "<150%",  status: "✓", statusClass: "text-up font-bold" },
+  { metric: "Trades",         training: "142",     oos: "89",      oosClass: "",                    ratio: "62.7%",  ratioClass: "text-up",  threshold: ">50%",   status: "✓", statusClass: "text-up font-bold" },
+  { metric: "Win Rate",       training: "72.4%",   oos: "68.5%",   oosClass: "text-up font-bold",  ratio: "94.6%",  ratioClass: "text-up",  threshold: ">50%",   status: "✓", statusClass: "text-up font-bold" },
+  { metric: "Sharpe",         training: "3.92",    oos: "3.14",    oosClass: "text-up font-bold",  ratio: "80.1%",  ratioClass: "",         threshold: "—",      status: "info", statusClass: "text-muted" },
+  { metric: "Sortino",        training: "4.15",    oos: "3.42",    oosClass: "",                    ratio: "82.4%",  ratioClass: "",         threshold: "—",      status: "info", statusClass: "text-muted" },
+  { metric: "Profit Factor",  training: "2.58",    oos: "2.11",    oosClass: "",                    ratio: "81.8%",  ratioClass: "",         threshold: "—",      status: "info", statusClass: "text-muted" },
+];
 
-// ── Props ─────────────────────────────────────────────────────────────
+const MOCK_RECURSIVE = [
+  { iter: 1, shift: "0d",  profit: "+42.1%", delta: "—" },
+  { iter: 2, shift: "1d",  profit: "+41.8%", delta: "-0.3%" },
+  { iter: 3, shift: "2d",  profit: "+41.5%", delta: "-0.3%" },
+  { iter: 4, shift: "3d",  profit: "+41.2%", delta: "-0.3%" },
+  { iter: 5, shift: "4d",  profit: "+40.8%", delta: "-0.4%" },
+];
+
+const MOCK_LOGS = [
+  { ts: "10:15:01", level: "INFO", msg: "Validation started — 3 checks queued" },
+  { ts: "10:15:02", level: "INFO", msg: "[1/3] OOS Backtest — running 2025-01-01 to 2025-06-01..." },
+  { ts: "10:28:44", level: "INFO", msg: "[1/3] OOS Backtest — PASS — +31.2%, 89 trades, ratio 74.1%" },
+  { ts: "10:28:45", level: "INFO", msg: "[2/3] Lookahead Bias Check — scanning indicators..." },
+  { ts: "10:31:12", level: "INFO", msg: "[2/3] Lookahead — CLEAN — 0 shifted indicators, 0 future refs" },
+  { ts: "10:31:13", level: "INFO", msg: "[3/3] Recursive Stability — running 5 iterations..." },
+  { ts: "10:42:55", level: "INFO", msg: "[3/3] Recursive — STABLE — max delta -0.4%, 5 iterations" },
+  { ts: "10:42:56", level: "INFO", msg: "All validations passed (3/3) — strategy is production ready" },
+];
+
+// ═════════════════════════════════════════════════════════════════════
+// COMPONENT
+// ═════════════════════════════════════════════════════════════════════
 interface ValidationTabProps {
-  strategy: string;
-  botId?: number;
+  strategy?: string;
   experimentId?: number;
   onNavigateToTab?: (tab: number) => void;
 }
 
-export default function ValidationTab({
-  strategy,
-  botId = 2,
-  experimentId,
-  onNavigateToTab,
-}: ValidationTabProps) {
-  const toast = useToast();
-  const [launching, setLaunching] = useState(false);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export default function ValidationTab(_props: ValidationTabProps) {
+  // ── Form State ──────────────────────────────────────────────────
+  const [sourceTest, setSourceTest] = useState("bt1");
+  const [verificationName, setVerificationName] = useState("OOS verify BT #1");
+  const [oosStart, setOosStart] = useState("2025-01-01");
+  const [oosEnd, setOosEnd] = useState("2025-06-01");
+  const [minProfit, setMinProfit] = useState(70);
+  const [maxDD, setMaxDD] = useState(150);
+  const [minTrades, setMinTrades] = useState(50);
+  const [minWinRate, setMinWinRate] = useState(50);
 
-  // ── Source data — from API ────────────────────────────────────────
-  const [sourceRuns, setSourceRuns] = useState<Array<{
-    id: number;
-    name: string;
-    run_type: string;
-    sampler: string | null;
-    loss_function: string | null;
-    profit_pct: number | null;
-    win_rate: number | null;
-    max_drawdown: number | null;
-    spaces: string[] | null;
-  }>>([]);
-  const [sourceLoaded, setSourceLoaded] = useState(false);
+  // Validation checks
+  const [oosBacktest, setOosBacktest] = useState(true);
+  const [lookaheadCheck, setLookaheadCheck] = useState(true);
+  const [recursiveStability, setRecursiveStability] = useState(true);
+  const [walkForward, setWalkForward] = useState(false);
 
-  // ── Verification form ────────────────────────────────────────────
-  const [selectedRunId, setSelectedRunId] = useState('');
-  const [verificationName, setVerificationName] = useState('');
-  const [description, setDescription] = useState('');
-  const [startDate, setStartDate] = useState('2024-01-01');
-  const [endDate, setEndDate] = useState('2025-01-01');
-
-  // ── Running state ────────────────────────────────────────────────
-  const [isRunningVerification, setIsRunningVerification] = useState(false);
-  const [isRunningLookahead, setIsRunningLookahead] = useState(false);
-  const [isRunningRecursive, setIsRunningRecursive] = useState(false);
-
-  // ── Results ──────────────────────────────────────────────────────
-  const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
-  const [lookaheadResult, setLookaheadResult] = useState<AnalysisResult | null>(null);
-  const [recursiveResult, setRecursiveResult] = useState<AnalysisResult | null>(null);
-
-  // ── Load source runs from API ────────────────────────────────────
-  const loadSourceRuns = useCallback(async () => {
-    if (!experimentId) return;
-    try {
-      const runs = await getExperimentRuns(experimentId, { status: 'completed' });
-      if (Array.isArray(runs)) {
-        setSourceRuns(runs.map((r) => ({
-          id: r.id,
-          name: `${r.run_type} #${r.id}${r.sampler ? ` · ${r.sampler}` : ''}${r.loss_function ? ` · ${r.loss_function}` : ''}${r.profit_pct != null ? ` · ${r.profit_pct >= 0 ? '+' : ''}${r.profit_pct.toFixed(1)}%` : ''}`,
-          run_type: r.run_type,
-          sampler: r.sampler,
-          loss_function: r.loss_function,
-          profit_pct: r.profit_pct,
-          win_rate: r.win_rate,
-          max_drawdown: r.max_drawdown,
-          spaces: r.spaces,
-        })));
-        setSourceLoaded(true);
-      }
-    } catch {
-      toast.error('Failed to load experiment runs');
-    }
-  }, [experimentId, toast]);
-
-  // Load on mount
-  useEffect(() => { loadSourceRuns(); }, [loadSourceRuns]);
-
-  // ── Verification Backtest ────────────────────────────────────────
-  const handleRunVerification = async () => {
-    if (!selectedRunId) {
-      toast.error('Select a source test first');
-      return;
-    }
-
-    setIsRunningVerification(true);
-    setVerificationResult(null);
-    toast.info('Starting verification backtest...');
-
-    const timerange = `${startDate.replace(/-/g, '')}-${endDate.replace(/-/g, '')}`;
-
-    try {
-      // Run a backtest with the same strategy on OOS data
-      await botBacktestStart(botId, {
-        strategy,
-        timerange,
-        export: 'trades',
-      });
-
-      // Poll for results
-      const pollInterval = setInterval(async () => {
-        try {
-          const res = await botBacktestResults(botId);
-          if (res && !res.running && res.backtest_result?.strategy) {
-            clearInterval(pollInterval);
-            
-            // Extract OOS results
-            const stratKey = Object.keys(res.backtest_result.strategy)[0];
-            const oos = res.backtest_result.strategy[stratKey];
-            
-            // Get source run data for comparison
-            const sourceRun = sourceRuns.find(r => String(r.id) === selectedRunId);
-            
-            if (oos && sourceRun) {
-              const trainingProfit = sourceRun.profit_pct ?? 0;
-              const oosProfit = (oos.profit_total ?? 0) * 100;
-              const trainingWR = sourceRun.win_rate ?? 0;
-              const oosWR = (oos.win_rate ?? 0) * 100;
-              const trainingDD = Math.abs(sourceRun.max_drawdown ?? 0);
-              const oosDD = Math.abs(oos.max_drawdown_account ?? 0) * 100;
-
-              // Apply VERIFICATION_CRITERIA thresholds
-              const reasons: string[] = [];
-              
-              const profitDrop = trainingProfit > 0 ? ((trainingProfit - oosProfit) / trainingProfit) * 100 : 0;
-              if (profitDrop > VERIFICATION_CRITERIA.profit_drop_max) {
-                reasons.push(`Profit dropped ${profitDrop.toFixed(0)}% (max allowed: ${VERIFICATION_CRITERIA.profit_drop_max}%)`);
-              }
-
-              const ddIncrease = trainingDD > 0 ? ((oosDD - trainingDD) / trainingDD) * 100 : 0;
-              if (ddIncrease > VERIFICATION_CRITERIA.dd_increase_max) {
-                reasons.push(`Drawdown increased ${ddIncrease.toFixed(0)}% (max allowed: ${VERIFICATION_CRITERIA.dd_increase_max}%)`);
-              }
-
-              const wrDrop = trainingWR - oosWR;
-              if (wrDrop > VERIFICATION_CRITERIA.winrate_drop_max) {
-                reasons.push(`Win rate dropped ${wrDrop.toFixed(1)}pp (max allowed: ${VERIFICATION_CRITERIA.winrate_drop_max}pp)`);
-              }
-
-              const verdict = reasons.length === 0 ? 'PASS' : 'FAIL';
-
-              setVerificationResult({
-                training: {
-                  profitPct: trainingProfit,
-                  winRate: trainingWR,
-                  maxDD: trainingDD,
-                  sharpe: 0, // Would need training sharpe from source
-                  trades: 0,
-                },
-                oos: {
-                  profitPct: oosProfit,
-                  winRate: oosWR,
-                  maxDD: oosDD,
-                  sharpe: oos.sharpe ?? 0,
-                  trades: oos.total_trades ?? 0,
-                },
-                verdict,
-                reasons,
-              });
-
-              toast[verdict === 'PASS' ? 'success' : 'error'](`Verification: ${verdict}`);
-            }
-            setIsRunningVerification(false);
-          }
-        } catch {
-          // Still running, keep polling
-        }
-      }, 3000);
-
-      // Cleanup after 10 min max
-      setTimeout(() => {
-        clearInterval(pollInterval);
-        if (isRunningVerification) {
-          setIsRunningVerification(false);
-          toast.error('Verification timed out');
-        }
-      }, 600000);
-    } catch (err) {
-      setIsRunningVerification(false);
-      toast.error(`Verification failed: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  };
-
-  // ── Lookahead Analysis ───────────────────────────────────────────
-  const handleRunLookahead = async () => {
-    setIsRunningLookahead(true);
-    setLookaheadResult(null);
-    toast.info('Starting lookahead analysis...');
-
-    try {
-      const res = await botLookaheadAnalysis(botId, {
-        strategy,
-        timerange: `${startDate.replace(/-/g, '')}-${endDate.replace(/-/g, '')}`,
-      });
-
-      // Parse the response
-      const result = res as Record<string, unknown>;
-      const output = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
-      const hasIssues = output.toLowerCase().includes('fail') || output.toLowerCase().includes('leak') || output.toLowerCase().includes('bias');
-
-      setLookaheadResult({
-        status: hasIssues ? 'FAIL' : 'PASS',
-        issues: [],
-        output,
-      });
-
-      toast[hasIssues ? 'error' : 'success'](`Lookahead: ${hasIssues ? 'Issues found' : 'PASS'}`);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setLookaheadResult({
-        status: 'FAIL',
-        issues: [{ indicator: 'error', severity: 'critical', description: msg }],
-        output: msg,
-      });
-      toast.error(`Lookahead analysis failed: ${msg}`);
-    } finally {
-      setIsRunningLookahead(false);
-    }
-  };
-
-  // ── Recursive Analysis ───────────────────────────────────────────
-  const handleRunRecursive = async () => {
-    setIsRunningRecursive(true);
-    setRecursiveResult(null);
-    toast.info('Starting recursive analysis...');
-
-    try {
-      const res = await botRecursiveAnalysis(botId, {
-        strategy,
-        timerange: `${startDate.replace(/-/g, '')}-${endDate.replace(/-/g, '')}`,
-      });
-
-      const result = res as Record<string, unknown>;
-      const output = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
-      const hasIssues = output.toLowerCase().includes('fail') || output.toLowerCase().includes('recursive') || output.toLowerCase().includes('cycle');
-
-      setRecursiveResult({
-        status: hasIssues ? 'FAIL' : 'PASS',
-        issues: [],
-        output,
-      });
-
-      toast[hasIssues ? 'error' : 'success'](`Recursive: ${hasIssues ? 'Issues found' : 'PASS'}`);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setRecursiveResult({
-        status: 'FAIL',
-        issues: [{ indicator: 'error', severity: 'critical', description: msg }],
-        output: msg,
-      });
-      toast.error(`Recursive analysis failed: ${msg}`);
-    } finally {
-      setIsRunningRecursive(false);
-    }
-  };
-
-  // ── All checks passed? ───────────────────────────────────────────
-  const allPassed =
-    verificationResult?.verdict === 'PASS' &&
-    lookaheadResult?.status === 'PASS' &&
-    recursiveResult?.status === 'PASS';
+  // Suppress unused local components
+  void Pill;
 
   return (
-    <div className="space-y-4 pb-12">
-      {/* ===== SECTION 1: VERIFICATION BACKTEST ===== */}
-      <div className={SECTION_CARD}>
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-xs font-semibold text-foreground">1. Verification Backtest (Out-of-Sample)</span>
+    <div className="h-full flex flex-row gap-3">
+      {/* ══════════ LEFT PANEL — CONFIG ══════════ */}
+      <div className="w-[400px] flex flex-col gap-0 bg-surface l-bd rounded-md shadow-xl shrink-0 h-full overflow-hidden">
+        {/* Header */}
+        <div className="h-10 l-b flex items-center px-4 bg-black/40 shrink-0">
+          <span className="section-title">Validation Configuration</span>
         </div>
 
-        <div className="space-y-3 mb-4">
-          {/* Source Test */}
+        {/* Body */}
+        <div className="p-4 flex flex-col gap-3.5 flex-1 overflow-y-auto">
+          {/* 1. Source Test */}
           <div>
-            <label className={LABEL}>Source Test</label>
-            <select
-              value={selectedRunId}
-              onChange={(e) => {
-                setSelectedRunId(e.target.value);
-                const run = sourceRuns.find(r => String(r.id) === e.target.value);
-                if (run) {
-                  setVerificationName(`OOS verify ${run.run_type} #${run.id}`);
-                }
-              }}
-              className={SELECT}
-            >
-              <option value="">Select a completed test...</option>
-              {sourceRuns.map((run) => (
-                <option key={run.id} value={String(run.id)}>
-                  {run.name}
-                </option>
-              ))}
+            <label className="builder-label">Source Test</label>
+            <select className="builder-select w-full" value={sourceTest} onChange={(e) => setSourceTest(e.target.value)}>
+              <option value="bt1">BT #1 — +42.12%, HO #147</option>
+              <option value="bt2">BT #2 — +21.4%</option>
+              <option value="fai">FAI — LightGBM-R — +52.4%</option>
             </select>
-            {!sourceLoaded && experimentId && (
-              <button onClick={loadSourceRuns} className="text-[10px] text-primary mt-1 hover:underline">
-                Load tests from experiment
-              </button>
-            )}
-            {!experimentId && (
-              <p className="text-[10px] text-muted-foreground mt-1">
-                No experiment context — navigate here from a specific experiment
-              </p>
-            )}
           </div>
 
-          {/* Verification Name */}
+          {/* 2. Verification Name */}
           <div>
-            <label className={LABEL}>Verification Name</label>
-            <input
-              type="text"
-              value={verificationName}
-              onChange={(e) => setVerificationName(e.target.value)}
-              placeholder="Auto-generated from source test"
-              className={INPUT}
-            />
+            <label className="builder-label">Verification Name</label>
+            <input type="text" className="builder-input" value={verificationName} onChange={(e) => setVerificationName(e.target.value)} />
           </div>
 
-          {/* Description */}
+          {/* 3. OOS Period */}
           <div>
-            <label className={LABEL}>Description (Optional)</label>
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Notes about this verification..."
-              className={INPUT}
-            />
-          </div>
-
-          {/* Date Range */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={LABEL}>Start Date</label>
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={INPUT} />
-            </div>
-            <div>
-              <label className={LABEL}>End Date</label>
-              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={INPUT} />
-            </div>
-          </div>
-
-          {/* Warning Box */}
-          <div className="bg-[rgba(245,158,11,0.08)] border border-[rgba(245,158,11,0.25)] rounded-btn px-3 py-2">
+            <label className="builder-label">OOS Period</label>
             <div className="flex gap-2">
-              <span className="text-amber-500 mt-0.5">⚠</span>
-              <div className="text-xs text-muted-foreground leading-relaxed">
-                <strong className="text-amber-500">Use a DIFFERENT time period from training!</strong>
-                <br />
-                <Tooltip content="Out-of-sample validation tests performance on data the strategy never saw during optimization. Must use a different date range.">
-                  <span className="hover:underline cursor-help">Training period</span>
-                </Tooltip>
-                {' must not overlap with verification period.'}
+              <input type="date" className="builder-input" value={oosStart} onChange={(e) => setOosStart(e.target.value)} />
+              <input type="date" className="builder-input" value={oosEnd} onChange={(e) => setOosEnd(e.target.value)} />
+            </div>
+          </div>
+
+          {/* 4. Pass/Fail Thresholds */}
+          <div className="l-t pt-3">
+            <label className="builder-label">Pass/Fail Thresholds</label>
+          </div>
+
+          {/* 5. Min Profit % / Max DD % */}
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <label className="builder-label">Min Profit %</label>
+              <input type="number" className="builder-input" value={minProfit} onChange={(e) => setMinProfit(Number(e.target.value))} />
+            </div>
+            <div className="flex-1">
+              <label className="builder-label">Max DD %</label>
+              <input type="number" className="builder-input" value={maxDD} onChange={(e) => setMaxDD(Number(e.target.value))} />
+            </div>
+          </div>
+
+          {/* 6. Min Trades % / Min Win Rate % */}
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <label className="builder-label">Min Trades %</label>
+              <input type="number" className="builder-input" value={minTrades} onChange={(e) => setMinTrades(Number(e.target.value))} />
+            </div>
+            <div className="flex-1">
+              <label className="builder-label">Min Win Rate %</label>
+              <input type="number" className="builder-input" value={minWinRate} onChange={(e) => setMinWinRate(Number(e.target.value))} />
+            </div>
+          </div>
+
+          {/* 7. Validation Checks */}
+          <div className="l-t pt-3">
+            <label className="builder-label">Validation Checks</label>
+            <div className="flex flex-col gap-2.5 mt-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-white font-mono">OOS Backtest</span>
+                <Toggle on={oosBacktest} onToggle={() => setOosBacktest(!oosBacktest)} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-white font-mono">Lookahead Bias Check</span>
+                <Toggle on={lookaheadCheck} onToggle={() => setLookaheadCheck(!lookaheadCheck)} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-white font-mono">Recursive Stability</span>
+                <Toggle on={recursiveStability} onToggle={() => setRecursiveStability(!recursiveStability)} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-white font-mono">Walk-Forward</span>
+                <Toggle on={walkForward} onToggle={() => setWalkForward(!walkForward)} />
               </div>
             </div>
           </div>
 
-          {/* Verification Criteria */}
-          <div className="bg-muted/50 border border-border rounded-btn p-3">
-            <div className={`${LABEL} mb-2`}>Pass/Fail Thresholds</div>
-            <table className="w-full text-xs">
-              <tbody>
-                <tr>
-                  <td className="py-1 px-2 text-muted-foreground">Max profit drop</td>
-                  <td className="py-1 px-2 text-right font-mono text-amber-400">{VERIFICATION_CRITERIA.profit_drop_max}%</td>
+          {/* 8. Warning box */}
+          <div className="bg-yellow-500/[0.04] border border-yellow-500/15 rounded px-3 py-2 flex gap-2">
+            <span className="text-yellow-400">⚠</span>
+            <span className="text-[10px] text-muted">OOS period must <b className="text-yellow-400">NOT overlap</b> with training data</span>
+          </div>
+
+          {/* 9. Run Buttons */}
+          <div className="flex gap-1.5 l-t pt-3">
+            <button
+              className="h-7 px-3 rounded-md text-[10px] font-bold flex items-center gap-1.5 transition-colors hover:border-up/30 hover:text-up"
+              style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.20)', color: '#22c55e' }}
+              title="Run all validation checks"
+            >
+              ▶ Run Verification
+            </button>
+            <button
+              className="h-7 px-3 rounded-md text-[10px] font-bold flex items-center gap-1.5 transition-colors"
+              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#F5F5F5' }}
+              title="Stop running"
+            >
+              ⏹ Stop
+            </button>
+            <button
+              className="h-7 px-3 rounded-md text-[10px] font-bold flex items-center gap-1.5 transition-colors"
+              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#F5F5F5' }}
+              title="Reset configuration to defaults"
+            >
+              ↺ Reset
+            </button>
+          </div>
+
+          {/* 10. Progress */}
+          <div className="l-t pt-3">
+            <div className="flex items-center justify-between text-[11px] font-mono">
+              <span className="text-muted">Progress</span>
+              <span className="text-white">3/3 checks</span>
+            </div>
+            <div className="mt-1.5 w-full h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+              <div className="h-full bg-up rounded-full transition-all" style={{ width: '100%' }} />
+            </div>
+          </div>
+
+          {/* 11. Terminal Output */}
+          <div className="l-t pt-3">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] text-muted uppercase tracking-widest font-bold">Terminal</span>
+              <button className="text-[9px] text-muted hover:text-white transition-colors">Clear</button>
+            </div>
+            <div className="bg-black/60 rounded-md l-bd p-2 max-h-[200px] overflow-y-auto font-mono text-[10px] leading-[1.7] space-y-px">
+              {MOCK_LOGS.map((log, i) => (
+                <div key={i} className="flex gap-2">
+                  <span className="text-muted shrink-0">{log.ts}</span>
+                  <span className={
+                    log.msg.includes("All validations passed") ? "text-up font-bold" :
+                    log.msg.includes("PASS") || log.msg.includes("CLEAN") || log.msg.includes("STABLE") ? "text-up" :
+                    "text-muted"
+                  }>{log.msg}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ══════════ RIGHT PANEL — RESULTS ══════════ */}
+      <div className="flex-1 flex flex-col gap-3 min-w-0 overflow-y-auto pr-1">
+        {/* 1. Verdict Banner */}
+        <div className="bg-up/[0.04] l-bd rounded-md p-3 shadow-xl border-l-2 border-l-up relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-up/[0.03] rounded-full -translate-y-8 translate-x-8" />
+          <div className="flex items-center justify-between mb-2 relative z-10">
+            <div className="flex items-center gap-2">
+              <span className="text-white font-mono text-[12px] font-bold">✓ PASS — All Validations (3/3)</span>
+              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded border border-up/25">PRODUCTION READY</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                className="h-7 px-3 rounded-md text-[10px] font-bold flex items-center gap-1.5 transition-colors hover:border-up/30 hover:text-up"
+                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#F5F5F5' }}
+                title="Promote to paper trading"
+              >
+                → Paper
+              </button>
+              <button
+                className="h-7 px-3 rounded-md text-[10px] font-bold flex items-center gap-1.5 transition-colors hover:border-up/30 hover:text-up"
+                style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.20)', color: '#22c55e' }}
+                title="Promote to live trading"
+              >
+                → Live
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-7 gap-2 text-[11px] font-mono relative z-10">
+            <div><div className="kpi-label">OOS Profit</div><div className="kpi-value text-up font-bold">+31.2%</div></div>
+            <div><div className="kpi-label">Ratio</div><div className="kpi-value text-up">74.1%</div></div>
+            <div><div className="kpi-label">Trades</div><div className="kpi-value text-white">89</div></div>
+            <div><div className="kpi-label">Win Rate</div><div className="kpi-value text-up">68.5%</div></div>
+            <div><div className="kpi-label">Sharpe</div><div className="kpi-value text-white">3.14</div></div>
+            <div><div className="kpi-label">Max DD</div><div className="kpi-value text-down font-bold">-2.8%</div></div>
+            <div><div className="kpi-label">Lookahead</div><div className="kpi-value text-up">Clean</div></div>
+          </div>
+        </div>
+
+        {/* 2. Training vs OOS Comparison */}
+        <div className="bg-surface l-bd rounded-md flex flex-col min-h-[200px] overflow-hidden shadow-xl">
+          <div className="h-10 l-b flex items-center px-4 bg-black/40 shrink-0">
+            <span className="section-title">Training vs OOS Comparison</span>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            <table className="w-full text-[13px] font-mono">
+              <thead>
+                <tr className="text-muted text-[11px] uppercase tracking-widest">
+                  <th className="px-2 py-1.5 text-left sticky top-0 bg-surface z-10">Metric</th>
+                  <th className="px-2 py-1.5 text-right sticky top-0 bg-surface z-10">Training</th>
+                  <th className="px-2 py-1.5 text-right sticky top-0 bg-surface z-10">OOS</th>
+                  <th className="px-2 py-1.5 text-right sticky top-0 bg-surface z-10">Ratio</th>
+                  <th className="px-2 py-1.5 text-right sticky top-0 bg-surface z-10">Threshold</th>
+                  <th className="px-2 py-1.5 text-right sticky top-0 bg-surface z-10">Status</th>
                 </tr>
-                <tr>
-                  <td className="py-1 px-2 text-muted-foreground">Max drawdown increase</td>
-                  <td className="py-1 px-2 text-right font-mono text-amber-400">{VERIFICATION_CRITERIA.dd_increase_max}%</td>
-                </tr>
-                <tr>
-                  <td className="py-1 px-2 text-muted-foreground">Max win rate drop</td>
-                  <td className="py-1 px-2 text-right font-mono text-amber-400">{VERIFICATION_CRITERIA.winrate_drop_max}pp</td>
-                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.05]">
+                {MOCK_COMPARISON.map((row, i) => (
+                  <tr key={i} className="hover:bg-white/[0.04]">
+                    <td className="px-2 py-1.5 text-white">{row.metric}</td>
+                    <td className="px-2 py-1.5 text-right">{row.training}</td>
+                    <td className={`px-2 py-1.5 text-right ${row.oosClass}`}>{row.oos}</td>
+                    <td className={`px-2 py-1.5 text-right ${row.ratioClass}`}>{row.ratio}</td>
+                    <td className="px-2 py-1.5 text-right text-muted">{row.threshold}</td>
+                    <td className={`px-2 py-1.5 text-right ${row.statusClass}`}>{row.status}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
-
-          {/* Run Button */}
-          <button
-            onClick={handleRunVerification}
-            disabled={isRunningVerification || !selectedRunId}
-            className={`w-full ${BTN_PRIMARY}`}
-          >
-            {isRunningVerification ? (
-              <>
-                <div className="animate-spin text-sm">⟳</div>
-                Running Verification Backtest...
-              </>
-            ) : (
-              <>▶ Run Verification Backtest</>
-            )}
-          </button>
         </div>
 
-        {/* ===== VERIFICATION RESULTS ===== */}
-        {!verificationResult ? (
-          <div className="border-t border-border pt-4 mt-4">
-            <div className={`${SECTION_CARD} flex flex-col items-center justify-center min-h-[200px]`}>
-              <div className="text-[32px] mb-3 opacity-30">✓</div>
-              <div className="text-sm font-semibold text-muted-foreground mb-1">No verification yet</div>
-              <div className="text-xs text-muted-foreground text-center max-w-[280px]">
-                Select a source test and click &quot;Run Verification Backtest&quot; to test on new data.
-              </div>
+        {/* 3. Lookahead + Recursive */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Lookahead Card */}
+          <div className="bg-surface l-bd rounded-md p-3 shadow-xl">
+            <div className="flex justify-between items-center mb-2">
+              <span className="section-title">Lookahead Bias</span>
+              <span className="text-up font-bold text-[10px]">✓ CLEAN</span>
+            </div>
+            <div className="text-[11px] text-muted font-mono mb-2">No lookahead bias detected in feature engineering</div>
+            <div className="space-y-1.5 text-[11px] font-mono">
+              <div className="flex justify-between"><span className="text-muted">Shifted Indicators</span><span className="text-up">0 found</span></div>
+              <div className="flex justify-between"><span className="text-muted">Future References</span><span className="text-up">0 found</span></div>
+              <div className="flex justify-between"><span className="text-muted">Data Leakage</span><span className="text-up">None</span></div>
             </div>
           </div>
-        ) : (
-          <div className="border-t border-border pt-4 mt-4 space-y-4">
-            {/* Verdict Banner */}
-            <div className={`rounded-card p-4 border ${
-              verificationResult.verdict === 'PASS'
-                ? 'bg-emerald-500/8 border-emerald-500/20'
-                : 'bg-rose-500/8 border-rose-500/20'
-            }`}>
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{verificationResult.verdict === 'PASS' ? '✅' : '❌'}</span>
-                <div>
-                  <div className={`text-sm font-bold ${verificationResult.verdict === 'PASS' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {verificationResult.verdict}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {verificationResult.verdict === 'PASS'
-                      ? 'Strategy passed out-of-sample validation'
-                      : `${verificationResult.reasons.length} criteria failed`}
-                  </div>
-                </div>
-              </div>
-              {verificationResult.reasons.length > 0 && (
-                <div className="mt-3 space-y-1">
-                  {verificationResult.reasons.map((reason, i) => (
-                    <div key={i} className="text-xs text-rose-400 flex gap-1.5">
-                      <span>•</span> {reason}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            {/* Side-by-side Comparison Table */}
-            <div className="border border-border rounded-card overflow-hidden">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="bg-muted/50">
-                    <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Metric</th>
-                    <th className="text-right px-3 py-2 font-semibold text-muted-foreground">Training (IS)</th>
-                    <th className="text-right px-3 py-2 font-semibold text-muted-foreground">Verification (OOS)</th>
-                    <th className="text-center px-3 py-2 font-semibold text-muted-foreground">Delta</th>
+          {/* Recursive Card */}
+          <div className="bg-surface l-bd rounded-md p-3 shadow-xl">
+            <div className="flex justify-between items-center mb-2">
+              <span className="section-title">Recursive Stability</span>
+              <span className="text-up font-bold text-[10px]">✓ STABLE</span>
+            </div>
+            <div className="text-[11px] text-muted font-mono mb-2">Results stable across 5 recursive iterations</div>
+            <table className="w-full text-[13px] font-mono">
+              <thead>
+                <tr className="text-muted text-[11px] uppercase tracking-widest">
+                  <th className="px-2 py-1 text-left">Iter</th>
+                  <th className="px-2 py-1 text-left">Shift</th>
+                  <th className="px-2 py-1 text-right">Profit</th>
+                  <th className="px-2 py-1 text-right">Δ</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.05]">
+                {MOCK_RECURSIVE.map((row) => (
+                  <tr key={row.iter}>
+                    <td className="px-2 py-1">{row.iter}</td>
+                    <td className="px-2 py-1 text-muted">{row.shift}</td>
+                    <td className="px-2 py-1 text-right text-up">{row.profit}</td>
+                    <td className="px-2 py-1 text-right text-muted">{row.delta}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {([
-                    { label: 'Profit %', training: verificationResult.training.profitPct, oos: verificationResult.oos.profitPct, fmt: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`, higherBetter: true },
-                    { label: 'Win Rate', training: verificationResult.training.winRate, oos: verificationResult.oos.winRate, fmt: (v: number) => `${v.toFixed(1)}%`, higherBetter: true },
-                    { label: 'Max Drawdown', training: verificationResult.training.maxDD, oos: verificationResult.oos.maxDD, fmt: (v: number) => `-${v.toFixed(2)}%`, higherBetter: false },
-                    { label: 'Sharpe', training: verificationResult.training.sharpe, oos: verificationResult.oos.sharpe, fmt: (v: number) => v.toFixed(2), higherBetter: true },
-                    { label: 'Trades', training: verificationResult.training.trades, oos: verificationResult.oos.trades, fmt: (v: number) => String(v), higherBetter: true },
-                  ] as const).map((row) => {
-                    const delta = row.oos - row.training;
-                    const better = row.higherBetter ? delta >= 0 : delta <= 0;
-                    return (
-                      <tr key={row.label} className="border-t border-border">
-                        <td className="px-3 py-2 text-muted-foreground">{row.label}</td>
-                        <td className="px-3 py-2 text-right tabular-nums">{row.fmt(row.training)}</td>
-                        <td className="px-3 py-2 text-right tabular-nums font-medium">{row.fmt(row.oos)}</td>
-                        <td className={`px-3 py-2 text-center font-medium ${better ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {delta >= 0 ? '↑' : '↓'} {Math.abs(delta).toFixed(2)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Action Buttons */}
-            {verificationResult.verdict === 'PASS' && (
-              <div className="flex gap-2">
-                <button
-                  disabled={launching}
-                  onClick={async () => {
-                    if (!confirm(`Launch paper trading bot for ${strategy}?\n\nThis will create a new Docker container and start paper trading immediately.`)) return;
-                    setLaunching(true);
-                    try {
-                      const res = await getExperiments();
-                      const exp = (res.items || []).find((e) => e.strategy_name === strategy || e.name === strategy);
-                      const versionId = exp?.best_version_id || undefined;
-                      const result = await launchPaperBot({
-                        strategy_name: strategy,
-                        strategy_version_id: versionId,
-                        pair_whitelist: ['BTC/USDT:USDT'],
-                        description: `Paper test from validation — ${strategy}${versionId ? ` v${versionId}` : ''}`,
-                      });
-                      toast.success(`🚀 ${result.message}`);
-                    } catch (err) {
-                      toast.error(`Launch failed: ${err instanceof Error ? err.message : String(err)}`);
-                    } finally {
-                      setLaunching(false);
-                    }
-                  }}
-                  className="flex-1 h-[34px] inline-flex items-center justify-center gap-[6px] rounded-btn text-xs font-medium border bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
-                >
-                  {launching ? '⏳ Launching...' : '🚀 Launch Paper Trading'}
-                </button>
-              </div>
-            )}
-            {verificationResult.verdict === 'FAIL' && (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => onNavigateToTab?.(2)} // Back to Hyperopt
-                  className="flex-1 h-[34px] inline-flex items-center justify-center gap-[6px] rounded-btn text-xs font-medium border border-border text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
-                >
-                  ← Choose a different test
-                </button>
-                <button
-                  onClick={() => { setVerificationResult(null); toast.info('Reset dates and re-run verification'); }}
-                  className="flex-1 h-[34px] inline-flex items-center justify-center gap-[6px] rounded-btn text-xs font-medium border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-colors"
-                >
-                  🔄 Re-run with different period
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* ===== SECTION 2: LOOKAHEAD ANALYSIS ===== */}
-      <div className={SECTION_CARD}>
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-xs font-semibold text-foreground">
-            2. Lookahead Analysis{' '}
-            <Tooltip content="§21: Checks if strategy uses future data for decisions">
-              <span className="text-muted-foreground text-xs cursor-help">(§21)</span>
-            </Tooltip>
-          </span>
-          {lookaheadResult && (
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-              lookaheadResult.status === 'PASS' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
-            }`}>
-              {lookaheadResult.status}
-            </span>
-          )}
-        </div>
-
-        <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
-          Checks if strategy &apos;cheats&apos; by using future data for decisions. Scans all entry and exit signals to ensure they only use data available AT the moment of the signal.
-        </p>
-
-        <button
-          onClick={handleRunLookahead}
-          disabled={isRunningLookahead}
-          className={`${BTN_PRIMARY} mb-3`}
-        >
-          {isRunningLookahead ? (
-            <>
-              <div className="animate-spin text-sm">⟳</div>
-              Running Lookahead Analysis...
-            </>
-          ) : (
-            <>▶ Run Lookahead Analysis</>
-          )}
-        </button>
-
-        {lookaheadResult ? (
-          <div className="space-y-3">
-            {lookaheadResult.issues.length > 0 && (
-              <div className="border border-border rounded-lg overflow-hidden">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="bg-muted/50 text-muted-foreground">
-                      <th className="text-left px-3 py-1.5 font-semibold">Indicator</th>
-                      <th className="text-left px-3 py-1.5 font-semibold">Severity</th>
-                      <th className="text-left px-3 py-1.5 font-semibold">Description</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lookaheadResult.issues.map((issue, i) => (
-                      <tr key={i} className="border-t border-border">
-                        <td className="px-3 py-1.5 font-mono">{issue.indicator}</td>
-                        <td className="px-3 py-1.5">
-                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
-                            issue.severity === 'critical' ? 'bg-rose-500/10 text-rose-400' : 'bg-amber-500/10 text-amber-400'
-                          }`}>{issue.severity}</span>
-                        </td>
-                        <td className="px-3 py-1.5 text-muted-foreground">{issue.description}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            {lookaheadResult.output && (
-              <details className="text-xs">
-                <summary className="text-muted-foreground cursor-pointer hover:text-foreground">Raw Output</summary>
-                <pre className="mt-2 p-3 bg-muted/30 border border-border rounded-lg overflow-auto text-[10px] max-h-[300px] text-muted-foreground whitespace-pre-wrap">
-                  {lookaheadResult.output}
-                </pre>
-              </details>
-            )}
-          </div>
-        ) : (
-          <div className={`${SECTION_CARD} flex flex-col items-center justify-center min-h-[150px]`}>
-            <div className="text-[32px] mb-3 opacity-30">⚡</div>
-            <div className="text-sm font-semibold text-muted-foreground mb-1">No lookahead analysis yet</div>
-            <div className="text-xs text-muted-foreground text-center max-w-[280px]">
-              Click &quot;Run Lookahead Analysis&quot; to check for future data leakage.
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ===== SECTION 3: RECURSIVE ANALYSIS ===== */}
-      <div className={SECTION_CARD}>
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-xs font-semibold text-foreground">
-            3. Recursive Analysis{' '}
-            <Tooltip content="§22: Checks for circular indicator dependencies">
-              <span className="text-muted-foreground text-xs cursor-help">(§22)</span>
-            </Tooltip>
-          </span>
-          {recursiveResult && (
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-              recursiveResult.status === 'PASS' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
-            }`}>
-              {recursiveResult.status}
-            </span>
-          )}
-        </div>
-
-        <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
-          Checks if indicators depend on each other in a loop. If indicator A depends on B and B depends on A, that creates unstable signals that can break in live trading.
-        </p>
-
-        <button
-          onClick={handleRunRecursive}
-          disabled={isRunningRecursive}
-          className={`${BTN_PRIMARY} mb-3`}
-        >
-          {isRunningRecursive ? (
-            <>
-              <div className="animate-spin text-sm">⟳</div>
-              Running Recursive Analysis...
-            </>
-          ) : (
-            <>▶ Run Recursive Analysis</>
-          )}
-        </button>
-
-        {recursiveResult ? (
-          <div className="space-y-3">
-            {recursiveResult.issues.length > 0 && (
-              <div className="border border-border rounded-lg overflow-hidden">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="bg-muted/50 text-muted-foreground">
-                      <th className="text-left px-3 py-1.5 font-semibold">Indicator</th>
-                      <th className="text-left px-3 py-1.5 font-semibold">Severity</th>
-                      <th className="text-left px-3 py-1.5 font-semibold">Description</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recursiveResult.issues.map((issue, i) => (
-                      <tr key={i} className="border-t border-border">
-                        <td className="px-3 py-1.5 font-mono">{issue.indicator}</td>
-                        <td className="px-3 py-1.5">
-                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
-                            issue.severity === 'critical' ? 'bg-rose-500/10 text-rose-400' : 'bg-amber-500/10 text-amber-400'
-                          }`}>{issue.severity}</span>
-                        </td>
-                        <td className="px-3 py-1.5 text-muted-foreground">{issue.description}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            {recursiveResult.output && (
-              <details className="text-xs">
-                <summary className="text-muted-foreground cursor-pointer hover:text-foreground">Raw Output</summary>
-                <pre className="mt-2 p-3 bg-muted/30 border border-border rounded-lg overflow-auto text-[10px] max-h-[300px] text-muted-foreground whitespace-pre-wrap">
-                  {recursiveResult.output}
-                </pre>
-              </details>
-            )}
-          </div>
-        ) : (
-          <div className={`${SECTION_CARD} flex flex-col items-center justify-center min-h-[150px]`}>
-            <div className="text-[32px] mb-3 opacity-30">🔄</div>
-            <div className="text-sm font-semibold text-muted-foreground mb-1">No recursive analysis yet</div>
-            <div className="text-xs text-muted-foreground text-center max-w-[280px]">
-              Click &quot;Run Recursive Analysis&quot; to check for circular indicator dependencies.
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ===== OVERALL VERDICT ===== */}
-      {(verificationResult || lookaheadResult || recursiveResult) && (
-        <div className={`rounded-card p-4 border ${
-          allPassed
-            ? 'bg-emerald-500/6 border-emerald-500/20'
-            : 'bg-amber-500/6 border-amber-500/20'
-        }`}>
-          <div className="flex items-center gap-3">
-            <span className="text-xl">{allPassed ? '🎯' : '⚠️'}</span>
-            <div>
-              <div className={`text-xs font-bold ${allPassed ? 'text-emerald-400' : 'text-amber-400'}`}>
-                {allPassed ? 'All Validations Passed' : 'Validations Incomplete'}
-              </div>
-              <div className="text-[10px] text-muted-foreground mt-0.5">
-                Verification: {verificationResult ? verificationResult.verdict : 'Not run'} · 
-                Lookahead: {lookaheadResult ? lookaheadResult.status : 'Not run'} · 
-                Recursive: {recursiveResult ? recursiveResult.status : 'Not run'}
-              </div>
-            </div>
-            {allPassed && (
-              <button
-                disabled={launching}
-                onClick={async () => {
-                  if (!confirm(`Launch paper trading for ${strategy}? This creates a new Docker container.`)) return;
-                  setLaunching(true);
-                  try {
-                    const res = await getExperiments();
-                    const exp = (res.items || []).find((e) => e.strategy_name === strategy || e.name === strategy);
-                    const versionId = exp?.best_version_id || undefined;
-                    const result = await launchPaperBot({
-                      strategy_name: strategy,
-                      strategy_version_id: versionId,
-                      pair_whitelist: ['BTC/USDT:USDT'],
-                    });
-                    toast.success(`🚀 ${result.message}`);
-                  } catch (err) {
-                    toast.error(`Launch failed: ${err instanceof Error ? err.message : String(err)}`);
-                  } finally {
-                    setLaunching(false);
-                  }
-                }}
-                className="ml-auto px-3 py-1.5 rounded-btn text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
-              >
-                {launching ? '⏳ Launching...' : '🚀 Launch Paper Trading'}
-              </button>
-            )}
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-      )}
+
+        {/* 4. Final Badge */}
+        <div className="bg-up/[0.04] border border-up/15 rounded-md px-4 py-3 text-center shadow-xl">
+          <span className="text-up font-bold text-[13px]">✓ All Validations Passed</span>
+          <span className="text-muted text-[11px] ml-3 font-mono">Strategy ready for paper trading deployment</span>
+        </div>
+      </div>
     </div>
   );
 }

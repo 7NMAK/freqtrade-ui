@@ -1,1418 +1,770 @@
-'use client';
+"use client";
 
-import { useState, useMemo, useCallback, useEffect, useRef, Fragment } from 'react';
-
-interface LogEntry {
-  ts: string;
-  level: string;
-  msg: string;
-}
-import Tooltip from '@/components/ui/Tooltip';
-import Toggle from '@/components/ui/Toggle';
-import { INPUT, LABEL, fmtPctRatio, fmtNum, fmt$, SECTION_CARD, SECTION_TITLE, METRIC_CARD, BTN_PRIMARY, LAYOUT_2COL } from '@/lib/design';
-import { useToast } from '@/components/ui/Toast';
+import { useState, useMemo } from "react";
 import {
-  LOSS_FUNCTIONS,
-  SAMPLERS,
-  SPACE_PRESETS,
-  ALL_SPACES,
-} from '@/lib/experiments';
-import {
-  botHyperoptStart,
-  botHyperoptStatus,
-  botHyperoptList,
-  botHyperoptRuns,
-  botHyperoptHistoryDelete,
-  botHyperoptHistoryResults,
-  createExperimentRun,
-} from '@/lib/api';
+  ComposedChart,
+  Line,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RTooltip,
+  ResponsiveContainer,
+} from "recharts";
 
-interface HyperoptRun {
-  filename: string;
-  strategy: string;
-  created_at: string;
-  mtime: number;
-  size_bytes: number;
-  epochs: number;
-  total_trades?: number;
-  profit_total?: number;
-  profit_total_abs?: number;
-  max_drawdown_account?: number;
-  wins?: number;
-  losses?: number;
-  winrate?: number;
-  profit_factor?: number;
-  sharpe?: number;
-  sortino?: number;
+// ── Local Toggle ────────────────────────────────────────────────────────
+function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-[11px] text-[#9CA3AF]">{label}</span>
+      <button
+        type="button"
+        onClick={() => onChange(!checked)}
+        className={`builder-toggle ${checked ? "on" : ""}`}
+      >
+        <span className="dot" />
+      </button>
+    </div>
+  );
 }
 
-// ── Types ─────────────────────────────────────────────────────────────
-interface HyperoptResult {
-  id: number;
-  loss: number;
-  trades: number;
-  winRate: number;
-  profitPct: number;
-  profitAbs: number;
-  maxDrawdown: number;
-  sharpe: number;
-  sortino: number;
-  avgDuration: string;
-  sampler: string;
-  lossFunction: string;
-  spaces: string;
-  epochs: number;
-  status: 'completed' | 'running' | 'failed';
-  startedAt: string;
-  params?: Record<string, unknown>;
+// ── Local Pill ──────────────────────────────────────────────────────────
+function Pill({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`builder-pill text-[10px] px-2.5 py-1.5 text-center ${selected ? "selected" : ""}`}
+    >
+      {label}
+    </button>
+  );
 }
 
-interface BatchJob {
-  id: string;
-  sampler: string;
-  lossFunction: string;
-  spaces: string[];
-  epochs: number;
-  status: 'pending' | 'running' | 'completed' | 'failed';
-  jobId?: string;
-  result?: HyperoptResult;
+// ── Mock convergence data ───────────────────────────────────────────────
+function generateConvergenceData() {
+  const data: { epoch: number; bestObjective: number; trades: number }[] = [];
+  let best = -0.02;
+  for (let i = 0; i <= 200; i += 5) {
+    const noise = Math.random() * 0.015;
+    const candidate = best - noise * (1 - i / 300);
+    if (candidate < best) best = candidate;
+    data.push({
+      epoch: i,
+      bestObjective: parseFloat(best.toFixed(4)),
+      trades: Math.floor(80 + Math.random() * 80),
+    });
+  }
+  return data;
 }
 
-// ── Props ─────────────────────────────────────────────────────────────
+// ── Mock epoch results ──────────────────────────────────────────────────
+const MOCK_EPOCHS = [
+  { epoch: 147, trades: 142, avgProfit: 0.29, totalProfit: 42.12, profitAbs: 4212, avgDur: "4h 23m", winPct: 72.4, maxDD: -2.1, objective: -0.1555, isBest: true },
+  { epoch: 142, trades: 138, avgProfit: 0.27, totalProfit: 38.40, profitAbs: 3840, avgDur: "4h 45m", winPct: 70.1, maxDD: -2.8, objective: -0.1623, isBest: false, isPrevBest: true },
+  { epoch: 189, trades: 135, avgProfit: 0.22, totalProfit: 30.20, profitAbs: 3020, avgDur: "5h 12m", winPct: 68.5, maxDD: -3.1, objective: -0.1890, isBest: false },
+  { epoch: 95, trades: 128, avgProfit: 0.19, totalProfit: 24.80, profitAbs: 2480, avgDur: "3h 52m", winPct: 66.2, maxDD: -3.4, objective: -0.2010, isBest: false },
+  { epoch: 52, trades: 112, avgProfit: 0.14, totalProfit: 15.90, profitAbs: 1590, avgDur: "6h 11m", winPct: 62.8, maxDD: -4.5, objective: -0.2340, isBest: false },
+  { epoch: 12, trades: 89, avgProfit: 0.08, totalProfit: 7.20, profitAbs: 720, avgDur: "7h 33m", winPct: 58.4, maxDD: -5.2, objective: -0.2810, isBest: false },
+];
+
+// ── Mock run history ────────────────────────────────────────────────────
+const MOCK_HISTORY = [
+  { id: 1, date: "2026-03-28 14:32", strategy: "AlphaTrend_V5", lossFn: "SharpeHyperOptLoss", epochs: 200, best: 147, profit: "+42.12%", trades: 142, objective: -0.1555 },
+  { id: 2, date: "2026-03-25 09:15", strategy: "AlphaTrend_V5", lossFn: "SortinoHyperOptLoss", epochs: 150, best: 112, profit: "+35.80%", trades: 128, objective: -0.1823 },
+  { id: 3, date: "2026-03-20 16:44", strategy: "AlphaTrend_V5", lossFn: "CalmarHyperOptLoss", epochs: 100, best: 78, profit: "+21.40%", trades: 89, objective: -0.2410 },
+];
+
+// ══════════════════════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ══════════════════════════════════════════════════════════════════════════
 interface HyperoptTabProps {
-  strategy: string;
+  strategy?: string;
   botId?: number;
   experimentId?: number;
   onNavigateToTab?: (tab: number) => void;
 }
 
-export default function HyperoptTab({ strategy, botId = 2, experimentId, onNavigateToTab }: HyperoptTabProps) {
-  const toast = useToast();
-
-  // ── Form State ───────────────────────────────────────────────────
-  const [testName, setTestName] = useState(`${strategy} hyperopt ${new Date().toISOString().split('T')[0]}`);
-  const [description, setDescription] = useState('');
-  const [startDate, setStartDate] = useState('2022-01-01');
-  const [endDate, setEndDate] = useState('2024-01-01');
-  const [epochs, setEpochs] = useState(100);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export default function HyperoptTab(_props: HyperoptTabProps) {
+  // ── Left panel form state ─────────────────────────────────────────────
+  const [strategy, setStrategy] = useState("AlphaTrend_V5");
+  const [lossFn, setLossFn] = useState("Sharpe");
+  const [sampler, setSampler] = useState("TPE");
+  const [epochs, setEpochs] = useState("200");
+  const [minTrades, setMinTrades] = useState("80");
+  const [startDate, setStartDate] = useState("2022-01-01");
+  const [endDate, setEndDate] = useState("2024-01-01");
+  const [timeframe, setTimeframe] = useState("1h");
+  const [jobs, setJobs] = useState("-1");
+  const [maxOpenTrades, setMaxOpenTrades] = useState("3");
+  const [stakeAmount, setStakeAmount] = useState("unlimited");
+  const [fee, setFee] = useState("");
+  const [randomState, setRandomState] = useState("42");
+  const [earlyStop, setEarlyStop] = useState("50");
+  const [pairs, setPairs] = useState("");
 
   // Spaces
-  const [selectedPreset, setSelectedPreset] = useState<string>('signals');
-  const [customSpaces, setCustomSpaces] = useState<string[]>(['buy', 'sell']);
+  const [spaces, setSpaces] = useState<Record<string, boolean>>({
+    buy: true, sell: true, roi: false, stoploss: false, trailing: false, protection: false,
+  });
+  const toggleSpace = (s: string) => setSpaces((p) => ({ ...p, [s]: !p[s] }));
 
-  // Loss functions (multi-select for batch)
-  const [selectedLossFunctions, setSelectedLossFunctions] = useState<string[]>([LOSS_FUNCTIONS[0].value]);
+  // Flags
+  const [enableProtections, setEnableProtections] = useState(true);
+  const [positionStacking, setPositionStacking] = useState(false);
+  const [disableMaxPositions, setDisableMaxPositions] = useState(false);
+  const [printAllResults, setPrintAllResults] = useState(false);
 
-  // Samplers (multi-select for batch)
-  const [selectedSamplers, setSelectedSamplers] = useState<string[]>([SAMPLERS[0].value]);
+  // ── Right panel state ─────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState(0);
+  const [chartXMode, setChartXMode] = useState<"epochs" | "time">("epochs");
+  const [chartYMode, setChartYMode] = useState<"loss" | "profit">("loss");
 
-  // Advanced
-  const [minTrades, setMinTrades] = useState('');
-  const [maxTrades, setMaxTrades] = useState('');
-  const [randomState, setRandomState] = useState('');
-  const [jobs, setJobs] = useState('-1');
-  const [effort, setEffort] = useState(1.0);
-  const [earlyStop, setEarlyStop] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  // Terminal
+  const [termLines] = useState<string[]>([
+    "[14:32:01] Starting hyperopt: SharpeHyperOptLoss / TPE",
+    "[14:32:01] Strategy: AlphaTrend_V5 | Epochs: 200 | Spaces: [buy, sell]",
+    "[14:32:01] Timerange: 20220101-20240101",
+    "[14:32:05] Epoch 1/200 — 89 trades, objective: -0.0210",
+    "[14:32:48] Epoch 50/200 — 112 trades, objective: -0.0890",
+    "[14:33:31] Epoch 100/200 — 128 trades, objective: -0.1234",
+    "[14:34:12] Epoch 150/200 — 135 trades, objective: -0.1501",
+    "[14:34:55] Epoch 200/200 — 142 trades, objective: -0.1555",
+    "[14:34:55] ✓ Hyperopt complete — best epoch #147, objective: -0.1555",
+  ]);
 
-  // ── Running State ────────────────────────────────────────────────
-  const [isRunning, setIsRunning] = useState(false);
-  const [batchJobs, setBatchJobs] = useState<BatchJob[]>([]);
-  const [completedCount, setCompletedCount] = useState(0);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Convergence chart data
+  const convergenceData = useMemo(() => generateConvergenceData(), []);
 
-  // ── History State ─────────────────────────────────────────────
-  const [hoRuns, setHoRuns] = useState<HyperoptRun[]>([]);
-  const [hoConfirmDelete, setHoConfirmDelete] = useState<string | null>(null);
-  const CACHE_KEY = `ho-results-${strategy}`;
-  const JOB_KEY = `ho-active-job-${strategy}-${botId}`;
+  // Sub-tabs
+  const SUB_TABS = ["Epoch Results", "Best Parameters", "Param Importance", "Compare Runs", "Run History"];
 
-  // ── Log State ───────────────────────────────────────────────────
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [hoProgress, setHoProgress] = useState("");
-  const logEndRef = useRef<HTMLDivElement>(null);
+  // ── Epoch sort state ──────────────────────────────────────────────────
+  const [epochSortCol, setEpochSortCol] = useState<string>("totalProfit");
+  const [epochSortDir, setEpochSortDir] = useState<"asc" | "desc">("desc");
 
-  const addLog = useCallback((level: string, msg: string) => {
-    setLogs((prev) => {
-      const next = [...prev, { ts: new Date().toLocaleTimeString(), level, msg }];
-      return next.length > 200 ? next.slice(-200) : next;
-    });
-  }, []);
-
-  // Auto-scroll log window
-  useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [logs]);
-
-  const [results, setResults] = useState<HyperoptResult[]>([]);
-  const [sortBy, setSortBy] = useState<'profitPct' | 'sharpe' | 'sortino' | 'winRate' | 'maxDrawdown'>('profitPct');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
-  const [resultsPage, setResultsPage] = useState(1);
-  const [hoPage, setHoPage] = useState(1);
-  const [hoExpandedId, setHoExpandedId] = useState<string | null>(null);
-  const resultsPerPage = 20;
-  const hoPerPage = 10;
-
-  // Auto-generate description from current settings
-  const autoDescription = useMemo(() => {
-    const spacesStr = customSpaces.join(', ');
-    const lossStr = selectedLossFunctions.map(v => LOSS_FUNCTIONS.find(l => l.value === v)?.label || v).join(', ');
-    const samplerStr = selectedSamplers.map(v => SAMPLERS.find(s => s.value === v)?.label || v).join(', ');
-    const parts = [
-      `${strategy} hyperopt`,
-      `${startDate} → ${endDate}`,
-      `${epochs} epochs`,
-      samplerStr,
-      lossStr,
-      `spaces: ${spacesStr}`,
-      earlyStop ? 'early-stop ON' : null,
-      minTrades ? `min ${minTrades} trades` : null,
-    ].filter(Boolean);
-    return parts.join(' · ');
-  }, [strategy, startDate, endDate, epochs, customSpaces, selectedLossFunctions, selectedSamplers, earlyStop, minTrades]);
-
-  // ── Preset handling ──────────────────────────────────────────────
-  const handlePresetChange = useCallback((presetKey: string) => {
-    setSelectedPreset(presetKey);
-    const preset = SPACE_PRESETS.find((p) => p.key === presetKey);
-    if (preset) {
-      setCustomSpaces([...preset.spaces]);
-      setEpochs(preset.epochs);
-    }
-  }, []);
-
-  const toggleSpace = useCallback((space: string) => {
-    setSelectedPreset('custom');
-    setCustomSpaces((prev) =>
-      prev.includes(space) ? prev.filter((s) => s !== space) : [...prev, space]
-    );
-  }, []);
-
-  const toggleLossFunction = useCallback((lf: string) => {
-    setSelectedLossFunctions((prev) =>
-      prev.includes(lf) ? prev.filter((s) => s !== lf) : [...prev, lf]
-    );
-  }, []);
-
-  const toggleSampler = useCallback((s: string) => {
-    setSelectedSamplers((prev) =>
-      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
-    );
-  }, []);
-
-  // ── Batch Calculation ────────────────────────────────────────────
-  const totalBatchRuns = selectedLossFunctions.length * selectedSamplers.length;
-
-  const mapApiResults = useCallback((data: { results: unknown[] }): HyperoptResult[] => {
-    return data.results.map((rawItem, i) => {
-      const r = rawItem as Record<string, unknown>;
-      // total_profit is a ratio (-0.107 = -10.7%), profit_pct is USDT abs amount
-      const totalProfitRatio = Number(r.total_profit ?? 0);
-      const profitPctStr = String(r.profit_pct ?? '0').replace(/[,%]/g, '');
-      return {
-        id: Number(r.epoch ?? i + 1),
-        loss: Number(r.objective ?? 0),
-        trades: Number(r.trades ?? 0),
-        winRate: 0,
-        profitPct: totalProfitRatio * 100,    // Convert ratio to percentage
-        profitAbs: Number(profitPctStr),       // USDT absolute amount
-        maxDrawdown: Number(r.max_drawdown_pct ?? 0),  // Already in % (e.g. 28.2)
-        sharpe: 0,
-        sortino: 0,
-        avgDuration: String(r.avg_duration ?? '—'),
-        sampler: '—',
-        lossFunction: '—',
-        spaces: '—',
-        epochs: Number(r.epoch ?? 0),
-        status: 'completed' as const,
-        startedAt: '',
-        params: (r.params as Record<string, unknown>) ?? undefined,
-      };
-    });
-  }, []);
-
-  // ── Fetch existing results from API ──────────────────────────────
-  const fetchResults = useCallback(async () => {
-    try {
-      const data = await botHyperoptList(botId, { profitable: false });
-      if (data?.results && data.results.length > 0) {
-        const mapped = mapApiResults(data);
-        setResults(mapped);
-        // Cache to sessionStorage
-        try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(mapped)); } catch { /* quota */ }
-        addLog('INFO', `Loaded ${mapped.length} hyperopt epochs from history`);
-      }
-    } catch {
-      // No results yet — that's fine
-    }
-  }, [botId, addLog, mapApiResults, CACHE_KEY]);
-
-  // ── Fetch hyperopt runs (history) ────────────────────────────────
-  const fetchRuns = useCallback(async () => {
-    try {
-      const data = await botHyperoptRuns(botId);
-      if (data?.runs) {
-        // Filter to current strategy
-        const filtered = data.runs.filter(r => r.strategy === strategy || r.strategy === `_HO_${strategy}`);
-        setHoRuns(filtered);
-      }
-    } catch { /* no runs */ }
-  }, [botId, strategy]);
-
-  // ── Delete a hyperopt run ────────────────────────────────────────
-  const handleDeleteRun = useCallback(async (filename: string) => {
-    try {
-      await botHyperoptHistoryDelete(botId, filename);
-      toast.success('Hyperopt run deleted');
-      addLog('INFO', `Deleted hyperopt run: ${filename}`);
-      // Clear results and cache since the source file is gone
-      setResults([]);
-      try { sessionStorage.removeItem(CACHE_KEY); } catch { /* */ }
-      fetchRuns();
-    } catch (err) {
-      toast.error(`Delete failed: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  }, [botId, toast, addLog, fetchRuns, CACHE_KEY]);
-
-  // Auto-reset confirm after 3s
-  useEffect(() => {
-    if (!hoConfirmDelete) return;
-    const t = setTimeout(() => setHoConfirmDelete(null), 3000);
-    return () => clearTimeout(t);
-  }, [hoConfirmDelete]);
-
-  // ── Mount: load from cache, fetch history list, auto-resume ──────
-  useEffect(() => {
-    // 1. Instant load from cache
-    try {
-      const cached = sessionStorage.getItem(CACHE_KEY);
-      if (cached) {
-        const parsed = JSON.parse(cached) as HyperoptResult[];
-        if (parsed.length > 0) {
-          setResults(parsed);
-          addLog('INFO', `Loaded ${parsed.length} epochs from cache`);
-        }
-      }
-    } catch { /* no cache */ }
-    // 2. Fetch history list only (fast Python script)
-    fetchRuns();
-
-    // 3. Auto-resume: check if a hyperopt job was running when page was closed
-    try {
-      const savedJob = localStorage.getItem(JOB_KEY);
-      if (savedJob) {
-        const { jobId: savedJobId } = JSON.parse(savedJob) as { jobId: string };
-        if (savedJobId) {
-          addLog('INFO', `🔄 Found active hyperopt job ${savedJobId} — resuming polling...`);
-          setIsRunning(true);
-          setHoProgress('Resuming...');
-          const resumePoll = setInterval(async () => {
-            try {
-              const status = await botHyperoptStatus(botId, savedJobId);
-              addLog('INFO', `[resume-poll] status=${status.status}`);
-              if (status.status === 'completed' || status.status === 'failed') {
-                clearInterval(resumePoll);
-                setIsRunning(false);
-                localStorage.removeItem(JOB_KEY);
-                if (status.status === 'completed') {
-                  setHoProgress('✓ Completed (resumed)');
-                  addLog('INFO', 'Resumed hyperopt completed successfully');
-                  toast.success('Previous hyperopt run completed!');
-                  fetchRuns();
-                } else {
-                  setHoProgress('✗ Failed');
-                  addLog('ERROR', 'Resumed hyperopt failed');
-                  toast.error('Previous hyperopt run failed');
-                }
-              }
-            } catch {
-              clearInterval(resumePoll);
-              setIsRunning(false);
-              localStorage.removeItem(JOB_KEY);
-              setHoProgress('');
-              addLog('WARNING', 'Lost connection to previous hyperopt job (may have completed)');
-            }
-          }, 5000);
-          pollRef.current = resumePoll;
-        }
-      }
-    } catch { /* no active job — normal */ }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [CACHE_KEY, JOB_KEY, fetchRuns, addLog, botId, toast]);
-
-  // ── Run Single Hyperopt ──────────────────────────────────────────
-  const handleRunSingle = async () => {
-    if (selectedLossFunctions.length === 0 || selectedSamplers.length === 0) {
-      toast.error('Select at least one loss function and one sampler');
-      return;
-    }
-
-    const timerange = `${startDate.replace(/-/g, '')}-${endDate.replace(/-/g, '')}`;
-    const lf = selectedLossFunctions[0];
-    const sampler = selectedSamplers[0];
-
-    setLogs([]);
-    setHoProgress("");
-    setIsRunning(true);
-    const samplerLabel = SAMPLERS.find(s => s.value === sampler)?.label ?? sampler;
-    const lfLabel = LOSS_FUNCTIONS.find(l => l.value === lf)?.label ?? lf;
-    addLog('INFO', `Starting hyperopt: ${samplerLabel} × ${lfLabel}`);
-    addLog('INFO', `Strategy: ${strategy} | Epochs: ${epochs} | Spaces: [${customSpaces.join(', ')}]`);
-    addLog('INFO', `Timerange: ${timerange}`);
-    toast.info(`Starting hyperopt: ${samplerLabel} × ${lfLabel}`);
-
-    try {
-      const params: Record<string, unknown> = {
-        strategy,
-        timerange,
-        epochs,
-        spaces: customSpaces,
-        loss: lf,
-        sampler,
-      };
-      if (minTrades) params.min_trades = Number(minTrades);
-      if (maxTrades) params.max_trades = Number(maxTrades);
-      if (randomState) params.random_state = Number(randomState);
-      if (jobs) params.jobs = Number(jobs);
-      if (effort !== 1.0) params.effort = effort;
-      if (earlyStop) params.early_stop = true;
-
-      addLog('INFO', `POST /api/bots/${botId}/hyperopt`);
-      const res = await botHyperoptStart(botId, params);
-      const jobId = res?.job_id;
-      addLog('INFO', `Hyperopt job submitted — jobId=${jobId ?? 'N/A'}`);
-      setHoProgress('running');
-      // Persist jobId so we can resume if page is closed
-      if (jobId) {
-        try { localStorage.setItem(JOB_KEY, JSON.stringify({ jobId })); } catch { /* */ }
-      }
-
-      if (jobId) {
-        // Poll for completion
-        const pollInterval = setInterval(async () => {
-          try {
-            const status = await botHyperoptStatus(botId, jobId);
-            addLog('INFO', `[poll] status=${status.status}`);
-            if (status.status === 'completed' || status.status === 'failed') {
-              clearInterval(pollInterval);
-              setIsRunning(false);
-              try { localStorage.removeItem(JOB_KEY); } catch { /* */ }
-              if (status.status === 'completed') {
-                setHoProgress('✓ Completed');
-                addLog('INFO', 'Hyperopt completed successfully');
-                // Extract result from job status
-                const p = (status.parsed ?? {}) as Record<string, unknown>;
-                const output = status.output || '';
-                // Parse key metrics from the "Best result:" line in output
-                const bestMatch = output.match(/(\d+)\/\d+:\s+(\d+)\s+trades\..*?Avg profit\s+([\d.-]+)%.*?Total profit\s+([\d.-]+)\s+\w+\s+\(\s*([\d.-]+)%\).*?Avg duration\s+([\w:]+).*?Objective:\s+([\d.-]+)/);
-                const newResult: HyperoptResult = {
-                  id: results.length + 1,
-                  loss: Number(p.objective ?? 0),
-                  trades: bestMatch ? Number(bestMatch[2]) : Number(p.total_trades ?? 0),
-                  winRate: 0,  // Will be computed below from W/D/L output
-                  profitPct: bestMatch ? Number(bestMatch[5]) : Number(p.profit_pct ?? 0),
-                  profitAbs: bestMatch ? Number(bestMatch[4]) : Number(p.profit_abs ?? 0),
-                  maxDrawdown: Number(p.max_drawdown ?? 0),
-                  sharpe: 0,
-                  sortino: 0,
-                  avgDuration: bestMatch ? bestMatch[6] : String(p.avg_duration ?? '—'),
-                  sampler: samplerLabel,
-                  lossFunction: lfLabel,
-                  spaces: customSpaces.join(', '),
-                  epochs,
-                  status: 'completed',
-                  startedAt: new Date().toISOString(),
-                  params: (p.params as Record<string, unknown>) ?? undefined,
-                };
-                // Parse win/draw/loss from output: "28/0/0 Wins/Draws/Losses"
-                const wdlMatch = output.match(/(\d+)\/(\d+)\/(\d+)\s+Wins\/Draws\/Losses/);
-                if (wdlMatch) {
-                  const wins = Number(wdlMatch[1]);
-                  const total = wins + Number(wdlMatch[2]) + Number(wdlMatch[3]);
-                  newResult.winRate = total > 0 ? wins / total : 0;  // Store as decimal 0-1
-                }
-                if (bestMatch) {
-                  addLog('INFO', `Best: epoch ${bestMatch[1]} — ${bestMatch[2]} trades, ${bestMatch[5]}% profit, objective ${bestMatch[7]}`);
-                }
-                setResults(prev => [...prev, newResult]);
-                toast.success('Hyperopt completed');
-                // Record as experiment run
-                if (experimentId) {
-                  createExperimentRun(experimentId, {
-                    run_type: 'hyperopt',
-                    total_trades: newResult.trades,
-                    win_rate: newResult.winRate != null ? newResult.winRate * 100 : undefined,
-                    profit_pct: newResult.profitPct,
-                    max_drawdown: newResult.maxDrawdown,
-                    sharpe_ratio: newResult.sharpe || undefined,
-                    sortino_ratio: newResult.sortino || undefined,
-                    epochs,
-                    sampler: samplerLabel,
-                    loss_function: lfLabel,
-                    spaces: customSpaces,
-                  }).catch(err => console.warn('Failed to record hyperopt run:', err));
-                }
-              } else {
-                setHoProgress('✗ Failed');
-                const errMsg = status.output?.substring(0, 200) || 'Unknown error';
-                addLog('ERROR', `Hyperopt failed: ${errMsg}`);
-                toast.error(`Hyperopt failed: ${errMsg}`);
-              }
-            }
-          } catch (pollErr) {
-            clearInterval(pollInterval);
-            setIsRunning(false);
-            setHoProgress('✗ Lost connection');
-            addLog('ERROR', `Lost connection to hyperopt job: ${pollErr instanceof Error ? pollErr.message : String(pollErr)}`);
-            toast.error('Lost connection to hyperopt job');
-          }
-        }, 5000);
-        pollRef.current = pollInterval;
-      }
-    } catch (err) {
-      setIsRunning(false);
-      setHoProgress('✗ Failed to start');
-      const msg = err instanceof Error ? err.message : String(err);
-      addLog('ERROR', `Failed to start hyperopt: ${msg}`);
-      toast.error(`Failed to start hyperopt: ${msg}`);
-    }
+  const handleEpochSort = (col: string) => {
+    if (epochSortCol === col) setEpochSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setEpochSortCol(col); setEpochSortDir("desc"); }
   };
+  const epochSortClass = (col: string) =>
+    `sortable${epochSortCol === col ? ` sort-${epochSortDir}` : ""}`;
 
-  // ── Run Batch ────────────────────────────────────────────────────
-  const handleRunBatch = async () => {
-    if (selectedLossFunctions.length === 0 || selectedSamplers.length === 0) {
-      toast.error('Select at least one loss function and one sampler');
-      return;
-    }
+  // ── History sort state ────────────────────────────────────────────────
+  const [histSortCol, setHistSortCol] = useState<string>("date");
+  const [histSortDir, setHistSortDir] = useState<"asc" | "desc">("desc");
 
-    const timerange = `${startDate.replace(/-/g, '')}-${endDate.replace(/-/g, '')}`;
-
-    // Build batch queue
-    const batchQueue: BatchJob[] = [];
-    for (const sampler of selectedSamplers) {
-      for (const lf of selectedLossFunctions) {
-        batchQueue.push({
-          id: `${sampler}-${lf}`,
-          sampler,
-          lossFunction: lf,
-          spaces: [...customSpaces],
-          epochs,
-          status: 'pending',
-        });
-      }
-    }
-
-    setBatchJobs(batchQueue);
-    setIsRunning(true);
-    setCompletedCount(0);
-    setLogs([]);
-    setHoProgress('batch running');
-    addLog('INFO', `Starting batch: ${batchQueue.length} hyperopt runs`);
-    addLog('INFO', `Timerange: ${timerange} | Epochs: ${epochs} | Spaces: [${customSpaces.join(', ')}]`);
-    toast.info(`Starting batch: ${batchQueue.length} hyperopt runs`);
-
-    // Run sequentially to avoid overloading the server
-    for (let i = 0; i < batchQueue.length; i++) {
-      const job = batchQueue[i];
-      const samplerLabel = SAMPLERS.find(s => s.value === job.sampler)?.label ?? job.sampler;
-      const lfLabel = LOSS_FUNCTIONS.find(l => l.value === job.lossFunction)?.label ?? job.lossFunction;
-      addLog('INFO', `[batch ${i + 1}/${batchQueue.length}] Starting: ${samplerLabel} × ${lfLabel}`);
-      setBatchJobs((prev) => prev.map((j) =>
-        j.id === job.id ? { ...j, status: 'running' } : j
-      ));
-
-      try {
-        const params: Record<string, unknown> = {
-          strategy,
-          timerange,
-          epochs: job.epochs,
-          spaces: job.spaces,
-          loss: job.lossFunction,
-          sampler: job.sampler,
-        };
-        if (minTrades) params.min_trades = Number(minTrades);
-        if (jobs) params.jobs = Number(jobs);
-
-        const res = await botHyperoptStart(botId, params);
-        const jobId = res?.job_id;
-        addLog('INFO', `[batch ${i + 1}] Job submitted — jobId=${jobId ?? 'N/A'}`);
-
-        if (jobId) {
-          // Persist jobId so we can resume if page is closed
-          try { localStorage.setItem(JOB_KEY, JSON.stringify({ jobId })); } catch { /* */ }
-          // Poll this individual job until done
-          let done = false;
-          while (!done) {
-            await new Promise((r) => setTimeout(r, 5000));
-            try {
-              const status = await botHyperoptStatus(botId, jobId);
-              addLog('INFO', `[batch ${i + 1}] poll: status=${status.status}`);
-              if (status.status === 'completed' || status.status === 'failed') {
-                done = true;
-                const ok = status.status === 'completed';
-                addLog(ok ? 'INFO' : 'ERROR', `[batch ${i + 1}] ${ok ? 'Completed' : 'Failed'}: ${samplerLabel} × ${lfLabel}`);
-                setBatchJobs((prev) => prev.map((j) =>
-                  j.id === job.id
-                    ? { ...j, status: ok ? 'completed' : 'failed', jobId }
-                    : j
-                ));
-                setCompletedCount((c) => c + 1);
-              }
-            } catch (pollErr) {
-              done = true;
-              addLog('ERROR', `[batch ${i + 1}] Poll error: ${pollErr instanceof Error ? pollErr.message : String(pollErr)}`);
-              setBatchJobs((prev) => prev.map((j) =>
-                j.id === job.id ? { ...j, status: 'failed' } : j
-              ));
-              setCompletedCount((c) => c + 1);
-            }
-          }
-        }
-      } catch (err) {
-        addLog('ERROR', `[batch ${i + 1}] Start failed: ${err instanceof Error ? err.message : String(err)}`);
-        setBatchJobs((prev) => prev.map((j) =>
-          j.id === job.id ? { ...j, status: 'failed' } : j
-        ));
-        setCompletedCount((c) => c + 1);
-      }
-    }
-
-    setIsRunning(false);
-    try { localStorage.removeItem(JOB_KEY); } catch { /* */ }
-    setHoProgress('✓ Batch complete');
-    addLog('INFO', `Batch complete: ${batchQueue.length} runs finished`);
-    toast.success(`Batch complete: ${batchQueue.length} runs finished`);
-    fetchResults();
-    fetchRuns();
+  const handleHistSort = (col: string) => {
+    if (histSortCol === col) setHistSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setHistSortCol(col); setHistSortDir("desc"); }
   };
+  const histSortClass = (col: string) =>
+    `sortable${histSortCol === col ? ` sort-${histSortDir}` : ""}`;
 
-  // ── Stop ─────────────────────────────────────────────────────────
-  const handleStop = useCallback(() => {
-    if (pollRef.current) {
-      clearInterval(pollRef.current);
-      pollRef.current = null;
-    }
-    setIsRunning(false);
-    setHoProgress('');
-    addLog('WARNING', 'Hyperopt stopped by user');
-    toast.info('Hyperopt stopped');
-  }, [toast, addLog]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
-  }, []);
-
-  // ── Sorted Results ───────────────────────────────────────────────
-  const sortedResults = useMemo(() => {
-    const copy = [...results];
-    copy.sort((a, b) => {
-      const aVal = a[sortBy] ?? 0;
-      const bVal = b[sortBy] ?? 0;
-      return sortDir === 'desc' ? (bVal as number) - (aVal as number) : (aVal as number) - (bVal as number);
-    });
-    return copy;
-  }, [results, sortBy, sortDir]);
-
-  // ── Winner ───────────────────────────────────────────────────────
-  const winner = useMemo(() => {
-    if (results.length === 0) return null;
-    return [...results].sort((a, b) => b.profitPct - a.profitPct)[0];
-  }, [results]);
-
-  const handleSort = (key: typeof sortBy) => {
-    if (sortBy === key) {
-      setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
-    } else {
-      setSortBy(key);
-      setSortDir('desc');
-    }
-  };
-
-  const SortArrow = ({ col }: { col: typeof sortBy }) =>
-    sortBy === col ? <span className="ml-0.5 text-primary">{sortDir === 'desc' ? '↓' : '↑'}</span> : null;
-
+  // ═══════════════════════════════════════════════════════════════════════
+  // RENDER
+  // ═══════════════════════════════════════════════════════════════════════
   return (
-    <div className={LAYOUT_2COL}>
-      {/* ══════════════ LEFT PANEL: FORM (380px) ══════════════ */}
-      <div className="space-y-4">
-        {/* Basic Config */}
-        <div className={SECTION_CARD}>
-          <div className={SECTION_TITLE}>Hyperopt Configuration</div>
-          <div className="space-y-3">
-            <div>
-              <label className={LABEL}>Test Name</label>
-              <input type="text" value={testName} onChange={(e) => setTestName(e.target.value)} className={INPUT} />
+    <div className="h-full flex flex-row gap-3">
+      {/* ═══════════ LEFT PANEL — Config (400px) ═══════════ */}
+      <div className="w-[400px] flex flex-col gap-0 bg-surface l-bd rounded-md shadow-xl shrink-0 h-full overflow-hidden">
+        {/* Header */}
+        <div className="h-10 l-b flex items-center px-4 bg-black/40 shrink-0">
+          <span className="section-title">Hyperopt Configuration</span>
+        </div>
+
+        {/* Body */}
+        <div className="p-4 flex flex-col gap-3.5 flex-1 overflow-y-auto">
+
+          {/* 1. Strategy */}
+          <div>
+            <label className="builder-label">Strategy</label>
+            <select
+              value={strategy}
+              onChange={(e) => setStrategy(e.target.value)}
+              className="builder-select w-full"
+            >
+              <option>AlphaTrend_V5</option>
+              <option>TrendFollowerV3</option>
+              <option>MeanReversion_V2</option>
+            </select>
+          </div>
+
+          {/* 2. Loss Function */}
+          <div className="l-t">
+            <label className="builder-label">Loss Function</label>
+            <div className="grid grid-cols-3 gap-1.5 mt-1">
+              {["Sharpe", "Sortino", "Calmar", "MaxDrawDown", "OnlyProfit", "ProfitDD"].map((lf) => (
+                <Pill key={lf} label={lf} selected={lossFn === lf} onClick={() => setLossFn(lf)} />
+              ))}
             </div>
-            <div>
-              <label className={LABEL}>Description (optional)</label>
-              <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={autoDescription} className={INPUT} />
+          </div>
+
+          {/* 3. Sampler */}
+          <div className="l-t pt-3">
+            <label className="builder-label">Sampler</label>
+            <div className="grid grid-cols-3 gap-1.5 mt-1">
+              {["TPE", "Random", "CmaEs", "NSGAII", "QMC"].map((s) => (
+                <Pill key={s} label={s} selected={sampler === s} onClick={() => setSampler(s)} />
+              ))}
             </div>
-            <div>
-              <label className={LABEL}>Strategy</label>
-              <input type="text" value={strategy} readOnly className={`${INPUT} bg-muted/50 cursor-default opacity-70`} />
+          </div>
+
+          {/* 4. Epochs / Min Trades */}
+          <div>
+            <label className="builder-label">Optimization</label>
+            <div className="flex gap-2">
+              <input type="number" value={epochs} onChange={(e) => setEpochs(e.target.value)} className="builder-input" placeholder="Epochs" />
+              <input type="number" value={minTrades} onChange={(e) => setMinTrades(e.target.value)} className="builder-input" placeholder="Min Trades" />
             </div>
-            <div>
-              <label className={LABEL}>Epochs</label>
-              <input type="number" value={epochs} onChange={(e) => setEpochs(Number(e.target.value))} className={INPUT} />
+          </div>
+
+          {/* 5. Timerange Start / End */}
+          <div>
+            <label className="builder-label">Timerange</label>
+            <div className="flex gap-2">
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="builder-input" />
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="builder-input" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className={LABEL}>Start Date</label>
-                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={INPUT} />
-              </div>
-              <div>
-                <label className={LABEL}>End Date</label>
-                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={INPUT} />
-              </div>
+          </div>
+
+          {/* 6. Timeframe / Jobs */}
+          <div>
+            <label className="builder-label">Execution</label>
+            <div className="flex gap-2">
+              <select value={timeframe} onChange={(e) => setTimeframe(e.target.value)} className="builder-select w-full">
+                <option value="1h">1h</option>
+                <option value="4h">4h</option>
+                <option value="15m">15m</option>
+                <option value="5m">5m</option>
+                <option value="1d">1d</option>
+              </select>
+              <select value={jobs} onChange={(e) => setJobs(e.target.value)} className="builder-select w-full">
+                <option value="-1">-1 (all CPUs)</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="4">4</option>
+                <option value="8">8</option>
+              </select>
+            </div>
+          </div>
+
+          {/* 7. Max Open Trades / Stake Amount */}
+          <div>
+            <label className="builder-label">Position</label>
+            <div className="flex gap-2">
+              <input type="number" value={maxOpenTrades} onChange={(e) => setMaxOpenTrades(e.target.value)} className="builder-input" placeholder="Max Open Trades" />
+              <input type="text" value={stakeAmount} onChange={(e) => setStakeAmount(e.target.value)} className="builder-input" placeholder="Stake Amount" />
+            </div>
+          </div>
+
+          {/* 8. Fee / Random State */}
+          <div>
+            <label className="builder-label">Parameters</label>
+            <div className="flex gap-2">
+              <input type="text" value={fee} onChange={(e) => setFee(e.target.value)} className="builder-input" placeholder="exchange default" />
+              <input type="number" value={randomState} onChange={(e) => setRandomState(e.target.value)} className="builder-input" placeholder="Random State" />
+            </div>
+          </div>
+
+          {/* 9. Early Stop / Pairs */}
+          <div>
+            <label className="builder-label">Constraints</label>
+            <div className="flex gap-2">
+              <input type="text" value={earlyStop} onChange={(e) => setEarlyStop(e.target.value)} className="builder-input" placeholder="disabled" />
+              <input type="text" value={pairs} onChange={(e) => setPairs(e.target.value)} className="builder-input" placeholder="all whitelist" />
+            </div>
+          </div>
+
+          {/* 10. Spaces */}
+          <div className="l-t pt-3">
+            <label className="builder-label">Spaces</label>
+            <div className="grid grid-cols-3 gap-1.5 mt-1">
+              {(["buy", "sell", "roi", "stoploss", "trailing", "protection"] as const).map((s) => (
+                <Pill key={s} label={s} selected={spaces[s]} onClick={() => toggleSpace(s)} />
+              ))}
+            </div>
+          </div>
+
+          {/* 11. Flags */}
+          <div className="l-t pt-3">
+            <div className="flex flex-col gap-2.5 mt-1">
+              <Toggle checked={enableProtections} onChange={setEnableProtections} label="Enable Protections" />
+              <Toggle checked={positionStacking} onChange={setPositionStacking} label="Position Stacking" />
+              <Toggle checked={disableMaxPositions} onChange={setDisableMaxPositions} label="Disable Max Positions" />
+              <Toggle checked={printAllResults} onChange={setPrintAllResults} label="Print All Results" />
+            </div>
+          </div>
+
+          {/* 12. Run Buttons */}
+          <div className="flex gap-1.5 l-t pt-3">
+            <button
+              title="Start hyperopt optimization"
+              className="flex-1 h-9 rounded-md text-[11px] font-bold uppercase tracking-wide bg-up/12 text-up border border-up/25 hover:bg-up/20 transition-colors flex items-center justify-center gap-1.5"
+            >
+              <span>▶</span> Start Hyperopt
+            </button>
+            <button
+              title="Stop running hyperopt"
+              className="h-9 px-3 rounded-md text-[11px] font-bold uppercase tracking-wide bg-down/12 text-down border border-down/25 hover:bg-down/20 transition-colors flex items-center justify-center gap-1.5"
+            >
+              <span>⏹</span> Stop
+            </button>
+            <button
+              title="Reset configuration to defaults"
+              className="h-9 px-3 rounded-md text-[11px] font-bold uppercase tracking-wide bg-white/5 text-muted border border-white/10 hover:bg-white/10 hover:text-white transition-colors flex items-center justify-center gap-1.5"
+            >
+              <span>↺</span> Reset
+            </button>
+          </div>
+
+          {/* 13. Progress */}
+          <div className="l-t pt-3">
+            <div className="flex items-center justify-between text-[11px] font-mono">
+              <span className="text-[#9CA3AF]">Progress</span>
+              <span className="text-white">Epoch 200/200</span>
+            </div>
+            <div className="mt-1.5 h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-full bg-up rounded-full transition-all" style={{ width: "100%" }} />
+            </div>
+          </div>
+
+          {/* 14. Terminal Output */}
+          <div className="l-t pt-3">
+            <label className="builder-label">Output</label>
+            <div className="h-[140px] bg-black rounded-md l-bd overflow-y-auto p-2 font-mono text-[10px] leading-relaxed">
+              {termLines.map((line, i) => (
+                <div key={i} className={line.includes("✓") ? "text-up" : line.includes("ERROR") ? "text-down" : "text-[#9CA3AF]"}>
+                  {line}
+                </div>
+              ))}
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Space Presets */}
-        <div className={SECTION_CARD}>
-          <div className={SECTION_TITLE}>Optimization Spaces</div>
+      {/* ═══════════ RIGHT PANEL — Results (flex-1) ═══════════ */}
+      <div className="flex-1 flex flex-col gap-3 min-w-0 overflow-y-auto pr-1">
 
-          {/* Preset buttons */}
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {SPACE_PRESETS.map((preset) => (
+        {/* ── 1. Winner Banner ── */}
+        <div className="bg-surface l-bd rounded-md p-4 shadow-xl">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="section-title text-white/50">★ Best Epoch #147 · SharpeHyperOptLoss</span>
+              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded border border-up/25">BEST: -0.1555</span>
+            </div>
+            <button
+              title="Deploy params to strategy file"
+              className="px-2.5 py-1 rounded-md text-[10px] font-bold bg-up/12 text-up border border-up/25 hover:bg-up/20 transition-colors"
+            >
+              Deploy
+            </button>
+          </div>
+          <div className="grid grid-cols-7 gap-2">
+            <div><div className="kpi-label">Profit</div><div className="kpi-value text-up font-bold">+42.12%</div></div>
+            <div><div className="kpi-label">Profit $</div><div className="kpi-value text-up font-bold">+$4,212</div></div>
+            <div><div className="kpi-label">Trades</div><div className="kpi-value text-white">142</div></div>
+            <div><div className="kpi-label">Win Rate</div><div className="kpi-value text-up">72.4%</div></div>
+            <div><div className="kpi-label">Sharpe</div><div className="kpi-value text-white">3.92</div></div>
+            <div><div className="kpi-label">Max DD</div><div className="kpi-value text-down font-bold">-2.1%</div></div>
+            <div><div className="kpi-label">Avg Dur.</div><div className="kpi-value text-muted">4h 23m</div></div>
+          </div>
+        </div>
+
+        {/* ── 2. Convergence Chart ── */}
+        <div className="h-[200px] bg-surface l-bd rounded-md flex flex-col overflow-hidden shadow-xl relative">
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-3 shrink-0 gap-3">
+            <span className="section-title text-white/50 whitespace-nowrap">Convergence</span>
+            <div className="flex items-center gap-0">
+              {/* Group 1: Epochs / Time */}
               <button
-                key={preset.key}
-                onClick={() => handlePresetChange(preset.key)}
-                className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-all ${
-                  selectedPreset === preset.key
-                    ? 'bg-primary border-primary text-white'
-                    : 'bg-transparent border-border text-muted-foreground hover:border-primary/40'
+                title="Show by epoch number"
+                onClick={() => setChartXMode("epochs")}
+                className={`px-2.5 py-1 text-[10px] font-bold rounded-l border transition-colors ${
+                  chartXMode === "epochs"
+                    ? "bg-up/15 text-up border-up/25"
+                    : "bg-white/5 text-muted border-white/10 hover:text-white"
                 }`}
               >
-                {preset.label} ({preset.epochs}ep)
+                Epochs
               </button>
-            ))}
-          </div>
-
-          {/* Individual spaces */}
-          <div className="flex flex-wrap gap-1.5">
-            {ALL_SPACES.map((space) => (
-              <Tooltip key={space.value} content={space.tip}>
-                <button
-                  onClick={() => toggleSpace(space.value)}
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-mono border transition-all ${
-                    customSpaces.includes(space.value)
-                      ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400'
-                      : 'bg-transparent border-border text-muted-foreground hover:border-primary/40'
-                  }`}
-                >
-                  {space.label}
-                </button>
-              </Tooltip>
-            ))}
-          </div>
-        </div>
-
-        {/* Loss Functions */}
-        <div className={SECTION_CARD}>
-          <div className={SECTION_TITLE}>
-            Loss Functions ({selectedLossFunctions.length}/{LOSS_FUNCTIONS.length})
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {LOSS_FUNCTIONS.map((lf) => (
-              <Tooltip key={lf.value} content={lf.tip}>
-                <button
-                  onClick={() => toggleLossFunction(lf.value)}
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-all ${
-                    selectedLossFunctions.includes(lf.value)
-                      ? 'bg-primary/10 border-primary/40 text-primary'
-                      : 'bg-transparent border-border text-muted-foreground hover:border-primary/40'
-                  }`}
-                >
-                  {lf.label}
-                </button>
-              </Tooltip>
-            ))}
-          </div>
-          <div className="flex gap-2 mt-2">
-            <button onClick={() => setSelectedLossFunctions(LOSS_FUNCTIONS.map(l => l.value))} className="text-[10px] text-primary hover:underline">Select All</button>
-            <button onClick={() => setSelectedLossFunctions([])} className="text-[10px] text-muted-foreground hover:underline">Clear</button>
-          </div>
-        </div>
-
-        {/* Samplers */}
-        <div className={SECTION_CARD}>
-          <div className={SECTION_TITLE}>
-            Samplers ({selectedSamplers.length}/{SAMPLERS.length})
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {SAMPLERS.map((s) => (
-              <Tooltip key={s.value} content={s.tip}>
-                <button
-                  onClick={() => toggleSampler(s.value)}
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-all ${
-                    selectedSamplers.includes(s.value)
-                      ? 'bg-amber-500/10 border-amber-500/40 text-amber-400'
-                      : 'bg-transparent border-border text-muted-foreground hover:border-primary/40'
-                  }`}
-                >
-                  {s.label}
-                </button>
-              </Tooltip>
-            ))}
-          </div>
-          <div className="flex gap-2 mt-2">
-            <button onClick={() => setSelectedSamplers(SAMPLERS.map(s => s.value))} className="text-[10px] text-primary hover:underline">Select All</button>
-            <button onClick={() => setSelectedSamplers([])} className="text-[10px] text-muted-foreground hover:underline">Clear</button>
-          </div>
-        </div>
-
-        {/* Batch Info */}
-        <div className="bg-[rgba(99,102,241,0.06)] border border-primary/20 rounded-card p-3">
-          <div className="text-xs text-foreground font-semibold mb-1">
-            Batch: {totalBatchRuns} run{totalBatchRuns !== 1 ? 's' : ''}
-          </div>
-          <div className="text-[10px] text-muted-foreground leading-relaxed">
-            {selectedSamplers.length} sampler{selectedSamplers.length !== 1 ? 's' : ''} × {selectedLossFunctions.length} loss fn{selectedLossFunctions.length !== 1 ? 's' : ''} × {epochs} epochs
-            <br />
-            Spaces: [{customSpaces.join(', ')}]
-          </div>
-        </div>
-
-        {/* Advanced */}
-        <div className={SECTION_CARD}>
-          <button
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="text-xs font-semibold text-foreground flex items-center gap-1 w-full"
-          >
-            Advanced Options <span className="text-muted-foreground">{showAdvanced ? '▾' : '▸'}</span>
-          </button>
-
-          {showAdvanced && (
-            <div className="mt-3 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={LABEL}>Min Trades</label>
-                  <input type="number" value={minTrades} onChange={(e) => setMinTrades(e.target.value)} placeholder="No min" className={INPUT} />
-                </div>
-                <div>
-                  <label className={LABEL}>Max Trades</label>
-                  <input type="number" value={maxTrades} onChange={(e) => setMaxTrades(e.target.value)} placeholder="No max" className={INPUT} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={LABEL}>Random State</label>
-                  <input type="number" value={randomState} onChange={(e) => setRandomState(e.target.value)} placeholder="Random" className={INPUT} />
-                </div>
-                <div>
-                  <label className={LABEL}>Jobs (CPU)</label>
-                  <input type="number" value={jobs} onChange={(e) => setJobs(e.target.value)} className={INPUT} />
-                </div>
-              </div>
-              <div>
-                <label className={LABEL}>Effort ({effort.toFixed(1)})</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.1"
-                  value={effort}
-                  onChange={(e) => setEffort(Number(e.target.value))}
-                  className="w-full accent-primary h-1"
-                />
-              </div>
-              <Toggle checked={earlyStop} onChange={setEarlyStop} label="Early Stop" />
-            </div>
-          )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="space-y-2">
-          {totalBatchRuns > 1 ? (
-            <button
-              onClick={handleRunBatch}
-              disabled={isRunning || selectedLossFunctions.length === 0 || selectedSamplers.length === 0}
-              className={`w-full ${BTN_PRIMARY}`}
-            >
-              {isRunning ? (
-                <>
-                  <div className="animate-spin">⟳</div>
-                  Running {completedCount}/{totalBatchRuns}...
-                </>
-              ) : (
-                <>▶ Run Batch ({totalBatchRuns} runs)</>
-              )}
-            </button>
-          ) : (
-            <button
-              onClick={handleRunSingle}
-              disabled={isRunning || selectedLossFunctions.length === 0 || selectedSamplers.length === 0}
-              className={`w-full ${BTN_PRIMARY}`}
-            >
-              {isRunning ? (
-                <>
-                  <div className="animate-spin">⟳</div>
-                  Running Hyperopt...
-                </>
-              ) : (
-                <>▶ Run Single Hyperopt</>
-              )}
-            </button>
-          )}
-
-          {isRunning && (
-            <button
-              onClick={handleStop}
-              className="w-full h-[34px] inline-flex items-center justify-center gap-[6px] rounded-btn text-xs font-medium border border-rose-500/40 text-rose-400 hover:bg-rose-500/10 transition-colors"
-            type="button"
-            >
-              ■ Stop
-            </button>
-          )}
-        </div>
-
-        {/* ═══════════ LOG WINDOW ═══════════ */}
-        <div className="flex flex-col mt-2 flex-1 min-h-[120px]">
-          <div className="flex items-center justify-between mb-[4px]">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.5px]">Log</span>
-            <div className="flex items-center gap-2">
-              {hoProgress && (
-                <span className="text-xs text-primary font-medium">{hoProgress}</span>
-              )}
-              {isRunning && (
-                <span className="w-[6px] h-[6px] rounded-full bg-green animate-pulse" />
-              )}
-              {logs.length > 0 && (
-                <button
-                  onClick={() => { setLogs([]); setHoProgress(""); }}
-                  type="button"
-                  className="text-[9px] text-muted-foreground hover:text-muted-foreground transition-colors"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="flex-1 bg-[#0d0d14] border border-border rounded-btn p-2 overflow-y-auto font-mono text-xs leading-[1.6] min-h-[100px] max-h-[220px]">
-            {logs.length === 0 ? (
-              <div className="text-muted-foreground text-xs opacity-50 select-none">
-                Logs will appear here when hyperopt starts...
-              </div>
-            ) : (
-              logs.map((entry, i) => (
-                <div key={i} className="flex gap-[6px]">
-                  <span className="text-muted-foreground shrink-0">{entry.ts}</span>
-                  <span className={`shrink-0 w-[38px] ${
-                    entry.level === "ERROR" ? "text-rose-500" :
-                    entry.level === "WARNING" ? "text-[#f59e0b]" :
-                    "text-muted-foreground"
-                  }`}>{entry.level.substring(0, 4)}</span>
-                  <span className="text-muted-foreground break-all">{entry.msg}</span>
-                </div>
-              ))
-            )}
-            <div ref={logEndRef} />
-          </div>
-        </div>
-        </div>
-
-      {/* ══════════════ RIGHT PANEL: RESULTS ══════════════ */}
-      <div className="flex-1 min-w-0 space-y-4">
-        {/* Batch Progress (only when running batch) */}
-        {isRunning && batchJobs.length > 0 && (
-          <div className="bg-card border border-border rounded-card p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-foreground">Batch Progress</span>
-              <span className="text-xs text-muted-foreground tabular-nums">
-                {completedCount}/{batchJobs.length} ({Math.round((completedCount / batchJobs.length) * 100)}%)
-              </span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-1.5 mb-3">
-              <div
-                className="bg-primary h-1.5 rounded-full transition-all"
-                style={{ width: `${(completedCount / batchJobs.length) * 100}%` }}
-              />
-            </div>
-            <div className="space-y-1 max-h-[200px] overflow-y-auto">
-              {batchJobs.map((job) => {
-                const samplerLabel = SAMPLERS.find(s => s.value === job.sampler)?.label ?? job.sampler;
-                const lfLabel = LOSS_FUNCTIONS.find(l => l.value === job.lossFunction)?.label ?? job.lossFunction;
-                return (
-                  <div key={job.id} className="flex items-center gap-2 text-[10px]">
-                    <span className={`w-2 h-2 rounded-full shrink-0 ${
-                      job.status === 'completed' ? 'bg-emerald-500' :
-                      job.status === 'running' ? 'bg-primary animate-pulse' :
-                      job.status === 'failed' ? 'bg-rose-500' :
-                      'bg-muted-foreground/30'
-                    }`} />
-                    <span className="text-muted-foreground truncate">
-                      {samplerLabel} × {lfLabel}
-                    </span>
-                    <span className={`ml-auto shrink-0 font-medium ${
-                      job.status === 'completed' ? 'text-emerald-400' :
-                      job.status === 'running' ? 'text-primary' :
-                      job.status === 'failed' ? 'text-rose-400' :
-                      'text-muted-foreground'
-                    }`}>{job.status}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Winner Banner */}
-        {winner && !isRunning && (
-          <div className="bg-[rgba(34,197,94,0.06)] border border-emerald-500/20 rounded-card p-4 flex items-center gap-4">
-            <span className="text-2xl">🏆</span>
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-semibold text-emerald-400 mb-0.5">Best Result</div>
-              <div className="text-xs text-muted-foreground">
-                {(() => {
-                  const s = winner.sampler !== '—' ? winner.sampler : selectedSamplers.map(v => SAMPLERS.find(x => x.value === v)?.label || v).join(', ');
-                  const l = winner.lossFunction !== '—' ? winner.lossFunction : selectedLossFunctions.map(v => LOSS_FUNCTIONS.find(x => x.value === v)?.label || v).join(', ');
-                  const sp = winner.spaces !== '—' ? winner.spaces : customSpaces.join(', ');
-                  return `${s} × ${l} — ${sp}`;
-                })()}
-              </div>
-            </div>
-            <div className="text-right">
-              <div className={`text-sm font-bold tabular-nums ${winner.profitPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                {fmtPctRatio(winner.profitPct / 100)}
-              </div>
-              <div className="text-[10px] text-muted-foreground">
-                {winner.trades} trades · {fmt$(winner.profitAbs)}
-                {winner.sharpe !== 0 && ` · Sharpe ${fmtNum(winner.sharpe)}`}
-                {winner.winRate > 0 && ` · WR ${(winner.winRate * 100).toFixed(1)}%`}
-              </div>
-            </div>
-            <div className="flex gap-1.5 shrink-0">
               <button
-                onClick={() => onNavigateToTab?.(5)}
-                className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-primary/40 text-primary hover:bg-primary/10 transition-all"
+                title="Show by elapsed time"
+                onClick={() => setChartXMode("time")}
+                className={`px-2.5 py-1 text-[10px] font-bold rounded-r border-y border-r transition-colors ${
+                  chartXMode === "time"
+                    ? "bg-up/15 text-up border-up/25"
+                    : "bg-white/5 text-muted border-white/10 hover:text-white"
+                }`}
               >
-                → Verify
+                Time
               </button>
-              <button onClick={async () => {
-                try {
-                  const { getExperiments, activateStrategyVersion } = await import('@/lib/api');
-                  const res = await getExperiments();
-                  const exp = (res.items || []).find((e) => e.strategy_name === strategy || e.name === strategy);
-                  if (exp && exp.best_version_id) {
-                    await activateStrategyVersion(exp.strategy_id, exp.best_version_id);
-                    toast.success(`Activated version ${exp.best_version_id} for ${strategy} ★`);
-                  } else if (exp) {
-                    toast.info('No version to activate yet — run verification first');
-                  } else {
-                    toast.error('Experiment not found');
-                  }
-                } catch (err) {
-                  toast.error(`Promote failed: ${err instanceof Error ? err.message : String(err)}`);
-                }
-              }} className="px-2.5 py-1 rounded-btn text-[10px] font-semibold border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-all">
-                Promote ★
+              {/* Spacer */}
+              <div className="w-3" />
+              {/* Group 2: Loss / Profit% */}
+              <button
+                title="Show objective loss"
+                onClick={() => setChartYMode("loss")}
+                className={`px-2.5 py-1 text-[10px] font-bold rounded-l border transition-colors ${
+                  chartYMode === "loss"
+                    ? "bg-up/15 text-up border-up/25"
+                    : "bg-white/5 text-muted border-white/10 hover:text-white"
+                }`}
+              >
+                Loss
+              </button>
+              <button
+                title="Show profit percentage"
+                onClick={() => setChartYMode("profit")}
+                className={`px-2.5 py-1 text-[10px] font-bold rounded-r border-y border-r transition-colors ${
+                  chartYMode === "profit"
+                    ? "bg-up/15 text-up border-up/25"
+                    : "bg-white/5 text-muted border-white/10 hover:text-white"
+                }`}
+              >
+                Profit%
               </button>
             </div>
           </div>
-        )}
 
-        {/* Results Master Table */}
-
-        {/* Optimized Parameters Display (§432-436) */}
-        {winner && winner.params && Object.keys(winner.params).length > 0 && !isRunning && (
-          <div className="bg-card border border-border rounded-card p-4">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-foreground">Optimized Parameters</span>
-              <span className="text-[10px] text-muted-foreground">
-                {winner.sampler} × {winner.lossFunction}
+          {/* Chart body */}
+          <div className="flex-1 px-5 pb-4 relative">
+            <div className="absolute inset-0 l-grid opacity-20" />
+            {/* Legend */}
+            <div className="absolute top-0 right-2 flex items-center gap-4 text-[9px] font-mono text-white/40 z-10">
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-[2px] bg-[#22c55e] rounded" />
+                Best Objective
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-2.5 bg-white/15 rounded-sm" />
+                Trades/Epoch
               </span>
             </div>
-            <div className="border border-border rounded-lg overflow-hidden">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="bg-muted/50">
-                    <th className="text-left px-3 py-1.5 font-semibold text-muted-foreground">Parameter</th>
-                    <th className="text-right px-3 py-1.5 font-semibold text-muted-foreground">Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(winner.params).map(([key, value]) => (
-                    <tr key={key} className="border-t border-border hover:bg-muted/20">
-                      <td className="px-3 py-1.5 font-mono text-foreground">{key}</td>
-                      <td className="px-3 py-1.5 text-right tabular-nums text-primary font-medium">
-                        {typeof value === 'number' ? value.toFixed(4).replace(/\.?0+$/, '') : String(value)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={convergenceData} margin={{ top: 14, right: 0, bottom: 0, left: -10 }}>
+                <CartesianGrid stroke="rgba(255,255,255,0.04)" />
+                <XAxis
+                  dataKey="epoch"
+                  tick={{ fontSize: 9, fill: "rgba(255,255,255,0.3)", fontFamily: "JetBrains Mono" }}
+                  axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                  tickLine={false}
+                  ticks={[0, 50, 100, 150, 200]}
+                />
+                <YAxis
+                  tick={{ fontSize: 9, fill: "rgba(255,255,255,0.3)", fontFamily: "JetBrains Mono" }}
+                  axisLine={false}
+                  tickLine={false}
+                  ticks={[0, -0.05, -0.10, -0.15, -0.20]}
+                  domain={[-0.22, 0.02]}
+                  tickFormatter={(v: number) => v.toFixed(2)}
+                />
+                <YAxis yAxisId="right" orientation="right" hide />
+                <RTooltip
+                  contentStyle={{ background: "#0C0C0C", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, fontSize: 10, fontFamily: "JetBrains Mono" }}
+                  labelStyle={{ color: "#9CA3AF" }}
+                  formatter={(value: unknown, name: unknown) => [
+                    name === "bestObjective" ? Number(value).toFixed(4) : String(value),
+                    name === "bestObjective" ? "Best Obj." : "Trades",
+                  ]}
+                />
+                <Bar dataKey="trades" yAxisId="right" fill="rgba(255,255,255,0.07)" radius={[2, 2, 0, 0]} />
+                <Line
+                  type="monotone"
+                  dataKey="bestObjective"
+                  stroke="#22c55e"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 3, fill: "#22c55e" }}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
           </div>
-        )}
+        </div>
 
-        {sortedResults.length > 0 ? (() => {
-          const totalResPages = Math.ceil(sortedResults.length / resultsPerPage);
-          const pagedResults = sortedResults.slice((resultsPage - 1) * resultsPerPage, resultsPage * resultsPerPage);
-          // Unique test ID from first result's startedAt
-          const hoTestId = (() => {
-            try {
-              const d = new Date(sortedResults[0]?.startedAt || Date.now());
-              return `HO-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;
-            } catch { return 'HO-unknown'; }
-          })();
-          // Summarize config — prefer results data, fall back to form state
-          const uniqueSamplers = (() => {
-            const fromResults = Array.from(new Set(sortedResults.map(r => r.sampler).filter(s => s && s !== '—' && s !== '')));
-            return fromResults.length > 0 ? fromResults.join(', ') : selectedSamplers.map(v => SAMPLERS.find(s => s.value === v)?.label || v).join(', ');
-          })();
-          const uniqueLoss = (() => {
-            const fromResults = Array.from(new Set(sortedResults.map(r => r.lossFunction).filter(s => s && s !== '—' && s !== '')));
-            return fromResults.length > 0 ? fromResults.join(', ') : selectedLossFunctions.map(v => LOSS_FUNCTIONS.find(l => l.value === v)?.label || v).join(', ');
-          })();
-          const uniqueSpaces = (() => {
-            const fromResults = Array.from(new Set(sortedResults.map(r => r.spaces).filter(s => s && s !== '—' && s !== '')));
-            return fromResults.length > 0 ? fromResults.join(', ') : customSpaces.join(', ');
-          })();
-          return (
-          <div data-ho-results className="bg-card border border-border rounded-card overflow-hidden">
-            {/* Config Header */}
-            <div className="px-4 py-3 border-b border-border">
-              <div className="flex items-center justify-between mb-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded">{hoTestId}</span>
-                  <span className="text-xs font-semibold text-foreground">
-                    Hyperopt Results ({sortedResults.length})
-                  </span>
-                  <button
-                    onClick={fetchResults}
-                    className="text-[10px] text-primary hover:underline"
-                  >
-                    ↻ Refresh
-                  </button>
-                </div>
-                <div className={`text-lg font-bold tabular-nums ${(sortedResults[0]?.profitPct ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {fmt$(sortedResults[0]?.profitAbs ?? 0)}
-                </div>
-              </div>
-              <div className="grid grid-cols-4 gap-2 text-[10px]">
-                <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
-                  <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Sampler</div>
-                  <div className="text-foreground font-mono truncate">{uniqueSamplers}</div>
-                </div>
-                <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
-                  <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Loss Function</div>
-                  <div className="text-foreground font-mono truncate">{uniqueLoss}</div>
-                </div>
-                <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
-                  <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Spaces</div>
-                  <div className="text-foreground font-mono truncate">{uniqueSpaces}</div>
-                </div>
-                <div className="bg-muted/30 border border-border rounded px-2 py-1.5">
-                  <div className="text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Best Profit</div>
-                  <div className={`font-mono ${(sortedResults[0]?.profitPct ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {(sortedResults[0]?.profitPct ?? 0) >= 0 ? '+' : ''}{(sortedResults[0]?.profitPct ?? 0).toFixed(2)}%
-                  </div>
-                </div>
-              </div>
-            </div>
+        {/* ── 3. Tabbed Results ── */}
+        <div className="flex-1 bg-surface l-bd rounded-md flex flex-col min-h-[250px] overflow-hidden shadow-xl">
+          {/* Tab bar */}
+          <div className="h-10 l-b flex items-center bg-black/40 shrink-0 overflow-x-auto whitespace-nowrap">
+            {SUB_TABS.map((tab, i) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(i)}
+                className={`h-full px-4 font-bold text-[11px] uppercase tracking-wide ho-tab-btn shrink-0 ${
+                  activeTab === i
+                    ? "border-b-2 border-up text-white"
+                    : "text-muted hover:text-white transition-colors"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
 
-            {/* Best Epoch Summary Metrics — uses same MetricCard layout as BacktestTab */}
-            {(() => {
-              const best = sortedResults[0];
-              if (!best) return null;
-              const profitOk = best.profitPct >= 0;
-              // Reusable MetricCard matching BacktestTab exactly
-              const MC = ({ label, value, sub, positive }: { label: string; value: string; sub?: string; positive?: boolean | null }) => {
-                const valColor = positive === true ? "text-emerald-400" : positive === false ? "text-rose-400" : "text-foreground";
-                return (
-                  <div className={METRIC_CARD}>
-                    <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">{label}</div>
-                    <div className={`text-sm font-bold tabular-nums ${valColor}`}>{value}</div>
-                    {sub && <div className="text-[10px] text-muted-foreground tabular-nums">{sub}</div>}
-                  </div>
-                );
-              };
-              return (
-                <div className="px-4 py-3 border-b border-border flex flex-col gap-2">
-                  {/* Row 1: Core Metrics (6-grid — same as BacktestTab Row 1) */}
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                    <MC label="Total Trades" value={String(best.trades)} />
-                    <MC label="Win Rate" value={best.winRate > 0 ? `${(best.winRate * 100).toFixed(1)}%` : '—'} positive={best.winRate > 0.6 ? true : best.winRate > 0 && best.winRate < 0.4 ? false : null} />
-                    <MC label="Total Profit" value={`${profitOk ? '+' : ''}${best.profitPct.toFixed(2)}%`} sub={fmt$(best.profitAbs)} positive={profitOk} />
-                    <MC label="Max Drawdown" value={`-${Math.abs(best.maxDrawdown).toFixed(2)}%`} positive={false} />
-                    <MC label="Sharpe" value={best.sharpe !== 0 ? fmtNum(best.sharpe) : '—'} positive={best.sharpe > 1 ? true : best.sharpe < 0 ? false : null} />
-                    <MC label="Sortino" value={best.sortino !== 0 ? fmtNum(best.sortino) : '—'} positive={best.sortino > 1 ? true : best.sortino < 0 ? false : null} />
-                  </div>
-                  {/* Row 2: Extra (4-grid — same as BacktestTab Row 4) */}
-                  <div className="grid grid-cols-4 gap-2">
-                    <MC label="Avg Duration" value={best.avgDuration || "—"} />
-                    <MC label="Loss" value={best.loss.toFixed(5)} positive={best.loss < 0 ? true : false} />
-                    <MC label="Profit $" value={fmt$(best.profitAbs)} positive={profitOk} />
-                    <MC label="Epochs" value={String(sortedResults.length)} />
-                  </div>
-                </div>
-              );
-            })()}
+          {/* Tab content */}
+          <div className="ho-tab-content flex-1 overflow-hidden flex flex-col">
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="bg-muted/50 text-muted-foreground">
-                    <th className="text-left px-3 py-2 font-semibold">#</th>
-                    <th className="text-right px-3 py-2 font-semibold">Epoch</th>
-                    <th className="text-right px-3 py-2 font-semibold">Trades</th>
-                    <th className="text-right px-3 py-2 font-semibold cursor-pointer hover:text-primary select-none" onClick={() => handleSort('winRate')}>
-                      Win% <SortArrow col="winRate" />
-                    </th>
-                    <th className="text-right px-3 py-2 font-semibold cursor-pointer hover:text-primary select-none" onClick={() => handleSort('profitPct')}>
-                      Profit% <SortArrow col="profitPct" />
-                    </th>
-                    <th className="text-right px-3 py-2 font-semibold">Profit $</th>
-                    <th className="text-right px-3 py-2 font-semibold cursor-pointer hover:text-primary select-none" onClick={() => handleSort('maxDrawdown')}>
-                      Max DD <SortArrow col="maxDrawdown" />
-                    </th>
-                    <th className="text-right px-3 py-2 font-semibold cursor-pointer hover:text-primary select-none" onClick={() => handleSort('sharpe')}>
-                      Sharpe <SortArrow col="sharpe" />
-                    </th>
-                    <th className="text-right px-3 py-2 font-semibold cursor-pointer hover:text-primary select-none" onClick={() => handleSort('sortino')}>
-                      Sortino <SortArrow col="sortino" />
-                    </th>
-                    <th className="text-right px-3 py-2 font-semibold">Avg Duration</th>
-                    <th className="text-center px-3 py-2 font-semibold">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pagedResults.map((r, idx) => {
-                    const isWinner = winner?.id === r.id;
-                    const globalIdx = (resultsPage - 1) * resultsPerPage + idx;
-                    return (
+            {/* ── Epoch Results ── */}
+            {activeTab === 0 && (
+              <div className="flex-1 overflow-x-auto overflow-y-auto">
+                <table className="w-full text-[13px] font-mono">
+                  <thead className="sticky top-0 bg-surface z-10">
+                    <tr className="text-muted text-[10px] uppercase tracking-wider">
+                      <th className={`px-2 py-1.5 text-left ${epochSortClass("epoch")}`} onClick={() => handleEpochSort("epoch")}>Epoch</th>
+                      <th className={`px-2 py-1.5 text-right ${epochSortClass("trades")}`} onClick={() => handleEpochSort("trades")}>Trades</th>
+                      <th className={`px-2 py-1.5 text-right ${epochSortClass("avgProfit")}`} onClick={() => handleEpochSort("avgProfit")}>Avg Profit</th>
+                      <th className={`px-2 py-1.5 text-right ${epochSortClass("totalProfit")}`} onClick={() => handleEpochSort("totalProfit")}>Total Profit</th>
+                      <th className={`px-2 py-1.5 text-right ${epochSortClass("profitAbs")}`} onClick={() => handleEpochSort("profitAbs")}>Profit $</th>
+                      <th className={`px-2 py-1.5 text-right ${epochSortClass("avgDur")}`} onClick={() => handleEpochSort("avgDur")}>Avg Dur.</th>
+                      <th className={`px-2 py-1.5 text-right ${epochSortClass("winPct")}`} onClick={() => handleEpochSort("winPct")}>Win%</th>
+                      <th className={`px-2 py-1.5 text-right ${epochSortClass("maxDD")}`} onClick={() => handleEpochSort("maxDD")}>Max DD</th>
+                      <th className={`px-2 py-1.5 text-right ${epochSortClass("objective")}`} onClick={() => handleEpochSort("objective")}>Objective</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {MOCK_EPOCHS.map((row) => (
                       <tr
-                        key={r.id}
-                        className={`border-t border-border hover:bg-muted/30 ${isWinner ? 'bg-emerald-500/5' : ''}`}
+                        key={row.epoch}
+                        className={`l-t hover:bg-white/[0.02] transition-colors ${row.isBest ? "bg-up/[0.02]" : ""}`}
                       >
-                        <td className="px-3 py-2 tabular-nums text-muted-foreground">
-                          {isWinner ? <span className="text-amber-400">★</span> : globalIdx + 1}
+                        <td className={`px-2 py-1.5 ${row.isBest ? "text-up font-bold" : row.isPrevBest ? "text-muted" : "text-muted"}`}>
+                          {row.isBest ? "★" : row.isPrevBest ? "*" : ""}{row.epoch}
                         </td>
-                        <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{r.id}</td>
-                        <td className="px-3 py-2 text-right tabular-nums">{r.trades}</td>
-                        <td className="px-3 py-2 text-right tabular-nums">{r.winRate > 0 ? `${(r.winRate * 100).toFixed(1)}%` : '—'}</td>
-                        <td className={`px-3 py-2 text-right tabular-nums font-medium ${r.profitPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {r.profitPct >= 0 ? '+' : ''}{r.profitPct.toFixed(2)}%
+                        <td className="px-2 py-1.5 text-right text-white">{row.trades}</td>
+                        <td className={`px-2 py-1.5 text-right ${row.avgProfit >= 0 ? "text-up" : "text-down"}`}>
+                          {row.avgProfit >= 0 ? "+" : ""}{row.avgProfit.toFixed(2)}%
                         </td>
-                        <td className={`px-3 py-2 text-right tabular-nums ${r.profitAbs >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {fmt$(r.profitAbs)}
+                        <td className={`px-2 py-1.5 text-right font-bold ${row.totalProfit >= 0 ? "text-up" : "text-down"}`}>
+                          {row.totalProfit >= 0 ? "+" : ""}{row.totalProfit.toFixed(2)}%
                         </td>
-                        <td className="px-3 py-2 text-right tabular-nums text-rose-400">
-                          -{Math.abs(r.maxDrawdown).toFixed(2)}%
+                        <td className={`px-2 py-1.5 text-right ${row.profitAbs >= 0 ? "text-up font-bold" : "text-down"}`}>
+                          {row.profitAbs >= 0 ? "+" : ""}${row.profitAbs.toLocaleString()}
                         </td>
-                        <td className="px-3 py-2 text-right tabular-nums">{r.sharpe !== 0 ? fmtNum(r.sharpe) : '—'}</td>
-                        <td className="px-3 py-2 text-right tabular-nums">{r.sortino !== 0 ? fmtNum(r.sortino) : '—'}</td>
-                        <td className="px-3 py-2 text-right text-muted-foreground">{r.avgDuration}</td>
-                        <td className="px-3 py-2 text-center">
-                          <div className="flex gap-1 justify-center">
+                        <td className="px-2 py-1.5 text-right text-muted">{row.avgDur}</td>
+                        <td className={`px-2 py-1.5 text-right ${row.winPct >= 65 ? "text-up" : "text-muted"}`}>{row.winPct}%</td>
+                        <td className="px-2 py-1.5 text-right text-down">{row.maxDD}%</td>
+                        <td className={`px-2 py-1.5 text-right ${row.isBest ? "text-up font-bold" : "text-muted"}`}>
+                          {row.objective.toFixed(4)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* ── Best Parameters ── */}
+            {activeTab === 1 && (
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="section-title">Optimized Parameters · Epoch #147</span>
+                  <div className="flex items-center gap-1.5">
+                    <button title="Copy as Python dict" className="px-2.5 py-1 l-bd rounded text-[10px] text-muted hover:text-white hover:bg-white/5 transition-colors font-mono">
+                      📋 Copy Python
+                    </button>
+                    <button title="Copy as JSON" className="px-2.5 py-1 l-bd rounded text-[10px] text-muted hover:text-white hover:bg-white/5 transition-colors font-mono">
+                      📋 Copy JSON
+                    </button>
+                    <button title="Export CSV" className="px-2.5 py-1 l-bd rounded text-[10px] text-muted hover:text-white hover:bg-white/5 transition-colors font-mono">
+                      ⬇ CSV
+                    </button>
+                  </div>
+                </div>
+                <div className="bg-black rounded p-3 font-mono text-[11px] leading-relaxed l-bd space-y-0.5">
+                  <div><span className="text-white">buy_params</span> <span className="text-muted">=</span> <span className="text-white">{"{"}</span></div>
+                  <div className="pl-4"><span className="text-up">&quot;buy_rsi&quot;</span><span className="text-muted">:</span> <span className="text-white font-bold">28</span><span className="text-muted">,</span></div>
+                  <div className="pl-4"><span className="text-up">&quot;buy_ema_short&quot;</span><span className="text-muted">:</span> <span className="text-white font-bold">12</span><span className="text-muted">,</span></div>
+                  <div className="pl-4"><span className="text-up">&quot;buy_ema_long&quot;</span><span className="text-muted">:</span> <span className="text-white font-bold">26</span><span className="text-muted">,</span></div>
+                  <div><span className="text-white">{"}"}</span></div>
+                  <div>&nbsp;</div>
+                  <div><span className="text-white">sell_params</span> <span className="text-muted">=</span> <span className="text-white">{"{"}</span></div>
+                  <div className="pl-4"><span className="text-down">&quot;sell_rsi&quot;</span><span className="text-muted">:</span> <span className="text-white font-bold">72</span><span className="text-muted">,</span></div>
+                  <div className="pl-4"><span className="text-down">&quot;sell_profit_offset&quot;</span><span className="text-muted">:</span> <span className="text-white font-bold">0.012</span><span className="text-muted">,</span></div>
+                  <div><span className="text-white">{"}"}</span></div>
+                  <div>&nbsp;</div>
+                  <div className="text-muted pt-2"># ROI Table</div>
+                  <div><span className="text-white">minimal_roi</span> <span className="text-muted">=</span> <span className="text-white">{"{"}</span></div>
+                  <div className="pl-4"><span className="text-muted">&quot;0&quot;</span><span className="text-muted">:</span> <span className="text-white font-bold">0.05</span><span className="text-muted">,</span></div>
+                  <div className="pl-4"><span className="text-muted">&quot;30&quot;</span><span className="text-muted">:</span> <span className="text-white font-bold">0.02</span><span className="text-muted">,</span></div>
+                  <div className="pl-4"><span className="text-muted">&quot;60&quot;</span><span className="text-muted">:</span> <span className="text-white font-bold">0.01</span><span className="text-muted">,</span></div>
+                  <div><span className="text-white">{"}"}</span></div>
+                  <div>&nbsp;</div>
+                  <div className="text-muted pt-2"># Stoploss</div>
+                  <div><span className="text-white">stoploss</span> <span className="text-muted">=</span> <span className="text-down font-bold">-0.03</span></div>
+                  <div><span className="text-white">trailing_stop</span> <span className="text-muted">=</span> <span className="text-up font-bold">True</span></div>
+                  <div><span className="text-white">trailing_stop_positive</span> <span className="text-muted">=</span> <span className="text-white font-bold">0.01</span></div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Param Importance ── */}
+            {activeTab === 2 && (
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="section-title mb-3">Parameter Importance (Impact on Objective)</div>
+                <div className="space-y-2.5">
+                  {[
+                    { name: "buy_rsi", pct: 85 },
+                    { name: "sell_rsi", pct: 72 },
+                    { name: "buy_ema_short", pct: 61 },
+                    { name: "trailing_stop_positive", pct: 48 },
+                    { name: "sell_profit_offset", pct: 35 },
+                    { name: "stoploss", pct: 22 },
+                  ].map((p) => {
+                    const color = p.pct >= 70 ? "bg-up" : p.pct >= 50 ? "bg-white" : "bg-white/60";
+                    const textColor = p.pct >= 70 ? "text-up" : p.pct >= 50 ? "text-white" : "text-muted";
+                    return (
+                      <div key={p.name} className="flex items-center gap-3 text-[11px] font-mono">
+                        <span className="w-[180px] text-muted truncate">{p.name}</span>
+                        <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full ${color}`} style={{ width: `${p.pct}%` }} />
+                        </div>
+                        <span className={`w-12 text-right font-bold ${textColor}`}>{p.pct}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── Compare Runs ── */}
+            {activeTab === 3 && (
+              <div className="flex-1 overflow-x-auto overflow-y-auto p-0">
+                <table className="w-full text-[13px] font-mono">
+                  <thead>
+                    <tr className="text-[#9CA3AF] text-[10px] uppercase tracking-wider sticky top-0 bg-surface z-10">
+                      <th className="px-2 py-1.5 text-left">Metric</th>
+                      <th className="px-2 py-1.5 text-right">Run #1</th>
+                      <th className="px-2 py-1.5 text-right">Run #2</th>
+                      <th className="px-2 py-1.5 text-right">Run #3</th>
+                      <th className="px-2 py-1.5 text-right">Δ Best</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Profit % */}
+                    <tr className="l-t hover:bg-white/[0.02]">
+                      <td className="px-2 py-1.5 text-muted">Profit %</td>
+                      <td className="px-2 py-1.5 text-right text-up font-bold">+42.12%</td>
+                      <td className="px-2 py-1.5 text-right text-up">+38.40%</td>
+                      <td className="px-2 py-1.5 text-right text-up">+21.4%</td>
+                      <td className="px-2 py-1.5 text-right text-up">+3.72%</td>
+                    </tr>
+                    {/* Win Rate */}
+                    <tr className="l-t hover:bg-white/[0.02]">
+                      <td className="px-2 py-1.5 text-muted">Win Rate</td>
+                      <td className="px-2 py-1.5 text-right text-up font-bold">72.4%</td>
+                      <td className="px-2 py-1.5 text-right text-up">70.1%</td>
+                      <td className="px-2 py-1.5 text-right text-up">65.8%</td>
+                      <td className="px-2 py-1.5 text-right text-up">+2.3%</td>
+                    </tr>
+                    {/* Max DD */}
+                    <tr className="l-t hover:bg-white/[0.02]">
+                      <td className="px-2 py-1.5 text-muted">Max DD</td>
+                      <td className="px-2 py-1.5 text-right text-down font-bold">-2.1%</td>
+                      <td className="px-2 py-1.5 text-right text-down">-3.4%</td>
+                      <td className="px-2 py-1.5 text-right text-down">-5.2%</td>
+                      <td className="px-2 py-1.5 text-right text-down">-2.1%</td>
+                    </tr>
+                    {/* Sharpe */}
+                    <tr className="l-t hover:bg-white/[0.02]">
+                      <td className="px-2 py-1.5 text-muted">Sharpe</td>
+                      <td className="px-2 py-1.5 text-right font-bold">3.92</td>
+                      <td className="px-2 py-1.5 text-right">3.45</td>
+                      <td className="px-2 py-1.5 text-right">2.11</td>
+                      <td className="px-2 py-1.5 text-right text-up">+0.47</td>
+                    </tr>
+                    {/* Sortino */}
+                    <tr className="l-t hover:bg-white/[0.02]">
+                      <td className="px-2 py-1.5 text-muted">Sortino</td>
+                      <td className="px-2 py-1.5 text-right font-bold">4.15</td>
+                      <td className="px-2 py-1.5 text-right">3.80</td>
+                      <td className="px-2 py-1.5 text-right">2.44</td>
+                      <td className="px-2 py-1.5 text-right text-up">+0.35</td>
+                    </tr>
+                    {/* Trades */}
+                    <tr className="l-t hover:bg-white/[0.02]">
+                      <td className="px-2 py-1.5 text-muted">Trades</td>
+                      <td className="px-2 py-1.5 text-right font-bold">142</td>
+                      <td className="px-2 py-1.5 text-right">128</td>
+                      <td className="px-2 py-1.5 text-right">89</td>
+                      <td className="px-2 py-1.5 text-right">+14</td>
+                    </tr>
+                    {/* Avg Duration */}
+                    <tr className="l-t hover:bg-white/[0.02]">
+                      <td className="px-2 py-1.5 text-muted">Avg Duration</td>
+                      <td className="px-2 py-1.5 text-right">4h 23m</td>
+                      <td className="px-2 py-1.5 text-right">3h 52m</td>
+                      <td className="px-2 py-1.5 text-right">6h 11m</td>
+                      <td className="px-2 py-1.5 text-right text-muted">&mdash;</td>
+                    </tr>
+                    {/* Objective */}
+                    <tr className="l-t hover:bg-white/[0.02]">
+                      <td className="px-2 py-1.5 text-muted">Objective</td>
+                      <td className="px-2 py-1.5 text-right text-up font-bold">-0.1555</td>
+                      <td className="px-2 py-1.5 text-right text-muted">-0.1823</td>
+                      <td className="px-2 py-1.5 text-right text-muted">-0.2410</td>
+                      <td className="px-2 py-1.5 text-right text-up">+0.0268</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* ── Run History ── */}
+            {activeTab === 4 && (
+              <div className="flex-1 overflow-x-auto overflow-y-auto">
+                <table className="w-full text-[13px] font-mono">
+                  <thead>
+                    <tr className="text-[#9CA3AF] text-[10px] uppercase tracking-wider sticky top-0 bg-surface z-10">
+                      <th className={`px-2 py-1.5 text-left ${histSortClass("id")}`} onClick={() => handleHistSort("id")}>#</th>
+                      <th className={`px-2 py-1.5 text-left ${histSortClass("date")}`} onClick={() => handleHistSort("date")}>Date</th>
+                      <th className={`px-2 py-1.5 text-left ${histSortClass("strategy")} filterable`} onClick={() => handleHistSort("strategy")}>Strategy</th>
+                      <th className={`px-2 py-1.5 text-left ${histSortClass("lossFn")} filterable`} onClick={() => handleHistSort("lossFn")}>Loss Fn</th>
+                      <th className={`px-2 py-1.5 text-right ${histSortClass("epochs")}`} onClick={() => handleHistSort("epochs")}>Epochs</th>
+                      <th className={`px-2 py-1.5 text-right ${histSortClass("best")}`} onClick={() => handleHistSort("best")}>Best</th>
+                      <th className={`px-2 py-1.5 text-right ${histSortClass("profit")}`} onClick={() => handleHistSort("profit")}>Profit</th>
+                      <th className={`px-2 py-1.5 text-right ${histSortClass("trades")}`} onClick={() => handleHistSort("trades")}>Trades</th>
+                      <th className={`px-2 py-1.5 text-right ${histSortClass("objective")}`} onClick={() => handleHistSort("objective")}>Objective</th>
+                      <th className="px-2 py-1.5 text-center">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {MOCK_HISTORY.map((row) => (
+                      <tr key={row.id} className="l-t hover:bg-white/[0.02] transition-colors">
+                        <td className="px-2 py-1.5 text-muted">{row.id}</td>
+                        <td className="px-2 py-1.5 text-white/70 whitespace-nowrap">{row.date}</td>
+                        <td className="px-2 py-1.5 text-white">{row.strategy}</td>
+                        <td className="px-2 py-1.5 text-muted">{row.lossFn}</td>
+                        <td className="px-2 py-1.5 text-right text-white">{row.epochs}</td>
+                        <td className="px-2 py-1.5 text-right text-up">{row.best}</td>
+                        <td className="px-2 py-1.5 text-right text-up">{row.profit}</td>
+                        <td className="px-2 py-1.5 text-right text-white">{row.trades}</td>
+                        <td className="px-2 py-1.5 text-right text-up font-bold">{row.objective.toFixed(4)}</td>
+                        <td className="px-2 py-1.5 text-center whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-1.5">
                             <button
-                              onClick={() => onNavigateToTab?.(5)}
-                              className="px-1.5 py-0.5 text-[9px] border border-primary/30 text-primary rounded hover:bg-primary/10 transition"
+                              title="Load results"
+                              className="text-[10px] px-2 py-0.5 bg-up/10 border border-up/25 text-up rounded hover:bg-up/20 transition-all"
                             >
-                              → Verify
+                              Load
                             </button>
                             <button
-                              onClick={() => onNavigateToTab?.(3)}
-                              className="px-1.5 py-0.5 text-[9px] border border-amber-500/30 text-amber-400 rounded hover:bg-amber-500/10 transition"
+                              title="Delete run"
+                              className="text-[10px] px-1.5 py-0.5 bg-down/10 border border-down/20 text-down/70 rounded hover:bg-down/20 hover:text-down transition-all"
                             >
-                              → FreqAI
+                              Del
                             </button>
                           </div>
                         </td>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            {totalResPages > 1 && (
-              <div className="flex items-center justify-between px-3 py-2 border-t border-border bg-muted/30">
-                <span className="text-xs text-muted-foreground">
-                  Showing {(resultsPage - 1) * resultsPerPage + 1}-{Math.min(resultsPage * resultsPerPage, sortedResults.length)} of {sortedResults.length}
-                </span>
-                <div className="flex gap-1">
-                  <button onClick={() => setResultsPage(p => Math.max(1, p - 1))} disabled={resultsPage === 1}
-                    className="px-2 py-1 text-xs border border-border rounded bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all">← Prev</button>
-                  <button onClick={() => setResultsPage(p => Math.min(totalResPages, p + 1))} disabled={resultsPage === totalResPages}
-                    className="px-2 py-1 text-xs border border-border rounded bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all">Next →</button>
-                </div>
-              </div>
-            )}
-          </div>
-          );
-        })() : (
-          <div className={`${SECTION_CARD} flex flex-col items-center justify-center min-h-[200px]`}>
-            <div className="text-[32px] mb-3 opacity-30">⚡</div>
-            <div className="text-sm font-semibold text-muted-foreground mb-1">No hyperopt results yet</div>
-            <div className="text-xs text-muted-foreground text-center max-w-[280px]">
-              Configure loss functions, samplers, and spaces, then click &quot;Run&quot; to start hyperparameter optimization.
-            </div>
-          </div>
-        )}
-
-        {/* ── Hyperopt History ── */}
-        {hoRuns.length > 0 && (() => {
-          const totalHoPages = Math.ceil(hoRuns.length / hoPerPage);
-          const pagedHoRuns = hoRuns.slice((hoPage - 1) * hoPerPage, hoPage * hoPerPage);
-          return (
-          <div>
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-              Hyperopt History ({hoRuns.length})
-            </div>
-            <div className="border border-border rounded-lg overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="bg-muted/50 text-muted-foreground">
-                      <th className="text-center px-2 py-2 font-semibold w-[32px]">#</th>
-                      <th className="text-left px-3 py-2 font-semibold w-[90px]">ID</th>
-                      <th className="text-left px-3 py-2 font-semibold">Run Date</th>
-                      <th className="text-left px-3 py-2 font-semibold">Strategy</th>
-                      <th className="text-right px-3 py-2 font-semibold">Epochs</th>
-                      <th className="text-right px-3 py-2 font-semibold">Trades</th>
-                      <th className="text-right px-3 py-2 font-semibold">Profit</th>
-                      <th className="text-right px-3 py-2 font-semibold">Profit %</th>
-                      <th className="text-right px-3 py-2 font-semibold">Win Rate</th>
-                      <th className="text-right px-3 py-2 font-semibold">Max DD</th>
-                      <th className="text-right px-3 py-2 font-semibold">PF</th>
-                      <th className="text-center px-3 py-2 font-semibold w-[120px]">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pagedHoRuns.map((run, idx) => {
-                      const isConfirming = hoConfirmDelete === run.filename;
-                      const runDate = new Date(run.mtime * 1000);
-                      const runStr = `${runDate.getFullYear()}-${String(runDate.getMonth()+1).padStart(2,'0')}-${String(runDate.getDate()).padStart(2,'0')} ${String(runDate.getHours()).padStart(2,'0')}:${String(runDate.getMinutes()).padStart(2,'0')}`;
-                      const hasStats = run.total_trades !== undefined && run.total_trades > 0;
-                      const profitOk = (run.profit_total_abs ?? 0) >= 0;
-                      const hoId = `HO-${runDate.getFullYear()}${String(runDate.getMonth()+1).padStart(2,'0')}${String(runDate.getDate()).padStart(2,'0')}-${String(runDate.getHours()).padStart(2,'0')}${String(runDate.getMinutes()).padStart(2,'0')}`;
-                      const isExpanded = hoExpandedId === run.filename;
-                      return (
-                        <Fragment key={run.filename}>
-                        <tr className={`border-t border-border hover:bg-muted/30 transition-colors cursor-pointer ${isExpanded ? 'bg-muted/20' : ''}`} onClick={() => setHoExpandedId(isExpanded ? null : run.filename)}>
-                          <td className="px-2 py-2 text-center text-[10px] text-muted-foreground tabular-nums">{(hoPage - 1) * hoPerPage + idx + 1}</td>
-                          <td className="px-3 py-2">
-                            <span className="text-[9px] font-mono px-1 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded whitespace-nowrap">{hoId}</span>
-                          </td>
-                          <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{runStr}</td>
-                          <td className="px-3 py-2 font-mono text-foreground">{run.strategy}</td>
-                          <td className="px-3 py-2 text-right tabular-nums text-foreground">{run.epochs}</td>
-                          {hasStats ? (
-                            <>
-                              <td className="px-3 py-2 text-right tabular-nums text-foreground">{run.total_trades}</td>
-                              <td className={`px-3 py-2 text-right tabular-nums font-medium ${profitOk ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                {fmt$(run.profit_total_abs ?? 0)}
-                              </td>
-                              <td className={`px-3 py-2 text-right tabular-nums ${profitOk ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                {fmtPctRatio(run.profit_total ?? 0)}
-                              </td>
-                              <td className="px-3 py-2 text-right tabular-nums text-foreground">
-                                {((run.winrate ?? 0) * 100).toFixed(1)}%
-                              </td>
-                              <td className="px-3 py-2 text-right tabular-nums text-rose-400">
-                                -{((run.max_drawdown_account ?? 0) * 100).toFixed(1)}%
-                              </td>
-                              <td className={`px-3 py-2 text-right tabular-nums ${(run.profit_factor ?? 0) > 1 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                {(run.profit_factor ?? 0).toFixed(2)}
-                              </td>
-                            </>
-                          ) : (
-                            <td colSpan={6} className="px-3 py-2 text-center text-muted-foreground/30">—</td>
-                          )}
-                          <td className="px-3 py-2 whitespace-nowrap">
-                            <div className="flex items-center justify-center gap-2">
-                              <button
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  addLog('INFO', `Loading results from ${run.filename}...`);
-                                  try {
-                                    const data = await botHyperoptHistoryResults(botId, run.filename);
-                                    const mapped: HyperoptResult[] = (data.results || []).map((r, i) => ({
-                                      id: r.current_epoch || i + 1,
-                                      loss: r.loss,
-                                      trades: r.trades,
-                                      winRate: r.winRate,
-                                      profitPct: r.profitPct,
-                                      profitAbs: r.profitAbs,
-                                      maxDrawdown: r.maxDrawdown,
-                                      sharpe: r.sharpe,
-                                      sortino: r.sortino,
-                                      avgDuration: r.avgDuration,
-                                      sampler: '',
-                                      lossFunction: '',
-                                      spaces: '',
-                                      epochs: data.total,
-                                      status: 'completed' as const,
-                                      startedAt: new Date(run.mtime * 1000).toISOString(),
-                                      params: r.params,
-                                    }));
-                                    setResults(mapped);
-                                    setResultsPage(1);
-                                    addLog('INFO', `Loaded ${mapped.length} epochs from ${run.filename}`);
-                                    toast.success(`Loaded ${mapped.length} epochs`);
-                                    setTimeout(() => document.querySelector('[data-ho-results]')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
-                                  } catch (err) {
-                                    addLog('ERROR', `Failed to load: ${err}`);
-                                    toast.error('Failed to load results');
-                                  }
-                                }}
-                                className="text-[10px] px-2 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded hover:bg-primary/20 transition-all"
-                              >Load</button>
-                              {isConfirming ? (
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); setHoConfirmDelete(null); handleDeleteRun(run.filename); }}
-                                  className="text-[10px] px-1.5 py-0.5 bg-rose-500/20 border border-rose-500/50 text-rose-400 rounded hover:bg-rose-500/30 transition-all animate-pulse"
-                                >Confirm?</button>
-                              ) : (
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); setHoConfirmDelete(run.filename); }}
-                                  className="text-[10px] px-1.5 py-0.5 bg-rose-500/10 border border-rose-500/20 text-rose-400/70 rounded hover:bg-rose-500/20 hover:text-rose-400 transition-all"
-                                >Delete</button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                        {isExpanded && (
-                          <tr key={`${run.filename}-expand`} className="bg-muted/10">
-                            <td colSpan={12} className="px-4 py-2">
-                              <div className="flex flex-wrap gap-x-6 gap-y-1 text-[10px]">
-                                <span className="text-muted-foreground">Strategy: <span className="text-foreground font-mono">{run.strategy}</span></span>
-                                <span className="text-muted-foreground">Epochs: <span className="text-foreground font-mono">{run.epochs}</span></span>
-                                <span className="text-muted-foreground">Size: <span className="text-foreground font-mono">{(run.size_bytes / 1024).toFixed(0)} KB</span></span>
-                                <span className="text-muted-foreground">File: <span className="text-foreground font-mono text-[9px]">{run.filename}</span></span>
-                                {run.sharpe !== undefined && <span className="text-muted-foreground">Sharpe: <span className="text-foreground font-mono">{(run.sharpe ?? 0).toFixed(2)}</span></span>}
-                                {run.sortino !== undefined && <span className="text-muted-foreground">Sortino: <span className="text-foreground font-mono">{(run.sortino ?? 0).toFixed(2)}</span></span>}
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                        </Fragment>
-                      );
-                    })}
+                    ))}
                   </tbody>
                 </table>
               </div>
-              {totalHoPages > 1 && (
-                <div className="flex items-center justify-between px-3 py-2 border-t border-border bg-muted/30">
-                  <span className="text-xs text-muted-foreground">
-                    Showing {(hoPage - 1) * hoPerPage + 1}-{Math.min(hoPage * hoPerPage, hoRuns.length)} of {hoRuns.length}
-                  </span>
-                  <div className="flex gap-1">
-                    <button onClick={() => setHoPage(p => Math.max(1, p - 1))} disabled={hoPage === 1}
-                      className="px-2 py-1 text-xs border border-border rounded bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all">← Prev</button>
-                    <button onClick={() => setHoPage(p => Math.min(totalHoPages, p + 1))} disabled={hoPage === totalHoPages}
-                      className="px-2 py-1 text-xs border border-border rounded bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-all">Next →</button>
-                  </div>
-                </div>
-              )}
-            </div>
+            )}
           </div>
-          );
-        })()}
+        </div>
       </div>
     </div>
   );

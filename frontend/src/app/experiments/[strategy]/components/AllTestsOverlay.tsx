@@ -1,13 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { INPUT, SELECT, LABEL, BTN_ACTION } from '@/lib/design';
-import { getExperimentRuns, type ExperimentRun } from '@/lib/api';
-import { useToast } from '@/components/ui/Toast';
-
-type SortKey = 'date' | 'profit' | 'sharpe' | 'winRate';
-type StatusFilter = 'All' | 'Running' | 'Done' | 'Failed';
-type TestType = 'All Types' | 'backtest' | 'hyperopt' | 'freqai' | 'verification' | 'ai_review';
+import { useState, useMemo } from "react";
 
 interface AllTestsOverlayProps {
   onClose: () => void;
@@ -17,386 +10,214 @@ interface AllTestsOverlayProps {
   onOpenOverlay?: (overlay: string) => void;
 }
 
+type TestType = "All Types" | "BT" | "HO" | "FAI";
+type TestStatus = "All Status" | "Completed" | "Running" | "Failed";
+type SortKey = "id" | "type" | "name" | "date" | "profit" | "sharpe" | "trades" | "status";
+type SortDir = "asc" | "desc";
+
+interface TestRow {
+  id: number;
+  type: "BT" | "HO" | "FAI";
+  name: string;
+  date: string;
+  profit: number;
+  sharpe: number;
+  trades: number;
+  status: "completed" | "running" | "failed";
+  promote: boolean;
+}
+
+const MOCK_TESTS: TestRow[] = [
+  { id: 1, type: "BT", name: "AlphaTrend_V5_base", date: "2026-03-28 14:22", profit: 42.12, sharpe: 3.92, trades: 142, status: "completed", promote: true },
+  { id: 147, type: "HO", name: "Sharpe_TPE_200ep", date: "2026-03-27 09:15", profit: 52.4, sharpe: 4.12, trades: 156, status: "completed", promote: true },
+  { id: 148, type: "FAI", name: "LightGBM-R_v2", date: "2026-03-26 18:40", profit: 38.7, sharpe: 3.45, trades: 128, status: "completed", promote: true },
+  { id: 149, type: "BT", name: "AlphaTrend_V5_tight", date: "2026-03-25 11:05", profit: 22.8, sharpe: 2.81, trades: 98, status: "completed", promote: false },
+  { id: 150, type: "HO", name: "Calmar_CMA_100ep", date: "2026-03-24 16:33", profit: -3.2, sharpe: -0.42, trades: 210, status: "completed", promote: false },
+  { id: 151, type: "FAI", name: "XGBoost-C_exp1", date: "2026-03-23 08:12", profit: 15.6, sharpe: 1.92, trades: 74, status: "completed", promote: false },
+  { id: 152, type: "BT", name: "AlphaTrend_V5_wide", date: "2026-03-22 20:48", profit: 8.3, sharpe: 1.14, trades: 186, status: "failed", promote: false },
+  { id: 153, type: "HO", name: "SortinoHyperLoss_TPE", date: "2026-03-21 13:55", profit: 31.2, sharpe: 3.18, trades: 134, status: "completed", promote: false },
+  { id: 154, type: "FAI", name: "LightGBM-R_v1", date: "2026-03-20 07:30", profit: 12.4, sharpe: 1.55, trades: 112, status: "completed", promote: false },
+  { id: 155, type: "BT", name: "AlphaTrend_V4_legacy", date: "2026-03-19 22:10", profit: -7.8, sharpe: -1.02, trades: 64, status: "completed", promote: false },
+];
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default function AllTestsOverlay({ onClose, strategy, experimentId, onNavigateToTab, onOpenOverlay }: AllTestsOverlayProps) {
-  const toast = useToast();
-  const [sortBy, setSortBy] = useState<SortKey>('date');
-  const [filterType, setFilterType] = useState<TestType>('All Types');
-  const [filterStatus, setFilterStatus] = useState<StatusFilter>('All');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [runs, setRuns] = useState<ExperimentRun[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [expandedRow, setExpandedRow] = useState<number | null>(null);
-  const [promotedId, setPromotedId] = useState<number | null>(null);
-  const itemsPerPage = 20;
+  const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState<TestType>("All Types");
+  const [filterStatus, setFilterStatus] = useState<TestStatus>("All Status");
+  const [sortKey, setSortKey] = useState<SortKey>("date");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
-  // ── Escape key handler ───────────────────────────────────────────
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [onClose]);
-
-  // ── Fetch runs from API ──────────────────────────────────────────
-  const fetchRuns = useCallback(async () => {
-    if (!experimentId) {
-      setLoading(false);
-      return;
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir(key === "date" ? "desc" : "asc");
     }
-    setLoading(true);
-    try {
-      const data = await getExperimentRuns(experimentId);
-      if (Array.isArray(data)) {
-        setRuns(data);
-      }
-    } catch (err) {
-      toast.error(`Failed to load runs: ${err instanceof Error ? err.message : String(err)}`);
-    } finally {
-      setLoading(false);
-    }
-  }, [experimentId, toast]);
+  };
 
-  useEffect(() => { fetchRuns(); }, [fetchRuns]);
+  const sortIndicator = (key: SortKey) =>
+    sortKey === key ? (sortDir === "asc" ? " \u25B2" : " \u25BC") : "";
 
-  // ── Filter + Sort ────────────────────────────────────────────────
   const filtered = useMemo(() => {
-    let result = [...runs];
+    let rows = [...MOCK_TESTS];
 
-    if (filterType !== 'All Types') {
-      result = result.filter((t) => t.run_type === filterType);
-    }
-
-    if (filterStatus !== 'All') {
-      const statusMap: Record<string, string> = { Running: 'running', Done: 'completed', Failed: 'failed' };
-      result = result.filter((t) => t.status === statusMap[filterStatus]);
-    }
-
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter((t) =>
-        (t.sampler?.toLowerCase().includes(q)) ||
-        (t.loss_function?.toLowerCase().includes(q)) ||
-        (t.run_type?.toLowerCase().includes(q)) ||
-        String(t.id).includes(q)
+    if (search) {
+      const q = search.toLowerCase();
+      rows = rows.filter(
+        (r) =>
+          r.name.toLowerCase().includes(q) ||
+          r.type.toLowerCase().includes(q) ||
+          String(r.id).includes(q)
       );
     }
 
-    return result;
-  }, [runs, filterType, filterStatus, searchQuery]);
+    if (filterType !== "All Types") {
+      rows = rows.filter((r) => r.type === filterType);
+    }
 
-  const sorted = useMemo(() => {
-    const copy = [...filtered];
-    copy.sort((a, b) => {
-      switch (sortBy) {
-        case 'date':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        case 'profit':
-          return (b.profit_pct ?? 0) - (a.profit_pct ?? 0);
-        case 'sharpe':
-          return (b.sharpe_ratio ?? 0) - (a.sharpe_ratio ?? 0);
-        case 'winRate':
-          return (b.win_rate ?? 0) - (a.win_rate ?? 0);
-        default:
-          return 0;
+    if (filterStatus !== "All Status") {
+      const statusMap: Record<string, string> = {
+        Completed: "completed",
+        Running: "running",
+        Failed: "failed",
+      };
+      rows = rows.filter((r) => r.status === statusMap[filterStatus]);
+    }
+
+    rows.sort((a, b) => {
+      let cmp = 0;
+      switch (sortKey) {
+        case "id": cmp = a.id - b.id; break;
+        case "type": cmp = a.type.localeCompare(b.type); break;
+        case "name": cmp = a.name.localeCompare(b.name); break;
+        case "date": cmp = a.date.localeCompare(b.date); break;
+        case "profit": cmp = a.profit - b.profit; break;
+        case "sharpe": cmp = a.sharpe - b.sharpe; break;
+        case "trades": cmp = a.trades - b.trades; break;
+        case "status": cmp = a.status.localeCompare(b.status); break;
       }
+      return sortDir === "asc" ? cmp : -cmp;
     });
-    return copy;
-  }, [filtered, sortBy]);
 
-  const totalPages = Math.ceil(sorted.length / itemsPerPage);
-  const start = (currentPage - 1) * itemsPerPage;
-  const paged = sorted.slice(start, start + itemsPerPage);
+    return rows;
+  }, [search, filterType, filterStatus, sortKey, sortDir]);
 
-  // ── Type counts ──────────────────────────────────────────────────
-  const countByType = useMemo(() => {
-    const counts: Record<string, number> = {};
-    runs.forEach((r) => { counts[r.run_type] = (counts[r.run_type] ?? 0) + 1; });
-    return counts;
-  }, [runs]);
-
-  const countByStatus = useMemo(() => {
-    const counts: Record<string, number> = { running: 0, completed: 0, failed: 0 };
-    runs.forEach((r) => { if (r.status in counts) counts[r.status]++; });
-    return counts;
-  }, [runs]);
-
-  const formatProfit = (v: number | null) => {
-    if (v == null) return '—';
-    return `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`;
-  };
-
-  const profitColor = (v: number | null) => {
-    if (v == null) return 'text-muted-foreground';
-    return v >= 0 ? 'text-emerald-400' : 'text-rose-400';
-  };
-
-  const statusBadge = (status: string) => {
-    const map: Record<string, { bg: string; text: string; label: string }> = {
-      running: { bg: 'bg-primary/10', text: 'text-primary', label: 'Running' },
-      completed: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', label: 'Done' },
-      failed: { bg: 'bg-rose-500/10', text: 'text-rose-400', label: 'Failed' },
-      pending: { bg: 'bg-muted/50', text: 'text-muted-foreground', label: 'Pending' },
-      promoted: { bg: 'bg-amber-500/10', text: 'text-amber-400', label: 'Promoted' },
-    };
-    const cfg = map[status] ?? map.pending;
-    return (
-      <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${cfg.bg} ${cfg.text}`}>
-        {cfg.label}
-      </span>
-    );
-  };
-
-  const typeBadge = (type: string) => {
-    const map: Record<string, string> = {
-      backtest: 'text-blue-400',
-      hyperopt: 'text-purple-400',
-      freqai: 'text-amber-400',
-      verification: 'text-emerald-400',
-      ai_review: 'text-cyan-400',
-    };
-    return (
-      <span className={`text-[10px] font-semibold uppercase ${map[type] ?? 'text-muted-foreground'}`}>
-        {type}
-      </span>
-    );
-  };
+  const totalPages = Math.max(1, Math.ceil(filtered.length / 20));
 
   return (
-    <div className="flex flex-col h-full bg-background text-foreground">
+    <div className="flex-1 flex flex-col">
       {/* Filter bar */}
-      <div className="border-b border-border px-[16px] py-[12px] space-y-[12px]">
-        <div className="flex gap-[12px] items-end flex-wrap">
-          <div className="flex-1 min-w-[200px]">
-            <label className={LABEL}>Search</label>
-            <input
-              type="text"
-              placeholder="Search by sampler, loss function..."
-              value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-              className={INPUT}
-            />
-          </div>
-          <div>
-            <label className={LABEL}>Sort By</label>
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} className={SELECT}>
-              <option value="date">Date</option>
-              <option value="profit">Profit</option>
-              <option value="sharpe">Sharpe</option>
-              <option value="winRate">Win Rate</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Type filters */}
-        <div className="flex gap-[8px] flex-wrap">
-          {(['All Types', 'backtest', 'hyperopt', 'freqai', 'verification', 'ai_review'] as const).map((type) => {
-            const count = type === 'All Types' ? runs.length : (countByType[type] ?? 0);
-            return (
-              <button
-                key={type}
-                onClick={() => { setFilterType(type); setCurrentPage(1); }}
-                className={`px-[12px] py-[4px] rounded-full text-xs font-semibold uppercase tracking-[0.5px] border transition ${
-                  filterType === type
-                    ? 'bg-primary border-primary text-white'
-                    : 'bg-transparent border-border text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {type === 'All Types' ? 'All' : type} ({count})
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Status filters */}
-        <div className="flex gap-[8px]">
-          {(['All', 'Running', 'Done', 'Failed'] as const).map((status) => {
-            const statusKey = status === 'All' ? '' : status.toLowerCase();
-            const count = status === 'All'
-              ? runs.length
-              : (countByStatus[statusKey === 'done' ? 'completed' : statusKey] ?? 0);
-            return (
-              <button
-                key={status}
-                onClick={() => { setFilterStatus(status); setCurrentPage(1); }}
-                className={`px-[12px] py-[4px] rounded-full text-xs font-semibold uppercase tracking-[0.5px] border transition ${
-                  filterStatus === status
-                    ? 'bg-primary border-primary text-white'
-                    : 'bg-transparent border-border text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {status} ({count})
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="text-xs text-muted-foreground font-semibold">
-          {sorted.length} test{sorted.length !== 1 ? 's' : ''} for {strategy}
-        </div>
+      <div className="flex gap-3 mb-4 items-center">
+        <input
+          type="text"
+          placeholder="Search tests..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="bg-[#1a1a1a] l-bd px-3 py-2 text-white outline-none rounded text-[12px] font-mono w-[240px]"
+        />
+        <select
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value as TestType)}
+          className="bg-[#1a1a1a] l-bd px-3 py-2 text-white/80 appearance-none rounded text-[12px] font-mono"
+        >
+          <option>All Types</option>
+          <option>BT</option>
+          <option>HO</option>
+          <option>FAI</option>
+        </select>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value as TestStatus)}
+          className="bg-[#1a1a1a] l-bd px-3 py-2 text-white/80 appearance-none rounded text-[12px] font-mono"
+        >
+          <option>All Status</option>
+          <option>Completed</option>
+          <option>Running</option>
+          <option>Failed</option>
+        </select>
+        <span className="flex-1" />
+        <span className="text-[10px] text-white/30 font-mono">
+          {filtered.length} total &middot; Page 1/{totalPages}
+        </span>
       </div>
 
-      {/* Loading */}
-      {loading && (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin text-2xl text-primary">⟳</div>
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!loading && paged.length === 0 && (
-        <div className="flex-1 flex flex-col items-center justify-center px-[16px] py-[40px]">
-          <div className="text-sm font-semibold text-muted-foreground mb-[8px]">No tests found</div>
-          <div className="text-xs text-muted-foreground max-w-xs text-center">
-            {runs.length === 0
-              ? 'Run a backtest, hyperopt, or FreqAI test first.'
-              : 'No tests match your current filters.'}
-          </div>
-        </div>
-      )}
-
       {/* Table */}
-      {!loading && paged.length > 0 && (
-        <div className="flex-1 overflow-auto">
-          <table className="w-full border-collapse">
-            <thead className="sticky top-0 bg-card">
-              <tr>
-                <th className="py-[8px] px-[10px] text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap text-center w-8">★</th>
-                <th className="py-[8px] px-[10px] text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap text-left">#</th>
-                <th className="py-[8px] px-[10px] text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap text-left">Type</th>
-                <th className="py-[8px] px-[10px] text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap text-left">Sampler</th>
-                <th className="py-[8px] px-[10px] text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap text-left">Loss Fn</th>
-                <th className="py-[8px] px-[10px] text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap text-left">Spaces</th>
-                <th className="py-[8px] px-[10px] text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap text-left">Date</th>
-                <th className="py-[8px] px-[10px] text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap text-right">Trades</th>
-                <th className="py-[8px] px-[10px] text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap text-right">Win%</th>
-                <th className="py-[8px] px-[10px] text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap text-right">Profit%</th>
-                <th className="py-[8px] px-[10px] text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap text-right">Max DD</th>
-                <th className="py-[8px] px-[10px] text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap text-right">Sharpe</th>
-                <th className="py-[8px] px-[10px] text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap text-right">Sortino</th>
-                <th className="py-[8px] px-[10px] text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap">Status</th>
-                <th className="py-[8px] px-[10px] text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap">Actions</th>
+      <div className="bg-surface l-bd rounded-md overflow-hidden">
+        <table className="w-full text-left border-collapse whitespace-nowrap text-[13px] font-mono">
+          <thead>
+            <tr className="bg-surface l-b text-[11px] uppercase tracking-widest text-muted">
+              <th className="px-4 py-2.5 cursor-pointer select-none sortable" onClick={() => handleSort("id")}>
+                #{sortIndicator("id")}
+              </th>
+              <th className="px-4 py-2.5 cursor-pointer select-none sortable filterable" onClick={() => handleSort("type")}>
+                Type{sortIndicator("type")}
+              </th>
+              <th className="px-4 py-2.5 cursor-pointer select-none sortable" onClick={() => handleSort("name")}>
+                Name{sortIndicator("name")}
+              </th>
+              <th className="px-4 py-2.5 cursor-pointer select-none sortable" onClick={() => handleSort("date")}>
+                Date{sortIndicator("date")}
+              </th>
+              <th className="px-4 py-2.5 text-right cursor-pointer select-none sortable" onClick={() => handleSort("profit")}>
+                Profit%{sortIndicator("profit")}
+              </th>
+              <th className="px-4 py-2.5 text-right cursor-pointer select-none sortable" onClick={() => handleSort("sharpe")}>
+                Sharpe{sortIndicator("sharpe")}
+              </th>
+              <th className="px-4 py-2.5 text-right cursor-pointer select-none sortable" onClick={() => handleSort("trades")}>
+                Trades{sortIndicator("trades")}
+              </th>
+              <th className="px-4 py-2.5 text-center cursor-pointer select-none sortable filterable" onClick={() => handleSort("status")}>
+                Status{sortIndicator("status")}
+              </th>
+              <th className="px-4 py-2.5 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/[0.05] text-white/70">
+            {filtered.map((row) => (
+              <tr key={row.id} className="hover:bg-white/[0.03] transition-colors">
+                <td className="px-4 py-2 text-muted">{row.id}</td>
+                <td className="px-4 py-2">
+                  <span className="px-1.5 py-0.5 rounded text-[8px] bg-white/5 border border-white/10 text-white/50">
+                    {row.type}
+                  </span>
+                </td>
+                <td className="px-4 py-2 text-white/80">{row.name}</td>
+                <td className="px-4 py-2 text-white/40">{row.date}</td>
+                <td className={`px-4 py-2 text-right ${row.profit >= 0 ? "text-up font-bold" : "text-down font-bold"}`}>
+                  {row.profit >= 0 ? "+" : ""}{row.profit.toFixed(2)}%
+                </td>
+                <td className="px-4 py-2 text-right">{row.sharpe.toFixed(2)}</td>
+                <td className="px-4 py-2 text-right">{row.trades}</td>
+                <td className="px-4 py-2 text-center">
+                  {row.status === "completed" && (
+                    <span className="text-[8px] text-up font-bold">{"\u2713"}</span>
+                  )}
+                  {row.status === "running" && (
+                    <span className="text-[8px] text-yellow-400 font-bold animate-pulse">{"\u25CF"}</span>
+                  )}
+                  {row.status === "failed" && (
+                    <span className="text-[8px] text-down font-bold">{"\u2717"}</span>
+                  )}
+                </td>
+                <td className="px-4 py-2 text-center">
+                  {row.promote ? (
+                    <button className="text-[9px] px-2 py-0.5 bg-up/10 border border-up/20 text-up rounded hover:bg-up/20 transition-colors">
+                      Promote
+                    </button>
+                  ) : (
+                    <button className="text-[9px] px-2 py-0.5 bg-white/5 border border-white/10 text-white/50 rounded hover:bg-white/10 transition-colors">
+                      Load
+                    </button>
+                  )}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {paged.map((run) => (
-                <React.Fragment key={run.id}>
-                <tr
-                  onClick={() => setExpandedRow(expandedRow === run.id ? null : run.id)}
-                  className={`border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer ${promotedId === run.id ? 'bg-amber-500/5' : ''} ${expandedRow === run.id ? 'bg-muted/20' : ''}`}
-                >
-                  <td className="py-[6px] px-[10px] text-center">
-                    {promotedId === run.id ? <span className="text-amber-400">★</span> : <span className="text-muted-foreground/30">☆</span>}
-                  </td>
-                  <td className="py-[6px] px-[10px] text-xs tabular-nums text-muted-foreground">{run.id}</td>
-                  <td className="py-[6px] px-[10px]">{typeBadge(run.run_type)}</td>
-                  <td className="py-[6px] px-[10px] text-xs font-mono">{run.sampler ?? '—'}</td>
-                  <td className="py-[6px] px-[10px] text-xs">{run.loss_function ?? '—'}</td>
-                  <td className="py-[6px] px-[10px] text-xs text-muted-foreground">
-                    {run.spaces ? run.spaces.join(', ') : '—'}
-                  </td>
-                  <td className="py-[6px] px-[10px] text-xs text-muted-foreground whitespace-nowrap">
-                    {run.created_at ? new Date(run.created_at).toISOString().replace('T', ' ').substring(0, 19) : '—'}
-                  </td>
-                  <td className="py-[6px] px-[10px] text-xs text-right tabular-nums">{run.total_trades ?? '—'}</td>
-                  <td className="py-[6px] px-[10px] text-xs text-right tabular-nums">
-                    {run.win_rate != null ? `${run.win_rate.toFixed(1)}%` : '—'}
-                  </td>
-                  <td className={`py-[6px] px-[10px] text-xs text-right tabular-nums font-medium ${profitColor(run.profit_pct)}`}>
-                    {formatProfit(run.profit_pct)}
-                  </td>
-                  <td className="py-[6px] px-[10px] text-xs text-right tabular-nums text-rose-400">
-                    {run.max_drawdown != null ? `-${Math.abs(run.max_drawdown).toFixed(2)}%` : '—'}
-                  </td>
-                  <td className="py-[6px] px-[10px] text-xs text-right tabular-nums">
-                    {run.sharpe_ratio?.toFixed(2) ?? '—'}
-                  </td>
-                  <td className="py-[6px] px-[10px] text-xs text-right tabular-nums">
-                    {run.sortino_ratio?.toFixed(2) ?? '—'}
-                  </td>
-                  <td className="py-[6px] px-[10px] text-center">{statusBadge(run.status)}</td>
-                  <td className="py-[6px] px-[10px] text-center">
-                    <span className="text-[10px] text-muted-foreground">{expandedRow === run.id ? '▲' : '▼'}</span>
-                  </td>
-                </tr>
-                {/* Expanded Row (§1120-1125) */}
-                {expandedRow === run.id && (
-                  <tr className="bg-muted/10">
-                    <td colSpan={15} className="px-[16px] py-[10px]">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onNavigateToTab?.(5); onClose(); }}
-                          className={`${BTN_ACTION} border-primary/40 text-primary hover:bg-primary/10`}
-                        >→ Verify</button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setPromotedId(run.id); toast.success(`Promoted run #${run.id}`); }}
-                          className={`${BTN_ACTION} border-amber-500/40 text-amber-400 hover:bg-amber-500/10`}
-                        >Promote ★</button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onClose(); onOpenOverlay?.('compare'); }}
-                          className={`${BTN_ACTION} border-border text-muted-foreground hover:bg-muted`}
-                        >Compare</button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onClose(); onOpenOverlay?.('analysis'); }}
-                          className={`${BTN_ACTION} border-border text-muted-foreground hover:bg-muted`}
-                        >→ Analysis</button>
-                        <div className="flex-1" />
-                        <div className="text-[10px] text-muted-foreground">
-                          Epochs: {run.epochs ?? '—'} · Timerange: {((run as unknown as Record<string, unknown>).timerange as string) ?? '—'}
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Pagination */}
-      {!loading && paged.length > 0 && totalPages > 1 && (
-        <div className="border-t border-border px-[16px] py-[12px] flex items-center justify-between">
-          <div className="text-xs text-muted-foreground">
-            Showing {start + 1} to {Math.min(start + itemsPerPage, sorted.length)} of {sorted.length}
-          </div>
-          <div className="flex gap-[8px] items-center">
-            <button
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="inline-flex items-center justify-center h-[34px] px-[14px] rounded-btn text-xs font-medium border border-border bg-muted/50 text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition"
-            >
-              ← Prev
-            </button>
-            <div className="flex gap-[4px] items-center">
-              {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
-                const page = i + 1;
-                return (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`inline-flex items-center justify-center h-[34px] w-[34px] rounded-btn text-xs font-medium border transition ${
-                      page === currentPage
-                        ? 'bg-primary border-primary text-white'
-                        : 'border-border bg-muted/50 text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                );
-              })}
-              {totalPages > 5 && <span className="text-xs text-muted-foreground">...</span>}
-            </div>
-            <button
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-              className="inline-flex items-center justify-center h-[34px] px-[14px] rounded-btn text-xs font-medium border border-border bg-muted/50 text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition"
-            >
-              Next →
-            </button>
-          </div>
-        </div>
-      )}
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

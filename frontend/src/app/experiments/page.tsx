@@ -2,10 +2,9 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { Search, FlaskConical, Plus, ArrowUpDown, Filter } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { useToast } from "@/components/ui/Toast";
-
-import { Input } from "@/components/ui/input";
 import {
   fmtDateTime,
   fmtPct,
@@ -14,7 +13,7 @@ import {
   type StrategyTestStatus,
   type StepState,
 } from "@/lib/experiments";
-import { getExperiments, type Experiment } from "@/lib/api";
+import { getExperiments, seedExperiments, type Experiment } from "@/lib/api";
 
 // ── Types ───────────────────────────────────────────────────────────────
 
@@ -66,18 +65,19 @@ function computeStatus(completedRunTypes: string[], testCount: number): Strategy
 
 // ── Status badge ─────────────────────────────────────────────────────────
 
+const STATUS_STYLES: Record<string, string> = {
+  Draft: "bg-white/[0.04] text-white/40 border border-white/[0.08]",
+  Backtested: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
+  Optimized: "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20",
+  Paper: "bg-purple-500/10 text-purple-400 border border-purple-500/20",
+  Live: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+  Retired: "bg-white/[0.03] text-white/30 border border-white/[0.06]",
+};
+
 function StatusBadge({ status }: { status: StrategyTestStatus }) {
-  const cls: Record<string, string> = {
-    Draft: "bg-zinc-800/60 text-zinc-400",
-    Backtested: "bg-blue-500/10 text-blue-400 border border-blue-500/25",
-    Optimized: "bg-amber-500/10 text-amber-400 border border-amber-500/25",
-    Paper: "bg-purple-500/10 text-purple-400 border border-purple-500/25",
-    Live: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/25",
-    Retired: "bg-zinc-700/40 text-zinc-500 border border-zinc-600/25",
-  };
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide ${cls[status] ?? cls.Draft}`}
+      className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] uppercase font-bold tracking-wider shrink-0 ${STATUS_STYLES[status] ?? STATUS_STYLES.Draft}`}
     >
       {status}
     </span>
@@ -91,29 +91,27 @@ function MiniPipeline({ steps }: { steps: Record<string, StepState> }) {
     <div className="flex items-center gap-[3px]">
       {PIPELINE_STEPS.map((step, idx) => {
         const state = steps[step.key];
-        let dotClass = "w-[10px] h-[10px] rounded-full border-[1.5px]";
-        let connectorClass = "w-[6px] h-[1.5px]";
+        let dotClass = "w-[7px] h-[7px] rounded-full";
+        let connectorClass = "w-[5px] h-px";
 
         if (state === "completed") {
-          dotClass += " bg-emerald-500 border-emerald-500";
-          connectorClass += " bg-emerald-500";
+          dotClass += " bg-emerald-500";
+          connectorClass += " bg-emerald-500/50";
         } else if (state === "active") {
-          dotClass += " bg-primary border-primary";
-          connectorClass += " bg-border";
+          dotClass += " bg-white animate-pulse";
+          connectorClass += " bg-white/20";
         } else if (state === "skipped") {
-          dotClass += " border-dashed border-zinc-600";
-          connectorClass += " bg-border";
+          dotClass += " border border-dashed border-white/20";
+          connectorClass += " bg-white/10";
         } else {
-          dotClass += " border-border";
-          connectorClass += " bg-border";
+          dotClass += " border border-white/15";
+          connectorClass += " bg-white/8";
         }
 
         return (
           <div key={step.key} className="flex items-center gap-[3px]">
             <div className={dotClass} />
-            {idx < PIPELINE_STEPS.length - 1 && (
-              <div className={connectorClass} />
-            )}
+            {idx < PIPELINE_STEPS.length - 1 && <div className={connectorClass} />}
           </div>
         );
       })}
@@ -133,8 +131,10 @@ export default function ExperimentsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [sortBy, setSortBy] = useState("lastTest");
   const [experiments, setExperiments] = useState<UIExperiment[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     getExperiments()
       .then((res) => {
         const data = (res as unknown as { items?: Experiment[] }).items || (res as unknown as Experiment[]);
@@ -166,8 +166,9 @@ export default function ExperimentsPage() {
         }
       })
       .catch((err) => {
-        console.error("Failed to fetch experiments", err);
-      });
+        toast.error(err instanceof Error ? err.message : "Failed to fetch experiments");
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   // Filter and sort
@@ -208,214 +209,212 @@ export default function ExperimentsPage() {
     return result;
   }, [experiments, searchTerm, statusFilter, sortBy]);
 
-  const handleNewExperiment = useCallback(() => {
-    toast.success("New experiment created (mock)");
+  const handleNewExperiment = useCallback(async () => {
+    const loadId = toast.loading("Creating experiments for all strategies...");
+    try {
+      const result = await seedExperiments();
+      toast.dismiss(loadId);
+      if (result.created > 0) {
+        toast.success(`${result.created} experiment(s) created.`);
+        const resp = await getExperiments();
+        if (resp.items) {
+          setExperiments(resp.items.map((exp) => ({
+            id: exp.id,
+            strategyName: exp.strategy_name ?? exp.name,
+            description: exp.notes || "",
+            status: computeStatus(exp.completed_run_types ?? [], exp.run_count ?? 0),
+            version: exp.best_version_id ? `v${exp.best_version_id}` : "v0 (draft)",
+            pair: exp.pair || "BTC/USDT:USDT",
+            timeframe: exp.timeframe || "1h",
+            testCount: exp.run_count ?? 0,
+            lastTestType: exp.last_run_type ?? null,
+            lastTestDate: exp.last_run_date ?? null,
+            bestProfit: exp.best_profit_pct ?? null,
+            winRate: exp.best_win_rate ?? null,
+            maxDD: exp.best_max_drawdown ?? null,
+            sharpe: exp.best_sharpe ?? null,
+            pipelineSteps: computePipelineSteps(exp.completed_run_types ?? []),
+          })));
+        }
+      } else {
+        toast.success("All strategies already have experiments.");
+      }
+    } catch (err) {
+      toast.dismiss(loadId);
+      toast.error(err instanceof Error ? err.message : "Failed to create experiments.");
+    }
   }, [toast]);
 
   return (
     <AppShell title="Experiments">
-      <div className="p-5">
-      {/* ── Header ── */}
-      <div className="flex items-center gap-3 mb-5">
-        <h1 className="text-base font-semibold text-foreground">Experiments</h1>
-        <span className="text-xs text-muted-foreground">
-          All strategies and their test pipelines
-        </span>
-        <div className="ml-auto">
-          <button
-            onClick={handleNewExperiment}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-primary hover:bg-[#5558e6] text-white text-xs font-medium rounded-btn transition-colors"
-          >
-            + New Experiment
-          </button>
-        </div>
-      </div>
+      <div className="flex flex-col h-full min-h-0 bg-black">
+        {/* ── Header Bar ── */}
+        <div className="h-12 l-b flex items-center px-5 gap-4 shrink-0">
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <FlaskConical className="w-4 h-4 text-white/40 shrink-0" />
+            <h1 className="text-[13px] font-bold text-white">Experiments</h1>
+            <span className="text-[10px] text-white/30 ml-1">
+              {filteredAndSorted.length} strategies
+            </span>
+          </div>
 
-      {/* ── Filters Bar ── */}
-      <div className="flex items-center gap-2.5 mb-4">
-        <Input
-          type="text"
-          placeholder="Search strategies..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-[240px] w-full"
-        />
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="flex h-9 w-full max-w-[160px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring appearance-none"
-        >
-          <option value="">All Status</option>
-          <option value="Draft">Draft</option>
-          <option value="Testing">Testing</option>
-          <option value="Optimized">Optimized</option>
-          <option value="Paper">Paper</option>
-          <option value="Live">Live</option>
-        </select>
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          className="flex h-9 w-full max-w-[160px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring appearance-none"
-        >
-          <option value="lastTest">Sort: Last Activity</option>
-          <option value="name">Sort: Name A-Z</option>
-          <option value="profit">Sort: Profit ↓</option>
-          <option value="tests">Sort: Tests ↓</option>
-        </select>
-        <span className="ml-auto text-xs text-muted-foreground">
-          {filteredAndSorted.length} strategies
-        </span>
-      </div>
+          {/* Search + Filters */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-white/30 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search strategies..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-8 w-[200px] pl-8 pr-3 text-[11px] rounded bg-white/[0.03] border border-white/[0.12] text-white placeholder:text-white/30 focus:border-white/25 focus:outline-none transition-colors"
+              />
+            </div>
 
-      {/* ── Strategy Table ── */}
-      {filteredAndSorted.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground text-xs">
-          No strategies found
+            <div className="relative">
+              <Filter className="w-3 h-3 text-white/30 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="h-8 w-[130px] pl-7 pr-2 text-[11px] rounded bg-white/[0.03] border border-white/[0.12] text-white/70 focus:border-white/25 focus:outline-none appearance-none cursor-pointer transition-colors"
+              >
+                <option value="">All Status</option>
+                <option value="Draft">Draft</option>
+                <option value="Backtested">Backtested</option>
+                <option value="Optimized">Optimized</option>
+                <option value="Paper">Paper</option>
+                <option value="Live">Live</option>
+              </select>
+            </div>
+
+            <div className="relative">
+              <ArrowUpDown className="w-3 h-3 text-white/30 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="h-8 w-[140px] pl-7 pr-2 text-[11px] rounded bg-white/[0.03] border border-white/[0.12] text-white/70 focus:border-white/25 focus:outline-none appearance-none cursor-pointer transition-colors"
+              >
+                <option value="lastTest">Last Activity</option>
+                <option value="name">Name A-Z</option>
+                <option value="profit">Profit</option>
+                <option value="tests">Tests</option>
+              </select>
+            </div>
+
+            <div className="h-5 w-px bg-white/10 mx-1" />
+
+            <button
+              onClick={handleNewExperiment}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white text-black text-[11px] font-bold rounded hover:bg-white/85 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              New Experiment
+            </button>
+          </div>
         </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr>
-                <th className="px-2.5 py-2 text-left text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap">
-                  Strategy
-                </th>
-                <th className="px-2.5 py-2 text-left text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap">
-                  Status
-                </th>
-                <th className="px-2.5 py-2 text-left text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap">
-                  Version
-                </th>
-                <th className="px-2.5 py-2 text-left text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap">
-                  Pair
-                </th>
-                <th className="px-2.5 py-2 text-left text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap">
-                  TF
-                </th>
-                <th className="px-2.5 py-2 text-left text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap">
-                  Tests
-                </th>
-                <th className="px-2.5 py-2 text-left text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap">
-                  Last Test
-                </th>
-                <th className="px-2.5 py-2 text-left text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap">
-                  Profit%
-                </th>
-                <th className="px-2.5 py-2 text-left text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap">
-                  Win Rate
-                </th>
-                <th className="px-2.5 py-2 text-left text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap">
-                  Max DD
-                </th>
-                <th className="px-2.5 py-2 text-left text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap">
-                  Sharpe
-                </th>
-                <th className="px-2.5 py-2 text-left text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap">
-                  Pipeline
-                </th>
-                <th className="px-2.5 py-2 text-left text-xs uppercase tracking-[0.5px] text-muted-foreground font-semibold border-b border-border whitespace-nowrap" />
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAndSorted.map((exp) => (
-                <tr
-                  key={exp.id}
-                  className="cursor-pointer hover:bg-[rgba(99,102,241,0.03)] transition-colors"
-                  onClick={() =>
-                    router.push(
-                      `/experiments/${encodeURIComponent(exp.strategyName)}`
-                    )
-                  }
+
+        {/* ── Card Grid ── */}
+        <div className="flex-1 overflow-y-auto p-5">
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="text-[11px] text-white/30 animate-pulse">Loading experiments...</div>
+            </div>
+          ) : filteredAndSorted.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <FlaskConical className="w-8 h-8 text-white/10" />
+              <div className="text-[11px] text-white/30">No strategies found</div>
+              {experiments.length === 0 && (
+                <button
+                  onClick={handleNewExperiment}
+                  className="mt-2 flex items-center gap-1.5 px-3.5 py-1.5 l-bd bg-white/[0.03] hover:bg-white/[0.06] text-white/60 text-[11px] rounded transition-colors"
                 >
-                  {/* Strategy (name + description) */}
-                  <td className="px-2.5 py-2 border-b border-border/50">
-                    <div className="font-semibold text-xs text-foreground">
-                      {exp.strategyName}
-                    </div>
-                    {exp.description && (
-                      <div className="text-xs text-muted-foreground mt-0.5">
-                        {exp.description}
+                  <Plus className="w-3 h-3" />
+                  Create experiments from strategies
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
+              {filteredAndSorted.map((exp) => (
+                <div
+                  key={exp.id}
+                  onClick={() => router.push(`/experiments/${encodeURIComponent(exp.strategyName)}`)}
+                  className="bg-white/[0.03] border border-white/[0.12] hover:bg-white/[0.06] hover:border-white/[0.20] rounded-md cursor-pointer transition-all group"
+                >
+                  {/* Card Header */}
+                  <div className="px-4 pt-3.5 pb-2.5">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <FlaskConical className="w-3.5 h-3.5 text-white/25 shrink-0" />
+                          <span className="text-[12px] font-bold text-white truncate">
+                            {exp.strategyName}
+                          </span>
+                        </div>
+                        {exp.description && (
+                          <p className="text-[10px] text-white/30 truncate pl-5.5">
+                            {exp.description}
+                          </p>
+                        )}
                       </div>
-                    )}
-                  </td>
+                      <StatusBadge status={exp.status} />
+                    </div>
 
-                  {/* Status */}
-                  <td className="px-2.5 py-2 border-b border-border/50">
-                    <StatusBadge status={exp.status} />
-                  </td>
+                    {/* Pipeline */}
+                    <div className="flex items-center gap-3 mt-2.5">
+                      <MiniPipeline steps={exp.pipelineSteps} />
+                      <span className="text-[9px] text-white/20 uppercase tracking-wider">
+                        pipeline
+                      </span>
+                    </div>
+                  </div>
 
-                  {/* Version */}
-                  <td className="px-2.5 py-2 border-b border-border/50 text-xs text-muted-foreground">
-                    {exp.version}
-                  </td>
+                  {/* Card Metrics */}
+                  <div className="border-t border-white/[0.06] px-4 py-2.5 grid grid-cols-4 gap-2">
+                    <div>
+                      <div className="text-[9px] text-white/25 uppercase tracking-wider mb-0.5">Tests</div>
+                      <div className="text-[11px] font-mono font-bold text-white/70">{exp.testCount}</div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] text-white/25 uppercase tracking-wider mb-0.5">Profit</div>
+                      <div className={`text-[11px] font-mono font-bold ${exp.bestProfit !== null ? ((exp.bestProfit ?? 0) >= 0 ? "text-emerald-500" : "text-rose-500") : "text-white/25"}`}>
+                        {exp.bestProfit !== null ? fmtPct(exp.bestProfit) : "--"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] text-white/25 uppercase tracking-wider mb-0.5">Win%</div>
+                      <div className={`text-[11px] font-mono font-bold ${exp.winRate !== null ? ((exp.winRate ?? 0) >= 50 ? "text-emerald-500" : "text-white/50") : "text-white/25"}`}>
+                        {exp.winRate !== null ? `${fmtNum(exp.winRate, 1)}%` : "--"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] text-white/25 uppercase tracking-wider mb-0.5">Max DD</div>
+                      <div className={`text-[11px] font-mono font-bold ${exp.maxDD !== null ? "text-rose-500" : "text-white/25"}`}>
+                        {exp.maxDD !== null ? fmtPct(exp.maxDD) : "--"}
+                      </div>
+                    </div>
+                  </div>
 
-                  {/* Pair */}
-                  <td className="px-2.5 py-2 border-b border-border/50 text-xs text-muted-foreground">
-                    {exp.pair}
-                  </td>
-
-                  {/* Timeframe */}
-                  <td className="px-2.5 py-2 border-b border-border/50 text-xs text-muted-foreground">
-                    {exp.timeframe}
-                  </td>
-
-                  {/* Tests */}
-                  <td className="px-2.5 py-2 border-b border-border/50 text-xs text-muted-foreground">
-                    {exp.testCount}
-                  </td>
-
-                  {/* Last Test */}
-                  <td className="px-2.5 py-2 border-b border-border/50 text-xs text-muted-foreground">
-                    {exp.lastTestDate
-                      ? `${exp.lastTestType ?? "Test"} · ${fmtDateTime(exp.lastTestDate)}`
-                      : "—"}
-                  </td>
-
-                  {/* Profit% */}
-                  <td
-                    className={`px-2.5 py-2 border-b border-border/50 text-xs ${
-                      (exp.bestProfit ?? 0) >= 0 ? "text-emerald-500" : "text-rose-500"
-                    }`}
-                  >
-                    {exp.bestProfit !== null ? fmtPct(exp.bestProfit) : "—"}
-                  </td>
-
-                  {/* Win Rate */}
-                  <td
-                    className={`px-2.5 py-2 border-b border-border/50 text-xs ${
-                      (exp.winRate ?? 0) >= 50 ? "text-emerald-500" : "text-muted-foreground"
-                    }`}
-                  >
-                    {exp.winRate !== null ? `${fmtNum(exp.winRate, 1)}%` : "—"}
-                  </td>
-
-                  {/* Max DD */}
-                  <td className="px-2.5 py-2 border-b border-border/50 text-xs text-rose-500">
-                    {exp.maxDD !== null ? fmtPct(exp.maxDD) : "—"}
-                  </td>
-
-                  {/* Sharpe */}
-                  <td className="px-2.5 py-2 border-b border-border/50 text-xs text-muted-foreground">
-                    {exp.sharpe !== null ? fmtNum(exp.sharpe, 2) : "—"}
-                  </td>
-
-                  {/* Pipeline */}
-                  <td className="px-2.5 py-2 border-b border-border/50">
-                    <MiniPipeline steps={exp.pipelineSteps} />
-                  </td>
-
-                  {/* Open button */}
-                  <td className="px-2.5 py-2 border-b border-border/50">
-                    <button onClick={(e) => { e.stopPropagation(); router.push(`/experiments/${encodeURIComponent(exp.strategyName)}`); }} className="inline-flex items-center gap-1.5 px-2.5 py-1 border border-border bg-muted/50 hover:bg-muted hover:border-ring text-xs text-muted-foreground rounded-btn transition-all">
-                      Open →
-                    </button>
-                  </td>
-                </tr>
+                  {/* Card Footer */}
+                  <div className="border-t border-white/[0.06] px-4 py-2 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-[10px] text-white/25">
+                      <span>{exp.pair}</span>
+                      <span className="text-white/10">|</span>
+                      <span>{exp.timeframe}</span>
+                      <span className="text-white/10">|</span>
+                      <span>{exp.version}</span>
+                    </div>
+                    <div className="text-[10px] text-white/20">
+                      {exp.lastTestDate
+                        ? fmtDateTime(exp.lastTestDate)
+                        : "No tests yet"}
+                    </div>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          )}
         </div>
-      )}
       </div>
     </AppShell>
   );

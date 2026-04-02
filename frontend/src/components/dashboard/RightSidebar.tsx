@@ -1,26 +1,109 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { fmt, fmtMoney } from "@/lib/format";
-import type { FTBalance, FTSysinfo, FTLogsResponse, FTProfit, FTHealth } from "@/types";
+import { getSystemLogs, getBotActivityLogs, getErrorLogs } from "@/lib/api";
+import { REFRESH_INTERVALS } from "@/lib/constants";
+import type {
+  FTBalance,
+  FTSysinfo,
+  FTLogsResponse,
+  FTProfit,
+  FTHealth,
+  ActivityLog,
+  LogLevel,
+  Bot,
+} from "@/types";
 
-interface RightSidebarProps {
-  isOpen: boolean;
-  balanceData: FTBalance | null;
-  sysinfoData: FTSysinfo | null;
-  logsData: FTLogsResponse | null;
-  /** Aggregated profit from all bots to compute fees */
-  aggregatedProfit: Partial<FTProfit> | null;
-  /** Total fees paid across all bots */
-  totalFees: number | null;
-  /** Total funding fees across all bots */
-  fundingFees: number | null;
-  /** Health data from FT API */
-  healthData?: FTHealth | null;
-  /** Exchange name from bot config */
-  exchangeName?: string;
-  loading: boolean;
+// ── Level badge colors (from LogViewer) ──────────────────────────────
+
+const LEVEL_STYLES: Record<LogLevel, string> = {
+  info: "bg-primary/10 text-primary border-primary/20",
+  warning: "bg-amber-500/10 text-amber-500 border-amber-500-500/20",
+  error: "bg-rose-500/10 text-rose-500 border-rose-500/20",
+  critical: "bg-rose-500/10 text-rose-500 border-rose-500/40 font-bold",
+};
+
+function LevelBadge({ level }: { level: LogLevel }) {
+  return (
+    <span
+      className={`text-xs px-1.5 py-0.5 rounded border uppercase tracking-wider ${LEVEL_STYLES[level] || LEVEL_STYLES.info}`}
+    >
+      {level}
+    </span>
+  );
 }
+
+// ── Detail expander (from LogViewer) ─────────────────────────────────
+
+function LogDetails({ details }: { details: string | null }) {
+  const [expanded, setExpanded] = useState(false);
+  if (!details) return null;
+
+  let parsed: Record<string, unknown> | null = null;
+  try {
+    parsed = JSON.parse(details);
+  } catch {
+    /* non-blocking — plain text */
+  }
+
+  const rawDiag = parsed?.diagnosis;
+  const diagnosis = typeof rawDiag === "string" ? rawDiag : undefined;
+  const rest = parsed
+    ? Object.fromEntries(Object.entries(parsed).filter(([k]) => k !== "diagnosis"))
+    : null;
+
+  return (
+    <div className="mt-1">
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="text-xs text-muted-foreground hover:text-muted-foreground underline"
+      >
+        {expanded ? "Hide details" : "Show details"}
+      </button>
+      {expanded && (
+        <div className="mt-1 text-xs text-muted-foreground bg-muted/50 rounded p-2 border border-border">
+          {diagnosis && (
+            <div className="mb-2 p-2 bg-rose-500/10 border border-rose-500/20 rounded text-rose-500">
+              <span className="font-semibold text-rose-500">Diagnosis: </span>
+              {diagnosis}
+            </div>
+          )}
+          {rest && Object.keys(rest).length > 0 && (
+            <pre className="whitespace-pre-wrap break-all text-xs">
+              {JSON.stringify(rest, null, 2)}
+            </pre>
+          )}
+          {!parsed && <span>{details}</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Time formatter (from LogViewer) ──────────────────────────────────
+
+function fmtTime(iso: string | null): string {
+  if (!iso) return "\u2014";
+  const d = new Date(iso);
+  const now = new Date();
+  const sameDay =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+  if (sameDay) {
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  }
+  return d.toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+// ── FT Log Entry (Panel 4 — Terminal StdOut) ─────────────────────────
 
 function LogEntry({ log }: { log: string[] }) {
   // FT logs format: [id, timestamp, module, level, message] (5 elements)
@@ -38,17 +121,25 @@ function LogEntry({ log }: { log: string[] }) {
   }
   const timeStr = timestamp ? String(timestamp).split(" ").pop()?.slice(0, 8) ?? "" : "";
   const levelColor =
-    level === "WARNING" || level === "WARN" ? "text-yellow-500 font-bold" :
-    level === "ERROR" || level === "CRITICAL" ? "text-[#ef4444] font-bold" :
-    level === "INFO" ? "text-blue-400 font-medium" :
-    "text-[#9CA3AF]";
+    level === "WARNING" || level === "WARN"
+      ? "text-yellow-500 font-medium"
+      : level === "ERROR" || level === "CRITICAL"
+        ? "text-[#ef4444] font-bold"
+        : level === "INFO"
+          ? "text-blue-400 font-medium"
+          : "text-[#9CA3AF]";
 
   // Detect trade actions in messages
   const msgColor =
-    (message ?? "").includes("Buy") || (message ?? "").includes("LONG") ? "text-[#22c55e] font-bold" :
-    (message ?? "").includes("Sell") || (message ?? "").includes("SHORT") ? "text-[#ef4444] font-bold" :
-    (message ?? "").includes("Fill") || (message ?? "").includes("FILL") ? "text-[#22c55e] font-bold" :
-    "";
+    (message ?? "").includes("Buy") || (message ?? "").includes("LONG")
+      ? "text-[#22c55e] font-bold"
+      : (message ?? "").includes("Sell") || (message ?? "").includes("SHORT")
+        ? "text-[#ef4444] font-bold"
+        : (message ?? "").includes("Fill") || (message ?? "").includes("FILL")
+          ? "text-[#22c55e] font-bold"
+          : (message ?? "").includes("HTTP")
+            ? "text-yellow-500 font-medium"
+            : "";
 
   return (
     <div className="mb-2">
@@ -58,6 +149,32 @@ function LogEntry({ log }: { log: string[] }) {
     </div>
   );
 }
+
+// ── Props ────────────────────────────────────────────────────────────
+
+interface RightSidebarProps {
+  isOpen: boolean;
+  balanceData: FTBalance | null;
+  sysinfoData: FTSysinfo | null;
+  logsData: FTLogsResponse | null;
+  /** Aggregated profit from all bots to compute fees */
+  aggregatedProfit: Partial<FTProfit> | null;
+  /** Total fees paid across all bots */
+  totalFees: number | null;
+  /** Total funding fees across all bots */
+  fundingFees: number | null;
+  /** Health data from FT API */
+  healthData?: FTHealth | null;
+  /** Exchange name from bot config */
+  exchangeName?: string;
+  loading: boolean;
+  /** Bots for activity-log filtering (from LogViewer) */
+  bots?: Bot[];
+  /** Default bot ID for activity logs */
+  defaultBotId?: number;
+}
+
+// ── Main Component ──────────────────────────────────────────────────
 
 export default function RightSidebar({
   isOpen,
@@ -70,27 +187,104 @@ export default function RightSidebar({
   healthData,
   exchangeName,
   loading,
+  bots: _bots = [],
+  defaultBotId,
 }: RightSidebarProps) {
+  void _bots; // used for future activity log filtering
   const logEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll logs to bottom
+  // ── FT StdOut auto-scroll ──────────────────────────────────────────
   useEffect(() => {
     if (logEndRef.current) {
       logEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [logsData]);
 
-  const cpuPct = sysinfoData ? (sysinfoData.cpu_pct.length > 0 ? Math.round(sysinfoData.cpu_pct.reduce((a, b) => a + b, 0) / sysinfoData.cpu_pct.length) : 0) : null;
+  // ── LogViewer state (activity logs from orchestrator) ──────────────
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [activityTotal, setActivityTotal] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [logTab, setLogTab] = useState<"system" | "bot" | "errors">("system");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [levelFilter, setLevelFilter] = useState<string>("");
+  const [selectedBotId, setSelectedBotId] = useState<number | undefined>(defaultBotId);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [actionFilter, setActionFilter] = useState("");
+  const refreshInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const fetchActivityLogs = useCallback(async () => {
+    setActivityLoading(true);
+    try {
+      if (logTab === "errors") {
+        const data = await getErrorLogs({
+          bot_id: selectedBotId,
+          limit: 100,
+        });
+        setActivityLogs(data.logs);
+        setActivityTotal(data.total);
+      } else if (logTab === "bot" && selectedBotId) {
+        const data = await getBotActivityLogs(selectedBotId, {
+          level: levelFilter || undefined,
+          limit: 100,
+        });
+        setActivityLogs(data.logs);
+        setActivityTotal(data.total);
+      } else {
+        const data = await getSystemLogs({
+          level: levelFilter || undefined,
+          bot_id: logTab === "bot" ? selectedBotId : undefined,
+          action: actionFilter || undefined,
+          limit: 100,
+        });
+        setActivityLogs(data.logs);
+        setActivityTotal(data.total);
+      }
+    } catch {
+      /* non-blocking — viewer still renders with cached data */
+    } finally {
+      setActivityLoading(false);
+    }
+  }, [logTab, levelFilter, selectedBotId, actionFilter]);
+
+  // Auto-refresh activity logs every 10s when sidebar is open
+  useEffect(() => {
+    if (!isOpen) return;
+    fetchActivityLogs();
+    refreshInterval.current = setInterval(fetchActivityLogs, REFRESH_INTERVALS.DASHBOARD);
+    return () => {
+      if (refreshInterval.current) clearInterval(refreshInterval.current);
+    };
+  }, [isOpen, fetchActivityLogs]);
+
+  // Switch to bot tab when defaultBotId changes
+  useEffect(() => {
+    if (defaultBotId) {
+      setSelectedBotId(defaultBotId);
+      setLogTab("bot");
+    }
+  }, [defaultBotId]);
+
+  // ── Derived values ─────────────────────────────────────────────────
+  const cpuPct = sysinfoData
+    ? sysinfoData.cpu_pct.length > 0
+      ? Math.round(sysinfoData.cpu_pct.reduce((a, b) => a + b, 0) / sysinfoData.cpu_pct.length)
+      : 0
+    : null;
   const ramPct = sysinfoData ? Math.round(sysinfoData.ram_pct) : null;
 
   // Fee calculations from aggregated profit
   const feeOpenAvg = aggregatedProfit ? 0.04 : null; // FT default fee
   const feeCloseAvg = aggregatedProfit ? 0.04 : null;
   const grossProfit = aggregatedProfit?.profit_closed_coin ?? null;
-  const feeRatio = totalFees != null && grossProfit != null && grossProfit !== 0
-    ? Math.abs(totalFees / grossProfit) * 100
-    : null;
+  const feeRatio =
+    totalFees != null && grossProfit != null && grossProfit !== 0
+      ? Math.abs(totalFees / grossProfit) * 100
+      : null;
 
+  // ── Render ─────────────────────────────────────────────────────────
   return (
     <div
       className={`flex flex-col gap-4 shrink-0 min-h-0 2xl:w-[320px] xl:w-[260px] xl:min-w-[260px] ${
@@ -104,10 +298,10 @@ export default function RightSidebar({
         scrollbarColor: "rgba(255,255,255,0.14) transparent",
       }}
     >
-      {/* Balance Breakdown */}
-      <div className="bg-[#0C0C0C] border border-white/[0.10] rounded-md shadow-xl overflow-hidden shrink-0">
-        <div className="h-10 border-b border-white/[0.10] flex items-center px-4 bg-black/40 shrink-0">
-          <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#9CA3AF]">Balance</span>
+      {/* ── Panel 1: Balance Breakdown ──────────────────────────────── */}
+      <div className="bg-surface l-bd rounded-md shadow-xl overflow-hidden shrink-0">
+        <div className="h-10 l-b flex items-center px-4 bg-black/40 shrink-0">
+          <span className="section-title">Balance</span>
         </div>
         <div className="p-4 font-mono text-[12px] space-y-2.5">
           {loading ? (
@@ -117,7 +311,7 @@ export default function RightSidebar({
               ))}
             </div>
           ) : !balanceData || balanceData.currencies.length === 0 ? (
-            <div className="text-[#9CA3AF] text-center py-4">No balance data</div>
+            <div className="text-muted text-center py-4">No balance data</div>
           ) : (
             <>
               {balanceData.currencies
@@ -125,22 +319,28 @@ export default function RightSidebar({
                 .slice(0, 8)
                 .map((c) => (
                   <div key={c.currency} className="flex items-center">
-                    <span className="text-[#9CA3AF] w-10">{c.currency}</span>
-                    <span className="text-white font-medium">{fmt(c.balance, c.balance < 1 ? 4 : 2)}</span>
+                    <span className="text-muted w-10">{c.currency}</span>
+                    <span className="text-white font-medium">
+                      {fmt(c.balance, c.balance < 1 ? 4 : 2)}
+                    </span>
                     {c.est_stake > 0 && c.currency !== balanceData.stake && (
                       <span className="text-white/30 text-[10px] ml-auto">
                         ≈ ${fmt(c.est_stake, 0)}
                       </span>
                     )}
                     {c.currency === balanceData.stake && (
-                      <span className="text-[#9CA3AF] text-[10px] ml-auto">free</span>
+                      <span className="text-muted text-[10px] ml-auto">free</span>
                     )}
                   </div>
                 ))}
               {balanceData.starting_capital != null && (
                 <div className="pt-2 flex justify-between">
-                  <span className="text-white/50 text-[11px] uppercase font-sans font-medium">Starting Capital</span>
-                  <span className="text-white font-medium">${fmt(balanceData.starting_capital, 2)}</span>
+                  <span className="text-white/50 text-[11px] uppercase font-sans font-medium">
+                    Starting Capital
+                  </span>
+                  <span className="text-white font-medium">
+                    ${fmt(balanceData.starting_capital, 2)}
+                  </span>
                 </div>
               )}
             </>
@@ -148,36 +348,42 @@ export default function RightSidebar({
         </div>
       </div>
 
-      {/* Fees & Costs */}
-      <div className="bg-[#0C0C0C] border border-white/[0.10] rounded-md shadow-xl overflow-hidden shrink-0">
-        <div className="h-10 border-b border-white/[0.10] flex items-center px-4 bg-black/40 shrink-0">
-          <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#9CA3AF]">Fees &amp; Costs</span>
+      {/* ── Panel 2: Fees & Costs ───────────────────────────────────── */}
+      <div className="bg-surface l-bd rounded-md shadow-xl overflow-hidden shrink-0">
+        <div className="h-10 l-b flex items-center px-4 bg-black/40 shrink-0">
+          <span className="section-title">Fees &amp; Costs</span>
         </div>
         <div className="p-4 font-mono text-[12px] space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-[#9CA3AF]">Total Fees Paid</span>
-            <span className="text-[#ef4444] font-bold">{totalFees != null ? fmtMoney(-Math.abs(totalFees)) : "\u2014"}</span>
+            <span className="text-muted">Total Fees Paid</span>
+            <span className="text-down font-bold">
+              {totalFees != null ? fmtMoney(-Math.abs(totalFees)) : "\u2014"}
+            </span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-[#9CA3AF]">Entry Fees (avg)</span>
+            <span className="text-muted">Entry Fees (avg)</span>
             <span className="text-white/70">{feeOpenAvg != null ? `${feeOpenAvg}%` : "\u2014"}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-[#9CA3AF]">Exit Fees (avg)</span>
-            <span className="text-white/70">{feeCloseAvg != null ? `${feeCloseAvg}%` : "\u2014"}</span>
+            <span className="text-muted">Exit Fees (avg)</span>
+            <span className="text-white/70">
+              {feeCloseAvg != null ? `${feeCloseAvg}%` : "\u2014"}
+            </span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-[#9CA3AF]">Funding Fees</span>
-            <span className={fundingFees != null ? "text-[#ef4444]" : "text-white/70"}>
+            <span className="text-muted">Funding Fees</span>
+            <span className={fundingFees != null ? "text-down" : "text-white/70"}>
               {fundingFees != null ? fmtMoney(-Math.abs(fundingFees)) : "\u2014"}
             </span>
           </div>
           <div className="pt-2.5 flex justify-between items-center">
-            <span className="text-[#9CA3AF]">Fees / Gross Profit</span>
-            <span className="text-yellow-400 font-bold">{feeRatio != null ? `${fmt(feeRatio, 1)}%` : "\u2014"}</span>
+            <span className="text-muted">Fees / Gross Profit</span>
+            <span className="text-yellow-400 font-bold">
+              {feeRatio != null ? `${fmt(feeRatio, 1)}%` : "\u2014"}
+            </span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-[#9CA3AF]">Net vs Gross</span>
+            <span className="text-muted">Net vs Gross</span>
             <span className="text-white/70">
               {grossProfit != null && totalFees != null
                 ? `${fmtMoney(grossProfit - Math.abs(totalFees))} / ${fmtMoney(grossProfit)}`
@@ -187,9 +393,9 @@ export default function RightSidebar({
         </div>
       </div>
 
-      {/* Node Telemetry */}
-      <div className="bg-[#0C0C0C] border border-white/[0.10] rounded-md p-4 flex flex-col gap-4 shadow-xl shrink-0">
-        <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#9CA3AF]">Node Telemetry</span>
+      {/* ── Panel 3: Node Telemetry ─────────────────────────────────── */}
+      <div className="bg-surface l-bd rounded-md p-4 flex flex-col gap-4 shadow-xl shrink-0">
+        <span className="section-title">Node Telemetry</span>
         {loading || !sysinfoData ? (
           <div className="animate-pulse space-y-3">
             <div className="h-4 bg-white/10 rounded w-full" />
@@ -197,68 +403,88 @@ export default function RightSidebar({
           </div>
         ) : (
           <>
+            {/* CPU bar */}
             <div>
               <div className="flex justify-between text-[12px] font-mono mb-1.5">
-                <span className="text-[#9CA3AF]">CPU</span>
+                <span className="text-muted">CPU</span>
                 <span className="text-white font-medium">{cpuPct}%</span>
               </div>
               <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full ${cpuPct != null && cpuPct > 80 ? "bg-[#ef4444]" : cpuPct != null && cpuPct > 60 ? "bg-yellow-400" : "bg-white/70"}`}
+                  className="h-full bg-white/70 rounded-full"
                   style={{ width: `${cpuPct}%` }}
                 />
               </div>
             </div>
+            {/* RAM bar */}
             <div>
               <div className="flex justify-between text-[12px] font-mono mb-1.5">
-                <span className="text-[#9CA3AF]">RAM</span>
-                <span className={`font-medium ${ramPct != null && ramPct > 80 ? "text-yellow-400" : "text-white"}`}>{ramPct}%</span>
+                <span className="text-muted">RAM</span>
+                <span className="text-yellow-400 font-medium">{ramPct}%</span>
               </div>
               <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full ${ramPct != null && ramPct > 80 ? "bg-yellow-400" : "bg-white/70"}`}
+                  className="h-full bg-yellow-400 rounded-full"
                   style={{ width: `${ramPct}%` }}
                 />
               </div>
             </div>
+            {/* Stats grid */}
             <div className="grid grid-cols-2 gap-3 text-[11px] font-mono">
               <div className="flex justify-between">
-                <span className="text-[#9CA3AF]">{exchangeName || "Exchange"}</span>
-                <span className={healthData?.last_process ? "text-[#22c55e]" : loading ? "text-[#9CA3AF] animate-pulse" : "text-[#9CA3AF]"}>
-                  {healthData?.last_process ? (() => {
-                    const diff = (Date.now() - new Date(healthData.last_process).getTime()) / 1000;
-                    return isNaN(diff) ? "N/A" : `${diff.toFixed(1)}s ago`;
-                  })() : loading ? "..." : "N/A"}
+                <span className="text-muted">{exchangeName || "Exchange"}</span>
+                <span
+                  className={
+                    healthData?.last_process
+                      ? "text-up"
+                      : loading
+                        ? "text-muted animate-pulse"
+                        : "text-muted"
+                  }
+                >
+                  {healthData?.last_process
+                    ? (() => {
+                        const diff =
+                          (Date.now() - new Date(healthData.last_process).getTime()) / 1000;
+                        return isNaN(diff) ? "N/A" : `${diff.toFixed(0)}ms`;
+                      })()
+                    : loading
+                      ? "..."
+                      : "N/A"}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#9CA3AF]">FT Process</span>
+                <span className="text-muted">FT Process</span>
                 <span className="text-white/70">
                   {healthData?.last_process
                     ? (() => {
-                        const diff = (Date.now() - new Date(healthData.last_process).getTime()) / 1000;
+                        const diff =
+                          (Date.now() - new Date(healthData.last_process).getTime()) / 1000;
                         return isNaN(diff) ? healthData.last_process : `${diff.toFixed(1)}s ago`;
                       })()
                     : "\u2014"}
                 </span>
               </div>
-              <div className="flex justify-between"><span className="text-[#9CA3AF]">DB Sync</span><span className="text-[#22c55e]">OK</span></div>
+              <div className="flex justify-between">
+                <span className="text-muted">DB Sync</span>
+                <span className="text-up">OK</span>
+              </div>
             </div>
           </>
         )}
       </div>
 
-      {/* Terminal StdOut */}
-      <div className="bg-black border border-white/[0.10] rounded-md flex flex-col shadow-xl overflow-hidden p-3 font-mono text-[11px] leading-relaxed text-[#9CA3AF] shrink-0 h-[320px]">
+      {/* ── Panel 4: Terminal StdOut ─────────────────────────────────── */}
+      <div className="bg-black l-bd rounded-md flex flex-col shadow-xl overflow-hidden p-3 font-mono text-[11px] leading-relaxed text-muted shrink-0 h-[320px]">
         <div className="flex justify-between items-center mb-3 px-1">
-          <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-white/50">Terminal StdOut</span>
+          <span className="section-title text-white/50">Terminal StdOut</span>
           <span className="flex items-center gap-1.5 text-green-400 text-[11px]">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" /> Streaming
           </span>
         </div>
-        <div className="flex-1 overflow-y-auto border border-white/[0.10] rounded p-3 bg-black">
+        <div className="flex-1 overflow-y-auto l-bd rounded p-3 bg-black">
           {!logsData || logsData.logs.length === 0 ? (
-            <div className="text-[#9CA3AF] text-center py-4">No log entries</div>
+            <div className="text-muted text-center py-4">No log entries</div>
           ) : (
             <>
               {logsData.logs.slice(-50).map((log, i) => (
@@ -272,3 +498,7 @@ export default function RightSidebar({
     </div>
   );
 }
+
+// ── Re-export LogViewer sub-components for external use if needed ────
+export { LevelBadge, LogDetails, fmtTime };
+export type { RightSidebarProps };

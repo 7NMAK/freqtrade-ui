@@ -39,6 +39,14 @@ function fmtDuration(openDate: string, closeDate?: string | null): string {
   return `${m}m`;
 }
 
+/* ── Shared classes ──────────────────────────────────────────────── */
+const TH_BASE = "px-5 py-3.5 font-medium font-mono text-[11px] uppercase tracking-widest text-muted";
+const TH_SORT = `${TH_BASE} cursor-pointer select-none whitespace-nowrap transition-colors hover:text-white hover:bg-white/[0.04]`;
+const THEAD  = "sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg";
+const TBODY  = "font-mono text-white/85 divide-y divide-white/[0.05]";
+const TD     = "px-5 py-3";
+const TABLE  = "w-full text-left border-collapse whitespace-nowrap text-[13px]";
+
 function SortHeader({
   label,
   sortKey,
@@ -60,7 +68,7 @@ function SortHeader({
   const alignClass = align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left";
   return (
     <th
-      className={`px-5 py-3.5 font-medium cursor-pointer select-none whitespace-nowrap transition-colors hover:text-white hover:bg-white/[0.04] font-mono text-[11px] uppercase tracking-widest text-[#9CA3AF] ${alignClass} ${highlight ? "bg-black/20" : ""} ${active ? "text-white bg-white/[0.04]" : ""}`}
+      className={`${TH_SORT} ${alignClass} ${highlight ? "bg-black/20" : ""} ${active ? "text-white bg-white/[0.04]" : ""}`}
       onClick={() => onSort(sortKey)}
     >
       {label}
@@ -98,7 +106,7 @@ function FilterDropdown({
   return (
     <div className="relative inline-block ml-1" ref={ref}>
       <button
-        className={`inline-flex items-center p-0.5 rounded transition-colors ${isActive ? "text-[#22d3ee]" : "text-[#9CA3AF]/50 hover:text-[#9CA3AF]"}`}
+        className={`inline-flex items-center p-0.5 rounded transition-colors ${isActive ? "text-[#22d3ee]" : "text-muted/50 hover:text-muted"}`}
         onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
       >
         <Filter className="w-2.5 h-2.5" />
@@ -175,10 +183,10 @@ function ActionDropdown({
   }, [open]);
 
   return (
-    <div className="relative inline-block" onClick={(e) => e.stopPropagation()}>
+    <div className="action-menu" onClick={(e) => e.stopPropagation()}>
       <button
         ref={btnRef}
-        className="bg-[#1a1a1a] border border-white/[0.10] px-2.5 py-1 rounded-[5px] text-[#9CA3AF] text-[11px] font-semibold cursor-pointer transition-all hover:bg-[#2a2a2a] hover:text-[#F5F5F5] flex items-center gap-1.5"
+        className="action-menu-btn"
         onClick={() => setOpen(!open)}
         disabled={exiting}
       >
@@ -196,44 +204,44 @@ function ActionDropdown({
               className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-[#d4d4d8] rounded-[5px] hover:bg-white/[0.06] hover:text-white transition-colors text-left"
               onClick={() => { onForceExit(trade, "limit"); setOpen(false); }}
             >
-              <LogOut className="w-3.5 h-3.5 text-[#9CA3AF]" /> Force Exit (Limit)
+              <LogOut className="w-3.5 h-3.5 text-muted" /> Force Exit (Limit)
             </button>
             <button
               className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-[#d4d4d8] rounded-[5px] hover:bg-white/[0.06] hover:text-white transition-colors text-left"
               onClick={() => { onForceExit(trade, "market"); setOpen(false); }}
             >
-              <Zap className="w-3.5 h-3.5 text-[#9CA3AF]" /> Force Exit (Market)
+              <Zap className="w-3.5 h-3.5 text-muted" /> Force Exit (Market)
             </button>
             <button
               className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-[#d4d4d8] rounded-[5px] hover:bg-white/[0.06] hover:text-white transition-colors text-left"
               onClick={() => { onForceExit(trade, "partial"); setOpen(false); }}
             >
-              <Scissors className="w-3.5 h-3.5 text-[#9CA3AF]" /> Force Exit (Partial)
+              <Scissors className="w-3.5 h-3.5 text-muted" /> Force Exit (Partial)
             </button>
             <div className="h-px bg-white/[0.06] mx-2 my-1" />
             <button
               className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-[#d4d4d8] rounded-[5px] hover:bg-white/[0.06] hover:text-white transition-colors text-left"
               onClick={() => { onForceEnter(trade); setOpen(false); }}
             >
-              <PlusCircle className="w-3.5 h-3.5 text-[#9CA3AF]" /> Increase Position
+              <PlusCircle className="w-3.5 h-3.5 text-muted" /> Increase Position
             </button>
             <button
               className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-[#d4d4d8] rounded-[5px] hover:bg-white/[0.06] hover:text-white transition-colors text-left"
               onClick={() => { onReloadTrade(trade); setOpen(false); }}
             >
-              <RefreshCw className="w-3.5 h-3.5 text-[#9CA3AF]" /> Reload
+              <RefreshCw className="w-3.5 h-3.5 text-muted" /> Reload
             </button>
             {hasOpenOrder && (
               <button
                 className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-[#d4d4d8] rounded-[5px] hover:bg-white/[0.06] hover:text-white transition-colors text-left"
                 onClick={() => { onCancelOrder(trade); setOpen(false); }}
               >
-                <Ban className="w-3.5 h-3.5 text-[#9CA3AF]" /> Cancel open order
+                <Ban className="w-3.5 h-3.5 text-muted" /> Cancel open order
               </button>
             )}
             <div className="h-px bg-white/[0.06] mx-2 my-1" />
             <button
-              className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-[#ef4444] rounded-[5px] hover:bg-[#ef4444]/10 transition-colors text-left"
+              className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-down rounded-[5px] hover:bg-down/10 transition-colors text-left"
               onClick={() => { onDeleteTrade(trade); setOpen(false); }}
             >
               <Trash2 className="w-3.5 h-3.5" /> Delete trade
@@ -427,48 +435,47 @@ export default function TradeTable({
     URL.revokeObjectURL(url);
   }, [activeTab, openTrades, closedTrades, perfData, entryData, exitData, whitelistData, lockMap]);
 
-  const tabs: Array<{ key: TradeTab; label: string; count?: number }> = [
-    { key: "open", label: "Open Trades", count: openTrades.length },
-    { key: "closed", label: "Closed", count: closedTrades.length },
-    { key: "whitelist", label: "Whitelist Matrix" },
-    { key: "performance", label: "Performance" },
-    { key: "entries", label: "Entry Tags" },
-    { key: "exits", label: "Exit Reasons" },
+  const tabs: Array<{ key: TradeTab; label: string; count?: number; title: string }> = [
+    { key: "open", label: "Open Trades", count: openTrades.length, title: "Currently active trades" },
+    { key: "closed", label: "Closed", count: closedTrades.length, title: "Completed trade history" },
+    { key: "whitelist", label: "Whitelist Matrix", title: "Pair monitoring and lock management" },
+    { key: "performance", label: "Performance", title: "Performance by trading pair" },
+    { key: "entries", label: "Entry Tags", title: "Entry signal tag analysis" },
+    { key: "exits", label: "Exit Reasons", title: "Exit reason analysis" },
   ];
 
   return (
-    <div className="flex-1 bg-[#0C0C0C] border border-white/[0.10] rounded-md shadow-xl flex flex-col min-h-0 overflow-hidden">
+    <div className="flex-1 bg-surface l-bd rounded-md shadow-xl flex flex-col min-h-0 overflow-hidden">
       {/* Tab Bar */}
-      <div className="h-12 border-b border-white/[0.10] flex items-center bg-black/40 shrink-0 overflow-x-auto whitespace-nowrap">
+      <div className="h-12 l-b flex items-center bg-black/40 shrink-0 border-b-2 border-transparent overflow-x-auto whitespace-nowrap">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`h-full px-5 font-bold text-[12px] uppercase tracking-wide shrink-0 transition-colors cursor-pointer ${
+            title={tab.title}
+            className={`h-full px-5 font-bold text-[12px] uppercase tracking-wide trade-tab-btn shrink-0 ${
               activeTab === tab.key
-                ? "border-b-2 border-[#22c55e] text-white"
-                : "text-[#9CA3AF] hover:text-white"
+                ? "border-b-2 border-up text-white"
+                : "text-muted hover:text-white transition-colors"
             }`}
           >
             {tab.label}{tab.count != null ? ` (${tab.count})` : ""}
           </button>
         ))}
-        <div className="ml-auto mr-5 flex items-center gap-2">
-          <button
-            onClick={exportCSV}
-            className="px-2 py-1 rounded text-[10px] text-[#9CA3AF] hover:text-white hover:bg-white/[0.06] transition-colors flex items-center gap-1 opacity-50 hover:opacity-100"
-            title="Export table data as CSV"
-          >
-            <Download className="w-3 h-3" />
-            CSV
-          </button>
-        </div>
+        <button
+          onClick={exportCSV}
+          className="ml-auto mr-5 px-2 py-1 rounded text-[10px] text-muted hover:text-white hover:bg-white/[0.06] transition-colors flex items-center gap-1 opacity-50 hover:opacity-100"
+          title="Export table data as CSV"
+        >
+          <Download className="w-3 h-3" />
+          CSV
+        </button>
       </div>
 
       {/* Tab Content */}
       <div className="flex-1 overflow-x-auto overflow-y-auto">
         {loading ? (
-          <div className="flex items-center justify-center h-full text-[#9CA3AF] text-sm animate-pulse p-8">
+          <div className="flex items-center justify-center h-full text-muted text-sm animate-pulse p-8">
             Loading trade data...
           </div>
         ) : (
@@ -479,19 +486,19 @@ export default function TradeTable({
               const remaining = openSort.sorted.length - visibleRows;
               return (
               <>
-              <table className="w-full text-left border-collapse whitespace-nowrap text-[13px]">
-                <thead className="sticky top-0 bg-[#0C0C0C] border-b border-white/[0.10] font-mono text-[11px] uppercase tracking-widest text-[#9CA3AF] z-10 shadow-lg">
+              <table className={TABLE}>
+                <thead className={THEAD}>
                   <tr>
                     <SortHeader label="Date & Time" sortKey="open_date" {...openSort} />
-                    <th className="px-5 py-3.5 font-medium cursor-pointer select-none whitespace-nowrap transition-colors hover:text-white hover:bg-white/[0.04] font-mono text-[11px] uppercase tracking-widest text-[#9CA3AF] text-left" onClick={() => openSort.onSort("pair")}>
+                    <th className={`${TH_SORT} text-left`} onClick={() => openSort.onSort("pair")}>
                       Pair<span className="ml-1 text-[10px] opacity-25">{openSort.currentSort === "pair" ? (openSort.currentDir === "asc" ? "\u2191" : "\u2193") : "\u21C5"}</span>
                       <FilterDropdown column="open_pair" values={getUniqueValues(openTrades, (t) => t.pair)} activeFilters={columnFilters["open_pair"]} onToggle={toggleFilter} />
                     </th>
-                    <th className="px-5 py-3.5 font-medium cursor-pointer select-none whitespace-nowrap transition-colors hover:text-white hover:bg-white/[0.04] font-mono text-[11px] uppercase tracking-widest text-[#9CA3AF] text-left" onClick={() => openSort.onSort("_bot_name")}>
+                    <th className={`${TH_SORT} text-left`} onClick={() => openSort.onSort("_bot_name")}>
                       Bot Logic<span className="ml-1 text-[10px] opacity-25">{openSort.currentSort === "_bot_name" ? (openSort.currentDir === "asc" ? "\u2191" : "\u2193") : "\u21C5"}</span>
                       <FilterDropdown column="open_bot" values={getUniqueValues(openTrades, (t) => t._bot_name ?? `Bot ${t._bot_id}`)} activeFilters={columnFilters["open_bot"]} onToggle={toggleFilter} />
                     </th>
-                    <th className="px-5 py-3.5 font-medium cursor-pointer select-none whitespace-nowrap transition-colors hover:text-white hover:bg-white/[0.04] font-mono text-[11px] uppercase tracking-widest text-[#9CA3AF] text-center" onClick={() => openSort.onSort("is_short")}>
+                    <th className={`${TH_SORT} text-center`} onClick={() => openSort.onSort("is_short")}>
                       Side<span className="ml-1 text-[10px] opacity-25">{openSort.currentSort === "is_short" ? (openSort.currentDir === "asc" ? "\u2191" : "\u2193") : "\u21C5"}</span>
                       <FilterDropdown column="open_side" values={["LONG", "SHORT"]} activeFilters={columnFilters["open_side"]} onToggle={toggleFilter} />
                     </th>
@@ -500,21 +507,21 @@ export default function TradeTable({
                     <SortHeader label="Mark Price" sortKey="current_rate" {...openSort} align="right" />
                     <SortHeader label="Profit %" sortKey="current_profit" {...openSort} align="right" highlight />
                     <SortHeader label="Value" sortKey="current_profit_abs" {...openSort} align="right" highlight />
-                    <th className="px-5 py-3.5 font-medium text-right font-mono text-[11px] uppercase tracking-widest text-[#9CA3AF]">Fee</th>
+                    <th className={`${TH_BASE} text-right`}>Fee</th>
                     <SortHeader label="Age" sortKey="open_date" {...openSort} />
-                    <th className="px-5 py-3.5 font-medium border-l border-white/[0.08] text-center font-mono text-[11px] uppercase tracking-widest text-[#9CA3AF]">Actions</th>
+                    <th className={`${TH_BASE} border-l border-white/[0.08] text-center`}>Actions</th>
                   </tr>
                 </thead>
-                <tbody className="font-mono text-white/85 divide-y divide-white/[0.05]">
+                <tbody className={TBODY}>
                   {rowsToShow.length === 0 ? (
-                    <tr><td colSpan={12} className="px-5 py-8 text-center text-[#9CA3AF]">No open trades</td></tr>
+                    <tr><td colSpan={12} className="px-5 py-8 text-center text-muted">No open trades</td></tr>
                   ) : (
                     rowsToShow.map((trade, idx) => {
                       // BUG 11 fix: fallback field names for profit
                       const pct = trade.current_profit ?? trade.close_profit ?? null;
                       const pnl = trade.current_profit_abs ?? trade.close_profit_abs ?? null;
                       const isUp = pnl != null && pnl >= 0;
-                      const color = pnl != null ? (isUp ? "text-[#22c55e]" : "text-[#ef4444]") : "text-[#9CA3AF]";
+                      const color = pnl != null ? (isUp ? "text-up" : "text-down") : "text-muted";
                       const fee = (trade.fee_open + trade.fee_close) * trade.stake_amount;
                       const d = new Date(trade.open_date);
                       const dateStr = `${d.getDate().toString().padStart(2, "0")}.${(d.getMonth() + 1).toString().padStart(2, "0")}.${d.getFullYear().toString().slice(2)}`;
@@ -522,30 +529,30 @@ export default function TradeTable({
 
                       return (
                         <tr key={trade.trade_id} className={`hover:bg-white/[0.04] transition-colors group ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}>
-                          <td className="px-5 py-3">{dateStr} <span className="text-white/35 ml-1">{timeStr}</span></td>
-                          <td className="px-5 py-3 font-bold text-white">{trade.pair}</td>
-                          <td className="px-5 py-3 text-[#9CA3AF] font-sans text-[12px]">{trade._bot_name ?? `Bot ${trade._bot_id}`}</td>
-                          <td className="px-5 py-3 text-center">
+                          <td className={TD}>{dateStr} <span className="text-white/35 ml-1">{timeStr}</span></td>
+                          <td className={`${TD} font-bold text-white`}>{trade.pair}</td>
+                          <td className={`${TD} text-muted font-sans text-[12px]`}>{trade._bot_name ?? `Bot ${trade._bot_id}`}</td>
+                          <td className={`${TD} text-center`}>
                             <span className={`px-2 py-0.5 rounded text-[11px] font-medium border ${
                               trade.is_short
-                                ? "bg-[#ef4444]/12 text-[#ef4444] border-[#ef4444]/25"
-                                : "bg-[#22c55e]/12 text-[#22c55e] border-[#22c55e]/25"
+                                ? "bg-down/12 text-down border-down/25"
+                                : "bg-up/12 text-up border-up/25"
                             }`}>
                               {trade.is_short ? "SHORT" : "LONG"}{trade.leverage > 1 ? ` ${trade.leverage}x` : ""}
                             </span>
                           </td>
-                          <td className="px-5 py-3 text-right text-[#9CA3AF]">{fmt(trade.stake_amount, 2)}</td>
-                          <td className="px-5 py-3 text-right">{fmt(trade.open_rate, trade.open_rate < 1 ? 4 : 2)}</td>
-                          <td className="px-5 py-3 text-right font-medium">{fmt(trade.current_rate, trade.current_rate < 1 ? 4 : 2)}</td>
-                          <td className={`px-5 py-3 text-right font-bold ${isUp ? "bg-[#22c55e]/5" : pnl != null ? "bg-[#ef4444]/5" : ""} ${color}`}>
+                          <td className={`${TD} text-right text-muted`}>{fmt(trade.stake_amount, 2)}</td>
+                          <td className={`${TD} text-right`}>{fmt(trade.open_rate, trade.open_rate < 1 ? 4 : 2)}</td>
+                          <td className={`${TD} text-right font-medium`}>{fmt(trade.current_rate, trade.current_rate < 1 ? 4 : 2)}</td>
+                          <td className={`${TD} text-right font-bold ${isUp ? "bg-up/5" : pnl != null ? "bg-down/5" : ""} ${color}`}>
                             {pct != null ? `${pct >= 0 ? "+" : ""}${fmt(pct * 100, 2)}%` : "\u2014"}
                           </td>
-                          <td className={`px-5 py-3 text-right ${isUp ? "bg-[#22c55e]/5" : pnl != null ? "bg-[#ef4444]/5" : ""} ${color}`}>
+                          <td className={`${TD} text-right ${isUp ? "bg-up/5" : pnl != null ? "bg-down/5" : ""} ${color}`}>
                             {pnl != null ? fmtMoney(pnl) : "\u2014"}
                           </td>
-                          <td className="px-5 py-3 text-right text-[#9CA3AF] text-[11px]">${fmt(fee, 2)}</td>
-                          <td className="px-5 py-3 text-[#9CA3AF]">{fmtDuration(trade.open_date)}</td>
-                          <td className="px-5 py-3 border-l border-white/[0.08] text-center opacity-40 group-hover:opacity-100 transition-opacity">
+                          <td className={`${TD} text-right text-muted text-[11px]`}>${fmt(fee, 2)}</td>
+                          <td className={`${TD} text-muted`}>{fmtDuration(trade.open_date)}</td>
+                          <td className={`${TD} border-l border-white/[0.08] text-center opacity-40 group-hover:opacity-100 transition-opacity`}>
                             <ActionDropdown
                               trade={trade}
                               onForceExit={onForceExit}
@@ -565,7 +572,7 @@ export default function TradeTable({
               {remaining > 0 && (
                 <button
                   onClick={() => setVisibleRows((v) => v + 50)}
-                  className="w-full py-2 text-[11px] text-[#9CA3AF] font-mono border border-white/[0.10] rounded hover:bg-white/5 transition-colors mt-2"
+                  className="w-full py-2 text-[11px] text-muted font-mono l-bd rounded hover:bg-white/5 transition-colors mt-2"
                 >
                   Load More ({remaining} remaining)
                 </button>
@@ -580,19 +587,19 @@ export default function TradeTable({
               const closedRemaining = closedSort.sorted.length - visibleRows;
               return (
               <>
-              <table className="w-full text-left border-collapse whitespace-nowrap text-[13px]">
-                <thead className="sticky top-0 bg-[#0C0C0C] border-b border-white/[0.10] font-mono text-[11px] uppercase tracking-widest text-[#9CA3AF] z-10 shadow-lg">
+              <table className={TABLE}>
+                <thead className={THEAD}>
                   <tr>
                     <SortHeader label="Date" sortKey="close_date" {...closedSort} />
-                    <th className="px-5 py-3.5 font-medium cursor-pointer select-none whitespace-nowrap transition-colors hover:text-white hover:bg-white/[0.04] font-mono text-[11px] uppercase tracking-widest text-[#9CA3AF] text-left" onClick={() => closedSort.onSort("pair")}>
+                    <th className={`${TH_SORT} text-left`} onClick={() => closedSort.onSort("pair")}>
                       Pair<span className="ml-1 text-[10px] opacity-25">{closedSort.currentSort === "pair" ? (closedSort.currentDir === "asc" ? "\u2191" : "\u2193") : "\u21C5"}</span>
                       <FilterDropdown column="closed_pair" values={getUniqueValues(closedTrades, (t) => t.pair)} activeFilters={columnFilters["closed_pair"]} onToggle={toggleFilter} />
                     </th>
-                    <th className="px-5 py-3.5 font-medium cursor-pointer select-none whitespace-nowrap transition-colors hover:text-white hover:bg-white/[0.04] font-mono text-[11px] uppercase tracking-widest text-[#9CA3AF] text-left" onClick={() => closedSort.onSort("_bot_name")}>
+                    <th className={`${TH_SORT} text-left`} onClick={() => closedSort.onSort("_bot_name")}>
                       Bot<span className="ml-1 text-[10px] opacity-25">{closedSort.currentSort === "_bot_name" ? (closedSort.currentDir === "asc" ? "\u2191" : "\u2193") : "\u21C5"}</span>
                       <FilterDropdown column="closed_bot" values={getUniqueValues(closedTrades, (t) => t._bot_name ?? `Bot ${t._bot_id}`)} activeFilters={columnFilters["closed_bot"]} onToggle={toggleFilter} />
                     </th>
-                    <th className="px-5 py-3.5 font-medium cursor-pointer select-none whitespace-nowrap transition-colors hover:text-white hover:bg-white/[0.04] font-mono text-[11px] uppercase tracking-widest text-[#9CA3AF] text-center" onClick={() => closedSort.onSort("is_short")}>
+                    <th className={`${TH_SORT} text-center`} onClick={() => closedSort.onSort("is_short")}>
                       Side<span className="ml-1 text-[10px] opacity-25">{closedSort.currentSort === "is_short" ? (closedSort.currentDir === "asc" ? "\u2191" : "\u2193") : "\u21C5"}</span>
                       <FilterDropdown column="closed_side" values={["LONG", "SHORT"]} activeFilters={columnFilters["closed_side"]} onToggle={toggleFilter} />
                     </th>
@@ -600,23 +607,23 @@ export default function TradeTable({
                     <SortHeader label="Exit" sortKey="close_rate" {...closedSort} align="right" />
                     <SortHeader label="Profit %" sortKey="close_profit" {...closedSort} align="right" highlight />
                     <SortHeader label="Value" sortKey="close_profit_abs" {...closedSort} align="right" highlight />
-                    <th className="px-5 py-3.5 font-medium text-right font-mono text-[11px] uppercase tracking-widest text-[#9CA3AF]">Fee</th>
+                    <th className={`${TH_BASE} text-right`}>Fee</th>
                     <SortHeader label="Duration" sortKey="close_date" {...closedSort} />
-                    <th className="px-5 py-3.5 font-medium cursor-pointer select-none whitespace-nowrap transition-colors hover:text-white hover:bg-white/[0.04] font-mono text-[11px] uppercase tracking-widest text-[#9CA3AF] text-left" onClick={() => closedSort.onSort("exit_reason")}>
+                    <th className={`${TH_SORT} text-left`} onClick={() => closedSort.onSort("exit_reason")}>
                       Exit Reason<span className="ml-1 text-[10px] opacity-25">{closedSort.currentSort === "exit_reason" ? (closedSort.currentDir === "asc" ? "\u2191" : "\u2193") : "\u21C5"}</span>
                       <FilterDropdown column="closed_exit" values={getUniqueValues(closedTrades, (t) => t.exit_reason ?? "")} activeFilters={columnFilters["closed_exit"]} onToggle={toggleFilter} />
                     </th>
                   </tr>
                 </thead>
-                <tbody className="font-mono text-white/85 divide-y divide-white/[0.05]">
+                <tbody className={TBODY}>
                   {closedRowsToShow.length === 0 ? (
-                    <tr><td colSpan={11} className="px-5 py-8 text-center text-[#9CA3AF]">No closed trades</td></tr>
+                    <tr><td colSpan={11} className="px-5 py-8 text-center text-muted">No closed trades</td></tr>
                   ) : (
                     closedRowsToShow.map((trade, idx) => {
                       const pnl = trade.close_profit_abs;
                       const pct = trade.close_profit;
                       const isUp = pnl != null && pnl >= 0;
-                      const color = pnl != null ? (isUp ? "text-[#22c55e]" : "text-[#ef4444]") : "text-[#9CA3AF]";
+                      const color = pnl != null ? (isUp ? "text-up" : "text-down") : "text-muted";
                       const fee = (trade.fee_open + trade.fee_close) * trade.stake_amount;
                       const d = trade.close_date ? new Date(trade.close_date) : null;
                       const dateStr = d ? `${d.getDate().toString().padStart(2, "0")}.${(d.getMonth() + 1).toString().padStart(2, "0")}.${d.getFullYear().toString().slice(2)}` : "\u2014";
@@ -624,29 +631,29 @@ export default function TradeTable({
 
                       return (
                         <tr key={trade.trade_id} className={`hover:bg-white/[0.04] transition-colors ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}>
-                          <td className="px-5 py-3">{dateStr} <span className="text-white/35 ml-1">{timeStr}</span></td>
-                          <td className="px-5 py-3 font-bold text-white">{trade.pair}</td>
-                          <td className="px-5 py-3 text-[#9CA3AF] font-sans text-[12px]">{trade._bot_name ?? `Bot ${trade._bot_id}`}</td>
-                          <td className="px-5 py-3 text-center">
+                          <td className={TD}>{dateStr} <span className="text-white/35 ml-1">{timeStr}</span></td>
+                          <td className={`${TD} font-bold text-white`}>{trade.pair}</td>
+                          <td className={`${TD} text-muted font-sans text-[12px]`}>{trade._bot_name ?? `Bot ${trade._bot_id}`}</td>
+                          <td className={`${TD} text-center`}>
                             <span className={`px-2 py-0.5 rounded text-[11px] font-medium border ${
                               trade.is_short
-                                ? "bg-[#ef4444]/12 text-[#ef4444] border-[#ef4444]/25"
-                                : "bg-[#22c55e]/12 text-[#22c55e] border-[#22c55e]/25"
+                                ? "bg-down/12 text-down border-down/25"
+                                : "bg-up/12 text-up border-up/25"
                             }`}>
                               {trade.is_short ? "SHORT" : "LONG"}{trade.leverage > 1 ? ` ${trade.leverage}x` : ""}
                             </span>
                           </td>
-                          <td className="px-5 py-3 text-right">{fmt(trade.open_rate, trade.open_rate < 1 ? 4 : 2)}</td>
-                          <td className="px-5 py-3 text-right">{fmt(trade.close_rate, trade.close_rate != null && trade.close_rate < 1 ? 4 : 2)}</td>
-                          <td className={`px-5 py-3 text-right font-bold ${isUp ? "bg-[#22c55e]/5" : pnl != null ? "bg-[#ef4444]/5" : ""} ${color}`}>
+                          <td className={`${TD} text-right`}>{fmt(trade.open_rate, trade.open_rate < 1 ? 4 : 2)}</td>
+                          <td className={`${TD} text-right`}>{fmt(trade.close_rate, trade.close_rate != null && trade.close_rate < 1 ? 4 : 2)}</td>
+                          <td className={`${TD} text-right font-bold ${isUp ? "bg-up/5" : pnl != null ? "bg-down/5" : ""} ${color}`}>
                             {pct != null ? `${pct >= 0 ? "+" : ""}${fmt(pct * 100, 2)}%` : "\u2014"}
                           </td>
-                          <td className={`px-5 py-3 text-right ${isUp ? "bg-[#22c55e]/5" : pnl != null ? "bg-[#ef4444]/5" : ""} ${color}`}>
+                          <td className={`${TD} text-right ${isUp ? "bg-up/5" : pnl != null ? "bg-down/5" : ""} ${color}`}>
                             {pnl != null ? fmtMoney(pnl) : "\u2014"}
                           </td>
-                          <td className="px-5 py-3 text-right text-[#9CA3AF] text-[11px]">${fmt(fee, 2)}</td>
-                          <td className="px-5 py-3 text-[#9CA3AF]">{fmtDuration(trade.open_date, trade.close_date)}</td>
-                          <td className={`px-5 py-3 font-sans text-[11px] ${trade.exit_reason === "stoploss" ? "text-[#ef4444]" : "text-[#9CA3AF]"}`}>
+                          <td className={`${TD} text-right text-muted text-[11px]`}>${fmt(fee, 2)}</td>
+                          <td className={`${TD} text-muted`}>{fmtDuration(trade.open_date, trade.close_date)}</td>
+                          <td className={`${TD} font-sans text-[11px] ${trade.exit_reason === "stoploss" ? "text-down" : "text-muted"}`}>
                             {trade.exit_reason ?? "\u2014"}
                           </td>
                         </tr>
@@ -658,7 +665,7 @@ export default function TradeTable({
               {closedRemaining > 0 && (
                 <button
                   onClick={() => setVisibleRows((v) => v + 50)}
-                  className="w-full py-2 text-[11px] text-[#9CA3AF] font-mono border border-white/[0.10] rounded hover:bg-white/5 transition-colors mt-2"
+                  className="w-full py-2 text-[11px] text-muted font-mono l-bd rounded hover:bg-white/5 transition-colors mt-2"
                 >
                   Load More ({closedRemaining} remaining)
                 </button>
@@ -669,8 +676,8 @@ export default function TradeTable({
 
             {/* WHITELIST MATRIX */}
             {activeTab === "whitelist" && (
-              <table className="w-full text-left border-collapse whitespace-nowrap text-[13px]">
-                <thead className="sticky top-0 bg-[#0C0C0C] border-b border-white/[0.10] font-mono text-[11px] uppercase tracking-widest text-[#9CA3AF] z-10 shadow-lg">
+              <table className={TABLE}>
+                <thead className={THEAD}>
                   <tr>
                     <SortHeader label="Pair" sortKey="pair" {...whitelistSort} />
                     <SortHeader label="Status" sortKey="status" {...whitelistSort} align="center" />
@@ -682,31 +689,31 @@ export default function TradeTable({
                     <SortHeader label="Volatility" sortKey="volatility" {...whitelistSort} align="right" />
                     <SortHeader label="Open Pos" sortKey="openCount" {...whitelistSort} align="center" />
                     <SortHeader label="Lock" sortKey="lockReason" {...whitelistSort} align="center" />
-                    <th className="px-5 py-3.5 font-medium border-l border-white/[0.08] text-center font-mono text-[11px] uppercase tracking-widest text-[#9CA3AF]">Controls</th>
+                    <th className={`${TH_BASE} border-l border-white/[0.08] text-center`}>Controls</th>
                   </tr>
                 </thead>
-                <tbody className="font-mono text-white/85 divide-y divide-white/[0.05]">
+                <tbody className={TBODY}>
                   {whitelistSort.sorted.length === 0 ? (
-                    <tr><td colSpan={11} className="px-5 py-8 text-center text-[#9CA3AF]">No whitelist data</td></tr>
+                    <tr><td colSpan={11} className="px-5 py-8 text-center text-muted">No whitelist data</td></tr>
                   ) : (
                     whitelistSort.sorted.map((row, idx) => {
                       return (
                         <tr key={row.pair} className={`hover:bg-white/[0.04] transition-colors ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}>
-                          <td className="px-5 py-3 font-bold text-white">{row.pair}</td>
-                          <td className="px-5 py-3 text-center">
+                          <td className={`${TD} font-bold text-white`}>{row.pair}</td>
+                          <td className={`${TD} text-center`}>
                             {row.lock ? (
-                              <span className="bg-[#ef4444]/12 text-[#ef4444] border border-[#ef4444]/25 px-2 py-0.5 rounded text-[10px] font-bold">LOCKED</span>
+                              <span className="bg-down/12 text-down border border-down/25 px-2 py-0.5 rounded text-[10px] font-bold">LOCKED</span>
                             ) : (
-                              <span className="bg-[#22c55e]/12 text-[#22c55e] border border-[#22c55e]/25 px-2 py-0.5 rounded text-[10px] font-bold">ACTIVE</span>
+                              <span className="bg-up/12 text-up border border-up/25 px-2 py-0.5 rounded text-[10px] font-bold">ACTIVE</span>
                             )}
                           </td>
-                          <td className="px-5 py-3 text-[#9CA3AF] font-sans text-[11px]">{row.assignedBots || "\u2014"}</td>
-                          <td className="px-5 py-3 text-right">{row.price > 0 ? fmt(row.price, row.price < 1 ? 4 : 2) : "\u2014"}</td>
-                          <td className={`px-5 py-3 text-right ${(pairMarketData?.[row.pair]?.change24h ?? 0) >= 0 ? "text-[#22c55e] font-medium" : "text-[#ef4444] font-medium"}`}>
+                          <td className={`${TD} text-muted font-sans text-[11px]`}>{row.assignedBots || "\u2014"}</td>
+                          <td className={`${TD} text-right`}>{row.price > 0 ? fmt(row.price, row.price < 1 ? 4 : 2) : "\u2014"}</td>
+                          <td className={`${TD} text-right ${(pairMarketData?.[row.pair]?.change24h ?? 0) >= 0 ? "text-up font-medium" : "text-down font-medium"}`}>
                             {pairMarketData?.[row.pair]?.change24h != null ? `${pairMarketData[row.pair].change24h >= 0 ? "+" : ""}${pairMarketData[row.pair].change24h.toFixed(2)}%` : "\u2014"}
                           </td>
-                          <td className="px-5 py-3 text-right text-[#9CA3AF]">{"\u2014"}</td>
-                          <td className="px-5 py-3 text-right text-[#9CA3AF]">
+                          <td className={`${TD} text-right text-muted`}>{"\u2014"}</td>
+                          <td className={`${TD} text-right text-muted`}>
                             {pairMarketData?.[row.pair]?.volume != null ? (() => {
                               const v = pairMarketData[row.pair].volume;
                               if (v >= 1_000_000_000) return `$${(v / 1_000_000_000).toFixed(1)}B`;
@@ -715,25 +722,25 @@ export default function TradeTable({
                               return `$${v.toFixed(0)}`;
                             })() : "\u2014"}
                           </td>
-                          <td className="px-5 py-3 text-right">
+                          <td className={`${TD} text-right`}>
                             {pairMarketData?.[row.pair]?.volatility != null ? (() => {
                               const vol = pairMarketData[row.pair].volatility;
-                              const volColor = vol > 5 ? "text-[#ef4444]" : vol > 2 ? "text-yellow-400" : "text-[#22c55e]";
+                              const volColor = vol > 5 ? "text-down" : vol > 2 ? "text-yellow-400" : "text-up";
                               const volLabel = vol > 5 ? "High" : vol > 2 ? "Med" : "Low";
                               return <span className={volColor}>{volLabel}</span>;
                             })() : "\u2014"}
                           </td>
-                          <td className="px-5 py-3 text-center font-bold">{row.openCount}</td>
-                          <td className="px-5 py-3 text-center">
+                          <td className={`${TD} text-center font-bold`}>{row.openCount}</td>
+                          <td className={`${TD} text-center`}>
                             {row.lock ? (
-                              <span className="text-[#ef4444] text-[10px] font-bold">{row.lock.reason}</span>
+                              <span className="text-down text-[10px] font-bold">{row.lock.reason}</span>
                             ) : "\u2014"}
                           </td>
-                          <td className="px-5 py-3 border-l border-white/[0.08] text-center">
+                          <td className={`${TD} border-l border-white/[0.08] text-center`}>
                             {row.lock ? (
-                              <button className="bg-black border border-white/[0.10] hover:bg-[#22c55e]/20 text-[#9CA3AF] hover:text-[#22c55e] px-2 py-0.5 rounded text-[10px] font-bold transition-colors">UNLOCK</button>
+                              <button className="bg-black l-bd hover:bg-up/20 text-muted hover:text-up px-2 py-0.5 rounded text-[10px] font-bold transition-colors">UNLOCK</button>
                             ) : (
-                              <button className="bg-black border border-white/[0.10] hover:bg-[#ef4444]/20 text-[#9CA3AF] hover:text-[#ef4444] px-2 py-0.5 rounded text-[10px] font-bold transition-colors">LOCK</button>
+                              <button className="bg-black l-bd hover:bg-down/20 text-muted hover:text-down px-2 py-0.5 rounded text-[10px] font-bold transition-colors">LOCK</button>
                             )}
                           </td>
                         </tr>
@@ -746,8 +753,8 @@ export default function TradeTable({
 
             {/* PERFORMANCE */}
             {activeTab === "performance" && (
-              <table className="w-full text-left border-collapse whitespace-nowrap text-[13px]">
-                <thead className="sticky top-0 bg-[#0C0C0C] border-b border-white/[0.10] font-mono text-[11px] uppercase tracking-widest text-[#9CA3AF] z-10 shadow-lg">
+              <table className={TABLE}>
+                <thead className={THEAD}>
                   <tr>
                     <SortHeader label="Pair" sortKey="pair" {...perfSort} />
                     <SortHeader label="Trades" sortKey="count" {...perfSort} align="right" />
@@ -760,13 +767,13 @@ export default function TradeTable({
                     <SortHeader label="Total Fees" sortKey="_total_fees" {...perfSort} align="right" />
                   </tr>
                 </thead>
-                <tbody className="font-mono text-white/85 divide-y divide-white/[0.05]">
+                <tbody className={TBODY}>
                   {perfSort.sorted.length === 0 ? (
-                    <tr><td colSpan={9} className="px-5 py-8 text-center text-[#9CA3AF]">No performance data</td></tr>
+                    <tr><td colSpan={9} className="px-5 py-8 text-center text-muted">No performance data</td></tr>
                   ) : (
                     perfSort.sorted.map((p, idx) => {
                       const isUp = p.profit_abs >= 0;
-                      const color = isUp ? "text-[#22c55e]" : "text-[#ef4444]";
+                      const color = isUp ? "text-up" : "text-down";
                       // Derive wins/losses from closed trades for this pair
                       const pairClosed = closedTrades.filter((t) => t.pair === p.pair);
                       const wins = pairClosed.filter((t) => (t.close_profit_abs ?? 0) >= 0).length;
@@ -775,24 +782,24 @@ export default function TradeTable({
                       const tradeCount = p.count ?? p.trades ?? 0;
                       const avgProfit = tradeCount > 0 ? (p.profit_ratio * 100) / tradeCount : 0;
                       const totalFees = pairClosed.reduce((acc, t) => acc + (t.fee_open + t.fee_close) * t.stake_amount, 0);
-                      const wrColor = winrate >= 0.6 ? "text-[#22c55e]" : winrate < 0.45 ? "text-[#ef4444]" : "text-white";
+                      const wrColor = winrate >= 0.65 ? "text-up" : winrate < 0.50 ? "text-down" : "text-white";
                       return (
                         <tr key={p.pair} className={`hover:bg-white/[0.04] transition-colors ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}>
-                          <td className="px-5 py-3 font-bold text-white">{p.pair}</td>
-                          <td className="px-5 py-3 text-right">{p.count ?? p.trades ?? 0}</td>
-                          <td className="px-5 py-3 text-right text-[#22c55e]">{wins}</td>
-                          <td className="px-5 py-3 text-right text-[#ef4444]">{losses}</td>
-                          <td className={`px-5 py-3 text-right font-medium ${wrColor}`}>{fmt(winrate * 100, 1)}%</td>
-                          <td className={`px-5 py-3 text-right font-bold ${isUp ? "bg-[#22c55e]/5" : "bg-[#ef4444]/5"} ${color}`}>
+                          <td className={`${TD} font-bold text-white`}>{p.pair}</td>
+                          <td className={`${TD} text-right`}>{p.count ?? p.trades ?? 0}</td>
+                          <td className={`${TD} text-right text-up`}>{wins}</td>
+                          <td className={`${TD} text-right text-down`}>{losses}</td>
+                          <td className={`${TD} text-right font-medium ${wrColor}`}>{fmt(winrate * 100, 1)}%</td>
+                          <td className={`${TD} text-right font-bold ${isUp ? "bg-up/5" : "bg-down/5"} ${color}`}>
                             {p.profit_ratio >= 0 ? "+" : ""}{fmt(p.profit_ratio * 100, 1)}%
                           </td>
-                          <td className={`px-5 py-3 text-right ${isUp ? "bg-[#22c55e]/5" : "bg-[#ef4444]/5"} ${color}`}>
+                          <td className={`${TD} text-right ${isUp ? "bg-up/5" : "bg-down/5"} ${color}`}>
                             {fmtMoney(p.profit_abs)}
                           </td>
-                          <td className={`px-5 py-3 text-right ${isUp ? "text-[#22c55e]" : "text-[#ef4444]"}`}>
+                          <td className={`${TD} text-right ${isUp ? "text-up" : "text-down"}`}>
                             {avgProfit >= 0 ? "+" : ""}{fmt(avgProfit, 2)}%
                           </td>
-                          <td className="px-5 py-3 text-right text-[#9CA3AF]">{fmtMoney(totalFees)}</td>
+                          <td className={`${TD} text-right text-muted`}>{fmtMoney(totalFees)}</td>
                         </tr>
                       );
                     })
@@ -803,8 +810,8 @@ export default function TradeTable({
 
             {/* ENTRY TAGS */}
             {activeTab === "entries" && (
-              <table className="w-full text-left border-collapse whitespace-nowrap text-[13px]">
-                <thead className="sticky top-0 bg-[#0C0C0C] border-b border-white/[0.10] font-mono text-[11px] uppercase tracking-widest text-[#9CA3AF] z-10 shadow-lg">
+              <table className={TABLE}>
+                <thead className={THEAD}>
                   <tr>
                     <SortHeader label="Tag" sortKey="enter_tag" {...entrySort} />
                     <SortHeader label="Trades" sortKey="entries" {...entrySort} align="right" />
@@ -818,14 +825,14 @@ export default function TradeTable({
                     <SortHeader label="Expectancy" sortKey="_expectancy" {...entrySort} align="right" />
                   </tr>
                 </thead>
-                <tbody className="font-mono text-white/85 divide-y divide-white/[0.05]">
+                <tbody className={TBODY}>
                   {entrySort.sorted.length === 0 ? (
-                    <tr><td colSpan={10} className="px-5 py-8 text-center text-[#9CA3AF]">No entry tag data</td></tr>
+                    <tr><td colSpan={10} className="px-5 py-8 text-center text-muted">No entry tag data</td></tr>
                   ) : (
                     entrySort.sorted.map((e, idx) => {
                       const wr = e.winrate ?? 0;
-                      const wrColor = wr >= 0.6 ? "text-[#22c55e]" : wr < 0.45 ? "text-[#ef4444]" : "text-white";
-                      const pnlColor = (e.profit_abs ?? 0) >= 0 ? "text-[#22c55e]" : "text-[#ef4444]";
+                      const wrColor = wr >= 0.65 ? "text-up" : wr < 0.50 ? "text-down" : "text-white";
+                      const pnlColor = (e.profit_abs ?? 0) >= 0 ? "text-up" : "text-down";
                       // Derive avg duration & best pair from closed trades with this enter_tag
                       const tagTrades = closedTrades.filter((t) => t.enter_tag === e.enter_tag);
                       const avgDurationMs = tagTrades.length > 0
@@ -849,19 +856,19 @@ export default function TradeTable({
                       // Expectancy = profit_abs / entries (avg profit per trade in $)
                       const entries = e.entries ?? 0;
                       const expectancy = entries > 0 ? (e.profit_abs ?? 0) / entries : 0;
-                      const expColor = expectancy >= 0 ? "text-[#22c55e]" : "text-[#ef4444]";
+                      const expColor = expectancy >= 0 ? "text-up" : "text-down";
                       return (
                         <tr key={e.enter_tag} className={`hover:bg-white/[0.04] ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}>
-                          <td className="px-5 py-3 text-white font-medium">{e.enter_tag}</td>
-                          <td className="px-5 py-3 text-right">{entries}</td>
-                          <td className="px-5 py-3 text-right text-[#22c55e]">{e.wins ?? 0}</td>
-                          <td className="px-5 py-3 text-right text-[#ef4444]">{e.losses ?? 0}</td>
-                          <td className={`px-5 py-3 text-right font-medium ${wrColor}`}>{fmt(wr * 100, 1)}%</td>
-                          <td className={`px-5 py-3 text-right ${pnlColor}`}>{(e.avg_profit ?? 0) >= 0 ? "+" : ""}{fmt(e.avg_profit ?? 0, 2)}%</td>
-                          <td className={`px-5 py-3 text-right font-bold ${pnlColor}`}>{fmtMoney(e.profit_abs ?? 0)}</td>
-                          <td className="px-5 py-3 text-right text-[#9CA3AF]">{avgDurStr}</td>
-                          <td className="px-5 py-3 text-white/70">{bestPair}</td>
-                          <td className={`px-5 py-3 text-right font-bold ${expColor}`}>{fmtMoney(expectancy)}</td>
+                          <td className={`${TD} text-white font-medium`}>{e.enter_tag}</td>
+                          <td className={`${TD} text-right`}>{entries}</td>
+                          <td className={`${TD} text-right text-up`}>{e.wins ?? 0}</td>
+                          <td className={`${TD} text-right text-down`}>{e.losses ?? 0}</td>
+                          <td className={`${TD} text-right font-medium ${wrColor}`}>{fmt(wr * 100, 1)}%</td>
+                          <td className={`${TD} text-right ${pnlColor}`}>{(e.avg_profit ?? 0) >= 0 ? "+" : ""}{fmt(e.avg_profit ?? 0, 2)}%</td>
+                          <td className={`${TD} text-right font-bold ${pnlColor}`}>{fmtMoney(e.profit_abs ?? 0)}</td>
+                          <td className={`${TD} text-right text-muted`}>{avgDurStr}</td>
+                          <td className={`${TD} text-white/70`}>{bestPair}</td>
+                          <td className={`${TD} text-right font-bold ${expColor}`}>{fmtMoney(expectancy)}</td>
                         </tr>
                       );
                     })
@@ -872,8 +879,8 @@ export default function TradeTable({
 
             {/* EXIT REASONS */}
             {activeTab === "exits" && (
-              <table className="w-full text-left border-collapse whitespace-nowrap text-[13px]">
-                <thead className="sticky top-0 bg-[#0C0C0C] border-b border-white/[0.10] font-mono text-[11px] uppercase tracking-widest text-[#9CA3AF] z-10 shadow-lg">
+              <table className={TABLE}>
+                <thead className={THEAD}>
                   <tr>
                     <SortHeader label="Reason" sortKey="exit_reason" {...exitSort} />
                     <SortHeader label="Exits" sortKey="exits" {...exitSort} align="right" />
@@ -887,14 +894,14 @@ export default function TradeTable({
                     <SortHeader label="Expectancy" sortKey="_expectancy" {...exitSort} align="right" />
                   </tr>
                 </thead>
-                <tbody className="font-mono text-white/85 divide-y divide-white/[0.05]">
+                <tbody className={TBODY}>
                   {exitSort.sorted.length === 0 ? (
-                    <tr><td colSpan={10} className="px-5 py-8 text-center text-[#9CA3AF]">No exit reason data</td></tr>
+                    <tr><td colSpan={10} className="px-5 py-8 text-center text-muted">No exit reason data</td></tr>
                   ) : (
                     exitSort.sorted.map((e, idx) => {
                       const wr = e.winrate ?? 0;
-                      const wrColor = wr >= 0.6 ? "text-[#22c55e]" : wr < 0.45 ? "text-[#ef4444]" : "text-white";
-                      const pnlColor = (e.profit_abs ?? 0) >= 0 ? "text-[#22c55e]" : "text-[#ef4444]";
+                      const wrColor = wr >= 0.65 ? "text-up" : wr < 0.50 ? "text-down" : "text-white";
+                      const pnlColor = (e.profit_abs ?? 0) >= 0 ? "text-up" : "text-down";
                       // Derive avg duration & best pair from closed trades with this exit_reason
                       const reasonTrades = closedTrades.filter((t) => t.exit_reason === e.exit_reason);
                       const avgDurationMs = reasonTrades.length > 0
@@ -918,19 +925,19 @@ export default function TradeTable({
                       // Expectancy = profit_abs / exits (avg profit per trade in $)
                       const exits = e.exits ?? 0;
                       const expectancy = exits > 0 ? (e.profit_abs ?? 0) / exits : 0;
-                      const expColor = expectancy >= 0 ? "text-[#22c55e]" : "text-[#ef4444]";
+                      const expColor = expectancy >= 0 ? "text-up" : "text-down";
                       return (
                         <tr key={e.exit_reason} className={`hover:bg-white/[0.04] ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}>
-                          <td className="px-5 py-3 text-white font-medium">{e.exit_reason}</td>
-                          <td className="px-5 py-3 text-right">{exits}</td>
-                          <td className="px-5 py-3 text-right text-[#22c55e]">{e.wins ?? 0}</td>
-                          <td className="px-5 py-3 text-right text-[#ef4444]">{e.losses ?? 0}</td>
-                          <td className={`px-5 py-3 text-right font-medium ${wrColor}`}>{fmt(wr * 100, 1)}%</td>
-                          <td className={`px-5 py-3 text-right ${pnlColor}`}>{(e.avg_profit ?? 0) >= 0 ? "+" : ""}{fmt(e.avg_profit ?? 0, 2)}%</td>
-                          <td className={`px-5 py-3 text-right font-bold ${pnlColor}`}>{fmtMoney(e.profit_abs ?? 0)}</td>
-                          <td className="px-5 py-3 text-right text-[#9CA3AF]">{avgDurStr}</td>
-                          <td className="px-5 py-3 text-white/70">{bestPair}</td>
-                          <td className={`px-5 py-3 text-right font-bold ${expColor}`}>{fmtMoney(expectancy)}</td>
+                          <td className={`${TD} text-white font-medium`}>{e.exit_reason}</td>
+                          <td className={`${TD} text-right`}>{exits}</td>
+                          <td className={`${TD} text-right text-up`}>{e.wins ?? 0}</td>
+                          <td className={`${TD} text-right text-down`}>{e.losses ?? 0}</td>
+                          <td className={`${TD} text-right font-medium ${wrColor}`}>{fmt(wr * 100, 1)}%</td>
+                          <td className={`${TD} text-right ${pnlColor}`}>{(e.avg_profit ?? 0) >= 0 ? "+" : ""}{fmt(e.avg_profit ?? 0, 2)}%</td>
+                          <td className={`${TD} text-right font-bold ${pnlColor}`}>{fmtMoney(e.profit_abs ?? 0)}</td>
+                          <td className={`${TD} text-right text-muted`}>{avgDurStr}</td>
+                          <td className={`${TD} text-white/70`}>{bestPair}</td>
+                          <td className={`${TD} text-right font-bold ${expColor}`}>{fmtMoney(expectancy)}</td>
                         </tr>
                       );
                     })

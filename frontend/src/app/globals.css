@@ -136,4 +136,33 @@
   /* Hyperopt sub-tab buttons and content */
   .ho-tab-btn {}
   .ho-tab-content {}
+
+  /* ═══ Dashboard-specific classes ═══ */
+
+  /* Bot Control Buttons */
+  .bot-ctrl { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 5px; background: #1a1a1a; border: 1px solid rgba(255,255,255,0.10); color: #9CA3AF; transition: all 0.15s; cursor: pointer; }
+  .bot-ctrl:hover { background: #2a2a2a; color: #F5F5F5; border-color: rgba(255,255,255,0.20); }
+  .bot-ctrl.ctrl-start:hover { color: #22c55e; border-color: rgba(34,197,94,0.3); }
+  .bot-ctrl.ctrl-stop:hover { color: #ef4444; border-color: rgba(239,68,68,0.3); }
+  .bot-ctrl.ctrl-pause:hover { color: #eab308; border-color: rgba(234,179,8,0.3); }
+
+  /* Action Menu (trade row actions) */
+  .action-menu { position: relative; display: inline-block; }
+  .action-menu-btn { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.10); padding: 4px 10px; border-radius: 5px; color: #9CA3AF; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 5px; }
+  .action-menu-btn:hover { background: #2a2a2a; color: #F5F5F5; }
+  .action-dropdown { display: none; position: absolute; right: 0; bottom: 100%; margin-bottom: 4px; min-width: 200px; background: #151515; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 4px; z-index: 40; box-shadow: 0 -8px 30px rgba(0,0,0,0.6); }
+  .action-dropdown.open { display: block; animation: fadeIn 0.15s; }
+  .action-dropdown button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; font-size: 12px; color: #d4d4d8; background: transparent; border: none; border-radius: 5px; cursor: pointer; transition: background 0.1s; text-align: left; font-family: 'Inter', sans-serif; }
+  .action-dropdown button:hover { background: rgba(255,255,255,0.06); color: #fff; }
+  .action-dropdown button.danger { color: #ef4444; }
+  .action-dropdown button.danger:hover { background: rgba(239,68,68,0.1); }
+  .action-dropdown .sep { height: 1px; background: rgba(255,255,255,0.06); margin: 4px 8px; }
+
+  /* Sidebar Toggle */
+  .sidebar-toggle { transition: transform 0.3s ease; }
+  .sidebar-toggle.rotated { transform: rotate(180deg); }
+
+  /* Trade tab buttons and content */
+  .trade-tab-btn {}
+  .trade-tab-content {}
 }

@@ -975,13 +975,7 @@ export default function DashboardPage() {
       )}
 
       {/* LINEAR EDGE LAYOUT */}
-      <div
-        className="flex flex-col gap-5 h-full p-5 overflow-hidden"
-        style={{
-          backgroundImage: "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)",
-          backgroundSize: "24px 24px",
-        }}
-      >
+      <div className="flex flex-1 overflow-hidden l-grid p-5 flex-col gap-5">
         {/* LAYER 1: KPI Grid (14 KPIs in 7+7) */}
         <KPIGrid
           totalEquity={totalEquity}

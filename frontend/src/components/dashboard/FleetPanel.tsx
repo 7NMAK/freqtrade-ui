@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { Play, Square, Pause, RefreshCw, XSquare, PlusSquare, ShieldAlert, Zap, GitCompare, Layers } from "lucide-react";
 import { fmtMoney, fmt } from "@/lib/format";
 import type { Bot, FTProfit } from "@/types";
@@ -30,64 +31,12 @@ function MiniSparkline({ data }: { data: number[] }) {
         return (
           <div
             key={`sp-${i}`}
-            className={`w-1.5 rounded-sm ${v >= 0 ? "bg-[#22c55e]" : "bg-[#ef4444]"}`}
+            className={`w-1.5 rounded-sm ${v >= 0 ? "bg-up" : "bg-down"}`}
             style={{ height: `${pct}%` }}
           />
         );
       })}
     </div>
-  );
-}
-
-function BotStatusDot({ status }: { status: string }) {
-  if (status === "running") {
-    return <div className="w-2 h-2 bg-[#22c55e] rounded-full shadow-[0_0_4px_#22c55e]" />;
-  }
-  if (status === "draining") {
-    return <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />;
-  }
-  return <div className="w-2 h-2 bg-[#ef4444] rounded-full" />;
-}
-
-function BotStatusBadge({ status, isDryRun }: { status: string; isDryRun: boolean }) {
-  if (status === "draining") {
-    return <span className="text-[10px] border border-yellow-500/30 px-1.5 py-[1px] rounded text-yellow-400 font-medium">DRAINING</span>;
-  }
-  if (status !== "running") {
-    return <span className="text-[10px] border border-[#ef4444]/30 px-1.5 py-[1px] rounded text-[#ef4444] font-medium">STOPPED</span>;
-  }
-  if (isDryRun) {
-    return <span className="text-[10px] border border-yellow-500/30 px-1.5 py-[1px] rounded text-yellow-400 font-medium">PAPER</span>;
-  }
-  return <span className="text-[10px] border border-white/20 px-1.5 py-[1px] rounded text-white/60 font-medium">LIVE</span>;
-}
-
-function CtrlBtn({
-  title,
-  icon,
-  variant,
-  onClick,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  variant?: "start" | "stop" | "pause" | "warn" | "default";
-  onClick: (e: React.MouseEvent) => void;
-}) {
-  const hoverClass =
-    variant === "start" ? "hover:text-[#22c55e] hover:border-[rgba(34,197,94,0.3)]" :
-    variant === "stop" ? "hover:text-[#ef4444] hover:border-[rgba(239,68,68,0.3)]" :
-    variant === "pause" ? "hover:text-[#eab308] hover:border-[rgba(234,179,8,0.3)]" :
-    variant === "warn" ? "text-[#facc15]" :
-    "hover:text-[#F5F5F5] hover:border-white/20";
-
-  return (
-    <button
-      className={`inline-flex items-center justify-center w-7 h-7 rounded-[5px] bg-[#1a1a1a] border border-white/10 text-[#9CA3AF] transition-all cursor-pointer hover:bg-[#2a2a2a] ${hoverClass}`}
-      title={title}
-      onClick={onClick}
-    >
-      {icon}
-    </button>
   );
 }
 
@@ -108,108 +57,158 @@ export default function FleetPanel({
   const tradeBots = bots.filter((b) => !b.is_utility && b.ft_mode !== "webserver");
 
   return (
-    <div className="w-[400px] flex flex-col gap-5 min-w-[400px] shrink-0 2xl:w-[400px] xl:w-[320px] xl:min-w-[320px]">
-      <div className="flex-1 bg-[#0C0C0C] border border-white/[0.10] rounded-md flex flex-col shadow-xl overflow-hidden">
-        {/* Header */}
-        <div className="h-12 border-b border-white/[0.10] flex items-center justify-between px-5 bg-black/40 shrink-0">
-          <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#9CA3AF] flex items-center gap-2.5">
-            <Layers className="w-4 h-4 text-[#9CA3AF]" /> Fleet Management ({tradeBots.length})
-          </span>
-          <button className="bg-white/10 px-3 py-1 rounded text-[11px] hover:bg-white/20 transition-colors font-medium flex items-center gap-1.5 text-[#9CA3AF] hover:text-white">
-            <GitCompare className="w-3 h-3" />Compare View
-          </button>
-        </div>
+    <div className="w-[400px] flex flex-col gap-5 min-w-[400px] shrink-0">
+    <div className="flex-1 bg-surface l-bd rounded-md flex flex-col shadow-xl overflow-hidden">
+      {/* Header */}
+      <div className="h-12 l-b flex items-center justify-between px-5 bg-black/40 shrink-0">
+        <span className="section-title flex items-center gap-2.5">
+          <Layers className="w-4 h-4 text-muted" /> Fleet Management ({tradeBots.length})
+        </span>
+        <Link
+          href="/dashboard/fleet"
+          className="bg-white/10 px-3 py-1 rounded text-[11px] hover:bg-white/20 transition-colors font-medium flex items-center gap-1.5 text-muted hover:text-white"
+          title="Open Fleet Management — Compare all bots side by side"
+        >
+          <GitCompare className="w-3 h-3" />Compare View
+        </Link>
+      </div>
 
-        {/* Bot List */}
-        <div className="flex-1 overflow-y-auto flex flex-col font-mono text-xs">
-          {tradeBots.length === 0 && (
-            <div className="p-8 text-center text-sm text-[#9CA3AF]">No bots registered.</div>
-          )}
-          {tradeBots.map((bot, idx) => {
-            const profit = botProfits[bot.id];
-            const pnl = profit?.profit_all_coin ?? null;
-            const pnlPct = profit?.profit_all_percent ?? null;
-            const trades = profit?.trade_count ?? 0;
-            const winRate = profit && profit.winning_trades != null && profit.losing_trades != null
-              ? ((profit.winning_trades / (profit.winning_trades + profit.losing_trades)) * 100)
-              : null;
-            const avgDur = profit?.avg_duration;
-            const avgDurStr = typeof avgDur === "number"
-              ? (avgDur >= 3600 ? `${(avgDur / 3600).toFixed(1)}h` : `${Math.round(avgDur / 60)}m`)
-              : typeof avgDur === "string" ? avgDur : "\u2014";
-            const maxDd = profit ? ((profit as Record<string, unknown>).max_drawdown as number | undefined) : undefined;
+      {/* Bot List */}
+      <div className="flex-1 overflow-y-auto flex flex-col font-mono text-xs">
+        {tradeBots.length === 0 && (
+          <div className="p-8 text-center text-sm text-muted">No bots registered.</div>
+        )}
+        {tradeBots.map((bot, idx) => {
+          const profit = botProfits[bot.id];
+          const pnl = profit?.profit_all_coin ?? null;
+          const pnlPct = profit?.profit_all_percent ?? null;
+          const trades = profit?.trade_count ?? 0;
+          const winRate = profit && profit.winning_trades != null && profit.losing_trades != null
+            ? ((profit.winning_trades / (profit.winning_trades + profit.losing_trades)) * 100)
+            : null;
+          const avgDur = profit?.avg_duration;
+          const avgDurStr = typeof avgDur === "number"
+            ? (avgDur >= 3600 ? `${(avgDur / 3600).toFixed(1)}h` : `${Math.round(avgDur / 60)}m`)
+            : typeof avgDur === "string" ? avgDur : "\u2014";
+          const maxDd = profit ? ((profit as Record<string, unknown>).max_drawdown as number | undefined) : undefined;
 
-            return (
-              <div
-                key={bot.id}
-                className={`p-4 border-b border-white/[0.10] hover:bg-white/[0.04] transition-colors group cursor-pointer ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}
-                onClick={() => onBotClick(bot.id)}
-              >
-                {/* Top: name + status + PnL */}
-                <div className="flex items-start justify-between mb-2.5">
-                  <div className="flex items-center gap-2">
-                    <BotStatusDot status={bot.status} />
-                    <span className="font-bold uppercase text-[12px] tracking-wide text-white">
-                      {bot.name}
-                    </span>
-                    <BotStatusBadge status={bot.status} isDryRun={bot.is_dry_run} />
-                  </div>
-                  <div className="text-right shrink-0">
-                    <span className={`font-bold text-[13px] ${pnl != null && pnl >= 0 ? "text-[#22c55e]" : pnl != null && pnl < 0 ? "text-[#ef4444]" : "text-[#9CA3AF]"}`}>
-                      {pnl != null ? fmtMoney(pnl) : "\u2014"}
-                    </span>
-                    {pnlPct != null && (
-                      <span className={`text-[10px] ml-1 ${pnlPct >= 0 ? "text-[#22c55e]/50" : "text-[#ef4444]/50"}`}>
-                        {pnlPct >= 0 ? "+" : ""}{fmt(pnlPct, 1)}%
-                      </span>
-                    )}
-                  </div>
+          const isLive = bot.status === "running";
+          const isPaused = bot.status === "draining";
+          const isStopped = !isLive && !isPaused;
+
+          return (
+            <div
+              key={bot.id}
+              className={`p-4 l-b hover:bg-white/[0.04] transition-colors group cursor-pointer ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}
+              onClick={() => onBotClick(bot.id)}
+            >
+              {/* Section 1 — Top: name + status + PnL */}
+              <div className="flex items-start justify-between mb-2.5">
+                <div className="flex items-center gap-2">
+                  {/* Status LED */}
+                  <div className={`w-2 h-2 rounded-full ${
+                    isLive ? "bg-up shadow-[0_0_4px_#22c55e]" :
+                    isPaused ? "bg-yellow-400" :
+                    "bg-down"
+                  }`} />
+                  {/* Bot name */}
+                  <span className={`font-bold uppercase text-[12px] tracking-wide ${
+                    isLive ? "text-white" :
+                    isPaused ? "text-white/60" :
+                    "text-white/40"
+                  }`}>
+                    {bot.name}
+                  </span>
+                  {/* Status badge */}
+                  {isPaused ? (
+                    <span className="text-[10px] border border-yellow-500/30 px-1.5 py-[1px] rounded text-yellow-400 font-medium">DRAINING</span>
+                  ) : isStopped ? (
+                    <span className="text-[10px] border border-down/30 px-1.5 py-[1px] rounded text-down font-medium">STOPPED</span>
+                  ) : bot.is_dry_run ? (
+                    <span className="text-[10px] border border-yellow-500/30 px-1.5 py-[1px] rounded text-yellow-400 font-medium">PAPER</span>
+                  ) : (
+                    <span className="text-[10px] border border-white/20 px-1.5 py-[1px] rounded text-white/60 font-medium">LIVE</span>
+                  )}
                 </div>
-
-                {/* Stats 2x2 grid */}
-                <div className="grid grid-cols-2 gap-y-1.5 text-[#9CA3AF] text-[12px] mb-3">
-                  <div className="flex justify-between w-full pr-5">
-                    <span>Trades:</span>
-                    <span className="text-white/70">{trades}</span>
-                  </div>
-                  <div className="flex justify-between w-full">
-                    <span>Win:</span>
-                    <span className={winRate != null && winRate < 50 ? "text-[#ef4444]" : "text-white/70"}>
-                      {winRate != null ? `${fmt(winRate, 0)}%` : "\u2014"}
+                <div className="text-right">
+                  <span className={`font-bold text-[13px] ${
+                    pnl != null && pnl > 0 ? "text-up" :
+                    pnl != null && pnl < 0 ? "text-down" :
+                    "text-muted"
+                  }`}>
+                    {pnl != null ? fmtMoney(pnl) : "\u2014"}
+                  </span>
+                  {!isPaused && pnlPct != null && (
+                    <span
+                      className="text-[10px] ml-1"
+                      style={{ color: pnlPct >= 0 ? "rgba(34,197,94,0.5)" : "rgba(239,68,68,0.5)" }}
+                    >
+                      {pnlPct >= 0 ? "+" : ""}{fmt(pnlPct, 1)}%
                     </span>
-                  </div>
-                  <div className="flex justify-between w-full pr-5">
-                    <span>Drawdown:</span>
-                    <span className={maxDd != null ? "text-[#ef4444]" : "text-white/70"}>
-                      {maxDd != null ? `${fmt(maxDd, 1)}%` : "\u2014"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between w-full">
-                    <span>Avg. Dur:</span>
-                    <span className="text-white/70">{avgDurStr}</span>
-                  </div>
-                </div>
-
-                {/* Sparkline + Controls */}
-                <div className="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
-                  <MiniSparkline data={sparklines[bot.id] ?? []} />
-                  <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                    <CtrlBtn title="Start Bot" icon={<Play className="w-3 h-3" />} variant="start" onClick={(e) => { e.stopPropagation(); onStart(bot.id); }} />
-                    <CtrlBtn title="Stop Bot" icon={<Square className="w-3 h-3" />} variant="stop" onClick={(e) => { e.stopPropagation(); onStop(bot.id); }} />
-                    <CtrlBtn title="Pause (Stopbuy)" icon={<Pause className="w-3 h-3" />} variant="pause" onClick={(e) => { e.stopPropagation(); onPause(bot.id); }} />
-                    <CtrlBtn title="Reload Config" icon={<RefreshCw className="w-3 h-3" />} onClick={(e) => { e.stopPropagation(); onReload(bot.id); }} />
-                    <CtrlBtn title="Force Exit All" icon={<XSquare className="w-3 h-3" />} variant="stop" onClick={(e) => { e.stopPropagation(); onForceExitAll(bot.id); }} />
-                    <CtrlBtn title="Toggle Stopbuy" icon={<PlusSquare className="w-3 h-3" />} onClick={(e) => { e.stopPropagation(); onStopBuy(bot.id); }} />
-                    <span className="w-px h-3 bg-white/15 mx-0.5 self-center" />
-                    <CtrlBtn title="Soft Kill" icon={<ShieldAlert className="w-3 h-3" />} variant="warn" onClick={(e) => { e.stopPropagation(); onSoftKill(bot.id); }} />
-                    <CtrlBtn title="Hard Kill" icon={<Zap className="w-3 h-3" />} variant="stop" onClick={(e) => { e.stopPropagation(); onHardKill(bot.id); }} />
-                  </div>
+                  )}
                 </div>
               </div>
-            );
-          })}
-        </div>
+
+              {/* Section 2 — Stats 2x2 grid */}
+              <div className="grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3">
+                <div className="flex justify-between w-full pr-5">
+                  <span className="text-muted">Trades:</span>
+                  <span className="text-white/70">{trades}</span>
+                </div>
+                <div className="flex justify-between w-full">
+                  <span className="text-muted">Win:</span>
+                  <span className={winRate != null && winRate < 50 ? "text-down" : "text-white/70"}>
+                    {winRate != null ? `${fmt(winRate, 0)}%` : "\u2014"}
+                  </span>
+                </div>
+                <div className="flex justify-between w-full pr-5">
+                  <span className="text-muted">Drawdown:</span>
+                  <span className={maxDd != null ? "text-down" : "text-white/70"}>
+                    {maxDd != null ? `${fmt(maxDd, 1)}%` : "\u2014"}
+                  </span>
+                </div>
+                <div className="flex justify-between w-full">
+                  <span className="text-muted">Avg. Dur:</span>
+                  <span className="text-white/70">{avgDurStr}</span>
+                </div>
+              </div>
+
+              {/* Section 3 — Sparkline + Controls */}
+              <div className="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
+                <MiniSparkline data={sparklines[bot.id] ?? []} />
+                <div className="flex gap-1">
+                  <button className="bot-ctrl ctrl-start" title="&#9654; Start Bot — Resume trading engine" onClick={(e) => { e.stopPropagation(); onStart(bot.id); }}>
+                    <Play className="w-3 h-3" />
+                  </button>
+                  <button className="bot-ctrl ctrl-stop" title="&#9632; Stop Bot — Gracefully stop trading" onClick={(e) => { e.stopPropagation(); onStop(bot.id); }}>
+                    <Square className="w-3 h-3" />
+                  </button>
+                  <button className="bot-ctrl ctrl-pause" title="&#9208; Pause — Stop opening new trades" onClick={(e) => { e.stopPropagation(); onPause(bot.id); }}>
+                    <Pause className="w-3 h-3" />
+                  </button>
+                  <button className="bot-ctrl" title="&#8635; Reload Config — Hot-reload strategy config" onClick={(e) => { e.stopPropagation(); onReload(bot.id); }}>
+                    <RefreshCw className="w-3 h-3" />
+                  </button>
+                  <button className="bot-ctrl ctrl-stop" title="&#10005; Force Exit All — Close all open positions" onClick={(e) => { e.stopPropagation(); onForceExitAll(bot.id); }}>
+                    <XSquare className="w-3 h-3" />
+                  </button>
+                  <button className="bot-ctrl" title="&#8862; Toggle Stopbuy — Prevent new buy orders" onClick={(e) => { e.stopPropagation(); onStopBuy(bot.id); }}>
+                    <PlusSquare className="w-3 h-3" />
+                  </button>
+                  <span className="w-px h-3 bg-white/15 mx-0.5 self-center" />
+                  <button className="bot-ctrl" style={{ color: "#facc15" }} title="Soft Kill — exits all trades, keeps bot" onClick={(e) => { e.stopPropagation(); onSoftKill(bot.id); }}>
+                    <ShieldAlert className="w-3 h-3" />
+                  </button>
+                  <button className="bot-ctrl ctrl-stop" title="Hard Kill — force stop bot + container" onClick={(e) => { e.stopPropagation(); onHardKill(bot.id); }}>
+                    <Zap className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
+    </div>
     </div>
   );
 }

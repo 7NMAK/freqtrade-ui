@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { getExperimentRuns, botBacktestHistoryResult } from "@/lib/api";
+
 
 interface AnalysisOverlayProps {
   onClose: () => void;
@@ -41,41 +43,109 @@ interface ExitRow {
   losses: number;
 }
 
-const MOCK_TRADES: TradeRow[] = [
-  { id: 1, pair: "BTC/USDT", side: "LONG", profitPct: 4.82, profitAbs: 48.20, open: "2026-03-15 08:00", close: "2026-03-16 14:30", duration: "30h 30m", exit: "roi" },
-  { id: 2, pair: "ETH/USDT", side: "SHORT", profitPct: -1.24, profitAbs: -12.40, open: "2026-03-16 02:15", close: "2026-03-16 09:45", duration: "7h 30m", exit: "stop_loss" },
-  { id: 3, pair: "BTC/USDT", side: "LONG", profitPct: 2.31, profitAbs: 23.10, open: "2026-03-17 11:00", close: "2026-03-18 03:20", duration: "16h 20m", exit: "trailing_stop_loss" },
-  { id: 4, pair: "SOL/USDT", side: "SHORT", profitPct: 6.15, profitAbs: 61.50, open: "2026-03-18 19:45", close: "2026-03-20 08:10", duration: "36h 25m", exit: "roi" },
-  { id: 5, pair: "ETH/USDT", side: "LONG", profitPct: -0.58, profitAbs: -5.80, open: "2026-03-20 14:30", close: "2026-03-20 22:00", duration: "7h 30m", exit: "stop_loss" },
-  { id: 6, pair: "BNB/USDT", side: "LONG", profitPct: 1.92, profitAbs: 19.20, open: "2026-03-21 06:00", close: "2026-03-21 18:45", duration: "12h 45m", exit: "exit_signal" },
-  { id: 7, pair: "SOL/USDT", side: "SHORT", profitPct: -2.74, profitAbs: -27.40, open: "2026-03-22 10:15", close: "2026-03-22 16:30", duration: "6h 15m", exit: "stop_loss" },
-  { id: 8, pair: "BTC/USDT", side: "LONG", profitPct: 8.41, profitAbs: 84.10, open: "2026-03-23 00:00", close: "2026-03-25 12:00", duration: "60h 0m", exit: "roi" },
-];
+interface RunOption { value: string; label: string; filename?: string; strategyName?: string; }
 
-const MOCK_PAIRS: PairRow[] = [
-  { pair: "BTC/USDT", trades: 3, profitPct: 15.54, profitAbs: 155.40, winRate: 100, avgDuration: "35h 37m" },
-  { pair: "ETH/USDT", trades: 2, profitPct: -1.82, profitAbs: -18.20, winRate: 0, avgDuration: "7h 30m" },
-  { pair: "SOL/USDT", trades: 2, profitPct: 3.41, profitAbs: 34.10, winRate: 50, avgDuration: "21h 20m" },
-  { pair: "BNB/USDT", trades: 1, profitPct: 1.92, profitAbs: 19.20, winRate: 100, avgDuration: "12h 45m" },
-];
+function fmtDuration(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours < 24) return `${hours}h ${mins}m`;
+  const days = Math.floor(hours / 24);
+  const rem = hours % 24;
+  return `${days}d ${rem}h`;
+}
 
-const MOCK_EXITS: ExitRow[] = [
-  { reason: "roi", trades: 3, profitPct: 19.38, profitAbs: 193.80, wins: 3, losses: 0 },
-  { reason: "stop_loss", trades: 3, profitPct: -4.56, profitAbs: -45.60, wins: 0, losses: 3 },
-  { reason: "trailing_stop_loss", trades: 1, profitPct: 2.31, profitAbs: 23.10, wins: 1, losses: 0 },
-  { reason: "exit_signal", trades: 1, profitPct: 1.92, profitAbs: 19.20, wins: 1, losses: 0 },
-];
-
-const RUN_OPTIONS = [
-  { value: "bt1", label: "BT #1 \u2014 AlphaTrend_V5 \u2014 142 trades" },
-  { value: "ho147", label: "HO #147 \u2014 200 epochs" },
-  { value: "fai1", label: "FAI \u2014 LightGBM-R \u2014 156 trades" },
-];
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function AnalysisOverlay({ onClose, strategy, experimentId, botId }: AnalysisOverlayProps) {
-  const [selectedRun, setSelectedRun] = useState("bt1");
+export default function AnalysisOverlay({ onClose, strategy, experimentId, botId = 2 }: AnalysisOverlayProps) {
+  const [selectedRun, setSelectedRun] = useState("");
   const [activeView, setActiveView] = useState<ViewTab>("trades");
+  const [runOptions, setRunOptions] = useState<RunOption[]>([]);
+  const [trades, setTrades] = useState<TradeRow[]>([]);
+  const [pairs, setPairs] = useState<PairRow[]>([]);
+  const [exits, setExits] = useState<ExitRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // ── Load run options from experiment ──────────────────────────────
+  useEffect(() => {
+    if (!experimentId) { setLoading(false); return; }
+    (async () => {
+      try {
+        const runs = await getExperimentRuns(experimentId);
+        const options: RunOption[] = (runs || [])
+          .filter((r) => r.status === "completed")
+          .map((r) => ({
+            value: String(r.id),
+            label: `${r.run_type?.toUpperCase()} #${r.id} — ${r.total_trades ?? 0} trades`,
+          }));
+        setRunOptions(options);
+        if (options.length > 0) setSelectedRun(options[0].value);
+      } catch { /* */ }
+      setLoading(false);
+    })();
+  }, [experimentId]);
+
+  // ── Load trade data for selected run ──────────────────────────────
+  const loadRunData = useCallback(async (runId: string) => {
+    if (!runId) return;
+    try {
+      // Try to load from backtest history
+      // The run maps to a backtest file - we'll load via botBacktestHistoryResult
+      const data = await botBacktestHistoryResult(botId, `backtest-result-${runId}.json`, strategy);
+      const r = data as Record<string, unknown>;
+      const stratMap = r.strategy as Record<string, Record<string, unknown>> | undefined;
+      if (!stratMap) return;
+      const firstKey = Object.keys(stratMap)[0];
+      if (!firstKey) return;
+      const raw = stratMap[firstKey];
+
+      // Parse trades
+      const rawTrades = (raw.trades as Array<Record<string, unknown>>) || [];
+      const tradeRows: TradeRow[] = rawTrades.map((t, i) => ({
+        id: Number(t.trade_id ?? i + 1),
+        pair: String(t.pair ?? ""),
+        side: t.is_short ? "SHORT" : "LONG",
+        profitPct: Number(t.profit_ratio ?? t.close_profit ?? 0) * 100,
+        profitAbs: Number(t.profit_abs ?? t.close_profit_abs ?? 0),
+        open: String(t.open_date ?? "").slice(0, 16),
+        close: String(t.close_date ?? "").slice(0, 16),
+        duration: fmtDuration(Number(t.trade_duration ?? 0)),
+        exit: String(t.exit_reason ?? ""),
+      }));
+      setTrades(tradeRows);
+
+      // Parse per-pair
+      const pairData = (raw.results_per_pair as Array<Record<string, unknown>>) || [];
+      const pairRows: PairRow[] = pairData.map((p) => ({
+        pair: String(p.key ?? ""),
+        trades: Number(p.trades ?? 0),
+        profitPct: Number(p.profit_total ?? 0) * 100,
+        profitAbs: Number(p.profit_total_abs ?? 0),
+        winRate: Number(p.wins ?? 0) / Math.max(Number(p.trades ?? 1), 1) * 100,
+        avgDuration: "—",
+      }));
+      setPairs(pairRows);
+
+      // Parse exits
+      const exitData = (raw.exit_reason_summary as Array<Record<string, unknown>>) || [];
+      const exitRows: ExitRow[] = exitData.map((e) => ({
+        reason: String(e.exit_reason ?? ""),
+        trades: Number(e.trades ?? 0),
+        profitPct: Number(e.profit_total ?? 0) * 100,
+        profitAbs: Number(e.profit_total_abs ?? 0),
+        wins: Number(e.wins ?? 0),
+        losses: Number(e.losses ?? 0),
+      }));
+      setExits(exitRows);
+    } catch {
+      // If backtest history load fails, data stays empty 
+    }
+  }, [botId, strategy]);
+
+  useEffect(() => {
+    if (selectedRun) loadRunData(selectedRun);
+  }, [selectedRun, loadRunData]);
+
+  // Suppress
+  void onClose;
 
   const viewTabs: Array<{ key: ViewTab; label: string }> = [
     { key: "trades", label: "Trades" },
@@ -87,32 +157,29 @@ export default function AnalysisOverlay({ onClose, strategy, experimentId, botId
     <div className="flex-1 flex flex-col">
       {/* Selector row */}
       <div className="flex gap-3 mb-4">
-        {/* Run select */}
         <div>
-          <label className="text-white/45 mb-1 text-[10px] uppercase tracking-wider font-bold block">
-            Select Run
-          </label>
+          <label className="text-white/45 mb-1 text-[10px] uppercase tracking-wider font-bold block">Select Run</label>
           <select
             value={selectedRun}
             onChange={(e) => setSelectedRun(e.target.value)}
             className="bg-[#1a1a1a] l-bd px-3 py-2 text-white/80 appearance-none rounded text-[12px] font-mono"
           >
-            {RUN_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
+            {loading ? (
+              <option>Loading...</option>
+            ) : runOptions.length === 0 ? (
+              <option>No runs available</option>
+            ) : (
+              runOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)
+            )}
           </select>
         </div>
-
-        {/* View tabs */}
         <div className="flex items-end gap-1 pb-0.5">
           {viewTabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveView(tab.key)}
               className={`px-3 py-2 l-bd text-[10px] font-bold rounded uppercase tracking-wider transition-colors ${
-                activeView === tab.key
-                  ? "bg-white/10 text-white"
-                  : "bg-white/[0.03] text-white/40 hover:text-white"
+                activeView === tab.key ? "bg-white/10 text-white" : "bg-white/[0.03] text-white/40 hover:text-white"
               }`}
             >
               {tab.label}
@@ -121,9 +188,14 @@ export default function AnalysisOverlay({ onClose, strategy, experimentId, botId
         </div>
       </div>
 
-      {/* ── Trades view ─────────────────────────────────────────── */}
+      {/* Trades view */}
       {activeView === "trades" && (
         <div className="bg-surface l-bd rounded-md overflow-hidden">
+          {trades.length === 0 ? (
+            <div className="flex items-center justify-center py-8 text-[11px] text-white/20">
+              {loading ? "Loading..." : "No trade data available — select a run"}
+            </div>
+          ) : (
           <table className="w-full text-left border-collapse whitespace-nowrap text-[13px] font-mono">
             <thead>
               <tr className="bg-surface l-b text-[11px] uppercase tracking-widest text-muted">
@@ -139,7 +211,7 @@ export default function AnalysisOverlay({ onClose, strategy, experimentId, botId
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.05] text-white/70">
-              {MOCK_TRADES.map((t) => (
+              {trades.map((t) => (
                 <tr key={t.id} className="hover:bg-white/[0.03] transition-colors">
                   <td className="px-3 py-2 text-muted">{t.id}</td>
                   <td className="px-3 py-2 text-white/80">{t.pair}</td>
@@ -164,12 +236,16 @@ export default function AnalysisOverlay({ onClose, strategy, experimentId, botId
               ))}
             </tbody>
           </table>
+          )}
         </div>
       )}
 
-      {/* ── Per Pair view ───────────────────────────────────────── */}
+      {/* Per Pair view */}
       {activeView === "per_pair" && (
         <div className="bg-surface l-bd rounded-md overflow-hidden">
+          {pairs.length === 0 ? (
+            <div className="flex items-center justify-center py-8 text-[11px] text-white/20">No pair data available</div>
+          ) : (
           <table className="w-full text-left border-collapse whitespace-nowrap text-[13px] font-mono">
             <thead>
               <tr className="bg-surface l-b text-[11px] uppercase tracking-widest text-muted">
@@ -182,7 +258,7 @@ export default function AnalysisOverlay({ onClose, strategy, experimentId, botId
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.05] text-white/70">
-              {MOCK_PAIRS.map((p) => (
+              {pairs.map((p) => (
                 <tr key={p.pair} className="hover:bg-white/[0.03] transition-colors">
                   <td className="px-3 py-2 text-white/80">{p.pair}</td>
                   <td className="px-3 py-2 text-right">{p.trades}</td>
@@ -198,12 +274,16 @@ export default function AnalysisOverlay({ onClose, strategy, experimentId, botId
               ))}
             </tbody>
           </table>
+          )}
         </div>
       )}
 
-      {/* ── Exit Reasons view ───────────────────────────────────── */}
+      {/* Exit Reasons view */}
       {activeView === "exit_reasons" && (
         <div className="bg-surface l-bd rounded-md overflow-hidden">
+          {exits.length === 0 ? (
+            <div className="flex items-center justify-center py-8 text-[11px] text-white/20">No exit data available</div>
+          ) : (
           <table className="w-full text-left border-collapse whitespace-nowrap text-[13px] font-mono">
             <thead>
               <tr className="bg-surface l-b text-[11px] uppercase tracking-widest text-muted">
@@ -216,7 +296,7 @@ export default function AnalysisOverlay({ onClose, strategy, experimentId, botId
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.05] text-white/70">
-              {MOCK_EXITS.map((e) => (
+              {exits.map((e) => (
                 <tr key={e.reason} className="hover:bg-white/[0.03] transition-colors">
                   <td className="px-3 py-2 text-white/80">{e.reason}</td>
                   <td className="px-3 py-2 text-right">{e.trades}</td>
@@ -232,6 +312,7 @@ export default function AnalysisOverlay({ onClose, strategy, experimentId, botId
               ))}
             </tbody>
           </table>
+          )}
         </div>
       )}
     </div>

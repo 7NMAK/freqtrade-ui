@@ -1,6 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  botBacktestStart,
+  botBacktestResults,
+  botLogs,
+  createExperimentRun,
+} from "@/lib/api";
+import { useToast } from "@/components/ui/Toast";
 
 // ── Local Toggle ────────────────────────────────────────────────────
 function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
@@ -21,31 +28,7 @@ interface MatrixRow {
   winPct: number;
 }
 
-// ── Mock Data ────────────────────────────────────────────────────────
-const MOCK_MATRIX: MatrixRow[] = [
-  { rank: 1, model: "LightGBM-R", outlier: "DI",  pca: false, noise: true,  profitPct: 52.4,  sharpe: 4.12, maxDD: -1.8,  trades: 156, winPct: 74.2 },
-  { rank: 2, model: "XGBoost-R",  outlier: "DI",  pca: false, noise: true,  profitPct: 48.1,  sharpe: 3.84, maxDD: -2.1,  trades: 149, winPct: 71.8 },
-  { rank: 3, model: "LightGBM-R", outlier: "DI",  pca: true,  noise: true,  profitPct: 44.6,  sharpe: 3.52, maxDD: -2.4,  trades: 138, winPct: 69.5 },
-  { rank: 4, model: "XGBoost-R",  outlier: "DI",  pca: true,  noise: true,  profitPct: 41.2,  sharpe: 3.21, maxDD: -2.7,  trades: 132, winPct: 67.1 },
-  { rank: 5, model: "LightGBM-R", outlier: "DI",  pca: false, noise: false, profitPct: 38.9,  sharpe: 2.98, maxDD: -3.1,  trades: 145, winPct: 65.3 },
-  { rank: 6, model: "XGBoost-R",  outlier: "DI",  pca: false, noise: false, profitPct: 35.2,  sharpe: 2.64, maxDD: -3.5,  trades: 141, winPct: 63.8 },
-  { rank: 7, model: "LightGBM-R", outlier: "DI",  pca: true,  noise: false, profitPct: 28.7,  sharpe: 2.11, maxDD: -4.2,  trades: 127, winPct: 60.2 },
-  { rank: 8, model: "XGBoost-R",  outlier: "DI",  pca: true,  noise: false, profitPct: 22.4,  sharpe: 1.78, maxDD: -5.1,  trades: 119, winPct: 57.6 },
-];
-
-const MOCK_LOGS = [
-  { ts: "14:32:01", level: "INFO", msg: "FreqAI matrix started — 8 runs queued" },
-  { ts: "14:32:02", level: "INFO", msg: "[1/8] LightGBM-R · DI · No PCA · Noise — training..." },
-  { ts: "14:47:18", level: "INFO", msg: "[1/8] Training complete — 156 trades, +52.4%, sharpe=4.12" },
-  { ts: "14:47:19", level: "INFO", msg: "[2/8] XGBoost-R · DI · No PCA · Noise — training..." },
-  { ts: "15:01:42", level: "INFO", msg: "[2/8] Training complete — 149 trades, +48.1%, sharpe=3.84" },
-  { ts: "15:01:43", level: "INFO", msg: "[3/8] LightGBM-R · DI · PCA · Noise — training..." },
-  { ts: "15:14:55", level: "INFO", msg: "[3/8] Training complete — 138 trades, +44.6%, sharpe=3.52" },
-  { ts: "15:14:56", level: "INFO", msg: "[4/8] XGBoost-R · DI · PCA · Noise — training..." },
-  { ts: "16:44:12", level: "INFO", msg: "[8/8] Training complete — 119 trades, +22.4%, sharpe=1.78" },
-  { ts: "16:44:13", level: "INFO", msg: "Matrix complete: 8 runs in ~2h 12m" },
-  { ts: "16:44:14", level: "INFO", msg: "Best: LightGBM-R · DI · No PCA · Noise — +52.4%, sharpe=4.12" },
-];
+interface LogEntry { ts: string; level: string; msg: string; }
 
 // ═════════════════════════════════════════════════════════════════════
 // COMPONENT
@@ -57,8 +40,9 @@ interface FreqAITabProps {
   onNavigateToTab?: (tab: number) => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function FreqAITab(_props: FreqAITabProps) {
+export default function FreqAITab({ strategy: propStrategy, botId = 2, experimentId, onNavigateToTab }: FreqAITabProps) {
+  const toast = useToast();
+
   // ── Form State ──────────────────────────────────────────────────
   const [sourceHO, setSourceHO] = useState("ho147");
   const [trainStart, setTrainStart] = useState("2022-01-01");
@@ -84,13 +68,219 @@ export default function FreqAITab(_props: FreqAITabProps) {
   // Derived
   const modelCount = [lgbmRegressor, xgbRegressor, catRegressor, lgbmClassifier].filter(Boolean).length;
   const outlierCount = outlierMethod !== "None" ? 1 : 1;
-  const pcaMultiplier = usePCA ? 2 : 2; // always test on/off
-  const noiseMultiplier = addNoise ? 2 : 2; // always test on/off
+  const pcaMultiplier = 2; // always test on/off
+  const noiseMultiplier = 2; // always test on/off
   const totalTests = modelCount * outlierCount * pcaMultiplier * noiseMultiplier;
 
-  // Suppress lint
-  void sourceHO; void trainStart; void trainEnd; void btStart; void btEnd;
-  void featurePeriod; void labelPeriod; void outlierMethod; void diThreshold;
+  // ── API / Job state ──────────────────────────────────────────────
+  const [isRunning, setIsRunning] = useState(false);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [matrixResults, setMatrixResults] = useState<MatrixRow[]>([]);
+  const [bestResult, setBestResult] = useState<MatrixRow | null>(null);
+  const [completedRuns, setCompletedRuns] = useState(0);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const logEndRef = useRef<HTMLDivElement>(null);
+
+  // ── Helpers ──────────────────────────────────────────────────────
+  const addLog = useCallback((level: string, msg: string) => {
+    setLogs((prev) => {
+      const next = [...prev, { ts: new Date().toLocaleTimeString(), level, msg }];
+      return next.length > 200 ? next.slice(-200) : next;
+    });
+  }, []);
+
+  useEffect(() => { logEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [logs]);
+
+  const stopPolling = useCallback(() => {
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+  }, []);
+
+  // ── Extract FreqAI matrix from backtest result ────────────────────
+  const extractMatrixFromResult = useCallback((data: Record<string, unknown>) => {
+    const strategyMap = data.strategy as Record<string, Record<string, unknown>> | undefined;
+    if (!strategyMap) return;
+    const results: MatrixRow[] = [];
+    let rank = 1;
+    for (const [, raw] of Object.entries(strategyMap)) {
+      const profitPct = Number(raw.profit_total ?? 0) * 100;
+      const sharpe = Number(raw.sharpe ?? raw.sharpe_ratio ?? 0);
+      const maxDD = -Number(raw.max_drawdown_account ?? 0) * 100;
+      const trades = Number(raw.total_trades ?? 0);
+      const wins = Number(raw.wins ?? 0);
+      const winPct = trades > 0 ? (wins / trades) * 100 : 0;
+      // Try to infer model/outlier/pca/noise from strategy name or metadata
+      const name = String(raw.strategy_name ?? "");
+      results.push({
+        rank: rank++,
+        model: name || `Run ${rank - 1}`,
+        outlier: outlierMethod,
+        pca: usePCA,
+        noise: addNoise,
+        profitPct,
+        sharpe,
+        maxDD,
+        trades,
+        winPct,
+      });
+    }
+    // Sort by profit descending, re-rank
+    results.sort((a, b) => b.profitPct - a.profitPct);
+    results.forEach((r, i) => { r.rank = i + 1; });
+    setMatrixResults(results);
+    if (results.length > 0) setBestResult(results[0]);
+  }, [outlierMethod, usePCA, addNoise]);
+
+  // ── Poll backtest results for FreqAI ──────────────────────────────
+  const startPolling = useCallback(() => {
+    stopPolling();
+    pollRef.current = setInterval(async () => {
+      try {
+        // Poll logs
+        try {
+          const logRes = await botLogs(botId, 20);
+          const logArr = (logRes as unknown as { logs?: string[] }).logs || [];
+          if (logArr.length > 0) {
+            const lastLine = logArr[logArr.length - 1];
+            if (lastLine) addLog("INFO", lastLine);
+          }
+        } catch { /* logs not critical */ }
+
+        // Poll backtest status
+        const btStatus = await botBacktestResults(botId);
+        const r = btStatus as unknown as Record<string, unknown>;
+
+        if (r.running === true) {
+          const pct = Number(r.progress ?? 0);
+          if (pct > 0) setCompletedRuns(Math.floor(pct * totalTests));
+        } else if (r.running === false && r.strategy) {
+          // Completed
+          stopPolling();
+          setIsRunning(false);
+          extractMatrixFromResult(r);
+          addLog("INFO", "✓ FreqAI matrix complete");
+          toast.success("FreqAI matrix complete");
+          setCompletedRuns(totalTests);
+
+          // Record experiment run
+          if (experimentId && matrixResults.length > 0) {
+            const best = matrixResults[0];
+            try {
+              await createExperimentRun(experimentId, {
+                run_type: "freqai",
+                status: "completed",
+                total_trades: best.trades,
+                win_rate: best.winPct / 100,
+                profit_pct: best.profitPct,
+                max_drawdown: Math.abs(best.maxDD) / 100,
+                sharpe_ratio: best.sharpe,
+              });
+              addLog("INFO", "Recorded experiment run");
+            } catch { /* not critical */ }
+          }
+        }
+      } catch (err) {
+        addLog("WARNING", `Poll error: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }, 5000);
+  }, [botId, stopPolling, addLog, toast, totalTests, extractMatrixFromResult, experimentId, matrixResults]);
+
+  // ── Start Matrix ──────────────────────────────────────────────────
+  const handleStart = useCallback(async () => {
+    if (isRunning) return;
+    setIsRunning(true);
+    setLogs([]);
+    setMatrixResults([]);
+    setBestResult(null);
+    setCompletedRuns(0);
+
+    const models: string[] = [];
+    if (lgbmRegressor) models.push("LightGBMRegressor");
+    if (xgbRegressor) models.push("XGBoostRegressor");
+    if (catRegressor) models.push("CatboostRegressor");
+    if (lgbmClassifier) models.push("LightGBMClassifier");
+
+    const timerange = `${trainStart.replace(/-/g, "")}-${btEnd.replace(/-/g, "")}`;
+
+    addLog("INFO", `FreqAI matrix started — ${totalTests} runs queued`);
+    addLog("INFO", `Models: [${models.join(", ")}]`);
+    addLog("INFO", `Outlier: ${outlierMethod}, PCA: ${usePCA ? "On" : "Off"}, Noise: ${addNoise ? "Yes" : "No"}`);
+
+    try {
+      const params: Record<string, unknown> = {
+        strategy: propStrategy,
+        timerange,
+        freqai: true,
+        freqai_models: models,
+        freqai_outlier: outlierMethod,
+        freqai_pca: usePCA,
+        freqai_noise: addNoise,
+        freqai_feature_period: featurePeriod,
+        freqai_label_period: labelPeriod,
+        freqai_di_threshold: parseFloat(diThreshold),
+        freqai_corr_pairs: corrPairs,
+      };
+
+      await botBacktestStart(botId, params);
+      addLog("INFO", "Job started — polling for results...");
+      startPolling();
+    } catch (err) {
+      setIsRunning(false);
+      const msg = err instanceof Error ? err.message : String(err);
+      addLog("ERROR", `Start failed: ${msg}`);
+      toast.error(`Start failed: ${msg}`);
+    }
+  }, [isRunning, propStrategy, trainStart, btEnd, totalTests, lgbmRegressor, xgbRegressor, catRegressor, lgbmClassifier, outlierMethod, usePCA, addNoise, featurePeriod, labelPeriod, diThreshold, corrPairs, botId, addLog, toast, startPolling]);
+
+  // ── Stop ──────────────────────────────────────────────────────────
+  const handleStop = useCallback(() => {
+    stopPolling();
+    setIsRunning(false);
+    addLog("INFO", "FreqAI matrix stopped by user");
+    toast.success("FreqAI stopped");
+  }, [stopPolling, addLog, toast]);
+
+  // ── Reset ─────────────────────────────────────────────────────────
+  const handleReset = useCallback(() => {
+    setSourceHO("ho147");
+    setTrainStart("2022-01-01");
+    setTrainEnd("2023-06-30");
+    setBtStart("2023-07-01");
+    setBtEnd("2024-01-01");
+    setFeaturePeriod(20);
+    setLabelPeriod(24);
+    setLgbmRegressor(true);
+    setXgbRegressor(true);
+    setCatRegressor(false);
+    setLgbmClassifier(false);
+    setOutlierMethod("DI");
+    setDiThreshold("0.9");
+    setUsePCA(false);
+    setAddNoise(true);
+    setCorrPairs(true);
+    setMatrixResults([]);
+    setBestResult(null);
+    setLogs([]);
+    setCompletedRuns(0);
+    toast.success("Configuration reset");
+  }, [toast]);
+
+  // ── Deploy Best ───────────────────────────────────────────────────
+  const handleDeploy = useCallback(() => {
+    if (!bestResult) return;
+    toast.success(`Deploy: ${bestResult.model} — use activateStrategyVersion to write params`);
+    if (onNavigateToTab) onNavigateToTab(5); // Go to validation
+  }, [bestResult, toast, onNavigateToTab]);
+
+  // Cleanup
+  useEffect(() => { return () => { stopPolling(); }; }, [stopPolling]);
+
+  // Progress
+  const progressPct = totalTests > 0 ? Math.round((completedRuns / totalTests) * 100) : 0;
+  const progressLabel = isRunning
+    ? `${completedRuns}/${totalTests} runs`
+    : matrixResults.length > 0
+      ? `Complete — ${matrixResults.length} runs`
+      : "Idle";
 
   return (
     <div className="h-full flex flex-row gap-3">
@@ -200,7 +390,7 @@ export default function FreqAITab(_props: FreqAITabProps) {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted">Est. Time</span>
-                <span className="text-white">~2h 15m</span>
+                <span className="text-white">~{Math.ceil(totalTests * 15 / 60)}h {(totalTests * 15) % 60}m</span>
               </div>
             </div>
           </div>
@@ -208,20 +398,25 @@ export default function FreqAITab(_props: FreqAITabProps) {
           {/* 8. Run Buttons */}
           <div className="flex gap-1.5 l-t pt-3">
             <button
-              className="h-7 px-3 rounded-md text-[10px] font-bold flex items-center gap-1.5 transition-colors hover:border-up/30 hover:text-up"
+              onClick={handleStart}
+              disabled={isRunning}
+              className="h-7 px-3 rounded-md text-[10px] font-bold flex items-center gap-1.5 transition-colors hover:border-up/30 hover:text-up disabled:opacity-40"
               style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.20)', color: '#22c55e' }}
               title="Start FreqAI matrix run"
             >
               ▶ Run Matrix ({totalTests})
             </button>
             <button
-              className="h-7 px-3 rounded-md text-[10px] font-bold flex items-center gap-1.5 transition-colors"
+              onClick={handleStop}
+              disabled={!isRunning}
+              className="h-7 px-3 rounded-md text-[10px] font-bold flex items-center gap-1.5 transition-colors disabled:opacity-40"
               style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#F5F5F5' }}
               title="Stop running"
             >
               ⏹ Stop
             </button>
             <button
+              onClick={handleReset}
               className="h-7 px-3 rounded-md text-[10px] font-bold flex items-center gap-1.5 transition-colors"
               style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#F5F5F5' }}
               title="Reset configuration to defaults"
@@ -234,10 +429,10 @@ export default function FreqAITab(_props: FreqAITabProps) {
           <div className="l-t pt-3">
             <div className="flex items-center justify-between text-[11px] font-mono">
               <span className="text-muted">Progress</span>
-              <span className="text-white">4/8 runs</span>
+              <span className="text-white">{progressLabel}</span>
             </div>
             <div className="mt-1.5 w-full h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
-              <div className="h-full bg-up rounded-full transition-all" style={{ width: '50%' }} />
+              <div className="h-full bg-up rounded-full transition-all" style={{ width: `${progressPct}%` }} />
             </div>
           </div>
 
@@ -245,19 +440,24 @@ export default function FreqAITab(_props: FreqAITabProps) {
           <div className="l-t pt-3">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-[11px] text-muted uppercase tracking-widest font-bold">Terminal</span>
-              <button className="text-[9px] text-muted hover:text-white transition-colors">Clear</button>
+              <button onClick={() => setLogs([])} className="text-[9px] text-muted hover:text-white transition-colors">Clear</button>
             </div>
             <div className="bg-black/60 rounded-md l-bd p-2 max-h-[200px] overflow-y-auto font-mono text-[10px] leading-[1.7] space-y-px">
-              {MOCK_LOGS.map((log, i) => (
+              {logs.length === 0 && (
+                <div className="text-muted">Waiting for FreqAI matrix to start...</div>
+              )}
+              {logs.map((log, i) => (
                 <div key={i} className="flex gap-2">
                   <span className="text-muted shrink-0">{log.ts}</span>
                   <span className={
                     log.msg.includes("Best:") ? "text-up font-bold" :
-                    log.msg.includes("complete") || log.msg.includes("+") ? "text-up" :
+                    log.msg.includes("✓") || log.msg.includes("complete") ? "text-up" :
+                    log.level === "ERROR" ? "text-down" :
                     "text-muted"
                   }>{log.msg}</span>
                 </div>
               ))}
+              <div ref={logEndRef} />
             </div>
           </div>
         </div>
@@ -269,31 +469,43 @@ export default function FreqAITab(_props: FreqAITabProps) {
         <div className="bg-up/[0.04] border border-up/15 rounded-md p-3 shadow-xl">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <span className="text-white font-bold text-[13px]">★ LightGBM-R · DI · No PCA · Noise</span>
-              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded border border-up/25">★ BEST</span>
+              <span className="text-white font-bold text-[13px]">
+                {bestResult ? `★ ${bestResult.model} · ${bestResult.outlier} · ${bestResult.pca ? "PCA" : "No PCA"} · ${bestResult.noise ? "Noise" : "No Noise"}` : "★ No results yet"}
+              </span>
+              {bestResult && (
+                <span className="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded border border-up/25">★ BEST</span>
+              )}
             </div>
-            <button
-              className="h-7 px-3 rounded-md text-[10px] font-bold flex items-center gap-1.5 transition-colors hover:border-up/30 hover:text-up"
-              style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.20)', color: '#22c55e' }}
-              title="Deploy to live"
-            >
-              Deploy
-            </button>
+            {bestResult && (
+              <button
+                onClick={handleDeploy}
+                className="h-7 px-3 rounded-md text-[10px] font-bold flex items-center gap-1.5 transition-colors hover:border-up/30 hover:text-up"
+                style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.20)', color: '#22c55e' }}
+                title="Deploy to live"
+              >
+                Deploy
+              </button>
+            )}
           </div>
           <div className="grid grid-cols-7 gap-2">
-            <div><div className="kpi-label">Profit</div><div className="kpi-value text-up font-bold">+52.4%</div></div>
-            <div><div className="kpi-label">Profit $</div><div className="kpi-value text-up font-bold">+$5,240</div></div>
-            <div><div className="kpi-label">Trades</div><div className="kpi-value text-white">156</div></div>
-            <div><div className="kpi-label">Win Rate</div><div className="kpi-value text-up">74.2%</div></div>
-            <div><div className="kpi-label">Sharpe</div><div className="kpi-value text-white">4.12</div></div>
-            <div><div className="kpi-label">Max DD</div><div className="kpi-value text-down font-bold">-1.8%</div></div>
-            <div><div className="kpi-label">Avg Dur.</div><div className="kpi-value text-muted">3h 45m</div></div>
+            <div><div className="kpi-label">Profit</div><div className="kpi-value text-up font-bold">{bestResult ? `+${bestResult.profitPct.toFixed(1)}%` : "—"}</div></div>
+            <div><div className="kpi-label">Profit $</div><div className="kpi-value text-up font-bold">{bestResult ? `+$${(bestResult.profitPct * 100).toLocaleString()}` : "—"}</div></div>
+            <div><div className="kpi-label">Trades</div><div className="kpi-value text-white">{bestResult?.trades ?? "—"}</div></div>
+            <div><div className="kpi-label">Win Rate</div><div className="kpi-value text-up">{bestResult ? `${bestResult.winPct.toFixed(1)}%` : "—"}</div></div>
+            <div><div className="kpi-label">Sharpe</div><div className="kpi-value text-white">{bestResult ? bestResult.sharpe.toFixed(2) : "—"}</div></div>
+            <div><div className="kpi-label">Max DD</div><div className="kpi-value text-down font-bold">{bestResult ? `${bestResult.maxDD.toFixed(1)}%` : "—"}</div></div>
+            <div><div className="kpi-label">Avg Dur.</div><div className="kpi-value text-muted">—</div></div>
           </div>
         </div>
 
         {/* 2. Matrix Results */}
         <h3 className="section-title">Matrix Results</h3>
         <div className="overflow-x-auto">
+          {matrixResults.length === 0 ? (
+            <div className="flex items-center justify-center py-12 text-[11px] text-white/20">
+              {isRunning ? "Running FreqAI matrix..." : "Run FreqAI matrix to see results"}
+            </div>
+          ) : (
           <table className="w-full text-[13px] font-mono whitespace-nowrap">
             <thead>
               <tr className="text-muted text-[11px] uppercase tracking-widest">
@@ -310,7 +522,7 @@ export default function FreqAITab(_props: FreqAITabProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.05]">
-              {MOCK_MATRIX.map((row) => (
+              {matrixResults.map((row) => (
                 <tr key={row.rank} className={`hover:bg-white/[0.04] ${row.rank === 1 ? 'bg-up/[0.02]' : ''}`}>
                   <td className={`px-2 py-1.5 ${row.rank === 1 ? 'text-up font-bold' : 'text-muted'}`}>
                     {row.rank === 1 ? '★1' : row.rank}
@@ -328,6 +540,7 @@ export default function FreqAITab(_props: FreqAITabProps) {
               ))}
             </tbody>
           </table>
+          )}
         </div>
       </div>
     </div>

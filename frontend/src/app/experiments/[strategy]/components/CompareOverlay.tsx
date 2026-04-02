@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getExperimentRuns, type ExperimentRun } from "@/lib/api";
 
 interface CompareOverlayProps {
   onClose: () => void;
@@ -16,105 +17,142 @@ interface MetricRow {
   winner: "A" | "B" | "tie";
 }
 
-const OPTIONS = [
-  { value: "bt1", label: "BT #1 \u2014 AlphaTrend_V5 \u2014 +42.12%" },
-  { value: "ho147", label: "HO #147 \u2014 Sharpe \u2014 +42.12%" },
-  { value: "fai1", label: "FAI \u2014 LightGBM-R \u2014 +52.4%" },
-];
-
-const COMPARE_DATA: Record<string, MetricRow[]> = {
-  "bt1|ho147": [
-    { metric: "Profit %", a: "+42.12%", b: "+42.12%", winner: "tie" },
-    { metric: "Sharpe", a: "3.92", b: "3.58", winner: "A" },
-    { metric: "Max DD", a: "-2.1%", b: "-3.4%", winner: "A" },
-    { metric: "Win Rate", a: "72.4%", b: "68.1%", winner: "A" },
-    { metric: "Trades", a: "142", b: "156", winner: "B" },
-  ],
-  "bt1|fai1": [
-    { metric: "Profit %", a: "+42.12%", b: "+52.4%", winner: "B" },
-    { metric: "Sharpe", a: "3.92", b: "4.12", winner: "B" },
-    { metric: "Max DD", a: "-2.1%", b: "-1.8%", winner: "B" },
-    { metric: "Win Rate", a: "72.4%", b: "74.2%", winner: "B" },
-    { metric: "Trades", a: "142", b: "156", winner: "B" },
-  ],
-  "ho147|fai1": [
-    { metric: "Profit %", a: "+42.12%", b: "+52.4%", winner: "B" },
-    { metric: "Sharpe", a: "3.58", b: "4.12", winner: "B" },
-    { metric: "Max DD", a: "-3.4%", b: "-1.8%", winner: "B" },
-    { metric: "Win Rate", a: "68.1%", b: "74.2%", winner: "B" },
-    { metric: "Trades", a: "156", b: "156", winner: "tie" },
-  ],
-};
-
-function getRows(a: string, b: string): MetricRow[] {
-  return (
-    COMPARE_DATA[`${a}|${b}`] ??
-    COMPARE_DATA[`${b}|${a}`]?.map((r) => ({
-      ...r,
-      a: r.b,
-      b: r.a,
-      winner: r.winner === "A" ? ("B" as const) : r.winner === "B" ? ("A" as const) : ("tie" as const),
-    })) ?? [
-      { metric: "Profit %", a: "+42.12%", b: "+52.4%", winner: "B" },
-      { metric: "Sharpe", a: "3.92", b: "4.12", winner: "B" },
-      { metric: "Max DD", a: "-2.1%", b: "-1.8%", winner: "B" },
-      { metric: "Win Rate", a: "72.4%", b: "74.2%", winner: "B" },
-      { metric: "Trades", a: "142", b: "156", winner: "B" },
-    ]
-  );
+interface RunOption {
+  value: string;
+  label: string;
+  run: ExperimentRun;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function CompareOverlay({ onClose, strategy, experimentId, onNavigateToTab }: CompareOverlayProps) {
-  const [testA, setTestA] = useState("bt1");
-  const [testB, setTestB] = useState("fai1");
+function buildComparison(a: ExperimentRun, b: ExperimentRun): MetricRow[] {
+  const profitA = a.profit_pct ?? 0;
+  const profitB = b.profit_pct ?? 0;
+  const wrA = (a.win_rate ?? 0) * 100;
+  const wrB = (b.win_rate ?? 0) * 100;
+  const ddA = -(a.max_drawdown ?? 0) * 100;
+  const ddB = -(b.max_drawdown ?? 0) * 100;
+  const sharpeA = a.sharpe_ratio ?? 0;
+  const sharpeB = b.sharpe_ratio ?? 0;
+  const tradesA = a.total_trades ?? 0;
+  const tradesB = b.total_trades ?? 0;
 
-  const rows = getRows(testA, testB);
+  return [
+    {
+      metric: "Profit %",
+      a: `${profitA >= 0 ? "+" : ""}${profitA.toFixed(2)}%`,
+      b: `${profitB >= 0 ? "+" : ""}${profitB.toFixed(2)}%`,
+      winner: profitA > profitB ? "A" : profitB > profitA ? "B" : "tie",
+    },
+    {
+      metric: "Win Rate",
+      a: `${wrA.toFixed(1)}%`,
+      b: `${wrB.toFixed(1)}%`,
+      winner: wrA > wrB ? "A" : wrB > wrA ? "B" : "tie",
+    },
+    {
+      metric: "Sharpe",
+      a: sharpeA.toFixed(2),
+      b: sharpeB.toFixed(2),
+      winner: sharpeA > sharpeB ? "A" : sharpeB > sharpeA ? "B" : "tie",
+    },
+    {
+      metric: "Max DD",
+      a: `${ddA.toFixed(1)}%`,
+      b: `${ddB.toFixed(1)}%`,
+      winner: Math.abs(ddA) < Math.abs(ddB) ? "A" : Math.abs(ddB) < Math.abs(ddA) ? "B" : "tie",
+    },
+    {
+      metric: "Trades",
+      a: String(tradesA),
+      b: String(tradesB),
+      winner: tradesA > tradesB ? "A" : tradesB > tradesA ? "B" : "tie",
+    },
+  ];
+}
+
+export default function CompareOverlay({ onClose, strategy, experimentId, onNavigateToTab }: CompareOverlayProps) {
+  const [runOptions, setRunOptions] = useState<RunOption[]>([]);
+  const [testA, setTestA] = useState("");
+  const [testB, setTestB] = useState("");
+  const [rows, setRows] = useState<MetricRow[]>([]);
+
+  // ── Load runs from experiment ─────────────────────────────────────
+  useEffect(() => {
+    if (!experimentId) return;
+    (async () => {
+      try {
+        const runs = await getExperimentRuns(experimentId);
+        const completed = (runs || []).filter((r) => r.status === "completed");
+        const options: RunOption[] = completed.map((r) => ({
+          value: String(r.id),
+          label: `${r.run_type?.toUpperCase()} #${r.id} — ${r.profit_pct != null ? `${r.profit_pct >= 0 ? "+" : ""}${r.profit_pct.toFixed(1)}%` : "—"}`,
+          run: r,
+        }));
+        setRunOptions(options);
+        if (options.length >= 2) {
+          setTestA(options[0].value);
+          setTestB(options[1].value);
+        } else if (options.length === 1) {
+          setTestA(options[0].value);
+          setTestB(options[0].value);
+        }
+      } catch { /* */ }
+    })();
+  }, [experimentId]);
+
+  // ── Build comparison when selections change ───────────────────────
+  useEffect(() => {
+    const optA = runOptions.find((o) => o.value === testA);
+    const optB = runOptions.find((o) => o.value === testB);
+    if (optA && optB) {
+      setRows(buildComparison(optA.run, optB.run));
+    }
+  }, [testA, testB, runOptions]);
+
+  // Suppress
+  void onClose; void strategy; void onNavigateToTab;
 
   return (
     <div className="flex-1 flex flex-col">
       {/* Selector row */}
       <div className="flex gap-4 mb-4">
-        {/* Test A */}
         <div className="flex-1">
-          <label className="text-white/45 mb-1 text-[10px] uppercase tracking-wider font-bold block">
-            Test A
-          </label>
+          <label className="text-white/45 mb-1 text-[10px] uppercase tracking-wider font-bold block">Test A</label>
           <select
             value={testA}
             onChange={(e) => setTestA(e.target.value)}
             className="w-full bg-[#1a1a1a] l-bd px-3 py-2 text-white/80 appearance-none rounded text-[12px] font-mono"
           >
-            {OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
+            {runOptions.length === 0 ? (
+              <option>No runs available</option>
+            ) : (
+              runOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)
+            )}
           </select>
         </div>
-
-        {/* VS divider */}
-        <div className="flex items-end pb-2 text-white/20 text-[11px] font-bold">
-          VS
-        </div>
-
-        {/* Test B */}
+        <div className="flex items-end pb-2 text-white/20 text-[11px] font-bold">VS</div>
         <div className="flex-1">
-          <label className="text-white/45 mb-1 text-[10px] uppercase tracking-wider font-bold block">
-            Test B
-          </label>
+          <label className="text-white/45 mb-1 text-[10px] uppercase tracking-wider font-bold block">Test B</label>
           <select
             value={testB}
             onChange={(e) => setTestB(e.target.value)}
             className="w-full bg-[#1a1a1a] l-bd px-3 py-2 text-white/80 appearance-none rounded text-[12px] font-mono"
           >
-            {OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
+            {runOptions.length === 0 ? (
+              <option>No runs available</option>
+            ) : (
+              runOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)
+            )}
           </select>
         </div>
       </div>
 
       {/* Table */}
       <div className="bg-surface l-bd rounded-md overflow-hidden">
+        {rows.length === 0 ? (
+          <div className="flex items-center justify-center py-12 text-[11px] text-white/20">
+            Select two runs to compare
+          </div>
+        ) : (
         <table className="w-full text-[13px] font-mono">
           <thead>
             <tr className="bg-surface l-b text-[11px] uppercase tracking-widest text-muted">
@@ -128,21 +166,18 @@ export default function CompareOverlay({ onClose, strategy, experimentId, onNavi
             {rows.map((row) => (
               <tr key={row.metric} className="hover:bg-white/[0.03] transition-colors">
                 <td className="px-4 py-2 text-white/70">{row.metric}</td>
-                <td className={`px-4 py-2 text-right ${row.winner === "A" ? "text-up font-bold" : ""}`}>
-                  {row.a}
-                </td>
-                <td className={`px-4 py-2 text-right ${row.winner === "B" ? "text-up font-bold" : ""}`}>
-                  {row.b}
-                </td>
+                <td className={`px-4 py-2 text-right ${row.winner === "A" ? "text-up font-bold" : ""}`}>{row.a}</td>
+                <td className={`px-4 py-2 text-right ${row.winner === "B" ? "text-up font-bold" : ""}`}>{row.b}</td>
                 <td className="px-4 py-2 text-center">
-                  {row.winner === "A" && <span className="text-up">A {"\u2713"}</span>}
-                  {row.winner === "B" && <span className="text-up">B {"\u2713"}</span>}
-                  {row.winner === "tie" && <span className="text-muted">{"\u2014"}</span>}
+                  {row.winner === "A" && <span className="text-up">A ✓</span>}
+                  {row.winner === "B" && <span className="text-up">B ✓</span>}
+                  {row.winner === "tie" && <span className="text-muted">—</span>}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        )}
       </div>
     </div>
   );

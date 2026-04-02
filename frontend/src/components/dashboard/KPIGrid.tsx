@@ -75,7 +75,7 @@ export default function KPIGrid({
 }: KPIGridProps) {
   if (loading) {
     return (
-      <div className="rounded-md bg-white/10 border border-white/[0.10] shrink-0 overflow-hidden">
+      <div className="rounded-md bg-white/10 l-bd shrink-0 overflow-hidden">
         <div className="grid grid-cols-7 gap-px">
           {Array.from({ length: 7 }).map((_, i) => <KPISkeleton key={`r1-${i}`} />)}
         </div>
@@ -89,58 +89,58 @@ export default function KPIGrid({
   const lockedPct = totalEquity && lockedInTrades ? Math.round((lockedInTrades / totalEquity) * 100) : null;
 
   return (
-    <div className="rounded-md bg-white/10 border border-white/[0.10] shrink-0 overflow-hidden">
+    <div className="rounded-md bg-white/10 l-bd shrink-0 overflow-hidden">
       {/* Row 1: 7 primary KPIs */}
       <div className="grid grid-cols-7 gap-px">
         {/* Total Equity */}
         <div className="bg-black p-4 flex flex-col hover:bg-white/[0.04] transition-colors">
-          <span className="text-[11px] text-[#6B7280] uppercase tracking-[0.08em] font-medium mb-1">Total Equity</span>
-          <span className="font-mono font-bold text-xl text-[#F5F5F5]">{fmtEquity(totalEquity)}</span>
+          <span className="kpi-label">Total Equity</span>
+          <span className="kpi-value text-xl">{fmtEquity(totalEquity)}</span>
         </div>
         {/* Locked in Trades */}
         <div className="bg-black p-4 flex flex-col hover:bg-white/[0.04] transition-colors">
-          <span className="text-[11px] text-[#6B7280] uppercase tracking-[0.08em] font-medium mb-1">Locked in Trades</span>
-          <span className="font-mono font-bold text-xl text-[#F5F5F5]">
+          <span className="kpi-label">Locked in Trades</span>
+          <span className="kpi-value text-xl">
             {lockedInTrades != null ? fmtEquity(lockedInTrades) : "\u2014"}
-            {lockedPct != null && <span className="text-[11px] text-[#9CA3AF] font-sans font-normal ml-1">({lockedPct}%)</span>}
+            {lockedPct != null && <span className="text-[11px] text-muted font-sans font-normal ml-1">({lockedPct}%)</span>}
           </span>
         </div>
         {/* Today's P&L */}
         <div className="bg-black p-4 flex flex-col hover:bg-white/[0.04] transition-colors">
-          <span className="text-[11px] text-[#6B7280] uppercase tracking-[0.08em] font-medium mb-1">Today&apos;s P&amp;L</span>
-          <span className={`font-mono font-bold text-xl ${todayPnl != null && todayPnl >= 0 ? "text-[#22c55e]" : todayPnl != null && todayPnl < 0 ? "text-[#ef4444]" : "text-[#F5F5F5]"}`}>
+          <span className="kpi-label">Today&apos;s P&amp;L</span>
+          <span className={`kpi-value text-xl ${todayPnl != null && todayPnl >= 0 ? "text-up" : todayPnl != null && todayPnl < 0 ? "text-down" : ""}`}>
             {todayPnl != null ? fmtMoney(todayPnl) : "\u2014"}
             {todayPnlPct != null && <span className="text-[11px] font-sans font-normal ml-1">{todayPnlPct >= 0 ? "+" : ""}{fmt(todayPnlPct, 2)}%</span>}
           </span>
         </div>
         {/* Total P&L (Closed) */}
         <div className="bg-black p-4 flex flex-col hover:bg-white/[0.04] transition-colors">
-          <span className="text-[11px] text-[#6B7280] uppercase tracking-[0.08em] font-medium mb-1">Total P&amp;L (Closed)</span>
-          <span className={`font-mono font-bold text-xl ${totalPnlClosed != null && totalPnlClosed >= 0 ? "text-[#22c55e]" : totalPnlClosed != null && totalPnlClosed < 0 ? "text-[#ef4444]" : "text-[#F5F5F5]"}`}>
+          <span className="kpi-label">Total P&amp;L (Closed)</span>
+          <span className={`kpi-value text-xl ${totalPnlClosed != null && totalPnlClosed >= 0 ? "text-up" : totalPnlClosed != null && totalPnlClosed < 0 ? "text-down" : ""}`}>
             {totalPnlClosed != null ? fmtMoney(totalPnlClosed) : "\u2014"}
             {totalPnlClosedPct != null && <span className="text-[11px] font-sans font-normal ml-1">{totalPnlClosedPct >= 0 ? "+" : ""}{fmt(totalPnlClosedPct, 2)}%</span>}
           </span>
         </div>
         {/* Open P&L */}
         <div className="bg-black p-4 flex flex-col hover:bg-white/[0.04] transition-colors">
-          <span className="text-[11px] text-[#6B7280] uppercase tracking-[0.08em] font-medium mb-1">Open P&amp;L (Unreal.)</span>
-          <span className={`font-mono font-bold text-xl ${openPnl != null && openPnl >= 0 ? "text-[#22c55e]" : openPnl != null && openPnl < 0 ? "text-[#ef4444]" : "text-[#F5F5F5]"}`}>
+          <span className="kpi-label">Open P&amp;L (Unreal.)</span>
+          <span className={`kpi-value text-xl ${openPnl != null && openPnl >= 0 ? "text-up" : openPnl != null && openPnl < 0 ? "text-down" : ""}`}>
             {openPnl != null ? fmtMoney(openPnl) : "\u2014"}
             {openPnlPct != null && <span className="text-[11px] font-sans font-normal ml-1">{openPnlPct >= 0 ? "+" : ""}{fmt(openPnlPct, 2)}%</span>}
           </span>
         </div>
         {/* Open Trades */}
         <div className="bg-black p-4 flex flex-col hover:bg-white/[0.04] transition-colors">
-          <span className="text-[11px] text-[#6B7280] uppercase tracking-[0.08em] font-medium mb-1">Open Trades</span>
-          <span className="font-mono font-bold text-xl text-[#F5F5F5]">
+          <span className="kpi-label">Open Trades</span>
+          <span className="kpi-value text-xl">
             {openTradeCount}
-            {maxOpenTrades != null && <span className="text-[11px] text-[#9CA3AF] font-sans font-normal ml-1">/ {maxOpenTrades} max</span>}
+            {maxOpenTrades != null && <span className="text-[11px] text-muted font-sans font-normal ml-1">/ {maxOpenTrades} max</span>}
           </span>
         </div>
         {/* Max Drawdown */}
         <div className="bg-black p-4 flex flex-col hover:bg-white/[0.04] transition-colors">
-          <span className="text-[11px] text-[#6B7280] uppercase tracking-[0.08em] font-medium mb-1">Max Drawdown</span>
-          <span className={`font-mono font-bold text-xl ${maxDrawdown != null ? "text-[#ef4444]" : "text-[#F5F5F5]"}`}>
+          <span className="kpi-label">Max Drawdown</span>
+          <span className={`kpi-value text-xl ${maxDrawdown != null ? "text-down" : ""}`}>
             {maxDrawdown != null ? `${fmt(maxDrawdown, 2)}%` : "\u2014"}
           </span>
         </div>
@@ -150,46 +150,46 @@ export default function KPIGrid({
       <div className="grid grid-cols-7 gap-px border-t border-white/10">
         {/* Win Rate */}
         <div className="bg-black p-3 flex flex-col hover:bg-white/[0.04] transition-colors">
-          <span className="text-[11px] text-[#6B7280] uppercase tracking-[0.08em] font-medium mb-1">Win Rate</span>
-          <span className="font-mono font-bold text-base text-[#F5F5F5]">
+          <span className="kpi-label">Win Rate</span>
+          <span className="kpi-value text-base">
             {winRate != null ? `${fmt(winRate, 1)}%` : "\u2014"}
-            {(winCount > 0 || lossCount > 0) && <span className="text-[10px] text-[#9CA3AF] font-sans font-normal ml-1">{winCount}W / {lossCount}L</span>}
+            {(winCount > 0 || lossCount > 0) && <span className="text-[10px] text-muted font-sans font-normal ml-1">{winCount}W / {lossCount}L</span>}
           </span>
         </div>
         {/* Profit Factor */}
         <div className="bg-black p-3 flex flex-col hover:bg-white/[0.04] transition-colors">
-          <span className="text-[11px] text-[#6B7280] uppercase tracking-[0.08em] font-medium mb-1">Profit Factor</span>
-          <span className={`font-mono font-bold text-base ${profitFactor != null && profitFactor > 1 ? "text-[#22c55e]" : profitFactor != null && profitFactor < 1 ? "text-[#ef4444]" : "text-[#F5F5F5]"}`}>
+          <span className="kpi-label">Profit Factor</span>
+          <span className={`kpi-value text-base ${profitFactor != null && profitFactor > 1 ? "text-up" : profitFactor != null && profitFactor < 1 ? "text-down" : ""}`}>
             {profitFactor != null ? fmt(profitFactor, 2) : "\u2014"}
           </span>
         </div>
         {/* Avg Duration */}
         <div className="bg-black p-3 flex flex-col hover:bg-white/[0.04] transition-colors">
-          <span className="text-[11px] text-[#6B7280] uppercase tracking-[0.08em] font-medium mb-1">Avg Duration</span>
-          <span className="font-mono font-bold text-base text-[#F5F5F5]">{avgDuration || "\u2014"}</span>
+          <span className="kpi-label">Avg Duration</span>
+          <span className="kpi-value text-base">{avgDuration || "\u2014"}</span>
         </div>
         {/* Total Trades */}
         <div className="bg-black p-3 flex flex-col hover:bg-white/[0.04] transition-colors">
-          <span className="text-[11px] text-[#6B7280] uppercase tracking-[0.08em] font-medium mb-1">Total Trades</span>
-          <span className="font-mono font-bold text-base text-[#F5F5F5]">{totalTrades.toLocaleString()}</span>
+          <span className="kpi-label">Total Trades</span>
+          <span className="kpi-value text-base">{totalTrades.toLocaleString()}</span>
         </div>
         {/* Best Pair */}
         <div className="bg-black p-3 flex flex-col hover:bg-white/[0.04] transition-colors">
-          <span className="text-[11px] text-[#6B7280] uppercase tracking-[0.08em] font-medium mb-1">Best Pair</span>
-          <span className={`font-mono font-bold text-base ${bestPairPct != null && bestPairPct > 0 ? "text-[#22c55e]" : "text-[#F5F5F5]"}`}>
+          <span className="kpi-label">Best Pair</span>
+          <span className={`kpi-value text-base ${bestPairPct != null && bestPairPct > 0 ? "text-up" : ""}`}>
             {bestPair || "\u2014"}
             {bestPairPct != null && <span className="text-[10px] ml-1">+{fmt(bestPairPct * 100, 2)}%</span>}
           </span>
         </div>
         {/* Sharpe Ratio */}
         <div className="bg-black p-3 flex flex-col hover:bg-white/[0.04] transition-colors">
-          <span className="text-[11px] text-[#6B7280] uppercase tracking-[0.08em] font-medium mb-1">Sharpe Ratio</span>
-          <span className="font-mono font-bold text-base text-[#F5F5F5]">{sharpeRatio != null ? fmt(sharpeRatio, 2) : "\u2014"}</span>
+          <span className="kpi-label">Sharpe Ratio</span>
+          <span className="kpi-value text-base">{sharpeRatio != null ? fmt(sharpeRatio, 2) : "\u2014"}</span>
         </div>
         {/* Trading Volume */}
         <div className="bg-black p-3 flex flex-col hover:bg-white/[0.04] transition-colors">
-          <span className="text-[11px] text-[#6B7280] uppercase tracking-[0.08em] font-medium mb-1">Trading Volume</span>
-          <span className="font-mono font-bold text-base text-[#F5F5F5]">{fmtVolume(tradingVolume)}</span>
+          <span className="kpi-label">Trading Volume</span>
+          <span className="kpi-value text-base">{fmtVolume(tradingVolume)}</span>
         </div>
       </div>
     </div>

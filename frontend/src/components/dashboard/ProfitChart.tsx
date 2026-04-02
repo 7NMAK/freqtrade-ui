@@ -29,6 +29,17 @@ interface ProfitChartProps {
   loading: boolean;
 }
 
+const timePeriods: { key: TimePeriod; label: string; title: string }[] = [
+  { key: "days", label: "Days", title: "Show daily chart" },
+  { key: "weeks", label: "Weeks", title: "Show weekly chart" },
+  { key: "months", label: "Months", title: "Show monthly chart" },
+];
+
+const valueModes: { key: ValueMode; label: string; title: string }[] = [
+  { key: "abs", label: "Abs $", title: "Show absolute dollar values" },
+  { key: "rel", label: "Rel %", title: "Show relative percentage values" },
+];
+
 export default function ProfitChart({
   dailyData,
   weeklyData,
@@ -107,8 +118,8 @@ export default function ProfitChart({
 
   if (loading) {
     return (
-      <div className="h-[280px] bg-[#0C0C0C] border border-white/[0.10] rounded-md flex shadow-xl shrink-0 overflow-hidden">
-        <div className="flex-1 flex items-center justify-center text-[#9CA3AF] text-sm animate-pulse">
+      <div className="h-[280px] bg-surface l-bd rounded-md flex shadow-xl shrink-0 overflow-hidden relative">
+        <div className="flex-1 flex items-center justify-center text-muted text-sm animate-pulse">
           Loading chart data...
         </div>
       </div>
@@ -116,68 +127,68 @@ export default function ProfitChart({
   }
 
   return (
-    <div className="h-[280px] bg-[#0C0C0C] border border-white/[0.10] rounded-md flex shadow-xl shrink-0 overflow-hidden relative">
-      {/* Grid overlay */}
-      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)", backgroundSize: "24px 24px", opacity: 0.2 }} />
-      {/* Left: Profit Over Time */}
-      <div className="flex-1 flex flex-col relative min-w-0">
+    <div className="h-[280px] bg-surface l-bd rounded-md flex shadow-xl shrink-0 overflow-hidden relative">
+      {/* LEFT: Profit Over Time */}
+      <div className="flex-1 flex flex-col relative">
+        {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 shrink-0 gap-3">
-          <h3 className="text-[12px] font-bold uppercase tracking-[0.08em] text-white/50 whitespace-nowrap">Profit Over Time</h3>
+          <h3 className="section-title text-white/50 whitespace-nowrap">Profit Over Time</h3>
           <div className="flex gap-0 shrink-0">
-            {/* Time period toggle */}
-            {(["days", "weeks", "months"] as const).map((p, i) => (
+            {/* Time range button group */}
+            {timePeriods.map((p, i) => (
               <button
-                key={p}
-                onClick={() => setTimePeriod(p)}
+                key={p.key}
+                onClick={() => setTimePeriod(p.key)}
+                title={p.title}
                 className={`px-3 py-1 text-[10px] font-bold uppercase transition-colors cursor-pointer ${
-                  timePeriod === p
+                  timePeriod === p.key
                     ? "bg-white/10 text-white"
-                    : "text-[#9CA3AF] hover:text-white border border-white/[0.10]"
-                } ${i === 0 ? "rounded-l" : ""} ${i === 2 ? "rounded-r" : ""} ${i > 0 ? "border-l-0" : ""}`}
+                    : "text-muted hover:text-white l-bd border-l-0"
+                } ${i === 0 ? "rounded-l" : ""} ${i === 2 ? "rounded-r" : ""}`}
               >
-                {p === "days" ? "Days" : p === "weeks" ? "Weeks" : "Months"}
+                {p.label}
               </button>
             ))}
             <div className="w-3" />
-            {/* Abs/Rel toggle */}
-            <button
-              onClick={() => setValueMode("abs")}
-              className={`px-3 py-1 text-[10px] font-bold uppercase rounded-l cursor-pointer transition-colors ${
-                valueMode === "abs"
-                  ? "bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/25"
-                  : "text-[#9CA3AF] border border-white/[0.10] hover:text-white"
-              }`}
-            >
-              Abs $
-            </button>
-            <button
-              onClick={() => setValueMode("rel")}
-              className={`px-3 py-1 text-[10px] font-bold uppercase rounded-r cursor-pointer transition-colors ${
-                valueMode === "rel"
-                  ? "bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/25 border-l-0"
-                  : "text-[#9CA3AF] border border-white/[0.10] border-l-0 hover:text-white"
-              }`}
-            >
-              Rel %
-            </button>
+            {/* Value mode group */}
+            {valueModes.map((m, i) => (
+              <button
+                key={m.key}
+                onClick={() => setValueMode(m.key)}
+                title={m.title}
+                className={`px-3 py-1 text-[10px] font-bold uppercase cursor-pointer transition-colors ${
+                  valueMode === m.key
+                    ? "bg-up/15 text-up border border-up/25"
+                    : "text-muted l-bd hover:text-white"
+                } ${i === 0 ? "rounded-l" : "rounded-r border-l-0"}`}
+              >
+                {m.label}
+              </button>
+            ))}
             <div className="w-2" />
             {/* Sidebar toggle */}
             <button
               onClick={onToggleSidebar}
-              className="px-2 py-1 rounded text-[#9CA3AF] hover:text-white hover:bg-white/[0.08] transition-all opacity-40 hover:opacity-100 cursor-pointer"
-              title="Toggle right sidebar"
+              className="sidebar-toggle px-2 py-1 rounded text-muted hover:text-white hover:bg-white/[0.08] transition-all opacity-40 hover:opacity-100 cursor-pointer"
+              title="Toggle right sidebar (Balance, Fees, Telemetry)"
             >
               {sidebarOpen ? <PanelRightClose className="w-3.5 h-3.5" /> : <PanelRightOpen className="w-3.5 h-3.5" />}
             </button>
           </div>
         </div>
-        <div className="flex-1 px-5 pb-4 relative min-w-0">
+
+        {/* Chart area */}
+        <div className="flex-1 px-5 pb-4 relative">
+          {/* Grid overlay */}
+          <div className="absolute inset-0 l-grid opacity-20" />
+
           {chartData.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-[#9CA3AF] text-sm">
+            <div className="flex items-center justify-center h-full text-muted text-sm">
               No data available
             </div>
           ) : (
             <>
+              {/* Legend */}
               <div className="absolute top-0 right-2 flex items-center gap-4 text-[9px] font-mono text-white/40 z-10">
                 <span className="flex items-center gap-1.5">
                   <span className="w-3 h-[2px] bg-[#22c55e] rounded inline-block" />Profit
@@ -187,78 +198,78 @@ export default function ProfitChart({
                 </span>
               </div>
               <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: -10 }}>
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 9, fill: "rgba(255,255,255,0.25)" }}
-                  axisLine={false}
-                  tickLine={false}
-                  interval="preserveStartEnd"
-                />
-                <YAxis
-                  yAxisId="profit"
-                  tick={{ fontSize: 9, fill: "rgba(255,255,255,0.25)" }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v: number) =>
-                    valueMode === "abs"
-                      ? `${v >= 0 ? "+" : ""}${v.toFixed(0)}`
-                      : `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`
-                  }
-                />
-                <YAxis
-                  yAxisId="trades"
-                  orientation="right"
-                  tick={false}
-                  axisLine={false}
-                  tickLine={false}
-                  domain={[0, "auto"]}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: "#0C0C0C",
-                    border: "1px solid rgba(255,255,255,0.10)",
-                    borderRadius: 6,
-                    fontSize: 11,
-                    fontFamily: "'JetBrains Mono', monospace",
-                  }}
-                  formatter={(v, name) => {
-                    const n = typeof v === "number" ? v : Number(v);
-                    if (name === "tradeCount") return [n, "Trades"];
-                    return [
-                      valueMode === "abs" ? fmtMoney(n) : `${n >= 0 ? "+" : ""}${fmt(n, 2)}%`,
-                      "Cum. P&L",
-                    ];
-                  }}
-                />
-                <ReferenceLine yAxisId="profit" y={0} stroke="rgba(255,255,255,0.08)" strokeWidth={0.5} strokeDasharray="3 3" />
-                <Bar
-                  yAxisId="trades"
-                  dataKey="tradeCount"
-                  fill="rgba(255,255,255,0.10)"
-                  radius={[1, 1, 0, 0]}
-                  barSize={6}
-                />
-                <Line
-                  yAxisId="profit"
-                  type="monotone"
-                  dataKey="profit"
-                  stroke="#22c55e"
-                  strokeWidth={1.5}
-                  dot={{ r: 2, fill: "#22c55e", stroke: "none" }}
-                  activeDot={{ r: 3 }}
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
+                <ComposedChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: -10 }}>
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 9, fill: "rgba(255,255,255,0.25)" }}
+                    axisLine={false}
+                    tickLine={false}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    yAxisId="profit"
+                    tick={{ fontSize: 9, fill: "rgba(255,255,255,0.25)" }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(v: number) =>
+                      valueMode === "abs"
+                        ? `${v >= 0 ? "+" : ""}${v.toFixed(0)}`
+                        : `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`
+                    }
+                  />
+                  <YAxis
+                    yAxisId="trades"
+                    orientation="right"
+                    tick={false}
+                    axisLine={false}
+                    tickLine={false}
+                    domain={[0, "auto"]}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: "#0C0C0C",
+                      border: "1px solid rgba(255,255,255,0.10)",
+                      borderRadius: 6,
+                      fontSize: 11,
+                      fontFamily: "'JetBrains Mono', monospace",
+                    }}
+                    formatter={(v, name) => {
+                      const n = typeof v === "number" ? v : Number(v);
+                      if (name === "tradeCount") return [n, "Trades"];
+                      return [
+                        valueMode === "abs" ? fmtMoney(n) : `${n >= 0 ? "+" : ""}${fmt(n, 2)}%`,
+                        "Cum. P&L",
+                      ];
+                    }}
+                  />
+                  <ReferenceLine yAxisId="profit" y={0} stroke="rgba(255,255,255,0.08)" strokeWidth={0.5} strokeDasharray="3 3" />
+                  <Bar
+                    yAxisId="trades"
+                    dataKey="tradeCount"
+                    fill="rgba(255,255,255,0.10)"
+                    radius={[1, 1, 0, 0]}
+                    barSize={6}
+                  />
+                  <Line
+                    yAxisId="profit"
+                    type="monotone"
+                    dataKey="profit"
+                    stroke="#22c55e"
+                    strokeWidth={1.5}
+                    dot={{ r: 2, fill: "#22c55e", stroke: "none" }}
+                    activeDot={{ r: 3 }}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
             </>
           )}
         </div>
       </div>
 
-      {/* Right: Profit Distribution */}
-      <div className="w-[300px] flex flex-col relative bg-black/20 shrink-0 border-l border-white/[0.10]">
+      {/* RIGHT: Profit Distribution */}
+      <div className="w-[300px] flex flex-col relative bg-black/20">
         <div className="px-5 py-3 shrink-0">
-          <h3 className="text-[12px] font-bold uppercase tracking-[0.08em] text-white/50">Profit Distribution</h3>
+          <h3 className="section-title text-white/50">Profit Distribution</h3>
         </div>
         <div className="flex-1 px-5 pb-4 flex items-end gap-[3px]">
           {distribution.length > 0 ? (
@@ -279,7 +290,7 @@ export default function ProfitChart({
               );
             })
           ) : (
-            <div className="flex-1 flex items-center justify-center text-[#9CA3AF] text-xs">
+            <div className="flex-1 flex items-center justify-center text-muted text-xs">
               No distribution data
             </div>
           )}
@@ -293,14 +304,14 @@ export default function ProfitChart({
         )}
         <div className="px-5 pb-4 grid grid-cols-2 gap-4">
           <div>
-            <div className="text-[11px] text-[#6B7280] uppercase tracking-[0.08em] font-medium mb-1">Absolute DD</div>
-            <div className="text-base font-bold font-mono text-[#ef4444]">
+            <div className="kpi-label">Absolute DD</div>
+            <div className="text-base font-bold font-mono text-down">
               {maxDrawdownAbs != null ? fmtMoney(-Math.abs(maxDrawdownAbs)) : "\u2014"}
             </div>
           </div>
           <div>
-            <div className="text-[11px] text-[#6B7280] uppercase tracking-[0.08em] font-medium mb-1">Relative DD</div>
-            <div className="text-base font-bold font-mono text-[#ef4444]">
+            <div className="kpi-label">Relative DD</div>
+            <div className="text-base font-bold font-mono text-down">
               {maxDrawdownRel != null ? `${fmt(-Math.abs(maxDrawdownRel), 2)}%` : "\u2014"}
             </div>
           </div>

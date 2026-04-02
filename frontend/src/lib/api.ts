@@ -1007,6 +1007,21 @@ export const getExperiment = (id: number) =>
 export const deleteExperiment = (id: number) =>
   request<void>(`/api/experiments/${id}`, { method: "DELETE" });
 
+export const createExperiment = (data: {
+  strategy_id: number;
+  name?: string;
+  pair?: string;
+  timeframe?: string;
+  notes?: string;
+}) =>
+  request<Experiment>(`/api/experiments/`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const seedExperiments = () =>
+  request<{ created: number; total_strategies: number; already_existed: number }>(`/api/experiments/seed`, { method: "POST" });
+
 export const getExperimentRuns = (experimentId: number, filters?: {
   run_type?: string;
   status?: string;

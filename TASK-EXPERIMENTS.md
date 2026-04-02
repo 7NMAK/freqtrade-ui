@@ -108,15 +108,20 @@ th.sortable::after { content: '⇅'; margin-left: 4px; opacity: 0.25; font-size:
 th.sortable:hover::after { opacity: 0.6; }
 th.sortable.sort-asc::after { content: '↑'; opacity: 0.9; color: #fff; }
 th.sortable.sort-desc::after { content: '↓'; opacity: 0.9; color: #fff; }
+/* Active sort state — line 38 (MUST include!) */
+th.sortable.sort-asc, th.sortable.sort-desc { color: #fff; background: rgba(255,255,255,0.04); }
 
 /* Filterable Column Headers — line 40-55 */
 th.filterable { position: relative; cursor: pointer; }
 th.filterable::before { content: ''; display: inline-block; width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid rgba(255,255,255,0.2); margin-right: 5px; vertical-align: middle; transition: border-color 0.15s; }
 th.filterable:hover::before { border-top-color: rgba(255,255,255,0.6); }
+/* Active filter state — line 54-55 */
+th.filterable.filter-active::before { border-top-color: #22d3ee; }
+th.filterable.filter-active { color: #22d3ee; }
 
 /* Tab visibility — line 66-67 */
-.exp-tab { display: none; }
-.exp-tab.active { display: flex; }
+.exp-tab { display: none !important; height: 100%; overflow-y: auto; overflow-x: hidden; }
+.exp-tab.active { display: flex !important; }
 ```
 
 ### KEY DIFFERENCES vs what you might assume:
@@ -261,18 +266,30 @@ Widgets (EXACT order):
        - Badge: `px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded border border-up/25` "COMPLETED"
        - Deploy button: `h-7 px-3 rounded-md text-[10px] font-bold flex items-center gap-1.5 transition-colors hover:border-up/30 hover:text-up` **with INLINE STYLE:** `style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#F5F5F5"` — "Deploy"
    - KPI row: `grid grid-cols-7 gap-2 text-[11px] font-mono relative z-10`
-     Each KPI: label `text-muted block text-[9px]` + value (colored appropriately)
-     7 KPIs: Profit (+42.12%), Profit $ (+$4,212), Trades (142), Win Rate (72.4%), Sharpe (3.92), Max DD (-2.1%), Duration (365 days)
+     Each KPI: label `text-muted block text-[9px]` + value with EXACT colors:
+     - Profit: `text-up font-bold` → +42.12%
+     - Profit $: `text-up font-bold` → +$4,212
+     - Trades: `text-white` (no bold) → 142
+     - Win Rate: `text-up` (no bold) → 72.4%
+     - Sharpe: `text-white` (no bold) → 3.92
+     - Max DD: `text-down font-bold` → -2.1%
+     - Duration: `text-muted` → 365 days
+     **Pattern for ALL winner banners:** positive $/%=`text-up font-bold`, neutral count=`text-white`, positive rate=`text-up`, negative=`text-down font-bold`, time/neutral=`text-muted`
 
 2. **KPI Cards** — `grid grid-cols-6 gap-2`
-   6 cards: Total Profit, Win Rate, Trades, Max Drawdown, Sharpe Ratio, Sortino Ratio
-   Each: `bg-surface p-2.5 l-bd rounded` → kpi-label + kpi-value + optional sub-text `text-[9px] font-mono`
-   Sub-text colors: Total Profit=`text-up`, Win Rate=`text-muted`, Trades=`text-muted`, Max DD=`text-down`, last 2 have no sub-text
+   6 cards, each: `bg-surface p-2.5 l-bd rounded` → kpi-label + kpi-value + optional sub-text `text-[9px] font-mono`
+   **Per-card kpi-value AND sub-text colors (EXACT from design):**
+   - Total Profit: kpi-value `text-up` → +$4,212, sub-text `text-up` → +42.12%
+   - Win Rate: kpi-value `text-up` → 72.4%, sub-text `text-muted` → 102W 40L
+   - Trades: kpi-value (no color class = white) → 142, sub-text `text-muted` → 80L 62S
+   - Max Drawdown: kpi-value `text-down` → -2.11%, sub-text `text-down` → -$211
+   - Sharpe Ratio: kpi-value (no color) → 3.92, NO sub-text
+   - Sortino Ratio: kpi-value (no color) → 4.15, NO sub-text
 
 3. **Advanced Stats** — `grid grid-cols-2 gap-2`
-   Left card (5 rows): Profit Factor, Expectancy, SQN, Calmar Ratio, CAGR
-   Right card (5 rows): Starting Balance, Final Balance, Best Day, Worst Day, Avg Duration
-   Each card: `bg-surface l-bd rounded p-2.5 space-y-1.5 text-[11px] font-mono`
+   Each card: `bg-surface l-bd rounded p-2.5 space-y-1.5 text-[11px] font-mono`, rows are `flex justify-between`, labels `text-muted`
+   **Left card value colors:** Profit Factor `text-up`, Expectancy `text-up`, SQN `text-white`, Calmar `text-white`, CAGR `text-up`
+   **Right card value colors:** Starting Balance `text-white`, Final Balance `text-up font-bold`, Best Day `text-up`, Worst Day `text-down`, Avg Duration `text-white`
 
 4. **Profit Over Time Chart** — `h-[200px] bg-surface l-bd rounded-md flex flex-col overflow-hidden relative`
    Header (`flex items-center justify-between px-5 py-2.5 shrink-0 gap-3`): section-title "Profit Over Time" `text-white/50 whitespace-nowrap` + toggle button groups in `flex gap-0 shrink-0` (see CRITICAL DETAILS → Chart Toggle Button Groups)
@@ -317,16 +334,16 @@ Same container pattern as Backtest.
 
 Form fields (EXACT order):
 1. **Strategy** — builder-select
-2. **Loss Function** (l-t) — grid-cols-3 gap-1.5, 6 pills: Sharpe, Sortino, Calmar, MaxDrawDown, OnlyProfit, ProfitDD
-3. **Sampler** (l-t pt-3) — grid-cols-3 gap-1.5, 5 pills: TPE, Random, CmaEs, NSGAII, QMC
+2. **Loss Function** (l-t) — grid-cols-3 gap-1.5 mt-1, 6 pills: ✓ Sharpe (selected), Sortino, Calmar, MaxDrawDown, OnlyProfit, ProfitDD
+3. **Sampler** (l-t pt-3) — grid-cols-3 gap-1.5 mt-1, 5 pills: ✓ TPE (selected), Random, CmaEs, NSGAII, QMC
 4. **Epochs / Min Trades** — 2x builder-input number, flex gap-2
 5. **Timerange Start / End** — 2x builder-input date, flex gap-2
 6. **Timeframe / Jobs** — builder-select + builder-select, flex gap-2
 7. **Max Open Trades / Stake Amount** — builder-input + builder-input, flex gap-2
 8. **Fee / Random State** — builder-input + builder-input number, flex gap-2
 9. **Early Stop / Pairs** — builder-input + builder-input, flex gap-2
-10. **Spaces** (l-t pt-3) — grid-cols-3 gap-1.5, 6 pills: buy, sell, roi, stoploss, trailing, protection
-11. **Flags** (l-t pt-3) — 4 toggles: Enable Protections, Position Stacking, Disable Max Positions, Print All Results
+10. **Spaces** (l-t pt-3) — grid-cols-3 gap-1.5 mt-1, 6 pills: ✓ buy (selected), ✓ sell (selected), roi, stoploss, trailing, protection
+11. **Flags** (l-t pt-3) — 4 toggles: Enable Protections (on), Position Stacking, Disable Max Positions, Print All Results
 12. **Run** — same 3-button pattern (▶ Start Hyperopt, ⏹, ↺)
 13. **Progress** — same pattern (Epoch X/Y)
 14. **Terminal Output** — same pattern
@@ -363,7 +380,7 @@ Form fields:
 4. **Feature Period / Label Period** — number inputs
 5. **ML Models** (l-t pt-3) — builder-label "ML Models" + `flex flex-col gap-2.5` (no mt-1 here!) — 4 toggles: LightGBM-Regressor (on), XGBoost-Regressor (on), CatBoost-Regressor, LightGBM-Classifier
 6. **Outlier Detection** (l-t pt-3) — builder-label "Outlier Detection" + top row `flex gap-2 mb-2`: Method select + DI Threshold input — then bottom `flex flex-col gap-2.5 mt-2` (note: mt-2 not mt-1!): 3 toggles: Use PCA, Add Noise (on), Correlated Pairs (on)
-7. **Matrix Calculation** (l-t pt-3) — builder-card with **blue** info badge (see CRITICAL DETAILS → FreqAI Matrix Calculation Info Badge for exact colors) showing "X models × Y outlier × Z PCA × W noise = N tests" + Est. Time
+7. **Matrix Calculation** (l-t pt-3) — `mt-1 builder-card space-y-1.5 text-[11px] font-mono` (note: extra classes on card!) with **blue** info badge (see CRITICAL DETAILS → FreqAI Matrix Calculation Info Badge for exact colors) showing "X models × Y outlier × Z PCA × W noise = N tests" + Est. Time row `flex justify-between`
 8. **Run** — ▶ Run Matrix (N), ⏹, ↺
 9. **Progress** — X/Y runs
 10. **Terminal Output**
@@ -380,7 +397,7 @@ Form fields:
 ### 8. AI REVIEW TAB (design lines 2696–2748) — AiReviewTab.tsx
 Layout: `h-full flex flex-col gap-3 overflow-y-auto` (NO left/right split — single column)
 
-1. **Header bar** (`flex items-center gap-3`) — section-title "AI Review" + right side (`flex items-center gap-2 ml-auto`): Scope badge, Model select (builder-select), Cost badge, ▶ Analyze button (see CRITICAL DETAILS → AI Review Header Bar Detail for exact classes)
+1. **Header bar** (`flex items-center gap-3`) — section-title "AI Review" + right side (`flex items-center gap-2 ml-auto`): Scope badge, Model select (`builder-select text-[11px] font-mono` — NOTE: `text-[11px]` overrides default 12px!), Cost badge, ▶ Analyze button (see CRITICAL DETAILS → AI Review Header Bar Detail for exact classes)
 2. **Score Cards** — `grid grid-cols-5 gap-2`
    Each: `bg-surface p-3 l-bd rounded` → kpi-label + kpi-value + rating text
    **EXACT per-card colors (from design HTML):**
@@ -394,7 +411,7 @@ Layout: `h-full flex flex-col gap-3 overflow-y-auto` (NO left/right split — si
    Left: ✓ Strengths (header: see CRITICAL DETAILS → AI Review Strengths/Concerns Headers)
    Right: ⚠ Concerns (header: see CRITICAL DETAILS)
 4. **Recommendation** — `bg-surface l-bd rounded p-3 text-[11px] font-mono border-l-2 border-l-white/30` — sub-header (see CRITICAL DETAILS → AI Review Recommendation Sub-header) + text `text-muted leading-relaxed`
-5. **Analysis History** — standalone `<h3 class="section-title">Analysis History</h3>` + BARE table (NO bg-surface l-bd rounded-md wrapper — unlike other tables!) — columns: Date (sort-desc), Source, Model, Score, Cost, Actions (View button)
+5. **Analysis History** — standalone `<h3 class="section-title">Analysis History</h3>` + BARE table (NO bg-surface l-bd rounded-md wrapper — unlike other tables!) — **NO sticky header** (unlike other tables, thead does NOT have `sticky top-0 bg-surface z-10`) — columns: Date (sort-desc), Source, Model, Score, Cost, Actions (View button)
 
 ---
 
@@ -408,7 +425,7 @@ Form fields:
 4. **Pass/Fail Thresholds** label (l-t pt-3)
 5. **Min Profit % / Max DD %** — number inputs
 6. **Min Trades % / Min Win Rate %** — number inputs
-7. **Validation Checks** (l-t pt-3) — 4 toggles: OOS Backtest, Lookahead Bias Check, Recursive Stability, Walk-Forward
+7. **Validation Checks** (l-t pt-3) — 4 toggles with mt-1 container: OOS Backtest (on), Lookahead Bias Check (on), Recursive Stability (on), Walk-Forward
 8. **Warning box** — `bg-yellow-500/[0.04] border border-yellow-500/15 rounded px-3 py-2 flex gap-2` — `<span class="text-yellow-400">⚠</span>` + text `text-[10px] text-muted` with `<b class="text-yellow-400">NOT overlap</b>` bold yellow
 9. **Run** — ▶ Run Verification, ⏹, ↺
 10. **Progress** — X/X checks
@@ -820,16 +837,18 @@ ALL header buttons (Back, All Tests, Compare, Analysis, + New Test) have `transi
 
 ### Terminal Output — Log Line Color Patterns (ALL tabs):
 All terminal outputs share the same structure: `mt-1 bg-black rounded p-3 font-mono text-[10px] text-muted leading-relaxed l-bd max-h-[300px] overflow-y-auto`
-Log line colors — 3 levels:
+Log line colors — 4 levels:
 - Default (INFO): no extra class, inherits `text-muted`
 - Important (key results): `class="text-white"` on the div
+- Positive (good but not best): `class="text-up"` on the div (green, NO bold — used in FreqAI terminal)
 - Success (final result): `class="text-up font-bold"` on the div
 - Inline highlights: `<span class="text-up">New best:</span>` or `<span class="text-up font-bold">New best:</span>` inside muted lines
 
 ### Common Sub-Section Pattern (flags, pills, toggles):
-All l-t pt-3 sections follow: `<div class="l-t pt-3">` → builder-label → content container with `mt-1` (for toggle containers and pill grids)
-Exception: ML Models in FreqAI uses `flex flex-col gap-2.5` WITHOUT mt-1
-Exception: Outlier Detection toggles in FreqAI use `mt-2` (not mt-1)
+Most sub-sections follow: `<div class="l-t pt-3">` → builder-label → content container with `mt-1` (for toggle containers and pill grids)
+**Exception:** Hyperopt Loss Function uses just `<div class="l-t">` (NO pt-3!) — all other sub-sections use `l-t pt-3`
+**Exception:** ML Models in FreqAI uses `flex flex-col gap-2.5` WITHOUT mt-1
+**Exception:** Outlier Detection toggles in FreqAI use `mt-2` (not mt-1)
 
 ### Tab Content Wrappers:
 - Tables (Closed Trades, Per-Pair, etc): `flex-1 overflow-x-auto overflow-y-auto p-0`

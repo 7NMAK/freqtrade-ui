@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Filter, ChevronDown, Download, LogOut, Zap, Scissors, PlusCircle, RefreshCw, Trash2, Ban } from "lucide-react";
 import { fmt, fmtMoney } from "@/lib/format";
 import type { FTTrade, FTPerformance, FTEntry, FTExit, FTWhitelist, FTLocksResponse } from "@/types";
@@ -138,21 +139,55 @@ function ActionDropdown({
   exiting: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const hasOpenOrder = trade.orders?.some((o) => o.status === "open") ?? false;
+
+  // Position the portal-based dropdown relative to the button
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+
+  useEffect(() => {
+    if (open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      // Place menu above button, right-aligned
+      setMenuPos({
+        top: rect.top - 4,
+        left: rect.right - 200,
+      });
+    }
+  }, [open]);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node) &&
+          btnRef.current && !btnRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
 
   return (
     <div className="relative inline-block" onClick={(e) => e.stopPropagation()}>
       <button
+        ref={btnRef}
         className="bg-[#1a1a1a] border border-white/[0.10] px-2.5 py-1 rounded-[5px] text-[#9CA3AF] text-[11px] font-semibold cursor-pointer transition-all hover:bg-[#2a2a2a] hover:text-[#F5F5F5] flex items-center gap-1.5"
         onClick={() => setOpen(!open)}
         disabled={exiting}
       >
         {exiting ? "..." : "Actions"} <ChevronDown className="w-3 h-3" />
       </button>
-      {open && (
+      {open && typeof document !== "undefined" && createPortal(
         <>
-          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 bottom-full mb-1 min-w-[200px] bg-[#151515] border border-white/[0.12] rounded-lg p-1 z-40 shadow-[0_-8px_30px_rgba(0,0,0,0.6)]">
+          <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)} />
+          <div
+            ref={menuRef}
+            className="fixed min-w-[200px] bg-[#151515] border border-white/[0.12] rounded-lg p-1 z-[9999] shadow-[0_-8px_30px_rgba(0,0,0,0.6)]"
+            style={{ top: menuPos.top, left: menuPos.left, transform: "translateY(-100%)" }}
+          >
             <button
               className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-[#d4d4d8] rounded-[5px] hover:bg-white/[0.06] hover:text-white transition-colors text-left"
               onClick={() => { onForceExit(trade, "limit"); setOpen(false); }}
@@ -200,7 +235,8 @@ function ActionDropdown({
               <Trash2 className="w-3.5 h-3.5" /> Delete trade
             </button>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
@@ -468,8 +504,9 @@ export default function TradeTable({
                     <tr><td colSpan={12} className="px-5 py-8 text-center text-[#9CA3AF]">No open trades</td></tr>
                   ) : (
                     rowsToShow.map((trade, idx) => {
-                      const pct = trade.current_profit;
-                      const pnl = trade.current_profit_abs;
+                      // BUG 11 fix: fallback field names for profit
+                      const pct = trade.current_profit ?? trade.close_profit ?? null;
+                      const pnl = trade.current_profit_abs ?? trade.close_profit_abs ?? null;
                       const isUp = pnl != null && pnl >= 0;
                       const color = pnl != null ? (isUp ? "text-[#22c55e]" : "text-[#ef4444]") : "text-[#9CA3AF]";
                       const fee = (trade.fee_open + trade.fee_close) * trade.stake_amount;

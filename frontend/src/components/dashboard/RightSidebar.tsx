@@ -20,8 +20,20 @@ interface RightSidebarProps {
   loading: boolean;
 }
 
-function LogEntry({ log }: { log: [string, string, string, string, string] }) {
-  const [, , timestamp, level, message] = log;
+function LogEntry({ log }: { log: string[] }) {
+  // FT logs format can be [timestamp, module, level, message] (4 elements)
+  // or [id, timestamp, module, level, message] (5 elements)
+  let timestamp: string, level: string, message: string;
+  if (log.length >= 5) {
+    [, , timestamp, level, message] = log;
+  } else if (log.length === 4) {
+    [timestamp, , level, message] = log;
+  } else {
+    // Fallback: show raw content
+    timestamp = "";
+    level = "";
+    message = log.join(" ");
+  }
   const timeStr = timestamp ? timestamp.split(" ").pop()?.slice(0, 8) ?? "" : "";
   const levelColor =
     level === "WARNING" || level === "WARN" ? "text-yellow-500 font-bold" :
@@ -31,16 +43,16 @@ function LogEntry({ log }: { log: [string, string, string, string, string] }) {
 
   // Detect trade actions in messages
   const msgColor =
-    message.includes("Buy") || message.includes("LONG") ? "text-[#22c55e] font-bold" :
-    message.includes("Sell") || message.includes("SHORT") ? "text-[#ef4444] font-bold" :
-    message.includes("Fill") || message.includes("FILL") ? "text-[#22c55e] font-bold" :
+    (message ?? "").includes("Buy") || (message ?? "").includes("LONG") ? "text-[#22c55e] font-bold" :
+    (message ?? "").includes("Sell") || (message ?? "").includes("SHORT") ? "text-[#ef4444] font-bold" :
+    (message ?? "").includes("Fill") || (message ?? "").includes("FILL") ? "text-[#22c55e] font-bold" :
     "";
 
   return (
     <div className="mb-2">
       <span className="text-white/35 pr-2">{timeStr}</span>
       <span className={levelColor}>{level}</span>{" "}
-      <span className={msgColor || ""}>{message}</span>
+      <span className={msgColor || ""}>{message ?? ""}</span>
     </div>
   );
 }
@@ -251,7 +263,7 @@ export default function RightSidebar({
           ) : (
             <>
               {logsData.logs.slice(-50).map((log, i) => (
-                <LogEntry key={`log-${i}`} log={log} />
+                <LogEntry key={`log-${i}`} log={log as string[]} />
               ))}
               <div ref={logEndRef} />
             </>

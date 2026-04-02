@@ -36,7 +36,7 @@ function LogEntry({ log }: { log: string[] }) {
     level = "";
     message = log.join(" ");
   }
-  const timeStr = timestamp ? timestamp.split(" ").pop()?.slice(0, 8) ?? "" : "";
+  const timeStr = timestamp ? String(timestamp).split(" ").pop()?.slice(0, 8) ?? "" : "";
   const levelColor =
     level === "WARNING" || level === "WARN" ? "text-yellow-500 font-bold" :
     level === "ERROR" || level === "CRITICAL" ? "text-[#ef4444] font-bold" :

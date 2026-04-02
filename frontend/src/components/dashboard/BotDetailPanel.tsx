@@ -837,7 +837,7 @@ function DetailContent({
                     } else {
                       timestamp = ""; level = ""; message = arr.join(" ");
                     }
-                    const timeStr = timestamp ? timestamp.split(" ").pop()?.slice(0, 8) ?? "" : "";
+                    const timeStr = timestamp ? String(timestamp).split(" ").pop()?.slice(0, 8) ?? "" : "";
                     const levelColor =
                       level === "WARNING" || level === "WARN" ? "text-yellow-500" :
                       level === "ERROR" || level === "CRITICAL" ? "text-rose-500" :

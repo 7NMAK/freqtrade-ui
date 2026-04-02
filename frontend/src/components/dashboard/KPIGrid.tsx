@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { fmtMoney, fmt, profitColor } from "@/lib/format";
+import { fmtMoney, fmt } from "@/lib/format";
 
 interface KPIGridProps {
   totalEquity: number | null;

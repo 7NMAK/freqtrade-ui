@@ -1,7 +1,45 @@
 # TASK: Rebuild Dashboard Page — Pixel Perfect from DESIGN-LINEAR-EDGE-FULL.html
 
-## STATUS: FROM SCRATCH
-Treat this as a COMPLETE REBUILD. Delete the contents of every component file and rewrite from zero using the design HTML as the only source of truth.
+---
+
+## ⛔⛔⛔ CRITICAL: READ THIS BEFORE TOUCHING ANY CODE ⛔⛔⛔
+
+### THIS IS A DESIGN-ONLY TASK
+
+The Dashboard page is **ALREADY FULLY FUNCTIONAL**. All API endpoints work. All data fetching works. All state management works. All WebSocket connections work. All buttons trigger real actions.
+
+**YOU ARE ONLY CHANGING THE VISUAL DESIGN / CSS / LAYOUT / HTML STRUCTURE.**
+
+### ABSOLUTE RULES:
+
+1. **ZERO MOCK DATA** — Every number, every string, every value on the page MUST come from the API. If you see `123.45` or `"BTC/USDT"` hardcoded anywhere in your code, you have failed. The ONLY exception is empty-state placeholder text (e.g., "No open trades").
+
+2. **ZERO HARDCODING** — No hardcoded bot IDs, no hardcoded strategy names, no hardcoded pair lists, no hardcoded anything. Everything is dynamic from the API.
+
+3. **PRODUCTION READY** — This code runs on a live server with real FreqTrade bots. Every component must handle: loading states, error states, empty states, and real data states. No "TODO" comments, no "placeholder" components, no shortcuts.
+
+4. **PRESERVE ALL FUNCTIONALITY** — Every `onClick`, every `useEffect`, every `fetch()`, every WebSocket subscription, every state update, every timer, every polling interval — KEEP IT ALL. If it works now, it must work after your changes.
+
+5. **FIX BUGS YOU FIND** — If you notice any broken functionality, wrong field names, missing error handling, or data display bugs while refactoring the design — FIX THEM. Don't ignore problems just because "it's a design task". But DO NOT invent new features.
+
+6. **DO NOT REMOVE OR RENAME API CALLS** — The orchestrator endpoints (`/api/bots`, `/api/portfolio/stats`, etc.) and FreqTrade proxy endpoints (`/api/ft/{bot_id}/...`) are all correct. Don't touch the URL paths, request methods, or response parsing unless you find an actual bug.
+
+7. **DO NOT CHANGE THE DATA FLOW** — Components receive data via props, hooks, or direct API calls. Don't restructure how data flows between components unless the current approach is actually broken.
+
+### WHAT YOU ARE DOING:
+- Changing Tailwind classes to match the design HTML exactly
+- Restructuring JSX to match the design HTML element hierarchy
+- Adding/removing CSS classes to match the design
+- Fixing layout (grid, flex, spacing, colors, fonts, borders)
+- Making it pixel-perfect against `prototypes/DESIGN-LINEAR-EDGE-FULL.html`
+
+### WHAT YOU ARE NOT DOING:
+- Writing new API endpoints
+- Adding new data fetching logic
+- Creating mock/seed/demo data
+- Inventing new features or widgets
+- Removing working functionality
+- Changing TypeScript interfaces (unless fixing a real type bug)
 
 ---
 

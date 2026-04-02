@@ -809,6 +809,17 @@ export default function BacktestTab({ strategy, backtestBotId = 2, experimentId 
           }
         }
       } catch { /* history fetch failed */ }
+
+      // 3. Check if FT has a backtest currently running (page was closed mid-run)
+      try {
+        const btStatus = await botBacktestResults(backtestBotId);
+        const r = btStatus as unknown as Record<string, unknown>;
+        if (r.running === true) {
+          addLog('INFO', '🔄 Detected active backtest from previous session — resuming polling...');
+          setIsRunning(true);
+          setBtProgress('Resuming...');
+        }
+      } catch { /* no active backtest — normal */ }
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

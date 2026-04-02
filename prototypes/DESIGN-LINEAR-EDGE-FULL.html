@@ -285,9 +285,9 @@
           <div id="sd-open-trades" class="sd-tab-content p-4 flex flex-col gap-3" style="display:none">
               <h3 class="section-title">Open Trades (5)</h3>
               <div class="overflow-x-auto">
-                  <table class="w-full text-[11px] font-mono whitespace-nowrap">
-                      <thead><tr class="text-muted text-[9px] uppercase tracking-wider">
-                          <th class="text-left px-2 py-1.5 font-semibold">Pair</th><th class="text-left px-2 py-1.5 font-semibold">Side</th><th class="text-right px-2 py-1.5 font-semibold">open_rate</th><th class="text-right px-2 py-1.5 font-semibold">stake_amount</th><th class="text-right px-2 py-1.5 font-semibold">current_profit</th><th class="text-left px-2 py-1.5 font-semibold">open_date</th><th class="text-left px-2 py-1.5 font-semibold">enter_tag</th><th class="text-center px-2 py-1.5 font-semibold">AI</th>
+                  <table class="w-full text-[13px] font-mono whitespace-nowrap">
+                      <thead><tr class="text-muted text-[11px] uppercase tracking-widest">
+                          <th class="text-left px-2 py-1.5 font-semibold sortable filterable">Pair</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Side</th><th class="text-right px-2 py-1.5 font-semibold sortable">open_rate</th><th class="text-right px-2 py-1.5 font-semibold sortable">stake_amount</th><th class="text-right px-2 py-1.5 font-semibold sortable">current_profit</th><th class="text-left px-2 py-1.5 font-semibold sortable sort-desc">open_date</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">enter_tag</th><th class="text-center px-2 py-1.5 font-semibold">AI</th>
                       </tr></thead>
                       <tbody class="divide-y divide-white/[0.04]">
                           <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-white">BTC/USDT</td><td class="px-2 py-1.5 text-up font-bold">LONG</td><td class="px-2 py-1.5 text-right">67,420.50</td><td class="px-2 py-1.5 text-right">$500</td><td class="px-2 py-1.5 text-right text-up font-bold">+2.41%</td><td class="px-2 py-1.5 text-muted">03-31 14:22</td><td class="px-2 py-1.5"><span class="px-1.5 py-0.5 bg-blue-500/12 text-blue-400 rounded text-[9px]">ema_cross</span></td><td class="px-2 py-1.5 text-center"><button class="px-1.5 py-0.5 bg-purple-500/12 text-purple-400 rounded text-[9px] font-bold hover:bg-purple-500/25 transition-colors" title="View AI Validation">AI</button></td></tr>
@@ -304,9 +304,9 @@
           <div id="sd-closed-trades" class="sd-tab-content p-4 flex flex-col gap-3" style="display:none">
               <h3 class="section-title">Closed Trades (1,284)</h3>
               <div class="overflow-x-auto">
-                  <table class="w-full text-[11px] font-mono whitespace-nowrap">
-                      <thead><tr class="text-muted text-[9px] uppercase tracking-wider">
-                          <th class="text-left px-2 py-1.5 font-semibold">Pair</th><th class="text-left px-2 py-1.5 font-semibold">Side</th><th class="text-right px-2 py-1.5 font-semibold">open_rate</th><th class="text-right px-2 py-1.5 font-semibold">close_rate</th><th class="text-right px-2 py-1.5 font-semibold">close_profit_abs</th><th class="text-left px-2 py-1.5 font-semibold">enter_tag</th><th class="text-left px-2 py-1.5 font-semibold">exit_reason</th><th class="text-left px-2 py-1.5 font-semibold">open_date</th><th class="text-left px-2 py-1.5 font-semibold">close_date</th>
+                  <table class="w-full text-[13px] font-mono whitespace-nowrap">
+                      <thead><tr class="text-muted text-[11px] uppercase tracking-widest">
+                          <th class="text-left px-2 py-1.5 font-semibold sortable filterable">Pair</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Side</th><th class="text-right px-2 py-1.5 font-semibold sortable">open_rate</th><th class="text-right px-2 py-1.5 font-semibold sortable">close_rate</th><th class="text-right px-2 py-1.5 font-semibold sortable">close_profit_abs</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">enter_tag</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">exit_reason</th><th class="text-left px-2 py-1.5 font-semibold sortable sort-desc">open_date</th><th class="text-left px-2 py-1.5 font-semibold sortable">close_date</th>
                       </tr></thead>
                       <tbody class="divide-y divide-white/[0.04]">
                           <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-white">BTC/USDT</td><td class="px-2 py-1.5 text-up">LONG</td><td class="px-2 py-1.5 text-right">66,800</td><td class="px-2 py-1.5 text-right">67,420</td><td class="px-2 py-1.5 text-right text-up font-bold">+$31.00</td><td class="px-2 py-1.5"><span class="px-1.5 py-0.5 bg-blue-500/12 text-blue-400 rounded text-[9px]">ema_cross</span></td><td class="px-2 py-1.5 text-muted">roi</td><td class="px-2 py-1.5 text-muted">03-30 18:22</td><td class="px-2 py-1.5 text-muted">03-31 02:15</td></tr>
@@ -321,7 +321,7 @@
           <!-- ═══ TAB: PERFORMANCE ═══ -->
           <div id="sd-performance" class="sd-tab-content p-4 flex flex-col gap-3" style="display:none">
               <h3 class="section-title">Per-Pair Performance</h3>
-              <table class="w-full text-[11px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[9px] uppercase tracking-wider"><th class="text-left px-2 py-1.5 font-semibold">Pair</th><th class="text-right px-2 py-1.5 font-semibold">Trades</th><th class="text-right px-2 py-1.5 font-semibold">profit_abs</th><th class="text-right px-2 py-1.5 font-semibold">profit_ratio</th><th class="text-right px-2 py-1.5 font-semibold">Win Rate</th><th class="text-right px-2 py-1.5 font-semibold">Avg Profit</th><th class="text-right px-2 py-1.5 font-semibold">Avg Dur.</th></tr></thead>
+              <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[11px] uppercase tracking-widest"><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Pair</th><th class="text-right px-2 py-1.5 font-semibold sortable">Trades</th><th class="text-right px-2 py-1.5 font-semibold sortable sort-desc">profit_abs</th><th class="text-right px-2 py-1.5 font-semibold sortable">profit_ratio</th><th class="text-right px-2 py-1.5 font-semibold sortable">Win Rate</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg Profit</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg Dur.</th></tr></thead>
               <tbody class="divide-y divide-white/[0.04]">
                   <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-white">BTC/USDT</td><td class="px-2 py-1.5 text-right">320</td><td class="px-2 py-1.5 text-right text-up font-bold">+$8,420</td><td class="px-2 py-1.5 text-right text-up">+16.84%</td><td class="px-2 py-1.5 text-right text-up">74.1%</td><td class="px-2 py-1.5 text-right text-up">+0.82%</td><td class="px-2 py-1.5 text-right text-muted">2h 15m</td></tr>
                   <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-white">ETH/USDT</td><td class="px-2 py-1.5 text-right">285</td><td class="px-2 py-1.5 text-right text-up font-bold">+$5,210</td><td class="px-2 py-1.5 text-right text-up">+10.42%</td><td class="px-2 py-1.5 text-right text-up">71.2%</td><td class="px-2 py-1.5 text-right text-up">+0.64%</td><td class="px-2 py-1.5 text-right text-muted">2h 40m</td></tr>
@@ -334,7 +334,7 @@
           <!-- ═══ TAB: ENTRY/EXIT ═══ -->
           <div id="sd-entry-exit" class="sd-tab-content p-4 flex flex-col gap-4" style="display:none">
               <h3 class="section-title">Entry Tags</h3>
-              <table class="w-full text-[11px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[9px] uppercase tracking-wider"><th class="text-left px-2 py-1.5 font-semibold">Tag</th><th class="text-right px-2 py-1.5 font-semibold">Trades</th><th class="text-right px-2 py-1.5 font-semibold">Wins</th><th class="text-right px-2 py-1.5 font-semibold">Losses</th><th class="text-right px-2 py-1.5 font-semibold">Win Rate</th><th class="text-right px-2 py-1.5 font-semibold">Avg P&amp;L %</th><th class="text-right px-2 py-1.5 font-semibold">Total P&amp;L</th><th class="text-right px-2 py-1.5 font-semibold">Avg Dur.</th><th class="text-left px-2 py-1.5 font-semibold">Best Pair</th><th class="text-right px-2 py-1.5 font-semibold">Expectancy</th></tr></thead>
+              <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[11px] uppercase tracking-widest"><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Tag</th><th class="text-right px-2 py-1.5 font-semibold sortable">Trades</th><th class="text-right px-2 py-1.5 font-semibold sortable">Wins</th><th class="text-right px-2 py-1.5 font-semibold sortable">Losses</th><th class="text-right px-2 py-1.5 font-semibold sortable">Win Rate</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg P&amp;L %</th><th class="text-right px-2 py-1.5 font-semibold sortable sort-desc">Total P&amp;L</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg Dur.</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Best Pair</th><th class="text-right px-2 py-1.5 font-semibold sortable">Expectancy</th></tr></thead>
                       <tbody class="divide-y divide-white/[0.04]">
                           <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5"><span class="px-1.5 py-0.5 bg-blue-500/12 text-blue-400 rounded text-[9px]">rsi_oversold</span></td><td class="px-2 py-1.5 text-right">412</td><td class="px-2 py-1.5 text-right text-up">305</td><td class="px-2 py-1.5 text-right text-down">107</td><td class="px-2 py-1.5 text-right text-up">74.0%</td><td class="px-2 py-1.5 text-right text-up">+1.02%</td><td class="px-2 py-1.5 text-right text-up font-bold">+$4,210</td><td class="px-2 py-1.5 text-right text-muted">2h 15m</td><td class="px-2 py-1.5 text-white">SOL/USDT</td><td class="px-2 py-1.5 text-right text-up">$10.22</td></tr>
                           <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5"><span class="px-1.5 py-0.5 bg-blue-500/12 text-blue-400 rounded text-[9px]">ema_cross</span></td><td class="px-2 py-1.5 text-right">284</td><td class="px-2 py-1.5 text-right text-up">193</td><td class="px-2 py-1.5 text-right text-down">91</td><td class="px-2 py-1.5 text-right text-up">68.0%</td><td class="px-2 py-1.5 text-right text-up">+0.74%</td><td class="px-2 py-1.5 text-right text-up font-bold">+$2,100</td><td class="px-2 py-1.5 text-right text-muted">3h 40m</td><td class="px-2 py-1.5 text-white">BTC/USDT</td><td class="px-2 py-1.5 text-right text-up">$7.39</td></tr>
@@ -343,7 +343,7 @@
                           <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5"><span class="px-1.5 py-0.5 bg-blue-500/12 text-blue-400 rounded text-[9px]">vol_breakout</span></td><td class="px-2 py-1.5 text-right">98</td><td class="px-2 py-1.5 text-right text-up">37</td><td class="px-2 py-1.5 text-right text-down">61</td><td class="px-2 py-1.5 text-right text-down">37.8%</td><td class="px-2 py-1.5 text-right text-down">-0.69%</td><td class="px-2 py-1.5 text-right text-down font-bold">-$680</td><td class="px-2 py-1.5 text-right text-muted">4h 20m</td><td class="px-2 py-1.5 text-white">BNB/USDT</td><td class="px-2 py-1.5 text-right text-down">-$6.94</td></tr>
                       </tbody></table>
               <h3 class="section-title">Exit Reasons</h3>
-              <table class="w-full text-[11px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[9px] uppercase tracking-wider"><th class="text-left px-2 py-1.5 font-semibold">Reason</th><th class="text-right px-2 py-1.5 font-semibold">Exits</th><th class="text-right px-2 py-1.5 font-semibold">Wins</th><th class="text-right px-2 py-1.5 font-semibold">Losses</th><th class="text-right px-2 py-1.5 font-semibold">Win Rate</th><th class="text-right px-2 py-1.5 font-semibold">Avg P&amp;L %</th><th class="text-right px-2 py-1.5 font-semibold">Total P&amp;L</th><th class="text-right px-2 py-1.5 font-semibold">Avg Dur.</th><th class="text-left px-2 py-1.5 font-semibold">Best Pair</th><th class="text-right px-2 py-1.5 font-semibold">Expectancy</th></tr></thead>
+              <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[11px] uppercase tracking-widest"><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Reason</th><th class="text-right px-2 py-1.5 font-semibold sortable">Exits</th><th class="text-right px-2 py-1.5 font-semibold sortable">Wins</th><th class="text-right px-2 py-1.5 font-semibold sortable">Losses</th><th class="text-right px-2 py-1.5 font-semibold sortable">Win Rate</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg P&amp;L %</th><th class="text-right px-2 py-1.5 font-semibold sortable sort-desc">Total P&amp;L</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg Dur.</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Best Pair</th><th class="text-right px-2 py-1.5 font-semibold sortable">Expectancy</th></tr></thead>
                       <tbody class="divide-y divide-white/[0.04]">
                           <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-white">roi</td><td class="px-2 py-1.5 text-right">620</td><td class="px-2 py-1.5 text-right text-up">620</td><td class="px-2 py-1.5 text-right text-muted">0</td><td class="px-2 py-1.5 text-right text-up">100%</td><td class="px-2 py-1.5 text-right text-up">+2.29%</td><td class="px-2 py-1.5 text-right text-up font-bold">+$14,200</td><td class="px-2 py-1.5 text-right text-muted">2h 40m</td><td class="px-2 py-1.5 text-white">BTC/USDT</td><td class="px-2 py-1.5 text-right text-up">$22.90</td></tr>
                           <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-white">trailing_stop</td><td class="px-2 py-1.5 text-right">340</td><td class="px-2 py-1.5 text-right text-up">266</td><td class="px-2 py-1.5 text-right text-down">74</td><td class="px-2 py-1.5 text-right text-up">78.2%</td><td class="px-2 py-1.5 text-right text-up">+1.12%</td><td class="px-2 py-1.5 text-right text-up font-bold">+$6,140</td><td class="px-2 py-1.5 text-right text-muted">3h 55m</td><td class="px-2 py-1.5 text-white">SOL/USDT</td><td class="px-2 py-1.5 text-right text-up">$18.06</td></tr>
@@ -629,7 +629,7 @@
               <div>
                   <h3 class="section-title mb-2 flex items-center gap-2">Open Positions <span class="text-white/30">(6)</span></h3>
                   <div class="overflow-x-auto">
-                  <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr>
+                  <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[11px] uppercase tracking-widest"><tr>
                       <th class="text-left py-1.5 px-1 sortable filterable">Pair</th><th class="text-left py-1.5 px-1 sortable filterable">Side</th><th class="text-right py-1.5 px-1 sortable">Leverage</th><th class="text-right py-1.5 px-1 sortable">Entry</th><th class="text-right py-1.5 px-1 sortable">Current</th><th class="text-right py-1.5 px-1 sortable">Stake</th><th class="text-right py-1.5 px-1 sortable">P&amp;L</th><th class="text-right py-1.5 px-1 sortable">P&amp;L %</th><th class="text-right py-1.5 px-1 sortable">Duration</th><th class="text-left py-1.5 px-1 sortable filterable">Enter Tag</th><th class="text-right py-1.5 px-1 sortable">SL</th>
                   </tr></thead>
                   <tbody class="divide-y divide-white/[0.04]">
@@ -641,7 +641,7 @@
               <div>
                   <h3 class="section-title mb-2 flex items-center gap-2">Closed Trades <span class="text-white/30">(last 10)</span></h3>
                   <div class="overflow-x-auto">
-                  <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr>
+                  <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[11px] uppercase tracking-widest"><tr>
                       <th class="text-left py-1.5 px-1 sortable filterable">Pair</th><th class="text-left py-1.5 px-1 sortable filterable">Side</th><th class="text-right py-1.5 px-1 sortable">Lev</th><th class="text-right py-1.5 px-1 sortable">Entry</th><th class="text-right py-1.5 px-1 sortable">Exit</th><th class="text-right py-1.5 px-1 sortable">Stake</th><th class="text-right py-1.5 px-1 sortable">P&amp;L</th><th class="text-right py-1.5 px-1 sortable">P&amp;L %</th><th class="text-right py-1.5 px-1 sortable">Duration</th><th class="text-left py-1.5 px-1 sortable filterable">Enter Tag</th><th class="text-left py-1.5 px-1 sortable filterable">Exit Reason</th>
                   </tr></thead>
                   <tbody class="divide-y divide-white/[0.04]">
@@ -665,7 +665,7 @@
               <!-- Pair Performance -->
               <div class="bg-surface l-bd rounded p-3">
                   <h3 class="section-title mb-2">Per-Pair Performance</h3>
-                   <table class="w-full text-[11px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[9px] uppercase tracking-wider"><th class="text-left px-2 py-1.5 font-semibold">Pair</th><th class="text-right px-2 py-1.5 font-semibold">Trades</th><th class="text-right px-2 py-1.5 font-semibold">profit_abs</th><th class="text-right px-2 py-1.5 font-semibold">profit_ratio</th><th class="text-right px-2 py-1.5 font-semibold">Win Rate</th><th class="text-right px-2 py-1.5 font-semibold">Avg Profit</th><th class="text-right px-2 py-1.5 font-semibold">Avg Dur.</th></tr></thead>
+                   <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[11px] uppercase tracking-widest"><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Pair</th><th class="text-right px-2 py-1.5 font-semibold sortable">Trades</th><th class="text-right px-2 py-1.5 font-semibold sortable sort-desc">profit_abs</th><th class="text-right px-2 py-1.5 font-semibold sortable">profit_ratio</th><th class="text-right px-2 py-1.5 font-semibold sortable">Win Rate</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg Profit</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg Dur.</th></tr></thead>
                    <tbody class="divide-y divide-white/[0.04]">
                        <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-white">BTC/USDT</td><td class="px-2 py-1.5 text-right">128</td><td class="px-2 py-1.5 text-right text-up font-bold">+$1,840</td><td class="px-2 py-1.5 text-right text-up">+14.38%</td><td class="px-2 py-1.5 text-right text-up">73.4%</td><td class="px-2 py-1.5 text-right text-up">+0.82%</td><td class="px-2 py-1.5 text-right text-muted">2h 15m</td></tr>
                        <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-white">SOL/USDT</td><td class="px-2 py-1.5 text-right">32</td><td class="px-2 py-1.5 text-right text-up font-bold">+$2,140</td><td class="px-2 py-1.5 text-right text-up">+66.88%</td><td class="px-2 py-1.5 text-right text-up">78.1%</td><td class="px-2 py-1.5 text-right text-up">+2.09%</td><td class="px-2 py-1.5 text-right text-muted">3h 40m</td></tr>
@@ -678,7 +678,7 @@
               <div class="grid grid-cols-2 gap-2.5">
                   <div class="bg-surface l-bd rounded p-3">
                       <h3 class="section-title mb-2">Entry Tags</h3>
-                       <table class="w-full text-[11px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[9px] uppercase tracking-wider"><th class="text-left px-2 py-1.5 font-semibold">Tag</th><th class="text-right px-2 py-1.5 font-semibold">Trades</th><th class="text-right px-2 py-1.5 font-semibold">Wins</th><th class="text-right px-2 py-1.5 font-semibold">Losses</th><th class="text-right px-2 py-1.5 font-semibold">Win Rate</th><th class="text-right px-2 py-1.5 font-semibold">Avg P&amp;L %</th><th class="text-right px-2 py-1.5 font-semibold">Total P&amp;L</th><th class="text-right px-2 py-1.5 font-semibold">Avg Dur.</th><th class="text-left px-2 py-1.5 font-semibold">Best Pair</th><th class="text-right px-2 py-1.5 font-semibold">Expectancy</th></tr></thead>
+                       <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[11px] uppercase tracking-widest"><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Tag</th><th class="text-right px-2 py-1.5 font-semibold sortable">Trades</th><th class="text-right px-2 py-1.5 font-semibold sortable">Wins</th><th class="text-right px-2 py-1.5 font-semibold sortable">Losses</th><th class="text-right px-2 py-1.5 font-semibold sortable">Win Rate</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg P&amp;L %</th><th class="text-right px-2 py-1.5 font-semibold sortable sort-desc">Total P&amp;L</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg Dur.</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Best Pair</th><th class="text-right px-2 py-1.5 font-semibold sortable">Expectancy</th></tr></thead>
                       <tbody class="divide-y divide-white/[0.04]">
                           <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5"><span class="px-1.5 py-0.5 bg-blue-500/12 text-blue-400 rounded text-[9px]">rsi_oversold</span></td><td class="px-2 py-1.5 text-right">412</td><td class="px-2 py-1.5 text-right text-up">305</td><td class="px-2 py-1.5 text-right text-down">107</td><td class="px-2 py-1.5 text-right text-up">74.0%</td><td class="px-2 py-1.5 text-right text-up">+1.02%</td><td class="px-2 py-1.5 text-right text-up font-bold">+$4,210</td><td class="px-2 py-1.5 text-right text-muted">2h 15m</td><td class="px-2 py-1.5 text-white">SOL/USDT</td><td class="px-2 py-1.5 text-right text-up">$10.22</td></tr>
                           <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5"><span class="px-1.5 py-0.5 bg-blue-500/12 text-blue-400 rounded text-[9px]">ema_cross</span></td><td class="px-2 py-1.5 text-right">284</td><td class="px-2 py-1.5 text-right text-up">193</td><td class="px-2 py-1.5 text-right text-down">91</td><td class="px-2 py-1.5 text-right text-up">68.0%</td><td class="px-2 py-1.5 text-right text-up">+0.74%</td><td class="px-2 py-1.5 text-right text-up font-bold">+$2,100</td><td class="px-2 py-1.5 text-right text-muted">3h 40m</td><td class="px-2 py-1.5 text-white">BTC/USDT</td><td class="px-2 py-1.5 text-right text-up">$7.39</td></tr>
@@ -689,7 +689,7 @@
                   </div>
                   <div class="bg-surface l-bd rounded p-3">
                       <h3 class="section-title mb-2">Exit Reasons</h3>
-                       <table class="w-full text-[11px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[9px] uppercase tracking-wider"><th class="text-left px-2 py-1.5 font-semibold">Reason</th><th class="text-right px-2 py-1.5 font-semibold">Exits</th><th class="text-right px-2 py-1.5 font-semibold">Wins</th><th class="text-right px-2 py-1.5 font-semibold">Losses</th><th class="text-right px-2 py-1.5 font-semibold">Win Rate</th><th class="text-right px-2 py-1.5 font-semibold">Avg P&amp;L %</th><th class="text-right px-2 py-1.5 font-semibold">Total P&amp;L</th><th class="text-right px-2 py-1.5 font-semibold">Avg Dur.</th><th class="text-left px-2 py-1.5 font-semibold">Best Pair</th><th class="text-right px-2 py-1.5 font-semibold">Expectancy</th></tr></thead>
+                       <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[11px] uppercase tracking-widest"><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Reason</th><th class="text-right px-2 py-1.5 font-semibold sortable">Exits</th><th class="text-right px-2 py-1.5 font-semibold sortable">Wins</th><th class="text-right px-2 py-1.5 font-semibold sortable">Losses</th><th class="text-right px-2 py-1.5 font-semibold sortable">Win Rate</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg P&amp;L %</th><th class="text-right px-2 py-1.5 font-semibold sortable sort-desc">Total P&amp;L</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg Dur.</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Best Pair</th><th class="text-right px-2 py-1.5 font-semibold sortable">Expectancy</th></tr></thead>
                       <tbody class="divide-y divide-white/[0.04]">
                           <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-white">roi</td><td class="px-2 py-1.5 text-right">620</td><td class="px-2 py-1.5 text-right text-up">620</td><td class="px-2 py-1.5 text-right text-muted">0</td><td class="px-2 py-1.5 text-right text-up">100%</td><td class="px-2 py-1.5 text-right text-up">+2.29%</td><td class="px-2 py-1.5 text-right text-up font-bold">+$14,200</td><td class="px-2 py-1.5 text-right text-muted">2h 40m</td><td class="px-2 py-1.5 text-white">BTC/USDT</td><td class="px-2 py-1.5 text-right text-up">$22.90</td></tr>
                           <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-white">trailing_stop</td><td class="px-2 py-1.5 text-right">340</td><td class="px-2 py-1.5 text-right text-up">266</td><td class="px-2 py-1.5 text-right text-down">74</td><td class="px-2 py-1.5 text-right text-up">78.2%</td><td class="px-2 py-1.5 text-right text-up">+1.12%</td><td class="px-2 py-1.5 text-right text-up font-bold">+$6,140</td><td class="px-2 py-1.5 text-right text-muted">3h 55m</td><td class="px-2 py-1.5 text-white">SOL/USDT</td><td class="px-2 py-1.5 text-right text-up">$18.06</td></tr>
@@ -746,7 +746,7 @@
               <!-- Active Locks -->
               <div class="bg-surface l-bd rounded p-3">
                   <h3 class="section-title mb-2">Active Locks</h3>
-                  <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[9px] uppercase tracking-wider"><tr><th class="text-left py-1 sortable filterable">Pair</th><th class="text-left py-1 sortable filterable">Reason</th><th class="text-right py-1 sortable">Until</th></tr></thead>
+                  <table class="w-full text-[11px] font-mono"><thead class="text-muted text-[11px] uppercase tracking-widest"><tr><th class="text-left py-1 sortable filterable">Pair</th><th class="text-left py-1 sortable filterable">Reason</th><th class="text-right py-1 sortable">Until</th></tr></thead>
                   <tbody class="divide-y divide-white/[0.04]">
                       <tr><td class="py-1.5 text-white font-medium">SOL/USDT</td><td class="py-1.5 text-muted">StoplossGuard</td><td class="py-1.5 text-right text-down">14m left</td></tr>
                   </tbody></table>
@@ -2223,9 +2223,9 @@
                           </div>
                           <!-- TAB: Closed Trades -->
                           <div id="bt-trades" class="bt-tab-content flex-1 overflow-x-auto overflow-y-auto p-0">
-                          <table class="w-full text-[11px] font-mono whitespace-nowrap">
-                              <thead class="sticky top-0 bg-black z-10"><tr class="text-muted text-[9px] uppercase tracking-wider">
-                                  <th class="text-left px-2 py-1.5 font-semibold">Date</th><th class="text-left px-2 py-1.5 font-semibold">Pair</th><th class="text-center px-2 py-1.5 font-semibold">Side</th><th class="text-right px-2 py-1.5 font-semibold">Entry</th><th class="text-right px-2 py-1.5 font-semibold">Exit</th><th class="text-right px-2 py-1.5 font-semibold">Profit %</th><th class="text-right px-2 py-1.5 font-semibold">Value</th><th class="text-right px-2 py-1.5 font-semibold">Fee</th><th class="text-left px-2 py-1.5 font-semibold">Duration</th><th class="text-left px-2 py-1.5 font-semibold">Exit Reason</th>
+                          <table class="w-full text-[13px] font-mono whitespace-nowrap">
+                              <thead class="sticky top-0 bg-black z-10"><tr class="text-muted text-[11px] uppercase tracking-widest">
+                                  <th class="text-left px-2 py-1.5 font-semibold sortable sort-desc">Date</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Pair</th><th class="text-center px-2 py-1.5 font-semibold sortable filterable">Side</th><th class="text-right px-2 py-1.5 font-semibold sortable">Entry</th><th class="text-right px-2 py-1.5 font-semibold sortable">Exit</th><th class="text-right px-2 py-1.5 font-semibold sortable">Profit %</th><th class="text-right px-2 py-1.5 font-semibold sortable">Value</th><th class="text-right px-2 py-1.5 font-semibold sortable">Fee</th><th class="text-left px-2 py-1.5 font-semibold sortable">Duration</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Exit Reason</th>
                               </tr></thead>
                               <tbody class="divide-y divide-white/[0.04]">
                                   <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">01-05 08:00</td><td class="px-2 py-1.5 text-white">BTC/USDT</td><td class="px-2 py-1.5 text-center"><span class="bg-up/12 text-up px-1 py-0.5 rounded text-[9px] font-bold">LONG</span></td><td class="px-2 py-1.5 text-right">64,220</td><td class="px-2 py-1.5 text-right">65,110</td><td class="px-2 py-1.5 text-right text-up font-bold">+1.38%</td><td class="px-2 py-1.5 text-right text-up">+$138.60</td><td class="px-2 py-1.5 text-right text-muted">$1.20</td><td class="px-2 py-1.5 text-muted">8h</td><td class="px-2 py-1.5 text-muted">roi</td></tr>
@@ -2238,7 +2238,7 @@
                           </div>
                           <!-- TAB: Per-Pair -->
                           <div id="bt-perpair" class="bt-tab-content flex-1 overflow-x-auto overflow-y-auto" style="display:none">
-                      <table class="w-full text-[11px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[9px] uppercase tracking-wider"><th class="text-left px-2 py-1.5 font-semibold">Pair</th><th class="text-right px-2 py-1.5 font-semibold">Trades</th><th class="text-right px-2 py-1.5 font-semibold">profit_abs</th><th class="text-right px-2 py-1.5 font-semibold">profit_ratio</th><th class="text-right px-2 py-1.5 font-semibold">Win Rate</th><th class="text-right px-2 py-1.5 font-semibold">Avg Profit</th><th class="text-right px-2 py-1.5 font-semibold">Avg Dur.</th></tr></thead>
+                      <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[11px] uppercase tracking-widest"><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Pair</th><th class="text-right px-2 py-1.5 font-semibold sortable">Trades</th><th class="text-right px-2 py-1.5 font-semibold sortable sort-desc">profit_abs</th><th class="text-right px-2 py-1.5 font-semibold sortable">profit_ratio</th><th class="text-right px-2 py-1.5 font-semibold sortable">Win Rate</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg Profit</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg Dur.</th></tr></thead>
                       <tbody class="divide-y divide-white/[0.04]">
                           <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-white">BTC/USDT</td><td class="px-2 py-1.5 text-right">45</td><td class="px-2 py-1.5 text-right text-up font-bold">+$1,420</td><td class="px-2 py-1.5 text-right text-up">+54.0%</td><td class="px-2 py-1.5 text-right text-up">76.2%</td><td class="px-2 py-1.5 text-right text-up">+1.2%</td><td class="px-2 py-1.5 text-right text-muted">3h 40m</td></tr>
                           <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-white">ETH/USDT</td><td class="px-2 py-1.5 text-right">38</td><td class="px-2 py-1.5 text-right text-up font-bold">+$1,120</td><td class="px-2 py-1.5 text-right text-up">+34.2%</td><td class="px-2 py-1.5 text-right text-up">73.7%</td><td class="px-2 py-1.5 text-right text-up">+0.9%</td><td class="px-2 py-1.5 text-right text-muted">4h 10m</td></tr>
@@ -2249,7 +2249,7 @@
                           </div>
                           <!-- TAB: Entry Tags -->
                           <div id="bt-entry" class="bt-tab-content flex-1 overflow-x-auto overflow-y-auto" style="display:none">
-                      <table class="w-full text-[11px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[9px] uppercase tracking-wider"><th class="text-left px-2 py-1.5 font-semibold">Tag</th><th class="text-right px-2 py-1.5 font-semibold">Trades</th><th class="text-right px-2 py-1.5 font-semibold">Wins</th><th class="text-right px-2 py-1.5 font-semibold">Losses</th><th class="text-right px-2 py-1.5 font-semibold">Win Rate</th><th class="text-right px-2 py-1.5 font-semibold">Avg P&amp;L %</th><th class="text-right px-2 py-1.5 font-semibold">Total P&amp;L</th><th class="text-right px-2 py-1.5 font-semibold">Avg Dur.</th><th class="text-left px-2 py-1.5 font-semibold">Best Pair</th><th class="text-right px-2 py-1.5 font-semibold">Expectancy</th></tr></thead>
+                      <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[11px] uppercase tracking-widest"><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Tag</th><th class="text-right px-2 py-1.5 font-semibold sortable">Trades</th><th class="text-right px-2 py-1.5 font-semibold sortable">Wins</th><th class="text-right px-2 py-1.5 font-semibold sortable">Losses</th><th class="text-right px-2 py-1.5 font-semibold sortable">Win Rate</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg P&amp;L %</th><th class="text-right px-2 py-1.5 font-semibold sortable sort-desc">Total P&amp;L</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg Dur.</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Best Pair</th><th class="text-right px-2 py-1.5 font-semibold sortable">Expectancy</th></tr></thead>
                       <tbody class="divide-y divide-white/[0.04]">
                           <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5"><span class="px-1.5 py-0.5 bg-blue-500/12 text-blue-400 rounded text-[9px]">rsi_oversold</span></td><td class="px-2 py-1.5 text-right">412</td><td class="px-2 py-1.5 text-right text-up">305</td><td class="px-2 py-1.5 text-right text-down">107</td><td class="px-2 py-1.5 text-right text-up">74.0%</td><td class="px-2 py-1.5 text-right text-up">+1.02%</td><td class="px-2 py-1.5 text-right text-up font-bold">+$4,210</td><td class="px-2 py-1.5 text-right text-muted">2h 15m</td><td class="px-2 py-1.5 text-white">SOL/USDT</td><td class="px-2 py-1.5 text-right text-up">$10.22</td></tr>
                           <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5"><span class="px-1.5 py-0.5 bg-blue-500/12 text-blue-400 rounded text-[9px]">ema_cross</span></td><td class="px-2 py-1.5 text-right">284</td><td class="px-2 py-1.5 text-right text-up">193</td><td class="px-2 py-1.5 text-right text-down">91</td><td class="px-2 py-1.5 text-right text-up">68.0%</td><td class="px-2 py-1.5 text-right text-up">+0.74%</td><td class="px-2 py-1.5 text-right text-up font-bold">+$2,100</td><td class="px-2 py-1.5 text-right text-muted">3h 40m</td><td class="px-2 py-1.5 text-white">BTC/USDT</td><td class="px-2 py-1.5 text-right text-up">$7.39</td></tr>
@@ -2260,7 +2260,7 @@
                           </div>
                           <!-- TAB: Exit Reasons -->
                           <div id="bt-exit" class="bt-tab-content flex-1 overflow-x-auto overflow-y-auto" style="display:none">
-                      <table class="w-full text-[11px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[9px] uppercase tracking-wider"><th class="text-left px-2 py-1.5 font-semibold">Reason</th><th class="text-right px-2 py-1.5 font-semibold">Exits</th><th class="text-right px-2 py-1.5 font-semibold">Wins</th><th class="text-right px-2 py-1.5 font-semibold">Losses</th><th class="text-right px-2 py-1.5 font-semibold">Win Rate</th><th class="text-right px-2 py-1.5 font-semibold">Avg P&amp;L %</th><th class="text-right px-2 py-1.5 font-semibold">Total P&amp;L</th><th class="text-right px-2 py-1.5 font-semibold">Avg Dur.</th><th class="text-left px-2 py-1.5 font-semibold">Best Pair</th><th class="text-right px-2 py-1.5 font-semibold">Expectancy</th></tr></thead>
+                      <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[11px] uppercase tracking-widest"><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Reason</th><th class="text-right px-2 py-1.5 font-semibold sortable">Exits</th><th class="text-right px-2 py-1.5 font-semibold sortable">Wins</th><th class="text-right px-2 py-1.5 font-semibold sortable">Losses</th><th class="text-right px-2 py-1.5 font-semibold sortable">Win Rate</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg P&amp;L %</th><th class="text-right px-2 py-1.5 font-semibold sortable sort-desc">Total P&amp;L</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg Dur.</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Best Pair</th><th class="text-right px-2 py-1.5 font-semibold sortable">Expectancy</th></tr></thead>
                       <tbody class="divide-y divide-white/[0.04]">
                           <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-white">roi</td><td class="px-2 py-1.5 text-right">620</td><td class="px-2 py-1.5 text-right text-up">620</td><td class="px-2 py-1.5 text-right text-muted">0</td><td class="px-2 py-1.5 text-right text-up">100%</td><td class="px-2 py-1.5 text-right text-up">+2.29%</td><td class="px-2 py-1.5 text-right text-up font-bold">+$14,200</td><td class="px-2 py-1.5 text-right text-muted">2h 40m</td><td class="px-2 py-1.5 text-white">BTC/USDT</td><td class="px-2 py-1.5 text-right text-up">$22.90</td></tr>
                           <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-white">trailing_stop</td><td class="px-2 py-1.5 text-right">340</td><td class="px-2 py-1.5 text-right text-up">266</td><td class="px-2 py-1.5 text-right text-down">74</td><td class="px-2 py-1.5 text-right text-up">78.2%</td><td class="px-2 py-1.5 text-right text-up">+1.12%</td><td class="px-2 py-1.5 text-right text-up font-bold">+$6,140</td><td class="px-2 py-1.5 text-right text-muted">3h 55m</td><td class="px-2 py-1.5 text-white">SOL/USDT</td><td class="px-2 py-1.5 text-right text-up">$18.06</td></tr>
@@ -2270,7 +2270,7 @@
                           </div>
                           <!-- TAB: History -->
                           <div id="bt-history" class="bt-tab-content flex-1 overflow-x-auto overflow-y-auto" style="display:none">
-                      <table class="w-full text-[11px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[9px] uppercase tracking-wider"><th class="text-left px-2 py-1.5 font-semibold">#</th><th class="text-left px-2 py-1.5 font-semibold">Run Date</th><th class="text-left px-2 py-1.5 font-semibold">TF</th><th class="text-left px-2 py-1.5 font-semibold">Timerange</th><th class="text-right px-2 py-1.5 font-semibold">Trades</th><th class="text-right px-2 py-1.5 font-semibold">Profit</th><th class="text-right px-2 py-1.5 font-semibold">Win%</th><th class="text-right px-2 py-1.5 font-semibold">Sharpe</th><th class="text-center px-2 py-1.5 font-semibold">Actions</th></tr></thead>
+                      <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[11px] uppercase tracking-widest"><th class="text-left px-2 py-1.5 font-semibold sortable">#</th><th class="text-left px-2 py-1.5 font-semibold sortable sort-desc">Run Date</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">TF</th><th class="text-left px-2 py-1.5 font-semibold sortable">Timerange</th><th class="text-right px-2 py-1.5 font-semibold sortable">Trades</th><th class="text-right px-2 py-1.5 font-semibold sortable">Profit</th><th class="text-right px-2 py-1.5 font-semibold sortable">Win%</th><th class="text-right px-2 py-1.5 font-semibold sortable">Sharpe</th><th class="text-center px-2 py-1.5 font-semibold">Actions</th></tr></thead>
                       <tbody class="divide-y divide-white/[0.04]">
                           <tr class="hover:bg-white/[0.03] bg-up/[0.02]"><td class="px-2 py-1.5 text-up font-bold">★1</td><td class="px-2 py-1.5 text-muted">2026-03-30 21:14</td><td class="px-2 py-1.5">1h</td><td class="px-2 py-1.5 text-muted">2024-01-01 → 2025-01-01</td><td class="px-2 py-1.5 text-right">142</td><td class="px-2 py-1.5 text-right text-up font-bold">+42.1%</td><td class="px-2 py-1.5 text-right">72.4%</td><td class="px-2 py-1.5 text-right">3.92</td><td class="px-2 py-1.5 text-center"><button class="px-2 py-0.5 l-bd rounded text-[9px] text-muted hover:text-white hover:bg-white/5 transition-colors">Load</button> <button class="px-2 py-0.5 l-bd rounded text-[9px] text-down/60 hover:text-down hover:bg-down/10 transition-colors">Del</button></td></tr>
                           <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">2</td><td class="px-2 py-1.5 text-muted">2026-03-29 14:20</td><td class="px-2 py-1.5">4h</td><td class="px-2 py-1.5 text-muted">2023-01-01 → 2024-01-01</td><td class="px-2 py-1.5 text-right">98</td><td class="px-2 py-1.5 text-right text-up font-bold">+21.4%</td><td class="px-2 py-1.5 text-right">68.1%</td><td class="px-2 py-1.5 text-right">2.80</td><td class="px-2 py-1.5 text-center"><button class="px-2 py-0.5 l-bd rounded text-[9px] text-muted hover:text-white hover:bg-white/5 transition-colors">Load</button> <button class="px-2 py-0.5 l-bd rounded text-[9px] text-down/60 hover:text-down hover:bg-down/10 transition-colors">Del</button></td></tr>
@@ -2489,8 +2489,8 @@
                           </div>
                           <!-- TAB: Epoch Results — real FreqTrade output fields -->
                           <div id="ho-epochs" class="ho-tab-content flex-1 overflow-x-auto overflow-y-auto">
-                              <table class="w-full text-[11px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-black z-10"><tr class="text-muted text-[9px] uppercase tracking-wider">
-                                  <th class="text-left px-2 py-1.5 font-semibold">Epoch</th><th class="text-right px-2 py-1.5 font-semibold">Trades</th><th class="text-right px-2 py-1.5 font-semibold">Avg Profit</th><th class="text-right px-2 py-1.5 font-semibold">Total Profit</th><th class="text-right px-2 py-1.5 font-semibold">Profit $</th><th class="text-right px-2 py-1.5 font-semibold">Avg Dur.</th><th class="text-right px-2 py-1.5 font-semibold">Win%</th><th class="text-right px-2 py-1.5 font-semibold">Max DD</th><th class="text-right px-2 py-1.5 font-semibold">Objective</th>
+                              <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-black z-10"><tr class="text-muted text-[11px] uppercase tracking-widest">
+                                  <th class="text-left px-2 py-1.5 font-semibold sortable">Epoch</th><th class="text-right px-2 py-1.5 font-semibold sortable">Trades</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg Profit</th><th class="text-right px-2 py-1.5 font-semibold sortable sort-desc">Total Profit</th><th class="text-right px-2 py-1.5 font-semibold sortable">Profit $</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg Dur.</th><th class="text-right px-2 py-1.5 font-semibold sortable">Win%</th><th class="text-right px-2 py-1.5 font-semibold sortable">Max DD</th><th class="text-right px-2 py-1.5 font-semibold sortable">Objective</th>
                               </tr></thead><tbody class="divide-y divide-white/[0.04]">
                                   <tr class="hover:bg-white/[0.03] bg-up/[0.02]"><td class="px-2 py-1.5 text-up font-bold">★147</td><td class="px-2 py-1.5 text-right">142</td><td class="px-2 py-1.5 text-right text-up">+0.30%</td><td class="px-2 py-1.5 text-right text-up font-bold">+42.12%</td><td class="px-2 py-1.5 text-right text-up">+$4,212</td><td class="px-2 py-1.5 text-right text-muted">4:22:00</td><td class="px-2 py-1.5 text-right">72.4%</td><td class="px-2 py-1.5 text-right text-down">-2.11%</td><td class="px-2 py-1.5 text-right text-up font-bold">-0.15550</td></tr>
                                   <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">*142</td><td class="px-2 py-1.5 text-right">138</td><td class="px-2 py-1.5 text-right text-up">+0.28%</td><td class="px-2 py-1.5 text-right text-up">+38.10%</td><td class="px-2 py-1.5 text-right text-up">+$3,810</td><td class="px-2 py-1.5 text-right text-muted">4:45:00</td><td class="px-2 py-1.5 text-right">70.2%</td><td class="px-2 py-1.5 text-right text-down">-2.80%</td><td class="px-2 py-1.5 text-right text-muted">-0.14800</td></tr>
@@ -2545,7 +2545,7 @@
                           </div>
                           <!-- TAB: Compare Runs -->
                           <div id="ho-compare" class="ho-tab-content flex-1 overflow-x-auto overflow-y-auto" style="display:none">
-                              <table class="w-full text-[11px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-black z-10"><tr class="text-muted text-[9px] uppercase tracking-wider">
+                              <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-black z-10"><tr class="text-muted text-[11px] uppercase tracking-widest">
                                   <th class="text-left px-2 py-1.5 font-semibold">Metric</th><th class="text-right px-2 py-1.5 font-semibold">Run #1 (Sharpe)</th><th class="text-right px-2 py-1.5 font-semibold">Run #2 (Sortino)</th><th class="text-right px-2 py-1.5 font-semibold">Run #3 (Calmar)</th><th class="text-right px-2 py-1.5 font-semibold">Δ Best</th>
                               </tr></thead><tbody class="divide-y divide-white/[0.04]">
                                   <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">Total Profit</td><td class="px-2 py-1.5 text-right text-up font-bold">+42.12%</td><td class="px-2 py-1.5 text-right text-up">+38.40%</td><td class="px-2 py-1.5 text-right text-up">+35.10%</td><td class="px-2 py-1.5 text-right text-up">+3.72%</td></tr>
@@ -2560,8 +2560,8 @@
                           </div>
                           <!-- TAB: Run History -->
                           <div id="ho-history" class="ho-tab-content flex-1 overflow-x-auto overflow-y-auto" style="display:none">
-                              <table class="w-full text-[11px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-black z-10"><tr class="text-muted text-[9px] uppercase tracking-wider">
-                                  <th class="text-left px-2 py-1.5 font-semibold">#</th><th class="text-left px-2 py-1.5 font-semibold">Date</th><th class="text-left px-2 py-1.5 font-semibold">Strategy</th><th class="text-left px-2 py-1.5 font-semibold">Loss Fn</th><th class="text-right px-2 py-1.5 font-semibold">Epochs</th><th class="text-right px-2 py-1.5 font-semibold">Best</th><th class="text-right px-2 py-1.5 font-semibold">Profit</th><th class="text-right px-2 py-1.5 font-semibold">Trades</th><th class="text-right px-2 py-1.5 font-semibold">Objective</th><th class="text-center px-2 py-1.5 font-semibold">Actions</th>
+                              <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-black z-10"><tr class="text-muted text-[11px] uppercase tracking-widest">
+                                  <th class="text-left px-2 py-1.5 font-semibold sortable">#</th><th class="text-left px-2 py-1.5 font-semibold sortable sort-desc">Date</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Strategy</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Loss Fn</th><th class="text-right px-2 py-1.5 font-semibold sortable">Epochs</th><th class="text-right px-2 py-1.5 font-semibold sortable">Best</th><th class="text-right px-2 py-1.5 font-semibold sortable">Profit</th><th class="text-right px-2 py-1.5 font-semibold sortable">Trades</th><th class="text-right px-2 py-1.5 font-semibold sortable">Objective</th><th class="text-center px-2 py-1.5 font-semibold">Actions</th>
                               </tr></thead><tbody class="divide-y divide-white/[0.04]">
                                   <tr class="hover:bg-white/[0.03] bg-up/[0.02]"><td class="px-2 py-1.5 text-up font-bold">★1</td><td class="px-2 py-1.5 text-muted">30.03.26 22:52</td><td class="px-2 py-1.5 text-white">AlphaTrend_V5</td><td class="px-2 py-1.5">Sharpe</td><td class="px-2 py-1.5 text-right">200</td><td class="px-2 py-1.5 text-right">#147</td><td class="px-2 py-1.5 text-right text-up font-bold">+42.1%</td><td class="px-2 py-1.5 text-right">142</td><td class="px-2 py-1.5 text-right text-up">-0.15550</td><td class="px-2 py-1.5 text-center"><button class="px-2 py-0.5 l-bd rounded text-[9px] text-muted hover:text-white hover:bg-white/5 transition-colors" title="Load results">Load</button> <button class="px-2 py-0.5 l-bd rounded text-[9px] text-down/60 hover:text-down hover:bg-down/10 transition-colors" title="Delete run">Del</button></td></tr>
                                   <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">2</td><td class="px-2 py-1.5 text-muted">29.03.26 18:40</td><td class="px-2 py-1.5 text-white">AlphaTrend_V5</td><td class="px-2 py-1.5">Sortino</td><td class="px-2 py-1.5 text-right">200</td><td class="px-2 py-1.5 text-right">#92</td><td class="px-2 py-1.5 text-right text-up font-bold">+38.4%</td><td class="px-2 py-1.5 text-right">128</td><td class="px-2 py-1.5 text-right text-muted">-0.14220</td><td class="px-2 py-1.5 text-center"><button class="px-2 py-0.5 l-bd rounded text-[9px] text-muted hover:text-white hover:bg-white/5 transition-colors" title="Load results">Load</button> <button class="px-2 py-0.5 l-bd rounded text-[9px] text-down/60 hover:text-down hover:bg-down/10 transition-colors" title="Delete run">Del</button></td></tr>
@@ -2677,9 +2677,9 @@
                       <!-- Results Table -->
                       <h3 class="section-title">Matrix Results</h3>
                       <div class="overflow-x-auto">
-                          <table class="w-full text-[11px] font-mono whitespace-nowrap">
-                              <thead class="sticky top-0 bg-black z-10"><tr class="text-muted text-[9px] uppercase tracking-wider">
-                                  <th class="text-left px-2 py-1.5 font-semibold">#</th><th class="text-left px-2 py-1.5 font-semibold">Model</th><th class="text-left px-2 py-1.5 font-semibold">Outlier</th><th class="text-left px-2 py-1.5 font-semibold">PCA</th><th class="text-left px-2 py-1.5 font-semibold">Noise</th><th class="text-right px-2 py-1.5 font-semibold">profit_%</th><th class="text-right px-2 py-1.5 font-semibold">Sharpe</th><th class="text-right px-2 py-1.5 font-semibold">Max DD</th><th class="text-right px-2 py-1.5 font-semibold">Trades</th><th class="text-right px-2 py-1.5 font-semibold">Win%</th>
+                          <table class="w-full text-[13px] font-mono whitespace-nowrap">
+                              <thead class="sticky top-0 bg-black z-10"><tr class="text-muted text-[11px] uppercase tracking-widest">
+                                  <th class="text-left px-2 py-1.5 font-semibold sortable">★</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Model</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Outlier</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">PCA</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Noise</th><th class="text-right px-2 py-1.5 font-semibold sortable sort-desc">profit_%</th><th class="text-right px-2 py-1.5 font-semibold sortable">Sharpe</th><th class="text-right px-2 py-1.5 font-semibold sortable">Max DD</th><th class="text-right px-2 py-1.5 font-semibold sortable">Trades</th><th class="text-right px-2 py-1.5 font-semibold sortable">Win%</th>
                               </tr></thead>
                               <tbody class="divide-y divide-white/[0.04]">
                                   <tr class="hover:bg-white/[0.03] bg-up/[0.02]"><td class="px-2 py-1.5 text-up font-bold">★1</td><td class="px-2 py-1.5">LightGBM-R</td><td class="px-2 py-1.5 text-muted">DI</td><td class="px-2 py-1.5 text-muted">Off</td><td class="px-2 py-1.5 text-up">Yes</td><td class="px-2 py-1.5 text-right text-up font-bold">+52.4%</td><td class="px-2 py-1.5 text-right">4.10</td><td class="px-2 py-1.5 text-right text-down">-1.8%</td><td class="px-2 py-1.5 text-right">156</td><td class="px-2 py-1.5 text-right">74.2%</td></tr>
@@ -2739,7 +2739,7 @@
                   </div>
                   <!-- Analysis History -->
                   <h3 class="section-title">Analysis History</h3>
-                  <table class="w-full text-[11px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[9px] uppercase tracking-wider"><th class="text-left px-2 py-1.5 font-semibold">Date</th><th class="text-left px-2 py-1.5 font-semibold">Source</th><th class="text-left px-2 py-1.5 font-semibold">Model</th><th class="text-right px-2 py-1.5 font-semibold">Score</th><th class="text-right px-2 py-1.5 font-semibold">Cost</th><th class="text-center px-2 py-1.5 font-semibold">Actions</th></tr></thead>
+                  <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[11px] uppercase tracking-widest"><th class="text-left px-2 py-1.5 font-semibold sortable sort-desc">Date</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Source</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Model</th><th class="text-right px-2 py-1.5 font-semibold sortable">Score</th><th class="text-right px-2 py-1.5 font-semibold sortable">Cost</th><th class="text-center px-2 py-1.5 font-semibold">Actions</th></tr></thead>
                   <tbody class="divide-y divide-white/[0.04]">
                       <tr class="hover:bg-white/[0.03] bg-up/[0.02]"><td class="px-2 py-1.5 text-muted">2026-03-30 21:22</td><td class="px-2 py-1.5">BT #1</td><td class="px-2 py-1.5">Claude Sonnet</td><td class="px-2 py-1.5 text-right text-up font-bold">78</td><td class="px-2 py-1.5 text-right text-muted">$0.028</td><td class="px-2 py-1.5 text-center"><button class="px-2 py-0.5 l-bd rounded text-[9px] text-muted hover:text-white hover:bg-white/5 transition-colors">View</button></td></tr>
                       <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-muted">2026-03-28 14:10</td><td class="px-2 py-1.5">BT #2</td><td class="px-2 py-1.5">GPT-4o</td><td class="px-2 py-1.5 text-right">71</td><td class="px-2 py-1.5 text-right text-muted">$0.052</td><td class="px-2 py-1.5 text-center"><button class="px-2 py-0.5 l-bd rounded text-[9px] text-muted hover:text-white hover:bg-white/5 transition-colors">View</button></td></tr>
@@ -2831,7 +2831,7 @@
                       <div class="bg-surface l-bd rounded-md flex flex-col min-h-[200px] overflow-hidden shadow-xl">
                           <div class="h-10 l-b flex items-center px-4 bg-black/40 shrink-0"><h3 class="section-title">Training vs OOS Comparison</h3></div>
                           <div class="flex-1 overflow-y-auto">
-                          <table class="w-full text-[11px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-black z-10"><tr class="text-muted text-[9px] uppercase tracking-wider"><th class="text-left px-2 py-1.5 font-semibold">Metric</th><th class="text-right px-2 py-1.5 font-semibold">Training</th><th class="text-right px-2 py-1.5 font-semibold">OOS</th><th class="text-right px-2 py-1.5 font-semibold">Ratio</th><th class="text-right px-2 py-1.5 font-semibold">Threshold</th><th class="text-center px-2 py-1.5 font-semibold">Status</th></tr></thead>
+                          <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-black z-10"><tr class="text-muted text-[11px] uppercase tracking-widest"><th class="text-left px-2 py-1.5 font-semibold">Metric</th><th class="text-right px-2 py-1.5 font-semibold">Training</th><th class="text-right px-2 py-1.5 font-semibold">OOS</th><th class="text-right px-2 py-1.5 font-semibold">Ratio</th><th class="text-right px-2 py-1.5 font-semibold">Threshold</th><th class="text-center px-2 py-1.5 font-semibold">Status</th></tr></thead>
                           <tbody class="divide-y divide-white/[0.04]">
                               <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-white">Profit %</td><td class="px-2 py-1.5 text-right">+42.12%</td><td class="px-2 py-1.5 text-right text-up font-bold">+31.20%</td><td class="px-2 py-1.5 text-right text-up">74.1%</td><td class="px-2 py-1.5 text-right text-muted">≥70%</td><td class="px-2 py-1.5 text-center text-up font-bold">✓</td></tr>
                               <tr class="hover:bg-white/[0.03]"><td class="px-2 py-1.5 text-white">Max DD</td><td class="px-2 py-1.5 text-right">-2.11%</td><td class="px-2 py-1.5 text-right text-down font-bold">-2.80%</td><td class="px-2 py-1.5 text-right">132.7%</td><td class="px-2 py-1.5 text-right text-muted">≤150%</td><td class="px-2 py-1.5 text-center text-up font-bold">✓</td></tr>
@@ -2859,7 +2859,7 @@
                           <div class="bg-surface l-bd rounded-md p-3 shadow-xl">
                               <div class="flex justify-between items-center mb-2"><h3 class="section-title">Recursive Stability</h3><span class="text-up font-bold text-[10px]">✓ STABLE</span></div>
                               <div class="text-[11px] text-muted font-mono mb-2">Re-runs with shifted data to verify signal robustness.</div>
-                              <table class="w-full text-[11px] font-mono"><thead><tr class="text-muted text-[9px] uppercase tracking-wider"><th class="text-left px-2 py-1 font-semibold">Iter</th><th class="text-right px-2 py-1 font-semibold">Shift</th><th class="text-right px-2 py-1 font-semibold">Profit</th><th class="text-right px-2 py-1 font-semibold">Δ</th></tr></thead>
+                              <table class="w-full text-[13px] font-mono"><thead><tr class="text-muted text-[11px] uppercase tracking-widest"><th class="text-left px-2 py-1 font-semibold">Iter</th><th class="text-right px-2 py-1 font-semibold">Shift</th><th class="text-right px-2 py-1 font-semibold">Profit</th><th class="text-right px-2 py-1 font-semibold">Δ</th></tr></thead>
                               <tbody class="divide-y divide-white/[0.04]">
                                   <tr><td class="px-2 py-1 text-muted">Base</td><td class="px-2 py-1 text-right text-muted">0</td><td class="px-2 py-1 text-right text-up">+42.12%</td><td class="px-2 py-1 text-right text-muted">—</td></tr>
                                   <tr><td class="px-2 py-1 text-muted">1</td><td class="px-2 py-1 text-right text-muted">+1h</td><td class="px-2 py-1 text-right text-up">+41.80%</td><td class="px-2 py-1 text-right text-muted">-0.32%</td></tr>
@@ -2883,17 +2883,17 @@
                   <!-- All Tests -->
                   <div id="exp-ov-all-tests" class="exp-overlay-panel flex-1 p-4 overflow-y-auto">
                       <div class="flex gap-3 mb-4 items-center"><input type="text" placeholder="Search tests..." class="bg-[#1a1a1a] l-bd px-3 py-2 text-white outline-none rounded text-[12px] font-mono w-[240px]"><select class="bg-[#1a1a1a] l-bd px-3 py-2 text-white/80 appearance-none rounded text-[12px] font-mono"><option>All Types</option><option>Backtest</option><option>Hyperopt</option><option>FreqAI</option></select><select class="bg-[#1a1a1a] l-bd px-3 py-2 text-white/80 appearance-none rounded text-[12px] font-mono"><option>All Status</option><option>Completed</option><option>Running</option><option>Failed</option></select><div class="flex-1"></div><span class="text-[10px] text-white/30 font-mono">142 total · Page 1/8</span></div>
-                      <div class="bg-black l-bd rounded-md overflow-hidden"><table class="w-full text-left border-collapse whitespace-nowrap text-[11px] font-mono"><thead class="bg-black l-b text-[10px] uppercase tracking-widest text-white/30"><tr><th class="px-4 py-2.5">#</th><th class="px-4 py-2.5">Type</th><th class="px-4 py-2.5">Name</th><th class="px-4 py-2.5">Date</th><th class="px-4 py-2.5 text-right sortable sort-desc">Profit%</th><th class="px-4 py-2.5 text-right sortable">Sharpe</th><th class="px-4 py-2.5 text-right sortable">Trades</th><th class="px-4 py-2.5 text-center">Status</th><th class="px-4 py-2.5 text-center">Actions</th></tr></thead><tbody class="divide-y divide-white/[0.04] text-white/70"><tr class="hover:bg-white/[0.03]"><td class="px-4 py-2 text-white/30">1</td><td class="px-4 py-2"><span class="px-1.5 py-0.5 rounded text-[8px] bg-white/5 border border-white/10 text-white/50">HO</span></td><td class="px-4 py-2 text-white/80">HO #147 Sharpe TPE</td><td class="px-4 py-2 text-white/40">Mar 30 21:14</td><td class="px-4 py-2 text-right text-up font-bold">+42.1%</td><td class="px-4 py-2 text-right">3.92</td><td class="px-4 py-2 text-right">142</td><td class="px-4 py-2 text-center"><span class="text-[8px] text-up font-bold">✓</span></td><td class="px-4 py-2 text-center"><button class="text-[9px] px-2 py-0.5 bg-up/10 border border-up/20 text-up rounded hover:bg-up/20">Promote</button></td></tr><tr class="hover:bg-white/[0.03]"><td class="px-4 py-2 text-white/30">2</td><td class="px-4 py-2"><span class="px-1.5 py-0.5 rounded text-[8px] bg-white/5 border border-white/10 text-white/50">BT</span></td><td class="px-4 py-2 text-white/80">Baseline Jan2024</td><td class="px-4 py-2 text-white/40">Mar 29 14:20</td><td class="px-4 py-2 text-right text-up font-bold">+38.4%</td><td class="px-4 py-2 text-right">3.44</td><td class="px-4 py-2 text-right">128</td><td class="px-4 py-2 text-center"><span class="text-[8px] text-up font-bold">✓</span></td><td class="px-4 py-2 text-center"><button class="text-[9px] px-2 py-0.5 bg-white/5 border border-white/10 text-white/50 rounded hover:bg-white/10">Load</button></td></tr></tbody></table></div>
+                      <div class="bg-black l-bd rounded-md overflow-hidden"><table class="w-full text-left border-collapse whitespace-nowrap    text-[13px] font-mono"><thead class="bg-black l-b text-[11px] uppercase tracking-widest text-white/30"><tr><th class="px-4 py-2.5 sortable">#</th><th class="px-4 py-2.5 sortable filterable">Type</th><th class="px-4 py-2.5 sortable">Name</th><th class="px-4 py-2.5 sortable sort-desc">Date</th><th class="px-4 py-2.5 text-right sortable">Profit%</th><th class="px-4 py-2.5 text-right sortable">Sharpe</th><th class="px-4 py-2.5 text-right sortable">Trades</th><th class="px-4 py-2.5 text-center sortable filterable">Status</th><th class="px-4 py-2.5 text-center">Actions</th></tr></thead><tbody class="divide-y divide-white/[0.04] text-white/70"><tr class="hover:bg-white/[0.03]"><td class="px-4 py-2 text-white/30">1</td><td class="px-4 py-2"><span class="px-1.5 py-0.5 rounded text-[8px] bg-white/5 border border-white/10 text-white/50">HO</span></td><td class="px-4 py-2 text-white/80">HO #147 Sharpe TPE</td><td class="px-4 py-2 text-white/40">Mar 30 21:14</td><td class="px-4 py-2 text-right text-up font-bold">+42.1%</td><td class="px-4 py-2 text-right">3.92</td><td class="px-4 py-2 text-right">142</td><td class="px-4 py-2 text-center"><span class="text-[8px] text-up font-bold">✓</span></td><td class="px-4 py-2 text-center"><button class="text-[9px] px-2 py-0.5 bg-up/10 border border-up/20 text-up rounded hover:bg-up/20">Promote</button></td></tr><tr class="hover:bg-white/[0.03]"><td class="px-4 py-2 text-white/30">2</td><td class="px-4 py-2"><span class="px-1.5 py-0.5 rounded text-[8px] bg-white/5 border border-white/10 text-white/50">BT</span></td><td class="px-4 py-2 text-white/80">Baseline Jan2024</td><td class="px-4 py-2 text-white/40">Mar 29 14:20</td><td class="px-4 py-2 text-right text-up font-bold">+38.4%</td><td class="px-4 py-2 text-right">3.44</td><td class="px-4 py-2 text-right">128</td><td class="px-4 py-2 text-center"><span class="text-[8px] text-up font-bold">✓</span></td><td class="px-4 py-2 text-center"><button class="text-[9px] px-2 py-0.5 bg-white/5 border border-white/10 text-white/50 rounded hover:bg-white/10">Load</button></td></tr></tbody></table></div>
                   </div>
                   <!-- Compare -->
                   <div id="exp-ov-compare" class="exp-overlay-panel flex-1 p-4 overflow-y-auto" style="display:none">
                       <div class="flex gap-4 mb-4"><div class="flex-1"><div class="text-white/45 mb-1 text-[10px] uppercase tracking-wider font-bold">Test A</div><select class="w-full bg-[#1a1a1a] l-bd px-3 py-2 text-white/80 appearance-none rounded text-[12px] font-mono"><option>HO #147 — +42.12%</option></select></div><div class="flex items-end pb-2 text-white/20 text-[11px] font-bold">VS</div><div class="flex-1"><div class="text-white/45 mb-1 text-[10px] uppercase tracking-wider font-bold">Test B</div><select class="w-full bg-[#1a1a1a] l-bd px-3 py-2 text-white/80 appearance-none rounded text-[12px] font-mono"><option>HO #92 — +38.40%</option></select></div></div>
-                      <div class="bg-black l-bd rounded-md overflow-hidden"><table class="w-full text-[11px] font-mono"><thead class="bg-black l-b text-[10px] uppercase tracking-widest text-white/30"><tr><th class="px-4 py-2.5 text-left">Metric</th><th class="px-4 py-2.5 text-right">Test A</th><th class="px-4 py-2.5 text-right">Test B</th><th class="px-4 py-2.5 text-center">Winner</th></tr></thead><tbody class="divide-y divide-white/[0.04] text-white/60"><tr><td class="px-4 py-2">Profit %</td><td class="px-4 py-2 text-right text-up font-bold">+42.12%</td><td class="px-4 py-2 text-right text-up">+38.40%</td><td class="px-4 py-2 text-center text-up">A ✓</td></tr><tr><td class="px-4 py-2">Sharpe</td><td class="px-4 py-2 text-right">3.92</td><td class="px-4 py-2 text-right">3.44</td><td class="px-4 py-2 text-center text-up">A ✓</td></tr><tr><td class="px-4 py-2">Max DD</td><td class="px-4 py-2 text-right text-down">-2.11%</td><td class="px-4 py-2 text-right text-down">-3.20%</td><td class="px-4 py-2 text-center text-up">A ✓</td></tr><tr><td class="px-4 py-2">Win Rate</td><td class="px-4 py-2 text-right">72.4%</td><td class="px-4 py-2 text-right">68.1%</td><td class="px-4 py-2 text-center text-up">A ✓</td></tr><tr><td class="px-4 py-2">Trades</td><td class="px-4 py-2 text-right">142</td><td class="px-4 py-2 text-right">128</td><td class="px-4 py-2 text-center text-white/30">—</td></tr></tbody></table></div>
+                      <div class="bg-black l-bd rounded-md overflow-hidden"><table class="w-full text-[13px] font-mono"><thead class="bg-black l-b text-[11px] uppercase tracking-widest text-white/30"><tr><th class="px-4 py-2.5 text-left">Metric</th><th class="px-4 py-2.5 text-right">Test A</th><th class="px-4 py-2.5 text-right">Test B</th><th class="px-4 py-2.5 text-center">Winner</th></tr></thead><tbody class="divide-y divide-white/[0.04] text-white/60"><tr><td class="px-4 py-2">Profit %</td><td class="px-4 py-2 text-right text-up font-bold">+42.12%</td><td class="px-4 py-2 text-right text-up">+38.40%</td><td class="px-4 py-2 text-center text-up">A ✓</td></tr><tr><td class="px-4 py-2">Sharpe</td><td class="px-4 py-2 text-right">3.92</td><td class="px-4 py-2 text-right">3.44</td><td class="px-4 py-2 text-center text-up">A ✓</td></tr><tr><td class="px-4 py-2">Max DD</td><td class="px-4 py-2 text-right text-down">-2.11%</td><td class="px-4 py-2 text-right text-down">-3.20%</td><td class="px-4 py-2 text-center text-up">A ✓</td></tr><tr><td class="px-4 py-2">Win Rate</td><td class="px-4 py-2 text-right">72.4%</td><td class="px-4 py-2 text-right">68.1%</td><td class="px-4 py-2 text-center text-up">A ✓</td></tr><tr><td class="px-4 py-2">Trades</td><td class="px-4 py-2 text-right">142</td><td class="px-4 py-2 text-right">128</td><td class="px-4 py-2 text-center text-white/30">—</td></tr></tbody></table></div>
                   </div>
                   <!-- Analysis -->
                   <div id="exp-ov-analysis" class="exp-overlay-panel flex-1 p-4 overflow-y-auto" style="display:none">
                       <div class="flex gap-3 mb-4"><div><div class="text-white/45 mb-1 text-[10px] uppercase tracking-wider font-bold">Select Run</div><select class="bg-[#1a1a1a] l-bd px-3 py-2 text-white/80 appearance-none rounded text-[12px] font-mono"><option>HO #147 — +42.12%</option></select></div><div class="flex items-end gap-1 pb-0.5"><button class="px-3 py-2 l-bd bg-white/10 text-white text-[10px] font-bold rounded uppercase tracking-wider">Trades</button><button class="px-3 py-2 l-bd bg-white/[0.03] text-white/40 text-[10px] font-bold rounded uppercase tracking-wider hover:text-white">Per Pair</button><button class="px-3 py-2 l-bd bg-white/[0.03] text-white/40 text-[10px] font-bold rounded uppercase tracking-wider hover:text-white">Exit Reasons</button></div></div>
-                      <div class="bg-black l-bd rounded-md overflow-hidden"><table class="w-full text-left border-collapse whitespace-nowrap text-[11px] font-mono"><thead class="bg-black l-b text-[10px] uppercase tracking-widest text-white/30"><tr><th class="px-3 py-2.5">#</th><th class="px-3 py-2.5">Pair</th><th class="px-3 py-2.5">Side</th><th class="px-3 py-2.5 text-right">Profit%</th><th class="px-3 py-2.5 text-right">Profit$</th><th class="px-3 py-2.5">Open</th><th class="px-3 py-2.5">Close</th><th class="px-3 py-2.5 text-right">Duration</th><th class="px-3 py-2.5">Exit</th></tr></thead><tbody class="divide-y divide-white/[0.04] text-white/70"><tr class="hover:bg-white/[0.03]"><td class="px-3 py-2 text-white/30">1</td><td class="px-3 py-2 text-white/80">BTC/USDT</td><td class="px-3 py-2 text-up">Long</td><td class="px-3 py-2 text-right text-up font-bold">+8.12%</td><td class="px-3 py-2 text-right text-up">+$812</td><td class="px-3 py-2 text-white/30">2024-01-05</td><td class="px-3 py-2 text-white/30">2024-01-10</td><td class="px-3 py-2 text-right text-white/30">5d</td><td class="px-3 py-2 text-white/25">roi</td></tr><tr class="hover:bg-white/[0.03]"><td class="px-3 py-2 text-white/30">2</td><td class="px-3 py-2 text-white/80">ETH/USDT</td><td class="px-3 py-2 text-down">Short</td><td class="px-3 py-2 text-right text-down font-bold">-2.10%</td><td class="px-3 py-2 text-right text-down">-$210</td><td class="px-3 py-2 text-white/30">2024-01-06</td><td class="px-3 py-2 text-white/30">2024-01-07</td><td class="px-3 py-2 text-right text-white/30">1d</td><td class="px-3 py-2 text-white/25">stoploss</td></tr></tbody></table></div>
+                      <div class="bg-black l-bd rounded-md overflow-hidden"><table class="w-full text-left border-collapse whitespace-nowrap    text-[13px] font-mono"><thead class="bg-black l-b text-[11px] uppercase tracking-widest text-white/30"><tr><th class="px-3 py-2.5 sortable">#</th><th class="px-3 py-2.5 sortable filterable">Pair</th><th class="px-3 py-2.5 sortable filterable">Side</th><th class="px-3 py-2.5 text-right sortable sort-desc">Profit%</th><th class="px-3 py-2.5 text-right sortable">Profit$</th><th class="px-3 py-2.5 sortable">Open</th><th class="px-3 py-2.5 sortable">Close</th><th class="px-3 py-2.5 text-right sortable">Duration</th><th class="px-3 py-2.5 sortable filterable">Exit</th></tr></thead><tbody class="divide-y divide-white/[0.04] text-white/70"><tr class="hover:bg-white/[0.03]"><td class="px-3 py-2 text-white/30">1</td><td class="px-3 py-2 text-white/80">BTC/USDT</td><td class="px-3 py-2 text-up">Long</td><td class="px-3 py-2 text-right text-up font-bold">+8.12%</td><td class="px-3 py-2 text-right text-up">+$812</td><td class="px-3 py-2 text-white/30">2024-01-05</td><td class="px-3 py-2 text-white/30">2024-01-10</td><td class="px-3 py-2 text-right text-white/30">5d</td><td class="px-3 py-2 text-white/25">roi</td></tr><tr class="hover:bg-white/[0.03]"><td class="px-3 py-2 text-white/30">2</td><td class="px-3 py-2 text-white/80">ETH/USDT</td><td class="px-3 py-2 text-down">Short</td><td class="px-3 py-2 text-right text-down font-bold">-2.10%</td><td class="px-3 py-2 text-right text-down">-$210</td><td class="px-3 py-2 text-white/30">2024-01-06</td><td class="px-3 py-2 text-white/30">2024-01-07</td><td class="px-3 py-2 text-right text-white/30">1d</td><td class="px-3 py-2 text-white/25">stoploss</td></tr></tbody></table></div>
                   </div>
               </div>
 
@@ -2901,187 +2901,250 @@
       </div>
 
       <!-- PAGE: ANALYTICS -->
-      <div id="page-analytics" class="page-view flex-1 overflow-hidden flex-col bg-black">
-          <!-- Tab Bar -->
-          <div class="h-12 l-b flex items-center bg-black/40 shrink-0 px-5 gap-1">
-              <button onclick="switchAnalyticsTab('an-performance', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide border-b-2 border-white text-white an-tab-btn shrink-0">Performance</button>
-              <button onclick="switchAnalyticsTab('an-pairs', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide border-b-2 border-transparent text-muted hover:text-white an-tab-btn shrink-0 transition-colors">Pairs</button>
-              <button onclick="switchAnalyticsTab('an-exits', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide border-b-2 border-transparent text-muted hover:text-white an-tab-btn shrink-0 transition-colors">Exit Analysis</button>
-              <button onclick="switchAnalyticsTab('an-journal', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide border-b-2 border-transparent text-muted hover:text-white an-tab-btn shrink-0 transition-colors">Journal</button>
-              <div class="flex-1"></div>
-              <div class="flex items-center gap-2">
-                  <select class="builder-select text-[11px] font-mono"><option>All Bots (312)</option><option>Binance Alpha (42)</option><option>Kraken Trend (18)</option><option>ByBit Scalper (6)</option></select>
-                  <select class="builder-select text-[11px] font-mono"><option>Last 30 Days</option><option>Last 7 Days</option><option>Last 90 Days</option><option>YTD</option><option>All Time</option></select>
+      <div id="page-analytics" class="page-view flex-1 overflow-y-auto flex-col p-5 gap-5 bg-black">
+
+          <!-- Bot Selector Bar -->
+          <div class="flex items-center gap-3 p-3 px-4 bg-surface l-bd rounded-md text-[11px] shrink-0">
+              <span class="text-muted uppercase tracking-wide font-semibold shrink-0">Bot</span>
+              <select class="builder-select text-[11px] font-mono min-w-[200px]"><option>Binance Alpha v3</option><option>Kraken Trend v2</option><option>ByBit Scalper</option></select>
+              <button class="h-7 px-3 rounded-md l-bd bg-white/[0.03] hover:bg-white/[0.06] text-muted text-[11px] font-mono transition-colors">Refresh Candles</button>
+          </div>
+
+          <!-- ═══ §19 PLOTTING & VISUALIZATION ═══ -->
+          <div class="flex items-center gap-3 pb-2 border-b border-white/[0.06] shrink-0">
+              <span class="text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest bg-up/[0.12] text-up">§19</span>
+              <span class="text-[14px] font-bold text-white">Plotting & Visualization</span>
+          </div>
+
+          <!-- Candlestick Chart -->
+          <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden shrink-0">
+              <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40">
+                  <h3 class="section-title flex items-center gap-2"><span>📉</span>Candlestick Chart</h3>
+                  <div class="flex items-center gap-2.5">
+                      <select class="builder-select text-[11px] font-mono"><option>BTC/USDT:USDT</option><option>ETH/USDT:USDT</option><option>SOL/USDT:USDT</option><option>BNB/USDT:USDT</option><option>XRP/USDT:USDT</option></select>
+                      <div class="flex gap-0 l-bd rounded-md overflow-hidden">
+                          <button class="px-2.5 py-1 text-[10px] font-medium text-muted hover:text-white transition-colors">1m</button>
+                          <button class="px-2.5 py-1 text-[10px] font-medium text-muted hover:text-white transition-colors">5m</button>
+                          <button class="px-2.5 py-1 text-[10px] font-medium text-muted hover:text-white transition-colors">15m</button>
+                          <button class="px-2.5 py-1 text-[10px] font-medium text-muted hover:text-white transition-colors">30m</button>
+                          <button class="px-2.5 py-1 text-[10px] font-medium bg-white/10 text-white">1h</button>
+                          <button class="px-2.5 py-1 text-[10px] font-medium text-muted hover:text-white transition-colors">4h</button>
+                          <button class="px-2.5 py-1 text-[10px] font-medium text-muted hover:text-white transition-colors">1d</button>
+                      </div>
+                  </div>
+              </div>
+              <!-- Candle Area -->
+              <div class="h-[280px] relative px-3 pt-7 pb-6 pl-10 overflow-hidden">
+                  <div class="absolute top-2 right-3 text-[9px] text-up font-mono">BTC/USDT:USDT · 1h · 100 candles (live)</div>
+                  <!-- Grid -->
+                  <div class="absolute inset-0 pointer-events-none" style="background:repeating-linear-gradient(0deg,transparent,transparent 55px,rgba(255,255,255,0.04) 55px,rgba(255,255,255,0.04) 56px)"></div>
+                  <!-- Y-axis -->
+                  <div class="absolute left-0 top-7 bottom-6 w-9 flex flex-col justify-between px-1">
+                      <span class="text-[9px] text-muted font-mono text-right">68,400</span><span class="text-[9px] text-muted font-mono text-right">67,800</span><span class="text-[9px] text-muted font-mono text-right">67,200</span><span class="text-[9px] text-muted font-mono text-right">66,600</span><span class="text-[9px] text-muted font-mono text-right">66,000</span>
+                  </div>
+                  <!-- Crosshair -->
+                  <div class="absolute left-10 right-3 h-px bg-up/25 pointer-events-none" style="top:45%">
+                      <span class="absolute right-0 -top-2 text-[9px] text-up bg-surface/50 px-1 rounded-sm font-mono">67,342.50</span>
+                  </div>
+                  <!-- Candles (mock 30 candles) -->
+                  <div class="flex items-end gap-px h-full">
+                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:35%;height:25%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:40%;height:12%"></div></div>
+                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:30%;height:30%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:38%;height:15%"></div></div>
+                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:32%;height:28%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:35%;height:18%"></div></div>
+                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:40%;height:22%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:42%;height:14%"></div></div>
+                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:38%;height:18%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:42%;height:8%"></div></div>
+                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:36%;height:24%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:38%;height:16%"></div></div>
+                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:42%;height:20%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:44%;height:10%"></div></div>
+                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:40%;height:26%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:48%;height:12%"></div></div>
+                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:38%;height:30%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:40%;height:20%"></div></div>
+                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:45%;height:22%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:48%;height:10%"></div></div>
+                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:42%;height:20%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:48%;height:8%"></div></div>
+                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:44%;height:18%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:46%;height:10%"></div></div>
+                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:48%;height:20%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:50%;height:12%"></div></div>
+                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:44%;height:24%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:52%;height:10%"></div></div>
+                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:46%;height:22%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:48%;height:14%"></div></div>
+                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:50%;height:18%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:52%;height:10%"></div></div>
+                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:48%;height:16%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:52%;height:6%"></div></div>
+                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:50%;height:20%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:52%;height:12%"></div></div>
+                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:54%;height:18%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:56%;height:10%"></div></div>
+                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:50%;height:22%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:58%;height:8%"></div></div>
+                  </div>
+                  <!-- X-axis -->
+                  <div class="absolute bottom-0 left-10 right-3 flex justify-between pt-1.5">
+                      <span class="text-[9px] text-muted font-mono">03/28</span><span class="text-[9px] text-muted font-mono">03/29</span><span class="text-[9px] text-muted font-mono">03/30</span><span class="text-[9px] text-muted font-mono">03/31</span><span class="text-[9px] text-muted font-mono">04/01</span>
+                  </div>
+              </div>
+              <!-- Overlay Controls -->
+              <div class="px-4 py-2 l-b flex items-center justify-between">
+                  <span class="text-[10px] text-muted font-semibold uppercase tracking-wider">Overlays</span>
+                  <div class="flex items-center gap-4">
+                      <label class="flex items-center gap-1.5 text-[11px] text-muted cursor-pointer"><span class="w-2.5 h-[3px] rounded-sm bg-yellow-500 inline-block"></span><span class="builder-toggle w-7 h-3.5 bg-up rounded-full relative"><span class="absolute w-2.5 h-2.5 rounded-full bg-white top-0.5 left-[14px]"></span></span>tema</label>
+                      <label class="flex items-center gap-1.5 text-[11px] text-muted cursor-pointer"><span class="w-2.5 h-[3px] rounded-sm bg-cyan-400 inline-block"></span><span class="builder-toggle w-7 h-3.5 bg-up rounded-full relative"><span class="absolute w-2.5 h-2.5 rounded-full bg-white top-0.5 left-[14px]"></span></span>sar</label>
+                  </div>
+              </div>
+              <!-- Subchart Tabs -->
+              <div class="flex gap-0 l-b items-center">
+                  <button class="px-4 py-2 text-[11px] font-bold uppercase border-b-2 border-white text-white">RSI</button>
+                  <button class="px-4 py-2 text-[11px] font-bold uppercase border-b-2 border-transparent text-muted hover:text-white transition-colors">MACD</button>
+                  <button class="px-4 py-2 text-[11px] font-bold uppercase border-b-2 border-transparent text-muted hover:text-white transition-colors">Volume</button>
+              </div>
+              <!-- Subchart Area (RSI) -->
+              <div class="h-[120px] relative px-3 pt-3 pb-2 pl-10 flex items-end gap-px">
+                  <div class="absolute inset-0 pointer-events-none" style="background:repeating-linear-gradient(0deg,transparent,transparent 29px,rgba(255,255,255,0.04) 29px,rgba(255,255,255,0.04) 30px)"></div>
+                  <!-- RSI zones -->
+                  <div class="absolute left-10 right-3 border-t border-dashed border-down/30 pointer-events-none" style="top:22%"><span class="absolute right-1 -top-2.5 text-[8px] text-down">70</span></div>
+                  <div class="absolute left-10 right-3 border-t border-dashed border-up/30 pointer-events-none" style="top:78%"><span class="absolute right-1 -top-2.5 text-[8px] text-up">30</span></div>
+                  <!-- RSI mock bars -->
+                  <div class="flex-1 bg-up/50 rounded-t-sm min-h-[2px]" style="height:45%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:38%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:52%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:60%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:55%"></div><div class="flex-1 bg-down/50 rounded-t-sm" style="height:72%"></div><div class="flex-1 bg-down/50 rounded-t-sm" style="height:78%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:62%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:48%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:42%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:38%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:35%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:40%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:45%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:50%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:55%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:48%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:42%"></div><div class="flex-1 bg-down/50 rounded-t-sm" style="height:68%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:58%"></div>
+              </div>
+              <!-- Trade Markers Legend -->
+              <div class="flex items-center gap-4 px-4 py-2 l-b bg-surface">
+                  <div class="flex items-center gap-1.5 text-[10px] text-muted"><span class="text-up">△</span>Buy (enter_long)</div>
+                  <div class="flex items-center gap-1.5 text-[10px] text-muted"><span class="text-down">▽</span>Sell (exit_long)</div>
+                  <div class="flex items-center gap-1.5 text-[10px] text-muted"><span class="text-down">△</span>Short (enter_short)</div>
+                  <div class="flex items-center gap-1.5 text-[10px] text-muted"><span class="text-up">▽</span>Cover (exit_short)</div>
+                  <div class="flex items-center gap-1.5 text-[10px] text-muted"><span class="w-2 h-2 rounded-full bg-up inline-block"></span>enter_tag</div>
+                  <div class="flex items-center gap-1.5 text-[10px] text-muted"><span class="w-2 h-2 rounded-full border-2 border-yellow-500 inline-block"></span>exit_reason</div>
               </div>
           </div>
 
-          <!-- Tab Content -->
-          <div class="flex-1 p-4 overflow-hidden relative">
-
-              <!-- TAB: PERFORMANCE -->
-              <div id="an-performance" class="an-tab active h-full flex flex-col gap-3 overflow-y-auto pr-1">
-                  <!-- KPI Row -->
-                  <div class="grid grid-cols-7 gap-2 shrink-0">
-                      <div class="bg-surface p-3 l-bd rounded"><div class="kpi-label">Cumulative P&L</div><div class="kpi-value text-up text-lg">+$18,940</div></div>
-                      <div class="bg-surface p-3 l-bd rounded"><div class="kpi-label">Best Month</div><div class="kpi-value text-up text-lg">+$4,210</div><div class="text-[9px] text-muted font-mono">Feb 2026</div></div>
-                      <div class="bg-surface p-3 l-bd rounded"><div class="kpi-label">Worst Month</div><div class="kpi-value text-down text-lg">-$890</div><div class="text-[9px] text-muted font-mono">Nov 2025</div></div>
-                      <div class="bg-surface p-3 l-bd rounded"><div class="kpi-label">Win Streak</div><div class="kpi-value text-lg">7</div><div class="text-[9px] text-up font-mono">current</div></div>
-                      <div class="bg-surface p-3 l-bd rounded"><div class="kpi-label">Max Win Run</div><div class="kpi-value text-up text-lg">14</div></div>
-                      <div class="bg-surface p-3 l-bd rounded"><div class="kpi-label">Expectancy</div><div class="kpi-value text-up text-lg">$28.40</div><div class="text-[9px] text-muted font-mono">per trade</div></div>
-                      <div class="bg-surface p-3 l-bd rounded border-l-2 border-l-up"><div class="kpi-label">Edge Ratio</div><div class="kpi-value text-white text-lg">1.42</div><div class="text-[9px] text-up font-mono">Positive Edge</div></div>
-                  </div>
-
-                  <!-- Cumulative Equity Curve -->
-                  <div class="h-[240px] bg-surface l-bd rounded-md flex flex-col shadow-xl shrink-0 overflow-hidden">
-                      <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40 shrink-0">
-                          <h3 class="section-title">Cumulative Equity Curve</h3>
-                          <div class="flex gap-3 text-[9px] font-mono text-white/40">
-                              <span class="flex items-center gap-1.5"><span class="w-3 h-[2px] bg-[#22c55e] rounded inline-block"></span>Equity</span>
-                              <span class="flex items-center gap-1.5"><span class="w-3 h-[2px] bg-[#60a5fa] rounded inline-block"></span>Benchmark (BTC)</span>
-                          </div>
-                      </div>
-                      <div class="flex-1 px-4 pb-3 pt-2 relative">
-                          <div class="absolute left-1 top-2 bottom-4 flex flex-col justify-between text-[9px] font-mono text-white/25"><span>20k</span><span>15k</span><span>10k</span><span>5k</span><span>0</span></div>
-                          <svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 200 100">
-                              <line x1="0" y1="50" x2="200" y2="50" stroke="rgba(255,255,255,0.06)" stroke-width="0.3" stroke-dasharray="3,3"/>
-                              <line x1="0" y1="25" x2="200" y2="25" stroke="rgba(255,255,255,0.04)" stroke-width="0.3" stroke-dasharray="2,4"/>
-                              <line x1="0" y1="75" x2="200" y2="75" stroke="rgba(255,255,255,0.04)" stroke-width="0.3" stroke-dasharray="2,4"/>
-                              <!-- Benchmark (BTC) -->
-                              <polyline points="0,50 15,48 30,52 45,55 60,45 75,42 90,48 105,40 120,35 135,38 150,30 165,32 180,28 195,25" fill="none" stroke="#60a5fa" stroke-width="0.3" stroke-dasharray="2,2" opacity="0.5"/>
-                              <!-- Equity curve -->
-                              <polyline points="0,90 15,85 30,80 45,78 60,72 75,68 90,65 105,58 120,52 135,48 150,42 165,35 180,30 195,22" fill="none" stroke="#22c55e" stroke-width="0.4" stroke-linejoin="round"/>
-                              <circle cx="0" cy="90" r="1.2" fill="#22c55e"/><circle cx="30" cy="80" r="1.2" fill="#22c55e"/><circle cx="60" cy="72" r="1.2" fill="#22c55e"/><circle cx="90" cy="65" r="1.2" fill="#22c55e"/><circle cx="120" cy="52" r="1.2" fill="#22c55e"/><circle cx="150" cy="42" r="1.2" fill="#22c55e"/><circle cx="180" cy="30" r="1.2" fill="#22c55e"/><circle cx="195" cy="22" r="1.2" fill="#22c55e"/>
-                          </svg>
-                          <div class="flex justify-between text-[9px] font-mono text-white/25 mt-1"><span>Oct</span><span>Nov</span><span>Dec</span><span>Jan</span><span>Feb</span><span>Mar</span></div>
-                      </div>
-                  </div>
-
-                  <!-- Monthly Heatmap + Drawdown -->
-                  <div class="grid grid-cols-2 gap-3 shrink-0">
-                      <!-- Monthly P&L Heatmap -->
-                      <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
-                          <div class="h-10 l-b flex items-center px-4 bg-black/40"><h3 class="section-title">Monthly P&L Heatmap</h3></div>
-                          <div class="p-4">
-                              <div class="grid grid-cols-12 gap-1 text-[8px] font-mono text-center mb-1"><span class="text-muted">J</span><span class="text-muted">F</span><span class="text-muted">M</span><span class="text-muted">A</span><span class="text-muted">M</span><span class="text-muted">J</span><span class="text-muted">J</span><span class="text-muted">A</span><span class="text-muted">S</span><span class="text-muted">O</span><span class="text-muted">N</span><span class="text-muted">D</span></div>
-                              <!-- 2025 -->
-                              <div class="flex items-center gap-1 mb-1"><span class="text-[9px] text-muted font-mono w-8">2025</span><div class="flex-1 grid grid-cols-12 gap-1">
-                                  <div class="h-6 rounded-sm bg-up/20 flex items-center justify-center text-[8px] font-mono text-up" title="+$1,200">+1.2</div>
-                                  <div class="h-6 rounded-sm bg-up/30 flex items-center justify-center text-[8px] font-mono text-up" title="+$2,100">+2.1</div>
-                                  <div class="h-6 rounded-sm bg-down/20 flex items-center justify-center text-[8px] font-mono text-down" title="-$400">-0.4</div>
-                                  <div class="h-6 rounded-sm bg-up/15 flex items-center justify-center text-[8px] font-mono text-up" title="+$800">+0.8</div>
-                                  <div class="h-6 rounded-sm bg-up/25 flex items-center justify-center text-[8px] font-mono text-up" title="+$1,800">+1.8</div>
-                                  <div class="h-6 rounded-sm bg-up/20 flex items-center justify-center text-[8px] font-mono text-up" title="+$1,100">+1.1</div>
-                                  <div class="h-6 rounded-sm bg-down/15 flex items-center justify-center text-[8px] font-mono text-down" title="-$200">-0.2</div>
-                                  <div class="h-6 rounded-sm bg-up/35 flex items-center justify-center text-[8px] font-mono text-up" title="+$3,200">+3.2</div>
-                                  <div class="h-6 rounded-sm bg-up/20 flex items-center justify-center text-[8px] font-mono text-up" title="+$1,400">+1.4</div>
-                                  <div class="h-6 rounded-sm bg-up/15 flex items-center justify-center text-[8px] font-mono text-up" title="+$900">+0.9</div>
-                                  <div class="h-6 rounded-sm bg-down/25 flex items-center justify-center text-[8px] font-mono text-down" title="-$890">-0.9</div>
-                                  <div class="h-6 rounded-sm bg-up/20 flex items-center justify-center text-[8px] font-mono text-up" title="+$1,300">+1.3</div>
-                              </div></div>
-                              <!-- 2026 -->
-                              <div class="flex items-center gap-1"><span class="text-[9px] text-muted font-mono w-8">2026</span><div class="flex-1 grid grid-cols-12 gap-1">
-                                  <div class="h-6 rounded-sm bg-up/25 flex items-center justify-center text-[8px] font-mono text-up">+2.4</div>
-                                  <div class="h-6 rounded-sm bg-up/40 flex items-center justify-center text-[8px] font-mono text-up font-bold">+4.2</div>
-                                  <div class="h-6 rounded-sm bg-up/30 flex items-center justify-center text-[8px] font-mono text-up">+3.1</div>
-                                  <div class="h-6 rounded-sm bg-white/[0.04] flex items-center justify-center text-[8px] font-mono text-muted">—</div>
-                                  <div class="h-6 rounded-sm bg-white/[0.04]"></div><div class="h-6 rounded-sm bg-white/[0.04]"></div><div class="h-6 rounded-sm bg-white/[0.04]"></div><div class="h-6 rounded-sm bg-white/[0.04]"></div><div class="h-6 rounded-sm bg-white/[0.04]"></div><div class="h-6 rounded-sm bg-white/[0.04]"></div><div class="h-6 rounded-sm bg-white/[0.04]"></div><div class="h-6 rounded-sm bg-white/[0.04]"></div>
-                              </div></div>
-                          </div>
-                      </div>
-                      <!-- Drawdown Timeline -->
-                      <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
-                          <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title">Drawdown Timeline</h3><span class="text-[10px] text-down font-mono font-bold">Current: -1.2%</span></div>
-                          <div class="flex-1 px-4 pb-3 pt-2 relative h-[140px]">
-                              <div class="absolute left-1 top-2 bottom-3 flex flex-col justify-between text-[9px] font-mono text-white/25"><span>0%</span><span>-2%</span><span>-4%</span></div>
-                              <svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 200 100">
-                                  <line x1="0" y1="0" x2="200" y2="0" stroke="rgba(255,255,255,0.08)" stroke-width="0.3"/>
-                                  <polyline points="0,0 10,5 20,2 30,15 40,25 50,40 55,45 60,30 70,10 80,5 90,0 100,3 110,8 120,20 130,35 135,40 140,25 150,15 160,5 170,0 180,2 190,8 200,12" fill="none" stroke="#ef4444" stroke-width="0.4" stroke-linejoin="round"/>
-                                  <!-- Max DD marker -->
-                                  <line x1="55" y1="45" x2="55" y2="0" stroke="rgba(239,68,68,0.2)" stroke-width="0.3" stroke-dasharray="2,2"/>
-                                  <circle cx="55" cy="45" r="2" fill="none" stroke="#ef4444" stroke-width="0.4"/>
-                                  <text x="58" y="48" fill="#ef4444" font-size="4" font-family="monospace">-4.12%</text>
-                              </svg>
-                              <div class="flex justify-between text-[9px] font-mono text-white/25 mt-1"><span>Oct</span><span>Dec</span><span>Feb</span><span>Mar</span></div>
-                          </div>
-                      </div>
-                  </div>
-
-                  <!-- Daily P&L Table -->
-                  <div class="bg-surface l-bd rounded-md flex flex-col shadow-xl overflow-hidden shrink-0" style="max-height:280px">
-                      <div class="h-10 l-b flex items-center px-4 bg-black/40 shrink-0"><h3 class="section-title">Daily P&L Breakdown</h3></div>
-                      <div class="flex-1 overflow-y-auto">
-                      <table class="w-full text-[11px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-black z-10"><tr class="text-muted text-[9px] uppercase tracking-wider"><th class="text-left px-3 py-1.5 font-semibold">Date</th><th class="text-right px-3 py-1.5 font-semibold">Trades</th><th class="text-right px-3 py-1.5 font-semibold">Win</th><th class="text-right px-3 py-1.5 font-semibold">Loss</th><th class="text-right px-3 py-1.5 font-semibold">Profit $</th><th class="text-right px-3 py-1.5 font-semibold">Profit %</th><th class="text-right px-3 py-1.5 font-semibold">Cumulative</th></tr></thead>
-                      <tbody class="divide-y divide-white/[0.04]">
-                          <tr class="hover:bg-white/[0.03]"><td class="px-3 py-1.5 text-white">2026-03-30</td><td class="px-3 py-1.5 text-right">18</td><td class="px-3 py-1.5 text-right text-up">14</td><td class="px-3 py-1.5 text-right text-down">4</td><td class="px-3 py-1.5 text-right text-up font-bold">+$1,420</td><td class="px-3 py-1.5 text-right text-up">+1.12%</td><td class="px-3 py-1.5 text-right text-up">+$18,940</td></tr>
-                          <tr class="hover:bg-white/[0.03]"><td class="px-3 py-1.5 text-white">2026-03-29</td><td class="px-3 py-1.5 text-right">22</td><td class="px-3 py-1.5 text-right text-up">16</td><td class="px-3 py-1.5 text-right text-down">6</td><td class="px-3 py-1.5 text-right text-up">+$890</td><td class="px-3 py-1.5 text-right text-up">+0.72%</td><td class="px-3 py-1.5 text-right text-up">+$17,520</td></tr>
-                          <tr class="hover:bg-white/[0.03]"><td class="px-3 py-1.5 text-white">2026-03-28</td><td class="px-3 py-1.5 text-right">15</td><td class="px-3 py-1.5 text-right text-up">8</td><td class="px-3 py-1.5 text-right text-down">7</td><td class="px-3 py-1.5 text-right text-down font-bold">-$210</td><td class="px-3 py-1.5 text-right text-down">-0.17%</td><td class="px-3 py-1.5 text-right text-up">+$16,630</td></tr>
-                          <tr class="hover:bg-white/[0.03]"><td class="px-3 py-1.5 text-white">2026-03-27</td><td class="px-3 py-1.5 text-right">20</td><td class="px-3 py-1.5 text-right text-up">15</td><td class="px-3 py-1.5 text-right text-down">5</td><td class="px-3 py-1.5 text-right text-up">+$1,050</td><td class="px-3 py-1.5 text-right text-up">+0.85%</td><td class="px-3 py-1.5 text-right text-up">+$16,840</td></tr>
-                          <tr class="hover:bg-white/[0.03]"><td class="px-3 py-1.5 text-white">2026-03-26</td><td class="px-3 py-1.5 text-right">12</td><td class="px-3 py-1.5 text-right text-up">9</td><td class="px-3 py-1.5 text-right text-down">3</td><td class="px-3 py-1.5 text-right text-up">+$680</td><td class="px-3 py-1.5 text-right text-up">+0.56%</td><td class="px-3 py-1.5 text-right text-up">+$15,790</td></tr>
-                          <tr class="hover:bg-white/[0.03]"><td class="px-3 py-1.5 text-white">2026-03-25</td><td class="px-3 py-1.5 text-right">25</td><td class="px-3 py-1.5 text-right text-up">18</td><td class="px-3 py-1.5 text-right text-down">7</td><td class="px-3 py-1.5 text-right text-up">+$1,240</td><td class="px-3 py-1.5 text-right text-up">+1.04%</td><td class="px-3 py-1.5 text-right text-up">+$15,110</td></tr>
-                      </tbody></table>
-                      </div>
-                  </div>
+          <!-- Cumulative Profit -->
+          <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden shrink-0">
+              <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40">
+                  <h3 class="section-title flex items-center gap-2"><span>💰</span>Cumulative Profit</h3>
+                  <button class="text-[11px] text-up font-medium hover:underline">Export Data</button>
               </div>
-
-              <!-- TAB: PAIRS -->
-              <div id="an-pairs" class="an-tab h-full flex flex-col gap-3 overflow-y-auto pr-1">
-                  <!-- KPI Row -->
-                  <div class="grid grid-cols-7 gap-2 shrink-0">
-                      <div class="bg-surface p-3 l-bd rounded"><div class="kpi-label">Total Pairs</div><div class="kpi-value text-lg">18</div></div>
-                      <div class="bg-surface p-3 l-bd rounded border-l-2 border-l-up"><div class="kpi-label">Best Pair</div><div class="kpi-value text-up text-lg">SOL/USDT</div><div class="text-[9px] text-up font-mono">+$4,820</div></div>
-                      <div class="bg-surface p-3 l-bd rounded border-l-2 border-l-down"><div class="kpi-label">Worst Pair</div><div class="kpi-value text-down text-lg">DOGE/USDT</div><div class="text-[9px] text-down font-mono">-$340</div></div>
-                      <div class="bg-surface p-3 l-bd rounded"><div class="kpi-label">Most Traded</div><div class="kpi-value text-lg">BTC/USDT</div><div class="text-[9px] text-muted font-mono">312 trades</div></div>
-                      <div class="bg-surface p-3 l-bd rounded"><div class="kpi-label">Profitable</div><div class="kpi-value text-up text-lg">14/18</div><div class="text-[9px] text-muted font-mono">77.8%</div></div>
-                      <div class="bg-surface p-3 l-bd rounded"><div class="kpi-label">Avg/Pair</div><div class="kpi-value text-lg">71 trades</div></div>
-                      <div class="bg-surface p-3 l-bd rounded"><div class="kpi-label">Concentration</div><div class="kpi-value text-lg">31.7%</div><div class="text-[9px] text-muted font-mono">BTC dominance</div></div>
+              <div class="h-[160px] relative px-3 pt-3 pb-5 pl-10">
+                  <div class="absolute left-0 top-3 bottom-5 w-9 flex flex-col justify-between px-1">
+                      <span class="text-[9px] text-muted font-mono text-right">+$5k</span><span class="text-[9px] text-muted font-mono text-right">+$2.5k</span><span class="text-[9px] text-muted font-mono text-right">$0</span><span class="text-[9px] text-muted font-mono text-right">-$1k</span>
                   </div>
-                  <!-- Top/Bottom Pairs Visual -->
-                  <div class="grid grid-cols-2 gap-3 shrink-0">
-                      <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
-                          <div class="h-10 l-b flex items-center px-4 bg-black/40"><h3 class="section-title">Top 5 Pairs</h3></div>
-                          <div class="p-3 space-y-2">
-                              <div class="flex items-center gap-2 text-[11px] font-mono"><span class="w-20 text-white shrink-0">SOL/USDT</span><div class="flex-1 h-4 bg-white/[0.04] rounded-sm overflow-hidden"><div class="h-full bg-up/40 rounded-sm" style="width:100%"></div></div><span class="text-up font-bold w-16 text-right">+$4,820</span></div>
-                              <div class="flex items-center gap-2 text-[11px] font-mono"><span class="w-20 text-white shrink-0">BTC/USDT</span><div class="flex-1 h-4 bg-white/[0.04] rounded-sm overflow-hidden"><div class="h-full bg-up/35 rounded-sm" style="width:85%"></div></div><span class="text-up font-bold w-16 text-right">+$4,102</span></div>
-                              <div class="flex items-center gap-2 text-[11px] font-mono"><span class="w-20 text-white shrink-0">ETH/USDT</span><div class="flex-1 h-4 bg-white/[0.04] rounded-sm overflow-hidden"><div class="h-full bg-up/30 rounded-sm" style="width:72%"></div></div><span class="text-up font-bold w-16 text-right">+$3,470</span></div>
-                              <div class="flex items-center gap-2 text-[11px] font-mono"><span class="w-20 text-white shrink-0">AVAX/USDT</span><div class="flex-1 h-4 bg-white/[0.04] rounded-sm overflow-hidden"><div class="h-full bg-up/25 rounded-sm" style="width:55%"></div></div><span class="text-up font-bold w-16 text-right">+$2,650</span></div>
-                              <div class="flex items-center gap-2 text-[11px] font-mono"><span class="w-20 text-white shrink-0">LINK/USDT</span><div class="flex-1 h-4 bg-white/[0.04] rounded-sm overflow-hidden"><div class="h-full bg-up/20 rounded-sm" style="width:40%"></div></div><span class="text-up font-bold w-16 text-right">+$1,930</span></div>
-                          </div>
-                      </div>
-                      <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
-                          <div class="h-10 l-b flex items-center px-4 bg-black/40"><h3 class="section-title">Bottom 5 Pairs</h3></div>
-                          <div class="p-3 space-y-2">
-                              <div class="flex items-center gap-2 text-[11px] font-mono"><span class="w-20 text-white shrink-0">DOGE/USDT</span><div class="flex-1 h-4 bg-white/[0.04] rounded-sm overflow-hidden"><div class="h-full bg-down/40 rounded-sm" style="width:100%"></div></div><span class="text-down font-bold w-16 text-right">-$340</span></div>
-                              <div class="flex items-center gap-2 text-[11px] font-mono"><span class="w-20 text-white shrink-0">XRP/USDT</span><div class="flex-1 h-4 bg-white/[0.04] rounded-sm overflow-hidden"><div class="h-full bg-down/30 rounded-sm" style="width:65%"></div></div><span class="text-down font-bold w-16 text-right">-$220</span></div>
-                              <div class="flex items-center gap-2 text-[11px] font-mono"><span class="w-20 text-white shrink-0">SHIB/USDT</span><div class="flex-1 h-4 bg-white/[0.04] rounded-sm overflow-hidden"><div class="h-full bg-down/20 rounded-sm" style="width:35%"></div></div><span class="text-down font-bold w-16 text-right">-$120</span></div>
-                              <div class="flex items-center gap-2 text-[11px] font-mono"><span class="w-20 text-white shrink-0">TRX/USDT</span><div class="flex-1 h-4 bg-white/[0.04] rounded-sm overflow-hidden"><div class="h-full bg-down/15 rounded-sm" style="width:20%"></div></div><span class="text-down w-16 text-right">-$68</span></div>
-                              <div class="flex items-center gap-2 text-[11px] font-mono"><span class="w-20 text-white shrink-0">ADA/USDT</span><div class="flex-1 h-4 bg-white/[0.04] rounded-sm overflow-hidden"><div class="h-full bg-up/10 rounded-sm" style="width:5%"></div></div><span class="text-muted w-16 text-right">+$12</span></div>
-                          </div>
-                      </div>
-                  </div>
-                  <!-- Pair Performance Table -->
-                  <div class="bg-surface l-bd rounded-md flex flex-col shadow-xl overflow-hidden shrink-0" style="max-height:340px">
-                      <div class="h-10 l-b flex items-center px-4 bg-black/40 shrink-0"><h3 class="section-title">Pair Performance</h3></div>
-                      <div class="flex-1 overflow-y-auto">
-                      <table class="w-full text-[11px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-black z-10"><tr class="text-muted text-[9px] uppercase tracking-wider"><th class="text-left px-3 py-1.5 font-semibold">Pair</th><th class="text-right px-3 py-1.5 font-semibold">Trades</th><th class="text-right px-3 py-1.5 font-semibold">Win %</th><th class="text-right px-3 py-1.5 font-semibold">Profit $</th><th class="text-right px-3 py-1.5 font-semibold">Profit %</th><th class="text-right px-3 py-1.5 font-semibold">Avg Dur.</th><th class="text-right px-3 py-1.5 font-semibold">Best</th><th class="text-right px-3 py-1.5 font-semibold">Worst</th></tr></thead>
-                      <tbody class="divide-y divide-white/[0.04]">
-                          <tr class="hover:bg-white/[0.03]"><td class="px-3 py-1.5 text-white font-bold">SOL/USDT</td><td class="px-3 py-1.5 text-right">98</td><td class="px-3 py-1.5 text-right text-up">74.5%</td><td class="px-3 py-1.5 text-right text-up font-bold">+$4,820</td><td class="px-3 py-1.5 text-right text-up">+8.12%</td><td class="px-3 py-1.5 text-right text-muted">2h 10m</td><td class="px-3 py-1.5 text-right text-up">+$320</td><td class="px-3 py-1.5 text-right text-down">-$85</td></tr>
-                          <tr class="hover:bg-white/[0.03]"><td class="px-3 py-1.5 text-white font-bold">BTC/USDT</td><td class="px-3 py-1.5 text-right">312</td><td class="px-3 py-1.5 text-right text-up">71.2%</td><td class="px-3 py-1.5 text-right text-up">+$4,102</td><td class="px-3 py-1.5 text-right text-up">+5.40%</td><td class="px-3 py-1.5 text-right text-muted">3h 15m</td><td class="px-3 py-1.5 text-right text-up">+$410</td><td class="px-3 py-1.5 text-right text-down">-$120</td></tr>
-                          <tr class="hover:bg-white/[0.03]"><td class="px-3 py-1.5 text-white font-bold">ETH/USDT</td><td class="px-3 py-1.5 text-right">205</td><td class="px-3 py-1.5 text-right text-up">69.8%</td><td class="px-3 py-1.5 text-right text-up">+$3,470</td><td class="px-3 py-1.5 text-right text-up">+4.85%</td><td class="px-3 py-1.5 text-right text-muted">2h 50m</td><td class="px-3 py-1.5 text-right text-up">+$280</td><td class="px-3 py-1.5 text-right text-down">-$95</td></tr>
-                          <tr class="hover:bg-white/[0.03]"><td class="px-3 py-1.5 text-white">AVAX/USDT</td><td class="px-3 py-1.5 text-right">76</td><td class="px-3 py-1.5 text-right text-up">68.4%</td><td class="px-3 py-1.5 text-right text-up">+$2,650</td><td class="px-3 py-1.5 text-right text-up">+3.92%</td><td class="px-3 py-1.5 text-right text-muted">1h 55m</td><td class="px-3 py-1.5 text-right text-up">+$210</td><td class="px-3 py-1.5 text-right text-down">-$72</td></tr>
-                          <tr class="hover:bg-white/[0.03]"><td class="px-3 py-1.5 text-white">LINK/USDT</td><td class="px-3 py-1.5 text-right">64</td><td class="px-3 py-1.5 text-right text-up">67.2%</td><td class="px-3 py-1.5 text-right text-up">+$1,930</td><td class="px-3 py-1.5 text-right text-up">+2.88%</td><td class="px-3 py-1.5 text-right text-muted">3h 22m</td><td class="px-3 py-1.5 text-right text-up">+$185</td><td class="px-3 py-1.5 text-right text-down">-$60</td></tr>
-                          <tr class="hover:bg-white/[0.03]"><td class="px-3 py-1.5 text-white">DOGE/USDT</td><td class="px-3 py-1.5 text-right">45</td><td class="px-3 py-1.5 text-right text-down">42.2%</td><td class="px-3 py-1.5 text-right text-down font-bold">-$340</td><td class="px-3 py-1.5 text-right text-down">-1.20%</td><td class="px-3 py-1.5 text-right text-muted">4h 10m</td><td class="px-3 py-1.5 text-right text-up">+$45</td><td class="px-3 py-1.5 text-right text-down">-$110</td></tr>
-                          <tr class="hover:bg-white/[0.03]"><td class="px-3 py-1.5 text-white">XRP/USDT</td><td class="px-3 py-1.5 text-right">38</td><td class="px-3 py-1.5 text-right text-down">44.7%</td><td class="px-3 py-1.5 text-right text-down">-$220</td><td class="px-3 py-1.5 text-right text-down">-0.85%</td><td class="px-3 py-1.5 text-right text-muted">5h 30m</td><td class="px-3 py-1.5 text-right text-up">+$32</td><td class="px-3 py-1.5 text-right text-down">-$88</td></tr>
-                      </tbody></table>
-                      </div>
-                  </div>
+                  <svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 400 110">
+                      <line x1="0" y1="75" x2="400" y2="75" stroke="rgba(255,255,255,0.06)" stroke-width="0.3" stroke-dasharray="3,3"/>
+                      <polyline points="0,90 30,85 60,80 90,75 120,70 150,72 180,65 210,55 240,50 270,42 300,35 330,28 360,22 390,15" fill="none" stroke="#22c55e" stroke-width="0.5" stroke-linejoin="round"/>
+                      <circle cx="0" cy="90" r="1.5" fill="#22c55e"/><circle cx="60" cy="80" r="1.5" fill="#22c55e"/><circle cx="120" cy="70" r="1.5" fill="#22c55e"/><circle cx="180" cy="65" r="1.5" fill="#22c55e"/><circle cx="240" cy="50" r="1.5" fill="#22c55e"/><circle cx="300" cy="35" r="1.5" fill="#22c55e"/><circle cx="390" cy="15" r="1.5" fill="#22c55e"/>
+                  </svg>
+                  <div class="flex justify-between text-[9px] text-muted font-mono mt-1"><span>BTC</span><span>ETH</span><span>SOL</span><span>BNB</span><span>XRP</span><span>AVAX</span><span>LINK</span></div>
               </div>
-              <!-- TAB: EXITS (placeholder) -->
-              <div id="an-exits" class="an-tab h-full flex flex-col gap-3 overflow-y-auto pr-1"></div>
-              <!-- TAB: JOURNAL (placeholder) -->
-              <div id="an-journal" class="an-tab h-full flex flex-col gap-3 overflow-y-auto pr-1"></div>
-
           </div>
+
+          <!-- ═══ §29 ORDERFLOW ═══ -->
+          <div class="flex items-center gap-3 pb-2 border-b border-white/[0.06] shrink-0">
+              <span class="text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest bg-cyan-400/[0.12] text-cyan-400">§29</span>
+              <span class="text-[14px] font-bold text-white">Orderflow</span>
+          </div>
+
+          <!-- Orderflow Configuration -->
+          <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden shrink-0">
+              <div class="h-10 l-b flex items-center px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>🌊</span>Orderflow Configuration</h3></div>
+              <div class="p-4 flex flex-col gap-4">
+                  <div class="flex items-center gap-3">
+                      <span class="builder-toggle w-8 h-4 bg-up rounded-full relative cursor-pointer"><span class="absolute w-3 h-3 rounded-full bg-white top-0.5 left-[18px]"></span></span>
+                      <span class="text-[11px] text-muted font-medium">Orderflow Data</span>
+                  </div>
+                  <div class="text-[10px] text-muted font-semibold uppercase tracking-wider">Orderflow Parameters</div>
+                  <div class="grid grid-cols-4 gap-3.5">
+                      <div class="flex flex-col gap-1"><label class="builder-label">Scale</label><input type="number" value="0.5" class="builder-input text-[11px] font-mono"></div>
+                      <div class="flex flex-col gap-1"><label class="builder-label">Imbalance Volume</label><input type="number" value="100" class="builder-input text-[11px] font-mono"></div>
+                      <div class="flex flex-col gap-1"><label class="builder-label">Imbalance Ratio</label><input type="number" value="3.0" class="builder-input text-[11px] font-mono"></div>
+                      <div class="flex flex-col gap-1"><label class="builder-label">Stacked Range</label><input type="number" value="3" class="builder-input text-[11px] font-mono"></div>
+                      <div class="flex flex-col gap-1"><label class="builder-label">Cache Size</label><input type="number" value="1500" class="builder-input text-[11px] font-mono"></div>
+                      <div class="flex flex-col gap-1"><label class="builder-label">Max Candles</label><input type="number" value="1500" class="builder-input text-[11px] font-mono"></div>
+                  </div>
+              </div>
+          </div>
+
+          <!-- Footprint + Delta grid -->
+          <div class="grid grid-cols-2 gap-5 shrink-0">
+              <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
+                  <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>🧱</span>Footprint Chart</h3><span class="text-[10px] text-muted font-mono">BTC/USDT:USDT · 1h</span></div>
+                  <div class="flex items-center justify-center py-12"><div class="text-center"><div class="text-[11px] text-muted mb-1">Orderflow data requires live connection</div><div class="text-[10px] text-muted">Enable use_public_trades and connect to a running bot</div></div></div>
+              </div>
+              <div class="flex flex-col gap-4">
+                  <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
+                      <div class="h-10 l-b flex items-center px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>📊</span>Delta Chart (Ask - Bid)</h3></div>
+                      <div class="flex items-center justify-center py-8"><div class="text-[11px] text-muted">Orderflow data requires live connection</div></div>
+                  </div>
+                  <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
+                      <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>⚡</span>Imbalance Highlights</h3><span class="text-[10px] text-muted font-mono">0 detected</span></div>
+                      <div class="flex items-center justify-center py-8"><div class="text-[11px] text-muted">Orderflow data requires live connection</div></div>
+                  </div>
+              </div>
+          </div>
+
+          <!-- ═══ §20 DATA ANALYSIS ═══ -->
+          <div class="flex items-center gap-3 pb-2 border-b border-white/[0.06] shrink-0">
+              <span class="text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest bg-cyan-400/[0.12] text-cyan-400">§20</span>
+              <span class="text-[14px] font-bold text-white">Data Analysis</span>
+          </div>
+
+          <!-- Quick Stats -->
+          <div class="grid grid-cols-4 gap-3.5 shrink-0">
+              <div class="bg-surface l-bd rounded-md p-3.5 px-4"><div class="kpi-label">Pairs Analyzed</div><div class="kpi-value text-lg">5</div><div class="text-[10px] text-muted mt-0.5">All active pairs</div></div>
+              <div class="bg-surface l-bd rounded-md p-3.5 px-4"><div class="kpi-label">Best Pair</div><div class="kpi-value text-up text-base">SOL/USDT</div><div class="text-[10px] text-up mt-0.5 font-medium">+482.30 USDT</div></div>
+              <div class="bg-surface l-bd rounded-md p-3.5 px-4"><div class="kpi-label">Worst Pair</div><div class="kpi-value text-down text-base">XRP/USDT</div><div class="text-[10px] text-down mt-0.5 font-medium">-34.20 USDT</div></div>
+              <div class="bg-surface l-bd rounded-md p-3.5 px-4"><div class="kpi-label">Total Trades</div><div class="kpi-value text-lg">1,284</div><div class="text-[10px] text-muted mt-0.5">All pairs combined</div></div>
+          </div>
+
+          <!-- Performance Heatmap + Jupyter -->
+          <div class="grid grid-cols-[2fr_1fr] gap-5 shrink-0">
+              <!-- Heatmap -->
+              <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
+                  <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>🔥</span>Performance Heatmap (Pair × Day)</h3><span class="text-[10px] text-muted font-mono">Last 7 days</span></div>
+                  <div class="p-0 overflow-x-auto">
+                      <div class="grid gap-px bg-white/[0.04] l-bd rounded-md overflow-hidden min-w-[500px]" style="grid-template-columns:90px repeat(7,1fr)">
+                          <div class="bg-surface text-muted text-[9px] font-semibold uppercase tracking-wider text-center px-1.5 py-2"></div>
+                          <div class="bg-surface text-muted text-[9px] font-semibold uppercase tracking-wider text-center px-1.5 py-2">Mon</div>
+                          <div class="bg-surface text-muted text-[9px] font-semibold uppercase tracking-wider text-center px-1.5 py-2">Tue</div>
+                          <div class="bg-surface text-muted text-[9px] font-semibold uppercase tracking-wider text-center px-1.5 py-2">Wed</div>
+                          <div class="bg-surface text-muted text-[9px] font-semibold uppercase tracking-wider text-center px-1.5 py-2">Thu</div>
+                          <div class="bg-surface text-muted text-[9px] font-semibold uppercase tracking-wider text-center px-1.5 py-2">Fri</div>
+                          <div class="bg-surface text-muted text-[9px] font-semibold uppercase tracking-wider text-center px-1.5 py-2">Sat</div>
+                          <div class="bg-surface text-muted text-[9px] font-semibold uppercase tracking-wider text-center px-1.5 py-2">Sun</div>
+                          <!-- BTC row -->
+                          <div class="bg-surface text-muted text-[11px] font-semibold text-left px-2.5 py-2.5">BTC/USDT</div>
+                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+1.2%</div>
+                          <div class="bg-down/[0.08] text-down text-[11px] font-medium text-center px-1.5 py-2.5">-0.3%</div>
+                          <div class="bg-up/[0.15] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+2.4%</div>
+                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+0.8%</div>
+                          <div class="bg-down/[0.15] text-down text-[11px] font-medium text-center px-1.5 py-2.5">-1.6%</div>
+                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+0.5%</div>
+                          <div class="bg-surface text-muted text-[11px] font-medium text-center px-1.5 py-2.5">0.0%</div>
+                          <!-- ETH row -->
+                          <div class="bg-surface text-muted text-[11px] font-semibold text-left px-2.5 py-2.5">ETH/USDT</div>
+                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+0.9%</div>
+                          <div class="bg-up/[0.15] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+2.1%</div>
+                          <div class="bg-down/[0.08] text-down text-[11px] font-medium text-center px-1.5 py-2.5">-0.4%</div>
+                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+1.3%</div>
+                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+0.7%</div>
+                          <div class="bg-down/[0.08] text-down text-[11px] font-medium text-center px-1.5 py-2.5">-0.2%</div>
+                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+0.4%</div>
+                          <!-- SOL row -->
+                          <div class="bg-surface text-muted text-[11px] font-semibold text-left px-2.5 py-2.5">SOL/USDT</div>
+                          <div class="bg-up/[0.15] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+3.1%</div>
+                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+1.4%</div>
+                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+0.6%</div>
+                          <div class="bg-down/[0.08] text-down text-[11px] font-medium text-center px-1.5 py-2.5">-0.5%</div>
+                          <div class="bg-up/[0.15] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+2.8%</div>
+                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+1.1%</div>
+                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+0.3%</div>
+                      </div>
+                  </div>
+              </div>
+              <!-- Jupyter Notebooks -->
+              <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
+                  <div class="h-10 l-b flex items-center px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>📓</span>Jupyter Notebooks</h3></div>
+                  <div class="p-4">
+                      <div class="flex items-center justify-center py-6"><span class="text-[11px] text-muted">No notebooks found on this bot</span></div>
+                      <div class="mt-3.5 p-2.5 px-3 bg-white/[0.03] l-bd rounded-md text-[11px] text-muted leading-relaxed">Notebooks run on the FreqTrade server at<br><span class="text-muted font-mono text-[10px]">/freqtrade/user_data/notebooks/</span><br>Access via Jupyter on port 8888</div>
+                  </div>
+              </div>
+          </div>
+
       </div>
+
+
+
+
 
       <!-- PAGE: FLEET MANAGEMENT -->
       <div id="page-fleet" class="page-view flex-1 overflow-y-auto flex-col p-5 gap-5">
@@ -3106,8 +3169,8 @@
           <!-- Fleet Table -->
           <div class="flex-1 bg-surface l-bd rounded-md shadow-xl overflow-hidden flex flex-col">
               <div class="flex-1 overflow-x-auto overflow-y-auto">
-                  <table class="w-full text-left border-collapse whitespace-nowrap text-[12px]">
-                      <thead class="sticky top-0 bg-surface l-b font-mono text-[10px] uppercase tracking-widest text-muted z-10 shadow-lg">
+                  <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
+                      <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
                           <tr>
                               <th class="px-3 py-3 font-medium w-8"><input type="checkbox" class="rounded" title="Select all"></th>
                               <th class="px-3 py-3 font-medium sortable filterable">Status</th>

@@ -125,6 +125,7 @@ export default function HyperoptTab({ strategy, botId = 2, experimentId, onNavig
   const [hoRuns, setHoRuns] = useState<HyperoptRun[]>([]);
   const [hoConfirmDelete, setHoConfirmDelete] = useState<string | null>(null);
   const CACHE_KEY = `ho-results-${strategy}`;
+  const JOB_KEY = `ho-active-job-${strategy}-${botId}`;
 
   // ── Log State ───────────────────────────────────────────────────
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -280,7 +281,7 @@ export default function HyperoptTab({ strategy, botId = 2, experimentId, onNavig
     return () => clearTimeout(t);
   }, [hoConfirmDelete]);
 
-  // ── Mount: load from cache, fetch history list (fast) ────────────
+  // ── Mount: load from cache, fetch history list, auto-resume ──────
   useEffect(() => {
     // 1. Instant load from cache
     try {
@@ -294,10 +295,50 @@ export default function HyperoptTab({ strategy, botId = 2, experimentId, onNavig
       }
     } catch { /* no cache */ }
     // 2. Fetch history list only (fast Python script)
-    // NOTE: fetchResults() is NOT called here — it runs `freqtrade hyperopt-list`
-    // which is very slow. Results load via: cache, Load button, or Refresh.
     fetchRuns();
-  }, [CACHE_KEY, fetchRuns, addLog]);
+
+    // 3. Auto-resume: check if a hyperopt job was running when page was closed
+    try {
+      const savedJob = localStorage.getItem(JOB_KEY);
+      if (savedJob) {
+        const { jobId: savedJobId } = JSON.parse(savedJob) as { jobId: string };
+        if (savedJobId) {
+          addLog('INFO', `🔄 Found active hyperopt job ${savedJobId} — resuming polling...`);
+          setIsRunning(true);
+          setHoProgress('Resuming...');
+          const resumePoll = setInterval(async () => {
+            try {
+              const status = await botHyperoptStatus(botId, savedJobId);
+              addLog('INFO', `[resume-poll] status=${status.status}`);
+              if (status.status === 'completed' || status.status === 'failed') {
+                clearInterval(resumePoll);
+                setIsRunning(false);
+                localStorage.removeItem(JOB_KEY);
+                if (status.status === 'completed') {
+                  setHoProgress('✓ Completed (resumed)');
+                  addLog('INFO', 'Resumed hyperopt completed successfully');
+                  toast.success('Previous hyperopt run completed!');
+                  fetchRuns();
+                } else {
+                  setHoProgress('✗ Failed');
+                  addLog('ERROR', 'Resumed hyperopt failed');
+                  toast.error('Previous hyperopt run failed');
+                }
+              }
+            } catch {
+              clearInterval(resumePoll);
+              setIsRunning(false);
+              localStorage.removeItem(JOB_KEY);
+              setHoProgress('');
+              addLog('WARNING', 'Lost connection to previous hyperopt job (may have completed)');
+            }
+          }, 5000);
+          pollRef.current = resumePoll;
+        }
+      }
+    } catch { /* no active job — normal */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [CACHE_KEY, JOB_KEY, fetchRuns, addLog, botId, toast]);
 
   // ── Run Single Hyperopt ──────────────────────────────────────────
   const handleRunSingle = async () => {
@@ -341,6 +382,10 @@ export default function HyperoptTab({ strategy, botId = 2, experimentId, onNavig
       const jobId = res?.job_id;
       addLog('INFO', `Hyperopt job submitted — jobId=${jobId ?? 'N/A'}`);
       setHoProgress('running');
+      // Persist jobId so we can resume if page is closed
+      if (jobId) {
+        try { localStorage.setItem(JOB_KEY, JSON.stringify({ jobId })); } catch { /* */ }
+      }
 
       if (jobId) {
         // Poll for completion
@@ -351,6 +396,7 @@ export default function HyperoptTab({ strategy, botId = 2, experimentId, onNavig
             if (status.status === 'completed' || status.status === 'failed') {
               clearInterval(pollInterval);
               setIsRunning(false);
+              try { localStorage.removeItem(JOB_KEY); } catch { /* */ }
               if (status.status === 'completed') {
                 setHoProgress('✓ Completed');
                 addLog('INFO', 'Hyperopt completed successfully');

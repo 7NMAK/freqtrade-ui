@@ -209,14 +209,15 @@ export default function ProfitChart({
                     fontSize: 11,
                     fontFamily: "'JetBrains Mono', monospace",
                   }}
-                  formatter={(v: unknown, name: string) => {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  formatter={((v: unknown, name: string) => {
                     const n = Number(v);
                     if (name === "tradeCount") return [n, "Trades"];
                     return [
                       valueMode === "abs" ? fmtMoney(n) : `${n >= 0 ? "+" : ""}${fmt(n, 2)}%`,
                       "Cum. P&L",
                     ];
-                  }}
+                  }) as never}
                 />
                 <Bar
                   yAxisId="trades"

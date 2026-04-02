@@ -88,6 +88,9 @@
   .builder-select { height: 36px; padding: 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.22); background: #1a1a1a; color: #F5F5F5; font-size: 12px; font-family: 'JetBrains Mono', monospace; outline: none; cursor: pointer; -webkit-appearance: none; appearance: none; }
   .builder-select:focus { border-color: rgba(255,255,255,0.30); }
 
+  /* Action button */
+  .builder-action { height: 32px; padding: 0 14px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.05em; }
+
   /* Label */
   .builder-label { font-size: 11px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 6px; display: block; }
 

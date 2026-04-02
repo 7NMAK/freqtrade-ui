@@ -507,7 +507,7 @@ export default function TradeTable({
                     <SortHeader label="Mark Price" sortKey="current_rate" {...openSort} align="right" />
                     <SortHeader label="Profit %" sortKey="current_profit" {...openSort} align="right" highlight />
                     <SortHeader label="Value" sortKey="current_profit_abs" {...openSort} align="right" highlight />
-                    <th className={`${TH_BASE} text-right`}>Fee</th>
+                    <SortHeader label="Fee" sortKey="fee_open" {...openSort} align="right" />
                     <SortHeader label="Age" sortKey="open_date" {...openSort} />
                     <th className={`${TH_BASE} border-l border-white/[0.08] text-center`}>Actions</th>
                   </tr>
@@ -607,8 +607,8 @@ export default function TradeTable({
                     <SortHeader label="Exit" sortKey="close_rate" {...closedSort} align="right" />
                     <SortHeader label="Profit %" sortKey="close_profit" {...closedSort} align="right" highlight />
                     <SortHeader label="Value" sortKey="close_profit_abs" {...closedSort} align="right" highlight />
-                    <th className={`${TH_BASE} text-right`}>Fee</th>
-                    <SortHeader label="Duration" sortKey="close_date" {...closedSort} />
+                    <SortHeader label="Fee" sortKey="fee_open" {...closedSort} align="right" />
+                    <SortHeader label="Duration" sortKey="trade_duration" {...closedSort} />
                     <th className={`${TH_SORT} text-left`} onClick={() => closedSort.onSort("exit_reason")}>
                       Exit Reason<span className="ml-1 text-[10px] opacity-25">{closedSort.currentSort === "exit_reason" ? (closedSort.currentDir === "asc" ? "\u2191" : "\u2193") : "\u21C5"}</span>
                       <FilterDropdown column="closed_exit" values={getUniqueValues(closedTrades, (t) => t.exit_reason ?? "")} activeFilters={columnFilters["closed_exit"]} onToggle={toggleFilter} />
@@ -782,7 +782,7 @@ export default function TradeTable({
                       const tradeCount = p.count ?? p.trades ?? 0;
                       const avgProfit = tradeCount > 0 ? (p.profit_ratio * 100) / tradeCount : 0;
                       const totalFees = pairClosed.reduce((acc, t) => acc + (t.fee_open + t.fee_close) * t.stake_amount, 0);
-                      const wrColor = winrate >= 0.65 ? "text-up" : winrate < 0.50 ? "text-down" : "text-white";
+                      const wrColor = winrate >= 0.65 ? "text-up" : winrate < 0.50 ? "text-down" : "";
                       return (
                         <tr key={p.pair} className={`hover:bg-white/[0.04] transition-colors ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}>
                           <td className={`${TD} font-bold text-white`}>{p.pair}</td>
@@ -831,7 +831,7 @@ export default function TradeTable({
                   ) : (
                     entrySort.sorted.map((e, idx) => {
                       const wr = e.winrate ?? 0;
-                      const wrColor = wr >= 0.65 ? "text-up" : wr < 0.50 ? "text-down" : "text-white";
+                      const wrColor = wr >= 0.65 ? "text-up" : wr < 0.50 ? "text-down" : "";
                       const pnlColor = (e.profit_abs ?? 0) >= 0 ? "text-up" : "text-down";
                       // Derive avg duration & best pair from closed trades with this enter_tag
                       const tagTrades = closedTrades.filter((t) => t.enter_tag === e.enter_tag);
@@ -900,7 +900,7 @@ export default function TradeTable({
                   ) : (
                     exitSort.sorted.map((e, idx) => {
                       const wr = e.winrate ?? 0;
-                      const wrColor = wr >= 0.65 ? "text-up" : wr < 0.50 ? "text-down" : "text-white";
+                      const wrColor = wr >= 0.65 ? "text-up" : wr < 0.50 ? "text-down" : "";
                       const pnlColor = (e.profit_abs ?? 0) >= 0 ? "text-up" : "text-down";
                       // Derive avg duration & best pair from closed trades with this exit_reason
                       const reasonTrades = closedTrades.filter((t) => t.exit_reason === e.exit_reason);

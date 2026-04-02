@@ -159,7 +159,7 @@ export default function KPIGrid({
         {/* Profit Factor */}
         <div className="bg-black p-3 flex flex-col hover:bg-white/[0.04] transition-colors">
           <span className="kpi-label">Profit Factor</span>
-          <span className={`kpi-value text-base ${profitFactor != null && profitFactor > 1 ? "text-up" : profitFactor != null && profitFactor < 1 ? "text-down" : ""}`}>
+          <span className={`kpi-value text-base ${profitFactor != null ? "text-up" : ""}`}>
             {profitFactor != null ? fmt(profitFactor, 2) : "\u2014"}
           </span>
         </div>
@@ -178,7 +178,7 @@ export default function KPIGrid({
           <span className="kpi-label">Best Pair</span>
           <span className={`kpi-value text-base ${bestPairPct != null && bestPairPct > 0 ? "text-up" : ""}`}>
             {bestPair || "\u2014"}
-            {bestPairPct != null && <span className="text-[10px] ml-1">+{fmt(bestPairPct * 100, 2)}%</span>}
+            {bestPairPct != null && <span className="text-[10px] font-sans font-normal ml-1">+{fmt(bestPairPct * 100, 2)}%</span>}
           </span>
         </div>
         {/* Sharpe Ratio */}

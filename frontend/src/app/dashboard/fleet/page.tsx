@@ -539,6 +539,8 @@ export default function FleetPage() {
                   {/* 1. Checkbox */}
                   <th className="w-8 px-3 py-3">
                     <input
+                      className="rounded"
+                      title="Select all"
                       type="checkbox"
                       checked={
                         sortedRows.length > 0 &&
@@ -722,7 +724,7 @@ export default function FleetPage() {
 
                       {/* 2. Status */}
                       <td className="px-3 py-2.5">
-                        <span className="flex items-center gap-2">
+                        <span className="flex items-center gap-1.5">
                           <span
                             className={`w-2 h-2 rounded-full shrink-0 ${
                               isLive
@@ -733,7 +735,7 @@ export default function FleetPage() {
                             }`}
                           />
                           <span
-                            className={`text-[10px] font-medium uppercase ${
+                            className={`text-[10px] font-bold uppercase ${
                               isLive
                                 ? "text-up"
                                 : isPaused
@@ -787,10 +789,10 @@ export default function FleetPage() {
                             ? "bg-up/5 text-up font-bold"
                             : todayPnl != null && todayPnl < 0
                             ? "bg-down/5 text-down font-bold"
-                            : ""
+                            : "text-muted"
                         }`}
                       >
-                        {todayPnl != null ? fmtMoney(todayPnl) : "\u2014"}
+                        {!isLive && !isPaused ? "\u2014" : isPaused ? "$0.00" : todayPnl != null ? fmtMoney(todayPnl) : "\u2014"}
                       </td>
 
                       {/* 8. Total P&L */}
@@ -981,9 +983,9 @@ export default function FleetPage() {
                 </span>
               )}
               <span>
-                Sort: {sortKey} {sortDir === "asc" ? "\u2191" : "\u2193"}
+                Sort: {sortKey === "todayPnl" ? "P&L" : sortKey === "totalPnl" ? "Total" : sortKey} {sortDir === "asc" ? "▲" : "▼"}
               </span>
-              <span className="text-white/50">Page 1 of 1</span>
+              <span className="text-white/50">Page 1 / {Math.max(1, Math.ceil(sortedRows.length / 8))}</span>
             </span>
           </div>
         </div>

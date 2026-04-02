@@ -140,7 +140,7 @@ export default function FleetPanel({
                   </span>
                   {!isPaused && pnlPct != null && (
                     <span
-                      className="text-[10px] ml-1"
+                      className="text-[10px]"
                       style={{ color: pnlPct >= 0 ? "rgba(34,197,94,0.5)" : "rgba(239,68,68,0.5)" }}
                     >
                       {pnlPct >= 0 ? "+" : ""}{fmt(pnlPct, 1)}%

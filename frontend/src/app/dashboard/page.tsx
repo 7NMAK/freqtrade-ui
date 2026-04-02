@@ -17,7 +17,7 @@ import {
   portfolioDaily,
   startBot,
   stopBot,
-  botForceEnter,
+
   botDeleteTrade,
   botReloadTrade,
   botCancelOpenOrder,
@@ -72,7 +72,7 @@ import { registerBot, deleteBot as deleteBotApi } from "@/lib/api";
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
-function isToday(dateStr: string | null | undefined): boolean {
+function _isToday(dateStr: string | null | undefined): boolean {
   if (!dateStr) return false;
   const d = new Date(dateStr);
   const now = new Date();
@@ -182,7 +182,7 @@ export default function DashboardPage() {
   const [singleEntryData, setSingleEntryData] = useState<FTEntry[]>([]);
   const [singleExitData, setSingleExitData] = useState<FTExit[]>([]);
   const [singleStatsData, setSingleStatsData] = useState<FTStats | null>(null);
-  const [singleConfigData, setSingleConfigData] = useState<Record<string, unknown> | null>(null);
+  const [_singleConfigData, setSingleConfigData] = useState<Record<string, unknown> | null>(null);
   const [singleSysinfoData, setSingleSysinfoData] = useState<FTSysinfo | null>(null);
   const [singleLogsData, setSingleLogsData] = useState<FTLogsResponse | null>(null);
   const [singleLocksData, setSingleLocksData] = useState<FTLocksResponse | null>(null);
@@ -265,7 +265,7 @@ export default function DashboardPage() {
       let bestPairName: string | null = null;
       let bestPairRate: number | null = null;
       let aggTotalFees = 0;
-      let aggFundingFees = 0;
+      const aggFundingFees = 0;
 
       // Collect all perf, entry, exit data across bots
       const allPerf: FTPerformance[] = [];
@@ -277,7 +277,7 @@ export default function DashboardPage() {
       await Promise.allSettled(
         tradeBots.map(async (bot) => {
           try {
-            const [p, d, s, st, perf, ent, ex, wl, lk] = await Promise.allSettled([
+            const [p, d, _s, st, perf, ent, ex, wl, lk] = await Promise.allSettled([
               botProfit(bot.id),
               botDaily(bot.id, 7),
               botStatus(bot.id),
@@ -751,7 +751,7 @@ export default function DashboardPage() {
         entryData={singleEntryData}
         exitData={singleExitData}
         statsData={singleStatsData}
-        configData={singleConfigData as import("@/types").FTShowConfig | null}
+        configData={_singleConfigData as import("@/types").FTShowConfig | null}
         sysinfoData={singleSysinfoData}
         logsData={singleLogsData}
         locksData={singleLocksData}

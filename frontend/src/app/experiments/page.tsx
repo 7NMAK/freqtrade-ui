@@ -214,6 +214,7 @@ export default function ExperimentsPage() {
 
   return (
     <AppShell title="Experiments">
+      <div className="p-5">
       {/* ── Header ── */}
       <div className="flex items-center gap-3 mb-5">
         <h1 className="text-base font-semibold text-foreground">Experiments</h1>
@@ -415,6 +416,7 @@ export default function ExperimentsPage() {
           </table>
         </div>
       )}
+      </div>
     </AppShell>
   );
 }

@@ -2454,7 +2454,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
 
   return (
     <AppShell title="Strategy Builder">
-      <div className="flex -m-8 h-[calc(100vh-56px)]">
+      <div className="flex h-full">
         {/* Left: Wizard */}
         <div className="flex-1 flex flex-col overflow-hidden border-r border-border">
           {/* Steps bar */}

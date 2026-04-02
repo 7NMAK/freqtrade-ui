@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { X } from "lucide-react";
 import { fmt, fmtMoney, profitColor } from "@/lib/format";
 import type {
   Bot,
@@ -18,7 +19,7 @@ import type {
   FTBalance,
 } from "@/types";
 
-type DetailTab = "overview" | "trades" | "performance" | "config" | "system";
+type DetailTab = "overview" | "trades" | "performance" | "config" | "backtest" | "hyperopt" | "freqai" | "system";
 
 interface BotDetailPanelProps {
   bot: Bot | null;
@@ -136,7 +137,7 @@ export default function BotDetailPanel({
             onClick={onClose}
             className="w-8 h-8 rounded-lg border border-border bg-muted/50 flex items-center justify-center text-muted-foreground text-base transition-all hover:bg-muted hover:text-foreground cursor-pointer"
           >
-            &times;
+            <X className="w-4 h-4" />
           </button>
           <div className="text-base font-bold text-foreground flex-1 truncate">
             {bot.name}
@@ -203,7 +204,10 @@ export default function BotDetailPanel({
               { key: "trades", label: "Trades" },
               { key: "performance", label: "Performance" },
               { key: "config", label: "Config" },
-              { key: "system", label: "System" },
+              { key: "backtest", label: "Backtest" },
+              { key: "hyperopt", label: "Hyperopt" },
+              { key: "freqai", label: "FreqAI" },
+              { key: "system", label: "System & Log" },
             ] satisfies { key: DetailTab; label: string }[]
           ).map((tab) => (
             <button
@@ -742,6 +746,85 @@ function DetailContent({
               </div>
             </div>
           )}
+        </div>
+      );
+    }
+
+    /* --- Backtest --- */
+    case "backtest": {
+      return (
+        <div className="space-y-6">
+          <div>
+            <div className={sectionTitle}>Recent Backtest Results</div>
+            <div className="text-center py-8 text-muted-foreground text-xs space-y-2">
+              <p>No backtest history available for this bot.</p>
+              <p className="text-[10px] text-muted-foreground/60">Run a backtest from the Backtesting page to see results here.</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* --- Hyperopt --- */
+    case "hyperopt": {
+      return (
+        <div className="space-y-6">
+          <div>
+            <div className={sectionTitle}>Recent Hyperopt Runs</div>
+            <div className="text-center py-8 text-muted-foreground text-xs space-y-2">
+              <p>No hyperopt history available for this bot.</p>
+              <p className="text-[10px] text-muted-foreground/60">Run hyperopt from the Backtesting page to see optimization results here.</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* --- FreqAI --- */
+    case "freqai": {
+      const freqaiConfig = configData?.freqai;
+      return (
+        <div className="space-y-6">
+          <div>
+            <div className={sectionTitle}>FreqAI Model Status</div>
+            {freqaiConfig ? (
+              <>
+                <div className={row}>
+                  <span className={key}>Enabled</span>
+                  <span className={val}>{freqaiConfig.enabled ? "Yes" : "No"}</span>
+                </div>
+                <div className={row}>
+                  <span className={key}>Identifier</span>
+                  <span className={val}>{freqaiConfig.identifier ?? "\u2014"}</span>
+                </div>
+                <div className={row}>
+                  <span className={key}>Training Period</span>
+                  <span className={val}>{freqaiConfig.train_period_days != null ? `${freqaiConfig.train_period_days} days` : "\u2014"}</span>
+                </div>
+                <div className={row}>
+                  <span className={key}>Backtest Period</span>
+                  <span className={val}>{freqaiConfig.backtest_period_days != null ? `${freqaiConfig.backtest_period_days} days` : "\u2014"}</span>
+                </div>
+                <div className={row}>
+                  <span className={key}>Live Retrain</span>
+                  <span className={val}>{freqaiConfig.live_retrain_hours != null ? `${freqaiConfig.live_retrain_hours}h` : "\u2014"}</span>
+                </div>
+                <div className={row}>
+                  <span className={key}>Feature Count</span>
+                  <span className={val}>{freqaiConfig.feature_parameters?.include_timeframes?.length ?? "\u2014"}</span>
+                </div>
+                <div className={row}>
+                  <span className={key}>Continual Learning</span>
+                  <span className={val}>{freqaiConfig.continual_learning ? "Yes" : "No"}</span>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground text-xs space-y-2">
+                <p>FreqAI is not configured for this bot.</p>
+                <p className="text-[10px] text-muted-foreground/60">Enable FreqAI in the bot config to see model information here.</p>
+              </div>
+            )}
+          </div>
         </div>
       );
     }

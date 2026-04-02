@@ -581,6 +581,7 @@ export default function FreqAIPage() {
   }
   return (
     <AppShell title="FreqAI Configuration">
+      <div className="p-5">
 
       {/* Bot selector */}
       <div className="flex items-center gap-3 mb-4 p-3 px-4 bg-muted/50 border border-border rounded-card text-xs">
@@ -1091,6 +1092,7 @@ export default function FreqAIPage() {
 
       </>}
 
+      </div>
     </AppShell>
   );
 }

@@ -605,6 +605,7 @@ export default function DataManagementPage() {
 
   return (
     <AppShell title="Data Management">
+      <div className="p-5">
 
       {/* ── Bot Selector ── */}
       <div className="mb-5 flex items-center gap-3">
@@ -1575,6 +1576,7 @@ export default function DataManagementPage() {
             </div>
           )}
         </UtilCard>
+      </div>
       </div>
     </AppShell>
   );

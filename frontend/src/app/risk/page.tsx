@@ -446,6 +446,7 @@ export default function RiskPage() {
 
   return (
     <AppShell title="Risk Management">
+      <div className="p-5">
 
       {/* ════ KILL SWITCH PANEL ════ */}
       <div className="bg-gradient-to-br from-bg-2 to-red/[0.03] border border-rose-500/15 rounded-card overflow-hidden mb-6">
@@ -1116,6 +1117,7 @@ export default function RiskPage() {
         </div>
       )}
 
+      </div>
     </AppShell>
   );
 }

@@ -2494,6 +2494,7 @@ export default function SettingsPage() {
 
   return (
     <AppShell title="Settings">
+      <div className="p-5">
       {/* Bot selector bar — hidden on System tab */}
       {activeTab !== "system" && (
         <div className="flex items-center gap-3 mb-4 p-4 bg-muted/50 border border-border rounded-card">
@@ -2582,6 +2583,7 @@ export default function SettingsPage() {
             </div>
           )}
         </div>
+      </div>
       </div>
     </AppShell>
   );

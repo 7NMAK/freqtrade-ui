@@ -749,7 +749,7 @@ export default function StrategiesPage() {
 
   return (
     <AppShell title="Strategies">
-      <div className="max-w-[1400px] mx-auto">
+      <div className="max-w-[1400px] mx-auto p-5">
         {/* ─── Toolbar ─── */}
         <div className="flex items-center gap-2.5 mb-5 flex-wrap">
           <div className="flex gap-2 flex-1 flex-wrap">

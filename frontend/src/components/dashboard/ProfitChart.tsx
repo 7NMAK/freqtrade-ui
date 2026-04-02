@@ -8,8 +8,10 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  ReferenceLine,
   ResponsiveContainer,
 } from "recharts";
+import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import { fmt, fmtMoney } from "@/lib/format";
 import type { FTDailyItem, FTWeeklyResponse, FTMonthlyResponse } from "@/types";
 
@@ -115,6 +117,8 @@ export default function ProfitChart({
 
   return (
     <div className="h-[280px] bg-[#0C0C0C] border border-white/[0.10] rounded-md flex shadow-xl shrink-0 overflow-hidden relative">
+      {/* Grid overlay */}
+      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)", backgroundSize: "24px 24px", opacity: 0.2 }} />
       {/* Left: Profit Over Time */}
       <div className="flex-1 flex flex-col relative min-w-0">
         <div className="flex items-center justify-between px-5 py-3 shrink-0 gap-3">
@@ -160,20 +164,29 @@ export default function ProfitChart({
             {/* Sidebar toggle */}
             <button
               onClick={onToggleSidebar}
-              className={`px-2 py-1 rounded text-[#9CA3AF] hover:text-white hover:bg-white/[0.08] transition-all opacity-40 hover:opacity-100 cursor-pointer ${!sidebarOpen ? "rotate-180" : ""}`}
+              className="px-2 py-1 rounded text-[#9CA3AF] hover:text-white hover:bg-white/[0.08] transition-all opacity-40 hover:opacity-100 cursor-pointer"
               title="Toggle right sidebar"
             >
-              &#9655;&#124;
+              {sidebarOpen ? <PanelRightClose className="w-3.5 h-3.5" /> : <PanelRightOpen className="w-3.5 h-3.5" />}
             </button>
           </div>
         </div>
-        <div className="flex-1 px-3 pb-4 relative min-w-0">
+        <div className="flex-1 px-5 pb-4 relative min-w-0">
           {chartData.length === 0 ? (
             <div className="flex items-center justify-center h-full text-[#9CA3AF] text-sm">
               No data available
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <>
+              <div className="absolute top-0 right-2 flex items-center gap-4 text-[9px] font-mono text-white/40 z-10">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-[2px] bg-[#22c55e] rounded inline-block" />Profit
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-2.5 bg-white/15 rounded-sm inline-block" />Trade Count
+                </span>
+              </div>
+              <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: -10 }}>
                 <XAxis
                   dataKey="date"
@@ -209,16 +222,16 @@ export default function ProfitChart({
                     fontSize: 11,
                     fontFamily: "'JetBrains Mono', monospace",
                   }}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  formatter={((v: unknown, name: string) => {
-                    const n = Number(v);
+                  formatter={(v, name) => {
+                    const n = typeof v === "number" ? v : Number(v);
                     if (name === "tradeCount") return [n, "Trades"];
                     return [
                       valueMode === "abs" ? fmtMoney(n) : `${n >= 0 ? "+" : ""}${fmt(n, 2)}%`,
                       "Cum. P&L",
                     ];
-                  }) as never}
+                  }}
                 />
+                <ReferenceLine yAxisId="profit" y={0} stroke="rgba(255,255,255,0.08)" strokeWidth={0.5} strokeDasharray="3 3" />
                 <Bar
                   yAxisId="trades"
                   dataKey="tradeCount"
@@ -237,6 +250,7 @@ export default function ProfitChart({
                 />
               </ComposedChart>
             </ResponsiveContainer>
+            </>
           )}
         </div>
       </div>
@@ -248,21 +262,35 @@ export default function ProfitChart({
         </div>
         <div className="flex-1 px-5 pb-4 flex items-end gap-[3px]">
           {distribution.length > 0 ? (
-            distribution.map((bin, i) => (
-              <div
-                key={`dist-${i}`}
-                className={`flex-1 rounded-t ${
-                  bin.isNeg ? "bg-[#ef4444]/40" : bin.isMid ? "bg-white/[0.08]" : "bg-[#22c55e]/40"
-                }`}
-                style={{ height: `${Math.max(2, bin.height)}%` }}
-              />
-            ))
+            distribution.map((bin, i) => {
+              // Graduated opacity: larger bars = more opaque (20% to 80%)
+              const opacityPct = Math.round(20 + (bin.height / 100) * 60);
+              const bgColor = bin.isNeg
+                ? `rgba(239,68,68,${opacityPct / 100})`
+                : bin.isMid
+                  ? "rgba(255,255,255,0.08)"
+                  : `rgba(34,197,94,${opacityPct / 100})`;
+              return (
+                <div
+                  key={`dist-${i}`}
+                  className="flex-1 rounded-t"
+                  style={{ height: `${Math.max(2, bin.height)}%`, backgroundColor: bgColor }}
+                />
+              );
+            })
           ) : (
             <div className="flex-1 flex items-center justify-center text-[#9CA3AF] text-xs">
               No distribution data
             </div>
           )}
         </div>
+        {distribution.length > 0 && (
+          <div className="flex justify-between text-[9px] font-mono text-white/25 px-5 pb-2">
+            <span>{dailyData.length > 0 ? fmt(Math.min(...dailyData.map((d) => d.abs_profit)), 2) : "-0.02"}</span>
+            <span>0</span>
+            <span>+{dailyData.length > 0 ? fmt(Math.max(...dailyData.map((d) => d.abs_profit)), 2) : "0.01"}</span>
+          </div>
+        )}
         <div className="px-5 pb-4 grid grid-cols-2 gap-4">
           <div>
             <div className="text-[11px] text-[#6B7280] uppercase tracking-[0.08em] font-medium mb-1">Absolute DD</div>

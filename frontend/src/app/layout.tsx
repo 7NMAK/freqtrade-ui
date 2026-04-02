@@ -4,10 +4,6 @@ import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/Toast";
 import { ClientErrorBoundary } from "@/components/ui/ClientErrorBoundary";
-import { Inter } from "next/font/google";
-import { cn } from "@/lib/utils";
-
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: "FreqTrade Platform",
@@ -23,7 +19,7 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className={cn("dark", "font-sans", inter.variable)}>
+    <html lang={locale} className="dark">
       <body className="font-sans antialiased">
         <NextIntlClientProvider messages={messages}>
           <ToastProvider>

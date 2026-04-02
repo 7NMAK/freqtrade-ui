@@ -240,6 +240,7 @@ export default function AnalyticsPage() {
 
   return (
     <AppShell title="Analytics">
+      <div className="p-5">
       {/* No bots empty state */}
       {bots.length === 0 && !loadingCandles && (
         <div className="py-16 text-center text-sm text-muted-foreground">No bots registered. Register a bot on the Dashboard to view analytics.</div>
@@ -815,6 +816,7 @@ export default function AnalyticsPage() {
             </div>
           </CardBody>
         </Card>
+      </div>
       </div>
     </AppShell>
   );

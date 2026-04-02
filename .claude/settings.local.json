@@ -63,7 +63,13 @@
       "Bash(ssh root@204.168.187.107 'curl -s http://127.0.0.1:8081/api/v1/backtest -u \"\"novakus:$FT_API_PASSWORD\"\" -H \"\"Authorization: Bearer $\\(curl -s -X POST http://127.0.0.1:8081/api/v1/token/login -u novakus:$FT_API_PASSWORD | python3 -c \\\\\"\"import sys,json; print\\(json.load\\(sys.stdin\\)[\\\\\\\\\\\\\"\"access_token\\\\\\\\\\\\\"\"]\\)\\\\\"\"\\)\"\" | python3 -m json.tool')",
       "Bash(ssh root@204.168.187.107:*)",
       "Bash(ssh root@204.168.187.107 'docker exec orchestrator grep -A 5 \"\"async def list_bots\"\" /app/src/api/bots.py')",
-      "Bash(echo \"EXIT: $?\")"
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(echo \"EXIT_CODE=$?\")",
+      "Bash(wc:*)",
+      "Bash(node_modules/.bin/tsc --noEmit --pretty false)",
+      "Bash(node_modules/.bin/tsc --noEmit --pretty false --incremental false)",
+      "Bash(rm:*)",
+      "Bash(ls:*)"
     ]
   }
 }

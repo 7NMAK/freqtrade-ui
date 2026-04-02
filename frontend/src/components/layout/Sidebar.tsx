@@ -4,35 +4,60 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
+import {
+  LayoutDashboard,
+  Layers,
+  Code2,
+  FlaskConical,
+  BarChart3,
+  Shield,
+  Brain,
+  Database,
+  Settings,
+  BookOpen,
+  Sparkles,
+  ChevronsLeft,
+} from "lucide-react";
 import { REFRESH_INTERVALS } from "@/lib/constants";
 import { getBots, getStrategies } from "@/lib/api";
 import { useToast } from "@/components/ui/Toast";
+import type { LucideIcon } from "lucide-react";
+
+interface NavItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  dotKey?: string;
+  badgeKey?: string;
+}
+
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
 
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
 }
 
-const NAV_STATIC = [
-  // MAIN
+const NAV_STATIC: NavSection[] = [
   { label: "MAIN", items: [
-    { name: "Dashboard", href: "/dashboard", icon: "📊", dotKey: "anyRunning" },
-    { name: "Strategies", href: "/strategies", icon: "📋", badgeKey: "liveFmt" },
-    { name: "Strategy Builder", href: "/builder", icon: "🔧", dotKey: "anyRunning" },
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, dotKey: "anyRunning" },
+    { name: "Strategies", href: "/strategies", icon: Layers, badgeKey: "liveFmt" },
+    { name: "Strategy Builder", href: "/builder", icon: Code2, dotKey: "anyRunning" },
   ]},
-  // MONITOR
   { label: "MONITOR", items: [
-    { name: "Experiments", href: "/experiments", icon: "🧪" },
-    { name: "Analytics", href: "/analytics", icon: "📈", dotKey: "anyRunning" },
-    { name: "AI Insights", href: "/ai-insights", icon: "🤖", dotKey: "anyRunning" },
-    { name: "Risk", href: "/risk", icon: "🛡️", dotKey: "anyRunning" },
-    { name: "FreqAI", href: "/freqai", icon: "🧠", dotKey: "anyRunning" },
+    { name: "Experiments", href: "/experiments", icon: FlaskConical },
+    { name: "Analytics", href: "/analytics", icon: BarChart3, dotKey: "anyRunning" },
+    { name: "AI Insights", href: "/ai-insights", icon: Sparkles, dotKey: "anyRunning" },
+    { name: "Risk", href: "/risk", icon: Shield, dotKey: "anyRunning" },
+    { name: "FreqAI", href: "/freqai", icon: Brain, dotKey: "anyRunning" },
   ]},
-  // SYSTEM
   { label: "SYSTEM", items: [
-    { name: "Data", href: "/data", icon: "💾" },
-    { name: "Settings", href: "/settings", icon: "⚙️" },
-    { name: "Docs", href: "/docs", icon: "📖" },
+    { name: "Data", href: "/data", icon: Database },
+    { name: "Settings", href: "/settings", icon: Settings },
+    { name: "Docs", href: "/docs", icon: BookOpen },
   ]},
 ];
 
@@ -43,7 +68,6 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const [anyRunning, setAnyRunning] = useState(false);
   const [liveFmt, setLiveFmt] = useState("0 live");
 
-  // S-2, S-3: Load bot + strategy counts for badges and footer
   useEffect(() => {
     async function loadSidebarData() {
       try {
@@ -56,13 +80,9 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         setBotCount(bots.length);
         const liveCount = strategies.filter((s) => s.lifecycle === "live").length;
         setLiveFmt(`${liveCount} live`);
-      } catch { /* non-blocking */
-        // Non-critical — sidebar still renders with static defaults
-      }
+      } catch { /* non-blocking */ }
     }
     loadSidebarData();
-    // 30s refresh is acceptable for sidebar badges — bot/strategy counts
-    // change infrequently. Shorter intervals would add unnecessary API load.
     const interval = setInterval(loadSidebarData, REFRESH_INTERVALS.SIDEBAR);
     return () => clearInterval(interval);
   }, [toast]);
@@ -70,48 +90,48 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside
       className={clsx(
-        "bg-card border-r border-border flex flex-col shrink-0 overflow-y-auto transition-[width] duration-200",
-        collapsed ? "w-[60px]" : "w-sidebar"
+        "bg-black border-r border-white/[0.10] flex flex-col shrink-0 overflow-y-auto overflow-x-hidden transition-[width] duration-250 ease-in-out",
+        collapsed ? "w-[56px]" : "w-[240px]"
       )}
     >
-      {/* S-1: Logo + Collapse Toggle */}
-      <div className="flex items-center border-b border-border">
+      {/* Logo + Collapse Toggle */}
+      <div className={clsx(
+        "flex items-center border-b border-white/[0.10] h-14 shrink-0",
+        collapsed ? "justify-center px-0" : "px-5 justify-between"
+      )}>
         <Link
           href="/dashboard"
           className={clsx(
-            "flex items-center gap-2.5 hover:bg-muted/50 transition-colors flex-1",
-            collapsed ? "px-3 py-[18px] justify-center" : "px-5 py-[18px]"
+            "flex items-center gap-2.5 hover:opacity-80 transition-opacity",
+            collapsed && "justify-center"
           )}
         >
-          <div className="w-8 h-8 bg-gradient-to-br from-accent to-purple rounded-lg flex items-center justify-center text-white font-bold text-lg shrink-0">
-            FT
-          </div>
+          <div className="w-6 h-6 bg-white rounded-[3px] shrink-0" />
           {!collapsed && (
-            <div>
-              <div className="text-md font-bold text-foreground tracking-tight">FreqTrade</div>
-              <div className="text-2xs text-muted-foreground font-medium">Trading Platform</div>
-            </div>
+            <span className="text-[13px] uppercase tracking-widest text-white font-semibold">
+              Orchestrator V4
+            </span>
           )}
         </Link>
         <button
           type="button"
           onClick={onToggle}
-          className={clsx(
-            "text-muted-foreground hover:text-muted-foreground hover:bg-muted/50 transition-all cursor-pointer shrink-0",
-            collapsed ? "absolute top-[18px] left-[60px] z-10 bg-card border border-border rounded-r-md px-1 py-1.5 text-xs" : "px-2 py-3 text-xs"
-          )}
+          className="text-[#9CA3AF] hover:text-white transition-colors cursor-pointer shrink-0"
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {collapsed ? "▶" : "◀"}
+          <ChevronsLeft
+            className="w-4 h-4"
+            style={{ transition: "transform 0.25s ease", transform: collapsed ? "rotate(180deg)" : "rotate(0deg)" }}
+          />
         </button>
       </div>
 
-      {/* S-2: Navigation */}
-      <nav className={clsx("flex-1", collapsed ? "p-1.5" : "p-3")}>
+      {/* Navigation */}
+      <nav className={clsx("flex-1", collapsed ? "px-1 py-2" : "px-3 py-3")}>
         {NAV_STATIC.map((section) => (
           <div key={section.label} className="mb-4">
             {!collapsed && (
-              <div className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-1.5 mb-0.5">
+              <div className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest px-3 py-1.5 mb-1">
                 {section.label}
               </div>
             )}
@@ -120,18 +140,15 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 pathname === item.href ||
                 pathname?.startsWith(item.href + "/");
 
-              // Resolve dynamic badge / dot
               const badge: string | undefined =
-                !collapsed && "badgeKey" in item && item.badgeKey === "liveFmt"
+                !collapsed && item.badgeKey === "liveFmt"
                   ? liveFmt
-                  : !collapsed && "badge" in item && typeof item.badge === "string"
-                  ? item.badge
                   : undefined;
 
               const showDot: boolean =
-                "dotKey" in item && item.dotKey === "anyRunning"
-                  ? anyRunning
-                  : false;
+                item.dotKey === "anyRunning" ? anyRunning : false;
+
+              const Icon = item.icon;
 
               return (
                 <Link
@@ -139,31 +156,24 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   href={item.href}
                   title={collapsed ? item.name : undefined}
                   className={clsx(
-                    "flex items-center rounded-btn text-sm font-medium transition-all duration-150 relative",
-                    collapsed ? "justify-center px-0 py-2.5 my-0.5" : "gap-2.5 px-3 py-2",
+                    "flex items-center rounded-md text-[13px] font-medium transition-all duration-150 relative",
+                    collapsed ? "justify-center px-0 py-2.5 my-0.5" : "gap-3 px-3 py-2.5",
                     active
-                      ? "bg-primary-glow text-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-muted-foreground"
+                      ? "bg-white/10 text-white font-semibold"
+                      : "text-[#9CA3AF] hover:text-white hover:bg-white/[0.05]"
                   )}
                 >
-                  <span className={clsx("text-center text-md shrink-0", collapsed ? "w-full" : "w-[18px]")}>
-                    {item.icon}
-                  </span>
+                  <Icon className={clsx("w-[18px] h-[18px] shrink-0", active ? "text-white" : "text-[#9CA3AF]")} />
                   {!collapsed && <span className="flex-1">{item.name}</span>}
                   {!collapsed && badge && (
-                    <span
-                      className={clsx(
-                        "text-2xs font-semibold px-1.5 py-px rounded-full",
-                        active ? "bg-primary-glow text-primary" : "bg-muted text-muted-foreground"
-                      )}
-                    >
+                    <span className="text-[10px] font-semibold px-1.5 py-px rounded-full bg-white/10 text-[#9CA3AF]">
                       {badge}
                     </span>
                   )}
                   {showDot && (
                     <span
                       className={clsx(
-                        "w-1.5 h-1.5 rounded-full bg-green shadow-[0_0_6px_var(--color-green)] flex-shrink-0",
+                        "w-1.5 h-1.5 rounded-full bg-[#22c55e] shadow-[0_0_6px_#22c55e] flex-shrink-0",
                         collapsed && "absolute top-1 right-1"
                       )}
                     />
@@ -175,9 +185,9 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         ))}
       </nav>
 
-      {/* S-3: Footer Status */}
+      {/* Footer Status */}
       <div className={clsx(
-        "border-t border-border text-xs text-muted-foreground",
+        "border-t border-white/[0.10] text-xs text-[#9CA3AF]",
         collapsed ? "px-2 py-3 text-center" : "px-4 py-3.5"
       )}>
         {collapsed ? (
@@ -185,19 +195,19 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             className={clsx(
               "w-[7px] h-[7px] rounded-full mx-auto",
               anyRunning
-                ? "bg-green shadow-[0_0_6px_var(--color-green)]"
-                : "bg-red-dim"
+                ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e]"
+                : "bg-[#ef4444]"
             )}
             title={`${botCount} bot${botCount !== 1 ? "s" : ""}`}
           />
         ) : (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 font-mono text-[11px]">
             <div
               className={clsx(
                 "w-[7px] h-[7px] rounded-full shrink-0",
                 anyRunning
-                  ? "bg-green shadow-[0_0_6px_var(--color-green)]"
-                  : "bg-red-dim"
+                  ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e]"
+                  : "bg-[#ef4444]"
               )}
             />
             FreqTrade 2026.2 —{" "}

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Play, Square, Pause, RefreshCw, XSquare, PlusSquare, ShieldAlert, Zap, GitCompare, Layers } from "lucide-react";
 import { fmtMoney, fmt } from "@/lib/format";
 import type { Bot, FTProfit } from "@/types";
 
@@ -68,7 +69,7 @@ function CtrlBtn({
   onClick,
 }: {
   title: string;
-  icon: string;
+  icon: React.ReactNode;
   variant?: "start" | "stop" | "pause" | "warn" | "default";
   onClick: (e: React.MouseEvent) => void;
 }) {
@@ -85,7 +86,7 @@ function CtrlBtn({
       title={title}
       onClick={onClick}
     >
-      <span className="text-xs">{icon}</span>
+      {icon}
     </button>
   );
 }
@@ -112,8 +113,11 @@ export default function FleetPanel({
         {/* Header */}
         <div className="h-12 border-b border-white/[0.10] flex items-center justify-between px-5 bg-black/40 shrink-0">
           <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#9CA3AF] flex items-center gap-2.5">
-            <span className="text-[#9CA3AF]">&#x25a6;</span> Fleet Management ({tradeBots.length})
+            <Layers className="w-4 h-4 text-[#9CA3AF]" /> Fleet Management ({tradeBots.length})
           </span>
+          <button className="bg-white/10 px-3 py-1 rounded text-[11px] hover:bg-white/20 transition-colors font-medium flex items-center gap-1.5 text-[#9CA3AF] hover:text-white">
+            <GitCompare className="w-3 h-3" />Compare View
+          </button>
         </div>
 
         {/* Bot List */}
@@ -145,7 +149,7 @@ export default function FleetPanel({
                 <div className="flex items-start justify-between mb-2.5">
                   <div className="flex items-center gap-2">
                     <BotStatusDot status={bot.status} />
-                    <span className={`font-bold uppercase text-[12px] tracking-wide ${bot.status === "running" ? "text-white" : "text-white/40"}`}>
+                    <span className="font-bold uppercase text-[12px] tracking-wide text-white">
                       {bot.name}
                     </span>
                     <BotStatusBadge status={bot.status} isDryRun={bot.is_dry_run} />
@@ -190,15 +194,15 @@ export default function FleetPanel({
                 <div className="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
                   <MiniSparkline data={sparklines[bot.id] ?? []} />
                   <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                    <CtrlBtn title="Start Bot" icon="&#9654;" variant="start" onClick={(e) => { e.stopPropagation(); onStart(bot.id); }} />
-                    <CtrlBtn title="Stop Bot" icon="&#9632;" variant="stop" onClick={(e) => { e.stopPropagation(); onStop(bot.id); }} />
-                    <CtrlBtn title="Pause (Stopbuy)" icon="&#10074;&#10074;" variant="pause" onClick={(e) => { e.stopPropagation(); onPause(bot.id); }} />
-                    <CtrlBtn title="Reload Config" icon="&#8635;" onClick={(e) => { e.stopPropagation(); onReload(bot.id); }} />
-                    <CtrlBtn title="Force Exit All" icon="&#10005;" variant="stop" onClick={(e) => { e.stopPropagation(); onForceExitAll(bot.id); }} />
-                    <CtrlBtn title="Toggle Stopbuy" icon="&#8862;" onClick={(e) => { e.stopPropagation(); onStopBuy(bot.id); }} />
+                    <CtrlBtn title="Start Bot" icon={<Play className="w-3 h-3" />} variant="start" onClick={(e) => { e.stopPropagation(); onStart(bot.id); }} />
+                    <CtrlBtn title="Stop Bot" icon={<Square className="w-3 h-3" />} variant="stop" onClick={(e) => { e.stopPropagation(); onStop(bot.id); }} />
+                    <CtrlBtn title="Pause (Stopbuy)" icon={<Pause className="w-3 h-3" />} variant="pause" onClick={(e) => { e.stopPropagation(); onPause(bot.id); }} />
+                    <CtrlBtn title="Reload Config" icon={<RefreshCw className="w-3 h-3" />} onClick={(e) => { e.stopPropagation(); onReload(bot.id); }} />
+                    <CtrlBtn title="Force Exit All" icon={<XSquare className="w-3 h-3" />} variant="stop" onClick={(e) => { e.stopPropagation(); onForceExitAll(bot.id); }} />
+                    <CtrlBtn title="Toggle Stopbuy" icon={<PlusSquare className="w-3 h-3" />} onClick={(e) => { e.stopPropagation(); onStopBuy(bot.id); }} />
                     <span className="w-px h-3 bg-white/15 mx-0.5 self-center" />
-                    <CtrlBtn title="Soft Kill" icon="&#128737;" variant="warn" onClick={(e) => { e.stopPropagation(); onSoftKill(bot.id); }} />
-                    <CtrlBtn title="Hard Kill" icon="&#9889;" variant="stop" onClick={(e) => { e.stopPropagation(); onHardKill(bot.id); }} />
+                    <CtrlBtn title="Soft Kill" icon={<ShieldAlert className="w-3 h-3" />} variant="warn" onClick={(e) => { e.stopPropagation(); onSoftKill(bot.id); }} />
+                    <CtrlBtn title="Hard Kill" icon={<Zap className="w-3 h-3" />} variant="stop" onClick={(e) => { e.stopPropagation(); onHardKill(bot.id); }} />
                   </div>
                 </div>
               </div>

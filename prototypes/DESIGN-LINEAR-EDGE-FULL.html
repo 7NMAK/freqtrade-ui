@@ -2901,245 +2901,273 @@
       </div>
 
       <!-- PAGE: ANALYTICS -->
-      <div id="page-analytics" class="page-view flex-1 overflow-y-auto flex-col p-5 gap-5 bg-black">
+      <div id="page-analytics" class="page-view flex-1 overflow-hidden flex-col bg-black">
+          <div class="flex-1 flex overflow-hidden p-5 gap-5">
 
-          <!-- Bot Selector Bar -->
-          <div class="flex items-center gap-3 p-3 px-4 bg-surface l-bd rounded-md text-[11px] shrink-0">
-              <span class="text-muted uppercase tracking-wide font-semibold shrink-0">Bot</span>
-              <select class="builder-select text-[11px] font-mono min-w-[200px]"><option>Binance Alpha v3</option><option>Kraken Trend v2</option><option>ByBit Scalper</option></select>
-              <button class="h-7 px-3 rounded-md l-bd bg-white/[0.03] hover:bg-white/[0.06] text-muted text-[11px] font-mono transition-colors">Refresh Candles</button>
-          </div>
-
-          <!-- ═══ §19 PLOTTING & VISUALIZATION ═══ -->
-          <div class="flex items-center gap-3 pb-2 l-b shrink-0">
-              <span class="text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest bg-up/[0.12] text-up">§19</span>
-              <span class="text-[13px] font-bold text-white">Plotting & Visualization</span>
-          </div>
-
-          <!-- Candlestick Chart -->
-          <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden shrink-0">
-              <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40">
-                  <h3 class="section-title flex items-center gap-2"><span>📉</span>Candlestick Chart</h3>
-                  <div class="flex items-center gap-2.5">
-                      <select class="builder-select text-[11px] font-mono"><option>BTC/USDT:USDT</option><option>ETH/USDT:USDT</option><option>SOL/USDT:USDT</option><option>BNB/USDT:USDT</option><option>XRP/USDT:USDT</option></select>
-                      <div class="flex gap-0 l-bd rounded-md overflow-hidden">
-                          <button class="px-2.5 py-1 text-[10px] font-medium text-muted hover:text-white transition-colors">1m</button>
-                          <button class="px-2.5 py-1 text-[10px] font-medium text-muted hover:text-white transition-colors">5m</button>
-                          <button class="px-2.5 py-1 text-[10px] font-medium text-muted hover:text-white transition-colors">15m</button>
-                          <button class="px-2.5 py-1 text-[10px] font-medium text-muted hover:text-white transition-colors">30m</button>
-                          <button class="px-2.5 py-1 text-[10px] font-medium bg-white/10 text-white">1h</button>
-                          <button class="px-2.5 py-1 text-[10px] font-medium text-muted hover:text-white transition-colors">4h</button>
-                          <button class="px-2.5 py-1 text-[10px] font-medium text-muted hover:text-white transition-colors">1d</button>
+              <!-- LEFT: Bot List (Dashboard pattern: w-[320px]) -->
+              <div class="w-[320px] min-w-[320px] shrink-0">
+                  <div class="flex-1 bg-surface l-bd rounded-md flex flex-col shadow-xl overflow-hidden h-full">
+                      <div class="h-12 l-b flex items-center justify-between px-5 bg-black/40 shrink-0">
+                          <span class="section-title flex items-center gap-2.5"><i data-lucide="bar-chart-3" class="w-4 h-4 text-muted"></i> Analytics</span>
+                          <span class="text-[10px] text-muted font-mono">5 bots</span>
+                      </div>
+                      <div class="flex-1 overflow-y-auto flex flex-col font-mono text-xs">
+                          <div class="p-4 l-b hover:bg-white/[0.04] transition-colors group cursor-pointer">
+                              <div class="flex items-start justify-between mb-2.5">
+                                  <div class="flex items-center gap-2"><div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="font-bold text-white uppercase text-[12px] tracking-wide">TrendFollowerV3_BTC</span><span class="text-[10px] border border-white/20 px-1.5 py-[1px] rounded text-white/60 font-medium">LIVE</span></div>
+                                   <span class="text-up font-bold text-[13px]">+$48.20</span>
+                              </div>
+                              <div class="grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3">
+                                  <div class="flex justify-between w-full pr-5"><span>Trades:</span> <span class="text-white/70">412</span></div>
+                                  <div class="flex justify-between w-full"><span>Win:</span> <span class="text-white/70">72%</span></div>
+                                  <div class="flex justify-between w-full pr-5"><span>Drawdown:</span> <span class="text-down">-1.2%</span></div>
+                                  <div class="flex justify-between w-full"><span>Avg. Dur:</span> <span class="text-white/70">1.5h</span></div>
+                              </div>
+                              <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity"><div class="flex gap-[2px] h-4 items-end"><div class="w-1.5 bg-up h-[40%] rounded-sm"></div><div class="w-1.5 bg-up h-[60%] rounded-sm"></div><div class="w-1.5 bg-down h-[20%] rounded-sm"></div><div class="w-1.5 bg-up h-[100%] rounded-sm"></div><div class="w-1.5 bg-up h-[80%] rounded-sm"></div></div></div>
+                          </div>
+                          <div class="p-4 l-b hover:bg-white/[0.04] transition-colors group cursor-pointer bg-white/[0.015]">
+                              <div class="flex items-start justify-between mb-2.5">
+                                  <div class="flex items-center gap-2"><div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="font-bold text-white uppercase text-[12px] tracking-wide">TrendFollowerV3_ETH</span><span class="text-[10px] border border-white/20 px-1.5 py-[1px] rounded text-white/60 font-medium">LIVE</span></div>
+                                   <span class="text-down font-bold text-[13px]">-$12.40</span>
+                              </div>
+                              <div class="grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3">
+                                  <div class="flex justify-between w-full pr-5"><span>Trades:</span> <span class="text-white/70">188</span></div>
+                                  <div class="flex justify-between w-full"><span>Win:</span> <span class="text-white/70">41%</span></div>
+                                  <div class="flex justify-between w-full pr-5"><span>Drawdown:</span> <span class="text-down">-4.2%</span></div>
+                                  <div class="flex justify-between w-full"><span>Avg. Dur:</span> <span class="text-white/70">3.2h</span></div>
+                              </div>
+                              <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity"><div class="flex gap-[2px] h-4 items-end"><div class="w-1.5 bg-down h-[60%] rounded-sm"></div><div class="w-1.5 bg-up h-[20%] rounded-sm"></div><div class="w-1.5 bg-down h-[100%] rounded-sm"></div><div class="w-1.5 bg-down h-[80%] rounded-sm"></div><div class="w-1.5 bg-up h-[30%] rounded-sm"></div></div></div>
+                          </div>
+                          <div class="p-4 l-b hover:bg-white/[0.04] transition-colors group cursor-pointer">
+                              <div class="flex items-start justify-between mb-2.5">
+                                  <div class="flex items-center gap-2"><div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="font-bold text-white uppercase text-[12px] tracking-wide">ScalpBot_XRP</span><span class="text-[10px] border border-white/20 px-1.5 py-[1px] rounded text-white/60 font-medium">LIVE</span></div>
+                                  <div class="text-right"><span class="text-up font-bold text-[13px]">+$92.10</span></div>
+                              </div>
+                              <div class="grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3">
+                                  <div class="flex justify-between w-full pr-5"><span>Trades:</span> <span class="text-white/70">620</span></div>
+                                  <div class="flex justify-between w-full"><span>Win:</span> <span class="text-white/70">71%</span></div>
+                                  <div class="flex justify-between w-full pr-5"><span>Drawdown:</span> <span class="text-down">-2.1%</span></div>
+                                  <div class="flex justify-between w-full"><span>Avg. Dur:</span> <span class="text-white/70">0.4h</span></div>
+                              </div>
+                              <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity"><div class="flex gap-[2px] h-4 items-end"><div class="w-1.5 bg-up h-[80%] rounded-sm"></div><div class="w-1.5 bg-up h-[100%] rounded-sm"></div><div class="w-1.5 bg-up h-[40%] rounded-sm"></div><div class="w-1.5 bg-down h-[20%] rounded-sm"></div><div class="w-1.5 bg-up h-[60%] rounded-sm"></div></div></div>
+                          </div>
+                          <div class="p-4 l-b hover:bg-white/[0.04] transition-colors group cursor-pointer bg-white/[0.015]">
+                              <div class="flex items-start justify-between mb-2.5">
+                                  <div class="flex items-center gap-2"><div class="w-2 h-2 bg-yellow-400 rounded-full"></div><span class="font-bold text-white/60 uppercase text-[12px] tracking-wide">MomentumRider_SOL</span><span class="text-[10px] border border-yellow-500/30 px-1.5 py-[1px] rounded text-yellow-400 font-medium">PAUSED</span></div>
+                                  <span class="text-muted font-bold text-[13px]">$0.00</span>
+                              </div>
+                              <div class="grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3">
+                                  <div class="flex justify-between w-full pr-5"><span>Trades:</span> <span class="text-white/70">156</span></div>
+                                  <div class="flex justify-between w-full"><span>Win:</span> <span class="text-white/70">62%</span></div>
+                                  <div class="flex justify-between w-full pr-5"><span>Drawdown:</span> <span class="text-down">-5.2%</span></div>
+                                  <div class="flex justify-between w-full"><span>Avg. Dur:</span> <span class="text-white/70">3.2h</span></div>
+                              </div>
+                              <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity"><div class="flex gap-[2px] h-4 items-end"><div class="w-1.5 bg-up h-[30%] rounded-sm"></div><div class="w-1.5 bg-down h-[50%] rounded-sm"></div><div class="w-1.5 bg-up h-[40%] rounded-sm"></div><div class="w-1.5 bg-down h-[70%] rounded-sm"></div><div class="w-1.5 bg-down h-[20%] rounded-sm"></div></div></div>
+                          </div>
+                          <div class="p-4 l-b hover:bg-white/[0.04] transition-colors group cursor-pointer">
+                              <div class="flex items-start justify-between mb-2.5">
+                                  <div class="flex items-center gap-2"><div class="w-2 h-2 bg-down rounded-full"></div><span class="font-bold text-white/40 uppercase text-[12px] tracking-wide">MemeScalper_DOGE</span><span class="text-[10px] border border-down/30 px-1.5 py-[1px] rounded text-down font-medium">STOPPED</span></div>
+                                  <div class="text-right"><span class="text-down font-bold text-[13px]">-$420</span></div>
+                              </div>
+                              <div class="grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3">
+                                  <div class="flex justify-between w-full pr-5"><span>Trades:</span> <span class="text-white/70">18</span></div>
+                                  <div class="flex justify-between w-full"><span>Win:</span> <span class="text-down">28%</span></div>
+                                  <div class="flex justify-between w-full pr-5"><span>Drawdown:</span> <span class="text-down">-12.4%</span></div>
+                                  <div class="flex justify-between w-full"><span>Avg. Dur:</span> <span class="text-white/70">0.8h</span></div>
+                              </div>
+                              <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity"><div class="flex gap-[2px] h-4 items-end"><div class="w-1.5 bg-down h-[90%] rounded-sm"></div><div class="w-1.5 bg-down h-[100%] rounded-sm"></div><div class="w-1.5 bg-up h-[10%] rounded-sm"></div><div class="w-1.5 bg-down h-[80%] rounded-sm"></div><div class="w-1.5 bg-down h-[60%] rounded-sm"></div></div></div>
+                          </div>
                       </div>
                   </div>
               </div>
-              <!-- Candle Area -->
-              <div class="h-[280px] relative px-3 pt-7 pb-6 pl-10 overflow-hidden">
-                  <div class="absolute top-2 right-3 text-[9px] text-up font-mono">BTC/USDT:USDT · 1h · 100 candles (live)</div>
-                  <!-- Grid -->
-                  <div class="absolute inset-0 pointer-events-none" style="background:repeating-linear-gradient(0deg,transparent,transparent 55px,rgba(255,255,255,0.04) 55px,rgba(255,255,255,0.04) 56px)"></div>
-                  <!-- Y-axis -->
-                  <div class="absolute left-0 top-7 bottom-6 w-9 flex flex-col justify-between px-1">
-                      <span class="text-[9px] text-muted font-mono text-right">68,400</span><span class="text-[9px] text-muted font-mono text-right">67,800</span><span class="text-[9px] text-muted font-mono text-right">67,200</span><span class="text-[9px] text-muted font-mono text-right">66,600</span><span class="text-[9px] text-muted font-mono text-right">66,000</span>
-                  </div>
-                  <!-- Crosshair -->
-                  <div class="absolute left-10 right-3 h-px bg-up/25 pointer-events-none" style="top:45%">
-                      <span class="absolute right-0 -top-2 text-[9px] text-up bg-surface px-1 rounded font-mono">67,342.50</span>
-                  </div>
-                  <!-- Candles (mock 30 candles) -->
-                  <div class="flex items-end gap-px h-full">
-                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:35%;height:25%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:40%;height:12%"></div></div>
-                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:30%;height:30%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:38%;height:15%"></div></div>
-                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:32%;height:28%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:35%;height:18%"></div></div>
-                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:40%;height:22%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:42%;height:14%"></div></div>
-                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:38%;height:18%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:42%;height:8%"></div></div>
-                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:36%;height:24%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:38%;height:16%"></div></div>
-                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:42%;height:20%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:44%;height:10%"></div></div>
-                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:40%;height:26%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:48%;height:12%"></div></div>
-                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:38%;height:30%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:40%;height:20%"></div></div>
-                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:45%;height:22%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:48%;height:10%"></div></div>
-                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:42%;height:20%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:48%;height:8%"></div></div>
-                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:44%;height:18%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:46%;height:10%"></div></div>
-                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:48%;height:20%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:50%;height:12%"></div></div>
-                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:44%;height:24%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:52%;height:10%"></div></div>
-                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:46%;height:22%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:48%;height:14%"></div></div>
-                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:50%;height:18%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:52%;height:10%"></div></div>
-                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:48%;height:16%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:52%;height:6%"></div></div>
-                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:50%;height:20%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:52%;height:12%"></div></div>
-                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:54%;height:18%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:56%;height:10%"></div></div>
-                      <div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:50%;height:22%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:58%;height:8%"></div></div>
-                  </div>
-                  <!-- X-axis -->
-                  <div class="absolute bottom-0 left-10 right-3 flex justify-between pt-1.5">
-                      <span class="text-[9px] text-muted font-mono">03/28</span><span class="text-[9px] text-muted font-mono">03/29</span><span class="text-[9px] text-muted font-mono">03/30</span><span class="text-[9px] text-muted font-mono">03/31</span><span class="text-[9px] text-muted font-mono">04/01</span>
-                  </div>
-              </div>
-              <!-- Overlay Controls -->
-              <div class="px-4 py-2 l-b flex items-center justify-between">
-                  <span class="text-[10px] text-muted font-semibold uppercase tracking-widest">Overlays</span>
-                  <div class="flex items-center gap-4">
-                      <label class="flex items-center gap-1.5 text-[11px] text-muted cursor-pointer"><span class="w-2.5 h-[3px] rounded bg-yellow-500 inline-block"></span><span class="builder-toggle w-7 h-3.5 bg-up rounded-full relative"><span class="absolute w-2.5 h-2.5 rounded-full bg-white top-0.5 left-[14px]"></span></span>tema</label>
-                      <label class="flex items-center gap-1.5 text-[11px] text-muted cursor-pointer"><span class="w-2.5 h-[3px] rounded bg-cyan-400 inline-block"></span><span class="builder-toggle w-7 h-3.5 bg-up rounded-full relative"><span class="absolute w-2.5 h-2.5 rounded-full bg-white top-0.5 left-[14px]"></span></span>sar</label>
-                  </div>
-              </div>
-              <!-- Subchart Tabs -->
-              <div class="flex gap-0 l-b items-center">
-                  <button class="px-4 py-2 text-[11px] font-bold uppercase border-b-2 border-up text-white">RSI</button>
-                  <button class="px-4 py-2 text-[11px] font-bold uppercase border-b-2 border-transparent text-muted hover:text-white transition-colors">MACD</button>
-                  <button class="px-4 py-2 text-[11px] font-bold uppercase border-b-2 border-transparent text-muted hover:text-white transition-colors">Volume</button>
-              </div>
-              <!-- Subchart Area (RSI) -->
-              <div class="h-[120px] relative px-3 pt-3 pb-2 pl-10 flex items-end gap-px">
-                  <div class="absolute inset-0 pointer-events-none" style="background:repeating-linear-gradient(0deg,transparent,transparent 29px,rgba(255,255,255,0.04) 29px,rgba(255,255,255,0.04) 30px)"></div>
-                  <!-- RSI zones -->
-                  <div class="absolute left-10 right-3 border-t border-dashed border-down/30 pointer-events-none" style="top:22%"><span class="absolute right-1 -top-2.5 text-[8px] text-down">70</span></div>
-                  <div class="absolute left-10 right-3 border-t border-dashed border-up/30 pointer-events-none" style="top:78%"><span class="absolute right-1 -top-2.5 text-[8px] text-up">30</span></div>
-                  <!-- RSI mock bars -->
-                  <div class="flex-1 bg-up/50 rounded-t-sm min-h-[2px]" style="height:45%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:38%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:52%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:60%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:55%"></div><div class="flex-1 bg-down/50 rounded-t-sm" style="height:72%"></div><div class="flex-1 bg-down/50 rounded-t-sm" style="height:78%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:62%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:48%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:42%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:38%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:35%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:40%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:45%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:50%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:55%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:48%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:42%"></div><div class="flex-1 bg-down/50 rounded-t-sm" style="height:68%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:58%"></div>
-              </div>
-              <!-- Trade Markers Legend -->
-              <div class="flex items-center gap-4 px-4 py-2 l-b bg-surface">
-                  <div class="flex items-center gap-1.5 text-[10px] text-muted"><span class="text-up">△</span>Buy (enter_long)</div>
-                  <div class="flex items-center gap-1.5 text-[10px] text-muted"><span class="text-down">▽</span>Sell (exit_long)</div>
-                  <div class="flex items-center gap-1.5 text-[10px] text-muted"><span class="text-down">△</span>Short (enter_short)</div>
-                  <div class="flex items-center gap-1.5 text-[10px] text-muted"><span class="text-up">▽</span>Cover (exit_short)</div>
-                  <div class="flex items-center gap-1.5 text-[10px] text-muted"><span class="w-2 h-2 rounded-full bg-up inline-block"></span>enter_tag</div>
-                  <div class="flex items-center gap-1.5 text-[10px] text-muted"><span class="w-2 h-2 rounded-full border-2 border-yellow-500 inline-block"></span>exit_reason</div>
-              </div>
-          </div>
 
-          <!-- Cumulative Profit -->
-          <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden shrink-0">
-              <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40">
-                  <h3 class="section-title flex items-center gap-2"><span>💰</span>Cumulative Profit</h3>
-                  <button class="text-[11px] text-up font-medium hover:underline">Export Data</button>
-              </div>
-              <div class="h-[160px] relative px-3 pt-3 pb-5 pl-10">
-                  <div class="absolute left-0 top-3 bottom-5 w-9 flex flex-col justify-between px-1">
-                      <span class="text-[9px] text-muted font-mono text-right">+$5k</span><span class="text-[9px] text-muted font-mono text-right">+$2.5k</span><span class="text-[9px] text-muted font-mono text-right">$0</span><span class="text-[9px] text-muted font-mono text-right">-$1k</span>
+              <!-- RIGHT: All analytics content, single scroll, dense layout -->
+              <div class="flex-1 overflow-y-auto flex flex-col gap-4">
+                  <!-- KPI Strip (7 cols, compact) -->
+                  <div class="grid grid-cols-7 gap-2.5 shrink-0">
+                      <div class="bg-surface p-2.5 l-bd rounded"><div class="kpi-label">Profit</div><div class="kpi-value text-up text-lg">+$18,940</div></div>
+                      <div class="bg-surface p-2.5 l-bd rounded"><div class="kpi-label">Win Rate</div><div class="kpi-value text-lg">68.4%</div></div>
+                      <div class="bg-surface p-2.5 l-bd rounded"><div class="kpi-label">Trades</div><div class="kpi-value text-lg">1,284</div></div>
+                      <div class="bg-surface p-2.5 l-bd rounded"><div class="kpi-label">Avg Hold</div><div class="kpi-value text-lg">4h 22m</div></div>
+                      <div class="bg-surface p-2.5 l-bd rounded"><div class="kpi-label">Sharpe</div><div class="kpi-value text-lg">1.82</div></div>
+                      <div class="bg-surface p-2.5 l-bd rounded"><div class="kpi-label">Max DD</div><div class="kpi-value text-down text-lg">-4.12%</div></div>
+                      <div class="bg-surface p-2.5 l-bd rounded"><div class="kpi-label">Profit Factor</div><div class="kpi-value text-lg">2.14</div></div>
                   </div>
-                  <svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 400 110">
-                      <line x1="0" y1="75" x2="400" y2="75" stroke="rgba(255,255,255,0.06)" stroke-width="0.3" stroke-dasharray="3,3"/>
-                      <polyline points="0,90 30,85 60,80 90,75 120,70 150,72 180,65 210,55 240,50 270,42 300,35 330,28 360,22 390,15" fill="none" stroke="#22c55e" stroke-width="0.5" stroke-linejoin="round"/>
-                      <circle cx="0" cy="90" r="1.5" fill="#22c55e"/><circle cx="60" cy="80" r="1.5" fill="#22c55e"/><circle cx="120" cy="70" r="1.5" fill="#22c55e"/><circle cx="180" cy="65" r="1.5" fill="#22c55e"/><circle cx="240" cy="50" r="1.5" fill="#22c55e"/><circle cx="300" cy="35" r="1.5" fill="#22c55e"/><circle cx="390" cy="15" r="1.5" fill="#22c55e"/>
-                  </svg>
-                  <div class="flex justify-between text-[9px] text-muted font-mono mt-1"><span>BTC</span><span>ETH</span><span>SOL</span><span>BNB</span><span>XRP</span><span>AVAX</span><span>LINK</span></div>
-              </div>
-          </div>
 
-          <!-- ═══ §29 ORDERFLOW ═══ -->
-          <div class="flex items-center gap-3 pb-2 l-b shrink-0">
-              <span class="text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest bg-cyan-400/[0.12] text-cyan-400">§29</span>
-              <span class="text-[13px] font-bold text-white">Orderflow</span>
-          </div>
-
-          <!-- Orderflow Configuration -->
-          <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden shrink-0">
-              <div class="h-10 l-b flex items-center px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>🌊</span>Orderflow Configuration</h3></div>
-              <div class="p-4 flex flex-col gap-4">
-                  <div class="flex items-center gap-3">
-                      <span class="builder-toggle w-8 h-4 bg-up rounded-full relative cursor-pointer"><span class="absolute w-3 h-3 rounded-full bg-white top-0.5 left-[18px]"></span></span>
-                      <span class="text-[11px] text-muted font-medium">Orderflow Data</span>
+                  <!-- Candlestick Chart (400px) -->
+                  <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden shrink-0">
+                      <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>📉</span>Candlestick Chart</h3><div class="flex items-center gap-2.5"><select class="builder-select text-[11px] font-mono"><option>BTC/USDT:USDT</option><option>ETH/USDT:USDT</option><option>SOL/USDT:USDT</option></select><div class="flex gap-0 l-bd rounded-md overflow-hidden"><button class="px-2.5 py-1 text-[10px] font-medium text-muted hover:text-white transition-colors">5m</button><button class="px-2.5 py-1 text-[10px] font-medium text-muted hover:text-white transition-colors">15m</button><button class="px-2.5 py-1 text-[10px] font-medium bg-white/10 text-white">1h</button><button class="px-2.5 py-1 text-[10px] font-medium text-muted hover:text-white transition-colors">4h</button><button class="px-2.5 py-1 text-[10px] font-medium text-muted hover:text-white transition-colors">1d</button></div></div></div>
+                      <div class="h-[400px] relative px-3 pt-7 pb-6 pl-10 overflow-hidden">
+                          <div class="absolute top-2 right-3 text-[9px] text-up font-mono">BTC/USDT:USDT · 1h · 100 candles</div>
+                          <div class="absolute inset-0 pointer-events-none" style="background:repeating-linear-gradient(0deg,transparent,transparent 55px,rgba(255,255,255,0.04) 55px,rgba(255,255,255,0.04) 56px)"></div>
+                          <div class="absolute left-0 top-7 bottom-6 w-9 flex flex-col justify-between px-1"><span class="text-[9px] text-muted font-mono text-right">68,400</span><span class="text-[9px] text-muted font-mono text-right">67,800</span><span class="text-[9px] text-muted font-mono text-right">67,200</span><span class="text-[9px] text-muted font-mono text-right">66,600</span><span class="text-[9px] text-muted font-mono text-right">66,000</span></div>
+                          <div class="absolute left-10 right-3 h-px bg-up/25 pointer-events-none" style="top:45%"><span class="absolute right-0 -top-2 text-[9px] text-up bg-surface px-1 rounded font-mono">67,342.50</span></div>
+                          <div class="flex items-end gap-px h-full"><div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:35%;height:25%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:40%;height:12%"></div></div><div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:30%;height:30%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:38%;height:15%"></div></div><div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:32%;height:28%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:35%;height:18%"></div></div><div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:40%;height:22%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:42%;height:14%"></div></div><div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:38%;height:18%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:42%;height:8%"></div></div><div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:36%;height:24%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:38%;height:16%"></div></div><div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:42%;height:20%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:44%;height:10%"></div></div><div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:40%;height:26%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:48%;height:12%"></div></div><div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:38%;height:30%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:40%;height:20%"></div></div><div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:45%;height:22%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:48%;height:10%"></div></div><div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:42%;height:20%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:48%;height:8%"></div></div><div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:44%;height:18%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:46%;height:10%"></div></div><div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:48%;height:20%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:50%;height:12%"></div></div><div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:44%;height:24%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:52%;height:10%"></div></div><div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:46%;height:22%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:48%;height:14%"></div></div><div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:50%;height:18%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:52%;height:10%"></div></div><div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:48%;height:16%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:52%;height:6%"></div></div><div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:50%;height:20%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:52%;height:12%"></div></div><div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-up" style="bottom:54%;height:18%"></div><div class="absolute w-[60%] rounded-[1px] bg-up" style="bottom:56%;height:10%"></div></div><div class="flex-1 flex flex-col items-center relative h-full"><div class="absolute w-px left-1/2 -translate-x-1/2 bg-down" style="bottom:50%;height:22%"></div><div class="absolute w-[60%] rounded-[1px] bg-down" style="bottom:58%;height:8%"></div></div></div>
+                          <div class="absolute bottom-0 left-10 right-3 flex justify-between pt-1.5"><span class="text-[9px] text-muted font-mono">03/28</span><span class="text-[9px] text-muted font-mono">03/29</span><span class="text-[9px] text-muted font-mono">03/30</span><span class="text-[9px] text-muted font-mono">03/31</span><span class="text-[9px] text-muted font-mono">04/01</span></div>
+                      </div>
+                      <div class="px-4 py-2 l-b flex items-center justify-between"><span class="text-[10px] text-muted font-semibold uppercase tracking-widest">Overlays</span><div class="flex items-center gap-4"><label class="flex items-center gap-1.5 text-[11px] text-muted cursor-pointer"><span class="w-2.5 h-[3px] rounded bg-yellow-500 inline-block"></span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div>tema</label><label class="flex items-center gap-1.5 text-[11px] text-muted cursor-pointer"><span class="w-2.5 h-[3px] rounded bg-cyan-400 inline-block"></span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div>sar</label></div></div>
+                      <div class="flex gap-0 l-b items-center"><button class="px-4 py-2 text-[11px] font-bold uppercase border-b-2 border-up text-white">RSI</button><button class="px-4 py-2 text-[11px] font-bold uppercase border-b-2 border-transparent text-muted hover:text-white transition-colors">MACD</button><button class="px-4 py-2 text-[11px] font-bold uppercase border-b-2 border-transparent text-muted hover:text-white transition-colors">Volume</button></div>
+                      <div class="h-[100px] relative px-3 pt-3 pb-2 pl-10 flex items-end gap-px"><div class="absolute inset-0 pointer-events-none" style="background:repeating-linear-gradient(0deg,transparent,transparent 24px,rgba(255,255,255,0.04) 24px,rgba(255,255,255,0.04) 25px)"></div><div class="absolute left-10 right-3 border-t border-dashed border-down/30 pointer-events-none" style="top:22%"><span class="absolute right-1 -top-2.5 text-[8px] text-down">70</span></div><div class="absolute left-10 right-3 border-t border-dashed border-up/30 pointer-events-none" style="top:78%"><span class="absolute right-1 -top-2.5 text-[8px] text-up">30</span></div><div class="flex-1 bg-up/50 rounded-t-sm min-h-[2px]" style="height:45%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:38%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:52%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:60%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:55%"></div><div class="flex-1 bg-down/50 rounded-t-sm" style="height:72%"></div><div class="flex-1 bg-down/50 rounded-t-sm" style="height:78%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:62%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:48%"></div><div class="flex-1 bg-up/50 rounded-t-sm" style="height:42%"></div></div>
+                      <div class="flex items-center gap-4 px-4 py-2 l-b bg-surface"><div class="flex items-center gap-1.5 text-[10px] text-muted"><span class="text-up">△</span>Buy</div><div class="flex items-center gap-1.5 text-[10px] text-muted"><span class="text-down">▽</span>Sell</div><div class="flex items-center gap-1.5 text-[10px] text-muted"><span class="w-2 h-2 rounded-full bg-up inline-block"></span>enter_tag</div><div class="flex items-center gap-1.5 text-[10px] text-muted"><span class="w-2 h-2 rounded-full border-2 border-yellow-500 inline-block"></span>exit_reason</div></div>
                   </div>
-                  <div class="text-[10px] text-muted font-semibold uppercase tracking-widest">Orderflow Parameters</div>
-                  <div class="grid grid-cols-4 gap-3.5">
-                      <div class="flex flex-col gap-1"><label class="builder-label">Scale</label><input type="number" value="0.5" class="builder-input text-[11px] font-mono"></div>
-                      <div class="flex flex-col gap-1"><label class="builder-label">Imbalance Volume</label><input type="number" value="100" class="builder-input text-[11px] font-mono"></div>
-                      <div class="flex flex-col gap-1"><label class="builder-label">Imbalance Ratio</label><input type="number" value="3.0" class="builder-input text-[11px] font-mono"></div>
-                      <div class="flex flex-col gap-1"><label class="builder-label">Stacked Range</label><input type="number" value="3" class="builder-input text-[11px] font-mono"></div>
-                      <div class="flex flex-col gap-1"><label class="builder-label">Cache Size</label><input type="number" value="1500" class="builder-input text-[11px] font-mono"></div>
-                      <div class="flex flex-col gap-1"><label class="builder-label">Max Candles</label><input type="number" value="1500" class="builder-input text-[11px] font-mono"></div>
-                  </div>
-              </div>
-          </div>
 
-          <!-- Footprint + Delta grid -->
-          <div class="grid grid-cols-2 gap-5 shrink-0">
-              <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
-                  <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>🧱</span>Footprint Chart</h3><span class="text-[10px] text-muted font-mono">BTC/USDT:USDT · 1h</span></div>
-                  <div class="flex items-center justify-center py-12"><div class="text-center"><div class="text-[11px] text-muted mb-1">Orderflow data requires live connection</div><div class="text-[10px] text-muted">Enable use_public_trades and connect to a running bot</div></div></div>
-              </div>
-              <div class="flex flex-col gap-4">
-                  <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
-                      <div class="h-10 l-b flex items-center px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>📊</span>Delta Chart (Ask - Bid)</h3></div>
-                      <div class="flex items-center justify-center py-8"><div class="text-[11px] text-muted">Orderflow data requires live connection</div></div>
-                  </div>
-                  <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
-                      <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>⚡</span>Imbalance Highlights</h3><span class="text-[10px] text-muted font-mono">0 detected</span></div>
-                      <div class="flex items-center justify-center py-8"><div class="text-[11px] text-muted">Orderflow data requires live connection</div></div>
-                  </div>
-              </div>
-          </div>
-
-          <!-- ═══ §20 DATA ANALYSIS ═══ -->
-          <div class="flex items-center gap-3 pb-2 l-b shrink-0">
-              <span class="text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest bg-cyan-400/[0.12] text-cyan-400">§20</span>
-              <span class="text-[13px] font-bold text-white">Data Analysis</span>
-          </div>
-
-          <!-- Quick Stats -->
-          <div class="grid grid-cols-4 gap-3.5 shrink-0">
-              <div class="bg-surface l-bd rounded-md p-3.5 px-4"><div class="kpi-label">Pairs Analyzed</div><div class="kpi-value text-lg">5</div><div class="text-[10px] text-muted mt-0.5">All active pairs</div></div>
-              <div class="bg-surface l-bd rounded-md p-3.5 px-4"><div class="kpi-label">Best Pair</div><div class="kpi-value text-up text-base">SOL/USDT</div><div class="text-[10px] text-up mt-0.5 font-medium">+482.30 USDT</div></div>
-              <div class="bg-surface l-bd rounded-md p-3.5 px-4"><div class="kpi-label">Worst Pair</div><div class="kpi-value text-down text-base">XRP/USDT</div><div class="text-[10px] text-down mt-0.5 font-medium">-34.20 USDT</div></div>
-              <div class="bg-surface l-bd rounded-md p-3.5 px-4"><div class="kpi-label">Total Trades</div><div class="kpi-value text-lg">1,284</div><div class="text-[10px] text-muted mt-0.5">All pairs combined</div></div>
-          </div>
-
-          <!-- Performance Heatmap + Jupyter -->
-          <div class="grid grid-cols-[2fr_1fr] gap-5 shrink-0">
-              <!-- Heatmap -->
-              <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
-                  <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>🔥</span>Performance Heatmap (Pair × Day)</h3><span class="text-[10px] text-muted font-mono">Last 7 days</span></div>
-                  <div class="p-0 overflow-x-auto">
-                      <div class="grid gap-px bg-white/[0.04] l-bd rounded-md overflow-hidden min-w-[500px]" style="grid-template-columns:90px repeat(7,1fr)">
-                          <div class="bg-surface text-muted text-[9px] font-semibold uppercase tracking-widest text-center px-1.5 py-2"></div>
-                          <div class="bg-surface text-muted text-[9px] font-semibold uppercase tracking-widest text-center px-1.5 py-2">Mon</div>
-                          <div class="bg-surface text-muted text-[9px] font-semibold uppercase tracking-widest text-center px-1.5 py-2">Tue</div>
-                          <div class="bg-surface text-muted text-[9px] font-semibold uppercase tracking-widest text-center px-1.5 py-2">Wed</div>
-                          <div class="bg-surface text-muted text-[9px] font-semibold uppercase tracking-widest text-center px-1.5 py-2">Thu</div>
-                          <div class="bg-surface text-muted text-[9px] font-semibold uppercase tracking-widest text-center px-1.5 py-2">Fri</div>
-                          <div class="bg-surface text-muted text-[9px] font-semibold uppercase tracking-widest text-center px-1.5 py-2">Sat</div>
-                          <div class="bg-surface text-muted text-[9px] font-semibold uppercase tracking-widest text-center px-1.5 py-2">Sun</div>
-                          <!-- BTC row -->
-                          <div class="bg-surface text-muted text-[11px] font-semibold text-left px-2.5 py-2.5">BTC/USDT</div>
-                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+1.2%</div>
-                          <div class="bg-down/[0.08] text-down text-[11px] font-medium text-center px-1.5 py-2.5">-0.3%</div>
-                          <div class="bg-up/[0.15] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+2.4%</div>
-                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+0.8%</div>
-                          <div class="bg-down/[0.15] text-down text-[11px] font-medium text-center px-1.5 py-2.5">-1.6%</div>
-                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+0.5%</div>
-                          <div class="bg-surface text-muted text-[11px] font-medium text-center px-1.5 py-2.5">0.0%</div>
-                          <!-- ETH row -->
-                          <div class="bg-surface text-muted text-[11px] font-semibold text-left px-2.5 py-2.5">ETH/USDT</div>
-                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+0.9%</div>
-                          <div class="bg-up/[0.15] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+2.1%</div>
-                          <div class="bg-down/[0.08] text-down text-[11px] font-medium text-center px-1.5 py-2.5">-0.4%</div>
-                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+1.3%</div>
-                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+0.7%</div>
-                          <div class="bg-down/[0.08] text-down text-[11px] font-medium text-center px-1.5 py-2.5">-0.2%</div>
-                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+0.4%</div>
-                          <!-- SOL row -->
-                          <div class="bg-surface text-muted text-[11px] font-semibold text-left px-2.5 py-2.5">SOL/USDT</div>
-                          <div class="bg-up/[0.15] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+3.1%</div>
-                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+1.4%</div>
-                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+0.6%</div>
-                          <div class="bg-down/[0.08] text-down text-[11px] font-medium text-center px-1.5 py-2.5">-0.5%</div>
-                          <div class="bg-up/[0.15] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+2.8%</div>
-                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+1.1%</div>
-                          <div class="bg-up/[0.08] text-up text-[11px] font-medium text-center px-1.5 py-2.5">+0.3%</div>
+                  <!-- Row: Cumulative Profit (2/3) + Advanced Stats (1/3) -->
+                  <div class="grid grid-cols-[2fr_1fr] gap-4 shrink-0">
+                      <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
+                          <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>💰</span>Cumulative Profit</h3><div class="flex items-center gap-2.5"><select class="builder-select text-[11px] font-mono"><option>All Bots</option><option>TrendFollowerV3_BTC</option><option>TrendFollowerV3_ETH</option><option>ScalpBot_XRP</option></select><div class="flex gap-0 l-bd rounded-md overflow-hidden"><button class="px-2.5 py-1 text-[10px] font-medium text-muted hover:text-white transition-colors">7d</button><button class="px-2.5 py-1 text-[10px] font-medium bg-white/10 text-white">30d</button><button class="px-2.5 py-1 text-[10px] font-medium text-muted hover:text-white transition-colors">90d</button><button class="px-2.5 py-1 text-[10px] font-medium text-muted hover:text-white transition-colors">All</button></div><button class="px-2 py-0.5 l-bd rounded text-[9px] text-muted hover:text-white hover:bg-white/5 transition-colors">Export</button></div></div>
+                          <div class="flex-1 px-5 pb-4 pt-2 relative">
+                              <!-- Legend -->
+                              <div class="absolute top-1 right-2 flex items-center gap-4 text-[9px] font-mono text-white/40 z-10">
+                                  <span class="flex items-center gap-1.5"><span class="w-3 h-[2px] bg-[#22c55e] rounded inline-block"></span>Profit</span>
+                                  <span class="flex items-center gap-1.5"><span class="w-3 h-2.5 bg-white/15 rounded-sm inline-block"></span>Trade Count</span>
+                              </div>
+                              <div class="absolute inset-0 l-grid opacity-20"></div>
+                              <!-- Left Y-axis -->
+                              <div class="absolute left-1 top-2 bottom-4 flex flex-col justify-between text-[9px] font-mono text-white/25">
+                                  <span>+$5k</span><span>+$2k</span><span>$0</span><span>-$1k</span>
+                              </div>
+                              <!-- Bars + Line overlay -->
+                              <svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 400 100">
+                                  <!-- Zero line -->
+                                  <line x1="0" y1="70" x2="400" y2="70" stroke="rgba(255,255,255,0.08)" stroke-width="0.5" stroke-dasharray="3,3"/>
+                                  <!-- Trade count bars -->
+                                  <rect x="8"   y="94" width="10" height="6"  rx="0.5" fill="rgba(255,255,255,0.10)"/>
+                                  <rect x="38"  y="90" width="10" height="10" rx="0.5" fill="rgba(255,255,255,0.10)"/>
+                                  <rect x="68"  y="88" width="10" height="12" rx="0.5" fill="rgba(255,255,255,0.12)"/>
+                                  <rect x="98"  y="86" width="10" height="14" rx="0.5" fill="rgba(255,255,255,0.12)"/>
+                                  <rect x="128" y="82" width="10" height="18" rx="0.5" fill="rgba(255,255,255,0.12)"/>
+                                  <rect x="158" y="84" width="10" height="16" rx="0.5" fill="rgba(255,255,255,0.12)"/>
+                                  <rect x="188" y="78" width="10" height="22" rx="0.5" fill="rgba(255,255,255,0.15)"/>
+                                  <rect x="218" y="74" width="10" height="26" rx="0.5" fill="rgba(255,255,255,0.15)"/>
+                                  <rect x="248" y="76" width="10" height="24" rx="0.5" fill="rgba(255,255,255,0.15)"/>
+                                  <rect x="278" y="70" width="10" height="30" rx="0.5" fill="rgba(255,255,255,0.15)"/>
+                                  <rect x="308" y="72" width="10" height="28" rx="0.5" fill="rgba(255,255,255,0.15)"/>
+                                  <rect x="338" y="66" width="10" height="34" rx="0.5" fill="rgba(255,255,255,0.18)"/>
+                                  <rect x="368" y="68" width="10" height="32" rx="0.5" fill="rgba(255,255,255,0.18)"/>
+                                  <!-- P&L thin line -->
+                                  <polyline points="13,85 43,80 73,75 103,70 133,65 163,68 193,60 223,50 253,45 283,38 313,30 343,25 373,18 393,12" fill="none" stroke="#22c55e" stroke-width="0.4" stroke-linejoin="round"/>
+                                  <!-- Dots (green=profit, red=loss) -->
+                                  <circle cx="13" cy="85" r="1.2" fill="#22c55e"/>
+                                  <circle cx="43" cy="80" r="1.2" fill="#22c55e"/>
+                                  <circle cx="73" cy="75" r="1.2" fill="#22c55e"/>
+                                  <circle cx="103" cy="70" r="1.2" fill="#22c55e"/>
+                                  <circle cx="133" cy="65" r="1.2" fill="#22c55e"/>
+                                  <circle cx="163" cy="68" r="1.2" fill="#ef4444"/>
+                                  <circle cx="193" cy="60" r="1.2" fill="#22c55e"/>
+                                  <circle cx="223" cy="50" r="1.2" fill="#22c55e"/>
+                                  <circle cx="253" cy="45" r="1.2" fill="#22c55e"/>
+                                  <circle cx="283" cy="38" r="1.2" fill="#22c55e"/>
+                                  <circle cx="313" cy="30" r="1.2" fill="#22c55e"/>
+                                  <circle cx="343" cy="25" r="1.2" fill="#22c55e"/>
+                                  <circle cx="373" cy="18" r="1.2" fill="#22c55e"/>
+                                  <circle cx="393" cy="12" r="1.2" fill="#22c55e"/>
+                              </svg>
+                              <!-- X-axis -->
+                              <div class="flex justify-between text-[9px] font-mono text-white/25 mt-1">
+                                  <span>03/01</span><span>03/08</span><span>03/15</span><span>03/22</span><span>03/29</span>
+                              </div>
+                          </div>
+                      </div>
+                      <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
+                          <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>📊</span>Advanced Stats</h3><span class="text-[10px] text-muted font-mono">all time</span></div>
+                          <div class="p-3 space-y-1.5 text-[12px] font-mono">
+                              <div class="flex justify-between"><span class="text-muted">Sortino</span><span class="text-white">2.41</span></div>
+                              <div class="flex justify-between"><span class="text-muted">Max Consec. Wins</span><span class="text-up">12</span></div>
+                              <div class="flex justify-between"><span class="text-muted">Max Consec. Losses</span><span class="text-down">4</span></div>
+                              <div class="flex justify-between"><span class="text-muted">Expectancy</span><span class="text-up">$14.75</span></div>
+                              <div class="flex justify-between"><span class="text-muted">Rejected Signals</span><span class="text-muted">23</span></div>
+                          </div>
                       </div>
                   </div>
-              </div>
-              <!-- Jupyter Notebooks -->
-              <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
-                  <div class="h-10 l-b flex items-center px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>📓</span>Jupyter Notebooks</h3></div>
-                  <div class="p-4">
-                      <div class="flex items-center justify-center py-6"><span class="text-[11px] text-muted">No notebooks found on this bot</span></div>
-                      <div class="mt-3.5 p-2.5 px-3 bg-white/[0.03] l-bd rounded-md text-[11px] text-muted leading-relaxed">Notebooks run on the FreqTrade server at<br><span class="text-muted font-mono text-[10px]">/freqtrade/user_data/notebooks/</span><br>Access via Jupyter on port 8888</div>
+
+                  <!-- Orderflow inline config -->
+                  <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden shrink-0">
+                      <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>🌊</span>Orderflow</h3><div class="flex items-center gap-3"><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div><span class="text-[11px] text-muted font-medium">Enabled</span></div></div>
+                      <div class="p-3"><div class="grid grid-cols-6 gap-3"><div class="flex flex-col gap-1"><label class="builder-label">Scale</label><input type="number" value="0.5" class="builder-input text-[11px] font-mono"></div><div class="flex flex-col gap-1"><label class="builder-label">Imb. Vol</label><input type="number" value="100" class="builder-input text-[11px] font-mono"></div><div class="flex flex-col gap-1"><label class="builder-label">Imb. Ratio</label><input type="number" value="3.0" class="builder-input text-[11px] font-mono"></div><div class="flex flex-col gap-1"><label class="builder-label">Stacked</label><input type="number" value="3" class="builder-input text-[11px] font-mono"></div><div class="flex flex-col gap-1"><label class="builder-label">Cache</label><input type="number" value="1500" class="builder-input text-[11px] font-mono"></div><div class="flex flex-col gap-1"><label class="builder-label">Max Candles</label><input type="number" value="1500" class="builder-input text-[11px] font-mono"></div></div></div>
+                  </div>
+
+                  <!-- Row: Footprint (1/2) + Delta+Imbalance (1/2) -->
+                  <div class="grid grid-cols-2 gap-4 shrink-0">
+                      <!-- Footprint Chart with POC data -->
+                      <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
+                          <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>🧱</span>Footprint Chart</h3><span class="text-[10px] text-muted font-mono">BTC/USDT · 1h</span></div>
+                          <div class="p-3 overflow-x-auto">
+                              <table class="w-full text-[13px] font-mono whitespace-nowrap">
+                                  <thead><tr class="text-muted text-[11px] uppercase tracking-widest"><th class="px-1.5 py-1 text-right font-semibold sortable sort-desc">Price</th><th class="px-1.5 py-1 text-right font-semibold sortable text-down">Bid Vol</th><th class="px-1.5 py-1 text-center font-semibold sortable">Delta</th><th class="px-1.5 py-1 text-left font-semibold sortable text-up">Ask Vol</th><th class="px-1.5 py-1 text-right font-semibold sortable">Total</th></tr></thead>
+                                  <tbody class="divide-y divide-white/[0.04]">
+                                      <tr class="hover:bg-white/[0.04]"><td class="px-1.5 py-1 text-right text-white">67,400</td><td class="px-1.5 py-1 text-right"><span class="text-down">142</span><div class="inline-block ml-1 w-[28px] h-2 bg-down/40 rounded-sm"></div></td><td class="px-1.5 py-1 text-center text-up font-bold">+38</td><td class="px-1.5 py-1 text-left"><div class="inline-block mr-1 w-[36px] h-2 bg-up/40 rounded-sm"></div><span class="text-up">180</span></td><td class="px-1.5 py-1 text-right text-white/60">322</td></tr>
+                                      <tr class="hover:bg-white/[0.04] bg-up/[0.04]"><td class="px-1.5 py-1 text-right text-white font-bold">67,350</td><td class="px-1.5 py-1 text-right"><span class="text-down">89</span><div class="inline-block ml-1 w-[18px] h-2 bg-down/40 rounded-sm"></div></td><td class="px-1.5 py-1 text-center text-up font-bold">+245</td><td class="px-1.5 py-1 text-left"><div class="inline-block mr-1 w-[67px] h-2 bg-up/60 rounded-sm"></div><span class="text-up font-bold">334</span></td><td class="px-1.5 py-1 text-right text-white">423</td></tr>
+                                      <tr class="hover:bg-white/[0.04]"><td class="px-1.5 py-1 text-right text-white">67,300</td><td class="px-1.5 py-1 text-right"><span class="text-down">210</span><div class="inline-block ml-1 w-[42px] h-2 bg-down/40 rounded-sm"></div></td><td class="px-1.5 py-1 text-center text-down font-bold">-65</td><td class="px-1.5 py-1 text-left"><div class="inline-block mr-1 w-[29px] h-2 bg-up/40 rounded-sm"></div><span class="text-up">145</span></td><td class="px-1.5 py-1 text-right text-white/60">355</td></tr>
+                                      <tr class="hover:bg-white/[0.04] bg-white/[0.015]"><td class="px-1.5 py-1 text-right text-white">67,250</td><td class="px-1.5 py-1 text-right"><span class="text-down">178</span><div class="inline-block ml-1 w-[36px] h-2 bg-down/40 rounded-sm"></div></td><td class="px-1.5 py-1 text-center text-down font-bold">-42</td><td class="px-1.5 py-1 text-left"><div class="inline-block mr-1 w-[27px] h-2 bg-up/40 rounded-sm"></div><span class="text-up">136</span></td><td class="px-1.5 py-1 text-right text-white/60">314</td></tr>
+                                      <tr class="hover:bg-white/[0.04]"><td class="px-1.5 py-1 text-right text-white">67,200</td><td class="px-1.5 py-1 text-right"><span class="text-down">95</span><div class="inline-block ml-1 w-[19px] h-2 bg-down/40 rounded-sm"></div></td><td class="px-1.5 py-1 text-center text-up font-bold">+128</td><td class="px-1.5 py-1 text-left"><div class="inline-block mr-1 w-[45px] h-2 bg-up/40 rounded-sm"></div><span class="text-up">223</span></td><td class="px-1.5 py-1 text-right text-white/60">318</td></tr>
+                                      <tr class="hover:bg-white/[0.04] bg-down/[0.04]"><td class="px-1.5 py-1 text-right text-white">67,150</td><td class="px-1.5 py-1 text-right"><span class="text-down font-bold">312</span><div class="inline-block ml-1 w-[62px] h-2 bg-down/60 rounded-sm"></div></td><td class="px-1.5 py-1 text-center text-down font-bold">-198</td><td class="px-1.5 py-1 text-left"><div class="inline-block mr-1 w-[23px] h-2 bg-up/40 rounded-sm"></div><span class="text-up">114</span></td><td class="px-1.5 py-1 text-right text-white">426</td></tr>
+                                      <tr class="hover:bg-white/[0.04]"><td class="px-1.5 py-1 text-right text-white">67,100</td><td class="px-1.5 py-1 text-right"><span class="text-down">156</span><div class="inline-block ml-1 w-[31px] h-2 bg-down/40 rounded-sm"></div></td><td class="px-1.5 py-1 text-center text-up font-bold">+12</td><td class="px-1.5 py-1 text-left"><div class="inline-block mr-1 w-[34px] h-2 bg-up/40 rounded-sm"></div><span class="text-up">168</span></td><td class="px-1.5 py-1 text-right text-white/60">324</td></tr>
+                                  </tbody>
+                              </table>
+                          </div>
+                      </div>
+                      <!-- Delta + Imbalance with POC data -->
+                      <div class="flex flex-col gap-4">
+                          <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
+                              <div class="h-10 l-b flex items-center px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>📊</span>Delta (Ask-Bid)</h3></div>
+                              <div class="p-3 h-[120px] flex items-end gap-1">
+                                  <div class="flex-1 flex flex-col items-center gap-0.5"><div class="w-full bg-up/60 rounded-t-sm" style="height:45px"></div><span class="text-[8px] text-up font-mono">+82</span></div>
+                                  <div class="flex-1 flex flex-col items-center gap-0.5"><div class="w-full bg-down/60 rounded-t-sm" style="height:35px"></div><span class="text-[8px] text-down font-mono">-64</span></div>
+                                  <div class="flex-1 flex flex-col items-center gap-0.5"><div class="w-full bg-up/60 rounded-t-sm" style="height:72px"></div><span class="text-[8px] text-up font-mono">+245</span></div>
+                                  <div class="flex-1 flex flex-col items-center gap-0.5"><div class="w-full bg-down/60 rounded-t-sm" style="height:30px"></div><span class="text-[8px] text-down font-mono">-42</span></div>
+                                  <div class="flex-1 flex flex-col items-center gap-0.5"><div class="w-full bg-up/60 rounded-t-sm" style="height:55px"></div><span class="text-[8px] text-up font-mono">+128</span></div>
+                                  <div class="flex-1 flex flex-col items-center gap-0.5"><div class="w-full bg-down/60 rounded-t-sm" style="height:80px"></div><span class="text-[8px] text-down font-mono">-198</span></div>
+                                  <div class="flex-1 flex flex-col items-center gap-0.5"><div class="w-full bg-up/60 rounded-t-sm" style="height:20px"></div><span class="text-[8px] text-up font-mono">+12</span></div>
+                                  <div class="flex-1 flex flex-col items-center gap-0.5"><div class="w-full bg-up/60 rounded-t-sm" style="height:50px"></div><span class="text-[8px] text-up font-mono">+95</span></div>
+                                  <div class="flex-1 flex flex-col items-center gap-0.5"><div class="w-full bg-down/60 rounded-t-sm" style="height:42px"></div><span class="text-[8px] text-down font-mono">-78</span></div>
+                                  <div class="flex-1 flex flex-col items-center gap-0.5"><div class="w-full bg-up/60 rounded-t-sm" style="height:65px"></div><span class="text-[8px] text-up font-mono">+156</span></div>
+                              </div>
+                          </div>
+                          <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
+                              <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>⚡</span>Imbalance</h3><span class="text-[10px] text-up font-mono">3 detected</span></div>
+                              <div class="p-3">
+                                  <table class="w-full text-[13px] font-mono whitespace-nowrap">
+                                      <thead><tr class="text-muted text-[11px] uppercase tracking-widest"><th class="px-1.5 py-1 text-left font-semibold sortable sort-desc">Price</th><th class="px-1.5 py-1 text-right font-semibold sortable">Ratio</th><th class="px-1.5 py-1 text-left font-semibold sortable filterable">Type</th><th class="px-1.5 py-1 text-right font-semibold sortable">Vol</th></tr></thead>
+                                      <tbody class="divide-y divide-white/[0.04]">
+                                          <tr class="bg-up/[0.06]"><td class="px-1.5 py-1 text-white">67,350</td><td class="px-1.5 py-1 text-right text-up font-bold">3.75x</td><td class="px-1.5 py-1"><span class="px-1.5 py-0.5 bg-up/12 text-up rounded text-[9px]">BUY IMB</span></td><td class="px-1.5 py-1 text-right text-white">334</td></tr>
+                                          <tr class="bg-down/[0.06]"><td class="px-1.5 py-1 text-white">67,150</td><td class="px-1.5 py-1 text-right text-down font-bold">2.74x</td><td class="px-1.5 py-1"><span class="px-1.5 py-0.5 bg-down/12 text-down rounded text-[9px]">SELL IMB</span></td><td class="px-1.5 py-1 text-right text-white">312</td></tr>
+                                          <tr class="bg-up/[0.06]"><td class="px-1.5 py-1 text-white">67,200</td><td class="px-1.5 py-1 text-right text-up font-bold">2.35x</td><td class="px-1.5 py-1"><span class="px-1.5 py-0.5 bg-up/12 text-up rounded text-[9px]">STACKED</span></td><td class="px-1.5 py-1 text-right text-white">223</td></tr>
+                                      </tbody>
+                                  </table>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+
+                  <!-- Row: Heatmap (2/3) + Pair Performance (1/3) -->
+                  <div class="grid grid-cols-[2fr_1fr] gap-4 shrink-0">
+                      <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
+                          <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>🔥</span>Heatmap (Pair × Day)</h3><span class="text-[10px] text-muted font-mono">7 days</span></div>
+                          <div class="p-0 overflow-x-auto"><div class="grid gap-px bg-white/[0.05] l-bd rounded-md overflow-hidden min-w-[500px]" style="grid-template-columns:90px repeat(7,1fr)"><div class="bg-surface text-muted text-[11px] font-semibold uppercase tracking-widest text-center px-1.5 py-2"></div><div class="bg-surface text-muted text-[11px] font-semibold uppercase tracking-widest text-center px-1.5 py-2">Mon</div><div class="bg-surface text-muted text-[11px] font-semibold uppercase tracking-widest text-center px-1.5 py-2">Tue</div><div class="bg-surface text-muted text-[11px] font-semibold uppercase tracking-widest text-center px-1.5 py-2">Wed</div><div class="bg-surface text-muted text-[11px] font-semibold uppercase tracking-widest text-center px-1.5 py-2">Thu</div><div class="bg-surface text-muted text-[11px] font-semibold uppercase tracking-widest text-center px-1.5 py-2">Fri</div><div class="bg-surface text-muted text-[11px] font-semibold uppercase tracking-widest text-center px-1.5 py-2">Sat</div><div class="bg-surface text-muted text-[11px] font-semibold uppercase tracking-widest text-center px-1.5 py-2">Sun</div><div class="bg-surface text-muted text-[13px] font-mono font-semibold text-left px-2.5 py-2">BTC</div><div class="bg-up/[0.08] text-up text-[13px] font-mono font-medium text-center px-1.5 py-2">+1.2%</div><div class="bg-down/[0.08] text-down text-[13px] font-mono font-medium text-center px-1.5 py-2">-0.3%</div><div class="bg-up/[0.15] text-up text-[13px] font-mono font-medium text-center px-1.5 py-2">+2.4%</div><div class="bg-up/[0.08] text-up text-[13px] font-mono font-medium text-center px-1.5 py-2">+0.8%</div><div class="bg-down/[0.15] text-down text-[13px] font-mono font-medium text-center px-1.5 py-2">-1.6%</div><div class="bg-up/[0.08] text-up text-[13px] font-mono font-medium text-center px-1.5 py-2">+0.5%</div><div class="bg-surface text-muted text-[13px] font-mono font-medium text-center px-1.5 py-2">0.0%</div><div class="bg-surface text-muted text-[13px] font-mono font-semibold text-left px-2.5 py-2">ETH</div><div class="bg-up/[0.08] text-up text-[13px] font-mono font-medium text-center px-1.5 py-2">+0.9%</div><div class="bg-up/[0.15] text-up text-[13px] font-mono font-medium text-center px-1.5 py-2">+2.1%</div><div class="bg-down/[0.08] text-down text-[13px] font-mono font-medium text-center px-1.5 py-2">-0.4%</div><div class="bg-up/[0.08] text-up text-[13px] font-mono font-medium text-center px-1.5 py-2">+1.3%</div><div class="bg-up/[0.08] text-up text-[13px] font-mono font-medium text-center px-1.5 py-2">+0.7%</div><div class="bg-down/[0.08] text-down text-[13px] font-mono font-medium text-center px-1.5 py-2">-0.2%</div><div class="bg-up/[0.08] text-up text-[13px] font-mono font-medium text-center px-1.5 py-2">+0.4%</div><div class="bg-surface text-muted text-[13px] font-mono font-semibold text-left px-2.5 py-2">SOL</div><div class="bg-up/[0.15] text-up text-[13px] font-mono font-medium text-center px-1.5 py-2">+3.1%</div><div class="bg-up/[0.08] text-up text-[13px] font-mono font-medium text-center px-1.5 py-2">+1.4%</div><div class="bg-up/[0.08] text-up text-[13px] font-mono font-medium text-center px-1.5 py-2">+0.6%</div><div class="bg-down/[0.08] text-down text-[13px] font-mono font-medium text-center px-1.5 py-2">-0.5%</div><div class="bg-up/[0.15] text-up text-[13px] font-mono font-medium text-center px-1.5 py-2">+2.8%</div><div class="bg-up/[0.08] text-up text-[13px] font-mono font-medium text-center px-1.5 py-2">+1.1%</div><div class="bg-up/[0.08] text-up text-[13px] font-mono font-medium text-center px-1.5 py-2">+0.3%</div></div></div>
+                      </div>
+                      <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden">
+                          <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>💹</span>Per-Pair P&amp;L</h3><span class="text-[10px] text-muted font-mono">5 pairs</span></div>
+                          <div class="overflow-x-auto"><table class="w-full text-[13px] font-mono whitespace-nowrap"><thead><tr class="text-muted text-[11px] uppercase tracking-widest"><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Pair</th><th class="text-right px-2 py-1.5 font-semibold sortable sort-desc">P&amp;L</th><th class="text-right px-2 py-1.5 font-semibold sortable">Win%</th></tr></thead><tbody class="divide-y divide-white/[0.05]"><tr class="hover:bg-white/[0.04]"><td class="px-2 py-1.5 text-white">BTC</td><td class="px-2 py-1.5 text-right text-up font-bold">+$8,420</td><td class="px-2 py-1.5 text-right text-up">74%</td></tr><tr class="hover:bg-white/[0.04]"><td class="px-2 py-1.5 text-white">ETH</td><td class="px-2 py-1.5 text-right text-up font-bold">+$5,210</td><td class="px-2 py-1.5 text-right text-up">71%</td></tr><tr class="hover:bg-white/[0.04]"><td class="px-2 py-1.5 text-white">SOL</td><td class="px-2 py-1.5 text-right text-up font-bold">+$3,840</td><td class="px-2 py-1.5 text-right text-up">68%</td></tr><tr class="hover:bg-white/[0.04]"><td class="px-2 py-1.5 text-white">XRP</td><td class="px-2 py-1.5 text-right text-up font-bold">+$1,120</td><td class="px-2 py-1.5 text-right">62%</td></tr><tr class="hover:bg-white/[0.04]"><td class="px-2 py-1.5 text-white">DOGE</td><td class="px-2 py-1.5 text-right text-up font-bold">+$350</td><td class="px-2 py-1.5 text-right">58%</td></tr></tbody></table></div>
+                      </div>
+                  </div>
+
+                  <!-- Jupyter -->
+                  <div class="bg-surface l-bd rounded-md shadow-xl overflow-hidden shrink-0">
+                      <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>📓</span>Jupyter Notebooks</h3><span class="text-[10px] text-muted font-mono">3 notebooks · port 8888</span></div>
+                      <div class="overflow-x-auto">
+                          <table class="w-full text-[13px] font-mono whitespace-nowrap">
+                              <thead><tr class="text-muted text-[11px] uppercase tracking-widest"><th class="text-left px-3 py-1.5 font-semibold sortable">Notebook</th><th class="text-left px-3 py-1.5 font-semibold sortable sort-desc">Last Modified</th><th class="text-left px-3 py-1.5 font-semibold sortable filterable">Kernel</th><th class="text-right px-3 py-1.5 font-semibold sortable">Cells</th><th class="text-center px-3 py-1.5 font-semibold">Actions</th></tr></thead>
+                              <tbody class="divide-y divide-white/[0.05]">
+                                  <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2 text-white flex items-center gap-2"><i data-lucide="file-text" class="w-3.5 h-3.5 text-muted"></i>pair_analysis_BTC.ipynb</td><td class="px-3 py-2 text-muted">2026-04-01 14:22</td><td class="px-3 py-2"><span class="px-1.5 py-0.5 bg-up/12 text-up rounded text-[9px]">● Running</span></td><td class="px-3 py-2 text-right text-white/70">24</td><td class="px-3 py-2 text-center"><button class="px-2 py-0.5 text-[10px] text-muted hover:text-white l-bd rounded hover:bg-white/5 transition-colors">Open</button></td></tr>
+                                  <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2 text-white flex items-center gap-2"><i data-lucide="file-text" class="w-3.5 h-3.5 text-muted"></i>strategy_backtest_report.ipynb</td><td class="px-3 py-2 text-muted">2026-03-29 09:15</td><td class="px-3 py-2"><span class="px-1.5 py-0.5 bg-white/8 text-muted rounded text-[9px]">● Idle</span></td><td class="px-3 py-2 text-right text-white/70">42</td><td class="px-3 py-2 text-center"><button class="px-2 py-0.5 text-[10px] text-muted hover:text-white l-bd rounded hover:bg-white/5 transition-colors">Open</button></td></tr>
+                                  <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2 text-white flex items-center gap-2"><i data-lucide="file-text" class="w-3.5 h-3.5 text-muted"></i>orderflow_research.ipynb</td><td class="px-3 py-2 text-muted">2026-03-25 18:40</td><td class="px-3 py-2"><span class="px-1.5 py-0.5 bg-down/12 text-down rounded text-[9px]">● Stopped</span></td><td class="px-3 py-2 text-right text-white/70">18</td><td class="px-3 py-2 text-center"><button class="px-2 py-0.5 text-[10px] text-muted hover:text-white l-bd rounded hover:bg-white/5 transition-colors">Open</button></td></tr>
+                              </tbody>
+                          </table>
+                      </div>
+                      <div class="px-3 py-2 l-b flex items-center justify-between"><span class="text-[10px] text-muted font-mono">/freqtrade/user_data/notebooks/</span><button class="px-2.5 py-1 text-[10px] text-muted hover:text-white l-bd rounded hover:bg-white/5 transition-colors flex items-center gap-1"><i data-lucide="plus" class="w-3 h-3"></i>New Notebook</button></div>
                   </div>
               </div>
           </div>
-
       </div>
 
 

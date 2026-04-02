@@ -887,6 +887,7 @@ function BacktestingInner() {
 
   return (
     <AppShell title="Backtesting">
+      <div className="p-5">
       <div className="grid grid-cols-[380px_1fr] gap-5">
         {/* ════════ LEFT COLUMN: CONFIGURATION ════════ */}
         <div className="flex flex-col gap-4">
@@ -2144,6 +2145,7 @@ function BacktestingInner() {
             </CardBody>
           </Card>
         </div>
+      </div>
       </div>
     </AppShell>
   );

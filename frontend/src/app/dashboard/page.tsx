@@ -163,6 +163,7 @@ export default function DashboardPage() {
   const [sysinfoData, setSysinfoData] = useState<FTSysinfo | null>(null);
   const [logsData, setLogsData] = useState<FTLogsResponse | null>(null);
   const [aggregatedProfit, setAggregatedProfit] = useState<Partial<FTProfit> | null>(null);
+  const [mainHealthData, setMainHealthData] = useState<FTHealth | null>(null);
 
   // UI state
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
@@ -373,13 +374,15 @@ export default function DashboardPage() {
           botBalance(firstBotId),
           botSysinfo(firstBotId),
           botLogs(firstBotId, 100),
-        ]).then(([w, mo, bal, sys, logs]) => {
+          botHealth(firstBotId),
+        ]).then(([w, mo, bal, sys, logs, health]) => {
           if (!m.current) return;
           if (w.status === "fulfilled") setWeeklyData(w.value);
           if (mo.status === "fulfilled") setMonthlyData(mo.value);
           if (bal.status === "fulfilled") setBalanceData(bal.value);
           if (sys.status === "fulfilled") setSysinfoData(sys.value);
           if (logs.status === "fulfilled") setLogsData(logs.value);
+          if (health.status === "fulfilled") setMainHealthData(health.value);
         });
       }
 
@@ -636,7 +639,7 @@ export default function DashboardPage() {
 
       {/* LINEAR EDGE LAYOUT */}
       <div
-        className="flex flex-col gap-5 h-full -m-8 p-5 overflow-hidden"
+        className="flex flex-col gap-5 h-full p-5 overflow-hidden"
         style={{
           backgroundImage: "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)",
           backgroundSize: "24px 24px",
@@ -728,6 +731,7 @@ export default function DashboardPage() {
             aggregatedProfit={aggregatedProfit}
             totalFees={aggStats.totalFees}
             fundingFees={aggStats.fundingFees}
+            healthData={mainHealthData}
             loading={loading}
           />
         </div>

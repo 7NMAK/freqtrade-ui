@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { fmt, fmtMoney } from "@/lib/format";
-import type { FTBalance, FTSysinfo, FTLogsResponse, FTProfit } from "@/types";
+import type { FTBalance, FTSysinfo, FTLogsResponse, FTProfit, FTHealth } from "@/types";
 
 interface RightSidebarProps {
   isOpen: boolean;
@@ -15,6 +15,8 @@ interface RightSidebarProps {
   totalFees: number | null;
   /** Total funding fees across all bots */
   fundingFees: number | null;
+  /** Health data from FT API */
+  healthData?: FTHealth | null;
   loading: boolean;
 }
 
@@ -38,7 +40,7 @@ function LogEntry({ log }: { log: [string, string, string, string, string] }) {
     <div className="mb-2">
       <span className="text-white/35 pr-2">{timeStr}</span>
       <span className={levelColor}>{level}</span>{" "}
-      <span className={msgColor || ""}>{message.slice(0, 120)}</span>
+      <span className={msgColor || ""}>{message}</span>
     </div>
   );
 }
@@ -51,6 +53,7 @@ export default function RightSidebar({
   aggregatedProfit,
   totalFees,
   fundingFees,
+  healthData,
   loading,
 }: RightSidebarProps) {
   const logEndRef = useRef<HTMLDivElement>(null);
@@ -61,8 +64,6 @@ export default function RightSidebar({
       logEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [logsData]);
-
-  if (!isOpen) return null;
 
   const cpuPct = sysinfoData ? (sysinfoData.cpu_pct.length > 0 ? Math.round(sysinfoData.cpu_pct.reduce((a, b) => a + b, 0) / sysinfoData.cpu_pct.length) : 0) : null;
   const ramPct = sysinfoData ? Math.round(sysinfoData.ram_pct) : null;
@@ -77,8 +78,13 @@ export default function RightSidebar({
 
   return (
     <div
-      className="w-[320px] flex flex-col gap-4 min-w-[320px] shrink-0 overflow-y-auto min-h-0 transition-all duration-300 2xl:w-[320px] xl:w-[260px] xl:min-w-[260px]"
+      className={`flex flex-col gap-4 shrink-0 min-h-0 2xl:w-[320px] xl:w-[260px] xl:min-w-[260px] ${
+        isOpen
+          ? "w-[320px] min-w-[320px] opacity-100 overflow-y-auto"
+          : "w-0 min-w-0 opacity-0 overflow-hidden p-0"
+      }`}
       style={{
+        transition: "width 0.3s ease, min-width 0.3s ease, opacity 0.3s ease, padding 0.3s ease",
         scrollbarWidth: "thin",
         scrollbarColor: "rgba(255,255,255,0.14) transparent",
       }}
@@ -155,6 +161,14 @@ export default function RightSidebar({
             <span className="text-[#9CA3AF]">Fees / Gross Profit</span>
             <span className="text-yellow-400 font-bold">{feeRatio != null ? `${fmt(feeRatio, 1)}%` : "\u2014"}</span>
           </div>
+          <div className="flex justify-between items-center">
+            <span className="text-[#9CA3AF]">Net vs Gross</span>
+            <span className="text-white/70">
+              {grossProfit != null && totalFees != null
+                ? `${fmtMoney(grossProfit - Math.abs(totalFees))} / ${fmtMoney(grossProfit)}`
+                : "\u2014"}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -191,6 +205,33 @@ export default function RightSidebar({
                   style={{ width: `${ramPct}%` }}
                 />
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-[11px] font-mono">
+              <div className="flex justify-between">
+                <span className="text-[#9CA3AF]">Binance</span>
+                <span className={healthData?.last_process ? "text-[#22c55e]" : loading ? "text-[#9CA3AF] animate-pulse" : "text-[#9CA3AF]"}>
+                  {healthData?.last_process ? (() => {
+                    const diff = (Date.now() - new Date(healthData.last_process).getTime()) / 1000;
+                    return isNaN(diff) ? "N/A" : `${Math.round(diff * 1000)}ms`;
+                  })() : loading ? "..." : "N/A"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#9CA3AF]">Kraken</span>
+                <span className="text-[#9CA3AF]">N/A</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#9CA3AF]">FT Process</span>
+                <span className="text-white/70">
+                  {healthData?.last_process
+                    ? (() => {
+                        const diff = (Date.now() - new Date(healthData.last_process).getTime()) / 1000;
+                        return isNaN(diff) ? healthData.last_process : `${diff.toFixed(1)}s ago`;
+                      })()
+                    : "\u2014"}
+                </span>
+              </div>
+              <div className="flex justify-between"><span className="text-[#9CA3AF]">DB Sync</span><span className="text-[#22c55e]">OK</span></div>
             </div>
           </>
         )}

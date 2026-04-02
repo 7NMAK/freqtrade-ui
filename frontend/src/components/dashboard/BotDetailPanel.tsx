@@ -21,6 +21,15 @@ import type {
 
 type DetailTab = "overview" | "trades" | "performance" | "config" | "backtest" | "hyperopt" | "freqai" | "system";
 
+function fmtDurSec(seconds: number): string {
+  if (isNaN(seconds)) return "—";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h >= 24) return `${Math.floor(h / 24)}d ${h % 24}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
 interface BotDetailPanelProps {
   bot: Bot | null;
   isOpen: boolean;
@@ -545,9 +554,17 @@ function DetailContent({
 
     /* ─── Performance ─── */
     case "performance": {
+      // Derive wins/losses from closed trades for enriched performance data
+      const enrichedPerf = perfData.map((p) => {
+        const pairClosed = closedTrades.filter((t) => t.pair === p.pair);
+        const wins = pairClosed.filter((t) => (t.close_profit_abs ?? 0) >= 0).length;
+        const losses = pairClosed.filter((t) => (t.close_profit_abs ?? 0) < 0).length;
+        const winrate = pairClosed.length > 0 ? wins / pairClosed.length : 0;
+        return { ...p, wins, losses, winrate };
+      });
       return (
         <div className="space-y-6">
-          {perfData && perfData.length > 0 ? (
+          {enrichedPerf && enrichedPerf.length > 0 ? (
             <div>
               <div className={sectionTitle}>Per-Pair Performance</div>
               <div className="overflow-x-auto">
@@ -556,16 +573,28 @@ function DetailContent({
                     <tr className="text-muted-foreground border-b border-border">
                       <th className="text-left py-2 font-medium">Pair</th>
                       <th className="text-right py-2 font-medium">Trades</th>
-                      <th className="text-right py-2 font-medium">Profit</th>
+                      <th className="text-right py-2 font-medium">W</th>
+                      <th className="text-right py-2 font-medium">L</th>
+                      <th className="text-right py-2 font-medium">WR%</th>
+                      <th className="text-right py-2 font-medium">Profit %</th>
+                      <th className="text-right py-2 font-medium">Profit $</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {perfData.map((p) => (
+                    {enrichedPerf.map((p) => (
                       <tr key={p.pair} className="border-b border-border/30">
                         <td className="py-2 text-foreground font-medium">{p.pair}</td>
                         <td className="py-2 text-right text-muted-foreground">{p.count}</td>
-                        <td className={`py-2 text-right font-semibold ${profitColor(p.profit)}`}>
-                          {fmtMoney(p.profit)}
+                        <td className="py-2 text-right text-emerald-500">{p.wins}</td>
+                        <td className="py-2 text-right text-rose-500">{p.losses}</td>
+                        <td className={`py-2 text-right font-medium ${p.winrate >= 0.6 ? "text-emerald-500" : p.winrate < 0.45 ? "text-rose-500" : "text-foreground"}`}>
+                          {fmt(p.winrate * 100, 1)}%
+                        </td>
+                        <td className={`py-2 text-right font-semibold ${profitColor(p.profit_ratio)}`}>
+                          {p.profit_ratio >= 0 ? "+" : ""}{fmt(p.profit_ratio * 100, 1)}%
+                        </td>
+                        <td className={`py-2 text-right font-semibold ${profitColor(p.profit_abs)}`}>
+                          {fmtMoney(p.profit_abs)}
                         </td>
                       </tr>
                     ))}
@@ -579,21 +608,33 @@ function DetailContent({
 
           {entryData && entryData.length > 0 && (
             <div>
-              <div className={sectionTitle}>Entry Tag Analysis (Top 5)</div>
+              <div className={sectionTitle}>Entry Tag Analysis</div>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="text-muted-foreground border-b border-border">
                       <th className="text-left py-2 font-medium">Tag</th>
                       <th className="text-right py-2 font-medium">Trades</th>
-                      <th className="text-right py-2 font-medium">Profit</th>
+                      <th className="text-right py-2 font-medium">W</th>
+                      <th className="text-right py-2 font-medium">L</th>
+                      <th className="text-right py-2 font-medium">WR%</th>
+                      <th className="text-right py-2 font-medium">Avg %</th>
+                      <th className="text-right py-2 font-medium">P&L</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {entryData.slice(0, 5).map((e) => (
+                    {entryData.map((e) => (
                       <tr key={e.enter_tag ?? "untagged"} className="border-b border-border/30">
                         <td className="py-2 text-foreground font-medium">{e.enter_tag ?? "untagged"}</td>
                         <td className="py-2 text-right text-muted-foreground">{e.entries}</td>
+                        <td className="py-2 text-right text-emerald-500">{e.wins}</td>
+                        <td className="py-2 text-right text-rose-500">{e.losses}</td>
+                        <td className={`py-2 text-right font-medium ${e.winrate >= 0.6 ? "text-emerald-500" : e.winrate < 0.45 ? "text-rose-500" : "text-foreground"}`}>
+                          {fmt(e.winrate * 100, 1)}%
+                        </td>
+                        <td className={`py-2 text-right ${profitColor(e.avg_profit)}`}>
+                          {e.avg_profit >= 0 ? "+" : ""}{fmt(e.avg_profit, 2)}%
+                        </td>
                         <td className={`py-2 text-right font-semibold ${profitColor(e.profit_abs)}`}>
                           {fmtMoney(e.profit_abs)}
                         </td>
@@ -607,21 +648,33 @@ function DetailContent({
 
           {exitData && exitData.length > 0 && (
             <div>
-              <div className={sectionTitle}>Exit Reason Analysis (Top 5)</div>
+              <div className={sectionTitle}>Exit Reason Analysis</div>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="text-muted-foreground border-b border-border">
                       <th className="text-left py-2 font-medium">Reason</th>
-                      <th className="text-right py-2 font-medium">Trades</th>
-                      <th className="text-right py-2 font-medium">Profit</th>
+                      <th className="text-right py-2 font-medium">Exits</th>
+                      <th className="text-right py-2 font-medium">W</th>
+                      <th className="text-right py-2 font-medium">L</th>
+                      <th className="text-right py-2 font-medium">WR%</th>
+                      <th className="text-right py-2 font-medium">Avg %</th>
+                      <th className="text-right py-2 font-medium">P&L</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {exitData.slice(0, 5).map((e) => (
+                    {exitData.map((e) => (
                       <tr key={e.exit_reason ?? "untagged"} className="border-b border-border/30">
                         <td className="py-2 text-foreground font-medium">{e.exit_reason ?? "untagged"}</td>
                         <td className="py-2 text-right text-muted-foreground">{e.exits}</td>
+                        <td className="py-2 text-right text-emerald-500">{e.wins}</td>
+                        <td className="py-2 text-right text-rose-500">{e.losses}</td>
+                        <td className={`py-2 text-right font-medium ${e.winrate >= 0.6 ? "text-emerald-500" : e.winrate < 0.45 ? "text-rose-500" : "text-foreground"}`}>
+                          {fmt(e.winrate * 100, 1)}%
+                        </td>
+                        <td className={`py-2 text-right ${profitColor(e.avg_profit)}`}>
+                          {e.avg_profit >= 0 ? "+" : ""}{fmt(e.avg_profit, 2)}%
+                        </td>
                         <td className={`py-2 text-right font-semibold ${profitColor(e.profit_abs)}`}>
                           {fmtMoney(e.profit_abs)}
                         </td>
@@ -714,13 +767,27 @@ function DetailContent({
             <div>
               <div className={sectionTitle}>System Info</div>
               <div className={row}>
-                <span className={key}>CPU %</span>
-                <span className={val}>{sysinfoData.cpu_pct.length > 0 ? fmt(sysinfoData.cpu_pct[0], 1) : "—"}%</span>
+                <span className={key}>CPU % (avg)</span>
+                <span className={val}>
+                  {sysinfoData.cpu_pct.length > 0
+                    ? fmt(sysinfoData.cpu_pct.reduce((a, b) => a + b, 0) / sysinfoData.cpu_pct.length, 1) + "%"
+                    : "—"}
+                </span>
+              </div>
+              <div className={row}>
+                <span className={key}>CPU cores</span>
+                <span className={val}>{sysinfoData.cpu_pct.length || "—"}</span>
               </div>
               <div className={row}>
                 <span className={key}>Memory %</span>
                 <span className={val}>{fmt(sysinfoData.ram_pct, 1)}%</span>
               </div>
+              {sysinfoData.ram_total != null && (
+                <div className={row}>
+                  <span className={key}>Memory Total</span>
+                  <span className={val}>{fmt((sysinfoData.ram_total ?? 0) / (1024 * 1024 * 1024), 1)} GB</span>
+                </div>
+              )}
             </div>
           )}
 
@@ -729,19 +796,83 @@ function DetailContent({
               <div className={sectionTitle}>Bot Health</div>
               <div className={row}>
                 <span className={key}>Last Process</span>
-                <span className={val}>{healthData.last_process ?? "—"}</span>
+                <span className={val}>
+                  {healthData.last_process
+                    ? (() => {
+                        const diff = (Date.now() - new Date(healthData.last_process).getTime()) / 1000;
+                        return isNaN(diff) ? healthData.last_process : `${diff.toFixed(1)}s ago`;
+                      })()
+                    : "—"}
+                </span>
+              </div>
+              <div className={row}>
+                <span className={key}>Last Process (loc)</span>
+                <span className={val}>{healthData.last_process_loc ?? "—"}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Locks */}
+          {locksData && locksData.locks && locksData.locks.length > 0 && (
+            <div>
+              <div className={sectionTitle}>Active Locks ({locksData.lock_count})</div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-muted-foreground border-b border-border">
+                      <th className="text-left py-2 font-medium">Pair</th>
+                      <th className="text-left py-2 font-medium">Side</th>
+                      <th className="text-left py-2 font-medium">Reason</th>
+                      <th className="text-right py-2 font-medium">Until</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {locksData.locks.filter(l => l.active).map((l) => (
+                      <tr key={l.id} className="border-b border-border/30">
+                        <td className="py-2 text-foreground font-medium">{l.pair}</td>
+                        <td className="py-2 text-muted-foreground">{l.side || "—"}</td>
+                        <td className="py-2 text-muted-foreground">{l.reason || "—"}</td>
+                        <td className="py-2 text-right text-muted-foreground">
+                          {l.lock_end_time ? new Date(l.lock_end_time).toLocaleString() : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
 
           {logsData && logsData.logs && logsData.logs.length > 0 && (
             <div>
-              <div className={sectionTitle}>Recent Logs</div>
-              <div className="bg-muted/50 border border-border rounded p-2 max-h-40 overflow-y-auto">
-                <div className="font-mono text-[9px] text-muted-foreground space-y-0.5">
-                  {logsData.logs.slice(0, 20).map((log, idx) => (
-                    <div key={idx}>{typeof log === "string" ? log : JSON.stringify(log)}</div>
-                  ))}
+              <div className={sectionTitle}>Recent Logs ({logsData.log_count} total)</div>
+              <div className="bg-muted/50 border border-border rounded p-2 max-h-[300px] overflow-y-auto">
+                <div className="font-mono text-[10px] space-y-1">
+                  {logsData.logs.slice(-30).map((log, idx) => {
+                    // Handle both 4-element and 5-element log tuples
+                    const arr = log as string[];
+                    let timestamp: string, level: string, message: string;
+                    if (arr.length >= 5) {
+                      [, , timestamp, level, message] = arr;
+                    } else if (arr.length === 4) {
+                      [timestamp, , level, message] = arr;
+                    } else {
+                      timestamp = ""; level = ""; message = arr.join(" ");
+                    }
+                    const timeStr = timestamp ? timestamp.split(" ").pop()?.slice(0, 8) ?? "" : "";
+                    const levelColor =
+                      level === "WARNING" || level === "WARN" ? "text-yellow-500" :
+                      level === "ERROR" || level === "CRITICAL" ? "text-rose-500" :
+                      level === "INFO" ? "text-blue-400" :
+                      "text-muted-foreground";
+                    return (
+                      <div key={idx} className="flex gap-1">
+                        <span className="text-muted-foreground/50 shrink-0">{timeStr}</span>
+                        <span className={`shrink-0 font-semibold ${levelColor}`}>{level}</span>
+                        <span className="text-foreground/80 break-all">{message ?? ""}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -752,14 +883,55 @@ function DetailContent({
 
     /* --- Backtest --- */
     case "backtest": {
+      // Show stats from profit data as a proxy for latest run performance
+      const hasStats = statsData || profit;
       return (
         <div className="space-y-6">
           <div>
-            <div className={sectionTitle}>Recent Backtest Results</div>
-            <div className="text-center py-8 text-muted-foreground text-xs space-y-2">
-              <p>No backtest history available for this bot.</p>
-              <p className="text-[10px] text-muted-foreground/60">Run a backtest from the Backtesting page to see results here.</p>
-            </div>
+            <div className={sectionTitle}>Backtest Summary</div>
+            {hasStats ? (
+              <>
+                <div className="bg-muted/10 border border-border/50 rounded-xl p-4 space-y-1 mb-4">
+                  <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-2">Latest Performance Snapshot</div>
+                  <div className={row}>
+                    <span className={key}>Total Trades</span>
+                    <span className={val}>{profit?.trade_count ?? statsData?.wins != null ? (statsData?.wins ?? 0) + (statsData?.losses ?? 0) + (statsData?.draws ?? 0) : "—"}</span>
+                  </div>
+                  <div className={row}>
+                    <span className={key}>Wins / Losses / Draws</span>
+                    <span className={val}>{statsData ? `${statsData.wins} / ${statsData.losses} / ${statsData.draws}` : "—"}</span>
+                  </div>
+                  <div className={row}>
+                    <span className={key}>Profit Factor</span>
+                    <span className={val}>{statsData?.profit_factor != null ? fmt(statsData.profit_factor) : "—"}</span>
+                  </div>
+                  <div className={row}>
+                    <span className={key}>Max Drawdown</span>
+                    <span className={`${val} text-rose-500`}>{statsData?.max_drawdown != null ? fmt(statsData.max_drawdown * 100, 2) + "%" : "—"}</span>
+                  </div>
+                  {statsData?.max_consecutive_wins != null && (
+                    <div className={row}>
+                      <span className={key}>Max Consecutive Wins</span>
+                      <span className={`${val} text-emerald-500`}>{statsData.max_consecutive_wins}</span>
+                    </div>
+                  )}
+                  {statsData?.max_consecutive_losses != null && (
+                    <div className={row}>
+                      <span className={key}>Max Consecutive Losses</span>
+                      <span className={`${val} text-rose-500`}>{statsData.max_consecutive_losses}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="text-[10px] text-muted-foreground/60 text-center">
+                  Run a full backtest from the Backtesting page for detailed timerange analysis.
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground text-xs space-y-2">
+                <p>No backtest history available for this bot.</p>
+                <p className="text-[10px] text-muted-foreground/60">Run a backtest from the Backtesting page to see results here.</p>
+              </div>
+            )}
           </div>
         </div>
       );
@@ -767,14 +939,72 @@ function DetailContent({
 
     /* --- Hyperopt --- */
     case "hyperopt": {
+      // Show rejection/timeout stats from FTStats as hyperopt-relevant metrics
       return (
         <div className="space-y-6">
           <div>
-            <div className={sectionTitle}>Recent Hyperopt Runs</div>
-            <div className="text-center py-8 text-muted-foreground text-xs space-y-2">
-              <p>No hyperopt history available for this bot.</p>
-              <p className="text-[10px] text-muted-foreground/60">Run hyperopt from the Backtesting page to see optimization results here.</p>
-            </div>
+            <div className={sectionTitle}>Hyperopt & Signal Quality</div>
+            {statsData ? (
+              <>
+                <div className="bg-muted/10 border border-border/50 rounded-xl p-4 space-y-1 mb-4">
+                  <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-2">Signal & Order Metrics</div>
+                  <div className={row}>
+                    <span className={key}>Rejected Signals</span>
+                    <span className={`${val} ${statsData.rejected_signals > 0 ? "text-amber-500" : ""}`}>{statsData.rejected_signals}</span>
+                  </div>
+                  <div className={row}>
+                    <span className={key}>Timed Out Entries</span>
+                    <span className={val}>{statsData.timedout_entry_orders}</span>
+                  </div>
+                  <div className={row}>
+                    <span className={key}>Timed Out Exits</span>
+                    <span className={val}>{statsData.timedout_exit_orders}</span>
+                  </div>
+                  <div className={row}>
+                    <span className={key}>Cancelled Entries</span>
+                    <span className={val}>{statsData.canceled_trade_entries}</span>
+                  </div>
+                  <div className={row}>
+                    <span className={key}>Replaced Entry Orders</span>
+                    <span className={val}>{statsData.replaced_entry_orders}</span>
+                  </div>
+                  <div className={row}>
+                    <span className={key}>Avg Win Duration</span>
+                    <span className={val}>{statsData.durations.wins != null ? fmtDurSec(statsData.durations.wins) : "—"}</span>
+                  </div>
+                  <div className={row}>
+                    <span className={key}>Avg Loss Duration</span>
+                    <span className={val}>{statsData.durations.losses != null ? fmtDurSec(statsData.durations.losses) : "—"}</span>
+                  </div>
+                  {statsData.sharpe_ratio != null && (
+                    <div className={row}>
+                      <span className={key}>Sharpe Ratio</span>
+                      <span className={val}>{fmt(statsData.sharpe_ratio)}</span>
+                    </div>
+                  )}
+                  {statsData.sortino_ratio != null && (
+                    <div className={row}>
+                      <span className={key}>Sortino Ratio</span>
+                      <span className={val}>{fmt(statsData.sortino_ratio)}</span>
+                    </div>
+                  )}
+                  {statsData.calmar_ratio != null && (
+                    <div className={row}>
+                      <span className={key}>Calmar Ratio</span>
+                      <span className={val}>{fmt(statsData.calmar_ratio)}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="text-[10px] text-muted-foreground/60 text-center">
+                  Run hyperopt from the Backtesting page to optimize strategy parameters.
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground text-xs space-y-2">
+                <p>No hyperopt history available for this bot.</p>
+                <p className="text-[10px] text-muted-foreground/60">Run hyperopt from the Backtesting page to see optimization results here.</p>
+              </div>
+            )}
           </div>
         </div>
       );

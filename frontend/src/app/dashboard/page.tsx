@@ -214,8 +214,8 @@ export default function DashboardPage() {
         const pp = await portfolioProfit();
         if (m.current) {
           setTotalPnlClosed(pp.combined.profit_closed_coin);
-          const closedPct = pp.combined.trade_count > 0 ? (pp.combined.profit_closed_coin / (pp.combined.profit_closed_coin + pp.combined.profit_closed_fiat || 1)) * 100 : null;
-          setTotalPnlClosedPct(closedPct);
+          // Use profit_all_coin as the basis for percentage, not the sum of coin + fiat
+          setTotalPnlClosedPct(null); // Will be computed from per-bot profit data below
           setTotalTradeCount(pp.combined.trade_count);
           const totalW = pp.combined.winning_trades ?? 0;
           const totalL = pp.combined.losing_trades ?? 0;
@@ -262,7 +262,7 @@ export default function DashboardPage() {
         // BUG 3 fix: Open P&L with fallback for field names
         const openPnlSum = allOpen.reduce((s, t) => {
           // Try current_profit_abs first, fallback to profit_abs
-          const pnl = t.current_profit_abs ?? (t as Record<string, unknown>).profit_abs as number ?? 0;
+          const pnl = t.current_profit_abs ?? (t as unknown as Record<string, unknown>).profit_abs as number ?? 0;
           return s + pnl;
         }, 0);
         setTotalPnlOpen(openPnlSum);
@@ -385,6 +385,17 @@ export default function DashboardPage() {
         setExitData(allExits);
         setWhitelistData(firstWhitelist);
         setLocksData(firstLocks);
+
+        // Compute closed P&L % from per-bot profit data
+        let closedPctSum = 0;
+        let closedPctCount = 0;
+        for (const p of Object.values(profits)) {
+          if (p.profit_closed_percent != null) {
+            closedPctSum += p.profit_closed_percent;
+            closedPctCount++;
+          }
+        }
+        setTotalPnlClosedPct(closedPctCount > 0 ? closedPctSum / closedPctCount : null);
 
         // BUG 2 fix: fallback profit factor from winning/losing profit
         const finalPF = aggPF ?? (aggLosingProfit > 0 ? aggWinningProfit / aggLosingProfit : null);

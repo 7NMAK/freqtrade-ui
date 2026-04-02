@@ -159,7 +159,7 @@ export default function KPIGrid({
         {/* Profit Factor */}
         <div className="bg-black p-3 flex flex-col hover:bg-white/[0.04] transition-colors">
           <span className="text-[11px] text-[#6B7280] uppercase tracking-[0.08em] font-medium mb-1">Profit Factor</span>
-          <span className={`font-mono font-bold text-base ${profitFactor != null && profitFactor > 1 ? "text-[#22c55e]" : "text-[#F5F5F5]"}`}>
+          <span className={`font-mono font-bold text-base ${profitFactor != null && profitFactor > 1 ? "text-[#22c55e]" : profitFactor != null && profitFactor < 1 ? "text-[#ef4444]" : "text-[#F5F5F5]"}`}>
             {profitFactor != null ? fmt(profitFactor, 2) : "\u2014"}
           </span>
         </div>

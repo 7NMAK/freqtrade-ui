@@ -307,14 +307,19 @@ Widgets (EXACT order):
    Each tab content panel: `flex-1 overflow-x-auto overflow-y-auto` (some have `p-0`, some have `p-4`)
 
    Sub-tabs:
-   - **Closed Trades** — columns: Date, Pair, Side, Entry, Exit, Profit %, Value, Fee, Duration, Exit Reason
-   - **Per-Pair** — columns: Pair, Trades, profit_abs, profit_ratio, Win Rate, Avg Profit, Avg Dur.
-   - **Entry Tags** — columns: Tag, Trades, Wins, Losses, Win Rate, Avg P&L %, Total P&L, Avg Dur., Best Pair, Expectancy — **Tag column uses colored badges** (see CRITICAL DETAILS → Entry Tag Badges)
-   - **Exit Reasons** — columns: Reason, Exits, Wins, Losses, Win Rate, Avg P&L %, Total P&L, Avg Dur., Best Pair, Expectancy
-   - **History** — columns: #, Run Date, TF, Timerange, Trades, Profit, Win%, Sharpe, Actions (Load/Del — see CRITICAL DETAILS → History Table Action Buttons for exact styles)
+   - **Closed Trades** — columns: Date (sortable **sort-desc**), Pair (sortable **filterable**), Side (sortable **filterable**, text-center), Entry (sortable, text-right), Exit (sortable, text-right), Profit % (sortable, text-right), Value (sortable, text-right), Fee (sortable, text-right), Duration (sortable), Exit Reason (sortable **filterable**)
+   - **Per-Pair** — columns: Pair (sortable **filterable**), Trades (sortable, text-right), profit_abs (sortable **sort-desc**, text-right), profit_ratio (sortable, text-right), Win Rate (sortable, text-right), Avg Profit (sortable, text-right), Avg Dur. (sortable, text-right)
+   - **Entry Tags** — columns: Tag (sortable **filterable**), Trades (sortable, text-right), Wins (sortable, text-right), Losses (sortable, text-right), Win Rate (sortable, text-right), Avg P&L % (sortable, text-right), Total P&L (sortable **sort-desc**, text-right), Avg Dur. (sortable, text-right), Best Pair (sortable **filterable**), Expectancy (sortable, text-right) — **Tag column uses colored badges** (see CRITICAL DETAILS → Entry Tag Badges)
+   - **Exit Reasons** — columns: Reason (sortable **filterable**), Exits (sortable, text-right), Wins (sortable, text-right), Losses (sortable, text-right), Win Rate (sortable, text-right), Avg P&L % (sortable, text-right), Total P&L (sortable **sort-desc**, text-right), Avg Dur. (sortable, text-right), Best Pair (sortable **filterable**), Expectancy (sortable, text-right)
+   - **History** — columns: # (sortable), Run Date (sortable **sort-desc**), TF (sortable **filterable**), Timerange (sortable), Trades (sortable, text-right), Profit (sortable, text-right), Win% (sortable, text-right), Sharpe (sortable, text-right), Actions (text-center, NO sortable) — Load/Del buttons (see CRITICAL DETAILS → History Table Action Buttons)
 
    Table styling: `text-[13px] font-mono whitespace-nowrap`
-   Header: `sticky top-0 bg-surface z-10` → row: `text-muted text-[11px] uppercase tracking-widest`
+   Header: row classes: `text-muted text-[11px] uppercase tracking-widest`
+   **⚠ STICKY HEADER INCONSISTENCY in Backtest sub-tabs:**
+   - **Closed Trades**: `<thead class="sticky top-0 bg-surface z-10">` (HAS sticky)
+   - **Per-Pair, Entry Tags, Exit Reasons, History**: `<thead>` (NO sticky — bare thead!)
+   - **All Hyperopt sub-tabs, Validation table, FreqAI Matrix**: DO have `sticky top-0 bg-surface z-10`
+   - **AI Review Analysis History**: NO sticky (already noted in its section)
    **Cell padding in Backtest/Hyperopt/Validation tables: `px-2 py-1.5`** (smaller than overlays!)
    Header cells: `px-2 py-1.5 font-semibold` + sortable/filterable classes where applicable
    Body: `divide-y divide-white/[0.05]`
@@ -362,11 +367,13 @@ Form fields (EXACT order):
    Recharts line chart showing best objective over epochs + trades/epoch bars
 
 3. **Tabbed Results** — `flex-1 bg-surface l-bd rounded-md flex flex-col min-h-[250px] overflow-hidden shadow-xl`, 5 sub-tabs:
-   - **Epoch Results** — columns: Epoch, Trades, Avg Profit, Total Profit, Profit $, Avg Dur., Win%, Max DD, Objective
+   - **Epoch Results** — columns: Epoch (sortable), Trades (sortable, text-right), Avg Profit (sortable, text-right), Total Profit (sortable **sort-desc**, text-right), Profit $ (sortable, text-right), Avg Dur. (sortable, text-right), Win% (sortable, text-right), Max DD (sortable, text-right), Objective (sortable, text-right)
+     **Row patterns:** Best row = `bg-up/[0.02]`, Epoch cell `text-up font-bold` with ★ prefix. Previous-best rows use `*` prefix (e.g., *142, *31). Regular rows: Epoch cell `text-muted`. Colors: Avg Profit positive=`text-up` negative=`text-down`, Total Profit=`text-up font-bold`/`text-down`, Profit $=same, Avg Dur=`text-muted`, Max DD=`text-down`, Objective best=`text-up font-bold` others=`text-muted`.
    - **Best Parameters** — formatted Python dict display with Copy Python/Copy JSON/CSV buttons (see CRITICAL DETAILS → Hyperopt Best Parameters Tab for full layout + color coding)
    - **Param Importance** — horizontal bar chart with color-coded importance levels (see CRITICAL DETAILS → Hyperopt Param Importance Tab for exact classes)
-   - **Compare Runs** — metric comparison table: Metric, Run #1, Run #2, Run #3, Δ Best
-   - **Run History** — columns: #, Date, Strategy, Loss Fn, Epochs, Best, Profit, Trades, Objective, Actions
+   - **Compare Runs** — metric comparison table: Metric (text-left), Run #1 (text-right), Run #2 (text-right), Run #3 (text-right), Δ Best (text-right). **NO sortable/filterable on any column.** Metric column = `text-muted`. Best value per row gets `font-bold`. Profit values=`text-up`/`text-down`. Δ Best: positive=`text-up`, negative=`text-down`, neutral=`text-muted`. Max DD all values `text-down`, best gets `font-bold`. Avg Duration all plain, Δ=`text-muted` "—".
+   - **Run History** — columns: # (sortable), Date (sortable **sort-desc**), Strategy (sortable **filterable**), Loss Fn (sortable **filterable**), Epochs (sortable, text-right), Best (sortable, text-right), Profit (sortable, text-right), Trades (sortable, text-right), Objective (sortable, text-right), Actions (text-center, NO sortable)
+     Actions: Load button + Del button (same styles as Backtest History — see CRITICAL DETAILS → History Table Action Buttons)
 
 ---
 
@@ -390,7 +397,7 @@ Form fields:
    KPI row grid-cols-7: Profit, Profit $, Trades, Win Rate, Sharpe, Max DD, Avg Dur.
 
 2. **Matrix Results** — standalone `<h3 class="section-title">Matrix Results</h3>` + `<div class="overflow-x-auto">` wrapper around table
-   Columns: ★, Model, Outlier, PCA, Noise, profit_% (sort-desc), Sharpe, Max DD, Trades, Win%
+   Columns: ★ (sortable), Model (sortable **filterable**), Outlier (sortable **filterable**), PCA (sortable **filterable**), Noise (sortable **filterable**), profit_% (sortable sort-desc), Sharpe (sortable), Max DD (sortable), Trades (sortable), Win% (sortable)
 
 ---
 
@@ -434,8 +441,8 @@ Form fields:
 #### Right Panel — Results (flex-1)
 1. **Winner Banner/Verdict** — same banner pattern, title "✓ PASS — All Validations (3/3)", badge "PRODUCTION READY"
    Action buttons (TWO buttons with DIFFERENT inline styles):
-   - → Paper: `h-7 px-3 rounded-md text-[10px] font-bold` with **inline style:** `background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#F5F5F5`
-   - → Live: `h-7 px-3 rounded-md text-[10px] font-bold` with **GREEN inline style:** `background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.20);color:#22c55e`
+   - → Paper: `h-7 px-3 rounded-md text-[10px] font-bold flex items-center gap-1.5 transition-colors hover:border-up/30 hover:text-up` with **inline style:** `background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#F5F5F5`
+   - → Live: `h-7 px-3 rounded-md text-[10px] font-bold flex items-center gap-1.5 transition-colors hover:border-up/30 hover:text-up` with **GREEN inline style:** `background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.20);color:#22c55e`
    KPI row grid-cols-7: OOS Profit (+31.2%), Ratio (74.1%), Trades (89), Win Rate (68.5%), Sharpe (3.14), Max DD (-2.8%), Lookahead (Clean)
 
 2. **Training vs OOS Comparison** — `bg-surface l-bd rounded-md flex flex-col min-h-[200px] overflow-hidden shadow-xl`
@@ -443,10 +450,24 @@ Form fields:
    Body: `flex-1 overflow-y-auto`
    Table columns: Metric, Training, OOS, Ratio, Threshold, Status (✓ or info)
    7 rows: Profit %, Max DD, Trades, Win Rate, Sharpe, Sortino, Profit Factor
+   **Per-row value colors (EXACT from design):**
+   - Profit %: Metric `text-white`, Training (no color), OOS `text-up font-bold`, Ratio `text-up`, Threshold `text-muted`, Status `text-up font-bold` ✓
+   - Max DD: Metric `text-white`, Training (no color), OOS `text-down font-bold`, Ratio (no color), Threshold `text-muted`, Status `text-up font-bold` ✓
+   - Trades: Metric `text-white`, Training (no color), OOS (no color), Ratio `text-up`, Threshold `text-muted`, Status `text-up font-bold` ✓
+   - Win Rate: Metric `text-white`, Training (no color), OOS `text-up font-bold`, Ratio `text-up`, Threshold `text-muted`, Status `text-up font-bold` ✓
+   - Sharpe: Metric `text-white`, Training (no color), OOS `text-up font-bold`, Ratio (no color), Threshold `text-muted`, Status `text-muted` "info"
+   - Sortino: Metric `text-white`, Training (no color), OOS (no color), Ratio (no color), Threshold `text-muted`, Status `text-muted` "info"
+   - Profit Factor: Metric `text-white`, Training (no color), OOS (no color), Ratio (no color), Threshold `text-muted`, Status `text-muted` "info"
+   **Pattern:** Metric column always `text-white`. OOS positive = `text-up font-bold`, OOS negative = `text-down font-bold`, OOS neutral = no color. Status ✓ = `text-up font-bold`, info = `text-muted`.
 
 3. **Lookahead + Recursive** — `grid grid-cols-2 gap-3`
    - Lookahead card: `bg-surface l-bd rounded-md p-3 shadow-xl` — header `flex justify-between items-center mb-2`: section-title "Lookahead Bias" + ✓ CLEAN badge `text-up font-bold text-[10px]` + description `text-[11px] text-muted font-mono mb-2` + 3 stat rows (`space-y-1.5 text-[11px] font-mono`, each flex justify-between)
-   - Recursive card: `bg-surface l-bd rounded-md p-3 shadow-xl` — header `flex justify-between items-center mb-2`: section-title "Recursive Stability" + ✓ STABLE badge `text-up font-bold text-[10px]` + description `text-[11px] text-muted font-mono mb-2` + table (Iter, Shift, Profit, Δ) — **NOTE: cell padding here is `px-2 py-1` NOT py-1.5!**
+   - Recursive card: `bg-surface l-bd rounded-md p-3 shadow-xl` — header `flex justify-between items-center mb-2`: section-title "Recursive Stability" + ✓ STABLE badge `text-up font-bold text-[10px]` + description `text-[11px] text-muted font-mono mb-2` + table `w-full text-[13px] font-mono` (NO whitespace-nowrap!) columns: Iter, Shift, Profit, Δ — **NOTE: this table is DIFFERENT from all others:**
+     - Cell padding: `px-2 py-1` (tightest — NOT py-1.5!)
+     - NO `sortable` class on any header
+     - NO `sticky top-0 bg-surface z-10` on thead (bare `<thead>`)
+     - NO `hover:bg-white/[0.04]` on rows (bare `<tr>`)
+     - Profit values: all `text-up` (all iterations show positive), Δ values: all `text-muted`
 
 4. **Final Badge** — `bg-up/[0.04] border border-up/15 rounded-md px-4 py-3 text-center shadow-xl` — "✓ All Validations Passed" `text-up font-bold text-[13px]` + detail text `text-muted text-[11px] ml-3 font-mono`
 
@@ -476,6 +497,7 @@ Header: `bg-surface l-b text-[11px] uppercase tracking-widest text-muted` — ce
 Columns: # (sortable), Type (sortable filterable), Name (sortable), Date (sortable sort-desc), Profit% (text-right sortable), Sharpe (text-right sortable), Trades (text-right sortable), Status (text-center sortable filterable), Actions (text-center)
 Body: `divide-y divide-white/[0.05] text-white/70` — cells `px-4 py-2`
 Type badge: `px-1.5 py-0.5 rounded text-[8px] bg-white/5 border border-white/10 text-white/50` — "HO", "BT", "FAI"
+Status cell content: `<span class="text-[8px] text-up font-bold">✓</span>` (simple styled checkmark)
 Actions: Promote button `text-[9px] px-2 py-0.5 bg-up/10 border border-up/20 text-up rounded hover:bg-up/20` or Load button `text-[9px] px-2 py-0.5 bg-white/5 border border-white/10 text-white/50 rounded hover:bg-white/10`
 
 #### CompareOverlay.tsx
@@ -783,12 +805,16 @@ Header: `flex justify-between items-center mb-3` → `section-title` "Optimized 
 
 Code display: `bg-black rounded p-3 font-mono text-[11px] leading-relaxed l-bd space-y-0.5`
 Color coding inside code:
-- Buy param keys: `text-up` (green)
-- Sell param keys: `text-down` (red)
-- Values: `text-white font-bold`
-- Operators/punctuation: `text-muted`
-- Comments: `text-muted`
-- Section variable names: `text-white`
+- Buy param keys: `text-up` (green) — e.g., "buy_rsi"
+- Sell param keys: `text-down` (red) — e.g., "sell_rsi"
+- ROI keys: `text-muted` — e.g., "0", "30", "60" (NOT green/red!)
+- Numeric values: `text-white font-bold` — e.g., 28, 0.012, 0.01
+- Negative numeric values: `text-down font-bold` — e.g., -0.03 (stoploss)
+- Boolean True: `text-up font-bold` — e.g., True (trailing_stop)
+- Operators/punctuation/commas: `text-muted`
+- Comments (# lines): `text-muted` on the whole div + `pt-2` for spacing
+- Section variable names: `text-white` — e.g., buy_params, sell_params, stoploss
+- Braces: `text-white`
 - Indented lines: `pl-4`
 
 ### Hyperopt Param Importance Tab — Bar Chart Spec:

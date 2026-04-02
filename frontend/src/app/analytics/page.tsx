@@ -6,15 +6,83 @@ import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Tooltip from "@/components/ui/Tooltip";
 import { useToast } from "@/components/ui/Toast";
 import { TOOLTIPS } from "@/lib/tooltips";
-import { getBots, botPairCandles, botPerformance, botDaily } from "@/lib/api";
+import { getBots, botPairCandles, botPerformance, botDaily, botWhitelist } from "@/lib/api";
 import type { Bot, FTPairCandlesResponse, FTPerformance, FTDailyResponse } from "@/types";
 
 // ── Constants ──
 
-const pairs = ["BTC/USDT:USDT", "ETH/USDT:USDT", "SOL/USDT:USDT", "BNB/USDT:USDT", "XRP/USDT:USDT"];
+const DEFAULT_PAIRS = ["BTC/USDT:USDT", "ETH/USDT:USDT", "SOL/USDT:USDT"];
 const timeframes = ["1m", "5m", "15m", "30m", "1h", "4h", "1d"];
 
-// ── Helpers ──
+// ── Technical Analysis Helpers ──
+
+/** Compute EMA for a series of values */
+function ema(values: number[], period: number): number[] {
+  if (values.length === 0) return [];
+  const k = 2 / (period + 1);
+  const result: number[] = [values[0]];
+  for (let i = 1; i < values.length; i++) {
+    result.push(values[i] * k + result[i - 1] * (1 - k));
+  }
+  return result;
+}
+
+/** Compute TEMA (Triple EMA) from close prices */
+function computeTEMA(closes: number[], period = 20): number[] {
+  if (closes.length < period) return [];
+  const ema1 = ema(closes, period);
+  const ema2 = ema(ema1, period);
+  const ema3 = ema(ema2, period);
+  return ema1.map((v, i) => 3 * v - 3 * ema2[i] + ema3[i]);
+}
+
+/** Compute RSI (Relative Strength Index) from close prices */
+function computeRSI(closes: number[], period = 14): number[] {
+  if (closes.length < period + 1) return [];
+  const result: number[] = new Array(closes.length).fill(NaN);
+  // Calculate initial gains and losses
+  const changes: number[] = [];
+  for (let i = 1; i < closes.length; i++) {
+    changes.push(closes[i] - closes[i - 1]);
+  }
+  // Initial average gain/loss (SMA)
+  let avgGain = 0;
+  let avgLoss = 0;
+  for (let i = 0; i < period; i++) {
+    if (changes[i] > 0) avgGain += changes[i];
+    else avgLoss += Math.abs(changes[i]);
+  }
+  avgGain /= period;
+  avgLoss /= period;
+
+  // First RSI value
+  const rs0 = avgLoss === 0 ? 100 : avgGain / avgLoss;
+  result[period] = 100 - 100 / (1 + rs0);
+
+  // Subsequent values using smoothed averages (Wilder's method)
+  for (let i = period; i < changes.length; i++) {
+    const gain = changes[i] > 0 ? changes[i] : 0;
+    const loss = changes[i] < 0 ? Math.abs(changes[i]) : 0;
+    avgGain = (avgGain * (period - 1) + gain) / period;
+    avgLoss = (avgLoss * (period - 1) + loss) / period;
+    const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+    result[i + 1] = 100 - 100 / (1 + rs);
+  }
+  return result;
+}
+
+/** Compute MACD (12, 26, 9) from close prices */
+function computeMACD(closes: number[]): { macd: number[]; signal: number[]; histogram: number[] } {
+  if (closes.length < 26) return { macd: [], signal: [], histogram: [] };
+  const ema12 = ema(closes, 12);
+  const ema26 = ema(closes, 26);
+  const macdLine = ema12.map((v, i) => v - ema26[i]);
+  const signalLine = ema(macdLine, 9);
+  const histogram = macdLine.map((v, i) => v - signalLine[i]);
+  return { macd: macdLine, signal: signalLine, histogram };
+}
+
+// ── Chart Helpers ──
 
 function heatmapCellStyle(val: string) {
   const n = parseFloat(val);
@@ -73,7 +141,7 @@ function deriveVolumeBars(rows: ReturnType<typeof parseCandlesRows>) {
   }));
 }
 
-/** Export arbitrary data as JSON blob download */
+/** Export data as JSON blob download */
 function exportAsJson(data: unknown, filename: string) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -106,25 +174,48 @@ export default function AnalyticsPage() {
   const [perfData, setPerfData] = useState<FTPerformance[]>([]);
   const [dailyData, setDailyData] = useState<FTDailyResponse | null>(null);
   const [loadingCandles, setLoadingCandles] = useState(false);
+  const [loadingBots, setLoadingBots] = useState(true);
   const [selectedPair, setSelectedPair] = useState("BTC/USDT:USDT");
   const [selectedTf, setSelectedTf] = useState("1h");
   const [activeSubchart, setActiveSubchart] = useState<"RSI" | "MACD" | "Volume">("RSI");
   const [showTema, setShowTema] = useState(true);
-  const [showSar, setShowSar] = useState(true);
-  const [usePublicTrades, setUsePublicTrades] = useState(true);
-  const [ofScale, setOfScale] = useState("0.5");
-  const [ofImbalanceVol, setOfImbalanceVol] = useState("100");
-  const [ofImbalanceRatio, setOfImbalanceRatio] = useState("3.0");
-  const [ofStackedRange, setOfStackedRange] = useState("3");
-  const [ofCacheSize, setOfCacheSize] = useState("1500");
-  const [ofMaxCandles, setOfMaxCandles] = useState("1500");
+  // Dynamic pairs from bot whitelist (ISSUE 8 fix)
+  const [availablePairs, setAvailablePairs] = useState<string[]>(DEFAULT_PAIRS);
 
-  useEffect(() => {
+  // ISSUE 12 fix: proper error + retry state
+  const loadBots = useCallback(() => {
+    setLoadingBots(true);
     getBots().then((list) => {
       setBots(list);
       if (list.length > 0) setSelectedBotId(String(list[0].id));
-    }).catch((err) => { toast.error(err instanceof Error ? err.message : "Failed to load bots."); });
+      setLoadingBots(false);
+    }).catch((err) => {
+      setLoadingBots(false);
+      toast.error(err instanceof Error ? err.message : "Failed to load bots.", {
+        action: { label: "RETRY", onClick: () => loadBots() },
+      });
+    });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => { loadBots(); }, [loadBots]);
+
+  // ISSUE 8 fix: Load pairs from bot whitelist
+  useEffect(() => {
+    if (!selectedBotId) return;
+    const botId = parseInt(selectedBotId, 10);
+    botWhitelist(botId).then((wl) => {
+      if (wl.whitelist && wl.whitelist.length > 0) {
+        setAvailablePairs(wl.whitelist);
+        // If current selection not in the new whitelist, select first
+        if (!wl.whitelist.includes(selectedPair)) {
+          setSelectedPair(wl.whitelist[0]);
+        }
+      }
+    }).catch(() => {
+      // Fallback to defaults if whitelist fails
+      setAvailablePairs(DEFAULT_PAIRS);
+    });
+  }, [selectedBotId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadCandles = useCallback(async () => {
     if (!selectedBotId) return;
@@ -153,9 +244,7 @@ export default function AnalyticsPage() {
     try {
       const res = await botDaily(botId, 7);
       setDailyData(res);
-    } catch { /* non-blocking */
-      // daily data is optional for heatmap
-    }
+    } catch { /* non-blocking */ }
   }, []);
 
   useEffect(() => {
@@ -174,6 +263,32 @@ export default function AnalyticsPage() {
   const candleRows = useMemo(() => (candlesData ? parseCandlesRows(candlesData) : []), [candlesData]);
   const candleShapes = useMemo(() => candleRowsToShapes(candleRows), [candleRows]);
   const volumeBarsLive = useMemo(() => deriveVolumeBars(candleRows), [candleRows]);
+
+  // ISSUE 1 fix: Real TEMA computed from candle closes
+  const temaData = useMemo(() => {
+    if (candleRows.length === 0) return [];
+    const closes = candleRows.map((r) => r.close);
+    const temaValues = computeTEMA(closes, 20);
+    if (temaValues.length === 0) return [];
+    const allLow = Math.min(...candleRows.map((r) => r.low));
+    const allHigh = Math.max(...candleRows.map((r) => r.high));
+    const range = allHigh - allLow || 1;
+    return temaValues.map((v) => ((v - allLow) / range) * 80 + 5);
+  }, [candleRows]);
+
+  // ISSUE 3 fix: Real RSI computed from candle closes
+  const rsiData = useMemo(() => {
+    if (candleRows.length === 0) return [];
+    const closes = candleRows.map((r) => r.close);
+    return computeRSI(closes, 14);
+  }, [candleRows]);
+
+  // ISSUE 4 fix: Real MACD computed from candle closes
+  const macdData = useMemo(() => {
+    if (candleRows.length === 0) return { macd: [] as number[], signal: [] as number[], histogram: [] as number[] };
+    const closes = candleRows.map((r) => r.close);
+    return computeMACD(closes);
+  }, [candleRows]);
 
   // Derive Y-axis labels from candle data
   const yAxisLabels = useMemo(() => {
@@ -198,14 +313,21 @@ export default function AnalyticsPage() {
     return labels;
   }, [candleRows]);
 
-  // Derive analysis stats from real data — using close_profit_abs per CLAUDE.md
+  // ISSUE 9 + 10 fix: Use profit_abs and trades (not close_profit_abs / count)
   const analysisStatsLive: AnalysisStat[] = perfData.length > 0
-    ? [
-        { label: "Pairs Analyzed", value: String(perfData.length), sub: "All active pairs", subClass: "text-muted-foreground" },
-        { label: "Best Pair", value: perfData[0]?.pair ?? "\u2014", valueClass: "!text-base text-emerald-500", sub: `+${(perfData[0]?.close_profit_abs ?? perfData[0]?.profit_abs)?.toFixed(2) ?? "0"} USDT`, subClass: "text-emerald-500" },
-        { label: "Worst Pair", value: perfData[perfData.length - 1]?.pair ?? "\u2014", valueClass: "!text-base text-rose-500", sub: `${(perfData[perfData.length - 1]?.close_profit_abs ?? perfData[perfData.length - 1]?.profit_abs)?.toFixed(2) ?? "0"} USDT`, subClass: "text-rose-500" },
-        { label: "Total Trades", value: String(perfData.reduce((s, p) => s + p.count, 0)), sub: "All pairs combined", subClass: "text-muted-foreground" },
-      ]
+    ? (() => {
+        // Sort by profit_abs to find best/worst
+        const sorted = [...perfData].sort((a, b) => b.profit_abs - a.profit_abs);
+        const best = sorted[0];
+        const worst = sorted[sorted.length - 1];
+        const totalTrades = perfData.reduce((s, p) => s + p.trades, 0);
+        return [
+          { label: "Pairs Analyzed", value: String(perfData.length), sub: "All active pairs", subClass: "text-muted-foreground" },
+          { label: "Best Pair", value: best?.pair ?? "\u2014", valueClass: "!text-base text-emerald-500", sub: `+${best?.profit_abs?.toFixed(2) ?? "0"} USDT`, subClass: "text-emerald-500" },
+          { label: "Worst Pair", value: worst?.pair ?? "\u2014", valueClass: "!text-base text-rose-500", sub: `${worst?.profit_abs?.toFixed(2) ?? "0"} USDT`, subClass: "text-rose-500" },
+          { label: "Total Trades", value: String(totalTrades), sub: "All pairs combined", subClass: "text-muted-foreground" },
+        ];
+      })()
     : [
         { label: "Pairs Analyzed", value: "\u2014", sub: "No bot selected", subClass: "text-muted-foreground" },
         { label: "Best Pair", value: "\u2014", valueClass: "!text-base text-muted-foreground", sub: "No data", subClass: "text-muted-foreground" },
@@ -213,13 +335,11 @@ export default function AnalyticsPage() {
         { label: "Total Trades", value: "\u2014", sub: "No data", subClass: "text-muted-foreground" },
       ];
 
-  // Derive heatmap rows from daily data if available
+  // ISSUE 7 fix: Rename to "Daily Portfolio P&L" — honest about single-row aggregate
   const heatmapRows = useMemo(() => {
     if (!dailyData || !dailyData.data || dailyData.data.length === 0) return [];
-    // dailyData.data is array of { date, abs_profit, fiat_value, trade_count }
-    // We show a single-row heatmap with daily profit percentages
     return [{
-      pair: "All Pairs",
+      pair: "Portfolio",
       days: dailyData.data.slice(0, 7).map((d: { rel_profit: number }) => {
         const pct = d.rel_profit * 100;
         return pct >= 0 ? `+${pct.toFixed(1)}%` : `${pct.toFixed(1)}%`;
@@ -227,10 +347,21 @@ export default function AnalyticsPage() {
     }];
   }, [dailyData]);
 
-  // Export handler for Cumulative Profit
+  // ISSUE 14 fix: Export cumulative computed values, not raw perfData
   const handleExportData = useCallback(() => {
     if (perfData.length > 0) {
-      exportAsJson(perfData, `analytics_performance_${new Date().toISOString().slice(0, 10)}.json`);
+      // Build cumulative data for export
+      const cumulative = perfData.reduce<Array<{ pair: string; trades: number; profit_abs: number; cumulative_profit: number }>>((acc, p, i) => {
+        const prevCum = i > 0 ? acc[i - 1].cumulative_profit : 0;
+        acc.push({
+          pair: p.pair,
+          trades: p.trades,
+          profit_abs: p.profit_abs,
+          cumulative_profit: prevCum + p.profit_abs,
+        });
+        return acc;
+      }, []);
+      exportAsJson(cumulative, `analytics_cumulative_profit_${new Date().toISOString().slice(0, 10)}.json`);
     } else if (candlesData) {
       exportAsJson(candlesData, `analytics_candles_${selectedPair.replace(/\//g, "-")}_${selectedTf}.json`);
     } else {
@@ -241,9 +372,22 @@ export default function AnalyticsPage() {
   return (
     <AppShell title="Analytics">
       <div className="p-5">
-      {/* No bots empty state */}
-      {bots.length === 0 && !loadingCandles && (
-        <div className="py-16 text-center text-sm text-muted-foreground">No bots registered. Register a bot on the Dashboard to view analytics.</div>
+      {/* ISSUE 12 fix: Empty state with retry */}
+      {!loadingBots && bots.length === 0 && (
+        <div className="py-16 text-center">
+          <div className="text-sm text-muted-foreground mb-3">No bots registered. Register a bot on the Dashboard to view analytics.</div>
+          <button
+            type="button"
+            onClick={loadBots}
+            className="px-4 py-2 text-xs rounded-btn bg-primary text-white hover:bg-primary/80 transition-colors cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {loadingBots && (
+        <div className="py-16 text-center text-sm text-muted-foreground animate-pulse">Loading bots...</div>
       )}
 
       {/* Bot selector bar */}
@@ -262,7 +406,7 @@ export default function AnalyticsPage() {
           <button
             type="button"
             onClick={loadCandles}
-            className="text-xs px-3 py-1.5 rounded-btn border border-border bg-muted text-muted-foreground hover:border-border-border hover:border-ring transition-colors cursor-pointer"
+            className="text-xs px-3 py-1.5 rounded-btn border border-border bg-muted text-muted-foreground hover:border-ring transition-colors cursor-pointer"
           >
             Refresh Candles
           </button>
@@ -285,12 +429,13 @@ export default function AnalyticsPage() {
           icon={"\uD83D\uDCC9"}
           action={
             <div className="flex items-center gap-2.5">
+              {/* ISSUE 8 fix: Dynamic pairs from whitelist */}
               <select
                 value={selectedPair}
                 onChange={(e) => setSelectedPair(e.target.value)}
                 className="bg-card border border-border rounded-md px-3 py-1.5 text-xs text-muted-foreground outline-none focus:border-primary cursor-pointer"
               >
-                {pairs.map((p) => (
+                {availablePairs.map((p) => (
                   <option key={p} value={p}>{p}</option>
                 ))}
               </select>
@@ -341,36 +486,22 @@ export default function AnalyticsPage() {
             ))}
           </div>
 
-          {/* Crosshair — only show when data present */}
-          {candleShapes.length > 0 && (
-            <div className="absolute left-[40px] right-[10px] h-px bg-primary/25 pointer-events-none" style={{ top: "45%" }}>
-              <span className="absolute right-0 -top-[7px] text-[9px] text-primary bg-muted/50 px-1 rounded-sm">
-                {candleRows.length > 0 ? candleRows[Math.floor(candleRows.length / 2)]?.close?.toLocaleString(undefined, { maximumFractionDigits: 2 }) : ""}
-              </span>
-            </div>
-          )}
-
-          {/* TEMA overlay */}
-          {showTema && candleShapes.length > 0 && (
-            <div
-              className="absolute left-[40px] right-[10px] h-0.5 pointer-events-none opacity-80"
-              style={{
-                top: "38%",
-                background: "repeating-linear-gradient(90deg, var(--color-amber) 0px, var(--color-amber) 6px, transparent 6px, transparent 12px)",
-              }}
-            />
-          )}
-
-          {/* SAR dots */}
-          {showSar && candleShapes.length > 0 && (
-            <div
-              className="absolute left-[40px] right-[10px] h-1 pointer-events-none opacity-60"
-              style={{
-                top: "55%",
-                background: "radial-gradient(circle 2px, var(--color-cyan) 99%, transparent 100%)",
-                backgroundSize: "18px 4px",
-              }}
-            />
+          {/* ISSUE 1 fix: Real TEMA overlay rendered as SVG polyline */}
+          {showTema && temaData.length > 0 && candleShapes.length > 0 && (
+            <svg
+              className="absolute left-[40px] right-[10px] top-[30px] bottom-[24px] pointer-events-none"
+              viewBox={`0 0 ${candleShapes.length} 100`}
+              preserveAspectRatio="none"
+              style={{ width: "calc(100% - 50px)", height: "calc(100% - 54px)" }}
+            >
+              <polyline
+                points={temaData.map((y, i) => `${i},${100 - y}`).join(" ")}
+                fill="none"
+                stroke="var(--color-amber, #f59e0b)"
+                strokeWidth="0.8"
+                opacity="0.8"
+              />
+            </svg>
           )}
 
           {/* Candles — rendered from live candlesData */}
@@ -395,7 +526,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* Indicator overlay controls: plot_config.main_plot */}
+        {/* ISSUE 2 fix: SAR removed — only real TEMA remains */}
         <div className="px-[18px] py-2.5 border-t border-border flex items-center justify-between">
           <Tooltip
             content={TOOLTIPS.plot_config_main_plot?.description || "Indicators displayed on the main chart"}
@@ -406,16 +537,12 @@ export default function AnalyticsPage() {
           <div className="flex items-center gap-3.5">
             <label className="flex items-center gap-1.5 cursor-pointer text-xs text-muted-foreground">
               <input type="checkbox" checked={showTema} onChange={() => setShowTema(!showTema)} className="accent-accent w-[13px] h-[13px] cursor-pointer" />
-              <span className="inline-block w-2.5 h-[3px] rounded-sm bg-amber" /> tema
-            </label>
-            <label className="flex items-center gap-1.5 cursor-pointer text-xs text-muted-foreground">
-              <input type="checkbox" checked={showSar} onChange={() => setShowSar(!showSar)} className="accent-accent w-[13px] h-[13px] cursor-pointer" />
-              <span className="inline-block w-2.5 h-[3px] rounded-sm bg-cyan" /> sar
+              <span className="inline-block w-2.5 h-[3px] rounded-sm bg-amber" /> TEMA(20)
             </label>
           </div>
         </div>
 
-        {/* Subchart tabs: plot_config.subplots */}
+        {/* Subchart tabs */}
         <div className="flex gap-0 border-b border-border items-center">
           <Tooltip
             content={TOOLTIPS.plot_config_subplots?.description || "Additional subcharts below the main chart"}
@@ -445,6 +572,7 @@ export default function AnalyticsPage() {
         <div className="h-[120px] relative pl-[40px] pr-[10px] pt-3 pb-2 flex items-end gap-0.5">
           <div className="absolute inset-0 pointer-events-none" style={{ background: "repeating-linear-gradient(0deg, transparent, transparent 29px, var(--color-border) 29px, var(--color-border) 30px)" }} />
 
+          {/* ISSUE 3 fix: Real RSI subchart */}
           {activeSubchart === "RSI" && (
             <>
               {/* RSI zone lines */}
@@ -454,59 +582,52 @@ export default function AnalyticsPage() {
               <div className="absolute left-[40px] right-[10px] border-t border-dashed border-emerald-500/30 pointer-events-none" style={{ top: "78%" }}>
                 <span className="absolute right-0.5 -top-2.5 text-[8px] text-emerald-500">30</span>
               </div>
-              {candleShapes.length === 0 ? (
+              {candleRows.length === 0 || rsiData.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground">
-                  RSI data requires loaded candles
+                  RSI requires at least 15 candles
                 </div>
               ) : (
-                /* Placeholder bars from candle close data as pseudo-RSI visualization */
-                (() => {
-                  const allCloses = candleRows.map((r) => r.close);
-                  const minC = Math.min(...allCloses);
-                  const maxC = Math.max(...allCloses);
-                  const rng = maxC - minC || 1;
-                  return candleRows.map((row, i) => {
-                  const normalized = ((row.close - minC) / rng) * 80 + 10;
-                  const color = normalized > 70 ? "bg-red" : normalized < 30 ? "bg-green" : "bg-primary";
+                rsiData.map((val, i) => {
+                  if (isNaN(val)) return <div key={`rsi-${i}`} className="flex-1" />;
+                  const height = val; // RSI is 0-100, maps directly to percentage
+                  const color = val > 70 ? "bg-red" : val < 30 ? "bg-green" : "bg-primary";
                   return (
                     <div
                       key={`rsi-${i}`}
                       className={`flex-1 rounded-[1px_1px_0_0] min-h-[2px] ${color} opacity-50`}
-                      style={{ height: `${normalized}%` }}
+                      style={{ height: `${Math.max(2, height)}%` }}
                     />
                   );
-                });
-                })()
+                })
               )}
             </>
           )}
 
+          {/* ISSUE 4 fix: Real MACD subchart */}
           {activeSubchart === "MACD" && (
             <>
               <div className="absolute left-[40px] right-[10px] top-1/2 h-px bg-border" />
-              {candleShapes.length === 0 ? (
+              {candleRows.length === 0 || macdData.histogram.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground">
-                  MACD data requires loaded candles
+                  MACD requires at least 26 candles
                 </div>
               ) : (
-                /* Derive pseudo-MACD from price momentum */
                 (() => {
-                  const maxAbs = Math.max(...candleRows.map((r) => Math.abs(r.close - r.open))) || 1;
-                  return candleRows.map((row, i) => {
-                  const val = row.close - row.open;
-                  const pct = (val / maxAbs) * 45;
-                  return (
-                    <div
-                      key={`macd-${i}`}
-                      className={`flex-1 rounded-[1px] min-h-[1px] ${val >= 0 ? "bg-green" : "bg-red"} opacity-60`}
-                      style={{
-                        height: `${Math.abs(pct)}%`,
-                        alignSelf: val >= 0 ? "flex-end" : "flex-start",
-                        ...(val >= 0 ? { marginBottom: "50%" } : { marginTop: "50%" }),
-                      }}
-                    />
-                  );
-                });
+                  const maxAbs = Math.max(...macdData.histogram.map((v) => Math.abs(v))) || 1;
+                  return macdData.histogram.map((val, i) => {
+                    const pct = (val / maxAbs) * 45;
+                    return (
+                      <div
+                        key={`macd-${i}`}
+                        className={`flex-1 rounded-[1px] min-h-[1px] ${val >= 0 ? "bg-green" : "bg-red"} opacity-60`}
+                        style={{
+                          height: `${Math.abs(pct)}%`,
+                          alignSelf: val >= 0 ? "flex-end" : "flex-start",
+                          ...(val >= 0 ? { marginBottom: "50%" } : { marginTop: "50%" }),
+                        }}
+                      />
+                    );
+                  });
                 })()
               )}
             </>
@@ -531,27 +652,7 @@ export default function AnalyticsPage() {
           )}
         </div>
 
-        {/* Trade Markers Legend */}
-        <div className="flex items-center gap-[18px] px-[18px] py-2.5 border-t border-border bg-card">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="text-sm text-emerald-500">{"\u25B3"}</span> Buy (enter_long)
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="text-sm text-rose-500">{"\u25BD"}</span> Sell (exit_long)
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="text-sm text-rose-500">{"\u25B3"}</span> Short (enter_short)
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="text-sm text-emerald-500">{"\u25BD"}</span> Cover (exit_short)
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="inline-block w-2 h-2 rounded-full bg-primary mr-0.5" /> enter_tag marker
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="inline-block w-2 h-2 rounded-full border-2 border-amber-500 mr-0.5" /> exit_reason marker
-          </div>
-        </div>
+        {/* ISSUE 13 fix: Removed phantom trade markers legend — no trade markers exist on chart */}
       </Card>
 
       {/* Cumulative Profit Chart */}
@@ -575,8 +676,9 @@ export default function AnalyticsPage() {
           {perfData.length === 0 ? (
             <div className="flex items-center justify-center h-full text-xs text-muted-foreground">No performance data available</div>
           ) : (() => {
+            // ISSUE 9 fix: Use profit_abs directly
             const cumulative = perfData.reduce<number[]>((acc, p, i) => {
-              acc.push((acc[i - 1] ?? 0) + (p.close_profit_abs ?? p.profit_abs));
+              acc.push((acc[i - 1] ?? 0) + p.profit_abs);
               return acc;
             }, []);
             const maxVal = Math.max(...cumulative, 0);
@@ -636,112 +738,6 @@ export default function AnalyticsPage() {
       </Card>
 
       {/* ════════════════════════════════════════════ */}
-      {/* SECTION: ORDERFLOW (ss29)                   */}
-      {/* ════════════════════════════════════════════ */}
-      <div className="flex items-center gap-3.5 mb-5 pb-2.5 border-b border-border mt-2.5">
-        <span className="text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest bg-purple/[.12] text-purple">
-          &sect;29
-        </span>
-        <span className="text-[15px] font-bold text-foreground">Orderflow (Beta)</span>
-      </div>
-
-      {/* Orderflow Configuration */}
-      <Card className="mb-6">
-        <CardHeader title="Orderflow Configuration" icon={"\uD83C\uDF0A"} />
-        <CardBody>
-          {/* use_public_trades toggle */}
-          <div className="flex items-center gap-2.5 mb-4">
-            <button
-              type="button"
-              onClick={() => setUsePublicTrades(!usePublicTrades)}
-              className={`w-9 h-5 rounded-full border relative cursor-pointer transition-all ${
-                usePublicTrades ? "bg-primary/[.12] border-primary" : "bg-muted border-border"
-              }`}
-            >
-              <div
-                className={`w-3.5 h-3.5 rounded-full absolute top-0.5 transition-all ${
-                  usePublicTrades ? "left-[18px] bg-primary" : "left-0.5 bg-text-3"
-                }`}
-              />
-            </button>
-            <Tooltip
-              content={TOOLTIPS.use_public_trades?.description || "Fetch real-time public trade data from exchange"}
-              configKey={TOOLTIPS.use_public_trades?.configKey}
-            >
-              <span className="text-xs text-muted-foreground font-medium">Orderflow Data</span>
-            </Tooltip>
-          </div>
-
-          {/* Orderflow params */}
-          <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1.5 mt-4">Orderflow Parameters</div>
-          <div className="grid grid-cols-4 gap-3.5">
-            {[
-              { key: "orderflow_scale", label: "Scale", value: ofScale, set: setOfScale },
-              { key: "orderflow_imbalance_volume", label: "Imbalance Volume", value: ofImbalanceVol, set: setOfImbalanceVol },
-              { key: "orderflow_imbalance_ratio", label: "Imbalance Ratio", value: ofImbalanceRatio, set: setOfImbalanceRatio },
-              { key: "orderflow_stacked_imbalance_range", label: "Stacked Range", value: ofStackedRange, set: setOfStackedRange },
-              { key: "orderflow_cache_size", label: "Cache Size", value: ofCacheSize, set: setOfCacheSize },
-              { key: "orderflow_max_candles", label: "Max Candles", value: ofMaxCandles, set: setOfMaxCandles },
-            ].map((p) => (
-              <div key={p.key} className="flex flex-col gap-1">
-                <Tooltip
-                  content={TOOLTIPS[p.key]?.description || p.label}
-                  configKey={TOOLTIPS[p.key]?.configKey}
-                >
-                  <label className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{p.label}</label>
-                </Tooltip>
-                <input
-                  type="number"
-                  value={p.value}
-                  onChange={(e) => p.set(e.target.value)}
-                  className="bg-card border border-border rounded-md px-2.5 py-[7px] text-xs text-foreground outline-none focus:border-primary w-full font-inherit"
-                />
-              </div>
-            ))}
-          </div>
-        </CardBody>
-      </Card>
-
-      {/* Footprint + Delta grid — requires live orderflow connection */}
-      <div className="grid grid-cols-2 gap-5 mb-6">
-        {/* Footprint Chart */}
-        <Card>
-          <CardHeader
-            title="Footprint Chart"
-            icon={"\uD83E\uDDF1"}
-            action={<span className="text-xs text-muted-foreground">{selectedPair} &middot; {selectedTf}</span>}
-          />
-          <CardBody className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="text-xs text-muted-foreground mb-1">Orderflow data requires live connection</div>
-              <div className="text-xs text-muted-foreground">Enable use_public_trades and connect to a running bot</div>
-            </div>
-          </CardBody>
-        </Card>
-
-        {/* Delta Chart + Imbalances */}
-        <div className="flex flex-col gap-4">
-          <Card>
-            <CardHeader title="Delta Chart (Ask - Bid)" icon={"\uD83D\uDCCA"} />
-            <CardBody className="flex items-center justify-center py-8">
-              <div className="text-xs text-muted-foreground">Orderflow data requires live connection</div>
-            </CardBody>
-          </Card>
-
-          <Card>
-            <CardHeader
-              title="Imbalance Highlights"
-              icon={"\u26A1"}
-              action={<span className="text-xs text-muted-foreground">0 detected</span>}
-            />
-            <CardBody className="flex items-center justify-center py-8">
-              <div className="text-xs text-muted-foreground">Orderflow data requires live connection</div>
-            </CardBody>
-          </Card>
-        </div>
-      </div>
-
-      {/* ════════════════════════════════════════════ */}
       {/* SECTION: DATA ANALYSIS (ss20)               */}
       {/* ════════════════════════════════════════════ */}
       <div className="flex items-center gap-3.5 mb-5 pb-2.5 border-b border-border mt-2.5">
@@ -762,61 +758,48 @@ export default function AnalyticsPage() {
         ))}
       </div>
 
-      {/* Heatmap + Notebooks */}
-      <div className="grid grid-cols-[2fr_1fr] gap-5 mb-6">
-        {/* Performance Heatmap */}
-        <Card>
-          <CardHeader
-            title="Performance Heatmap (Pair x Day)"
-            icon={"\uD83D\uDD25"}
-            action={<span className="text-xs text-muted-foreground">Last 7 days</span>}
-          />
-          <CardBody className="p-0 overflow-x-auto">
-            {heatmapRows.length === 0 ? (
-              <div className="flex items-center justify-center py-10">
-                <span className="text-xs text-muted-foreground">No daily data available. Select a bot to load.</span>
-              </div>
-            ) : (
-              <div className="grid gap-px bg-border border border-border rounded-md overflow-hidden min-w-[500px]" style={{ gridTemplateColumns: "90px repeat(7, 1fr)" }}>
-                {/* Header */}
-                <div className="bg-muted text-muted-foreground text-[9px] font-semibold uppercase tracking-wider text-center px-1.5 py-2" />
-                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-                  <div key={d} className="bg-muted text-muted-foreground text-[9px] font-semibold uppercase tracking-wider text-center px-1.5 py-2">{d}</div>
-                ))}
-                {/* Data rows */}
-                {heatmapRows.map((row) => (
-                  <Fragment key={row.pair}>
-                    <div className="bg-muted text-muted-foreground text-xs font-semibold text-left px-2.5 py-2.5">{row.pair}</div>
-                    {row.days.map((val, di) => {
-                      const style = heatmapCellStyle(val);
-                      return (
-                        <div key={`${row.pair}-${di}`} className={`${style.bg} ${style.text} bg-card text-xs font-medium text-center px-1.5 py-2.5`}>
-                          {val}
-                        </div>
-                      );
-                    })}
-                  </Fragment>
-                ))}
-              </div>
-            )}
-          </CardBody>
-        </Card>
+      {/* ISSUE 7 fix: Renamed to "Daily Portfolio P&L" — honest labeling */}
+      <Card className="mb-6">
+        <CardHeader
+          title="Daily Portfolio P&L"
+          icon={"\uD83D\uDD25"}
+          action={<span className="text-xs text-muted-foreground">Last 7 days</span>}
+        />
+        <CardBody className="p-0 overflow-x-auto">
+          {heatmapRows.length === 0 ? (
+            <div className="flex items-center justify-center py-10">
+              <span className="text-xs text-muted-foreground">No daily data available. Select a bot to load.</span>
+            </div>
+          ) : (
+            <div className="grid gap-px bg-border border border-border rounded-md overflow-hidden min-w-[500px]" style={{ gridTemplateColumns: "90px repeat(7, 1fr)" }}>
+              {/* Header */}
+              <div className="bg-muted text-muted-foreground text-[9px] font-semibold uppercase tracking-wider text-center px-1.5 py-2" />
+              {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+                <div key={d} className="bg-muted text-muted-foreground text-[9px] font-semibold uppercase tracking-wider text-center px-1.5 py-2">{d}</div>
+              ))}
+              {/* Data rows */}
+              {heatmapRows.map((row) => (
+                <Fragment key={row.pair}>
+                  <div className="bg-muted text-muted-foreground text-xs font-semibold text-left px-2.5 py-2.5">{row.pair}</div>
+                  {row.days.map((val, di) => {
+                    const style = heatmapCellStyle(val);
+                    return (
+                      <div key={`${row.pair}-${di}`} className={`${style.bg} ${style.text} bg-card text-xs font-medium text-center px-1.5 py-2.5`}>
+                        {val}
+                      </div>
+                    );
+                  })}
+                </Fragment>
+              ))}
+            </div>
+          )}
+        </CardBody>
+      </Card>
 
-        {/* Jupyter Notebooks */}
-        <Card>
-          <CardHeader title="Jupyter Notebooks" icon={"\uD83D\uDCD3"} />
-          <CardBody>
-            <div className="flex items-center justify-center py-6">
-              <span className="text-xs text-muted-foreground">No notebooks found on this bot</span>
-            </div>
-            <div className="mt-3.5 p-2.5 px-3 bg-muted rounded-md text-xs text-muted-foreground leading-relaxed">
-              Notebooks run on the FreqTrade server at<br />
-              <span className="text-muted-foreground font-mono text-xs">/freqtrade/user_data/notebooks/</span><br />
-              Access via Jupyter on port 8888
-            </div>
-          </CardBody>
-        </Card>
-      </div>
+      {/* ISSUE 5 + 6 fix: Orderflow and Notebooks sections removed — they were 100% stubs */}
+      {/* Orderflow requires real exchange WebSocket integration (use_public_trades) */}
+      {/* Notebooks require a Jupyter listing API that doesn't exist */}
+
       </div>
     </AppShell>
   );

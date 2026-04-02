@@ -538,6 +538,8 @@ export default function HyperoptTab({ strategy, botId = 2, experimentId, onNavig
         addLog('INFO', `[batch ${i + 1}] Job submitted — jobId=${jobId ?? 'N/A'}`);
 
         if (jobId) {
+          // Persist jobId so we can resume if page is closed
+          try { localStorage.setItem(JOB_KEY, JSON.stringify({ jobId })); } catch { /* */ }
           // Poll this individual job until done
           let done = false;
           while (!done) {
@@ -576,6 +578,7 @@ export default function HyperoptTab({ strategy, botId = 2, experimentId, onNavig
     }
 
     setIsRunning(false);
+    try { localStorage.removeItem(JOB_KEY); } catch { /* */ }
     setHoProgress('✓ Batch complete');
     addLog('INFO', `Batch complete: ${batchQueue.length} runs finished`);
     toast.success(`Batch complete: ${batchQueue.length} runs finished`);

@@ -341,6 +341,95 @@ ssh root@204.168.187.107 "cd /opt/freqtrade-ui && docker compose exec orchestrat
 
 ---
 
+## MULTI-AGENT WORKFLOW (Orchestrator-Workers + Evaluator-Optimizer)
+
+When building features, use the agent system. DO NOT code and self-review in one pass.
+
+### Architecture
+```
+User gives task
+       │
+       ▼
+┌──────────────┐
+│ ORCHESTRATOR  │  Reads task, decomposes, delegates, routes fixes
+│ (this agent)  │  NEVER writes code directly
+└──────┬───────┘
+       │ delegates paralelno
+ ┌─────┴──────┐
+ ▼             ▼
+┌────────┐  ┌────────┐
+│FRONTEND│  │BACKEND │  Workers — write code in isolation
+│ CODER  │  │ CODER  │  frontend/ only | orchestrator/ only
+└───┬────┘  └───┬────┘
+    │            │
+    ▼            ▼
+┌────────────────────┐
+│   CODE REVIEWER    │  Evaluator — reads code, compares to specs
+│  reads both, writes│  Returns APPROVED or list of problems
+│  nothing           │  If NEEDS_CHANGES → back to coders
+└────────┬───────────┘
+         │ APPROVED
+         ▼
+┌────────────────────┐
+│        QA          │  Final gate — build, lint, test, smoke test
+│  runs commands,    │  Returns PASS or list of exact errors
+│  writes nothing    │  If FAIL → back to ORCHESTRATOR with errors
+└────────┬───────────┘
+         │ PASS
+         ▼
+      DONE ✓
+```
+
+### Agent Definitions: `agents/` folder
+| Agent | File | Reads | Writes | Role |
+|-------|------|-------|--------|------|
+| Orchestrator | (this CLAUDE.md) | Everything | Nothing — only delegates | Decompose tasks, route fixes |
+| Frontend Coder | `agents/frontend-coder.md` | `docs/`, `CLAUDE.md`, `frontend/src/` | `frontend/src/` only | Write Next.js code |
+| Backend Coder | `agents/backend-coder.md` | `docs/`, `CLAUDE.md`, `orchestrator/` | `orchestrator/` only | Write FastAPI code |
+| Code Reviewer | `agents/code-reviewer.md` | `docs/`, `CLAUDE.md`, `frontend/src/`, `orchestrator/` | Nothing | Review code against specs |
+| QA | `agents/qa.md` | Any file (to understand errors) | Nothing | Run build, lint, test |
+
+### Orchestrator Rules (YOU follow these)
+1. **NEVER write code yourself** — always delegate to frontend-coder or backend-coder
+2. **Decompose first** — read PAGE_SPECS.md, list all widgets/endpoints needed, then delegate
+3. **Delegate in parallel** — if task needs both frontend + backend, launch both coders at same time
+4. **Wait for reviewer** — never send code to QA without code-reviewer APPROVED
+5. **Route fixes precisely** — when QA or reviewer reports errors, send EXACT error + file + line to the right coder
+6. **Loop until clean** — Coder → Reviewer → Coder (repeat) → QA → (if fail) back to step 5
+7. **Max 3 loops** — if code still fails after 3 rounds, stop and report to user with full error list
+
+### How to Invoke Agents
+```
+# Delegate to frontend coder (as subagent)
+Use the Agent tool with prompt referencing agents/frontend-coder.md rules
+
+# Delegate to backend coder (as subagent)
+Use the Agent tool with prompt referencing agents/backend-coder.md rules
+
+# Run code review (as subagent)
+Use the Agent tool with prompt referencing agents/code-reviewer.md rules
+
+# Run QA (as subagent)
+Use the Agent tool with prompt referencing agents/qa.md rules
+```
+
+### Example Task Decomposition
+User says: "Build the Dashboard page"
+
+Orchestrator does:
+1. Read `docs/PAGE_SPECS.md` → Dashboard has 15 widgets
+2. Read `docs/FT-UI-MAP.html` → Dashboard maps to §8, §16
+3. Determine: needs frontend (page + components) + backend (portfolio aggregation endpoint)
+4. Launch frontend-coder: "Build Dashboard page with ALL 15 widgets from PAGE_SPECS.md"
+5. Launch backend-coder: "Build GET /api/portfolio/stats endpoint"
+6. Both finish → launch code-reviewer: "Review frontend/src/app/dashboard/ and orchestrator/src/api/portfolio.py"
+7. Reviewer says NEEDS_CHANGES (3 missing widgets, 1 wrong field name) → send back to frontend-coder with exact list
+8. Frontend-coder fixes → reviewer again → APPROVED
+9. Launch QA: "Run full test suite"
+10. QA says PASS → done
+
+---
+
 ## REFERENCE FILES
 
 | File | Purpose | Read When |

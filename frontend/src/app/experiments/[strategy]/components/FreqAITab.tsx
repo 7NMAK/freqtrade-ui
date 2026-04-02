@@ -285,33 +285,6 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [experimentId, addLog]);
 
-  // ── Auto-resume: detect running FreqAI/backtest on mount ──────────
-  // Separate from history loading so it works even without experimentId
-  useEffect(() => {
-    if (!botId) return;
-
-    botBacktestResults(botId)
-      .then((raw) => {
-        const r = raw as unknown as Record<string, unknown>;
-        if (r.running === true) {
-          addLog("INFO", "🔄 Detected active FreqAI run from previous session — resuming polling...");
-          setIsRunning(true);
-          setCurrentRunLabel("Resuming previous run...");
-          pollUntilDone().then((result) => {
-            if (result) {
-              addLog("INFO", "Resumed run completed.");
-              toast.info("Previous FreqAI run completed.");
-            }
-            setIsRunning(false);
-            setCurrentRunLabel("");
-            setCurrentRunProgress(0);
-          });
-        }
-      })
-      .catch(() => { /* no active backtest — normal */ });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [botId, addLog, toast, pollUntilDone]);
-
   // ── Build Matrix Queue ────────────────────────────────────────────
   const buildQueue = useCallback((): QueueItem[] => {
     const queue: QueueItem[] = [];
@@ -387,6 +360,33 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
     addLog("ERROR", "Polling timed out after 30 minutes");
     return null;
   }, [botId, addLog]);
+
+  // ── Auto-resume: detect running FreqAI/backtest on mount ──────────
+  // Placed after pollUntilDone so React can resolve the reference
+  useEffect(() => {
+    if (!botId) return;
+
+    botBacktestResults(botId)
+      .then((raw) => {
+        const r = raw as unknown as Record<string, unknown>;
+        if (r.running === true) {
+          addLog("INFO", "🔄 Detected active FreqAI run from previous session — resuming polling...");
+          setIsRunning(true);
+          setCurrentRunLabel("Resuming previous run...");
+          pollUntilDone().then((result) => {
+            if (result) {
+              addLog("INFO", "Resumed run completed.");
+              toast.info("Previous FreqAI run completed.");
+            }
+            setIsRunning(false);
+            setCurrentRunLabel("");
+            setCurrentRunProgress(0);
+          });
+        }
+      })
+      .catch(() => { /* no active backtest — normal */ });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [botId, addLog, toast, pollUntilDone]);
 
   // ── Parse Result ──────────────────────────────────────────────────
   const parseResult = useCallback((raw: Record<string, unknown>, item: QueueItem, idx: number): FreqAIResult => {

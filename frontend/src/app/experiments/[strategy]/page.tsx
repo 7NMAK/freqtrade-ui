@@ -2,23 +2,18 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
 import { ArrowLeft, FlaskConical } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { PIPELINE_STEPS, type PipelineStepKey, type StepState } from "@/lib/experiments";
 import { getExperiments } from "@/lib/api";
-
-// ── Lazy-loaded tab components ────────────────────────────────────────────
-const BacktestTab = dynamic(() => import("./components/BacktestTab"), { ssr: false });
-const HyperoptTab = dynamic(() => import("./components/HyperoptTab"), { ssr: false });
-const FreqAITab = dynamic(() => import("./components/FreqAITab"), { ssr: false });
-const AiReviewTab = dynamic(() => import("./components/AiReviewTab"), { ssr: false });
-const ValidationTab = dynamic(() => import("./components/ValidationTab"), { ssr: false });
-
-// ── Lazy-loaded overlay components ────────────────────────────────────────
-const AllTestsOverlay = dynamic(() => import("./components/AllTestsOverlay"), { ssr: false });
-const CompareOverlay = dynamic(() => import("./components/CompareOverlay"), { ssr: false });
-const AnalysisOverlay = dynamic(() => import("./components/AnalysisOverlay"), { ssr: false });
+import BacktestTab from "./components/BacktestTab";
+import HyperoptTab from "./components/HyperoptTab";
+import FreqAITab from "./components/FreqAITab";
+import AiReviewTab from "./components/AiReviewTab";
+import ValidationTab from "./components/ValidationTab";
+import AllTestsOverlay from "./components/AllTestsOverlay";
+import CompareOverlay from "./components/CompareOverlay";
+import AnalysisOverlay from "./components/AnalysisOverlay";
 
 // ── Types ────────────────────────────────────────────────────────────────
 type Tab = "backtest" | "hyperopt" | "freqai" | "ai_review" | "validation";

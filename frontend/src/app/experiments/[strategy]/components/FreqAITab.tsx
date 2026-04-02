@@ -282,28 +282,35 @@ export default function FreqAITab({ strategy, botId = 2, experimentId, onNavigat
         }
       })
       .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [experimentId, addLog]);
 
-    // Resume: check if FT bot has an active backtest (page was closed mid-run)
+  // ── Auto-resume: detect running FreqAI/backtest on mount ──────────
+  // Separate from history loading so it works even without experimentId
+  useEffect(() => {
+    if (!botId) return;
+
     botBacktestResults(botId)
       .then((raw) => {
         const r = raw as unknown as Record<string, unknown>;
         if (r.running === true) {
-          addLog("INFO", "Detected active backtest — resuming polling...");
+          addLog("INFO", "🔄 Detected active FreqAI run from previous session — resuming polling...");
           setIsRunning(true);
           setCurrentRunLabel("Resuming previous run...");
           pollUntilDone().then((result) => {
             if (result) {
-              addLog("INFO", "Resumed run completed. Results saved on next fresh matrix run.");
-              toast.info("Previous FreqAI run completed. Start a new matrix to continue.");
+              addLog("INFO", "Resumed run completed.");
+              toast.info("Previous FreqAI run completed.");
             }
             setIsRunning(false);
             setCurrentRunLabel("");
+            setCurrentRunProgress(0);
           });
         }
       })
       .catch(() => { /* no active backtest — normal */ });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [experimentId, botId, addLog, toast]);
+  }, [botId, addLog, toast, pollUntilDone]);
 
   // ── Build Matrix Queue ────────────────────────────────────────────
   const buildQueue = useCallback((): QueueItem[] => {

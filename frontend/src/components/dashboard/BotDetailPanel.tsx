@@ -77,7 +77,7 @@ function StatusBadge({ status, isDryRun }: { status: string; isDryRun: boolean }
   }
   if (status !== "running") {
     return (
-      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground uppercase tracking-wide border border-border">
+      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-surface text-muted uppercase tracking-wide border l-bd-color">
         Stopped
       </span>
     );
@@ -90,7 +90,7 @@ function StatusBadge({ status, isDryRun }: { status: string; isDryRun: boolean }
     );
   }
   return (
-    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 uppercase tracking-wide border border-emerald-500/20">
+    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-up/10 text-up uppercase tracking-wide border border-up/20">
       Live
     </span>
   );
@@ -149,26 +149,26 @@ export default function BotDetailPanel({
 
       {/* Panel */}
       <div
-        className={`fixed top-0 h-screen w-[560px] max-w-[90vw] bg-card border-l border-border z-[501] transition-[right] duration-300 ease-out flex flex-col overflow-hidden ${
+        className={`fixed top-0 h-screen w-[560px] max-w-[90vw] bg-surface border-l l-bd-color z-[501] transition-[right] duration-300 ease-out flex flex-col overflow-hidden ${
           isOpen ? "right-0" : "-right-[560px]"
         }`}
       >
         {/* Header — matches prototype drawer */}
-        <div className="px-4 pb-3 border-b border-border bg-black flex flex-col gap-3 flex-shrink-0 pt-4">
+        <div className="px-4 pb-3 border-b l-bd-color bg-black flex flex-col gap-3 flex-shrink-0 pt-4">
           <div className="flex justify-between items-start">
             <div>
               <div className="flex items-center gap-2.5 mb-1">
-                <h2 className="text-base font-bold tracking-tight text-foreground font-mono">{bot.name}</h2>
+                <h2 className="text-base font-bold tracking-tight text-white font-mono">{bot.name}</h2>
                 <StatusBadge status={bot.status} isDryRun={bot.is_dry_run} />
               </div>
-              <p className="text-[11px] text-muted-foreground font-mono uppercase tracking-wide">
+              <p className="text-[11px] text-muted font-mono uppercase tracking-wide">
                 Strategy: {bot.strategy_name ?? "N/A"} &middot; {bot.exchange_name ?? "Exchange"} &middot; {isRunning ? "Running" : isDraining ? "Draining" : "Stopped"}
               </p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="hover:text-foreground text-muted-foreground p-1.5 hover:bg-white/10 rounded transition-colors cursor-pointer"
+              className="hover:text-white text-muted p-1.5 hover:bg-white/10 rounded transition-colors cursor-pointer"
               title="Close drawer"
             >
               <X className="w-5 h-5" />
@@ -176,21 +176,21 @@ export default function BotDetailPanel({
           </div>
           {/* 9 Action Buttons — icon-only, matching prototype */}
           <div className="flex items-center gap-1 flex-wrap">
-            <button type="button" onClick={onStart} className="w-7 h-7 rounded border border-border bg-muted/50 flex items-center justify-center text-emerald-500 hover:bg-emerald-500/20 transition-colors cursor-pointer" title="Start Bot"><Play className="w-3.5 h-3.5" /></button>
-            <button type="button" onClick={onStop} className="w-7 h-7 rounded border border-border bg-muted/50 flex items-center justify-center text-rose-500 hover:bg-rose-500/20 transition-colors cursor-pointer" title="Stop Bot"><Square className="w-3.5 h-3.5" /></button>
-            <button type="button" onClick={onPause ?? onDrain} className="w-7 h-7 rounded border border-border bg-muted/50 flex items-center justify-center text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors cursor-pointer" title="Pause (Stopbuy)"><Pause className="w-3.5 h-3.5" /></button>
-            <button type="button" onClick={onReload ?? onEdit} className="w-7 h-7 rounded border border-border bg-muted/50 flex items-center justify-center text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors cursor-pointer" title="Reload Config"><RefreshCw className="w-3.5 h-3.5" /></button>
-            <button type="button" onClick={onForceEnter ?? (() => {})} className="w-7 h-7 rounded border border-border bg-muted/50 flex items-center justify-center text-emerald-500 hover:bg-emerald-500/20 transition-colors cursor-pointer" title="Force open a new trade"><PlusCircle className="w-3.5 h-3.5" /></button>
-            <button type="button" onClick={onForceExitAll ?? (() => {})} className="w-7 h-7 rounded border border-border bg-muted/50 flex items-center justify-center text-rose-500 hover:bg-rose-500/20 transition-colors cursor-pointer" title="Force Exit All"><XSquare className="w-3.5 h-3.5" /></button>
-            <button type="button" onClick={onStopBuy ?? (() => {})} className="w-7 h-7 rounded border border-border bg-muted/50 flex items-center justify-center text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors cursor-pointer" title="Toggle Stopbuy"><PlusSquare className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onStart} className="w-7 h-7 rounded border l-bd-color bg-surface flex items-center justify-center text-up hover:bg-up/15 transition-colors cursor-pointer" title="Start Bot"><Play className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onStop} className="w-7 h-7 rounded border l-bd-color bg-surface flex items-center justify-center text-down hover:bg-down/15 transition-colors cursor-pointer" title="Stop Bot"><Square className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onPause ?? onDrain} className="w-7 h-7 rounded border l-bd-color bg-surface flex items-center justify-center text-muted hover:bg-white/10 hover:text-white transition-colors cursor-pointer" title="Pause (Stopbuy)"><Pause className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onReload ?? onEdit} className="w-7 h-7 rounded border l-bd-color bg-surface flex items-center justify-center text-muted hover:bg-white/10 hover:text-white transition-colors cursor-pointer" title="Reload Config"><RefreshCw className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onForceEnter ?? (() => {})} className="w-7 h-7 rounded border l-bd-color bg-surface flex items-center justify-center text-up hover:bg-up/15 transition-colors cursor-pointer" title="Force open a new trade"><PlusCircle className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onForceExitAll ?? (() => {})} className="w-7 h-7 rounded border l-bd-color bg-surface flex items-center justify-center text-down hover:bg-down/15 transition-colors cursor-pointer" title="Force Exit All"><XSquare className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onStopBuy ?? (() => {})} className="w-7 h-7 rounded border l-bd-color bg-surface flex items-center justify-center text-muted hover:bg-white/10 hover:text-white transition-colors cursor-pointer" title="Toggle Stopbuy"><PlusSquare className="w-3.5 h-3.5" /></button>
             <span className="w-px h-4 bg-white/15 mx-1" />
-            <button type="button" onClick={onSoftKill ?? (() => {})} className="w-7 h-7 rounded border border-border bg-muted/50 flex items-center justify-center text-yellow-500 hover:bg-yellow-500/20 transition-colors cursor-pointer" title="Soft Kill"><ShieldAlert className="w-3.5 h-3.5" /></button>
-            <button type="button" onClick={onHardKill ?? (() => {})} className="w-7 h-7 rounded border border-border bg-muted/50 flex items-center justify-center text-rose-500 hover:bg-rose-500/20 transition-colors cursor-pointer" title="Hard Kill"><Zap className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onSoftKill ?? (() => {})} className="w-7 h-7 rounded border l-bd-color bg-surface flex items-center justify-center text-yellow-500 hover:bg-yellow-500/20 transition-colors cursor-pointer" title="Soft Kill"><ShieldAlert className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onHardKill ?? (() => {})} className="w-7 h-7 rounded border l-bd-color bg-surface flex items-center justify-center text-down hover:bg-down/15 transition-colors cursor-pointer" title="Hard Kill"><Zap className="w-3.5 h-3.5" /></button>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="px-6 border-b border-border flex gap-1 overflow-x-auto flex-shrink-0 pt-4 pb-0 items-end">
+        <div className="px-6 border-b l-bd-color flex gap-1 overflow-x-auto flex-shrink-0 pt-4 pb-0 items-end">
           {(
             [
               { key: "overview", label: "Overview" },
@@ -209,8 +209,8 @@ export default function BotDetailPanel({
               onClick={() => setDetailTab(tab.key)}
               className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer border-b-2 ${
                 detailTab === tab.key
-                  ? "border-primary text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground opacity-80 hover:opacity-100"
+                  ? "border-primary text-white"
+                  : "border-transparent text-muted hover:text-white opacity-80 hover:opacity-100"
               }`}
             >
               {tab.label}
@@ -221,7 +221,7 @@ export default function BotDetailPanel({
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
           {loading ? (
-            <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
+            <div className="flex items-center justify-center h-32 text-muted text-sm">
               Loading details...
             </div>
           ) : (
@@ -246,10 +246,10 @@ export default function BotDetailPanel({
         </div>
 
         {/* Bottom actions — Edit, Duplicate, Delete, Close */}
-        <div className="px-6 py-4 border-t border-border flex gap-2 flex-shrink-0">
-          <button type="button" onClick={onEdit} className="flex-1 py-2.5 rounded-md border border-border bg-muted/50 text-muted-foreground text-xs font-medium text-center transition-all hover:bg-muted cursor-pointer">Edit</button>
-          <button type="button" onClick={onDuplicate} className="flex-1 py-2.5 rounded-md border border-border bg-muted/50 text-muted-foreground text-xs font-medium text-center transition-all hover:bg-muted cursor-pointer">Duplicate</button>
-          <button type="button" onClick={onDelete} className="py-2.5 px-4 rounded-md border border-rose-500/20 bg-rose-500/10 text-rose-500 text-xs font-medium text-center transition-all hover:bg-rose-500/20 cursor-pointer">Delete</button>
+        <div className="px-6 py-4 border-t l-bd-color flex gap-2 flex-shrink-0">
+          <button type="button" onClick={onEdit} className="flex-1 py-2.5 rounded-md border l-bd-color bg-surface text-muted text-xs font-medium text-center transition-all hover:bg-surface cursor-pointer">Edit</button>
+          <button type="button" onClick={onDuplicate} className="flex-1 py-2.5 rounded-md border l-bd-color bg-surface text-muted text-xs font-medium text-center transition-all hover:bg-surface cursor-pointer">Duplicate</button>
+          <button type="button" onClick={onDelete} className="py-2.5 px-4 rounded-md border border-down/20 bg-down/10 text-down text-xs font-medium text-center transition-all hover:bg-down/15 cursor-pointer">Delete</button>
           <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-md border-none bg-primary text-white text-xs font-semibold text-center transition-all hover:bg-white/20 cursor-pointer">Close</button>
         </div>
       </div>
@@ -294,10 +294,10 @@ function DetailContent({
   balanceData: FTBalance | null;
   healthData: FTHealth | null;
 }) {
-  const sectionTitle = "text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3";
-  const row = "flex justify-between py-2 border-b border-border/40 last:border-b-0";
-  const key = "text-xs text-muted-foreground";
-  const val = "text-xs font-semibold text-foreground text-right";
+  const sectionTitle = "text-xs font-semibold text-muted uppercase tracking-wider mb-3";
+  const row = "flex justify-between py-2 border-b l-bd-color/40 last:border-b-0";
+  const key = "text-xs text-muted";
+  const val = "text-xs font-semibold text-white text-right";
 
   switch (tab) {
     /* ─── Overview ─── */
@@ -314,75 +314,75 @@ function DetailContent({
         <div className="space-y-4">
           {/* KPI Row — 4 columns matching prototype */}
           <div className="grid grid-cols-4 gap-2.5">
-            <div className="bg-muted/10 border border-border/50 rounded p-3">
-              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Closed P&L</div>
+            <div className="bg-surface/10 border l-bd-color/50 rounded p-3">
+              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">Closed P&L</div>
               <div className={`font-mono font-bold text-lg ${profitColor(profit?.profit_closed_coin)}`}>{fmtMoney(profit?.profit_closed_coin)}</div>
               {profit?.profit_closed_percent != null && <div className={`text-[10px] font-mono mt-0.5 ${profitColor(profit.profit_closed_percent)}`}>{profit.profit_closed_percent >= 0 ? "+" : ""}{fmt(profit.profit_closed_percent, 1)}%</div>}
             </div>
-            <div className="bg-muted/10 border border-border/50 rounded p-3">
-              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Open P&L</div>
+            <div className="bg-surface/10 border l-bd-color/50 rounded p-3">
+              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">Open P&L</div>
               <div className={`font-mono font-bold text-lg ${profitColor(openPnl)}`}>{fmtMoney(openPnl)}</div>
-              <div className="text-muted-foreground/50 text-[10px] font-mono mt-0.5">{openTrades.length} position{openTrades.length !== 1 ? "s" : ""}</div>
+              <div className="text-muted/50 text-[10px] font-mono mt-0.5">{openTrades.length} position{openTrades.length !== 1 ? "s" : ""}</div>
             </div>
-            <div className="bg-muted/10 border border-border/50 rounded p-3">
-              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Win Rate</div>
-              <div className="font-mono font-bold text-lg text-foreground">{winRate != null ? `${fmt(winRate, 1)}%` : "—"}</div>
-              <div className="text-muted-foreground/50 text-[10px] font-mono mt-0.5">{winCount}W / {lossCount}L</div>
+            <div className="bg-surface/10 border l-bd-color/50 rounded p-3">
+              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">Win Rate</div>
+              <div className="font-mono font-bold text-lg text-white">{winRate != null ? `${fmt(winRate, 1)}%` : "—"}</div>
+              <div className="text-muted/50 text-[10px] font-mono mt-0.5">{winCount}W / {lossCount}L</div>
             </div>
-            <div className="bg-muted/10 border border-border/50 rounded p-3">
-              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Trades</div>
-              <div className="font-mono font-bold text-lg text-foreground">{profit?.trade_count ?? totalCount}</div>
-              {statsData?.durations?.wins != null && <div className="text-muted-foreground/50 text-[10px] font-mono mt-0.5">{fmtDurSec(statsData.durations.wins)} avg hold</div>}
+            <div className="bg-surface/10 border l-bd-color/50 rounded p-3">
+              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">Trades</div>
+              <div className="font-mono font-bold text-lg text-white">{profit?.trade_count ?? totalCount}</div>
+              {statsData?.durations?.wins != null && <div className="text-muted/50 text-[10px] font-mono mt-0.5">{fmtDurSec(statsData.durations.wins)} avg hold</div>}
             </div>
           </div>
 
           {/* 2-column stats grid matching prototype */}
           <div className="grid grid-cols-2 gap-2.5">
             {/* Risk Metrics */}
-            <div className="bg-muted/10 border border-border/50 rounded p-3">
-              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-2">Risk Metrics</div>
+            <div className="bg-surface/10 border l-bd-color/50 rounded p-3">
+              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-2">Risk Metrics</div>
               <div className="space-y-1.5 font-mono text-[12px]">
-                <div className="flex justify-between"><span className="text-muted-foreground">Profit Factor</span><span className={`font-bold ${(statsData?.profit_factor ?? 0) > 1 ? "text-emerald-500" : "text-foreground"}`}>{statsData?.profit_factor != null ? fmt(statsData.profit_factor) : "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Max Drawdown</span><span className="text-rose-500 font-bold">{statsData?.max_drawdown != null ? fmt(statsData.max_drawdown * 100, 1) + "%" : "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Sharpe Ratio</span><span className="text-foreground">{statsData?.sharpe_ratio != null ? fmt(statsData.sharpe_ratio) : "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Sortino Ratio</span><span className="text-foreground">{statsData?.sortino_ratio != null ? fmt(statsData.sortino_ratio) : "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Expectancy</span><span className={profitColor(expectancy)}>{expectancy != null ? fmtMoney(expectancy) : "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted">Profit Factor</span><span className={`font-bold ${(statsData?.profit_factor ?? 0) > 1 ? "text-up" : "text-white"}`}>{statsData?.profit_factor != null ? fmt(statsData.profit_factor) : "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted">Max Drawdown</span><span className="text-down font-bold">{statsData?.max_drawdown != null ? fmt(statsData.max_drawdown * 100, 1) + "%" : "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted">Sharpe Ratio</span><span className="text-white">{statsData?.sharpe_ratio != null ? fmt(statsData.sharpe_ratio) : "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted">Sortino Ratio</span><span className="text-white">{statsData?.sortino_ratio != null ? fmt(statsData.sortino_ratio) : "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted">Expectancy</span><span className={profitColor(expectancy)}>{expectancy != null ? fmtMoney(expectancy) : "—"}</span></div>
               </div>
             </div>
             {/* Bot Info */}
-            <div className="bg-muted/10 border border-border/50 rounded p-3">
-              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-2">Bot Info</div>
+            <div className="bg-surface/10 border l-bd-color/50 rounded p-3">
+              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-2">Bot Info</div>
               <div className="space-y-1.5 font-mono text-[12px]">
-                <div className="flex justify-between"><span className="text-muted-foreground">Exchange</span><span className="text-foreground">{bot.exchange_name ?? "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Mode</span><span className="text-foreground">{configData ? `${configData.trading_mode ?? "spot"} · ${configData.margin_mode ?? "—"}` : "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Timeframe</span><span className="text-foreground">{configData?.timeframe ?? "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Stake</span><span className="text-foreground">{configData ? `${fmt(typeof configData.stake_amount === "number" ? configData.stake_amount : 0, 0)} ${configData.stake_currency ?? ""}` : "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Max Trades</span><span className="text-foreground">{configData?.max_open_trades ?? "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted">Exchange</span><span className="text-white">{bot.exchange_name ?? "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted">Mode</span><span className="text-white">{configData ? `${configData.trading_mode ?? "spot"} · ${configData.margin_mode ?? "—"}` : "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted">Timeframe</span><span className="text-white">{configData?.timeframe ?? "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted">Stake</span><span className="text-white">{configData ? `${fmt(typeof configData.stake_amount === "number" ? configData.stake_amount : 0, 0)} ${configData.stake_currency ?? ""}` : "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted">Max Trades</span><span className="text-white">{configData?.max_open_trades ?? "—"}</span></div>
               </div>
             </div>
           </div>
 
           {/* Wallet Balance — matching prototype */}
           {balanceData && (
-            <div className="bg-muted/10 border border-border/50 rounded p-3">
-              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-2">Wallet Balance</div>
+            <div className="bg-surface/10 border l-bd-color/50 rounded p-3">
+              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-2">Wallet Balance</div>
               {balanceData.currencies && balanceData.currencies.filter(c => c.balance > 0 || c.used > 0 || c.est_stake > 0 || c.free > 0).length > 0 ? (
                 <div className="grid grid-cols-3 gap-4 font-mono text-[12px]">
                   {balanceData.currencies.filter(c => c.balance > 0 || c.used > 0 || c.est_stake > 0 || c.free > 0).slice(0, 3).map((c) => (
                     <div key={c.currency}>
-                      <span className="text-muted-foreground block text-[10px] mb-0.5">{c.currency}</span>
-                      <span className="text-foreground font-bold">{fmt(c.balance, c.balance < 1 ? 4 : 2)}</span>
+                      <span className="text-muted block text-[10px] mb-0.5">{c.currency}</span>
+                      <span className="text-white font-bold">{fmt(c.balance, c.balance < 1 ? 4 : 2)}</span>
                     </div>
                   ))}
                   {balanceData.total > 0 && (
                     <div>
-                      <span className="text-muted-foreground block text-[10px] mb-0.5">Total Est.</span>
-                      <span className="text-foreground font-bold">${fmt(balanceData.total, 0)}</span>
+                      <span className="text-muted block text-[10px] mb-0.5">Total Est.</span>
+                      <span className="text-white font-bold">${fmt(balanceData.total, 0)}</span>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="text-center py-4 text-muted-foreground text-xs">No balance data</div>
+                <div className="text-center py-4 text-muted text-xs">No balance data</div>
               )}
             </div>
           )}
@@ -396,13 +396,13 @@ function DetailContent({
         <div className="space-y-6">
           {/* Open Trades */}
           <div>
-            <h3 className={`${sectionTitle} flex items-center gap-2`}>Open Positions <span className="text-muted-foreground/30">({openTrades.length})</span></h3>
+            <h3 className={`${sectionTitle} flex items-center gap-2`}>Open Positions <span className="text-muted/30">({openTrades.length})</span></h3>
             {openTrades.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground text-xs">No open trades</div>
+              <div className="text-center py-6 text-muted text-xs">No open trades</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-[13px] font-mono">
-                  <thead className="text-muted-foreground text-[11px] uppercase tracking-widest">
+                  <thead className="text-muted text-[11px] uppercase tracking-widest">
                     <tr>
                       <th className="text-left py-1.5 px-1 font-medium">Pair</th>
                       <th className="text-left py-1.5 px-1 font-medium">Side</th>
@@ -426,16 +426,16 @@ function DetailContent({
                       const durStr = durH > 0 ? `${durH}h${durM.toString().padStart(2, "0")}m` : `${durM}m`;
                       return (
                         <tr key={t.trade_id} className="hover:bg-white/[0.04]">
-                          <td className="py-1.5 px-1 text-foreground font-medium">{t.pair}</td>
-                          <td className="py-1.5 px-1"><span className={`${t.is_short ? "bg-rose-500/12 text-rose-500" : "bg-emerald-500/12 text-emerald-500"} px-1 py-0.5 rounded text-[9px] font-bold`}>{t.is_short ? "SHORT" : "LONG"}</span></td>
+                          <td className="py-1.5 px-1 text-white font-medium">{t.pair}</td>
+                          <td className="py-1.5 px-1"><span className={`${t.is_short ? "bg-down/12 text-down" : "bg-up/12 text-up"} px-1 py-0.5 rounded text-[9px] font-bold`}>{t.is_short ? "SHORT" : "LONG"}</span></td>
                           <td className="py-1.5 px-1 text-right">{t.leverage > 1 ? `${t.leverage}x` : "1x"}</td>
                           <td className="py-1.5 px-1 text-right">{fmt(t.open_rate, t.open_rate < 1 ? 4 : 0)}</td>
                           <td className="py-1.5 px-1 text-right font-medium">{fmt(t.current_rate, t.current_rate < 1 ? 4 : 0)}</td>
                           <td className="py-1.5 px-1 text-right">{fmt(t.stake_amount, 0)}</td>
                           <td className={`py-1.5 px-1 text-right font-bold ${profitColor(pnl)}`}>{fmtMoney(pnl)}</td>
                           <td className={`py-1.5 px-1 text-right ${profitColor(pct)}`}>{pct != null ? `${pct >= 0 ? "+" : ""}${fmt(pct, 2)}%` : "—"}</td>
-                          <td className="py-1.5 px-1 text-right text-muted-foreground">{durStr}</td>
-                          <td className="py-1.5 px-1 text-muted-foreground">{t.enter_tag ?? "—"}</td>
+                          <td className="py-1.5 px-1 text-right text-muted">{durStr}</td>
+                          <td className="py-1.5 px-1 text-muted">{t.enter_tag ?? "—"}</td>
                         </tr>
                       );
                     })}
@@ -447,13 +447,13 @@ function DetailContent({
 
           {/* Closed Trades */}
           <div>
-            <h3 className={`${sectionTitle} flex items-center gap-2`}>Closed Trades <span className="text-muted-foreground/30">(last 10)</span></h3>
+            <h3 className={`${sectionTitle} flex items-center gap-2`}>Closed Trades <span className="text-muted/30">(last 10)</span></h3>
             {closedTrades.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground text-xs">No closed trades</div>
+              <div className="text-center py-6 text-muted text-xs">No closed trades</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-[13px] font-mono">
-                  <thead className="text-muted-foreground text-[11px] uppercase tracking-widest">
+                  <thead className="text-muted text-[11px] uppercase tracking-widest">
                     <tr>
                       <th className="text-left py-1.5 px-1 font-medium">Pair</th>
                       <th className="text-left py-1.5 px-1 font-medium">Side</th>
@@ -478,17 +478,17 @@ function DetailContent({
                       const durStr = ms > 0 ? (durH > 0 ? `${durH}h${durM.toString().padStart(2, "0")}m` : `${durM}m`) : "—";
                       return (
                         <tr key={t.trade_id} className="hover:bg-white/[0.04]">
-                          <td className="py-1.5 px-1 text-foreground font-medium">{t.pair}</td>
-                          <td className="py-1.5 px-1"><span className={`${t.is_short ? "text-rose-500" : "text-emerald-500"} text-[9px] font-bold`}>{t.is_short ? "SHORT" : "LONG"}</span></td>
+                          <td className="py-1.5 px-1 text-white font-medium">{t.pair}</td>
+                          <td className="py-1.5 px-1"><span className={`${t.is_short ? "text-down" : "text-up"} text-[9px] font-bold`}>{t.is_short ? "SHORT" : "LONG"}</span></td>
                           <td className="py-1.5 px-1 text-right">{t.leverage > 1 ? `${t.leverage}x` : "1x"}</td>
                           <td className="py-1.5 px-1 text-right">{fmt(t.open_rate, t.open_rate < 1 ? 4 : 0)}</td>
                           <td className="py-1.5 px-1 text-right">{fmt(t.close_rate, t.close_rate != null && t.close_rate < 1 ? 4 : 0)}</td>
                           <td className="py-1.5 px-1 text-right">{fmt(t.stake_amount, 0)}</td>
                           <td className={`py-1.5 px-1 text-right font-bold ${profitColor(pnl)}`}>{fmtMoney(pnl)}</td>
                           <td className={`py-1.5 px-1 text-right ${profitColor(pct)}`}>{pct != null ? `${pct >= 0 ? "+" : ""}${fmt(pct, 2)}%` : "—"}</td>
-                          <td className="py-1.5 px-1 text-right text-muted-foreground">{durStr}</td>
-                          <td className="py-1.5 px-1 text-muted-foreground">{t.enter_tag ?? "—"}</td>
-                          <td className="py-1.5 px-1 text-muted-foreground">{t.exit_reason ?? "—"}</td>
+                          <td className="py-1.5 px-1 text-right text-muted">{durStr}</td>
+                          <td className="py-1.5 px-1 text-muted">{t.enter_tag ?? "—"}</td>
+                          <td className="py-1.5 px-1 text-muted">{t.exit_reason ?? "—"}</td>
                         </tr>
                       );
                     })}
@@ -521,23 +521,23 @@ function DetailContent({
         <div className="space-y-4">
           {/* KPI Summary — 4 columns matching prototype */}
           <div className="grid grid-cols-4 gap-2.5">
-            <div className="bg-muted/10 border border-border/50 rounded p-3 text-center">
-              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Best Pair</div>
+            <div className="bg-surface/10 border l-bd-color/50 rounded p-3 text-center">
+              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">Best Pair</div>
               <div className={`font-mono font-bold text-sm ${profitColor(bestPerf?.profit_abs)}`}>{bestPerf?.pair ?? "—"}</div>
               {bestPerf && <div className={`text-[10px] font-mono ${profitColor(bestPerf.profit_abs)}`}>{fmtMoney(bestPerf.profit_abs)}</div>}
             </div>
-            <div className="bg-muted/10 border border-border/50 rounded p-3 text-center">
-              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Worst Pair</div>
+            <div className="bg-surface/10 border l-bd-color/50 rounded p-3 text-center">
+              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">Worst Pair</div>
               <div className={`font-mono font-bold text-sm ${profitColor(worstPerf?.profit_abs)}`}>{worstPerf?.pair ?? "—"}</div>
               {worstPerf && <div className={`text-[10px] font-mono ${profitColor(worstPerf.profit_abs)}`}>{fmtMoney(worstPerf.profit_abs)}</div>}
             </div>
-            <div className="bg-muted/10 border border-border/50 rounded p-3 text-center">
-              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Best Tag</div>
+            <div className="bg-surface/10 border l-bd-color/50 rounded p-3 text-center">
+              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">Best Tag</div>
               <div className={`font-mono font-bold text-sm ${profitColor(bestEntry?.profit_abs)}`}>{bestEntry?.enter_tag ?? "—"}</div>
               {bestEntry && <div className={`text-[10px] font-mono ${profitColor(bestEntry.profit_abs)}`}>{fmtMoney(bestEntry.profit_abs)}</div>}
             </div>
-            <div className="bg-muted/10 border border-border/50 rounded p-3 text-center">
-              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Best Exit</div>
+            <div className="bg-surface/10 border l-bd-color/50 rounded p-3 text-center">
+              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">Best Exit</div>
               <div className={`font-mono font-bold text-sm ${profitColor(bestExit?.profit_abs)}`}>{bestExit?.exit_reason ?? "—"}</div>
               {bestExit && <div className={`text-[10px] font-mono ${profitColor(bestExit.profit_abs)}`}>{fmtMoney(bestExit.profit_abs)}</div>}
             </div>
@@ -545,11 +545,11 @@ function DetailContent({
 
           {/* Per-Pair Performance */}
           {enrichedPerf.length > 0 ? (
-            <div className="bg-muted/10 border border-border/50 rounded p-3">
+            <div className="bg-surface/10 border l-bd-color/50 rounded p-3">
               <h3 className={sectionTitle}>Per-Pair Performance</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-[13px] font-mono whitespace-nowrap">
-                  <thead><tr className="text-muted-foreground text-[11px] uppercase tracking-widest">
+                  <thead><tr className="text-muted text-[11px] uppercase tracking-widest">
                     <th className="text-left px-2 py-1.5 font-semibold">Pair</th>
                     <th className="text-right px-2 py-1.5 font-semibold">Trades</th>
                     <th className="text-right px-2 py-1.5 font-semibold">profit_abs</th>
@@ -559,11 +559,11 @@ function DetailContent({
                   <tbody className="divide-y divide-border/30">
                     {enrichedPerf.map((p) => (
                       <tr key={p.pair} className="hover:bg-white/[0.04]">
-                        <td className="px-2 py-1.5 text-foreground">{p.pair}</td>
+                        <td className="px-2 py-1.5 text-white">{p.pair}</td>
                         <td className="px-2 py-1.5 text-right">{p.count ?? p.trades ?? 0}</td>
                         <td className={`px-2 py-1.5 text-right font-bold ${profitColor(p.profit_abs)}`}>{fmtMoney(p.profit_abs)}</td>
                         <td className={`px-2 py-1.5 text-right ${profitColor(p.profit_ratio)}`}>{p.profit_ratio >= 0 ? "+" : ""}{fmt(p.profit_ratio * 100, 2)}%</td>
-                        <td className={`px-2 py-1.5 text-right ${p.winrate >= 0.6 ? "text-emerald-500" : p.winrate < 0.45 ? "text-rose-500" : "text-foreground"}`}>{fmt(p.winrate * 100, 1)}%</td>
+                        <td className={`px-2 py-1.5 text-right ${p.winrate >= 0.6 ? "text-up" : p.winrate < 0.45 ? "text-down" : "text-white"}`}>{fmt(p.winrate * 100, 1)}%</td>
                       </tr>
                     ))}
                   </tbody>
@@ -571,17 +571,17 @@ function DetailContent({
               </div>
             </div>
           ) : (
-            <div className="text-center py-6 text-muted-foreground text-xs">No performance data</div>
+            <div className="text-center py-6 text-muted text-xs">No performance data</div>
           )}
 
           {/* Entry / Exit Analysis side by side — matching prototype */}
           {(entryData.length > 0 || exitData.length > 0) && (
             <div className="grid grid-cols-2 gap-2.5">
               {entryData.length > 0 && (
-                <div className="bg-muted/10 border border-border/50 rounded p-3">
+                <div className="bg-surface/10 border l-bd-color/50 rounded p-3">
                   <h3 className={sectionTitle}>Entry Tags</h3>
                   <table className="w-full text-[13px] font-mono whitespace-nowrap">
-                    <thead><tr className="text-muted-foreground text-[11px] uppercase tracking-widest">
+                    <thead><tr className="text-muted text-[11px] uppercase tracking-widest">
                       <th className="text-left px-2 py-1.5 font-semibold">Tag</th>
                       <th className="text-right px-2 py-1.5 font-semibold">Trades</th>
                       <th className="text-right px-2 py-1.5 font-semibold">WR%</th>
@@ -590,9 +590,9 @@ function DetailContent({
                     <tbody className="divide-y divide-border/30">
                       {entryData.map((e) => (
                         <tr key={e.enter_tag ?? "untagged"} className="hover:bg-white/[0.04]">
-                          <td className="px-2 py-1.5 text-foreground">{e.enter_tag ?? "untagged"}</td>
+                          <td className="px-2 py-1.5 text-white">{e.enter_tag ?? "untagged"}</td>
                           <td className="px-2 py-1.5 text-right">{e.entries ?? 0}</td>
-                          <td className={`px-2 py-1.5 text-right ${(e.winrate ?? 0) >= 0.6 ? "text-emerald-500" : (e.winrate ?? 0) < 0.45 ? "text-rose-500" : "text-foreground"}`}>{fmt((e.winrate ?? 0) * 100, 1)}%</td>
+                          <td className={`px-2 py-1.5 text-right ${(e.winrate ?? 0) >= 0.6 ? "text-up" : (e.winrate ?? 0) < 0.45 ? "text-down" : "text-white"}`}>{fmt((e.winrate ?? 0) * 100, 1)}%</td>
                           <td className={`px-2 py-1.5 text-right font-bold ${profitColor(e.profit_abs)}`}>{fmtMoney(e.profit_abs ?? 0)}</td>
                         </tr>
                       ))}
@@ -601,10 +601,10 @@ function DetailContent({
                 </div>
               )}
               {exitData.length > 0 && (
-                <div className="bg-muted/10 border border-border/50 rounded p-3">
+                <div className="bg-surface/10 border l-bd-color/50 rounded p-3">
                   <h3 className={sectionTitle}>Exit Reasons</h3>
                   <table className="w-full text-[13px] font-mono whitespace-nowrap">
-                    <thead><tr className="text-muted-foreground text-[11px] uppercase tracking-widest">
+                    <thead><tr className="text-muted text-[11px] uppercase tracking-widest">
                       <th className="text-left px-2 py-1.5 font-semibold">Reason</th>
                       <th className="text-right px-2 py-1.5 font-semibold">Exits</th>
                       <th className="text-right px-2 py-1.5 font-semibold">WR%</th>
@@ -613,9 +613,9 @@ function DetailContent({
                     <tbody className="divide-y divide-border/30">
                       {exitData.map((e) => (
                         <tr key={e.exit_reason ?? "untagged"} className="hover:bg-white/[0.04]">
-                          <td className="px-2 py-1.5 text-foreground">{e.exit_reason ?? "untagged"}</td>
+                          <td className="px-2 py-1.5 text-white">{e.exit_reason ?? "untagged"}</td>
                           <td className="px-2 py-1.5 text-right">{e.exits ?? 0}</td>
-                          <td className={`px-2 py-1.5 text-right ${(e.winrate ?? 0) >= 0.6 ? "text-emerald-500" : (e.winrate ?? 0) < 0.45 ? "text-rose-500" : "text-foreground"}`}>{fmt((e.winrate ?? 0) * 100, 1)}%</td>
+                          <td className={`px-2 py-1.5 text-right ${(e.winrate ?? 0) >= 0.6 ? "text-up" : (e.winrate ?? 0) < 0.45 ? "text-down" : "text-white"}`}>{fmt((e.winrate ?? 0) * 100, 1)}%</td>
                           <td className={`px-2 py-1.5 text-right font-bold ${profitColor(e.profit_abs)}`}>{fmtMoney(e.profit_abs ?? 0)}</td>
                         </tr>
                       ))}
@@ -712,16 +712,16 @@ function DetailContent({
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="text-muted-foreground border-b border-border">
+                        <tr className="text-muted border-b l-bd-color">
                           <th className="text-left py-2 font-medium">Pair</th>
                           <th className="text-left py-2 font-medium">Reason</th>
                         </tr>
                       </thead>
                       <tbody>
                         {locksData.locks.map((l) => (
-                          <tr key={l.pair} className="border-b border-border/30">
-                            <td className="py-2 text-foreground font-medium">{l.pair}</td>
-                            <td className="py-2 text-muted-foreground">{l.reason ?? "—"}</td>
+                          <tr key={l.pair} className="border-b l-bd-color/30">
+                            <td className="py-2 text-white font-medium">{l.pair}</td>
+                            <td className="py-2 text-muted">{l.reason ?? "—"}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -731,7 +731,7 @@ function DetailContent({
               )}
             </>
           ) : (
-            <div className="text-center py-6 text-muted-foreground text-xs">No config data</div>
+            <div className="text-center py-6 text-muted text-xs">No config data</div>
           )}
         </div>
       );
@@ -797,7 +797,7 @@ function DetailContent({
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="text-muted-foreground border-b border-border">
+                    <tr className="text-muted border-b l-bd-color">
                       <th className="text-left py-2 font-medium">Pair</th>
                       <th className="text-left py-2 font-medium">Side</th>
                       <th className="text-left py-2 font-medium">Reason</th>
@@ -806,11 +806,11 @@ function DetailContent({
                   </thead>
                   <tbody>
                     {locksData.locks.filter(l => l.active).map((l) => (
-                      <tr key={l.id} className="border-b border-border/30">
-                        <td className="py-2 text-foreground font-medium">{l.pair}</td>
-                        <td className="py-2 text-muted-foreground">{l.side || "—"}</td>
-                        <td className="py-2 text-muted-foreground">{l.reason || "—"}</td>
-                        <td className="py-2 text-right text-muted-foreground">
+                      <tr key={l.id} className="border-b l-bd-color/30">
+                        <td className="py-2 text-white font-medium">{l.pair}</td>
+                        <td className="py-2 text-muted">{l.side || "—"}</td>
+                        <td className="py-2 text-muted">{l.reason || "—"}</td>
+                        <td className="py-2 text-right text-muted">
                           {l.lock_end_time ? new Date(l.lock_end_time).toLocaleString() : "—"}
                         </td>
                       </tr>
@@ -824,7 +824,7 @@ function DetailContent({
           {logsData && logsData.logs && logsData.logs.length > 0 && (
             <div>
               <div className={sectionTitle}>Recent Logs ({logsData.log_count} total)</div>
-              <div className="bg-muted/50 border border-border rounded p-2 max-h-[300px] overflow-y-auto">
+              <div className="bg-surface border l-bd-color rounded p-2 max-h-[300px] overflow-y-auto">
                 <div className="font-mono text-[10px] space-y-1">
                   {logsData.logs.slice(-30).map((log, idx) => {
                     // FT logs format: [id, timestamp, module, level, message]
@@ -840,14 +840,14 @@ function DetailContent({
                     const timeStr = timestamp ? String(timestamp).split(" ").pop()?.slice(0, 8) ?? "" : "";
                     const levelColor =
                       level === "WARNING" || level === "WARN" ? "text-yellow-500" :
-                      level === "ERROR" || level === "CRITICAL" ? "text-rose-500" :
+                      level === "ERROR" || level === "CRITICAL" ? "text-down" :
                       level === "INFO" ? "text-blue-400" :
-                      "text-muted-foreground";
+                      "text-muted";
                     return (
                       <div key={idx} className="flex gap-1">
-                        <span className="text-muted-foreground/50 shrink-0">{timeStr}</span>
+                        <span className="text-muted/50 shrink-0">{timeStr}</span>
                         <span className={`shrink-0 font-semibold ${levelColor}`}>{level}</span>
-                        <span className="text-foreground/80 break-all">{message ?? ""}</span>
+                        <span className="text-white/80 break-all">{message ?? ""}</span>
                       </div>
                     );
                   })}
@@ -869,8 +869,8 @@ function DetailContent({
             <div className={sectionTitle}>Backtest Summary</div>
             {hasStats ? (
               <>
-                <div className="bg-muted/10 border border-border/50 rounded-xl p-4 space-y-1 mb-4">
-                  <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-2">Latest Performance Snapshot</div>
+                <div className="bg-surface/10 border l-bd-color/50 rounded-xl p-4 space-y-1 mb-4">
+                  <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-2">Latest Performance Snapshot</div>
                   <div className={row}>
                     <span className={key}>Total Trades</span>
                     <span className={val}>{profit?.trade_count ?? statsData?.wins != null ? (statsData?.wins ?? 0) + (statsData?.losses ?? 0) + (statsData?.draws ?? 0) : "—"}</span>
@@ -885,29 +885,29 @@ function DetailContent({
                   </div>
                   <div className={row}>
                     <span className={key}>Max Drawdown</span>
-                    <span className={`${val} text-rose-500`}>{statsData?.max_drawdown != null ? fmt(statsData.max_drawdown * 100, 2) + "%" : "—"}</span>
+                    <span className={`${val} text-down`}>{statsData?.max_drawdown != null ? fmt(statsData.max_drawdown * 100, 2) + "%" : "—"}</span>
                   </div>
                   {statsData?.max_consecutive_wins != null && (
                     <div className={row}>
                       <span className={key}>Max Consecutive Wins</span>
-                      <span className={`${val} text-emerald-500`}>{statsData.max_consecutive_wins}</span>
+                      <span className={`${val} text-up`}>{statsData.max_consecutive_wins}</span>
                     </div>
                   )}
                   {statsData?.max_consecutive_losses != null && (
                     <div className={row}>
                       <span className={key}>Max Consecutive Losses</span>
-                      <span className={`${val} text-rose-500`}>{statsData.max_consecutive_losses}</span>
+                      <span className={`${val} text-down`}>{statsData.max_consecutive_losses}</span>
                     </div>
                   )}
                 </div>
-                <div className="text-[10px] text-muted-foreground/60 text-center">
+                <div className="text-[10px] text-muted/60 text-center">
                   Run a full backtest from the Backtesting page for detailed timerange analysis.
                 </div>
               </>
             ) : (
-              <div className="text-center py-8 text-muted-foreground text-xs space-y-2">
+              <div className="text-center py-8 text-muted text-xs space-y-2">
                 <p>No backtest history available for this bot.</p>
-                <p className="text-[10px] text-muted-foreground/60">Run a backtest from the Backtesting page to see results here.</p>
+                <p className="text-[10px] text-muted/60">Run a backtest from the Backtesting page to see results here.</p>
               </div>
             )}
           </div>
@@ -924,8 +924,8 @@ function DetailContent({
             <div className={sectionTitle}>Hyperopt & Signal Quality</div>
             {statsData ? (
               <>
-                <div className="bg-muted/10 border border-border/50 rounded-xl p-4 space-y-1 mb-4">
-                  <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-2">Signal & Order Metrics</div>
+                <div className="bg-surface/10 border l-bd-color/50 rounded-xl p-4 space-y-1 mb-4">
+                  <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-2">Signal & Order Metrics</div>
                   <div className={row}>
                     <span className={key}>Rejected Signals</span>
                     <span className={`${val} ${statsData.rejected_signals > 0 ? "text-amber-500" : ""}`}>{statsData.rejected_signals}</span>
@@ -973,14 +973,14 @@ function DetailContent({
                     </div>
                   )}
                 </div>
-                <div className="text-[10px] text-muted-foreground/60 text-center">
+                <div className="text-[10px] text-muted/60 text-center">
                   Run hyperopt from the Backtesting page to optimize strategy parameters.
                 </div>
               </>
             ) : (
-              <div className="text-center py-8 text-muted-foreground text-xs space-y-2">
+              <div className="text-center py-8 text-muted text-xs space-y-2">
                 <p>No hyperopt history available for this bot.</p>
-                <p className="text-[10px] text-muted-foreground/60">Run hyperopt from the Backtesting page to see optimization results here.</p>
+                <p className="text-[10px] text-muted/60">Run hyperopt from the Backtesting page to see optimization results here.</p>
               </div>
             )}
           </div>
@@ -1027,9 +1027,9 @@ function DetailContent({
                 </div>
               </>
             ) : (
-              <div className="text-center py-8 text-muted-foreground text-xs space-y-2">
+              <div className="text-center py-8 text-muted text-xs space-y-2">
                 <p>FreqAI is not configured for this bot.</p>
-                <p className="text-[10px] text-muted-foreground/60">Enable FreqAI in the bot config to see model information here.</p>
+                <p className="text-[10px] text-muted/60">Enable FreqAI in the bot config to see model information here.</p>
               </div>
             )}
           </div>

@@ -26,6 +26,10 @@ interface TradeTableProps {
   onCancelOrder: (trade: FTTrade) => void;
   exitingTradeId: string | null;
   pairMarketData?: Record<string, { change24h: number; volume: number; volatility: number }>;
+  onLockPair?: (pair: string, botId: number) => void;
+  onUnlockPair?: (lockId: number, botId: number) => void;
+  spreadData?: Record<string, { spreadPct: number }>;
+  whitelistBotMap?: Map<string, number>;
 }
 
 function fmtDuration(openDate: string, closeDate?: string | null): string {
@@ -304,6 +308,10 @@ export default function TradeTable({
   onCancelOrder,
   exitingTradeId,
   pairMarketData,
+  onLockPair,
+  onUnlockPair,
+  spreadData,
+  whitelistBotMap,
 }: TradeTableProps) {
   const [activeTab, setActiveTab] = useState<TradeTab>("open");
   const [columnFilters, setColumnFilters] = useState<ColumnFilters>({});
@@ -360,10 +368,10 @@ export default function TradeTable({
   ]), [closedTrades, columnFilters]);
 
   const lockMap = useMemo(() => {
-    const m = new Map<string, { reason: string; lock_end_time: string }>();
+    const m = new Map<string, { id: number; reason: string; lock_end_time: string }>();
     if (locksData) {
       for (const lock of locksData.locks) {
-        if (lock.active) m.set(lock.pair, { reason: lock.reason, lock_end_time: lock.lock_end_time });
+        if (lock.active) m.set(lock.pair, { id: lock.id, reason: lock.reason, lock_end_time: lock.lock_end_time });
       }
     }
     return m;
@@ -712,7 +720,11 @@ export default function TradeTable({
                           <td className={`${TD} text-right ${(pairMarketData?.[row.pair]?.change24h ?? 0) >= 0 ? "text-up font-medium" : "text-down font-medium"}`}>
                             {pairMarketData?.[row.pair]?.change24h != null ? `${pairMarketData[row.pair].change24h >= 0 ? "+" : ""}${pairMarketData[row.pair].change24h.toFixed(2)}%` : "\u2014"}
                           </td>
-                          <td className={`${TD} text-right text-muted`}>{"\u2014"}</td>
+                          <td className={`${TD} text-right text-muted`}>
+                            {spreadData?.[row.pair]?.spreadPct != null
+                              ? `${spreadData[row.pair].spreadPct.toFixed(3)}%`
+                              : "—"}
+                          </td>
                           <td className={`${TD} text-right text-muted`}>
                             {pairMarketData?.[row.pair]?.volume != null ? (() => {
                               const v = pairMarketData[row.pair].volume;
@@ -738,9 +750,15 @@ export default function TradeTable({
                           </td>
                           <td className={`${TD} border-l border-white/[0.08] text-center`}>
                             {row.lock ? (
-                              <button className="bg-black l-bd hover:bg-up/20 text-muted hover:text-up px-2 py-0.5 rounded text-[10px] font-bold transition-colors">UNLOCK</button>
+                              <button onClick={() => {
+                                const botId = whitelistBotMap?.get(row.pair);
+                                if (botId && row.lock) onUnlockPair?.(row.lock.id, botId);
+                              }} className="bg-black l-bd hover:bg-up/20 text-muted hover:text-up px-2 py-0.5 rounded text-[10px] font-bold transition-colors cursor-pointer">UNLOCK</button>
                             ) : (
-                              <button className="bg-black l-bd hover:bg-down/20 text-muted hover:text-down px-2 py-0.5 rounded text-[10px] font-bold transition-colors">LOCK</button>
+                              <button onClick={() => {
+                                const botId = whitelistBotMap?.get(row.pair);
+                                if (botId) onLockPair?.(row.pair, botId);
+                              }} className="bg-black l-bd hover:bg-down/20 text-muted hover:text-down px-2 py-0.5 rounded text-[10px] font-bold transition-colors cursor-pointer">LOCK</button>
                             )}
                           </td>
                         </tr>

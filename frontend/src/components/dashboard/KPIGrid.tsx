@@ -159,7 +159,7 @@ export default function KPIGrid({
         {/* Profit Factor */}
         <div className="bg-black p-3 flex flex-col hover:bg-white/[0.04] transition-colors">
           <span className="kpi-label">Profit Factor</span>
-          <span className={`kpi-value text-base ${profitFactor != null ? "text-up" : ""}`}>
+          <span className={`kpi-value text-base ${profitFactor != null ? (profitFactor > 1 ? "text-up" : profitFactor < 1 ? "text-down" : "") : ""}`}>
             {profitFactor != null ? fmt(profitFactor, 2) : "\u2014"}
           </span>
         </div>

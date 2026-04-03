@@ -150,8 +150,8 @@ export default function AiReviewTab({ strategy: propStrategy, experimentId, onNa
     toast.success(`Viewing analysis #${row.id} from ${row.date}`);
   }, [toast]);
 
-  // Suppress unused
-  void experimentId; void onNavigateToTab; void selectedHistory; void analysisResult;
+  // Suppress unused — these are accepted props/state not yet wired to UI actions
+  void experimentId; void onNavigateToTab; void selectedHistory;
 
   return (
     <div className="h-full flex flex-col gap-3 overflow-y-auto">

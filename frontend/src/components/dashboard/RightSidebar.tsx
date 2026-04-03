@@ -19,9 +19,9 @@ import type {
 
 const LEVEL_STYLES: Record<LogLevel, string> = {
   info: "bg-primary/10 text-primary border-primary/20",
-  warning: "bg-amber-500/10 text-amber-500 border-amber-500-500/20",
-  error: "bg-rose-500/10 text-rose-500 border-rose-500/20",
-  critical: "bg-rose-500/10 text-rose-500 border-rose-500/40 font-bold",
+  warning: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+  error: "bg-down/10 text-down border-down/20",
+  critical: "bg-down/10 text-down border-down/40 font-bold",
 };
 
 function LevelBadge({ level }: { level: LogLevel }) {
@@ -44,7 +44,7 @@ function LogDetails({ details }: { details: string | null }) {
   try {
     parsed = JSON.parse(details);
   } catch {
-    /* non-blocking — plain text */
+    /* non-blocking — details is plain text, not JSON */
   }
 
   const rawDiag = parsed?.diagnosis;
@@ -58,15 +58,15 @@ function LogDetails({ details }: { details: string | null }) {
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="text-xs text-muted-foreground hover:text-muted-foreground underline"
+        className="text-xs text-muted hover:text-muted underline"
       >
         {expanded ? "Hide details" : "Show details"}
       </button>
       {expanded && (
-        <div className="mt-1 text-xs text-muted-foreground bg-muted/50 rounded p-2 border border-border">
+        <div className="mt-1 text-xs text-muted bg-white/5 rounded p-2 border border-white/10">
           {diagnosis && (
-            <div className="mb-2 p-2 bg-rose-500/10 border border-rose-500/20 rounded text-rose-500">
-              <span className="font-semibold text-rose-500">Diagnosis: </span>
+            <div className="mb-2 p-2 bg-down/10 border border-down/20 rounded text-down">
+              <span className="font-semibold text-down">Diagnosis: </span>
               {diagnosis}
             </div>
           )}
@@ -163,6 +163,10 @@ interface RightSidebarProps {
   totalFees: number | null;
   /** Total funding fees across all bots */
   fundingFees: number | null;
+  /** Average entry fee % */
+  feeOpenAvg?: number | null;
+  /** Average exit fee % */
+  feeCloseAvg?: number | null;
   /** Health data from FT API */
   healthData?: FTHealth | null;
   /** Exchange name from bot config */
@@ -184,13 +188,14 @@ export default function RightSidebar({
   aggregatedProfit,
   totalFees,
   fundingFees,
+  feeOpenAvg,
+  feeCloseAvg,
   healthData,
   exchangeName,
   loading,
-  bots: _bots = [],
+  bots = [],
   defaultBotId,
 }: RightSidebarProps) {
-  void _bots; // used for future activity log filtering
   const logEndRef = useRef<HTMLDivElement>(null);
 
   // ── FT StdOut auto-scroll ──────────────────────────────────────────
@@ -200,18 +205,13 @@ export default function RightSidebar({
     }
   }, [logsData]);
 
-  // ── LogViewer state (activity logs from orchestrator) ──────────────
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // ── Activity logs from orchestrator ─────────────────────────────────
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [activityTotal, setActivityTotal] = useState(0);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [activityLoading, setActivityLoading] = useState(false);
   const [logTab, setLogTab] = useState<"system" | "bot" | "errors">("system");
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [levelFilter, setLevelFilter] = useState<string>("");
   const [selectedBotId, setSelectedBotId] = useState<number | undefined>(defaultBotId);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [actionFilter, setActionFilter] = useState("");
   const refreshInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -243,7 +243,7 @@ export default function RightSidebar({
         setActivityTotal(data.total);
       }
     } catch {
-      /* non-blocking — viewer still renders with cached data */
+      /* non-blocking — activity log fetch failed, viewer renders with cached data */
     } finally {
       setActivityLoading(false);
     }
@@ -275,9 +275,6 @@ export default function RightSidebar({
     : null;
   const ramPct = sysinfoData ? Math.round(sysinfoData.ram_pct) : null;
 
-  // Fee calculations from aggregated profit
-  const feeOpenAvg = aggregatedProfit ? 0.04 : null; // FT default fee
-  const feeCloseAvg = aggregatedProfit ? 0.04 : null;
   const grossProfit = aggregatedProfit?.profit_closed_coin ?? null;
   const feeRatio =
     totalFees != null && grossProfit != null && grossProfit !== 0
@@ -446,7 +443,7 @@ export default function RightSidebar({
                     ? (() => {
                         const diff =
                           (Date.now() - new Date(healthData.last_process).getTime()) / 1000;
-                        return isNaN(diff) ? "N/A" : `${diff.toFixed(0)}ms`;
+                        return isNaN(diff) ? "N/A" : `${diff.toFixed(1)}s`;
                       })()
                     : loading
                       ? "..."
@@ -466,8 +463,18 @@ export default function RightSidebar({
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted">DB Sync</span>
-                <span className="text-up">OK</span>
+                <span className="text-muted">Uptime</span>
+                <span className="text-white/70">
+                  {(() => {
+                    if (!healthData?.last_process) return "—";
+                    const firstSeen = new Date(healthData.last_process).getTime();
+                    if (isNaN(firstSeen)) return "—";
+                    const uptimeMs = Date.now() - firstSeen;
+                    const days = Math.floor(uptimeMs / 86400000);
+                    const hours = Math.floor((uptimeMs % 86400000) / 3600000);
+                    return days > 0 ? `${days}d ${hours}h` : `${hours}h`;
+                  })()}
+                </span>
               </div>
             </div>
           </>
@@ -492,6 +499,55 @@ export default function RightSidebar({
               ))}
               <div ref={logEndRef} />
             </>
+          )}
+        </div>
+      </div>
+
+      {/* ── Panel 5: Activity Log ──────────────────────────────────────── */}
+      <div className="bg-surface l-bd rounded-md flex flex-col shadow-xl overflow-hidden shrink-0">
+        <div className="h-10 l-b flex items-center justify-between px-4 bg-black/40 shrink-0">
+          <span className="section-title">Activity Log</span>
+          <span className="text-[10px] text-muted font-mono">{activityTotal} entries</span>
+        </div>
+        <div className="flex gap-0 px-3 pt-2 pb-1">
+          {(["system", "bot", "errors"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setLogTab(t)}
+              className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded transition-colors cursor-pointer ${
+                logTab === t ? "bg-white/10 text-white" : "text-muted hover:text-white"
+              }`}
+            >
+              {t === "system" ? "System" : t === "bot" ? "Bot" : "Errors"}
+            </button>
+          ))}
+          {logTab === "bot" && (
+            <select
+              value={selectedBotId ?? ""}
+              onChange={(e) => setSelectedBotId(e.target.value ? Number(e.target.value) : undefined)}
+              className="ml-auto text-[10px] bg-black/40 text-muted border border-white/10 rounded px-1.5 py-0.5"
+            >
+              <option value="">All bots</option>
+              {bots.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
+          )}
+        </div>
+        <div className="flex-1 overflow-y-auto px-3 pb-3 max-h-[250px] font-mono text-[11px] leading-relaxed">
+          {activityLoading && activityLogs.length === 0 ? (
+            <div className="text-muted text-center py-4 animate-pulse">Loading...</div>
+          ) : activityLogs.length === 0 ? (
+            <div className="text-muted text-center py-4">No log entries</div>
+          ) : (
+            activityLogs.slice(0, 30).map((log) => (
+              <div key={log.id} className={`py-1.5 l-b flex gap-2 items-start ${log.level === "error" || log.level === "critical" ? "text-down" : ""}`}>
+                <span className="text-white/35 shrink-0 w-14">{fmtTime(log.created_at)}</span>
+                <span className={`shrink-0 w-12 text-[9px] font-bold uppercase ${
+                  log.level === "error" || log.level === "critical" ? "text-down" :
+                  log.level === "warning" ? "text-yellow-400" : "text-white/40"
+                }`}>{log.level}</span>
+                <span className="text-white/60 truncate">{log.action}</span>
+              </div>
+            ))
           )}
         </div>
       </div>

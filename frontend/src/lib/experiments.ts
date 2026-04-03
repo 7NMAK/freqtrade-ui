@@ -185,14 +185,13 @@ export function fmtNum(val: number | null | undefined, decimals = 2): string {
   return val.toFixed(decimals);
 }
 
-// ── Color helpers ─────────────────────────────────────────────────────────
+// ── Color helpers (re-exported from format.ts for DS compliance) ──────
+// Use profitColor from @/lib/format for text-up / text-down tokens.
+// ddColor always returns text-down since drawdown is always negative.
 
-export function profitColor(val: number | null | undefined): string {
-  if (val == null) return "text-muted-foreground";
-  return val >= 0 ? "text-emerald-500" : "text-rose-500";
-}
+export { profitColor } from "./format";
 
 export function ddColor(val: number | null | undefined): string {
-  if (val == null) return "text-muted-foreground";
-  return "text-rose-500";
+  if (val == null) return "text-muted";
+  return "text-down";
 }

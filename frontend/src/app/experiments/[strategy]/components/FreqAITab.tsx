@@ -5,6 +5,7 @@ import {
   botBacktestStart,
   botBacktestResults,
   botLogs,
+  botHyperoptRuns,
   createExperimentRun,
 } from "@/lib/api";
 import { useToast } from "@/components/ui/Toast";
@@ -44,7 +45,8 @@ export default function FreqAITab({ strategy: propStrategy, botId = 2, experimen
   const toast = useToast();
 
   // ── Form State ──────────────────────────────────────────────────
-  const [sourceHO, setSourceHO] = useState("ho147");
+  const [sourceHO, setSourceHO] = useState("");
+  const [hoOptions, setHoOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [trainStart, setTrainStart] = useState("2022-01-01");
   const [trainEnd, setTrainEnd] = useState("2023-06-30");
   const [btStart, setBtStart] = useState("2023-07-01");
@@ -94,6 +96,22 @@ export default function FreqAITab({ strategy: propStrategy, botId = 2, experimen
   const stopPolling = useCallback(() => {
     if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
   }, []);
+
+  // ── Load HO runs for source selector ───────────────────────────────
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await botHyperoptRuns(botId);
+        const runs = res.runs || [];
+        const opts = runs.map((r) => ({
+          value: r.filename,
+          label: `${r.strategy} — ${r.epochs} epochs — ${new Date(r.created_at).toLocaleDateString()}`,
+        }));
+        setHoOptions(opts);
+        if (opts.length > 0 && !sourceHO) setSourceHO(opts[0].value);
+      } catch { /* not critical */ }
+    })();
+  }, [botId, sourceHO]);
 
   // ── Extract FreqAI matrix from backtest result ────────────────────
   const extractMatrixFromResult = useCallback((data: Record<string, unknown>) => {
@@ -297,8 +315,11 @@ export default function FreqAITab({ strategy: propStrategy, botId = 2, experimen
           <div>
             <label className="builder-label">Source HO Epoch</label>
             <select className="builder-select w-full" value={sourceHO} onChange={(e) => setSourceHO(e.target.value)}>
-              <option value="ho147">HO #147 — Sharpe — +42.12%</option>
-              <option value="ho92">HO #92 — Sortino — +38.40%</option>
+              {hoOptions.length > 0 ? (
+                hoOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)
+              ) : (
+                <option value="">No hyperopt runs available</option>
+              )}
             </select>
           </div>
 

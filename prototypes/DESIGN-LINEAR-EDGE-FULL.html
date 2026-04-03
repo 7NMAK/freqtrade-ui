@@ -1055,6 +1055,7 @@
           <button onclick="switchPage('page-experiments')" class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors nav-btn hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]" title="Experiments — Backtest, Hyperopt, FreqAI"><i data-lucide="flask-conical" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">Experiments</span></button>
           <button onclick="switchPage('page-analytics')" class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors nav-btn hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]" title="Analytics — Deep performance analysis"><i data-lucide="bar-chart-3" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">Analytics</span></button>
           <button onclick="switchPage('page-ai-insights')" class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors nav-btn hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]" title="AI Insights — AI Validation Layer dashboard"><i data-lucide="sparkles" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">AI Insights</span></button>
+          <button onclick="switchPage('page-risk')" class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors nav-btn hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]" title="Risk — Kill switches, protections, pair locks"><i data-lucide="shield-alert" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">Risk</span></button>
           <button onclick="switchPage('page-strategies')" class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors nav-btn hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]" title="Strategies — Manage trading strategies"><i data-lucide="list" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">Strategies</span></button>
           <button class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]" title="System — Server health, configs, logs"><i data-lucide="settings" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">System</span></button>
       </nav>
@@ -2342,7 +2343,7 @@
                           <!-- TAB: Closed Trades -->
                           <div id="bt-trades" class="bt-tab-content flex-1 overflow-x-auto overflow-y-auto p-0">
                           <table class="w-full text-[13px] font-mono whitespace-nowrap">
-                              <thead class="sticky top-0 bg-surface z-10"><tr class="text-muted text-[11px] uppercase tracking-widest">
+                              <thead class="sticky top-0 bg-surface z-10 font-mono text-[11px] uppercase tracking-widest text-muted l-b shadow-lg"><tr>
                                   <th class="text-left px-2 py-1.5 font-semibold sortable sort-desc">Date</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Pair</th><th class="text-center px-2 py-1.5 font-semibold sortable filterable">Side</th><th class="text-right px-2 py-1.5 font-semibold sortable">Entry</th><th class="text-right px-2 py-1.5 font-semibold sortable">Exit</th><th class="text-right px-2 py-1.5 font-semibold sortable">Profit %</th><th class="text-right px-2 py-1.5 font-semibold sortable">Value</th><th class="text-right px-2 py-1.5 font-semibold sortable">Fee</th><th class="text-left px-2 py-1.5 font-semibold sortable">Duration</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Exit Reason</th>
                               </tr></thead>
                               <tbody class="divide-y divide-white/[0.05]">
@@ -2607,7 +2608,7 @@
                           </div>
                           <!-- TAB: Epoch Results — real FreqTrade output fields -->
                           <div id="ho-epochs" class="ho-tab-content flex-1 overflow-x-auto overflow-y-auto">
-                              <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-surface z-10"><tr class="text-muted text-[11px] uppercase tracking-widest">
+                              <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-surface z-10 font-mono text-[11px] uppercase tracking-widest text-muted l-b shadow-lg"><tr>
                                   <th class="text-left px-2 py-1.5 font-semibold sortable">Epoch</th><th class="text-right px-2 py-1.5 font-semibold sortable">Trades</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg Profit</th><th class="text-right px-2 py-1.5 font-semibold sortable sort-desc">Total Profit</th><th class="text-right px-2 py-1.5 font-semibold sortable">Profit $</th><th class="text-right px-2 py-1.5 font-semibold sortable">Avg Dur.</th><th class="text-right px-2 py-1.5 font-semibold sortable">Win%</th><th class="text-right px-2 py-1.5 font-semibold sortable">Max DD</th><th class="text-right px-2 py-1.5 font-semibold sortable">Objective</th>
                               </tr></thead><tbody class="divide-y divide-white/[0.05]">
                                   <tr class="hover:bg-white/[0.04] bg-up/[0.02]"><td class="px-2 py-1.5 text-up font-bold">★147</td><td class="px-2 py-1.5 text-right">142</td><td class="px-2 py-1.5 text-right text-up">+0.30%</td><td class="px-2 py-1.5 text-right text-up font-bold">+42.12%</td><td class="px-2 py-1.5 text-right text-up">+$4,212</td><td class="px-2 py-1.5 text-right text-muted">4:22:00</td><td class="px-2 py-1.5 text-right">72.4%</td><td class="px-2 py-1.5 text-right text-down">-2.11%</td><td class="px-2 py-1.5 text-right text-up font-bold">-0.15550</td></tr>
@@ -2663,7 +2664,7 @@
                           </div>
                           <!-- TAB: Compare Runs -->
                           <div id="ho-compare" class="ho-tab-content flex-1 overflow-x-auto overflow-y-auto" style="display:none">
-                              <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-surface z-10"><tr class="text-muted text-[11px] uppercase tracking-widest">
+                              <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-surface z-10 font-mono text-[11px] uppercase tracking-widest text-muted l-b shadow-lg"><tr>
                                   <th class="text-left px-2 py-1.5 font-semibold">Metric</th><th class="text-right px-2 py-1.5 font-semibold">Run #1 (Sharpe)</th><th class="text-right px-2 py-1.5 font-semibold">Run #2 (Sortino)</th><th class="text-right px-2 py-1.5 font-semibold">Run #3 (Calmar)</th><th class="text-right px-2 py-1.5 font-semibold">Δ Best</th>
                               </tr></thead><tbody class="divide-y divide-white/[0.05]">
                                   <tr class="hover:bg-white/[0.04]"><td class="px-2 py-1.5 text-muted">Total Profit</td><td class="px-2 py-1.5 text-right text-up font-bold">+42.12%</td><td class="px-2 py-1.5 text-right text-up">+38.40%</td><td class="px-2 py-1.5 text-right text-up">+35.10%</td><td class="px-2 py-1.5 text-right text-up">+3.72%</td></tr>
@@ -2678,7 +2679,7 @@
                           </div>
                           <!-- TAB: Run History -->
                           <div id="ho-history" class="ho-tab-content flex-1 overflow-x-auto overflow-y-auto" style="display:none">
-                              <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-surface z-10"><tr class="text-muted text-[11px] uppercase tracking-widest">
+                              <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-surface z-10 font-mono text-[11px] uppercase tracking-widest text-muted l-b shadow-lg"><tr>
                                   <th class="text-left px-2 py-1.5 font-semibold sortable">#</th><th class="text-left px-2 py-1.5 font-semibold sortable sort-desc">Date</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Strategy</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Loss Fn</th><th class="text-right px-2 py-1.5 font-semibold sortable">Epochs</th><th class="text-right px-2 py-1.5 font-semibold sortable">Best</th><th class="text-right px-2 py-1.5 font-semibold sortable">Profit</th><th class="text-right px-2 py-1.5 font-semibold sortable">Trades</th><th class="text-right px-2 py-1.5 font-semibold sortable">Objective</th><th class="text-center px-2 py-1.5 font-semibold">Actions</th>
                               </tr></thead><tbody class="divide-y divide-white/[0.05]">
                                   <tr class="hover:bg-white/[0.04] bg-up/[0.02]"><td class="px-2 py-1.5 text-up font-bold">★1</td><td class="px-2 py-1.5 text-muted">30.03.26 22:52</td><td class="px-2 py-1.5 text-white">AlphaTrend_V5</td><td class="px-2 py-1.5">Sharpe</td><td class="px-2 py-1.5 text-right">200</td><td class="px-2 py-1.5 text-right">#147</td><td class="px-2 py-1.5 text-right text-up font-bold">+42.1%</td><td class="px-2 py-1.5 text-right">142</td><td class="px-2 py-1.5 text-right text-up">-0.15550</td><td class="px-2 py-1.5 text-center"><button class="px-2 py-0.5 l-bd rounded text-[9px] text-muted hover:text-white hover:bg-white/5 transition-colors" title="Load results">Load</button> <button class="px-2 py-0.5 l-bd rounded text-[9px] text-down/60 hover:text-down hover:bg-down/10 transition-colors" title="Delete run">Del</button></td></tr>
@@ -2796,7 +2797,7 @@
                       <h3 class="section-title">Matrix Results</h3>
                       <div class="overflow-x-auto">
                           <table class="w-full text-[13px] font-mono whitespace-nowrap">
-                              <thead class="sticky top-0 bg-surface z-10"><tr class="text-muted text-[11px] uppercase tracking-widest">
+                              <thead class="sticky top-0 bg-surface z-10 font-mono text-[11px] uppercase tracking-widest text-muted l-b shadow-lg"><tr>
                                   <th class="text-left px-2 py-1.5 font-semibold sortable">★</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Model</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Outlier</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">PCA</th><th class="text-left px-2 py-1.5 font-semibold sortable filterable">Noise</th><th class="text-right px-2 py-1.5 font-semibold sortable sort-desc">profit_%</th><th class="text-right px-2 py-1.5 font-semibold sortable">Sharpe</th><th class="text-right px-2 py-1.5 font-semibold sortable">Max DD</th><th class="text-right px-2 py-1.5 font-semibold sortable">Trades</th><th class="text-right px-2 py-1.5 font-semibold sortable">Win%</th>
                               </tr></thead>
                               <tbody class="divide-y divide-white/[0.05]">
@@ -2949,7 +2950,7 @@
                       <div class="bg-surface l-bd rounded-md flex flex-col min-h-[200px] overflow-hidden shadow-xl">
                           <div class="h-10 l-b flex items-center px-4 bg-black/40 shrink-0"><h3 class="section-title">Training vs OOS Comparison</h3></div>
                           <div class="flex-1 overflow-y-auto">
-                          <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-surface z-10"><tr class="text-muted text-[11px] uppercase tracking-widest"><th class="text-left px-2 py-1.5 font-semibold">Metric</th><th class="text-right px-2 py-1.5 font-semibold">Training</th><th class="text-right px-2 py-1.5 font-semibold">OOS</th><th class="text-right px-2 py-1.5 font-semibold">Ratio</th><th class="text-right px-2 py-1.5 font-semibold">Threshold</th><th class="text-center px-2 py-1.5 font-semibold">Status</th></tr></thead>
+                          <table class="w-full text-[13px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-surface z-10 font-mono text-[11px] uppercase tracking-widest text-muted l-b shadow-lg"><tr><th class="text-left px-2 py-1.5 font-semibold">Metric</th><th class="text-right px-2 py-1.5 font-semibold">Training</th><th class="text-right px-2 py-1.5 font-semibold">OOS</th><th class="text-right px-2 py-1.5 font-semibold">Ratio</th><th class="text-right px-2 py-1.5 font-semibold">Threshold</th><th class="text-center px-2 py-1.5 font-semibold">Status</th></tr></thead>
                           <tbody class="divide-y divide-white/[0.05]">
                               <tr class="hover:bg-white/[0.04]"><td class="px-2 py-1.5 text-white">Profit %</td><td class="px-2 py-1.5 text-right">+42.12%</td><td class="px-2 py-1.5 text-right text-up font-bold">+31.20%</td><td class="px-2 py-1.5 text-right text-up">74.1%</td><td class="px-2 py-1.5 text-right text-muted">≥70%</td><td class="px-2 py-1.5 text-center text-up font-bold">✓</td></tr>
                               <tr class="hover:bg-white/[0.04]"><td class="px-2 py-1.5 text-white">Max DD</td><td class="px-2 py-1.5 text-right">-2.11%</td><td class="px-2 py-1.5 text-right text-down font-bold">-2.80%</td><td class="px-2 py-1.5 text-right">132.7%</td><td class="px-2 py-1.5 text-right text-muted">≤150%</td><td class="px-2 py-1.5 text-center text-up font-bold">✓</td></tr>
@@ -3212,7 +3213,7 @@
                           <div class="p-3 overflow-x-auto">
                               <table class="w-full text-[13px] font-mono whitespace-nowrap">
                                   <thead><tr class="text-muted text-[11px] uppercase tracking-widest"><th class="px-1.5 py-1 text-right font-semibold sortable sort-desc">Price</th><th class="px-1.5 py-1 text-right font-semibold sortable text-down">Bid Vol</th><th class="px-1.5 py-1 text-center font-semibold sortable">Delta</th><th class="px-1.5 py-1 text-left font-semibold sortable text-up">Ask Vol</th><th class="px-1.5 py-1 text-right font-semibold sortable">Total</th></tr></thead>
-                                  <tbody class="divide-y divide-white/[0.04]">
+                                  <tbody class="divide-y divide-white/[0.05]">
                                       <tr class="hover:bg-white/[0.04]"><td class="px-1.5 py-1 text-right text-white">67,400</td><td class="px-1.5 py-1 text-right"><span class="text-down">142</span><div class="inline-block ml-1 w-[28px] h-2 bg-down/40 rounded-sm"></div></td><td class="px-1.5 py-1 text-center text-up font-bold">+38</td><td class="px-1.5 py-1 text-left"><div class="inline-block mr-1 w-[36px] h-2 bg-up/40 rounded-sm"></div><span class="text-up">180</span></td><td class="px-1.5 py-1 text-right text-white/60">322</td></tr>
                                       <tr class="hover:bg-white/[0.04] bg-up/[0.04]"><td class="px-1.5 py-1 text-right text-white font-bold">67,350</td><td class="px-1.5 py-1 text-right"><span class="text-down">89</span><div class="inline-block ml-1 w-[18px] h-2 bg-down/40 rounded-sm"></div></td><td class="px-1.5 py-1 text-center text-up font-bold">+245</td><td class="px-1.5 py-1 text-left"><div class="inline-block mr-1 w-[67px] h-2 bg-up/60 rounded-sm"></div><span class="text-up font-bold">334</span></td><td class="px-1.5 py-1 text-right text-white">423</td></tr>
                                       <tr class="hover:bg-white/[0.04]"><td class="px-1.5 py-1 text-right text-white">67,300</td><td class="px-1.5 py-1 text-right"><span class="text-down">210</span><div class="inline-block ml-1 w-[42px] h-2 bg-down/40 rounded-sm"></div></td><td class="px-1.5 py-1 text-center text-down font-bold">-65</td><td class="px-1.5 py-1 text-left"><div class="inline-block mr-1 w-[29px] h-2 bg-up/40 rounded-sm"></div><span class="text-up">145</span></td><td class="px-1.5 py-1 text-right text-white/60">355</td></tr>
@@ -3246,7 +3247,7 @@
                               <div class="p-3">
                                   <table class="w-full text-[13px] font-mono whitespace-nowrap">
                                       <thead><tr class="text-muted text-[11px] uppercase tracking-widest"><th class="px-1.5 py-1 text-left font-semibold sortable sort-desc">Price</th><th class="px-1.5 py-1 text-right font-semibold sortable">Ratio</th><th class="px-1.5 py-1 text-left font-semibold sortable filterable">Type</th><th class="px-1.5 py-1 text-right font-semibold sortable">Vol</th></tr></thead>
-                                      <tbody class="divide-y divide-white/[0.04]">
+                                      <tbody class="divide-y divide-white/[0.05]">
                                           <tr class="bg-up/[0.06]"><td class="px-1.5 py-1 text-white">67,350</td><td class="px-1.5 py-1 text-right text-up font-bold">3.75x</td><td class="px-1.5 py-1"><span class="px-1.5 py-0.5 bg-up/12 text-up rounded text-[9px]">BUY IMB</span></td><td class="px-1.5 py-1 text-right text-white">334</td></tr>
                                           <tr class="bg-down/[0.06]"><td class="px-1.5 py-1 text-white">67,150</td><td class="px-1.5 py-1 text-right text-down font-bold">2.74x</td><td class="px-1.5 py-1"><span class="px-1.5 py-0.5 bg-down/12 text-down rounded text-[9px]">SELL IMB</span></td><td class="px-1.5 py-1 text-right text-white">312</td></tr>
                                           <tr class="bg-up/[0.06]"><td class="px-1.5 py-1 text-white">67,200</td><td class="px-1.5 py-1 text-right text-up font-bold">2.35x</td><td class="px-1.5 py-1"><span class="px-1.5 py-0.5 bg-up/12 text-up rounded text-[9px]">STACKED</span></td><td class="px-1.5 py-1 text-right text-white">223</td></tr>
@@ -3389,7 +3390,7 @@
               </div>
               <div class="overflow-x-auto">
                   <table class="w-full text-[13px] font-mono whitespace-nowrap">
-                      <thead class="sticky top-0 bg-surface l-b font-mono z-10 shadow-lg"><tr class="text-muted text-[11px] uppercase tracking-widest">
+                      <thead class="sticky top-0 bg-surface l-b font-mono z-10 shadow-lg text-[11px] uppercase tracking-widest text-muted"><tr>
                           <th class="text-left px-3 py-1.5 font-semibold">Status</th><th class="text-left px-3 py-1.5 font-semibold sortable">Trade</th><th class="text-left px-3 py-1.5 font-semibold sortable filterable">Pair</th><th class="text-left px-3 py-1.5 font-semibold sortable">FreqAI</th><th class="text-left px-3 py-1.5 font-semibold sortable">Claude</th><th class="text-left px-3 py-1.5 font-semibold sortable">Grok</th><th class="text-center px-3 py-1.5 font-semibold sortable">Combined</th><th class="text-right px-3 py-1.5 font-semibold sortable">Agree%</th><th class="text-right px-3 py-1.5 font-semibold sortable">Cost</th><th class="text-right px-3 py-1.5 font-semibold sortable sort-desc">Time</th>
                       </tr></thead>
                       <tbody class="font-mono text-white/85 divide-y divide-white/[0.05]">
@@ -3457,7 +3458,7 @@
               </div>
               <div class="overflow-x-auto">
                   <table class="w-full text-[13px] font-mono whitespace-nowrap">
-                      <thead class="sticky top-0 bg-surface l-b font-mono z-10 shadow-lg"><tr class="text-muted text-[11px] uppercase tracking-widest">
+                      <thead class="sticky top-0 bg-surface l-b font-mono z-10 shadow-lg text-[11px] uppercase tracking-widest text-muted"><tr>
                           <th class="text-left px-3 py-1.5 font-semibold filterable">Type</th><th class="text-left px-3 py-1.5 font-semibold sortable filterable">Strategy</th><th class="text-left px-3 py-1.5 font-semibold sortable filterable">Pair</th><th class="text-left px-3 py-1.5 font-semibold sortable">TF</th><th class="text-left px-3 py-1.5 font-semibold sortable">Suggestion</th><th class="text-right px-3 py-1.5 font-semibold sortable">Claude</th><th class="text-right px-3 py-1.5 font-semibold sortable">Grok</th><th class="text-right px-3 py-1.5 font-semibold sortable">Cost</th><th class="text-right px-3 py-1.5 font-semibold sortable sort-desc">Time</th>
                       </tr></thead>
                       <tbody class="font-mono text-white/85 divide-y divide-white/[0.05]">
@@ -3488,6 +3489,403 @@
                       <div class="text-[11px] text-muted font-mono">Avg paper result: <span class="font-bold text-down">-2.1%</span></div>
                       <div class="text-[11px] text-muted font-mono">Avg live result: <span class="font-bold text-down">-3.8%</span></div>
                   </div>
+              </div>
+          </div>
+
+      </div>
+
+      <!-- PAGE: RISK MANAGEMENT -->
+      <div id="page-risk" class="page-view flex-1 overflow-y-auto flex-col p-5 gap-5 bg-black">
+
+          <!-- ═══ R-1: KILL SWITCH CONTROL ═══ -->
+          <div class="rounded-lg overflow-hidden mb-5 shrink-0" style="background:linear-gradient(135deg, #111 0%, rgba(239,68,68,0.04) 100%); border:1px solid rgba(239,68,68,0.18)">
+              <div class="px-5 py-3.5 flex items-center justify-between" style="border-bottom:1px solid rgba(239,68,68,0.12)">
+                  <h3 class="section-title flex items-center gap-2"><span>🚨</span>Kill Switch Control</h3>
+                  <div class="flex items-center gap-2">
+                      <span class="text-[11px] text-muted">Last event:</span>
+                      <span class="text-[11px] text-[#f59e0b] font-bold font-mono">SOFT KILL — 2026-04-01 14:22:08</span>
+                  </div>
+              </div>
+              <div class="p-5">
+                  <!-- Big Kill Buttons -->
+                  <div class="grid grid-cols-2 gap-5 mb-5">
+                      <!-- SOFT KILL -->
+                      <button class="text-center p-6 rounded-lg cursor-pointer transition-all" style="background:rgba(245,158,11,0.08); border:2px solid rgba(245,158,11,0.22)" onmouseenter="this.style.borderColor='#f59e0b';this.style.boxShadow='0 0 24px rgba(245,158,11,0.25)'" onmouseleave="this.style.borderColor='rgba(245,158,11,0.22)';this.style.boxShadow='none'">
+                          <div class="text-[32px] mb-2">⏸️</div>
+                          <div class="text-[15px] font-bold text-[#f59e0b] mb-1">SOFT KILL</div>
+                          <div class="text-[11px] text-muted leading-relaxed">Stop Trading — no new entries.<br>Open positions remain untouched.</div>
+                          <div class="text-[10px] text-muted mt-2 font-mono">POST /api/v1/stop</div>
+                      </button>
+                      <!-- HARD KILL -->
+                      <button class="text-center p-6 rounded-lg cursor-pointer transition-all" style="background:rgba(239,68,68,0.08); border:2px solid rgba(239,68,68,0.22)" onmouseenter="this.style.borderColor='#ef4444';this.style.boxShadow='0 0 24px rgba(239,68,68,0.25)'" onmouseleave="this.style.borderColor='rgba(239,68,68,0.22)';this.style.boxShadow='none'">
+                          <div class="text-[32px] mb-2">🛑</div>
+                          <div class="text-[15px] font-bold text-[#ef4444] mb-1">EMERGENCY CLOSE ALL</div>
+                          <div class="text-[11px] text-muted leading-relaxed">Force-exit ALL positions at MARKET<br>and stop ALL bots. Nuclear option.</div>
+                          <div class="text-[10px] text-muted mt-2 font-mono">POST /api/v1/forceexit + /stop</div>
+                      </button>
+                  </div>
+                  <!-- Per-bot controls -->
+                  <div class="flex items-center gap-3 flex-wrap">
+                      <select class="builder-select text-[11px]" style="min-width:220px">
+                          <option>Select bot to kill...</option>
+                          <option>TrendFollowerV3_BTC (LIVE — running)</option>
+                          <option>TrendFollowerV3_ETH (LIVE — running)</option>
+                          <option>ScalpBot_XRP (PAPER — running)</option>
+                          <option>GridBot_SOL (LIVE — stopped)</option>
+                      </select>
+                      <button class="h-8 px-3.5 rounded-md text-[11px] font-bold uppercase tracking-wide transition-colors flex items-center gap-1.5" style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); color:#f59e0b">Soft Kill</button>
+                      <button class="h-8 px-3.5 rounded-md text-[11px] font-bold uppercase tracking-wide transition-colors flex items-center gap-1.5" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#ef4444">Hard Kill</button>
+                      <div class="ml-auto flex items-center gap-2">
+                          <div class="w-2.5 h-2.5 rounded-full bg-up" style="box-shadow:0 0 8px var(--clr-up)"></div>
+                          <div>
+                              <div class="text-[11px] font-bold text-white font-mono">3 / 4 Running</div>
+                              <div class="text-[10px] text-muted">GridBot_SOL stopped</div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <!-- ═══ R-2: HEARTBEAT MONITOR ═══ -->
+          <div class="bg-surface l-bd rounded-lg overflow-hidden mb-5 shrink-0">
+              <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40">
+                  <h3 class="section-title flex items-center gap-2"><span>💓</span>Heartbeat Monitor</h3>
+                  <span class="text-[10px] text-muted font-mono">15s refresh · 3 failures = HARD KILL</span>
+              </div>
+              <div class="p-4">
+                  <div class="grid grid-cols-4 gap-4">
+                      <!-- Bot 1: OK -->
+                      <div class="bg-black/40 l-bd rounded-lg p-4 hover:border-white/15 transition-colors">
+                          <div class="flex items-center justify-between mb-3">
+                              <div class="text-[11px] font-bold text-white">TrendFollowerV3_BTC</div>
+                              <div class="w-2.5 h-2.5 rounded-full bg-up" style="box-shadow:0 0 8px var(--clr-up)"></div>
+                          </div>
+                          <div class="flex flex-col gap-1.5">
+                              <div class="flex justify-between items-center"><span class="text-[10px] text-muted uppercase tracking-wider">Status</span><span class="text-[11px] font-bold text-up">running</span></div>
+                              <div class="flex justify-between items-center"><span class="text-[10px] text-muted uppercase tracking-wider">Health</span><span class="text-[11px] font-bold text-up">Healthy</span></div>
+                              <div class="flex justify-between items-center"><span class="text-[10px] text-muted uppercase tracking-wider">Failures</span><div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-white/10 border border-white/15"></div><div class="w-2 h-2 rounded-full bg-white/10 border border-white/15"></div><div class="w-2 h-2 rounded-full bg-white/10 border border-white/15"></div><span class="text-[11px] font-bold text-muted ml-1">0</span></div></div>
+                          </div>
+                      </div>
+                      <!-- Bot 2: OK -->
+                      <div class="bg-black/40 l-bd rounded-lg p-4 hover:border-white/15 transition-colors">
+                          <div class="flex items-center justify-between mb-3">
+                              <div class="text-[11px] font-bold text-white">TrendFollowerV3_ETH</div>
+                              <div class="w-2.5 h-2.5 rounded-full bg-up" style="box-shadow:0 0 8px var(--clr-up)"></div>
+                          </div>
+                          <div class="flex flex-col gap-1.5">
+                              <div class="flex justify-between items-center"><span class="text-[10px] text-muted uppercase tracking-wider">Status</span><span class="text-[11px] font-bold text-up">running</span></div>
+                              <div class="flex justify-between items-center"><span class="text-[10px] text-muted uppercase tracking-wider">Health</span><span class="text-[11px] font-bold text-up">Healthy</span></div>
+                              <div class="flex justify-between items-center"><span class="text-[10px] text-muted uppercase tracking-wider">Failures</span><div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-white/10 border border-white/15"></div><div class="w-2 h-2 rounded-full bg-white/10 border border-white/15"></div><div class="w-2 h-2 rounded-full bg-white/10 border border-white/15"></div><span class="text-[11px] font-bold text-muted ml-1">0</span></div></div>
+                          </div>
+                      </div>
+                      <!-- Bot 3: WARN -->
+                      <div class="bg-black/40 rounded-lg p-4 transition-colors" style="border:1px solid rgba(245,158,11,0.3)">
+                          <div class="flex items-center justify-between mb-3">
+                              <div class="text-[11px] font-bold text-white">ScalpBot_XRP</div>
+                              <div class="w-2.5 h-2.5 rounded-full" style="background:#f59e0b; box-shadow:0 0 8px #f59e0b"></div>
+                          </div>
+                          <div class="flex flex-col gap-1.5">
+                              <div class="flex justify-between items-center"><span class="text-[10px] text-muted uppercase tracking-wider">Status</span><span class="text-[11px] font-bold text-[#f59e0b]">running</span></div>
+                              <div class="flex justify-between items-center"><span class="text-[10px] text-muted uppercase tracking-wider">Health</span><span class="text-[11px] font-bold text-[#ef4444]">Unhealthy</span></div>
+                              <div class="flex justify-between items-center"><span class="text-[10px] text-muted uppercase tracking-wider">Failures</span><div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full" style="background:#f59e0b; border:1px solid #f59e0b"></div><div class="w-2 h-2 rounded-full bg-white/10 border border-white/15"></div><div class="w-2 h-2 rounded-full bg-white/10 border border-white/15"></div><span class="text-[11px] font-bold text-[#f59e0b] ml-1">1</span></div></div>
+                          </div>
+                      </div>
+                      <!-- Bot 4: FAIL -->
+                      <div class="bg-black/40 rounded-lg p-4 transition-colors" style="border:1px solid rgba(239,68,68,0.3)">
+                          <div class="flex items-center justify-between mb-3">
+                              <div class="text-[11px] font-bold text-white">GridBot_SOL</div>
+                              <div class="w-2.5 h-2.5 rounded-full animate-pulse" style="background:#ef4444; box-shadow:0 0 8px #ef4444"></div>
+                          </div>
+                          <div class="flex flex-col gap-1.5">
+                              <div class="flex justify-between items-center"><span class="text-[10px] text-muted uppercase tracking-wider">Status</span><span class="text-[11px] font-bold text-[#ef4444]">stopped</span></div>
+                              <div class="flex justify-between items-center"><span class="text-[10px] text-muted uppercase tracking-wider">Health</span><span class="text-[11px] font-bold text-[#ef4444]">Unhealthy</span></div>
+                              <div class="flex justify-between items-center"><span class="text-[10px] text-muted uppercase tracking-wider">Failures</span><div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full" style="background:#ef4444; border:1px solid #ef4444; box-shadow:0 0 4px #ef4444"></div><div class="w-2 h-2 rounded-full" style="background:#ef4444; border:1px solid #ef4444; box-shadow:0 0 4px #ef4444"></div><div class="w-2 h-2 rounded-full" style="background:#ef4444; border:1px solid #ef4444; box-shadow:0 0 4px #ef4444"></div><span class="text-[11px] font-bold text-[#ef4444] ml-1">3</span></div></div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <!-- ═══ R-3: FT PROTECTIONS STATUS ═══ -->
+          <div class="bg-surface l-bd rounded-lg overflow-hidden mb-5 shrink-0">
+              <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40">
+                  <h3 class="section-title flex items-center gap-2"><span>🔒</span>FT Protections Status</h3>
+                  <span class="text-[10px] text-muted font-mono">From bot config.json (read-only)</span>
+              </div>
+              <div class="p-4">
+                  <div class="grid grid-cols-2 gap-4">
+                      <!-- MaxDrawdown -->
+                      <div class="bg-black/40 l-bd rounded-lg p-4 hover:border-white/15 transition-colors">
+                          <div class="flex items-center justify-between mb-3">
+                              <div class="text-[12px] font-bold text-white">MaxDrawdown</div>
+                              <span class="px-2 py-0.5 bg-up/12 text-up border border-up/25 text-[9px] uppercase font-bold tracking-wider rounded-full">Active</span>
+                          </div>
+                          <div class="grid grid-cols-2 gap-1.5 mb-3">
+                              <div class="flex flex-col gap-0.5"><span class="text-[9px] text-muted uppercase tracking-wider">Max Allowed Drawdown</span><span class="text-[11px] font-bold text-muted font-mono">0.15</span></div>
+                              <div class="flex flex-col gap-0.5"><span class="text-[9px] text-muted uppercase tracking-wider">Trade Limit</span><span class="text-[11px] font-bold text-muted font-mono">1</span></div>
+                              <div class="flex flex-col gap-0.5"><span class="text-[9px] text-muted uppercase tracking-wider">Stop Duration</span><span class="text-[11px] font-bold text-muted font-mono">720</span></div>
+                              <div class="flex flex-col gap-0.5"><span class="text-[9px] text-muted uppercase tracking-wider">Lookback Period</span><span class="text-[11px] font-bold text-muted font-mono">2</span></div>
+                          </div>
+                          <div class="mt-2">
+                              <div class="flex justify-between text-[11px] text-muted mb-1"><span>Current Drawdown</span><span class="font-bold text-[#f59e0b] font-mono">12.4% / 15.0%</span></div>
+                              <div class="h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full rounded-full" style="width:82.6%; background:#f59e0b"></div></div>
+                          </div>
+                      </div>
+                      <!-- StoplossGuard -->
+                      <div class="bg-black/40 l-bd rounded-lg p-4 hover:border-white/15 transition-colors">
+                          <div class="flex items-center justify-between mb-3">
+                              <div class="text-[12px] font-bold text-white">StoplossGuard</div>
+                              <span class="px-2 py-0.5 bg-up/12 text-up border border-up/25 text-[9px] uppercase font-bold tracking-wider rounded-full">Active</span>
+                          </div>
+                          <div class="grid grid-cols-2 gap-1.5">
+                              <div class="flex flex-col gap-0.5"><span class="text-[9px] text-muted uppercase tracking-wider">Trade Limit</span><span class="text-[11px] font-bold text-muted font-mono">4</span></div>
+                              <div class="flex flex-col gap-0.5"><span class="text-[9px] text-muted uppercase tracking-wider">Stop Duration</span><span class="text-[11px] font-bold text-muted font-mono">1440</span></div>
+                              <div class="flex flex-col gap-0.5"><span class="text-[9px] text-muted uppercase tracking-wider">Lookback Period Days</span><span class="text-[11px] font-bold text-muted font-mono">1</span></div>
+                              <div class="flex flex-col gap-0.5"><span class="text-[9px] text-muted uppercase tracking-wider">Only Per Pair</span><span class="text-[11px] font-bold text-muted font-mono">false</span></div>
+                          </div>
+                      </div>
+                      <!-- CooldownPeriod -->
+                      <div class="bg-black/40 l-bd rounded-lg p-4 hover:border-white/15 transition-colors">
+                          <div class="flex items-center justify-between mb-3">
+                              <div class="text-[12px] font-bold text-white">CooldownPeriod</div>
+                              <span class="px-2 py-0.5 bg-up/12 text-up border border-up/25 text-[9px] uppercase font-bold tracking-wider rounded-full">Active</span>
+                          </div>
+                          <div class="grid grid-cols-2 gap-1.5">
+                              <div class="flex flex-col gap-0.5"><span class="text-[9px] text-muted uppercase tracking-wider">Stop Duration Candles</span><span class="text-[11px] font-bold text-muted font-mono">10</span></div>
+                              <div class="flex flex-col gap-0.5"><span class="text-[9px] text-muted uppercase tracking-wider">Trade Limit</span><span class="text-[11px] font-bold text-muted font-mono">1</span></div>
+                          </div>
+                      </div>
+                      <!-- LowProfitPairs — triggered -->
+                      <div class="bg-black/40 rounded-lg p-4 transition-colors" style="border:1px solid rgba(239,68,68,0.2)">
+                          <div class="flex items-center justify-between mb-3">
+                              <div class="text-[12px] font-bold text-white">LowProfitPairs</div>
+                              <span class="px-2 py-0.5 bg-down/12 text-down border border-down/25 text-[9px] uppercase font-bold tracking-wider rounded-full">Triggered</span>
+                          </div>
+                          <div class="grid grid-cols-2 gap-1.5 mb-3">
+                              <div class="flex flex-col gap-0.5"><span class="text-[9px] text-muted uppercase tracking-wider">Lookback Period Days</span><span class="text-[11px] font-bold text-muted font-mono">14</span></div>
+                              <div class="flex flex-col gap-0.5"><span class="text-[9px] text-muted uppercase tracking-wider">Trade Limit</span><span class="text-[11px] font-bold text-muted font-mono">1</span></div>
+                              <div class="flex flex-col gap-0.5"><span class="text-[9px] text-muted uppercase tracking-wider">Required Profit</span><span class="text-[11px] font-bold text-muted font-mono">0.01</span></div>
+                              <div class="flex flex-col gap-0.5"><span class="text-[9px] text-muted uppercase tracking-wider">Stop Duration</span><span class="text-[11px] font-bold text-muted font-mono">1440</span></div>
+                          </div>
+                          <div class="mt-2">
+                              <div class="text-[10px] text-muted mb-1.5">Flagged pairs:</div>
+                              <div class="flex flex-wrap gap-1.5">
+                                  <span class="text-[10px] font-bold text-[#f59e0b] bg-[#f59e0b]/12 border border-[#f59e0b]/20 rounded px-2 py-0.5">DOGE/USDT:USDT</span>
+                                  <span class="text-[10px] font-bold text-[#f59e0b] bg-[#f59e0b]/12 border border-[#f59e0b]/20 rounded px-2 py-0.5">SHIB/USDT:USDT</span>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <!-- ═══ R-4 + R-5: PAIR LOCKS + PORTFOLIO EXPOSURE ═══ -->
+          <div class="grid grid-cols-2 gap-5 mb-5 shrink-0">
+              <!-- R-4: Pair Locks Table -->
+              <div class="bg-surface l-bd rounded-lg overflow-hidden">
+                  <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40">
+                      <h3 class="section-title flex items-center gap-2"><span>🔐</span>Pair Locks</h3>
+                      <button class="builder-action bg-white text-black hover:bg-white/90"><i data-lucide="plus" class="w-3.5 h-3.5"></i>Lock Pair</button>
+                  </div>
+                  <div class="overflow-x-auto">
+                      <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
+                          <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
+                              <tr>
+                                  <th class="px-4 py-3 font-medium sortable filterable">Pair</th>
+                                  <th class="px-4 py-3 font-medium sortable filterable">Bot</th>
+                                  <th class="px-4 py-3 font-medium sortable sort-desc">Lock Until</th>
+                                  <th class="px-4 py-3 font-medium sortable">Reason</th>
+                                  <th class="px-4 py-3 font-medium sortable filterable">Status</th>
+                                  <th class="px-4 py-3 font-medium"></th>
+                              </tr>
+                          </thead>
+                          <tbody class="font-mono text-white/85 divide-y divide-white/[0.05]">
+                              <tr class="hover:bg-white/[0.04] transition-colors">
+                                  <td class="px-4 py-3 font-bold text-white">DOGE/USDT:USDT</td>
+                                  <td class="px-4 py-3 text-muted">TrendFollowerV3_BTC</td>
+                                  <td class="px-4 py-3 text-muted">2026-04-02 16:00:00</td>
+                                  <td class="px-4 py-3 text-muted truncate max-w-[180px]">LowProfitPairs protection</td>
+                                  <td class="px-4 py-3"><span class="px-2 py-0.5 bg-down/12 text-down border border-down/25 text-[9px] uppercase font-bold tracking-wider rounded-full">Active</span></td>
+                                  <td class="px-4 py-3"><button class="text-[11px] text-down hover:underline">Delete</button></td>
+                              </tr>
+                              <tr class="hover:bg-white/[0.04] transition-colors">
+                                  <td class="px-4 py-3 font-bold text-white">SHIB/USDT:USDT</td>
+                                  <td class="px-4 py-3 text-muted">TrendFollowerV3_BTC</td>
+                                  <td class="px-4 py-3 text-muted">2026-04-02 18:30:00</td>
+                                  <td class="px-4 py-3 text-muted truncate max-w-[180px]">LowProfitPairs protection</td>
+                                  <td class="px-4 py-3"><span class="px-2 py-0.5 bg-down/12 text-down border border-down/25 text-[9px] uppercase font-bold tracking-wider rounded-full">Active</span></td>
+                                  <td class="px-4 py-3"><button class="text-[11px] text-down hover:underline">Delete</button></td>
+                              </tr>
+                              <tr class="hover:bg-white/[0.04] transition-colors">
+                                  <td class="px-4 py-3 font-bold text-white/50">BTC/USDT:USDT</td>
+                                  <td class="px-4 py-3 text-muted">ScalpBot_XRP</td>
+                                  <td class="px-4 py-3 text-muted">2026-04-01 08:00:00</td>
+                                  <td class="px-4 py-3 text-muted truncate max-w-[180px]">Manual lock from Risk page</td>
+                                  <td class="px-4 py-3"><span class="px-2 py-0.5 bg-white/5 text-muted text-[9px] uppercase font-bold tracking-wider rounded-full">Expired</span></td>
+                                  <td class="px-4 py-3"></td>
+                              </tr>
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+
+              <!-- R-5: Portfolio Exposure -->
+              <div class="bg-surface l-bd rounded-lg overflow-hidden">
+                  <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40">
+                      <h3 class="section-title flex items-center gap-2"><span>💰</span>Portfolio Exposure (Cross-Bot)</h3>
+                      <span class="text-[10px] text-muted font-mono">Aggregated from all bots</span>
+                  </div>
+                  <div class="p-4">
+                      <div class="flex items-baseline gap-2 mb-4">
+                          <div class="kpi-value text-2xl text-white">$12,450.28</div>
+                          <div class="kpi-label" style="margin-bottom:0">Total across 4 bots</div>
+                      </div>
+                      <div class="flex flex-col gap-3">
+                          <!-- Bot 1 -->
+                          <div class="flex items-center gap-3">
+                              <div class="text-[11px] font-bold min-w-[130px] text-white truncate">TrendFollowerV3_BTC</div>
+                              <div class="flex-1 h-4 bg-white/10 rounded overflow-hidden"><div class="h-full rounded" style="width:52%; background:linear-gradient(90deg, #22d3ee, rgba(34,211,238,0.5))"></div></div>
+                              <div class="text-[11px] font-bold min-w-[75px] text-right text-white font-mono">$6,480.14</div>
+                              <div class="text-[11px] min-w-[40px] text-right text-muted font-mono">52.0%</div>
+                          </div>
+                          <!-- Bot 2 -->
+                          <div class="flex items-center gap-3">
+                              <div class="text-[11px] font-bold min-w-[130px] text-white truncate">TrendFollowerV3_ETH</div>
+                              <div class="flex-1 h-4 bg-white/10 rounded overflow-hidden"><div class="h-full rounded" style="width:28%; background:linear-gradient(90deg, #22d3ee, rgba(34,211,238,0.5))"></div></div>
+                              <div class="text-[11px] font-bold min-w-[75px] text-right text-white font-mono">$3,486.08</div>
+                              <div class="text-[11px] min-w-[40px] text-right text-muted font-mono">28.0%</div>
+                          </div>
+                          <!-- Bot 3 -->
+                          <div class="flex items-center gap-3">
+                              <div class="text-[11px] font-bold min-w-[130px] text-white truncate">ScalpBot_XRP</div>
+                              <div class="flex-1 h-4 bg-white/10 rounded overflow-hidden"><div class="h-full rounded" style="width:14%; background:linear-gradient(90deg, #22d3ee, rgba(34,211,238,0.5))"></div></div>
+                              <div class="text-[11px] font-bold min-w-[75px] text-right text-white font-mono">$1,743.04</div>
+                              <div class="text-[11px] min-w-[40px] text-right text-muted font-mono">14.0%</div>
+                          </div>
+                          <!-- Bot 4 -->
+                          <div class="flex items-center gap-3">
+                              <div class="text-[11px] font-bold min-w-[130px] text-white truncate">GridBot_SOL</div>
+                              <div class="flex-1 h-4 bg-white/10 rounded overflow-hidden"><div class="h-full rounded" style="width:6%; background:linear-gradient(90deg, #22d3ee, rgba(34,211,238,0.5))"></div></div>
+                              <div class="text-[11px] font-bold min-w-[75px] text-right text-white font-mono">$741.02</div>
+                              <div class="text-[11px] min-w-[40px] text-right text-muted font-mono">6.0%</div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <!-- ═══ R-6: RISK EVENTS LOG ═══ -->
+          <div class="bg-surface l-bd rounded-lg overflow-hidden mb-5 shrink-0">
+              <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40">
+                  <h3 class="section-title flex items-center gap-2"><span>📋</span>Risk Events Log (Immutable Audit Trail)</h3>
+                  <span class="text-[10px] text-muted font-mono">7 events total</span>
+              </div>
+              <div class="overflow-x-auto">
+                  <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
+                      <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
+                          <tr>
+                              <th class="px-4 py-3 font-medium sortable sort-desc">Timestamp</th>
+                              <th class="px-4 py-3 font-medium sortable filterable">Bot ID</th>
+                              <th class="px-4 py-3 font-medium sortable filterable">Kill Type</th>
+                              <th class="px-4 py-3 font-medium sortable filterable">Trigger</th>
+                              <th class="px-4 py-3 font-medium sortable">Reason</th>
+                              <th class="px-4 py-3 font-medium sortable filterable">Triggered By</th>
+                          </tr>
+                      </thead>
+                      <tbody class="font-mono text-white/85 divide-y divide-white/[0.05]">
+                          <tr class="hover:bg-white/[0.04] transition-colors">
+                              <td class="px-4 py-3 text-muted">2026-04-02 14:22:08</td>
+                              <td class="px-4 py-3 text-muted">ALL</td>
+                              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-[#f59e0b]/12 text-[#f59e0b] border border-[#f59e0b]/20 text-[9px] uppercase font-bold tracking-wider rounded">SOFT KILL</span></td>
+                              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-blue-500/12 text-blue-400 border border-blue-500/20 text-[9px] uppercase font-bold tracking-wider rounded">MANUAL</span></td>
+                              <td class="px-4 py-3 text-muted truncate max-w-[240px]">Manual SOFT KILL from Risk page</td>
+                              <td class="px-4 py-3 text-muted">admin</td>
+                          </tr>
+                          <tr class="hover:bg-white/[0.04] transition-colors">
+                              <td class="px-4 py-3 text-muted">2026-04-01 22:18:43</td>
+                              <td class="px-4 py-3 text-muted">Bot 4</td>
+                              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-[#ef4444]/12 text-[#ef4444] border border-[#ef4444]/20 text-[9px] uppercase font-bold tracking-wider rounded">HARD KILL</span></td>
+                              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-purple-500/12 text-purple-400 border border-purple-500/20 text-[9px] uppercase font-bold tracking-wider rounded">HEARTBEAT FAILURE</span></td>
+                              <td class="px-4 py-3 text-muted truncate max-w-[240px]">3 consecutive heartbeat failures</td>
+                              <td class="px-4 py-3 text-muted">system</td>
+                          </tr>
+                          <tr class="hover:bg-white/[0.04] transition-colors">
+                              <td class="px-4 py-3 text-muted">2026-03-31 09:45:12</td>
+                              <td class="px-4 py-3 text-muted">Bot 1</td>
+                              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-[#f59e0b]/12 text-[#f59e0b] border border-[#f59e0b]/20 text-[9px] uppercase font-bold tracking-wider rounded">SOFT KILL</span></td>
+                              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-cyan-500/12 text-cyan-400 border border-cyan-500/20 text-[9px] uppercase font-bold tracking-wider rounded">DRAWDOWN LIMIT</span></td>
+                              <td class="px-4 py-3 text-muted truncate max-w-[240px]">Drawdown exceeded 15% threshold</td>
+                              <td class="px-4 py-3 text-muted">system</td>
+                          </tr>
+                          <tr class="hover:bg-white/[0.04] transition-colors">
+                              <td class="px-4 py-3 text-muted">2026-03-30 16:30:00</td>
+                              <td class="px-4 py-3 text-muted">ALL</td>
+                              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-[#ef4444]/12 text-[#ef4444] border border-[#ef4444]/20 text-[9px] uppercase font-bold tracking-wider rounded">HARD KILL</span></td>
+                              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-blue-500/12 text-blue-400 border border-blue-500/20 text-[9px] uppercase font-bold tracking-wider rounded">MANUAL</span></td>
+                              <td class="px-4 py-3 text-muted truncate max-w-[240px]">Emergency HARD KILL from Risk page</td>
+                              <td class="px-4 py-3 text-muted">admin</td>
+                          </tr>
+                          <tr class="hover:bg-white/[0.04] transition-colors">
+                              <td class="px-4 py-3 text-muted">2026-03-29 11:12:55</td>
+                              <td class="px-4 py-3 text-muted">Bot 3</td>
+                              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-[#f59e0b]/12 text-[#f59e0b] border border-[#f59e0b]/20 text-[9px] uppercase font-bold tracking-wider rounded">SOFT KILL</span></td>
+                              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-blue-500/12 text-blue-400 border border-blue-500/20 text-[9px] uppercase font-bold tracking-wider rounded">MANUAL</span></td>
+                              <td class="px-4 py-3 text-muted truncate max-w-[240px]">Manual kill — XRP flash crash</td>
+                              <td class="px-4 py-3 text-muted">admin</td>
+                          </tr>
+                      </tbody>
+                  </table>
+              </div>
+          </div>
+
+          <!-- ═══ R-7: CROSS-BOT PAIR OVERLAP MATRIX ═══ -->
+          <div class="bg-surface l-bd rounded-lg overflow-hidden mb-5 shrink-0">
+              <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40">
+                  <h3 class="section-title flex items-center gap-2"><span>🔗</span>Cross-Bot Pair Overlap</h3>
+                  <span class="text-[10px] text-muted font-mono">Shared pairs between bots</span>
+              </div>
+              <div class="overflow-x-auto">
+                  <table class="w-full border-collapse whitespace-nowrap text-[13px]">
+                      <thead class="bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted shadow-lg">
+                          <tr>
+                              <th class="text-left px-4 py-3 font-medium"></th>
+                              <th class="text-center px-4 py-3 font-medium">TF_V3_BTC</th>
+                              <th class="text-center px-4 py-3 font-medium">TF_V3_ETH</th>
+                              <th class="text-center px-4 py-3 font-medium">Scalp_XRP</th>
+                              <th class="text-center px-4 py-3 font-medium">Grid_SOL</th>
+                          </tr>
+                      </thead>
+                      <tbody class="font-mono text-white/85 divide-y divide-white/[0.05]">
+                          <tr class="hover:bg-white/[0.04] transition-colors">
+                              <td class="px-4 py-3 font-bold text-white l-r">TF_V3_BTC</td>
+                              <td class="px-4 py-3 text-center text-muted" style="background:rgba(255,255,255,0.015)">5 pairs</td>
+                              <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 bg-[#f59e0b]/12 text-[#f59e0b] border border-[#f59e0b]/20 rounded text-[10px] font-bold" title="BTC/USDT, ETH/USDT, SOL/USDT">3 overlap</span></td>
+                              <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 bg-[#f59e0b]/12 text-[#f59e0b] border border-[#f59e0b]/20 rounded text-[10px] font-bold" title="BTC/USDT">1 overlap</span></td>
+                              <td class="px-4 py-3 text-center text-muted">0</td>
+                          </tr>
+                          <tr class="hover:bg-white/[0.04] transition-colors">
+                              <td class="px-4 py-3 font-bold text-white l-r">TF_V3_ETH</td>
+                              <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 bg-[#f59e0b]/12 text-[#f59e0b] border border-[#f59e0b]/20 rounded text-[10px] font-bold">3 overlap</span></td>
+                              <td class="px-4 py-3 text-center text-muted" style="background:rgba(255,255,255,0.015)">4 pairs</td>
+                              <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 bg-[#f59e0b]/12 text-[#f59e0b] border border-[#f59e0b]/20 rounded text-[10px] font-bold">1 overlap</span></td>
+                              <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 bg-[#f59e0b]/12 text-[#f59e0b] border border-[#f59e0b]/20 rounded text-[10px] font-bold">1 overlap</span></td>
+                          </tr>
+                          <tr class="hover:bg-white/[0.04] transition-colors">
+                              <td class="px-4 py-3 font-bold text-white l-r">Scalp_XRP</td>
+                              <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 bg-[#f59e0b]/12 text-[#f59e0b] border border-[#f59e0b]/20 rounded text-[10px] font-bold">1 overlap</span></td>
+                              <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 bg-[#f59e0b]/12 text-[#f59e0b] border border-[#f59e0b]/20 rounded text-[10px] font-bold">1 overlap</span></td>
+                              <td class="px-4 py-3 text-center text-muted" style="background:rgba(255,255,255,0.015)">3 pairs</td>
+                              <td class="px-4 py-3 text-center text-muted">0</td>
+                          </tr>
+                          <tr class="hover:bg-white/[0.04] transition-colors">
+                              <td class="px-4 py-3 font-bold text-white l-r">Grid_SOL</td>
+                              <td class="px-4 py-3 text-center text-muted">0</td>
+                              <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 bg-[#f59e0b]/12 text-[#f59e0b] border border-[#f59e0b]/20 rounded text-[10px] font-bold">1 overlap</span></td>
+                              <td class="px-4 py-3 text-center text-muted">0</td>
+                              <td class="px-4 py-3 text-center text-muted" style="background:rgba(255,255,255,0.015)">2 pairs</td>
+                          </tr>
+                      </tbody>
+                  </table>
               </div>
           </div>
 
@@ -4253,7 +4651,7 @@
                   <div>
                     <label class="builder-label">Minimal ROI <span class="normal-case tracking-normal font-normal text-muted">— Return targets at minutes elapsed</span></label>
                     <div class="builder-card overflow-hidden" style="padding:0">
-                      <table class="w-full" style="border-collapse:collapse">
+                      <table class="w-full text-[13px]" style="border-collapse:collapse">
                         <thead>
                           <tr class="l-b">
                             <th class="text-left px-3 py-2 text-[11px] text-muted uppercase tracking-widest font-bold">Minutes</th>
@@ -4342,7 +4740,7 @@
                   <div>
                     <label class="builder-label">Order Types <span class="normal-case tracking-normal font-normal text-muted">— market or limit for each order type</span></label>
                     <div class="builder-card overflow-hidden" style="padding:0">
-                      <table class="w-full" style="border-collapse:collapse">
+                      <table class="w-full text-[13px]" style="border-collapse:collapse">
                         <thead><tr class="l-b"><th class="text-left px-3 py-2 text-[11px] text-muted uppercase tracking-widest font-bold">Order Type</th><th class="text-left px-3 py-2 text-[11px] text-muted uppercase tracking-widest font-bold">Value</th></tr></thead>
                         <tbody>
                           <tr class="l-b"><td class="px-3 py-1.5 text-[11px] text-muted font-mono">entry</td><td class="px-3 py-1.5"><select class="builder-select" style="height:28px;font-size:11px"><option selected>market</option><option>limit</option></select></td></tr>
@@ -4566,7 +4964,8 @@
             'page-strategies': 'Strategy Management',
             'page-builder': 'Strategy Builder',
             'page-analytics': 'Analytics',
-            'page-ai-insights': 'AI Insights'
+            'page-ai-insights': 'AI Insights',
+            'page-risk': 'Risk Management'
         }[pageId] || pageId;
         setTimeout(() => lucide.createIcons(), 50);
         

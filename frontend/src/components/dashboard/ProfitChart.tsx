@@ -297,9 +297,9 @@ export default function ProfitChart({
         </div>
         {distribution.length > 0 && (
           <div className="flex justify-between text-[9px] font-mono text-white/25 px-5 pb-2">
-            <span>{dailyData.length > 0 ? fmt(Math.min(...dailyData.map((d) => d.abs_profit)), 2) : "-0.02"}</span>
+            <span>{dailyData.length > 0 ? fmt(Math.min(...dailyData.map((d) => d.abs_profit)), 2) : "\u2014"}</span>
             <span>0</span>
-            <span>+{dailyData.length > 0 ? fmt(Math.max(...dailyData.map((d) => d.abs_profit)), 2) : "0.01"}</span>
+            <span>+{dailyData.length > 0 ? fmt(Math.max(...dailyData.map((d) => d.abs_profit)), 2) : "\u2014"}</span>
           </div>
         )}
         <div className="px-5 pb-4 grid grid-cols-2 gap-4">

@@ -77,7 +77,7 @@ export default function ValidationTab({ strategy: propStrategy, botId = 2, exper
 
   // ── Form State ──────────────────────────────────────────────────
   const [sourceTest, setSourceTest] = useState("bt1");
-  const [verificationName, setVerificationName] = useState("OOS verify BT #1");
+  const [verificationName, setVerificationName] = useState("OOS Verification");
   const [oosStart, setOosStart] = useState("2025-01-01");
   const [oosEnd, setOosEnd] = useState("2025-06-01");
   const [minProfit, setMinProfit] = useState(70);
@@ -101,7 +101,8 @@ export default function ValidationTab({ strategy: propStrategy, botId = 2, exper
   const [completedChecks, setCompletedChecks] = useState(0);
   const [totalChecks, setTotalChecks] = useState(0);
   const [verdict, setVerdict] = useState<"PASS" | "FAIL" | null>(null);
-  const [sourceOptions, setSourceOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [sourceOptions, setSourceOptions] = useState<Array<{ value: string; label: string; profitPct: number }>>([]);
+  const [trainingProfit, setTrainingProfit] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const logEndRef = useRef<HTMLDivElement>(null);
 
@@ -130,10 +131,12 @@ export default function ValidationTab({ strategy: propStrategy, botId = 2, exper
           .map((r) => ({
             value: String(r.id),
             label: `${r.run_type.toUpperCase()} #${r.id} — ${r.profit_pct != null ? `+${(r.profit_pct).toFixed(1)}%` : "—"}, ${r.total_trades ?? 0} trades`,
+            profitPct: r.profit_pct ?? 0,
           }));
         if (options.length > 0) {
           setSourceOptions(options);
           setSourceTest(options[0].value);
+          setTrainingProfit(options[0].profitPct);
         }
       } catch { /* not critical */ }
     })();
@@ -234,7 +237,7 @@ export default function ValidationTab({ strategy: propStrategy, botId = 2, exper
 
                 const oos: OOSResult = { profitPct, profitAbs, trades, winRate, sharpe, maxDD: maxDDVal, ratio: 0 };
                 setOosResult(oos);
-                setComparisonRows(buildComparison(42.1, oos)); // TODO: get real training profit from source test
+                setComparisonRows(buildComparison(trainingProfit, oos));
 
                 addLog("INFO", `[1/${checks}] OOS Backtest — ${profitPct > 0 ? "PASS" : "FAIL"} — +${profitPct.toFixed(1)}%, ${trades} trades`);
                 if (profitPct <= 0) allPassed = false;
@@ -362,7 +365,7 @@ export default function ValidationTab({ strategy: propStrategy, botId = 2, exper
   // ── Reset ─────────────────────────────────────────────────────────
   const handleReset = useCallback(() => {
     setSourceTest("bt1");
-    setVerificationName("OOS verify BT #1");
+    setVerificationName("OOS Verification");
     setOosStart("2025-01-01");
     setOosEnd("2025-06-01");
     setMinProfit(70);
@@ -400,8 +403,7 @@ export default function ValidationTab({ strategy: propStrategy, botId = 2, exper
       ? `Complete — ${completedChecks}/${totalChecks} checks`
       : "Idle";
 
-  // Suppress unused
-  void sourceTest; void verificationName; void sourceOptions;
+
 
   return (
     <div className="h-full flex flex-row gap-3">
@@ -417,15 +419,15 @@ export default function ValidationTab({ strategy: propStrategy, botId = 2, exper
           {/* 1. Source Test */}
           <div>
             <label className="builder-label">Source Test</label>
-            <select className="builder-select w-full" value={sourceTest} onChange={(e) => setSourceTest(e.target.value)}>
+            <select className="builder-select w-full" value={sourceTest} onChange={(e) => {
+              setSourceTest(e.target.value);
+              const opt = sourceOptions.find((o) => o.value === e.target.value);
+              if (opt) setTrainingProfit(opt.profitPct);
+            }}>
               {sourceOptions.length > 0 ? (
                 sourceOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)
               ) : (
-                <>
-                  <option value="bt1">BT #1 — +42.12%, HO #147</option>
-                  <option value="bt2">BT #2 — +21.4%</option>
-                  <option value="fai">FAI — LightGBM-R — +52.4%</option>
-                </>
+                <option value="">No completed runs — run a backtest first</option>
               )}
             </select>
           </div>

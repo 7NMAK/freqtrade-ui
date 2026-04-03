@@ -210,9 +210,9 @@ export default function RightSidebar({
   const [activityTotal, setActivityTotal] = useState(0);
   const [activityLoading, setActivityLoading] = useState(false);
   const [logTab, setLogTab] = useState<"system" | "bot" | "errors">("system");
-  const [levelFilter, _setLevelFilter] = useState<string>("");
+  const levelFilter = "";
   const [selectedBotId, setSelectedBotId] = useState<number | undefined>(defaultBotId);
-  const [actionFilter, _setActionFilter] = useState("");
+  const actionFilter = "";
   const refreshInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchActivityLogs = useCallback(async () => {

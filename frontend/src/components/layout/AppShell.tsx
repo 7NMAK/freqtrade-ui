@@ -6,7 +6,7 @@ import Header from "./Header";
 import AuthGuard from "@/lib/AuthGuard";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
-const SIDEBAR_COLLAPSED_KEY = "sidebar_collapsed";
+const SIDEBAR_COLLAPSED_KEY = "sidebar_collapsed_v2";
 
 interface AppShellProps {
   title: string;
@@ -16,11 +16,19 @@ interface AppShellProps {
 export default function AppShell({ title, children }: AppShellProps) {
   const [collapsed, setCollapsed] = useState(true);
 
-  // Restore collapsed state from localStorage on mount (default: collapsed per DS spec)
+  // DS v1.4: sidebar defaults to collapsed (56px). Only restore expanded state if user explicitly expanded.
+  // On first ever load, there's no key → stays collapsed.
   useEffect(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
-      if (saved === "false") setCollapsed(false);
+      // Only expand if explicitly saved as "false" (user clicked expand)
+      if (saved === "false") {
+        setCollapsed(false);
+      }
+      // If no saved value exists, ensure default collapsed is persisted
+      if (saved === null) {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, "true");
+      }
     }
   }, []);
 

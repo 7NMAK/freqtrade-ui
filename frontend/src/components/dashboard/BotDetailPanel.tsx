@@ -149,15 +149,24 @@ export default function BotDetailPanel({
       />
 
       {/* Drawer Panel — ds_bot_drawer.md §30A */}
+      {/* Responsive drawer-left CSS variable — matches HTML prototype breakpoints */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        :root { --drawer-left: 680px; }
+        @media (max-width: 1440px) { :root { --drawer-left: 600px; } }
+        @media (max-width: 1280px) { :root { --drawer-left: 500px; } }
+        @media (max-width: 1024px) { :root { --drawer-left: 0px; } }
+      `}} />
       <div
-        className="fixed top-0 bottom-0 right-0 z-[60] flex flex-col overflow-hidden"
+        className="fixed top-0 bottom-0 z-[60] flex flex-col overflow-hidden"
         style={{
-          width: "min(560px, 90vw)",
+          left: "var(--drawer-left)",
+          right: 0,
+          width: "auto",
           background: "#0C0C0C",
           borderLeft: "1px solid rgba(255,255,255,0.10)",
           boxShadow: "-10px 0 40px rgba(0,0,0,0.85)",
           transform: isOpen ? "translateX(0)" : "translateX(100%)",
-          transition: "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+          transition: "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), left 0.25s ease",
         }}
       >
         {/* Header — ds_bot_drawer.md §30B */}
@@ -304,7 +313,7 @@ function DetailContent({
   healthData: FTHealth | null;
 }) {
   // DS v1.4 §6 section-title + §30E/F stats row tokens
-  const sectionTitle = "kpi-label mb-2";
+  const sectionTitle = "section-title mb-2";
   const row = "flex justify-between py-1.5";
   const key = "text-[12px] font-mono text-muted";
   const val = "text-[12px] font-mono font-bold text-white text-right";
@@ -399,6 +408,30 @@ function DetailContent({
               )}
             </div>
           )}
+          {/* Day/Week/Month Summary — matching HTML prototype line 612-625 */}
+          {(() => {
+            const now = Date.now();
+            const dayMs = 86400000;
+            const todayProfit = closedTrades.filter(t => t.close_date && (now - new Date(t.close_date).getTime()) < dayMs).reduce((s, t) => s + (t.close_profit_abs ?? 0), 0);
+            const weekProfit = closedTrades.filter(t => t.close_date && (now - new Date(t.close_date).getTime()) < 7 * dayMs).reduce((s, t) => s + (t.close_profit_abs ?? 0), 0);
+            const monthProfit = closedTrades.filter(t => t.close_date && (now - new Date(t.close_date).getTime()) < 30 * dayMs).reduce((s, t) => s + (t.close_profit_abs ?? 0), 0);
+            return (
+              <div className="grid grid-cols-3 gap-2.5">
+                <div className="bg-surface p-3 l-bd rounded text-center">
+                  <div className="kpi-label">Today</div>
+                  <div className={`font-mono font-bold text-sm ${profitColor(todayProfit)}`}>{fmtMoney(todayProfit)}</div>
+                </div>
+                <div className="bg-surface p-3 l-bd rounded text-center">
+                  <div className="kpi-label">This Week</div>
+                  <div className={`font-mono font-bold text-sm ${profitColor(weekProfit)}`}>{fmtMoney(weekProfit)}</div>
+                </div>
+                <div className="bg-surface p-3 l-bd rounded text-center">
+                  <div className="kpi-label">This Month</div>
+                  <div className={`font-mono font-bold text-sm ${profitColor(monthProfit)}`}>{fmtMoney(monthProfit)}</div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       );
     }
@@ -409,7 +442,7 @@ function DetailContent({
         <div className="space-y-6">
           {/* Open Trades */}
           <div>
-            <h3 className={`${sectionTitle} flex items-center gap-2`}>Open Positions <span className="text-muted/30">({openTrades.length})</span></h3>
+            <h3 className={`${sectionTitle} flex items-center gap-2`}>Open Positions <span className="text-white/30">({openTrades.length})</span></h3>
             {openTrades.length === 0 ? (
               <div className="text-center py-6 text-muted text-xs">No open trades</div>
             ) : (
@@ -417,19 +450,20 @@ function DetailContent({
                 <table className="w-full text-[13px] font-mono">
                   <thead className="text-muted text-[11px] uppercase tracking-widest">
                     <tr>
-                      <th className="text-left py-1.5 px-1 font-medium">Pair</th>
-                      <th className="text-left py-1.5 px-1 font-medium">Side</th>
-                      <th className="text-right py-1.5 px-1 font-medium">Lev</th>
-                      <th className="text-right py-1.5 px-1 font-medium">Entry</th>
-                      <th className="text-right py-1.5 px-1 font-medium">Current</th>
-                      <th className="text-right py-1.5 px-1 font-medium">Stake</th>
-                      <th className="text-right py-1.5 px-1 font-medium">P&L</th>
-                      <th className="text-right py-1.5 px-1 font-medium">P&L %</th>
-                      <th className="text-right py-1.5 px-1 font-medium">Duration</th>
-                      <th className="text-left py-1.5 px-1 font-medium">Enter Tag</th>
+                      <th className="text-left py-1.5 px-1 font-semibold">Pair</th>
+                      <th className="text-left py-1.5 px-1 font-semibold">Side</th>
+                      <th className="text-right py-1.5 px-1 font-semibold">Leverage</th>
+                      <th className="text-right py-1.5 px-1 font-semibold">Entry</th>
+                      <th className="text-right py-1.5 px-1 font-semibold">Current</th>
+                      <th className="text-right py-1.5 px-1 font-semibold">Stake</th>
+                      <th className="text-right py-1.5 px-1 font-semibold">P&L</th>
+                      <th className="text-right py-1.5 px-1 font-semibold">P&L %</th>
+                      <th className="text-right py-1.5 px-1 font-semibold">Duration</th>
+                      <th className="text-left py-1.5 px-1 font-semibold">Enter Tag</th>
+                      <th className="text-right py-1.5 px-1 font-semibold">SL</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border/30">
+                  <tbody className="divide-y divide-white/[0.05]">
                     {openTrades.map((t) => {
                       const pnl = t.current_profit_abs ?? 0;
                       const pct = t.current_profit != null ? t.current_profit * 100 : null;
@@ -437,6 +471,7 @@ function DetailContent({
                       const durH = Math.floor(ms / 3600000);
                       const durM = Math.floor((ms % 3600000) / 60000);
                       const durStr = durH > 0 ? `${durH}h${durM.toString().padStart(2, "0")}m` : `${durM}m`;
+                      const slPct = t.stop_loss_pct != null ? t.stop_loss_pct : null;
                       return (
                         <tr key={t.trade_id} className="hover:bg-white/[0.04]">
                           <td className="py-1.5 px-1 text-white font-medium">{t.pair}</td>
@@ -449,6 +484,7 @@ function DetailContent({
                           <td className={`py-1.5 px-1 text-right ${profitColor(pct)}`}>{pct != null ? `${pct >= 0 ? "+" : ""}${fmt(pct, 2)}%` : "—"}</td>
                           <td className="py-1.5 px-1 text-right text-muted">{durStr}</td>
                           <td className="py-1.5 px-1 text-muted">{t.enter_tag ?? "—"}</td>
+                          <td className="py-1.5 px-1 text-right text-down">{slPct != null ? `${fmt(slPct, 0)}%` : "—"}</td>
                         </tr>
                       );
                     })}
@@ -460,7 +496,7 @@ function DetailContent({
 
           {/* Closed Trades */}
           <div>
-            <h3 className={`${sectionTitle} flex items-center gap-2`}>Closed Trades <span className="text-muted/30">(last 10)</span></h3>
+            <h3 className={`${sectionTitle} flex items-center gap-2`}>Closed Trades <span className="text-white/30">(last 10)</span></h3>
             {closedTrades.length === 0 ? (
               <div className="text-center py-6 text-muted text-xs">No closed trades</div>
             ) : (
@@ -468,20 +504,20 @@ function DetailContent({
                 <table className="w-full text-[13px] font-mono">
                   <thead className="text-muted text-[11px] uppercase tracking-widest">
                     <tr>
-                      <th className="text-left py-1.5 px-1 font-medium">Pair</th>
-                      <th className="text-left py-1.5 px-1 font-medium">Side</th>
-                      <th className="text-right py-1.5 px-1 font-medium">Lev</th>
-                      <th className="text-right py-1.5 px-1 font-medium">Entry</th>
-                      <th className="text-right py-1.5 px-1 font-medium">Exit</th>
-                      <th className="text-right py-1.5 px-1 font-medium">Stake</th>
-                      <th className="text-right py-1.5 px-1 font-medium">P&L</th>
-                      <th className="text-right py-1.5 px-1 font-medium">P&L %</th>
-                      <th className="text-right py-1.5 px-1 font-medium">Duration</th>
-                      <th className="text-left py-1.5 px-1 font-medium">Enter Tag</th>
-                      <th className="text-left py-1.5 px-1 font-medium">Exit Reason</th>
+                      <th className="text-left py-1.5 px-1 font-semibold">Pair</th>
+                      <th className="text-left py-1.5 px-1 font-semibold">Side</th>
+                      <th className="text-right py-1.5 px-1 font-semibold">Lev</th>
+                      <th className="text-right py-1.5 px-1 font-semibold">Entry</th>
+                      <th className="text-right py-1.5 px-1 font-semibold">Exit</th>
+                      <th className="text-right py-1.5 px-1 font-semibold">Stake</th>
+                      <th className="text-right py-1.5 px-1 font-semibold">P&L</th>
+                      <th className="text-right py-1.5 px-1 font-semibold">P&L %</th>
+                      <th className="text-right py-1.5 px-1 font-semibold">Duration</th>
+                      <th className="text-left py-1.5 px-1 font-semibold">Enter Tag</th>
+                      <th className="text-left py-1.5 px-1 font-semibold">Exit Reason</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border/30">
+                  <tbody className="divide-y divide-white/[0.05]">
                     {closedTrades.slice(0, 10).map((t) => {
                       const pnl = t.close_profit_abs ?? 0;
                       const pct = t.close_profit != null ? t.close_profit * 100 : null;
@@ -516,13 +552,15 @@ function DetailContent({
 
     /* ─── Performance ─── */
     case "performance": {
-      // Derive wins/losses from closed trades for enriched performance data
+      // Derive wins/losses/avgProfit/avgDur from closed trades for enriched performance data
       const enrichedPerf = perfData.map((p) => {
         const pairClosed = closedTrades.filter((t) => t.pair === p.pair);
         const wins = pairClosed.filter((t) => (t.close_profit_abs ?? 0) >= 0).length;
         const losses = pairClosed.filter((t) => (t.close_profit_abs ?? 0) < 0).length;
         const winrate = pairClosed.length > 0 ? wins / pairClosed.length : 0;
-        return { ...p, wins, losses, winrate };
+        const avgProfit = pairClosed.length > 0 ? pairClosed.reduce((s, t) => s + ((t.close_profit ?? 0) * 100), 0) / pairClosed.length : 0;
+        const avgDurMs = pairClosed.length > 0 ? pairClosed.reduce((s, t) => s + (t.close_date ? new Date(t.close_date).getTime() - new Date(t.open_date).getTime() : 0), 0) / pairClosed.length : 0;
+        return { ...p, wins, losses, winrate, avgProfit, avgDurMs };
       });
       // Derive best/worst pair, best tag, best exit for KPI summary
       const bestPerf = enrichedPerf.length > 0 ? enrichedPerf.reduce((best, p) => p.profit_abs > best.profit_abs ? p : best, enrichedPerf[0]) : null;
@@ -530,36 +568,47 @@ function DetailContent({
       const bestEntry = entryData.length > 0 ? entryData.reduce((best, e) => (e.profit_abs ?? 0) > (best.profit_abs ?? 0) ? e : best, entryData[0]) : null;
       const bestExit = exitData.length > 0 ? exitData.reduce((best, e) => (e.profit_abs ?? 0) > (best.profit_abs ?? 0) ? e : best, exitData[0]) : null;
 
+      // Helper: compute per-tag enrichment from closed trades
+      const enrichEntry = (e: FTEntry) => {
+        const tagTrades = closedTrades.filter(t => t.enter_tag === e.enter_tag);
+        const avgDurMs = tagTrades.length > 0 ? tagTrades.reduce((s, t) => s + (t.close_date ? new Date(t.close_date).getTime() - new Date(t.open_date).getTime() : 0), 0) / tagTrades.length : 0;
+        const bestPairMap = new Map<string, number>();
+        tagTrades.forEach(t => bestPairMap.set(t.pair, (bestPairMap.get(t.pair) ?? 0) + (t.close_profit_abs ?? 0)));
+        let bestPair = "—"; let bestPairPnl = -Infinity;
+        bestPairMap.forEach((v, k) => { if (v > bestPairPnl) { bestPairPnl = v; bestPair = k; } });
+        const expectancy = (e.entries ?? 0) > 0 ? (e.profit_abs ?? 0) / (e.entries ?? 1) : 0;
+        return { avgDurMs, bestPair, expectancy };
+      };
+      const enrichExit = (e: FTExit) => {
+        const reasonTrades = closedTrades.filter(t => t.exit_reason === e.exit_reason);
+        const avgDurMs = reasonTrades.length > 0 ? reasonTrades.reduce((s, t) => s + (t.close_date ? new Date(t.close_date).getTime() - new Date(t.open_date).getTime() : 0), 0) / reasonTrades.length : 0;
+        const bestPairMap = new Map<string, number>();
+        reasonTrades.forEach(t => bestPairMap.set(t.pair, (bestPairMap.get(t.pair) ?? 0) + (t.close_profit_abs ?? 0)));
+        let bestPair = "—"; let bestPairPnl = -Infinity;
+        bestPairMap.forEach((v, k) => { if (v > bestPairPnl) { bestPairPnl = v; bestPair = k; } });
+        const expectancy = (e.exits ?? 0) > 0 ? (e.profit_abs ?? 0) / (e.exits ?? 1) : 0;
+        return { avgDurMs, bestPair, expectancy };
+      };
+      const fmtDurMs = (ms: number) => {
+        const h = Math.floor(ms / 3600000); const m = Math.floor((ms % 3600000) / 60000);
+        if (h >= 24) return `${Math.floor(h / 24)}d ${h % 24}h`;
+        return h > 0 ? `${h}h ${m.toString().padStart(2, "0")}m` : `${m}m`;
+      };
+
       return (
         <div className="space-y-4">
-          {/* KPI Summary — 4 columns matching prototype */}
+          {/* KPI Summary — 4 columns matching HTML prototype line 660-665 */}
           <div className="grid grid-cols-4 gap-2.5">
-            <div className="bg-surface l-bd rounded p-3 text-center">
-              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">Best Pair</div>
-              <div className={`font-mono font-bold text-sm ${profitColor(bestPerf?.profit_abs)}`}>{bestPerf?.pair ?? "—"}</div>
-              {bestPerf && <div className={`text-[10px] font-mono ${profitColor(bestPerf.profit_abs)}`}>{fmtMoney(bestPerf.profit_abs)}</div>}
-            </div>
-            <div className="bg-surface l-bd rounded p-3 text-center">
-              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">Worst Pair</div>
-              <div className={`font-mono font-bold text-sm ${profitColor(worstPerf?.profit_abs)}`}>{worstPerf?.pair ?? "—"}</div>
-              {worstPerf && <div className={`text-[10px] font-mono ${profitColor(worstPerf.profit_abs)}`}>{fmtMoney(worstPerf.profit_abs)}</div>}
-            </div>
-            <div className="bg-surface l-bd rounded p-3 text-center">
-              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">Best Tag</div>
-              <div className={`font-mono font-bold text-sm ${profitColor(bestEntry?.profit_abs)}`}>{bestEntry?.enter_tag ?? "—"}</div>
-              {bestEntry && <div className={`text-[10px] font-mono ${profitColor(bestEntry.profit_abs)}`}>{fmtMoney(bestEntry.profit_abs)}</div>}
-            </div>
-            <div className="bg-surface l-bd rounded p-3 text-center">
-              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">Best Exit</div>
-              <div className={`font-mono font-bold text-sm ${profitColor(bestExit?.profit_abs)}`}>{bestExit?.exit_reason ?? "—"}</div>
-              {bestExit && <div className={`text-[10px] font-mono ${profitColor(bestExit.profit_abs)}`}>{fmtMoney(bestExit.profit_abs)}</div>}
-            </div>
+            <div className="bg-surface p-3 l-bd rounded text-center"><div className="kpi-label">Best Pair</div><div className={`font-mono font-bold text-sm ${profitColor(bestPerf?.profit_abs)}`}>{bestPerf?.pair ?? "—"}</div>{bestPerf && <div className={`text-[10px] font-mono ${profitColor(bestPerf.profit_abs)}`}>{fmtMoney(bestPerf.profit_abs)}</div>}</div>
+            <div className="bg-surface p-3 l-bd rounded text-center"><div className="kpi-label">Worst Pair</div><div className={`font-mono font-bold text-sm ${profitColor(worstPerf?.profit_abs)}`}>{worstPerf?.pair ?? "—"}</div>{worstPerf && <div className={`text-[10px] font-mono ${profitColor(worstPerf.profit_abs)}`}>{fmtMoney(worstPerf.profit_abs)}</div>}</div>
+            <div className="bg-surface p-3 l-bd rounded text-center"><div className="kpi-label">Best Tag</div><div className={`font-mono font-bold text-sm ${profitColor(bestEntry?.profit_abs)}`}>{bestEntry?.enter_tag ?? "—"}</div>{bestEntry && <div className={`text-[10px] font-mono ${profitColor(bestEntry.profit_abs)}`}>{fmtMoney(bestEntry.profit_abs)}</div>}</div>
+            <div className="bg-surface p-3 l-bd rounded text-center"><div className="kpi-label">Best Exit</div><div className={`font-mono font-bold text-sm ${profitColor(bestExit?.profit_abs)}`}>{bestExit?.exit_reason ?? "—"}</div>{bestExit && <div className={`text-[10px] font-mono ${profitColor(bestExit.profit_abs)}`}>{fmtMoney(bestExit.profit_abs)}</div>}</div>
           </div>
 
-          {/* Per-Pair Performance */}
+          {/* Per-Pair Performance — 7 columns matching HTML prototype line 669-676 */}
           {enrichedPerf.length > 0 ? (
             <div className="bg-surface l-bd rounded p-3">
-              <h3 className={sectionTitle}>Per-Pair Performance</h3>
+              <h3 className="section-title mb-2">Per-Pair Performance</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-[13px] font-mono whitespace-nowrap">
                   <thead><tr className="text-muted text-[11px] uppercase tracking-widest">
@@ -568,8 +617,10 @@ function DetailContent({
                     <th className="text-right px-2 py-1.5 font-semibold">profit_abs</th>
                     <th className="text-right px-2 py-1.5 font-semibold">profit_ratio</th>
                     <th className="text-right px-2 py-1.5 font-semibold">Win Rate</th>
+                    <th className="text-right px-2 py-1.5 font-semibold">Avg Profit</th>
+                    <th className="text-right px-2 py-1.5 font-semibold">Avg Dur.</th>
                   </tr></thead>
-                  <tbody className="divide-y divide-border/30">
+                  <tbody className="divide-y divide-white/[0.05]">
                     {enrichedPerf.map((p) => (
                       <tr key={p.pair} className="hover:bg-white/[0.04]">
                         <td className="px-2 py-1.5 text-white">{p.pair}</td>
@@ -577,6 +628,8 @@ function DetailContent({
                         <td className={`px-2 py-1.5 text-right font-bold ${profitColor(p.profit_abs)}`}>{fmtMoney(p.profit_abs)}</td>
                         <td className={`px-2 py-1.5 text-right ${profitColor(p.profit_ratio)}`}>{p.profit_ratio >= 0 ? "+" : ""}{fmt(p.profit_ratio * 100, 2)}%</td>
                         <td className={`px-2 py-1.5 text-right ${p.winrate >= 0.6 ? "text-up" : p.winrate < 0.45 ? "text-down" : "text-white"}`}>{fmt(p.winrate * 100, 1)}%</td>
+                        <td className={`px-2 py-1.5 text-right ${profitColor(p.avgProfit)}`}>{p.avgProfit >= 0 ? "+" : ""}{fmt(p.avgProfit, 2)}%</td>
+                        <td className="px-2 py-1.5 text-right text-muted">{fmtDurMs(p.avgDurMs)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -587,53 +640,87 @@ function DetailContent({
             <div className="text-center py-6 text-muted text-xs">No performance data</div>
           )}
 
-          {/* Entry / Exit Analysis side by side — matching prototype */}
+          {/* Entry / Exit Analysis side by side — 10 columns each matching HTML prototype line 679-699 */}
           {(entryData.length > 0 || exitData.length > 0) && (
             <div className="grid grid-cols-2 gap-2.5">
               {entryData.length > 0 && (
                 <div className="bg-surface l-bd rounded p-3">
-                  <h3 className={sectionTitle}>Entry Tags</h3>
+                  <h3 className="section-title mb-2">Entry Tags</h3>
+                  <div className="overflow-x-auto">
                   <table className="w-full text-[13px] font-mono whitespace-nowrap">
                     <thead><tr className="text-muted text-[11px] uppercase tracking-widest">
                       <th className="text-left px-2 py-1.5 font-semibold">Tag</th>
                       <th className="text-right px-2 py-1.5 font-semibold">Trades</th>
-                      <th className="text-right px-2 py-1.5 font-semibold">WR%</th>
-                      <th className="text-right px-2 py-1.5 font-semibold">P&L</th>
+                      <th className="text-right px-2 py-1.5 font-semibold">Wins</th>
+                      <th className="text-right px-2 py-1.5 font-semibold">Losses</th>
+                      <th className="text-right px-2 py-1.5 font-semibold">Win Rate</th>
+                      <th className="text-right px-2 py-1.5 font-semibold">Avg P&L %</th>
+                      <th className="text-right px-2 py-1.5 font-semibold">Total P&L</th>
+                      <th className="text-right px-2 py-1.5 font-semibold">Avg Dur.</th>
+                      <th className="text-left px-2 py-1.5 font-semibold">Best Pair</th>
+                      <th className="text-right px-2 py-1.5 font-semibold">Expectancy</th>
                     </tr></thead>
-                    <tbody className="divide-y divide-border/30">
-                      {entryData.map((e) => (
-                        <tr key={e.enter_tag ?? "untagged"} className="hover:bg-white/[0.04]">
-                          <td className="px-2 py-1.5 text-white">{e.enter_tag ?? "untagged"}</td>
-                          <td className="px-2 py-1.5 text-right">{e.entries ?? 0}</td>
-                          <td className={`px-2 py-1.5 text-right ${(e.winrate ?? 0) >= 0.6 ? "text-up" : (e.winrate ?? 0) < 0.45 ? "text-down" : "text-white"}`}>{fmt((e.winrate ?? 0) * 100, 1)}%</td>
-                          <td className={`px-2 py-1.5 text-right font-bold ${profitColor(e.profit_abs)}`}>{fmtMoney(e.profit_abs ?? 0)}</td>
-                        </tr>
-                      ))}
+                    <tbody className="divide-y divide-white/[0.05]">
+                      {entryData.map((e) => {
+                        const ex = enrichEntry(e);
+                        return (
+                          <tr key={e.enter_tag ?? "untagged"} className="hover:bg-white/[0.04]">
+                            <td className="px-2 py-1.5"><span className="px-1.5 py-0.5 bg-blue-500/[0.12] text-blue-400 rounded text-[9px]">{e.enter_tag ?? "untagged"}</span></td>
+                            <td className="px-2 py-1.5 text-right">{e.entries ?? 0}</td>
+                            <td className="px-2 py-1.5 text-right text-up">{e.wins ?? 0}</td>
+                            <td className="px-2 py-1.5 text-right text-down">{e.losses ?? 0}</td>
+                            <td className={`px-2 py-1.5 text-right ${(e.winrate ?? 0) >= 0.6 ? "text-up" : (e.winrate ?? 0) < 0.45 ? "text-down" : "text-white"}`}>{fmt((e.winrate ?? 0) * 100, 1)}%</td>
+                            <td className={`px-2 py-1.5 text-right ${profitColor(e.avg_profit)}`}>{(e.avg_profit ?? 0) >= 0 ? "+" : ""}{fmt(e.avg_profit ?? 0, 2)}%</td>
+                            <td className={`px-2 py-1.5 text-right font-bold ${profitColor(e.profit_abs)}`}>{fmtMoney(e.profit_abs ?? 0)}</td>
+                            <td className="px-2 py-1.5 text-right text-muted">{fmtDurMs(ex.avgDurMs)}</td>
+                            <td className="px-2 py-1.5 text-white">{ex.bestPair}</td>
+                            <td className={`px-2 py-1.5 text-right ${profitColor(ex.expectancy)}`}>{fmtMoney(ex.expectancy)}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
+                  </div>
                 </div>
               )}
               {exitData.length > 0 && (
                 <div className="bg-surface l-bd rounded p-3">
-                  <h3 className={sectionTitle}>Exit Reasons</h3>
+                  <h3 className="section-title mb-2">Exit Reasons</h3>
+                  <div className="overflow-x-auto">
                   <table className="w-full text-[13px] font-mono whitespace-nowrap">
                     <thead><tr className="text-muted text-[11px] uppercase tracking-widest">
                       <th className="text-left px-2 py-1.5 font-semibold">Reason</th>
                       <th className="text-right px-2 py-1.5 font-semibold">Exits</th>
-                      <th className="text-right px-2 py-1.5 font-semibold">WR%</th>
-                      <th className="text-right px-2 py-1.5 font-semibold">P&L</th>
+                      <th className="text-right px-2 py-1.5 font-semibold">Wins</th>
+                      <th className="text-right px-2 py-1.5 font-semibold">Losses</th>
+                      <th className="text-right px-2 py-1.5 font-semibold">Win Rate</th>
+                      <th className="text-right px-2 py-1.5 font-semibold">Avg P&L %</th>
+                      <th className="text-right px-2 py-1.5 font-semibold">Total P&L</th>
+                      <th className="text-right px-2 py-1.5 font-semibold">Avg Dur.</th>
+                      <th className="text-left px-2 py-1.5 font-semibold">Best Pair</th>
+                      <th className="text-right px-2 py-1.5 font-semibold">Expectancy</th>
                     </tr></thead>
-                    <tbody className="divide-y divide-border/30">
-                      {exitData.map((e) => (
-                        <tr key={e.exit_reason ?? "untagged"} className="hover:bg-white/[0.04]">
-                          <td className="px-2 py-1.5 text-white">{e.exit_reason ?? "untagged"}</td>
-                          <td className="px-2 py-1.5 text-right">{e.exits ?? 0}</td>
-                          <td className={`px-2 py-1.5 text-right ${(e.winrate ?? 0) >= 0.6 ? "text-up" : (e.winrate ?? 0) < 0.45 ? "text-down" : "text-white"}`}>{fmt((e.winrate ?? 0) * 100, 1)}%</td>
-                          <td className={`px-2 py-1.5 text-right font-bold ${profitColor(e.profit_abs)}`}>{fmtMoney(e.profit_abs ?? 0)}</td>
-                        </tr>
-                      ))}
+                    <tbody className="divide-y divide-white/[0.05]">
+                      {exitData.map((e) => {
+                        const ex = enrichExit(e);
+                        return (
+                          <tr key={e.exit_reason ?? "untagged"} className="hover:bg-white/[0.04]">
+                            <td className="px-2 py-1.5 text-white">{e.exit_reason ?? "untagged"}</td>
+                            <td className="px-2 py-1.5 text-right">{e.exits ?? 0}</td>
+                            <td className="px-2 py-1.5 text-right text-up">{e.wins ?? 0}</td>
+                            <td className="px-2 py-1.5 text-right text-down">{e.losses ?? 0}</td>
+                            <td className={`px-2 py-1.5 text-right ${(e.winrate ?? 0) >= 0.6 ? "text-up" : (e.winrate ?? 0) < 0.45 ? "text-down" : "text-white"}`}>{fmt((e.winrate ?? 0) * 100, 1)}%</td>
+                            <td className={`px-2 py-1.5 text-right ${profitColor(e.avg_profit)}`}>{(e.avg_profit ?? 0) >= 0 ? "+" : ""}{fmt(e.avg_profit ?? 0, 2)}%</td>
+                            <td className={`px-2 py-1.5 text-right font-bold ${profitColor(e.profit_abs)}`}>{fmtMoney(e.profit_abs ?? 0)}</td>
+                            <td className="px-2 py-1.5 text-right text-muted">{fmtDurMs(ex.avgDurMs)}</td>
+                            <td className="px-2 py-1.5 text-white">{ex.bestPair}</td>
+                            <td className={`px-2 py-1.5 text-right ${profitColor(ex.expectancy)}`}>{fmtMoney(ex.expectancy)}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
+                  </div>
                 </div>
               )}
             </div>
@@ -645,73 +732,49 @@ function DetailContent({
     /* ─── Config ─── */
     case "config": {
       return (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {configData ? (
             <>
-              <div>
-                <div className={sectionTitle}>Core Config</div>
-                <div className={row}>
-                  <span className={key}>Strategy</span>
-                  <span className={val}>{configData.strategy ?? "—"}</span>
-                </div>
-                {configData.strategy_version && (
-                  <div className={row}>
-                    <span className={key}>Strategy Version</span>
-                    <span className={val}>{configData.strategy_version}</span>
+              {/* 2-column grid: Core Config + Risk Management — matching HTML line 707-731 */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="bg-surface l-bd rounded p-3">
+                  <h3 className="section-title mb-2 flex items-center justify-between">Core Config <button className="text-[9px] text-muted hover:text-white l-bd px-1.5 py-0.5 rounded transition-colors cursor-pointer" title="Edit core config">EDIT</button></h3>
+                  <div className="space-y-1.5 font-mono text-[12px]">
+                    <div className="flex justify-between"><span className="text-muted">Strategy</span><span className="text-white">{configData.strategy ?? "—"}</span></div>
+                    <div className="flex justify-between"><span className="text-muted">Exchange</span><span className="text-white">{typeof configData.exchange === "string" ? configData.exchange : "—"}</span></div>
+                    <div className="flex justify-between"><span className="text-muted">Timeframe</span><span className="text-white">{configData.timeframe ?? "—"}</span></div>
+                    <div className="flex justify-between"><span className="text-muted">Mode</span><span className="text-white">{configData.trading_mode ? `${configData.trading_mode} · ${configData.margin_mode ?? "—"}` : "—"}</span></div>
+                    <div className="flex justify-between"><span className="text-muted">Stake Currency</span><span className="text-white">{configData.stake_currency ?? "—"}</span></div>
+                    <div className="flex justify-between"><span className="text-muted">Stake Amount</span><span className="text-white">{fmt(typeof configData.stake_amount === "number" ? configData.stake_amount : 0, 2)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted">Max Open Trades</span><span className="text-white">{configData.max_open_trades ?? "—"}</span></div>
+                    <div className="flex justify-between"><span className="text-muted">Dry Run</span><span className="text-white">{configData.dry_run ? "Yes" : "No"}</span></div>
                   </div>
-                )}
-                <div className={row}>
-                  <span className={key}>Exchange</span>
-                  <span className={val}>{typeof configData.exchange === "string" ? configData.exchange : "—"}</span>
                 </div>
-                <div className={row}>
-                  <span className={key}>Timeframe</span>
-                  <span className={val}>{configData.timeframe ?? "—"}</span>
-                </div>
-                <div className={row}>
-                  <span className={key}>Stake Currency</span>
-                  <span className={val}>{configData.stake_currency ?? "—"}</span>
-                </div>
-                <div className={row}>
-                  <span className={key}>Stake Amount</span>
-                  <span className={val}>{fmt(typeof configData.stake_amount === "number" ? configData.stake_amount : 0, 2)} {configData.stake_currency}</span>
-                </div>
-                {configData.max_open_trades != null && (
-                  <div className={row}>
-                    <span className={key}>Max Open Trades</span>
-                    <span className={val}>{configData.max_open_trades}</span>
+                <div className="bg-surface l-bd rounded p-3">
+                  <h3 className="section-title mb-2 flex items-center justify-between">Risk Management <button className="text-[9px] text-muted hover:text-white l-bd px-1.5 py-0.5 rounded transition-colors cursor-pointer" title="Edit risk settings">EDIT</button></h3>
+                  <div className="space-y-1.5 font-mono text-[12px]">
+                    <div className="flex justify-between"><span className="text-muted">Stoploss</span><span className="text-down font-bold">{configData.stoploss != null ? `${fmt(configData.stoploss * 100, 1)}%` : "—"}</span></div>
+                    <div className="flex justify-between"><span className="text-muted">Trailing Stop</span><span className={configData.trailing_stop ? "text-up" : "text-white"}>{configData.trailing_stop ? "Yes" : "No"}</span></div>
+                    {configData.trailing_stop_positive != null && (
+                      <div className="flex justify-between"><span className="text-muted">Trailing Positive</span><span className="text-white">{configData.trailing_stop_positive}</span></div>
+                    )}
+                    {configData.trailing_stop_positive_offset != null && (
+                      <div className="flex justify-between"><span className="text-muted">Trailing Offset</span><span className="text-white">{configData.trailing_stop_positive_offset}</span></div>
+                    )}
+                    {configData.minimal_roi && (
+                      <div className="flex justify-between"><span className="text-muted">minimal_roi</span><span className="text-white font-mono text-[10px]">{JSON.stringify(configData.minimal_roi)}</span></div>
+                    )}
                   </div>
-                )}
-                <div className={row}>
-                  <span className={key}>Dry Run</span>
-                  <span className={val}>{configData.dry_run ? "Yes" : "No"}</span>
                 </div>
-                {configData.trading_mode && (
-                  <div className={row}>
-                    <span className={key}>Trading Mode</span>
-                    <span className={val}>{configData.trading_mode}</span>
-                  </div>
-                )}
-                {configData.margin_mode && (
-                  <div className={row}>
-                    <span className={key}>Margin Mode</span>
-                    <span className={val}>{configData.margin_mode}</span>
-                  </div>
-                )}
-                {configData.available_capital != null && (
-                  <div className={row}>
-                    <span className={key}>Available Capital</span>
-                    <span className={val}>{fmt(configData.available_capital, 2)} {configData.stake_currency}</span>
-                  </div>
-                )}
               </div>
 
+              {/* Whitelist — card-wrapped with EDIT button, matching HTML line 733-746 */}
               {configData.pair_whitelist && configData.pair_whitelist.length > 0 && (
-                <div>
-                  <div className={sectionTitle}>Whitelist ({configData.pair_whitelist.length})</div>
-                  <div className="flex flex-wrap gap-1">
+                <div className="bg-surface l-bd rounded p-3">
+                  <h3 className="section-title mb-2 flex items-center justify-between">Whitelist <span className="text-white/30 font-normal text-[10px]">{configData.pair_whitelist.length} pairs</span> <button className="text-[9px] text-muted hover:text-white l-bd px-1.5 py-0.5 rounded transition-colors ml-auto cursor-pointer" title="Edit whitelist">EDIT</button></h3>
+                  <div className="flex flex-wrap gap-1.5">
                     {configData.pair_whitelist.map((p) => (
-                      <span key={p} className="text-[9px] px-2 py-0.5 rounded-sm font-medium bg-cyan/8 text-cyan border border-cyan/20">
+                      <span key={p} className="text-[9px] px-2 py-0.5 rounded bg-cyan-500/[0.08] text-cyan-400 border border-cyan-500/20 font-medium">
                         {p}
                       </span>
                     ))}
@@ -719,27 +782,28 @@ function DetailContent({
                 </div>
               )}
 
+              {/* Active Locks — with Until countdown column, matching HTML line 748-754 */}
               {locksData && locksData.locks && locksData.locks.length > 0 && (
-                <div>
-                  <div className={sectionTitle}>Locks ({locksData.locks.length})</div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="text-muted l-b">
-                          <th className="text-left py-2 font-medium">Pair</th>
-                          <th className="text-left py-2 font-medium">Reason</th>
+                <div className="bg-surface l-bd rounded p-3">
+                  <h3 className="section-title mb-2">Active Locks</h3>
+                  <table className="w-full text-[13px] font-mono"><thead className="text-muted text-[11px] uppercase tracking-widest"><tr>
+                    <th className="text-left py-1 font-semibold">Pair</th>
+                    <th className="text-left py-1 font-semibold">Reason</th>
+                    <th className="text-right py-1 font-semibold">Until</th>
+                  </tr></thead>
+                  <tbody className="divide-y divide-white/[0.05]">
+                    {locksData.locks.filter(l => l.active).map((l) => {
+                      const until = l.lock_end_time ? new Date(l.lock_end_time) : null;
+                      const remaining = until ? Math.max(0, Math.round((until.getTime() - Date.now()) / 60000)) : null;
+                      return (
+                        <tr key={l.id}>
+                          <td className="py-1.5 text-white font-medium">{l.pair}</td>
+                          <td className="py-1.5 text-muted">{l.reason ?? "—"}</td>
+                          <td className="py-1.5 text-right text-down">{remaining != null ? `${remaining}m left` : "—"}</td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {locksData.locks.map((l) => (
-                          <tr key={l.pair} className="border-b border-white/[0.03]">
-                            <td className="py-2 text-white font-medium">{l.pair}</td>
-                            <td className="py-2 text-muted">{l.reason ?? "—"}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      );
+                    })}
+                  </tbody></table>
                 </div>
               )}
             </>

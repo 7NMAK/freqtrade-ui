@@ -455,8 +455,10 @@ export default function DashboardPage() {
         }
       }
 
-      // FALLBACK: compute entry/exit stats from closed trades if API returned empty
-      if (allEntries.length === 0 && allClosed.length > 0) {
+      // ALWAYS compute entry/exit stats from closed trades for reliability
+      // (FT /entries and /exits endpoints often return empty or incomplete data)
+      if (allClosed.length > 0) {
+        // Entry tags from closed trades
         const tagMap = new Map<string, { entries: number; wins: number; losses: number; draws: number; profitSum: number; avgProfitSum: number }>();
         for (const t of allClosed) {
           const tag = t.enter_tag || "(no tag)";
@@ -470,23 +472,28 @@ export default function DashboardPage() {
           cur.avgProfitSum += (t.close_profit ?? 0);
           tagMap.set(tag, cur);
         }
-        for (const [tag, s] of Array.from(tagMap.entries())) {
-          const total = s.wins + s.losses + s.draws;
-          allEntries.push({
-            enter_tag: tag,
-            entries: s.entries,
-            wins: s.wins,
-            losses: s.losses,
-            draws: s.draws,
-            winrate: total > 0 ? s.wins / total : 0,
-            profit_factor: s.losses > 0 ? Math.abs(s.wins / s.losses) : s.wins,
-            profit_ratio: s.entries > 0 ? s.profitSum / s.entries : 0,
-            profit_abs: s.profitSum,
-            avg_profit: s.entries > 0 ? (s.avgProfitSum / s.entries) * 100 : 0,
-          });
+        // Only use computed data if it has more tags than the API data (or API was empty)
+        if (tagMap.size > allEntries.length || allEntries.length === 0) {
+          allEntries.length = 0; // clear API data
+          for (const [tag, s] of Array.from(tagMap.entries())) {
+            const total = s.wins + s.losses + s.draws;
+            allEntries.push({
+              enter_tag: tag,
+              entries: s.entries,
+              wins: s.wins,
+              losses: s.losses,
+              draws: s.draws,
+              winrate: total > 0 ? s.wins / total : 0,
+              profit_factor: s.losses > 0 ? Math.abs(s.wins / s.losses) : s.wins,
+              profit_ratio: s.entries > 0 ? s.profitSum / s.entries : 0,
+              profit_abs: s.profitSum,
+              avg_profit: s.entries > 0 ? (s.avgProfitSum / s.entries) * 100 : 0,
+            });
+          }
         }
       }
-      if (allExits.length === 0 && allClosed.length > 0) {
+      if (allClosed.length > 0) {
+        // Exit reasons from closed trades
         const reasonMap = new Map<string, { exits: number; wins: number; losses: number; draws: number; profitSum: number; avgProfitSum: number }>();
         for (const t of allClosed) {
           const reason = t.exit_reason || "(unknown)";
@@ -500,20 +507,23 @@ export default function DashboardPage() {
           cur.avgProfitSum += (t.close_profit ?? 0);
           reasonMap.set(reason, cur);
         }
-        for (const [reason, s] of Array.from(reasonMap.entries())) {
-          const total = s.wins + s.losses + s.draws;
-          allExits.push({
-            exit_reason: reason,
-            exits: s.exits,
-            wins: s.wins,
-            losses: s.losses,
-            draws: s.draws,
-            winrate: total > 0 ? s.wins / total : 0,
-            profit_factor: s.losses > 0 ? Math.abs(s.wins / s.losses) : s.wins,
-            profit_ratio: s.exits > 0 ? s.profitSum / s.exits : 0,
-            profit_abs: s.profitSum,
-            avg_profit: s.exits > 0 ? (s.avgProfitSum / s.exits) * 100 : 0,
-          });
+        if (reasonMap.size > allExits.length || allExits.length === 0) {
+          allExits.length = 0;
+          for (const [reason, s] of Array.from(reasonMap.entries())) {
+            const total = s.wins + s.losses + s.draws;
+            allExits.push({
+              exit_reason: reason,
+              exits: s.exits,
+              wins: s.wins,
+              losses: s.losses,
+              draws: s.draws,
+              winrate: total > 0 ? s.wins / total : 0,
+              profit_factor: s.losses > 0 ? Math.abs(s.wins / s.losses) : s.wins,
+              profit_ratio: s.exits > 0 ? s.profitSum / s.exits : 0,
+              profit_abs: s.profitSum,
+              avg_profit: s.exits > 0 ? (s.avgProfitSum / s.exits) * 100 : 0,
+            });
+          }
         }
       }
 
@@ -584,13 +594,22 @@ export default function DashboardPage() {
         });
       }
 
-      // Daily P&L chart
+      // Daily P&L chart — try portfolio aggregate first, fallback to first bot's daily
       let fetchedDaily: FTDailyItem[] = [];
       try {
         const daily = await portfolioDaily();
         fetchedDaily = daily.data ?? [];
-        if (m.current) setDailyData(fetchedDaily);
-      } catch { if (m.current) setDailyData([]); }
+      } catch { /* portfolio daily failed */ }
+
+      // FALLBACK: If portfolio daily returned no data, fetch from first running bot directly
+      if (fetchedDaily.length === 0 && effectiveTradeBots.length > 0) {
+        try {
+          const botDailyResp = await botDaily(effectiveTradeBots[0].id, 30);
+          fetchedDaily = botDailyResp.data ?? [];
+        } catch { /* per-bot daily also failed */ }
+      }
+
+      if (m.current) setDailyData(fetchedDaily);
 
       // FIX D: Compute Sharpe from daily data (FT /stats does not return sharpe_ratio for live)
       if (m.current && fetchedDaily.length >= 1) {

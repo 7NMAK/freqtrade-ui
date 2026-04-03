@@ -1055,6 +1055,7 @@
           <button onclick="switchPage('page-experiments')" class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors nav-btn hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]" title="Experiments — Backtest, Hyperopt, FreqAI"><i data-lucide="flask-conical" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">Experiments</span></button>
           <button onclick="switchPage('page-analytics')" class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors nav-btn hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]" title="Analytics — Deep performance analysis"><i data-lucide="bar-chart-3" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">Analytics</span></button>
           <button onclick="switchPage('page-ai-insights')" class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors nav-btn hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]" title="AI Insights — AI Validation Layer dashboard"><i data-lucide="sparkles" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">AI Insights</span></button>
+          <button onclick="switchPage('page-freqai')" class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors nav-btn hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]" title="FreqAI — ML model training, monitoring & deployment"><i data-lucide="brain" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">FreqAI</span></button>
           <button onclick="switchPage('page-risk')" class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors nav-btn hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]" title="Risk — Kill switches, protections, pair locks"><i data-lucide="shield-alert" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">Risk</span></button>
           <button onclick="switchPage('page-strategies')" class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors nav-btn hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]" title="Strategies — Manage trading strategies"><i data-lucide="list" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">Strategies</span></button>
           <button class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]" title="System — Server health, configs, logs"><i data-lucide="settings" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">System</span></button>
@@ -4946,6 +4947,319 @@
 
       </div><!-- /END STRATEGY BUILDER -->
 
+      <!-- ════════════════════════════════════════════════════════════════════════ -->
+      <!-- PAGE: FREQAI — ML Model Training, Monitoring & Deployment              -->
+      <!-- ════════════════════════════════════════════════════════════════════════ -->
+      <div id="page-freqai" class="page-view flex-1 overflow-hidden flex-col p-5 gap-5 bg-black">
+
+          <!-- KPI BAR -->
+          <div class="grid grid-cols-6 gap-2.5 shrink-0">
+              <div class="bg-surface p-3.5 l-bd rounded-lg">
+                  <div class="kpi-label">Active Models</div>
+                  <div class="kpi-value font-mono text-white text-lg">3</div>
+                  <div class="text-white/35 text-[10px] font-mono mt-0.5">across 5 bots</div>
+              </div>
+              <div class="bg-surface p-3.5 l-bd rounded-lg">
+                  <div class="kpi-label">Avg Accuracy</div>
+                  <div class="kpi-value font-mono text-up text-lg">72.4%</div>
+                  <div class="text-up/50 text-[10px] font-mono mt-0.5">↑ 2.1% vs last</div>
+              </div>
+              <div class="bg-surface p-3.5 l-bd rounded-lg">
+                  <div class="kpi-label">Total Predictions</div>
+                  <div class="kpi-value font-mono text-white text-lg">3,550</div>
+                  <div class="text-white/35 text-[10px] font-mono mt-0.5">last 30d</div>
+              </div>
+              <div class="bg-surface p-3.5 l-bd rounded-lg">
+                  <div class="kpi-label">Avg Prediction Time</div>
+                  <div class="kpi-value font-mono text-white text-lg">12ms</div>
+                  <div class="text-white/35 text-[10px] font-mono mt-0.5">p99: 28ms</div>
+              </div>
+              <div class="bg-surface p-3.5 l-bd rounded-lg">
+                  <div class="kpi-label">Next Retrain</div>
+                  <div class="kpi-value font-mono text-yellow-400 text-lg">2h 14m</div>
+                  <div class="text-white/35 text-[10px] font-mono mt-0.5">3 bots queued</div>
+              </div>
+              <div class="bg-surface p-3.5 l-bd rounded-lg">
+                  <div class="kpi-label">Model Archive</div>
+                  <div class="kpi-value font-mono text-white text-lg">18</div>
+                  <div class="text-white/35 text-[10px] font-mono mt-0.5">7 archived</div>
+              </div>
+          </div>
+          <!-- MAIN 2-COL LAYOUT -->
+          <div class="flex gap-5 flex-1 min-h-0">
+
+              <!-- LEFT COLUMN: Config + Controls -->
+              <div class="w-[440px] flex flex-col gap-5 shrink-0 overflow-y-auto min-h-0 pr-1">
+
+                  <!-- ■ ACTIVE MODELS LIST -->
+                  <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                      <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40 shrink-0">
+                          <h3 class="section-title">Active Models</h3>
+                          <span class="text-[10px] text-white/30 font-mono">3 active · 7 archived</span>
+                      </div>
+                      <!-- Model 1: Active / Training -->
+                      <div class="p-4 l-b hover:bg-white/[0.02] transition-colors cursor-pointer" onclick="document.getElementById('fai-model-detail').scrollIntoView({behavior:'smooth'})">
+                          <div class="flex justify-between items-center mb-2">
+                              <span class="text-white font-mono text-[12px] font-bold">LightGBMRegressor — v3</span>
+                              <div class="flex items-center gap-1.5">
+                                  <span class="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded border border-up/25">ACTIVE</span>
+                                  <span class="px-1.5 py-0.5 text-[9px] font-bold bg-cyan-500/12 text-cyan-400 rounded border border-cyan-500/25 animate-pulse">TRAINING</span>
+                              </div>
+                          </div>
+                          <div class="grid grid-cols-4 gap-2 text-[11px] font-mono mb-2">
+                              <div><span class="text-muted block text-[9px]">Features</span><span class="text-white">42</span></div>
+                              <div><span class="text-muted block text-[9px]">Accuracy</span><span class="text-up font-bold">72.4%</span></div>
+                              <div><span class="text-muted block text-[9px]">Predictions</span><span class="text-white">1,240</span></div>
+                              <div><span class="text-muted block text-[9px]">Retrain</span><span class="text-yellow-400">2h 14m</span></div>
+                          </div>
+                          <div class="grid grid-cols-4 gap-2 text-[11px] font-mono">
+                              <div><span class="text-muted block text-[9px]">Train Samples</span><span class="text-white">48,000</span></div>
+                              <div><span class="text-muted block text-[9px]">Test Acc.</span><span class="text-white">68.1%</span></div>
+                              <div><span class="text-muted block text-[9px]">Trained</span><span class="text-white">2024-03-27</span></div>
+                              <div><span class="text-muted block text-[9px]">Pred. Time</span><span class="text-white">12ms</span></div>
+                          </div>
+                          <div class="mt-2.5 pt-2.5 border-t border-white/[0.06]">
+                              <div class="flex justify-between text-[10px] font-mono mb-1"><span class="text-cyan-400">Retraining in progress...</span><span class="text-white font-bold">67%</span></div>
+                              <div class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 rounded-full transition-all" style="width:67%"></div></div>
+                          </div>
+                      </div>
+                      <!-- Model 2 -->
+                      <div class="p-4 l-b hover:bg-white/[0.02] transition-colors cursor-pointer">
+                          <div class="flex justify-between items-center mb-2">
+                              <span class="text-white font-mono text-[12px] font-bold">XGBoostRegressor — v2</span>
+                              <span class="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded border border-up/25">ACTIVE</span>
+                          </div>
+                          <div class="grid grid-cols-4 gap-2 text-[11px] font-mono">
+                              <div><span class="text-muted block text-[9px]">Features</span><span class="text-white">38</span></div>
+                              <div><span class="text-muted block text-[9px]">Accuracy</span><span class="text-up font-bold">69.7%</span></div>
+                              <div><span class="text-muted block text-[9px]">Predictions</span><span class="text-white">890</span></div>
+                              <div><span class="text-muted block text-[9px]">Retrain</span><span class="text-muted">4h 30m</span></div>
+                          </div>
+                      </div>
+                      <!-- Model 3 -->
+                      <div class="p-4 l-b hover:bg-white/[0.02] transition-colors cursor-pointer">
+                          <div class="flex justify-between items-center mb-2">
+                              <span class="text-white font-mono text-[12px] font-bold">LightGBMClassifier — v1</span>
+                              <span class="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded border border-up/25">ACTIVE</span>
+                          </div>
+                          <div class="grid grid-cols-4 gap-2 text-[11px] font-mono">
+                              <div><span class="text-muted block text-[9px]">Features</span><span class="text-white">24</span></div>
+                              <div><span class="text-muted block text-[9px]">Accuracy</span><span class="text-white">64.8%</span></div>
+                              <div><span class="text-muted block text-[9px]">Predictions</span><span class="text-white">420</span></div>
+                              <div><span class="text-muted block text-[9px]">Retrain</span><span class="text-muted">6h 10m</span></div>
+                          </div>
+                      </div>
+                      <!-- Archived -->
+                      <div class="px-4 py-2.5 l-b bg-black/20">
+                          <button class="text-[10px] font-bold uppercase tracking-wider text-muted hover:text-white transition-colors flex items-center gap-1.5" onclick="document.getElementById('fai-archived').classList.toggle('hidden')"><i data-lucide="archive" class="w-3 h-3"></i>Archived Models (7)<i data-lucide="chevron-down" class="w-3 h-3"></i></button>
+                      </div>
+                      <div id="fai-archived" class="hidden">
+                          <div class="p-4 l-b opacity-50 hover:opacity-80 transition-opacity cursor-pointer">
+                              <div class="flex justify-between items-center mb-2"><span class="text-white font-mono text-[12px] font-bold">LightGBMRegressor — v2</span><span class="px-1.5 py-0.5 text-[9px] font-bold text-muted l-bd rounded">ARCHIVED</span></div>
+                              <div class="grid grid-cols-4 gap-2 text-[11px] font-mono">
+                                  <div><span class="text-muted block text-[9px]">Features</span><span class="text-white">38</span></div>
+                                  <div><span class="text-muted block text-[9px]">Accuracy</span><span class="text-white">68.1%</span></div>
+                                  <div><span class="text-muted block text-[9px]">Trained</span><span class="text-white">2024-03-15</span></div>
+                                  <div><span class="text-muted block text-[9px]">Predictions</span><span class="text-white">890</span></div>
+                              </div>
+                          </div>
+                          <div class="p-4 l-b opacity-35 hover:opacity-70 transition-opacity cursor-pointer">
+                              <div class="flex justify-between items-center mb-2"><span class="text-white font-mono text-[12px] font-bold">CatBoostClassifier — v1</span><span class="px-1.5 py-0.5 text-[9px] font-bold text-muted l-bd rounded">ARCHIVED</span></div>
+                              <div class="grid grid-cols-4 gap-2 text-[11px] font-mono">
+                                  <div><span class="text-muted block text-[9px]">Features</span><span class="text-white">24</span></div>
+                                  <div><span class="text-muted block text-[9px]">Accuracy</span><span class="text-white">61.2%</span></div>
+                                  <div><span class="text-muted block text-[9px]">Trained</span><span class="text-white">2024-02-28</span></div>
+                                  <div><span class="text-muted block text-[9px]">Predictions</span><span class="text-white">420</span></div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+
+                  <!-- ■ FEATURE IMPORTANCE -->
+                  <div id="fai-model-detail" class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                      <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40">
+                          <h3 class="section-title">Feature Importance</h3>
+                          <span class="text-[10px] text-white/30 font-mono">LightGBMRegressor v3</span>
+                      </div>
+                      <div class="p-4 space-y-2">
+                          <div class="flex items-center gap-2 text-[11px] font-mono"><span class="text-muted w-28 truncate">rsi_14</span><div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 rounded-full" style="width:82%"></div></div><span class="text-white w-10 text-right font-bold">0.82</span></div>
+                          <div class="flex items-center gap-2 text-[11px] font-mono"><span class="text-muted w-28 truncate">ema_diff</span><div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 rounded-full" style="width:71%"></div></div><span class="text-white w-10 text-right font-bold">0.71</span></div>
+                          <div class="flex items-center gap-2 text-[11px] font-mono"><span class="text-muted w-28 truncate">bb_width</span><div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 rounded-full" style="width:64%"></div></div><span class="text-white w-10 text-right font-bold">0.64</span></div>
+                          <div class="flex items-center gap-2 text-[11px] font-mono"><span class="text-muted w-28 truncate">volume_ratio</span><div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 rounded-full" style="width:58%"></div></div><span class="text-white w-10 text-right font-bold">0.58</span></div>
+                          <div class="flex items-center gap-2 text-[11px] font-mono"><span class="text-muted w-28 truncate">atr_14</span><div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 rounded-full" style="width:45%"></div></div><span class="text-white w-10 text-right font-bold">0.45</span></div>
+                          <div class="flex items-center gap-2 text-[11px] font-mono"><span class="text-muted w-28 truncate">macd_histogram</span><div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 rounded-full" style="width:42%"></div></div><span class="text-white w-10 text-right font-bold">0.42</span></div>
+                          <div class="flex items-center gap-2 text-[11px] font-mono"><span class="text-muted w-28 truncate">stoch_k</span><div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 rounded-full" style="width:38%"></div></div><span class="text-white w-10 text-right font-bold">0.38</span></div>
+                          <div class="flex items-center gap-2 text-[11px] font-mono"><span class="text-muted w-28 truncate">adx_14</span><div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 rounded-full" style="width:31%"></div></div><span class="text-white w-10 text-right font-bold">0.31</span></div>
+                          <div class="flex items-center gap-2 text-[11px] font-mono"><span class="text-muted w-28 truncate">close_pct_change</span><div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400/60 rounded-full" style="width:24%"></div></div><span class="text-muted w-10 text-right">0.24</span></div>
+                          <div class="flex items-center gap-2 text-[11px] font-mono"><span class="text-muted w-28 truncate">spread</span><div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400/40 rounded-full" style="width:15%"></div></div><span class="text-muted w-10 text-right">0.15</span></div>
+                      </div>
+                  </div>
+
+                  <!-- ■ MODEL CONFIG -->
+                  <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                      <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40">
+                          <h3 class="section-title">Model Configuration</h3>
+                          <button class="text-[9px] text-muted hover:text-white l-bd px-1.5 py-0.5 rounded transition-colors">EDIT</button>
+                      </div>
+                      <div class="p-4 space-y-1.5 font-mono text-[12px]">
+                          <div class="flex justify-between"><span class="text-muted">Model Type</span><span class="text-white">LightGBMRegressor</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Identifier</span><span class="text-white">unique-freqai-model-1</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Train Period</span><span class="text-white">30 days</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Backtest Period</span><span class="text-white">7 days</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Live Retrain Hours</span><span class="text-white">8h</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Continual Learning</span><span class="text-up font-bold">ON</span></div>
+                          <div class="l-t mt-2 pt-2"></div>
+                          <div class="flex justify-between"><span class="text-muted">Timeframes</span><span class="text-white">5m, 15m, 1h</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Corr Pairs</span><span class="text-white">BTC, ETH</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Outlier Detection</span><span class="text-white">SVM (nu=0.1)</span></div>
+                          <div class="flex justify-between"><span class="text-muted">PCA</span><span class="text-muted">Off</span></div>
+                          <div class="flex justify-between"><span class="text-muted">DI Threshold</span><span class="text-white">1.0</span></div>
+                      </div>
+                  </div>
+
+                  <!-- ■ MATRIX RUNNER CONFIG -->
+                  <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                      <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40">
+                          <h3 class="section-title flex items-center gap-2"><span>🧪</span>FreqAI Matrix Runner</h3>
+                          <span class="text-[10px] text-white/30 font-mono">Source: HO #147</span>
+                      </div>
+                      <div class="p-4 flex flex-col gap-3.5">
+                          <div><label class="builder-label">Source HO Epoch</label><select class="builder-select w-full"><option>HO #147 — Sharpe — +42.12%</option><option>HO #92 — Sortino — +38.40%</option></select></div>
+                          <div class="flex gap-2">
+                             <div class="flex-1"><label class="builder-label">Train Start</label><input type="date" class="builder-input w-full" value="2022-01-01"></div>
+                             <div class="flex-1"><label class="builder-label">Train End</label><input type="date" class="builder-input w-full" value="2023-06-30"></div>
+                          </div>
+                          <div class="flex gap-2">
+                             <div class="flex-1"><label class="builder-label">BT Start</label><input type="date" class="builder-input w-full" value="2023-07-01"></div>
+                             <div class="flex-1"><label class="builder-label">BT End</label><input type="date" class="builder-input w-full" value="2024-01-01"></div>
+                          </div>
+                          <div class="flex gap-2">
+                             <div class="flex-1"><label class="builder-label">Feature Period</label><input type="number" class="builder-input w-full" value="20"></div>
+                             <div class="flex-1"><label class="builder-label">Label Period</label><input type="number" class="builder-input w-full" value="24"></div>
+                          </div>
+                          <div class="l-t pt-3"><label class="builder-label">ML Models</label>
+                              <div class="flex flex-col gap-2.5">
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">LightGBM-Regressor</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">XGBoost-Regressor</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">CatBoost-Regressor</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">LightGBM-Classifier</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                              </div>
+                          </div>
+                          <div class="l-t pt-3"><label class="builder-label">Outlier Detection</label>
+                              <div class="flex gap-2 mb-2">
+                                <div class="flex-1"><label class="builder-label">Method</label><select class="builder-select w-full"><option>DI</option><option>SVM</option><option>None</option></select></div>
+                                <div class="flex-1"><label class="builder-label">DI Threshold</label><input type="number" step="0.1" class="builder-input w-full" value="0.9"></div>
+                              </div>
+                              <div class="flex flex-col gap-2.5 mt-2">
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Use PCA</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Add Noise</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Correlated Pairs</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                              </div>
+                          </div>
+                          <div class="l-t pt-3">
+                              <label class="builder-label">Matrix Calculation</label>
+                              <div class="mt-1 builder-card space-y-1.5 text-[11px] font-mono">
+                                  <div class="flex items-center gap-1.5 text-[#60a5fa]"><span class="px-1.5 py-0.5 bg-[#60a5fa]/10 border border-[#60a5fa]/25 rounded text-[10px]">ℹ</span><span><span class="text-white font-bold">2</span> models × <span class="text-white font-bold">2</span> outlier × <span class="text-white font-bold">2</span> PCA × <span class="text-white font-bold">2</span> noise = <span class="text-up font-bold">16</span> tests</span></div>
+                                  <div class="flex justify-between"><span class="text-muted">Est. Time</span><span class="text-muted">~5h 20m</span></div>
+                              </div>
+                          </div>
+                          <div class="flex gap-1.5 l-t pt-3">
+                              <button class="flex-1 py-2 text-[11px] font-bold uppercase tracking-wider bg-white text-black rounded hover:bg-white/85 transition-colors">▶ Run Matrix (16)</button>
+                              <button class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider l-bd rounded text-down hover:bg-down/10 transition-colors">⏹</button>
+                              <button class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider l-bd rounded text-muted hover:text-white hover:bg-white/5 transition-colors">↺</button>
+                          </div>
+                          <div class="l-t pt-3">
+                              <div class="flex justify-between text-[11px] font-mono mb-1.5"><span class="text-muted">Progress</span><span class="text-white font-bold">5/8 runs · ETA ~1h 20m</span></div>
+                              <div class="w-full h-1.5 bg-white/10 rounded-full"><div class="h-full bg-up rounded-full transition-all" style="width:62.5%"></div></div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- RIGHT COLUMN: Results + Statistics -->
+              <div class="flex-1 flex flex-col gap-5 min-w-0 overflow-y-auto min-h-0 pr-1">
+
+                  <!-- ■ WINNER BANNER -->
+                  <div class="bg-up/[0.04] l-bd rounded-lg p-4 shadow-xl border-l-2 border-l-up relative overflow-hidden shrink-0">
+                      <div class="absolute top-0 right-0 w-24 h-24 bg-up/[0.03] rounded-full -translate-y-8 translate-x-8"></div>
+                      <div class="flex justify-between items-center mb-2.5 relative z-10">
+                          <span class="text-white font-mono text-[12px] font-bold">★ LightGBM-R · DI · No PCA · Noise</span>
+                          <div class="flex items-center gap-2">
+                              <span class="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded border border-up/25">★ BEST</span>
+                              <button class="h-7 px-3 rounded-md text-[10px] font-bold flex items-center gap-1.5 transition-colors hover:border-up/30 hover:text-up" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#F5F5F5">Deploy</button>
+                          </div>
+                      </div>
+                      <div class="grid grid-cols-7 gap-2 text-[11px] font-mono relative z-10">
+                          <div><span class="text-muted block text-[9px]">Profit</span><span class="text-up font-bold">+52.4%</span></div>
+                          <div><span class="text-muted block text-[9px]">Profit $</span><span class="text-up font-bold">+$5,240</span></div>
+                          <div><span class="text-muted block text-[9px]">Trades</span><span class="text-white">156</span></div>
+                          <div><span class="text-muted block text-[9px]">Win Rate</span><span class="text-up">74.2%</span></div>
+                          <div><span class="text-muted block text-[9px]">Sharpe</span><span class="text-white">4.10</span></div>
+                          <div><span class="text-muted block text-[9px]">Max DD</span><span class="text-down font-bold">-1.8%</span></div>
+                          <div><span class="text-muted block text-[9px]">Avg Dur.</span><span class="text-muted">3h 50m</span></div>
+                      </div>
+                  </div>
+
+                  <!-- ■ MATRIX RESULTS TABLE -->
+                  <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                      <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40">
+                          <h3 class="section-title">Matrix Results</h3>
+                          <span class="text-[10px] text-white/30 font-mono">5/8 complete</span>
+                      </div>
+                      <div class="overflow-x-auto">
+                          <table class="w-full text-[13px] font-mono whitespace-nowrap">
+                              <thead class="sticky top-0 bg-surface z-10 font-mono text-[11px] uppercase tracking-widest text-muted l-b shadow-lg"><tr>
+                                  <th class="text-left px-3 py-2 font-semibold sortable">★</th><th class="text-left px-3 py-2 font-semibold sortable filterable">Model</th><th class="text-left px-3 py-2 font-semibold sortable filterable">Outlier</th><th class="text-left px-3 py-2 font-semibold sortable filterable">PCA</th><th class="text-left px-3 py-2 font-semibold sortable filterable">Noise</th><th class="text-right px-3 py-2 font-semibold sortable sort-desc">Profit %</th><th class="text-right px-3 py-2 font-semibold sortable">Sharpe</th><th class="text-right px-3 py-2 font-semibold sortable">Max DD</th><th class="text-right px-3 py-2 font-semibold sortable">Trades</th><th class="text-right px-3 py-2 font-semibold sortable">Win %</th><th class="text-right px-3 py-2 font-semibold sortable">Accuracy</th><th class="text-center px-3 py-2 font-semibold">Action</th>
+                              </tr></thead>
+                              <tbody class="divide-y divide-white/[0.05]">
+                                  <tr class="hover:bg-white/[0.04] bg-up/[0.02]"><td class="px-3 py-2.5 text-up font-bold">★1</td><td class="px-3 py-2.5">LightGBM-R</td><td class="px-3 py-2.5 text-muted">DI</td><td class="px-3 py-2.5 text-muted">Off</td><td class="px-3 py-2.5 text-up">Yes</td><td class="px-3 py-2.5 text-right text-up font-bold">+52.4%</td><td class="px-3 py-2.5 text-right">4.10</td><td class="px-3 py-2.5 text-right text-down">-1.8%</td><td class="px-3 py-2.5 text-right">156</td><td class="px-3 py-2.5 text-right">74.2%</td><td class="px-3 py-2.5 text-right text-up">72.4%</td><td class="px-3 py-2.5 text-center"><button class="px-2.5 py-1 text-[10px] font-bold bg-up/10 text-up rounded l-bd hover:bg-up/20 transition-colors">Deploy</button></td></tr>
+                                  <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2.5 text-muted">2</td><td class="px-3 py-2.5">XGBoost-R</td><td class="px-3 py-2.5 text-muted">None</td><td class="px-3 py-2.5 text-muted">Off</td><td class="px-3 py-2.5 text-up">Yes</td><td class="px-3 py-2.5 text-right text-up font-bold">+44.1%</td><td class="px-3 py-2.5 text-right">3.22</td><td class="px-3 py-2.5 text-right text-down">-3.5%</td><td class="px-3 py-2.5 text-right">132</td><td class="px-3 py-2.5 text-right">69.7%</td><td class="px-3 py-2.5 text-right">69.1%</td><td class="px-3 py-2.5 text-center"><button class="px-2.5 py-1 text-[10px] font-bold text-muted l-bd rounded hover:bg-white/5 transition-colors">Deploy</button></td></tr>
+                                  <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2.5 text-muted">3</td><td class="px-3 py-2.5">LightGBM-R</td><td class="px-3 py-2.5 text-muted">SVM</td><td class="px-3 py-2.5 text-up">On</td><td class="px-3 py-2.5 text-muted">No</td><td class="px-3 py-2.5 text-right text-up font-bold">+38.9%</td><td class="px-3 py-2.5 text-right">2.95</td><td class="px-3 py-2.5 text-right text-down">-4.2%</td><td class="px-3 py-2.5 text-right">118</td><td class="px-3 py-2.5 text-right">66.1%</td><td class="px-3 py-2.5 text-right">66.8%</td><td class="px-3 py-2.5 text-center"><button class="px-2.5 py-1 text-[10px] font-bold text-muted l-bd rounded hover:bg-white/5 transition-colors">Deploy</button></td></tr>
+                                  <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2.5 text-muted">4</td><td class="px-3 py-2.5">XGBoost-R</td><td class="px-3 py-2.5 text-muted">DI</td><td class="px-3 py-2.5 text-up">On</td><td class="px-3 py-2.5 text-up">Yes</td><td class="px-3 py-2.5 text-right text-up font-bold">+32.1%</td><td class="px-3 py-2.5 text-right">2.44</td><td class="px-3 py-2.5 text-right text-down">-5.8%</td><td class="px-3 py-2.5 text-right">98</td><td class="px-3 py-2.5 text-right">61.2%</td><td class="px-3 py-2.5 text-right">63.4%</td><td class="px-3 py-2.5 text-center"><button class="px-2.5 py-1 text-[10px] font-bold text-muted l-bd rounded hover:bg-white/5 transition-colors">Deploy</button></td></tr>
+                                  <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2.5 text-muted">5</td><td class="px-3 py-2.5">CatBoost-R</td><td class="px-3 py-2.5 text-muted">None</td><td class="px-3 py-2.5 text-muted">Off</td><td class="px-3 py-2.5 text-muted">No</td><td class="px-3 py-2.5 text-right text-down font-bold">-4.2%</td><td class="px-3 py-2.5 text-right text-down">-0.18</td><td class="px-3 py-2.5 text-right text-down">-14.2%</td><td class="px-3 py-2.5 text-right">44</td><td class="px-3 py-2.5 text-right">45.5%</td><td class="px-3 py-2.5 text-right text-down">48.2%</td><td class="px-3 py-2.5 text-center"><button class="px-2.5 py-1 text-[10px] font-bold text-muted l-bd rounded hover:bg-white/5 transition-colors">Deploy</button></td></tr>
+                              </tbody>
+                          </table>
+                      </div>
+                  </div>
+
+                  <!-- ■ TRAINING TERMINAL -->
+                  <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                      <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40">
+                          <h3 class="section-title">Training Terminal</h3>
+                          <div class="flex items-center gap-2">
+                              <button class="px-2 py-0.5 text-[9px] font-bold uppercase bg-white/10 text-white rounded">ALL</button>
+                              <button class="px-2 py-0.5 text-[9px] font-bold uppercase text-muted hover:text-white transition-colors rounded">INFO</button>
+                              <button class="px-2 py-0.5 text-[9px] font-bold uppercase text-muted hover:text-white transition-colors rounded">WARN</button>
+                              <button class="px-2 py-0.5 text-[9px] font-bold uppercase text-muted hover:text-white transition-colors rounded">ERR</button>
+                              <button class="text-[10px] text-muted hover:text-white transition-colors font-mono flex items-center gap-1"><i data-lucide="pin" class="w-3 h-3"></i>Pin</button>
+                          </div>
+                      </div>
+                      <div class="bg-black p-4 font-mono text-[10px] text-muted leading-relaxed max-h-[280px] overflow-y-auto">
+                          <div>14:10:02 INFO  Loading FreqAI configuration...</div>
+                          <div>14:10:03 INFO  Source: HO #147 (SharpeHyperOptLoss)</div>
+                          <div>14:10:04 INFO  Models: LightGBM-R, XGBoost-R</div>
+                          <div>14:10:05 INFO  Outlier: DI (threshold=0.9), Noise=On</div>
+                          <div>14:10:06 INFO  Matrix: 8 total runs</div>
+                          <div>14:10:08 INFO  [1/8] LightGBM-R · DI · NoPCA · Noise — training...</div>
+                          <div class="text-white">14:12:30 INFO  [1/8] Complete — profit: +52.4%, trades: 156, accuracy: 72.4%</div>
+                          <div>14:12:31 INFO  [2/8] XGBoost-R · DI · NoPCA · Noise — training...</div>
+                          <div class="text-white">14:15:10 INFO  [2/8] Complete — profit: +44.1%, trades: 132, accuracy: 69.1%</div>
+                          <div>14:15:11 INFO  [3/8] LightGBM-R · SVM · NoPCA · Noise — training...</div>
+                          <div class="text-white">14:18:22 INFO  [3/8] Complete — profit: +38.9%, trades: 118, accuracy: 66.8%</div>
+                          <div>14:18:23 INFO  [4/8] XGBoost-R · SVM · NoPCA · Noise — training...</div>
+                          <div class="text-up">14:21:45 INFO  [4/8] Complete — profit: +32.1%, trades: 98, accuracy: 63.4%</div>
+                          <div>14:21:46 INFO  [5/8] LightGBM-R · DI · PCA · Noise — training...</div>
+                          <div class="text-white">14:25:10 INFO  [5/8] Complete — profit: +28.9%, trades: 92, accuracy: 61.2%</div>
+                          <div class="text-cyan-400 animate-pulse">14:25:12 INFO  [6/8] XGBoost-R · DI · PCA · Noise — training...</div>
+                      </div>
+                  </div>
+
+              </div><!-- /RIGHT COLUMN -->
+          </div><!-- /MAIN 2-COL -->
+
+
+      </div><!-- /END FREQAI PAGE -->
+
 
 
   </div> <!-- /END MAIN WINDOW -->
@@ -4965,7 +5279,8 @@
             'page-builder': 'Strategy Builder',
             'page-analytics': 'Analytics',
             'page-ai-insights': 'AI Insights',
-            'page-risk': 'Risk Management'
+            'page-risk': 'Risk Management',
+            'page-freqai': 'FreqAI'
         }[pageId] || pageId;
         setTimeout(() => lucide.createIcons(), 50);
         

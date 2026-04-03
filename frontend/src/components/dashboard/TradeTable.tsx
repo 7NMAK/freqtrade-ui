@@ -377,7 +377,7 @@ export default function TradeTable({
     return m;
   }, [locksData]);
 
-  // Whitelist derived data for sorting
+  // Whitelist derived data for sorting — includes market data for 24h change, spread, volume, volatility
   const whitelistRows = useMemo(() => {
     if (!whitelistData) return [];
     return whitelistData.whitelist.map((pair) => {
@@ -386,17 +386,23 @@ export default function TradeTable({
       const assignedBots = Array.from(new Set(openTrades.filter((t) => t.pair === pair).map((t) => t._bot_name ?? `Bot ${t._bot_id}`))).join(", ");
       const pairTrades = openTrades.filter((t) => t.pair === pair);
       const latestPrice = pairTrades.length > 0 ? pairTrades[0].current_rate : null;
+      const market = pairMarketData?.[pair];
+      const spread = spreadData?.[pair];
       return {
         pair,
         status: lock ? "LOCKED" : "ACTIVE",
         assignedBots: assignedBots || "",
         price: latestPrice ?? 0,
+        change24h: market?.change24h ?? null,
+        spread: spread?.spreadPct ?? null,
+        vol24h: market?.volume ?? null,
+        volatility: market?.volatility ?? null,
         openCount,
         lockReason: lock?.reason ?? "",
         lock,
       };
     });
-  }, [whitelistData, lockMap, openTrades]);
+  }, [whitelistData, lockMap, openTrades, pairMarketData, spreadData]);
 
   const openSort = useSortable(filteredOpenTrades, "open_date");
   const closedSort = useSortable(filteredClosedTrades, "close_date");

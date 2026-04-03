@@ -189,6 +189,54 @@ export default function BotDetailPanel({
 }: BotDetailPanelProps) {
   const [detailTab, setDetailTab] = useState<DetailTab>("overview");
 
+  // ── Config inline editing state ─────────────────────────────────────
+  const [editingSection, setEditingSection] = useState<"core" | "risk" | null>(null);
+  const [editValues, setEditValues] = useState<Record<string, string | number | boolean>>({});
+  const [savingConfig, setSavingConfig] = useState(false);
+
+  const handleEditStart = useCallback((section: "core" | "risk") => {
+    if (!configData) return;
+    if (section === "core") {
+      setEditValues({
+        stake_amount: typeof configData.stake_amount === "number" ? configData.stake_amount : 0,
+        max_open_trades: configData.max_open_trades ?? 0,
+        timeframe: configData.timeframe ?? "",
+      });
+    } else {
+      setEditValues({
+        stoploss: configData.stoploss != null ? configData.stoploss * 100 : -10,
+        trailing_stop: configData.trailing_stop ?? false,
+        trailing_stop_positive: configData.trailing_stop_positive ?? 0,
+        trailing_stop_positive_offset: configData.trailing_stop_positive_offset ?? 0,
+      });
+    }
+    setEditingSection(section);
+  }, [configData]);
+
+  const handleSaveApply = useCallback(async () => {
+    if (!bot || !editingSection) return;
+    setSavingConfig(true);
+    try {
+      const { saveBotConfig, applyBotConfig } = await import("@/lib/api");
+      const patch: Record<string, unknown> = {};
+      if (editingSection === "core") {
+        patch.stake_amount = Number(editValues.stake_amount);
+        patch.max_open_trades = Number(editValues.max_open_trades);
+        patch.timeframe = String(editValues.timeframe);
+      } else {
+        patch.stoploss = Number(editValues.stoploss) / 100; // convert % back to ratio
+        patch.trailing_stop = editValues.trailing_stop;
+        patch.trailing_stop_positive = Number(editValues.trailing_stop_positive);
+        patch.trailing_stop_positive_offset = Number(editValues.trailing_stop_positive_offset);
+      }
+      await saveBotConfig(bot.id, patch);
+      await applyBotConfig(bot.id);
+      setEditingSection(null);
+    } catch { /* TODO: show error toast */ } finally {
+      setSavingConfig(false);
+    }
+  }, [bot, editingSection, editValues]);
+
   // ── Backtest / Hyperopt history state ───────────────────────────────
   const [backtestHistory, setBacktestHistory] = useState<Array<{ filename: string; strategy: string; run_id: string; backtest_start_time: number; notes?: string; timeframe?: string }>>([]);
   const [backtestLoading, setBacktestLoading] = useState(false);
@@ -210,8 +258,9 @@ export default function BotDetailPanel({
       const stratName = configData?.strategy ?? bot.strategy_name;
       const filtered = stratName ? data.results.filter(r => r.strategy === stratName) : data.results;
       setBacktestHistory(filtered.sort((a, b) => b.backtest_start_time - a.backtest_start_time));
-    } catch { /* non-blocking */ }
-    setBacktestLoading(false);
+    } catch { /* non-blocking */ } finally {
+      setBacktestLoading(false);
+    }
   }, [bot, configData?.strategy]);
 
   // Fetch single backtest result detail
@@ -235,8 +284,9 @@ export default function BotDetailPanel({
       const { botHyperoptRuns } = await import("@/lib/api");
       const data = await botHyperoptRuns(bot.id);
       setHyperoptRuns((data.runs ?? []).sort((a, b) => b.mtime - a.mtime));
-    } catch { /* non-blocking */ }
-    setHyperoptLoading(false);
+    } catch { /* non-blocking */ } finally {
+      setHyperoptLoading(false);
+    }
   }, [bot]);
 
   // Fetch hyperopt detail for a specific run
@@ -410,17 +460,16 @@ export default function BotDetailPanel({
               hyperoptLoading={hyperoptLoading}
               hyperoptDetails={hyperoptDetails}
               fetchHyperoptDetail={fetchHyperoptDetail}
+              editingSection={editingSection}
+              editValues={editValues}
+              savingConfig={savingConfig}
+              onEditStart={handleEditStart}
+              onEditCancel={() => setEditingSection(null)}
+              onEditChange={(k, v) => setEditValues(prev => ({ ...prev, [k]: v }))}
+              onSaveApply={handleSaveApply}
             />
             </div>
           )}
-        </div>
-
-        {/* Bottom actions — Edit, Duplicate, Delete, Close */}
-        <div className="px-4 py-3 l-t flex gap-2 shrink-0">
-          <button type="button" onClick={() => setDetailTab("config")} className="flex-1 py-2 rounded l-bd bg-surface text-muted text-[11px] font-medium text-center transition-all hover:bg-white/[0.04] cursor-pointer">Config</button>
-          <button type="button" onClick={onDuplicate} className="flex-1 py-2 rounded l-bd bg-surface text-muted text-[11px] font-medium text-center transition-all hover:bg-white/[0.04] cursor-pointer">Duplicate</button>
-          <button type="button" onClick={onDelete} className="py-2 px-4 rounded border border-down/20 bg-down/10 text-down text-[11px] font-medium text-center transition-all hover:bg-down/15 cursor-pointer">Delete</button>
-          <button type="button" onClick={onClose} className="flex-1 py-2 rounded bg-white/10 text-white text-[11px] font-semibold text-center transition-all hover:bg-white/20 cursor-pointer">Close</button>
         </div>
       </div>
     </>
@@ -455,6 +504,13 @@ function DetailContent({
   hyperoptLoading,
   hyperoptDetails,
   fetchHyperoptDetail,
+  editingSection,
+  editValues,
+  savingConfig,
+  onEditStart,
+  onEditCancel,
+  onEditChange,
+  onSaveApply,
 }: {
   tab: DetailTab;
   bot: Bot;
@@ -479,6 +535,13 @@ function DetailContent({
   hyperoptLoading: boolean;
   hyperoptDetails: Record<string, Array<{ current_epoch: number; loss: number; trades: number; winRate: number; profitPct: number; profitAbs: number; maxDrawdown: number; sharpe: number; sortino: number; avgDuration: string; params?: Record<string, unknown> }>>;
   fetchHyperoptDetail: (filename: string) => void;
+  editingSection: "core" | "risk" | null;
+  editValues: Record<string, string | number | boolean>;
+  savingConfig: boolean;
+  onEditStart: (section: "core" | "risk") => void;
+  onEditCancel: () => void;
+  onEditChange: (key: string, value: string | number | boolean) => void;
+  onSaveApply: () => void;
 }) {
   switch (tab) {
     /* ─── Overview ─── */
@@ -891,6 +954,32 @@ function DetailContent({
 
     /* ─── Config ─── */
     case "config": {
+      // Helper for inline edit fields
+      const EditRow = ({ label, field, type = "text", suffix }: { label: string; field: string; type?: string; suffix?: string }) => (
+        <div className="flex justify-between items-center">
+          <span className="text-muted">{label}</span>
+          <div className="flex items-center gap-1">
+            <input
+              type={type}
+              value={String(editValues[field] ?? "")}
+              onChange={(e) => onEditChange(field, type === "number" ? Number(e.target.value) : e.target.value)}
+              className="bg-white/[0.06] border border-white/10 rounded px-2 py-0.5 text-white text-[12px] font-mono w-24 text-right focus:border-cyan-500/50 outline-none"
+            />
+            {suffix && <span className="text-muted text-[10px]">{suffix}</span>}
+          </div>
+        </div>
+      );
+      const ToggleRow = ({ label, field }: { label: string; field: string }) => (
+        <div className="flex justify-between items-center">
+          <span className="text-muted">{label}</span>
+          <button
+            type="button"
+            onClick={() => onEditChange(field, !editValues[field])}
+            className={`px-2 py-0.5 text-[10px] font-bold rounded cursor-pointer ${editValues[field] ? "bg-up/15 text-up" : "bg-white/10 text-muted"}`}
+          >{editValues[field] ? "Yes" : "No"}</button>
+        </div>
+      );
+
       return (
         <div className="flex flex-col gap-4">
           {configData ? (
@@ -898,28 +987,70 @@ function DetailContent({
               {/* 2-column grid: Core Config + Risk Management — matching HTML line 707-731 */}
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="bg-surface l-bd rounded p-3">
-                  <h3 className="section-title mb-2 flex items-center justify-between">Core Config <button className="text-[9px] text-muted hover:text-white l-bd px-1.5 py-0.5 rounded transition-colors cursor-pointer" title="Edit core config">EDIT</button></h3>
+                  <h3 className="section-title mb-2 flex items-center justify-between">Core Config
+                    {editingSection === "core" ? (
+                      <div className="flex gap-1">
+                        <button onClick={onSaveApply} disabled={savingConfig} className="text-[9px] text-up hover:text-white bg-up/15 px-1.5 py-0.5 rounded transition-colors cursor-pointer font-bold">{savingConfig ? "Saving..." : "Save & Apply"}</button>
+                        <button onClick={onEditCancel} className="text-[9px] text-muted hover:text-white l-bd px-1.5 py-0.5 rounded transition-colors cursor-pointer">Cancel</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => onEditStart("core")} className="text-[9px] text-muted hover:text-white l-bd px-1.5 py-0.5 rounded transition-colors cursor-pointer" title="Edit core config">EDIT</button>
+                    )}
+                  </h3>
                   <div className="space-y-1.5 font-mono text-[12px]">
                     <div className="flex justify-between"><span className="text-muted">Strategy</span><span className="text-white">{configData.strategy ?? "—"}</span></div>
                     <div className="flex justify-between"><span className="text-muted">Exchange</span><span className="text-white">{typeof configData.exchange === "string" ? configData.exchange : "—"}</span></div>
-                    <div className="flex justify-between"><span className="text-muted">Timeframe</span><span className="text-white">{configData.timeframe ?? "—"}</span></div>
-                    <div className="flex justify-between"><span className="text-muted">Mode</span><span className="text-white">{configData.trading_mode ? `${configData.trading_mode} · ${configData.margin_mode ?? "—"}` : "—"}</span></div>
-                    <div className="flex justify-between"><span className="text-muted">Stake Currency</span><span className="text-white">{configData.stake_currency ?? "—"}</span></div>
-                    <div className="flex justify-between"><span className="text-muted">Stake Amount</span><span className="text-white">{fmt(typeof configData.stake_amount === "number" ? configData.stake_amount : 0, 2)}</span></div>
-                    <div className="flex justify-between"><span className="text-muted">Max Open Trades</span><span className="text-white">{configData.max_open_trades ?? "—"}</span></div>
-                    <div className="flex justify-between"><span className="text-muted">Dry Run</span><span className="text-white">{configData.dry_run ? "Yes" : "No"}</span></div>
+                    {editingSection === "core" ? (
+                      <>
+                        <EditRow label="Timeframe" field="timeframe" />
+                        <div className="flex justify-between"><span className="text-muted">Mode</span><span className="text-white">{configData.trading_mode ? `${configData.trading_mode} · ${configData.margin_mode ?? "—"}` : "—"}</span></div>
+                        <div className="flex justify-between"><span className="text-muted">Stake Currency</span><span className="text-white">{configData.stake_currency ?? "—"}</span></div>
+                        <EditRow label="Stake Amount" field="stake_amount" type="number" />
+                        <EditRow label="Max Open Trades" field="max_open_trades" type="number" />
+                        <div className="flex justify-between"><span className="text-muted">Dry Run</span><span className="text-white">{configData.dry_run ? "Yes" : "No"}</span></div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex justify-between"><span className="text-muted">Timeframe</span><span className="text-white">{configData.timeframe ?? "—"}</span></div>
+                        <div className="flex justify-between"><span className="text-muted">Mode</span><span className="text-white">{configData.trading_mode ? `${configData.trading_mode} · ${configData.margin_mode ?? "—"}` : "—"}</span></div>
+                        <div className="flex justify-between"><span className="text-muted">Stake Currency</span><span className="text-white">{configData.stake_currency ?? "—"}</span></div>
+                        <div className="flex justify-between"><span className="text-muted">Stake Amount</span><span className="text-white">{fmt(typeof configData.stake_amount === "number" ? configData.stake_amount : 0, 2)}</span></div>
+                        <div className="flex justify-between"><span className="text-muted">Max Open Trades</span><span className="text-white">{configData.max_open_trades ?? "—"}</span></div>
+                        <div className="flex justify-between"><span className="text-muted">Dry Run</span><span className="text-white">{configData.dry_run ? "Yes" : "No"}</span></div>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="bg-surface l-bd rounded p-3">
-                  <h3 className="section-title mb-2 flex items-center justify-between">Risk Management <button className="text-[9px] text-muted hover:text-white l-bd px-1.5 py-0.5 rounded transition-colors cursor-pointer" title="Edit risk settings">EDIT</button></h3>
-                  <div className="space-y-1.5 font-mono text-[12px]">
-                    <div className="flex justify-between"><span className="text-muted">Stoploss</span><span className="text-down font-bold">{configData.stoploss != null ? `${fmt(configData.stoploss * 100, 1)}%` : "—"}</span></div>
-                    <div className="flex justify-between"><span className="text-muted">Trailing Stop</span><span className={configData.trailing_stop ? "text-up" : "text-white"}>{configData.trailing_stop ? "Yes" : "No"}</span></div>
-                    {configData.trailing_stop_positive != null && (
-                      <div className="flex justify-between"><span className="text-muted">Trailing Positive</span><span className="text-white">{configData.trailing_stop_positive}</span></div>
+                  <h3 className="section-title mb-2 flex items-center justify-between">Risk Management
+                    {editingSection === "risk" ? (
+                      <div className="flex gap-1">
+                        <button onClick={onSaveApply} disabled={savingConfig} className="text-[9px] text-up hover:text-white bg-up/15 px-1.5 py-0.5 rounded transition-colors cursor-pointer font-bold">{savingConfig ? "Saving..." : "Save & Apply"}</button>
+                        <button onClick={onEditCancel} className="text-[9px] text-muted hover:text-white l-bd px-1.5 py-0.5 rounded transition-colors cursor-pointer">Cancel</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => onEditStart("risk")} className="text-[9px] text-muted hover:text-white l-bd px-1.5 py-0.5 rounded transition-colors cursor-pointer" title="Edit risk settings">EDIT</button>
                     )}
-                    {configData.trailing_stop_positive_offset != null && (
-                      <div className="flex justify-between"><span className="text-muted">Trailing Offset</span><span className="text-white">{configData.trailing_stop_positive_offset}</span></div>
+                  </h3>
+                  <div className="space-y-1.5 font-mono text-[12px]">
+                    {editingSection === "risk" ? (
+                      <>
+                        <EditRow label="Stoploss" field="stoploss" type="number" suffix="%" />
+                        <ToggleRow label="Trailing Stop" field="trailing_stop" />
+                        <EditRow label="Trailing Positive" field="trailing_stop_positive" type="number" />
+                        <EditRow label="Trailing Offset" field="trailing_stop_positive_offset" type="number" />
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex justify-between"><span className="text-muted">Stoploss</span><span className="text-down font-bold">{configData.stoploss != null ? `${fmt(configData.stoploss * 100, 1)}%` : "—"}</span></div>
+                        <div className="flex justify-between"><span className="text-muted">Trailing Stop</span><span className={configData.trailing_stop ? "text-up" : "text-white"}>{configData.trailing_stop ? "Yes" : "No"}</span></div>
+                        {configData.trailing_stop_positive != null && (
+                          <div className="flex justify-between"><span className="text-muted">Trailing Positive</span><span className="text-white">{configData.trailing_stop_positive}</span></div>
+                        )}
+                        {configData.trailing_stop_positive_offset != null && (
+                          <div className="flex justify-between"><span className="text-muted">Trailing Offset</span><span className="text-white">{configData.trailing_stop_positive_offset}</span></div>
+                        )}
+                      </>
                     )}
                     {configData.minimal_roi && (
                       <div className="flex justify-between"><span className="text-muted">minimal_roi</span><span className="text-white font-mono text-[10px]">{JSON.stringify(configData.minimal_roi)}</span></div>
@@ -1060,7 +1191,9 @@ function DetailContent({
                   ?? (detail?.strategy as Record<string, Record<string, unknown>> | undefined)?.[run.strategy]
                   ?? null;
                 const isExpanded = idx === 0;
-                const totalProfitPct = (strat as Record<string, number> | null)?.profit_total_pct ?? (strat as Record<string, number> | null)?.profit_total ?? 0;
+                // FT backtest returns profit_total as ratio (0.05 = 5%), profit_total_pct already in %
+                const rawProfitPct = (strat as Record<string, number> | null)?.profit_total_pct ?? (strat as Record<string, number> | null)?.profit_total ?? 0;
+                const totalProfitPct = Math.abs(rawProfitPct) < 1 ? rawProfitPct * 100 : rawProfitPct; // normalize to %
                 const totalProfit = (strat as Record<string, number> | null)?.profit_total_abs ?? 0;
                 const maxDD = (strat as Record<string, number> | null)?.max_drawdown ?? (strat as Record<string, number> | null)?.max_drawdown_account ?? 0;
                 const winRate = (strat as Record<string, number> | null)?.wins != null && (strat as Record<string, number> | null)?.trades != null
@@ -1084,7 +1217,7 @@ function DetailContent({
                       </div>
                     </div>
                     <div className="grid grid-cols-6 gap-2 text-[11px] font-mono mb-2">
-                      <div><span className="text-muted block text-[9px]">Total Profit</span><span className={`${profitColor(totalProfitPct)} font-bold`}>{totalProfitPct >= 0 ? "+" : ""}{fmt(totalProfitPct * 100, 1)}%</span></div>
+                      <div><span className="text-muted block text-[9px]">Total Profit</span><span className={`${profitColor(totalProfitPct)} font-bold`}>{totalProfitPct >= 0 ? "+" : ""}{fmt(totalProfitPct, 1)}%</span></div>
                       <div><span className="text-muted block text-[9px]">Profit Abs</span><span className={`${profitColor(totalProfit)} font-bold`}>{fmtMoney(totalProfit)}</span></div>
                       <div><span className="text-muted block text-[9px]">Max DD</span><span className="text-down font-bold">{maxDD > 0 ? `-${fmt(maxDD * 100, 1)}%` : "—"}</span></div>
                       <div><span className="text-muted block text-[9px]">Win Rate</span><span className="text-white">{fmt(winRate, 1)}%</span></div>
@@ -1139,7 +1272,7 @@ function DetailContent({
                     <div className="grid grid-cols-6 gap-2 text-[11px] font-mono mb-2">
                       <div><span className="text-muted block text-[9px]">Epochs</span><span className="text-white">{run.epochs}</span></div>
                       <div><span className="text-muted block text-[9px]">Best Epoch</span><span className="text-white font-bold">{best?.current_epoch ?? "—"}</span></div>
-                      <div><span className="text-muted block text-[9px]">Profit</span><span className={`${best && best.profitPct >= 0 ? "text-up" : "text-down"} font-bold`}>{best ? `${best.profitPct >= 0 ? "+" : ""}${fmt(best.profitPct, 1)}%` : "—"}</span></div>
+                      <div><span className="text-muted block text-[9px]">Profit</span><span className={`${best ? (best.profitPct >= 0 ? "text-up" : "text-down") : "text-muted"} font-bold`}>{best ? `${best.profitPct >= 0 ? "+" : ""}${fmt(best.profitPct, 1)}%` : "—"}</span></div>
                       <div><span className="text-muted block text-[9px]">Max DD</span><span className="text-down font-bold">{best ? `-${fmt(best.maxDrawdown * 100, 1)}%` : "—"}</span></div>
                       <div><span className="text-muted block text-[9px]">Win Rate</span><span className="text-white">{best ? `${fmt(best.winRate * 100, 1)}%` : "—"}</span></div>
                       <div><span className="text-muted block text-[9px]">Trades</span><span className="text-white">{best?.trades ?? "—"}</span></div>

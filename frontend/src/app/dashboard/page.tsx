@@ -232,6 +232,11 @@ export default function DashboardPage() {
       // If no trade bots found but we have running bots, use ALL running bots as fallback
       const effectiveTradeBots = tradeBots.length > 0 ? tradeBots : runningBots;
 
+      console.log(`[KPI DEBUG] BOT INVENTORY:
+  Total bots: ${botList.length} → ${botList.map(b => `${b.name}(id=${b.id},status=${b.status},mode=${b.ft_mode},utility=${b.is_utility})`).join(', ')}
+  Running bots: ${runningBots.length} → ${runningBots.map(b => b.name).join(', ')}
+  Trade bots: ${tradeBots.length} → ${tradeBots.map(b => b.name).join(', ')}
+  Effective trade bots (used for KPIs): ${effectiveTradeBots.length} → ${effectiveTradeBots.map(b => b.name).join(', ')}`);
       // ── STAGE 2: Fire ALL portfolio + per-bot calls in PARALLEL ──────
       // This eliminates the sequential waterfall that was adding 4-5 round-trips
       const [pbResult, ppResult, ptResult, pdResult] = await Promise.allSettled([
@@ -357,9 +362,11 @@ export default function DashboardPage() {
               if (stats.sharpe_ratio != null) {
                 aggSharpe = aggSharpe != null ? Math.min(aggSharpe, stats.sharpe_ratio) : stats.sharpe_ratio;
               }
-              // Max drawdown from stats — max_drawdown is a ratio (e.g. 0.05 = 5%)
+              // Max drawdown from stats — max_drawdown is a positive ratio (e.g. 0.05 = 5%)
+              // Use Math.max to get the WORST (largest) drawdown across bots
               if (stats.max_drawdown != null) {
-                aggMaxDD = aggMaxDD != null ? Math.min(aggMaxDD, stats.max_drawdown) : stats.max_drawdown;
+                console.log(`[KPI DEBUG] MAX DD: bot=${bot.name} max_drawdown=${stats.max_drawdown} (=${(stats.max_drawdown * 100).toFixed(2)}%) max_drawdown_abs=${stats.max_drawdown_abs} negtrade=${stats.negtrade_account_drawdown}`);
+                aggMaxDD = aggMaxDD != null ? Math.max(aggMaxDD, stats.max_drawdown) : stats.max_drawdown;
               }
               if (stats.max_drawdown_abs != null) {
                 aggMaxDDAbs = aggMaxDDAbs != null ? Math.max(aggMaxDDAbs, stats.max_drawdown_abs) : stats.max_drawdown_abs;
@@ -538,9 +545,11 @@ export default function DashboardPage() {
 
         // Open P&L with fallback for field names
         const openPnlSum = effectiveOpen.reduce((s, t) => {
-          const pnl = t.current_profit_abs ?? (t as unknown as Record<string, unknown>).profit_abs as number ?? 0;
+          const pnl = t.current_profit_abs ?? ((t as unknown as Record<string, unknown>).profit_abs as number | undefined) ?? 0;
+          console.log(`[KPI DEBUG] OPEN P&L: bot=${(t as unknown as Record<string, unknown>)._bot_name} pair=${t.pair} trade_id=${t.trade_id} current_profit_abs=${t.current_profit_abs} pnl_used=${pnl}`);
           return s + pnl;
         }, 0);
+        console.log(`[KPI DEBUG] OPEN P&L TOTAL: $${openPnlSum.toFixed(2)} from ${effectiveOpen.length} trades`);
         setTotalPnlOpen(openPnlSum);
         const totalStake = effectiveOpen.reduce((s, t) => s + t.stake_amount, 0);
         setTotalPnlOpenPct(totalStake > 0 ? (openPnlSum / totalStake) * 100 : null);
@@ -591,8 +600,8 @@ export default function DashboardPage() {
           finalPF = lossSum > 0 ? winSum / lossSum : (winSum > 0 ? winSum : null);
         }
 
-        // FALLBACK: Max drawdown from equity curve (closed + open unrealized)
-        let finalMaxDD: number | null = aggMaxDD != null ? aggMaxDD * 100 : null;
+        // Max drawdown: always display as negative percentage
+        let finalMaxDD: number | null = aggMaxDD != null ? -(aggMaxDD * 100) : null;
         if (finalMaxDD == null && allClosed.length > 0) {
           const sorted = [...allClosed].sort((a, b) => new Date(a.close_date ?? "").getTime() - new Date(b.close_date ?? "").getTime());
           let equity = 0, peak = 0, maxDDPct = 0;

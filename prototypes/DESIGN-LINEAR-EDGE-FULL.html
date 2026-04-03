@@ -4972,9 +4972,10 @@
           <!-- ═══════════════════════════════════════════ -->
           <!-- TAB 1: MODELS & MONITORING                 -->
           <!-- ═══════════════════════════════════════════ -->
-          <div id="fai-tab-models" class="fai-tab flex-1 min-h-0 overflow-hidden flex gap-5 p-5">
+          <div id="fai-tab-models" class="fai-tab flex-1 min-h-0 overflow-y-auto">
+              <div class="flex gap-5 p-5">
               <!-- Col 1: Active Models List -->
-              <div class="w-[380px] shrink-0 relative"><div class="absolute inset-0 overflow-y-auto pr-1"><div class="flex flex-col gap-5">
+              <div class="w-[380px] shrink-0"><div class="flex flex-col gap-5">
                   <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
                       <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title">Active Models</h3><span class="text-[10px] text-white/30 font-mono">3 active · 7 archived</span></div>
                       <div class="p-4 l-b hover:bg-white/[0.04] transition-colors cursor-pointer bg-white/[0.04]">
@@ -4996,10 +4997,10 @@
                           <div class="grid grid-cols-4 gap-2 text-[11px] font-mono"><div><span class="text-muted block text-[9px]">Features</span><span class="text-muted">30</span></div><div><span class="text-muted block text-[9px]">Accuracy</span><span class="text-muted">58.2%</span></div><div><span class="text-muted block text-[9px]">Predictions</span><span class="text-muted">310</span></div><div><span class="text-muted block text-[9px]">Archived</span><span class="text-muted">Mar 15</span></div></div>
                       </div>
                   </div>
-              </div></div></div>
+              </div></div>
 
               <!-- Col 2: Feature Importance + Prediction History -->
-              <div class="flex-1 min-w-0 relative"><div class="absolute inset-0 overflow-y-auto pr-1"><div class="flex flex-col gap-5">
+              <div class="flex-1 min-w-0"><div class="flex flex-col gap-5">
                   <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
                       <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title">Feature Importance</h3><span class="text-[10px] text-white/30 font-mono">LightGBMRegressor v3 · 42 features</span></div>
                       <div class="p-4 space-y-2">
@@ -5027,10 +5028,10 @@
                           <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2 text-white">13:40</td><td class="px-3 py-2 text-white/80">ETH/USDT</td><td class="px-3 py-2 text-right text-up font-bold">+0.44%</td><td class="px-3 py-2 text-right text-up">+0.38%</td><td class="px-3 py-2 text-right text-muted">0.06%</td><td class="px-3 py-2 text-center"><span class="text-[8px] text-up font-bold">✓</span></td></tr>
                       </tbody></table></div>
                   </div>
-              </div></div></div>
+              </div></div>
 
               <!-- Col 3: Config Summary + Model Comparison + Training Log -->
-              <div class="w-[380px] shrink-0 relative"><div class="absolute inset-0 overflow-y-auto pr-1"><div class="flex flex-col gap-5">
+              <div class="w-[380px] shrink-0"><div class="flex flex-col gap-5">
                   <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
                       <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title">Current Config</h3><button onclick="switchFaiTab('fai-tab-config',document.querySelectorAll('.fai-tab-btn')[1])" class="text-[9px] text-cyan-400 hover:text-white l-bd px-1.5 py-0.5 rounded transition-colors">EDIT →</button></div>
                       <div class="p-4 space-y-1.5 font-mono text-[12px]">
@@ -5060,20 +5061,22 @@
                   <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
                       <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title">Training History</h3><span class="text-[10px] text-white/30 font-mono">last 5 runs</span></div>
                       <div class="p-4 space-y-2">
-                          <div class="flex items-center justify-between text-[11px] font-mono"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-up"></span><span class="text-white">v3 · Mar 27 14:10</span></div><div class="flex gap-3"><span class="text-up font-bold">72.4%</span><span class="text-muted">3m 22s</span></div></div>
-                          <div class="flex items-center justify-between text-[11px] font-mono"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-up"></span><span class="text-white">v2 · Mar 27 06:10</span></div><div class="flex gap-3"><span class="text-up font-bold">70.1%</span><span class="text-muted">3m 18s</span></div></div>
-                          <div class="flex items-center justify-between text-[11px] font-mono"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-up"></span><span class="text-white">v1 · Mar 26 22:10</span></div><div class="flex gap-3"><span class="text-white">68.9%</span><span class="text-muted">3m 45s</span></div></div>
-                          <div class="flex items-center justify-between text-[11px] font-mono"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-down"></span><span class="text-muted">v0.9 · Mar 26 14:10</span></div><div class="flex gap-3"><span class="text-down">54.2%</span><span class="text-muted">4m 10s</span></div></div>
-                          <div class="flex items-center justify-between text-[11px] font-mono"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-up"></span><span class="text-muted">v0.8 · Mar 26 06:10</span></div><div class="flex gap-3"><span class="text-white">66.1%</span><span class="text-muted">3m 30s</span></div></div>
+                          <div class="flex items-center justify-between text-[9px] font-mono uppercase tracking-widest text-muted pb-1 mb-1 border-b border-white/[0.06]"><div class="flex items-center gap-2"><span class="w-2"></span><span class="w-14">Model</span><span>Version · Date</span></div><div class="flex gap-3"><span class="w-10 text-right">Acc %</span><span class="w-12 text-right">Duration</span></div></div>
+                          <div class="flex items-center justify-between text-[11px] font-mono"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-up"></span><span class="text-white font-bold">LGBM-R</span><span class="text-muted">v3 · Mar 27 14:10</span></div><div class="flex gap-3"><span class="text-up font-bold">72.4%</span><span class="text-muted">3m 22s</span></div></div>
+                          <div class="flex items-center justify-between text-[11px] font-mono"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-up"></span><span class="text-white font-bold">LGBM-R</span><span class="text-muted">v2 · Mar 27 06:10</span></div><div class="flex gap-3"><span class="text-up font-bold">70.1%</span><span class="text-muted">3m 18s</span></div></div>
+                          <div class="flex items-center justify-between text-[11px] font-mono"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-up"></span><span class="text-white font-bold">XGB-R</span><span class="text-muted">v1 · Mar 26 22:10</span></div><div class="flex gap-3"><span class="text-white">68.9%</span><span class="text-muted">3m 45s</span></div></div>
+                          <div class="flex items-center justify-between text-[11px] font-mono"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-down"></span><span class="text-white font-bold">LGBM-C</span><span class="text-muted">v0.9 · Mar 26 14:10</span></div><div class="flex gap-3"><span class="text-down">54.2%</span><span class="text-muted">4m 10s</span></div></div>
+                          <div class="flex items-center justify-between text-[11px] font-mono"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-up"></span><span class="text-white font-bold">XGB-R</span><span class="text-muted">v0.8 · Mar 26 06:10</span></div><div class="flex gap-3"><span class="text-white">66.1%</span><span class="text-muted">3m 30s</span></div></div>
                       </div>
                   </div>
-              </div></div></div>
+              </div></div>
+              </div>
           </div>
 
           <!-- ═══════════════════════════════════════════ -->
           <!-- TAB 2: CONFIGURE (full form)               -->
           <!-- ═══════════════════════════════════════════ -->
-          <div id="fai-tab-config" class="fai-tab flex-1 min-h-0 overflow-hidden hidden" style="display:none">
+          <div id="fai-tab-config" class="fai-tab flex-1 min-h-0 overflow-hidden hidden">
               <div class="h-full overflow-y-auto p-5 pt-3">
                   <div class="grid grid-cols-3 gap-5">
                       <!-- LEFT CONFIG COL -->
@@ -5175,8 +5178,8 @@
           <!-- ═══════════════════════════════════════════ -->
           <!-- TAB 3: MATRIX RUNNER                       -->
           <!-- ═══════════════════════════════════════════ -->
-          <div id="fai-tab-matrix" class="fai-tab flex-1 min-h-0 overflow-hidden hidden" style="display:none">
-              <div class="flex gap-5 p-5 pt-3 h-full overflow-hidden">
+          <div id="fai-tab-matrix" class="fai-tab flex-1 min-h-0 overflow-y-auto hidden">
+              <div class="flex gap-5 p-5 pt-3">
                   <!-- Left: Config -->
                   <div class="w-[380px] shrink-0 overflow-y-auto pr-1"><div class="flex flex-col gap-5">
                       <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
@@ -5253,13 +5256,9 @@
 
     /* FreqAI tab switcher */
     function switchFaiTab(tabId, btn) {
-      document.querySelectorAll('.fai-tab').forEach(el => { el.style.display = 'none'; el.classList.add('hidden'); });
+      document.querySelectorAll('.fai-tab').forEach(el => { el.classList.add('hidden'); });
       const target = document.getElementById(tabId);
-      if (target) {
-        // Config tab uses block scroll, others use flex layout
-        target.style.display = tabId === 'fai-tab-config' ? 'block' : 'flex';
-        target.classList.remove('hidden');
-      }
+      if (target) { target.classList.remove('hidden'); }
       document.querySelectorAll('.fai-tab-btn').forEach(b => { b.classList.remove('text-white','bg-white/[0.04]'); b.classList.add('text-muted'); b.style.borderBottomColor = 'transparent'; });
       if (btn) { btn.classList.add('text-white','bg-white/[0.04]'); btn.classList.remove('text-muted'); btn.style.borderBottomColor = '#22c55e'; }
     }

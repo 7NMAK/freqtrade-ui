@@ -4989,7 +4989,8 @@
           <div class="flex gap-5 flex-1 min-h-0 overflow-hidden">
 
               <!-- LEFT COLUMN: Config + Controls -->
-              <div class="w-[440px] flex flex-col gap-5 shrink-0 overflow-y-auto min-h-0 pr-1">
+              <div class="w-[440px] shrink-0 relative">
+              <div class="absolute inset-0 overflow-y-auto pr-1"><div class="flex flex-col gap-5">
 
                   <!-- ■ ACTIVE MODELS LIST -->
                   <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
@@ -5174,10 +5175,11 @@
                           </div>
                       </div>
                   </div>
-              </div>
+              </div></div></div>
 
               <!-- RIGHT COLUMN: Results + Statistics -->
-              <div class="flex-1 flex flex-col gap-5 min-w-0 overflow-y-auto min-h-0 pr-1">
+              <div class="flex-1 min-w-0 relative">
+              <div class="absolute inset-0 overflow-y-auto pr-1"><div class="flex flex-col gap-5">
 
                   <!-- ■ WINNER BANNER -->
                   <div class="bg-up/[0.04] l-bd rounded-lg p-4 shadow-xl border-l-2 border-l-up relative overflow-hidden shrink-0">
@@ -5254,7 +5256,7 @@
                       </div>
                   </div>
 
-              </div><!-- /RIGHT COLUMN -->
+              </div></div></div><!-- /RIGHT COLUMN -->
           </div><!-- /MAIN 2-COL -->
 
 

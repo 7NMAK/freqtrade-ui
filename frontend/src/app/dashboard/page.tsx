@@ -232,73 +232,54 @@ export default function DashboardPage() {
       // If no trade bots found but we have running bots, use ALL running bots as fallback
       const effectiveTradeBots = tradeBots.length > 0 ? tradeBots : runningBots;
 
+      // ── STAGE 2: Fire ALL portfolio + per-bot calls in PARALLEL ──────
+      // This eliminates the sequential waterfall that was adding 4-5 round-trips
+      const [pbResult, ppResult, ptResult, pdResult] = await Promise.allSettled([
+        portfolioBalance(),
+        portfolioProfit(),
+        portfolioTrades(),
+        portfolioDaily(),
+      ]);
+
       // Portfolio balance
-      try {
-        const pb = await portfolioBalance();
-        if (m.current) setTotalEquity(pb.total_value);
-      } catch { /* non-blocking */ }
+      if (pbResult.status === "fulfilled" && m.current) {
+        setTotalEquity(pbResult.value.total_value);
+      }
 
       // Portfolio profit
       let portfolioProfitData: Record<string, Record<string, unknown>> | null = null;
-      try {
-        const pp = await portfolioProfit();
-        if (m.current) {
-          setTotalPnlClosed(pp.combined.profit_closed_coin);
-          // Use profit_all_coin as the basis for percentage, not the sum of coin + fiat
-          setTotalPnlClosedPct(null); // Will be computed from per-bot profit data below
-          setTotalTradeCount(pp.combined.trade_count);
-          const totalW = pp.combined.winning_trades ?? 0;
-          const totalL = pp.combined.losing_trades ?? 0;
-          const total = totalW + totalL;
-          setTotalWinRate(total > 0 ? (totalW / total) * 100 : null);
-          setTotalWins(totalW);
-          setTotalLosses(totalL);
-          setAggregatedProfit({ profit_closed_coin: pp.combined.profit_closed_coin } as Partial<FTProfit>);
-          portfolioProfitData = pp.bots;
-        }
-      } catch { /* non-blocking */ }
-
-      // Open trades (all bots combined)
-      let allOpen: FTTrade[] = [];
-      let allClosed: FTTrade[] = [];
-      try {
-        const pt = await portfolioTrades();
-        if (!m.current) return;
-        allOpen = pt.trades.filter((t) => t.is_open);
-        allClosed = pt.trades.filter((t) => !t.is_open);
-      } catch { /* non-blocking */ }
-
-      // BUG 7 fix: If portfolio trades returned no closed trades, fetch per-bot
-      if (allClosed.length === 0 && effectiveTradeBots.length > 0) {
-        try {
-          const perBotResults = await Promise.allSettled(
-            effectiveTradeBots.map(async (bot) => {
-              const result = await botTrades(bot.id, 200);
-              return result.trades
-                .filter((t) => !t.is_open)
-                .map((t) => ({ ...t, _bot_id: bot.id, _bot_name: bot.name }));
-            })
-          );
-          for (const r of perBotResults) {
-            if (r.status === "fulfilled") allClosed.push(...r.value);
-          }
-        } catch { /* non-blocking */ }
+      if (ppResult.status === "fulfilled" && m.current) {
+        const pp = ppResult.value;
+        setTotalPnlClosed(pp.combined.profit_closed_coin);
+        setTotalPnlClosedPct(null); // Will be computed from per-bot profit data below
+        setTotalTradeCount(pp.combined.trade_count);
+        const totalW = pp.combined.winning_trades ?? 0;
+        const totalL = pp.combined.losing_trades ?? 0;
+        const total = totalW + totalL;
+        setTotalWinRate(total > 0 ? (totalW / total) * 100 : null);
+        setTotalWins(totalW);
+        setTotalLosses(totalL);
+        setAggregatedProfit({ profit_closed_coin: pp.combined.profit_closed_coin } as Partial<FTProfit>);
+        portfolioProfitData = pp.bots;
       }
 
-      // Fetch open trades from botStatus (more reliable current_profit data)
+      // Portfolio trades
+      let allOpen: FTTrade[] = [];
+      let allClosed: FTTrade[] = [];
+      if (ptResult.status === "fulfilled" && m.current) {
+        allOpen = ptResult.value.trades.filter((t) => t.is_open);
+        allClosed = ptResult.value.trades.filter((t) => !t.is_open);
+      }
+
+      // Daily chart data (fetched in parallel, not sequentially)
+      let fetchedDaily: FTDailyItem[] = [];
+      if (pdResult.status === "fulfilled") {
+        fetchedDaily = pdResult.value.data ?? [];
+      }
+
+      // ── STAGE 3: Per-bot calls — ALL bots fire simultaneously ────────
+      // BUG 7 fix + botStatus + per-bot aggregation ALL in one wave
       const openTradesFromStatus: FTTrade[] = [];
-      await Promise.allSettled(
-        effectiveTradeBots.map(async (bot) => {
-          try {
-            const status = await botStatus(bot.id);
-            for (const t of status) {
-              (t as unknown as Record<string, unknown>)._bot_id = bot.id;
-              (t as unknown as Record<string, unknown>)._bot_name = bot.name;
-            }
-            openTradesFromStatus.push(...status);
-          } catch { /* ignore */ }
-        })
-      );
 
       if (m.current) {
         // Use botStatus open trades if available (they have current_profit fields)
@@ -343,7 +324,7 @@ export default function DashboardPage() {
       await Promise.allSettled(
         effectiveTradeBots.map(async (bot) => {
           try {
-            const [p, d, , st, perf, ent, ex, wl, lk, cfg] = await Promise.allSettled([
+            const [p, d, statusResult, st, perf, ent, ex, wl, lk, cfg] = await Promise.allSettled([
               botProfit(bot.id),
               botDaily(bot.id, 7),
               botStatus(bot.id),
@@ -357,6 +338,26 @@ export default function DashboardPage() {
             ]);
             if (p.status === "fulfilled") profits[bot.id] = p.value;
             if (d.status === "fulfilled") sparks[bot.id] = d.value.data.map((item) => item.abs_profit);
+
+            // Capture open trades from botStatus (most reliable current_profit data)
+            if (statusResult.status === "fulfilled") {
+              for (const t of statusResult.value) {
+                (t as unknown as Record<string, unknown>)._bot_id = bot.id;
+                (t as unknown as Record<string, unknown>)._bot_name = bot.name;
+              }
+              openTradesFromStatus.push(...statusResult.value);
+            }
+
+            // BUG 7: If portfolio had no closed trades, fetch per-bot
+            if (allClosed.length === 0) {
+              try {
+                const result = await botTrades(bot.id, 200);
+                const perBotClosed = result.trades
+                  .filter((t) => !t.is_open)
+                  .map((t) => ({ ...t, _bot_id: bot.id, _bot_name: bot.name }));
+                allClosed.push(...perBotClosed);
+              } catch { /* non-blocking */ }
+            }
 
             // Stats aggregation
             if (st.status === "fulfilled") {
@@ -556,11 +557,85 @@ export default function DashboardPage() {
         setTotalPnlClosedPct(closedPctCount > 0 ? closedPctSum / closedPctCount : null);
 
         // Profit factor from winning/losing profit sums (correct multi-bot aggregation)
-        const finalPF = aggLosingProfit > 0 ? aggWinningProfit / aggLosingProfit : null;
-        // Volume fallback from open trade stakes
-        const finalVolume = effectiveTradeBots.length > 0 ? (aggVolume > 0 ? aggVolume :
-          openTradesFromStatus.reduce((s, t) => s + t.stake_amount * (t.leverage || 1), 0) || null
-        ) : null;
+        let finalPF = aggLosingProfit > 0 ? aggWinningProfit / aggLosingProfit : null;
+        // FALLBACK: compute profit factor from ALL trades (closed + open)
+        if (finalPF == null && (allClosed.length > 0 || openTradesFromStatus.length > 0)) {
+          let winSum = 0, lossSum = 0;
+          for (const t of allClosed) {
+            const pnl = t.close_profit_abs ?? 0;
+            if (pnl > 0) winSum += pnl;
+            else if (pnl < 0) lossSum += Math.abs(pnl);
+          }
+          // Include open trades unrealized P&L
+          for (const t of openTradesFromStatus) {
+            const pnl = t.current_profit_abs ?? 0;
+            if (pnl > 0) winSum += pnl;
+            else if (pnl < 0) lossSum += Math.abs(pnl);
+          }
+          finalPF = lossSum > 0 ? winSum / lossSum : (winSum > 0 ? winSum : null);
+        }
+
+        // FALLBACK: Max drawdown from equity curve (closed + open unrealized)
+        let finalMaxDD: number | null = aggMaxDD != null ? aggMaxDD * 100 : null;
+        if (finalMaxDD == null && allClosed.length > 0) {
+          const sorted = [...allClosed].sort((a, b) => new Date(a.close_date ?? "").getTime() - new Date(b.close_date ?? "").getTime());
+          let equity = 0, peak = 0, maxDDPct = 0;
+          for (const t of sorted) {
+            equity += t.close_profit_abs ?? 0;
+            if (equity > peak) peak = equity;
+            if (peak > 0) {
+              const dd = ((peak - equity) / peak) * 100;
+              if (dd > maxDDPct) maxDDPct = dd;
+            }
+          }
+          // Include open unrealized in final equity for current drawdown
+          const openUnrealized = openTradesFromStatus.reduce((s, t) => s + (t.current_profit_abs ?? 0), 0);
+          const currentEquity = equity + openUnrealized;
+          if (currentEquity < peak && peak > 0) {
+            const currentDD = ((peak - currentEquity) / peak) * 100;
+            if (currentDD > maxDDPct) maxDDPct = currentDD;
+          }
+          finalMaxDD = maxDDPct > 0 ? -maxDDPct : null;
+        }
+
+        // FALLBACK: Sharpe ratio from ALL trade returns (closed + open)
+        let finalSharpe: number | null = aggSharpe;
+        const allReturns = [
+          ...allClosed.map(t => t.close_profit ?? 0),
+          ...openTradesFromStatus.map(t => t.current_profit ?? 0),
+        ];
+        if (finalSharpe == null && allReturns.length >= 3) {
+          const mean = allReturns.reduce((s, r) => s + r, 0) / allReturns.length;
+          const variance = allReturns.reduce((s, r) => s + (r - mean) ** 2, 0) / allReturns.length;
+          const std = Math.sqrt(variance);
+          if (std > 0) finalSharpe = (mean / std) * Math.sqrt(252); // annualized
+        }
+
+        // Volume: closed + open trade stakes combined
+        const closedVolume = allClosed.reduce((s, t) => s + t.stake_amount * (t.leverage || 1), 0);
+        const openVolume = openTradesFromStatus.reduce((s, t) => s + t.stake_amount * (t.leverage || 1), 0);
+        const volumeResult = aggVolume > 0 ? aggVolume : ((closedVolume + openVolume) || null);
+
+        // Avg duration: closed + open (open uses current time as end)
+        let finalAvgDur = aggDurCount > 0 ? fmtDurationSec(aggDurTotal / aggDurCount) : null;
+        if (!finalAvgDur && (allClosed.length > 0 || openTradesFromStatus.length > 0)) {
+          let durSum = 0, durN = 0;
+          const now = Date.now();
+          for (const t of allClosed) {
+            if (t.close_date && t.open_date) {
+              const ms = new Date(t.close_date).getTime() - new Date(t.open_date).getTime();
+              if (ms > 0) { durSum += ms / 1000; durN++; }
+            }
+          }
+          // Open trades: duration = now - open_date
+          for (const t of openTradesFromStatus) {
+            if (t.open_date) {
+              const ms = now - new Date(t.open_date).getTime();
+              if (ms > 0) { durSum += ms / 1000; durN++; }
+            }
+          }
+          if (durN > 0) finalAvgDur = fmtDurationSec(durSum / durN);
+        }
 
         // Compute fees directly from trade data (FTTrade has fee_open, fee_close, funding_fees)
         const allTradesForFees = [...allClosed, ...openTradesFromStatus];
@@ -579,11 +654,11 @@ export default function DashboardPage() {
 
         setAggStats({
           profitFactor: finalPF ?? (effectiveTradeBots.length > 0 ? 0 : null),
-          sharpeRatio: aggSharpe,
-          maxDrawdown: aggMaxDD != null ? aggMaxDD * 100 : null,
+          sharpeRatio: finalSharpe,
+          maxDrawdown: finalMaxDD,
           maxDrawdownAbs: aggMaxDDAbs,
-          tradingVolume: finalVolume,
-          avgDuration: aggDurCount > 0 ? fmtDurationSec(aggDurTotal / aggDurCount) : "\u2014",
+          tradingVolume: volumeResult,
+          avgDuration: finalAvgDur ?? "\u2014",
           bestPair: bestPairName,
           bestPairPct: bestPairRate,
           totalFees: totalFeesAbs > 0 ? totalFeesAbs : null,
@@ -594,14 +669,7 @@ export default function DashboardPage() {
         });
       }
 
-      // Daily P&L chart — try portfolio aggregate first, fallback to first bot's daily
-      let fetchedDaily: FTDailyItem[] = [];
-      try {
-        const daily = await portfolioDaily();
-        fetchedDaily = daily.data ?? [];
-      } catch { /* portfolio daily failed */ }
-
-      // FALLBACK: If portfolio daily returned no data, fetch from first running bot directly
+      // Daily fallback: if portfolio daily was empty, use first bot's daily (already fetched as sparkline)
       if (fetchedDaily.length === 0 && effectiveTradeBots.length > 0) {
         try {
           const botDailyResp = await botDaily(effectiveTradeBots[0].id, 30);
@@ -1006,42 +1074,50 @@ export default function DashboardPage() {
     }
   }
 
-  // ── Computed values ────────────────────────────────────────────────────
+  // ── Computed values (CLOSED + OPEN combined for live KPI view) ───────
 
   const selectedBot = bots.find((b) => b.id === selectedBotId) ?? null;
-
-  // Today's P&L from daily data — with fallback to closed trades and open P&L
   const today = new Date().toISOString().slice(0, 10);
+
+  // Open trades unrealized P&L
+  const openPnlTotal = openTrades.reduce((s, t) => s + (t.current_profit_abs ?? 0), 0);
+  const openStakeTotal = openTrades.reduce((s, t) => s + t.stake_amount, 0);
+
+  // ── TODAY'S P&L: closed today + ALL open unrealized ──────────────────
+  const todayClosedTrades = closedTrades.filter(t => t.close_date?.startsWith(today));
+  const todayClosedPnl = todayClosedTrades.reduce((s, t) => s + (t.close_profit_abs ?? 0), 0);
   const todayPnl = (() => {
-    // Try daily data first
+    // Daily data from API gives the best "today" value, but we ALWAYS add open unrealized
     if (dailyData.length > 0) {
       const last = dailyData[dailyData.length - 1];
-      if (last?.date === today) return last.abs_profit;
+      if (last?.date === today) return last.abs_profit + openPnlTotal;
     }
-    // Fallback: sum of closed trades today
-    const todayClosed = closedTrades.filter(t => t.close_date?.startsWith(today));
-    if (todayClosed.length > 0) return todayClosed.reduce((s, t) => s + (t.close_profit_abs ?? 0), 0);
-    // Fallback: sum of open trades P&L
-    const openPnl = openTrades.reduce((s, t) => s + (t.current_profit_abs ?? 0), 0);
-    return openPnl;
+    // Fallback: closed trades today + open unrealized
+    return todayClosedPnl + openPnlTotal;
   })();
   const todayPnlPct = (() => {
+    const totalStake = todayClosedTrades.reduce((s, t) => s + t.stake_amount, 0) + openStakeTotal;
+    if (totalStake > 0) return ((todayClosedPnl + openPnlTotal) / totalStake);
     if (dailyData.length > 0) {
       const last = dailyData[dailyData.length - 1];
       if (last?.date === today) return last.rel_profit ?? 0;
     }
-    // Fallback: compute from closed trades today
-    const todayClosed = closedTrades.filter(t => t.close_date?.startsWith(today));
-    if (todayClosed.length > 0) {
-      const totalStake = todayClosed.reduce((s, t) => s + t.stake_amount, 0);
-      const totalProfit = todayClosed.reduce((s, t) => s + (t.close_profit_abs ?? 0), 0);
-      return totalStake > 0 ? totalProfit / totalStake : 0;
-    }
     return 0;
   })();
 
+  // ── WIN RATE: closed + open combined ─────────────────────────────────
+  const openWins = openTrades.filter(t => (t.current_profit_abs ?? 0) > 0).length;
+  const openLosses = openTrades.filter(t => (t.current_profit_abs ?? 0) < 0).length;
+  const combinedWins = totalWins + openWins;
+  const combinedLosses = totalLosses + openLosses;
+  const combinedTotal = combinedWins + combinedLosses;
+  const combinedWinRate = combinedTotal > 0 ? (combinedWins / combinedTotal) * 100 : totalWinRate;
+
+  // ── TOTAL TRADES: closed + open ──────────────────────────────────────
+  const combinedTradeCount = totalTradeCount + openTrades.length;
+
   // Locked in trades = sum of open trade stake amounts
-  const lockedInTrades = openTrades.reduce((s, t) => s + t.stake_amount, 0);
+  const lockedInTrades = openStakeTotal;
 
   const staleWarning = staleCount >= 3;
 
@@ -1064,7 +1140,7 @@ export default function DashboardPage() {
 
       {/* LINEAR EDGE LAYOUT */}
       <div className="flex flex-1 overflow-hidden l-grid p-5 flex-col gap-5">
-        {/* LAYER 1: KPI Grid (14 KPIs in 7+7) */}
+        {/* LAYER 1: KPI Grid (14 KPIs in 7+7) — LIVE: closed + open combined */}
         <KPIGrid
           totalEquity={totalEquity}
           lockedInTrades={lockedInTrades > 0 ? lockedInTrades : null}
@@ -1077,12 +1153,12 @@ export default function DashboardPage() {
           openTradeCount={openTrades.length}
           maxOpenTrades={aggStats.maxOpenTrades ?? null}
           maxDrawdown={aggStats.maxDrawdown}
-          winRate={totalWinRate}
-          winCount={totalWins}
-          lossCount={totalLosses}
+          winRate={combinedWinRate}
+          winCount={combinedWins}
+          lossCount={combinedLosses}
           profitFactor={aggStats.profitFactor}
           avgDuration={aggStats.avgDuration}
-          totalTrades={totalTradeCount}
+          totalTrades={combinedTradeCount}
           bestPair={aggStats.bestPair}
           bestPairPct={aggStats.bestPairPct}
           sharpeRatio={aggStats.sharpeRatio}

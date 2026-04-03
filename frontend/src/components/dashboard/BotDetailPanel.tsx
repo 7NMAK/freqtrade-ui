@@ -330,7 +330,7 @@ function DetailContent({
       const expectancy = totalCount > 0 && statsData ? (statsData.profit_all_coin ?? 0) / totalCount : null;
 
       return (
-        <div className="space-y-4">
+        <>
           {/* KPI Row — 4 columns matching prototype */}
           {/* KPI Cards — ds_bot_drawer.md §30E */}
           <div className="grid grid-cols-4 gap-2.5">
@@ -432,23 +432,22 @@ function DetailContent({
               </div>
             );
           })()}
-        </div>
+        </>
       );
     }
 
     /* ─── Trades ─── */
     case "trades": {
       return (
-        <div className="space-y-6">
+        <>
           {/* Open Trades */}
           <div>
-            <h3 className={`${sectionTitle} flex items-center gap-2`}>Open Positions <span className="text-white/30">({openTrades.length})</span></h3>
+            <h3 className="section-title mb-2 flex items-center gap-2">Open Positions <span className="text-white/30">({openTrades.length})</span></h3>
             {openTrades.length === 0 ? (
               <div className="text-center py-6 text-muted text-xs">No open trades</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-[13px] font-mono">
-                  <thead className="text-muted text-[11px] uppercase tracking-widest">
+                <table className="w-full text-[13px] font-mono"><thead className="text-muted text-[13px] uppercase tracking-widest">
                     <tr>
                       <th className="text-left py-1.5 px-1 font-semibold">Pair</th>
                       <th className="text-left py-1.5 px-1 font-semibold">Side</th>
@@ -496,13 +495,12 @@ function DetailContent({
 
           {/* Closed Trades */}
           <div>
-            <h3 className={`${sectionTitle} flex items-center gap-2`}>Closed Trades <span className="text-white/30">(last 10)</span></h3>
+            <h3 className="section-title mb-2 flex items-center gap-2">Closed Trades <span className="text-white/30">(last 10)</span></h3>
             {closedTrades.length === 0 ? (
               <div className="text-center py-6 text-muted text-xs">No closed trades</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-[13px] font-mono">
-                  <thead className="text-muted text-[11px] uppercase tracking-widest">
+                <table className="w-full text-[13px] font-mono"><thead className="text-muted text-[13px] uppercase tracking-widest">
                     <tr>
                       <th className="text-left py-1.5 px-1 font-semibold">Pair</th>
                       <th className="text-left py-1.5 px-1 font-semibold">Side</th>
@@ -546,7 +544,7 @@ function DetailContent({
               </div>
             )}
           </div>
-        </div>
+        </>
       );
     }
 
@@ -596,7 +594,7 @@ function DetailContent({
       };
 
       return (
-        <div className="space-y-4">
+        <>
           {/* KPI Summary — 4 columns matching HTML prototype line 660-665 */}
           <div className="grid grid-cols-4 gap-2.5">
             <div className="bg-surface p-3 l-bd rounded text-center"><div className="kpi-label">Best Pair</div><div className={`font-mono font-bold text-sm ${profitColor(bestPerf?.profit_abs)}`}>{bestPerf?.pair ?? "—"}</div>{bestPerf && <div className={`text-[10px] font-mono ${profitColor(bestPerf.profit_abs)}`}>{fmtMoney(bestPerf.profit_abs)}</div>}</div>
@@ -725,14 +723,14 @@ function DetailContent({
               )}
             </div>
           )}
-        </div>
+        </>
       );
     }
 
     /* ─── Config ─── */
     case "config": {
       return (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           {configData ? (
             <>
               {/* 2-column grid: Core Config + Risk Management — matching HTML line 707-731 */}
@@ -817,7 +815,7 @@ function DetailContent({
     /* ─── System ─── */
     case "system": {
       return (
-        <div className="space-y-6">
+        <div className="flex flex-col gap-4">
           {sysinfoData && (
             <div>
               <div className={sectionTitle}>System Info</div>
@@ -941,7 +939,7 @@ function DetailContent({
       // Show stats from profit data as a proxy for latest run performance
       const hasStats = statsData || profit;
       return (
-        <div className="space-y-6">
+        <div className="flex flex-col gap-4">
           <div>
             <div className={sectionTitle}>Backtest Summary</div>
             {hasStats ? (
@@ -996,7 +994,7 @@ function DetailContent({
     case "hyperopt": {
       // Show rejection/timeout stats from FTStats as hyperopt-relevant metrics
       return (
-        <div className="space-y-6">
+        <div className="flex flex-col gap-4">
           <div>
             <div className={sectionTitle}>Hyperopt & Signal Quality</div>
             {statsData ? (
@@ -1069,7 +1067,7 @@ function DetailContent({
     case "freqai": {
       const freqaiConfig = configData?.freqai;
       return (
-        <div className="space-y-6">
+        <div className="flex flex-col gap-4">
           <div>
             <div className={sectionTitle}>FreqAI Model Status</div>
             {freqaiConfig ? (

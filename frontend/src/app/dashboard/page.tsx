@@ -281,21 +281,8 @@ export default function DashboardPage() {
       // BUG 7 fix + botStatus + per-bot aggregation ALL in one wave
       const openTradesFromStatus: FTTrade[] = [];
 
-      if (m.current) {
-        // Use botStatus open trades if available (they have current_profit fields)
-        const effectiveOpen = openTradesFromStatus.length > 0 ? openTradesFromStatus : allOpen;
-        setOpenTrades(effectiveOpen);
-        setClosedTrades(allClosed);
-
-        // Open P&L with fallback for field names
-        const openPnlSum = effectiveOpen.reduce((s, t) => {
-          const pnl = t.current_profit_abs ?? (t as unknown as Record<string, unknown>).profit_abs as number ?? 0;
-          return s + pnl;
-        }, 0);
-        setTotalPnlOpen(openPnlSum);
-        const totalStake = effectiveOpen.reduce((s, t) => s + t.stake_amount, 0);
-        setTotalPnlOpenPct(totalStake > 0 ? (openPnlSum / totalStake) * 100 : null);
-      }
+      // NOTE: setOpenTrades/setClosedTrades moved to AFTER the per-bot loop
+      // to ensure openTradesFromStatus and BUG 7 allClosed data are populated first
 
       // Per-bot sparklines + profits + stats aggregation
       const profits: Record<number, Partial<FTProfit>> = {};
@@ -529,6 +516,20 @@ export default function DashboardPage() {
       }
 
       if (m.current) {
+        // NOW set open/closed trades — per-bot loop has populated openTradesFromStatus and allClosed
+        const effectiveOpen = openTradesFromStatus.length > 0 ? openTradesFromStatus : allOpen;
+        setOpenTrades(effectiveOpen);
+        setClosedTrades(allClosed);
+
+        // Open P&L with fallback for field names
+        const openPnlSum = effectiveOpen.reduce((s, t) => {
+          const pnl = t.current_profit_abs ?? (t as unknown as Record<string, unknown>).profit_abs as number ?? 0;
+          return s + pnl;
+        }, 0);
+        setTotalPnlOpen(openPnlSum);
+        const totalStake = effectiveOpen.reduce((s, t) => s + t.stake_amount, 0);
+        setTotalPnlOpenPct(totalStake > 0 ? (openPnlSum / totalStake) * 100 : null);
+
         setBotProfits(profits);
         setSparklines(sparks);
         setPerfData(allPerf);

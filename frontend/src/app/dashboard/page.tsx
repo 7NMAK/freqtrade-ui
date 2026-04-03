@@ -376,6 +376,11 @@ export default function DashboardPage() {
               // and mixing it with max_drawdown causes scale confusion.
               if (stats.trading_volume != null) aggVolume += stats.trading_volume;
               if (stats.durations.wins != null) { aggDurTotal += stats.durations.wins; aggDurCount++; }
+              // Store max_drawdown per-bot so FleetPanel can read it
+              if (stats.max_drawdown != null) {
+                if (!profits[bot.id]) profits[bot.id] = {};
+                (profits[bot.id] as Record<string, unknown>).max_drawdown = stats.max_drawdown;
+              }
             }
 
             // max_open_trades from config (NOT from /stats)
@@ -1303,6 +1308,7 @@ export default function DashboardPage() {
         onStopBuy={() => selectedBot && handleStopBuyBot(selectedBot.id)}
         onSoftKill={() => selectedBot && handleSoftKillBot(selectedBot.id)}
         onHardKill={() => selectedBot && handleHardKillBot(selectedBot.id)}
+        onConfigRefresh={(cfg) => setSingleConfigData(cfg)}
       />
 
       {/* EDIT & DELETE MODALS */}

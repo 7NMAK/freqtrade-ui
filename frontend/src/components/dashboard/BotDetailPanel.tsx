@@ -64,6 +64,7 @@ interface BotDetailPanelProps {
   onStopBuy?: () => void;
   onSoftKill?: () => void;
   onHardKill?: () => void;
+  onConfigRefresh?: (config: FTShowConfig) => void;
 }
 
 // Status Badge helper — matches ds_bot_drawer.md §30B Mode Badge Variants
@@ -188,8 +189,41 @@ export default function BotDetailPanel({
   onStopBuy,
   onSoftKill,
   onHardKill,
+  onConfigRefresh,
 }: BotDetailPanelProps) {
   const [detailTab, setDetailTab] = useState<DetailTab>("overview");
+
+  // ── Drawer sort state ────────────────────────────────────────────────
+  type SortDir = "asc" | "desc" | null;
+  const [drawerSortKey, setDrawerSortKey] = useState<string | null>(null);
+  const [drawerSortDir, setDrawerSortDir] = useState<SortDir>(null);
+  const [drawerSortTable, setDrawerSortTable] = useState<string | null>(null);
+
+  const handleDrawerSort = useCallback((table: string, key: string) => {
+    if (drawerSortTable === table && drawerSortKey === key) {
+      setDrawerSortDir(drawerSortDir === "asc" ? "desc" : drawerSortDir === "desc" ? null : "asc");
+      if (drawerSortDir === "desc") { setDrawerSortKey(null); setDrawerSortTable(null); }
+    } else {
+      setDrawerSortTable(table);
+      setDrawerSortKey(key);
+      setDrawerSortDir("desc");
+    }
+  }, [drawerSortTable, drawerSortKey, drawerSortDir]);
+
+  // Generic sort function for any array based on current drawer sort state
+  const sortDrawerData = useCallback(<T,>(data: T[], table: string): T[] => {
+    if (drawerSortTable !== table || !drawerSortKey || !drawerSortDir) return data;
+    return [...data].sort((a, b) => {
+      const av = (a as Record<string, unknown>)[drawerSortKey!];
+      const bv = (b as Record<string, unknown>)[drawerSortKey!];
+      const na = typeof av === "number" ? av : typeof av === "string" ? av : 0;
+      const nb = typeof bv === "number" ? bv : typeof bv === "string" ? bv : 0;
+      if (typeof na === "number" && typeof nb === "number") {
+        return drawerSortDir === "asc" ? na - nb : nb - na;
+      }
+      return drawerSortDir === "asc" ? String(na).localeCompare(String(nb)) : String(nb).localeCompare(String(na));
+    });
+  }, [drawerSortTable, drawerSortKey, drawerSortDir]);
 
   // ── Config inline editing state ─────────────────────────────────────
   const [editingSection, setEditingSection] = useState<"core" | "risk" | null>(null);
@@ -219,7 +253,7 @@ export default function BotDetailPanel({
     if (!bot || !editingSection) return;
     setSavingConfig(true);
     try {
-      const { saveBotConfig, applyBotConfig } = await import("@/lib/api");
+      const { saveBotConfig, applyBotConfig, botConfig } = await import("@/lib/api");
       const patch: Record<string, unknown> = {};
       if (editingSection === "core") {
         patch.stake_amount = Number(editValues.stake_amount);
@@ -233,11 +267,16 @@ export default function BotDetailPanel({
       }
       await saveBotConfig(bot.id, patch);
       await applyBotConfig(bot.id);
+      // Re-fetch config to refresh the display immediately
+      try {
+        const freshConfig = await botConfig(bot.id);
+        if (onConfigRefresh) onConfigRefresh(freshConfig);
+      } catch { /* config refresh non-critical */ }
       setEditingSection(null);
     } catch { /* TODO: show error toast */ } finally {
       setSavingConfig(false);
     }
-  }, [bot, editingSection, editValues]);
+  }, [bot, editingSection, editValues, onConfigRefresh]);
 
   // ── Backtest / Hyperopt history state ───────────────────────────────
   const [backtestHistory, setBacktestHistory] = useState<Array<{ filename: string; strategy: string; run_id: string; backtest_start_time: number; notes?: string; timeframe?: string }>>([]);
@@ -469,6 +508,11 @@ export default function BotDetailPanel({
               onEditCancel={() => setEditingSection(null)}
               onEditChange={(k, v) => setEditValues(prev => ({ ...prev, [k]: v }))}
               onSaveApply={handleSaveApply}
+              onSort={handleDrawerSort}
+              sortData={sortDrawerData}
+              sortKey={drawerSortKey}
+              sortDir={drawerSortDir}
+              sortTable={drawerSortTable}
             />
             </div>
           )}
@@ -513,6 +557,11 @@ function DetailContent({
   onEditCancel,
   onEditChange,
   onSaveApply,
+  onSort,
+  sortData,
+  sortKey,
+  sortDir,
+  sortTable,
 }: {
   tab: DetailTab;
   bot: Bot;
@@ -544,7 +593,26 @@ function DetailContent({
   onEditCancel: () => void;
   onEditChange: (key: string, value: string | number | boolean) => void;
   onSaveApply: () => void;
+  onSort: (table: string, key: string) => void;
+  sortData: <T>(data: T[], table: string) => T[];
+  sortKey: string | null;
+  sortDir: "asc" | "desc" | null;
+  sortTable: string | null;
 }) {
+  // Sortable header helper for drawer tables
+  const SH = ({ label, tbl, col, align }: { label: string; tbl: string; col: string; align?: "right" | "left" | "center" }) => {
+    const active = sortTable === tbl && sortKey === col;
+    return (
+      <th
+        className={`py-1.5 px-1 font-semibold cursor-pointer select-none hover:text-white transition-colors ${align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left"} ${active ? "text-white" : ""}`}
+        onClick={() => onSort(tbl, col)}
+      >
+        {label}
+        <span className="ml-0.5 text-[9px] opacity-30">{active ? (sortDir === "asc" ? "↑" : "↓") : "⇅"}</span>
+      </th>
+    );
+  };
+
   switch (tab) {
     /* ─── Overview ─── */
     case "overview": {
@@ -591,7 +659,7 @@ function DetailContent({
               <div className="kpi-label mb-2">Risk Metrics</div>
               <div className="space-y-1.5 font-mono text-[12px]">
                 <div className="flex justify-between"><span className="text-muted">Profit Factor</span><span className={`font-bold ${(statsData?.profit_factor ?? 0) > 1 ? "text-up" : "text-white"}`}>{statsData?.profit_factor != null ? fmt(statsData.profit_factor) : "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted">Max Drawdown</span><span className="text-down font-bold">{statsData?.max_drawdown != null ? fmt(statsData.max_drawdown * 100, 1) + "%" : "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted">Max Drawdown</span><span className="text-down font-bold">{statsData?.max_drawdown != null ? "-" + fmt(statsData.max_drawdown * 100, 1) + "%" : "—"}</span></div>
                 <div className="flex justify-between"><span className="text-muted">Sharpe Ratio</span><span className="text-white">{statsData?.sharpe_ratio != null ? fmt(statsData.sharpe_ratio) : "—"}</span></div>
                 <div className="flex justify-between"><span className="text-muted">Sortino Ratio</span><span className="text-white">{statsData?.sortino_ratio != null ? fmt(statsData.sortino_ratio) : "—"}</span></div>
                 <div className="flex justify-between"><span className="text-muted">Expectancy</span><span className={profitColor(expectancy)}>{expectancy != null ? fmtMoney(expectancy) : "—"}</span></div>
@@ -676,21 +744,21 @@ function DetailContent({
               <div className="overflow-x-auto">
                 <table className="w-full text-[13px] font-mono"><thead className="text-muted text-[13px] uppercase tracking-widest">
                     <tr>
-                      <th className="text-left py-1.5 px-1 font-semibold">Pair</th>
-                      <th className="text-left py-1.5 px-1 font-semibold">Side</th>
-                      <th className="text-right py-1.5 px-1 font-semibold">Leverage</th>
-                      <th className="text-right py-1.5 px-1 font-semibold">Entry</th>
-                      <th className="text-right py-1.5 px-1 font-semibold">Current</th>
-                      <th className="text-right py-1.5 px-1 font-semibold">Stake</th>
-                      <th className="text-right py-1.5 px-1 font-semibold">P&L</th>
-                      <th className="text-right py-1.5 px-1 font-semibold">P&L %</th>
-                      <th className="text-right py-1.5 px-1 font-semibold">Duration</th>
-                      <th className="text-left py-1.5 px-1 font-semibold">Enter Tag</th>
-                      <th className="text-right py-1.5 px-1 font-semibold">SL</th>
+                      <SH label="Pair" tbl="open" col="pair" />
+                      <SH label="Side" tbl="open" col="is_short" align="center" />
+                      <SH label="Leverage" tbl="open" col="leverage" align="right" />
+                      <SH label="Entry" tbl="open" col="open_rate" align="right" />
+                      <SH label="Current" tbl="open" col="current_rate" align="right" />
+                      <SH label="Stake" tbl="open" col="stake_amount" align="right" />
+                      <SH label="P&L" tbl="open" col="current_profit_abs" align="right" />
+                      <SH label="P&L %" tbl="open" col="current_profit" align="right" />
+                      <SH label="Duration" tbl="open" col="open_date" align="right" />
+                      <SH label="Enter Tag" tbl="open" col="enter_tag" />
+                      <SH label="SL" tbl="open" col="stop_loss_pct" align="right" />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/[0.05]">
-                    {openTrades.map((t) => {
+                    {sortData(openTrades, "open").map((t) => {
                       const pnl = t.current_profit_abs ?? 0;
                       const pct = t.current_profit != null ? t.current_profit * 100 : null;
                       const ms = Date.now() - new Date(t.open_date).getTime();
@@ -729,21 +797,21 @@ function DetailContent({
               <div className="overflow-x-auto">
                 <table className="w-full text-[13px] font-mono"><thead className="text-muted text-[13px] uppercase tracking-widest">
                     <tr>
-                      <th className="text-left py-1.5 px-1 font-semibold">Pair</th>
-                      <th className="text-left py-1.5 px-1 font-semibold">Side</th>
-                      <th className="text-right py-1.5 px-1 font-semibold">Lev</th>
-                      <th className="text-right py-1.5 px-1 font-semibold">Entry</th>
-                      <th className="text-right py-1.5 px-1 font-semibold">Exit</th>
-                      <th className="text-right py-1.5 px-1 font-semibold">Stake</th>
-                      <th className="text-right py-1.5 px-1 font-semibold">P&L</th>
-                      <th className="text-right py-1.5 px-1 font-semibold">P&L %</th>
-                      <th className="text-right py-1.5 px-1 font-semibold">Duration</th>
-                      <th className="text-left py-1.5 px-1 font-semibold">Enter Tag</th>
-                      <th className="text-left py-1.5 px-1 font-semibold">Exit Reason</th>
+                      <SH label="Pair" tbl="closed" col="pair" />
+                      <SH label="Side" tbl="closed" col="is_short" align="center" />
+                      <SH label="Lev" tbl="closed" col="leverage" align="right" />
+                      <SH label="Entry" tbl="closed" col="open_rate" align="right" />
+                      <SH label="Exit" tbl="closed" col="close_rate" align="right" />
+                      <SH label="Stake" tbl="closed" col="stake_amount" align="right" />
+                      <SH label="P&L" tbl="closed" col="close_profit_abs" align="right" />
+                      <SH label="P&L %" tbl="closed" col="close_profit" align="right" />
+                      <SH label="Duration" tbl="closed" col="trade_duration" align="right" />
+                      <SH label="Enter Tag" tbl="closed" col="enter_tag" />
+                      <SH label="Exit Reason" tbl="closed" col="exit_reason" />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/[0.05]">
-                    {closedTrades.slice(0, 10).map((t) => {
+                    {sortData(closedTrades.slice(0, 10), "closed").map((t) => {
                       const pnl = t.close_profit_abs ?? 0;
                       const pct = t.close_profit != null ? t.close_profit * 100 : null;
                       const ms = t.close_date ? new Date(t.close_date).getTime() - new Date(t.open_date).getTime() : 0;
@@ -837,16 +905,16 @@ function DetailContent({
               <div className="overflow-x-auto">
                 <table className="w-full text-[13px] font-mono whitespace-nowrap">
                   <thead><tr className="text-muted text-[11px] uppercase tracking-widest">
-                    <th className="text-left px-2 py-1.5 font-semibold">Pair</th>
-                    <th className="text-right px-2 py-1.5 font-semibold">Trades</th>
-                    <th className="text-right px-2 py-1.5 font-semibold">profit_abs</th>
-                    <th className="text-right px-2 py-1.5 font-semibold">profit_ratio</th>
-                    <th className="text-right px-2 py-1.5 font-semibold">Win Rate</th>
-                    <th className="text-right px-2 py-1.5 font-semibold">Avg Profit</th>
-                    <th className="text-right px-2 py-1.5 font-semibold">Avg Dur.</th>
+                    <SH label="Pair" tbl="perf" col="pair" />
+                    <SH label="Trades" tbl="perf" col="count" align="right" />
+                    <SH label="Profit $" tbl="perf" col="profit_abs" align="right" />
+                    <SH label="Profit %" tbl="perf" col="profit_ratio" align="right" />
+                    <SH label="Win Rate" tbl="perf" col="winrate" align="right" />
+                    <SH label="Avg Profit" tbl="perf" col="avgProfit" align="right" />
+                    <SH label="Avg Dur." tbl="perf" col="avgDurMs" align="right" />
                   </tr></thead>
                   <tbody className="divide-y divide-white/[0.05]">
-                    {enrichedPerf.map((p) => (
+                    {sortData(enrichedPerf, "perf").map((p) => (
                       <tr key={p.pair} className="hover:bg-white/[0.04]">
                         <td className="px-2 py-1.5 text-white">{p.pair}</td>
                         <td className="px-2 py-1.5 text-right">{p.count ?? p.trades ?? 0}</td>

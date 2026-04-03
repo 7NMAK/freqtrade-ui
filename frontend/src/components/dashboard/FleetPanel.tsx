@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { Play, Square, Pause, RefreshCw, XSquare, PlusSquare, ShieldAlert, Zap, GitCompare, Layers } from "lucide-react";
+import { Play, Square, Pause, RefreshCw, XSquare, PlusSquare, ShieldAlert, Zap, GitCompare, Layers, ArrowUpDown } from "lucide-react";
 import { fmtMoney, fmt } from "@/lib/format";
 import type { Bot, FTProfit } from "@/types";
 
@@ -20,6 +20,8 @@ interface FleetPanelProps {
   onSoftKill: (botId: number) => void;
   onHardKill: (botId: number) => void;
 }
+
+type SortKey = "name" | "pnl" | "winRate" | "drawdown" | "trades";
 
 function MiniSparkline({ data }: { data: number[] }) {
   if (!data || data.length === 0) return null;
@@ -40,6 +42,23 @@ function MiniSparkline({ data }: { data: number[] }) {
   );
 }
 
+function getBotMetrics(bot: Bot, profit: Partial<FTProfit> | undefined) {
+  const pnl = profit?.profit_closed_coin ?? null;
+  const pnlPct = profit?.profit_closed_percent ?? null;
+  const trades = profit?.trade_count ?? 0;
+  const winRate = profit && profit.winning_trades != null && profit.losing_trades != null
+    ? ((profit.winning_trades / (profit.winning_trades + profit.losing_trades)) * 100)
+    : null;
+  const avgDur = profit?.avg_duration;
+  const avgDurStr = typeof avgDur === "number"
+    ? (avgDur >= 3600 ? `${(avgDur / 3600).toFixed(1)}h` : `${Math.round(avgDur / 60)}m`)
+    : typeof avgDur === "string" ? avgDur : "\u2014";
+  // max_drawdown is injected from botStats in the dashboard per-bot loop
+  const maxDd = profit ? ((profit as Record<string, unknown>).max_drawdown as number | undefined) : undefined;
+
+  return { pnl, pnlPct, trades, winRate, avgDurStr, maxDd };
+}
+
 export default function FleetPanel({
   bots,
   botProfits,
@@ -54,7 +73,44 @@ export default function FleetPanel({
   onSoftKill,
   onHardKill,
 }: FleetPanelProps) {
-  const tradeBots = bots.filter((b) => !b.is_utility && b.ft_mode !== "webserver");
+  const tradeBots = useMemo(() => bots.filter((b) => !b.is_utility && b.ft_mode !== "webserver"), [bots]);
+
+  // ── Sorting ──────────────────────────────────────────────────────────
+  const [sortKey, setSortKey] = useState<SortKey>("pnl");
+  const [sortAsc, setSortAsc] = useState(false);
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortAsc(!sortAsc);
+    } else {
+      setSortKey(key);
+      setSortAsc(false);
+    }
+  };
+
+  const sortedBots = useMemo(() => {
+    return [...tradeBots].sort((a, b) => {
+      const am = getBotMetrics(a, botProfits[a.id]);
+      const bm = getBotMetrics(b, botProfits[b.id]);
+      let cmp = 0;
+      switch (sortKey) {
+        case "name": cmp = a.name.localeCompare(b.name); break;
+        case "pnl": cmp = (am.pnl ?? -Infinity) - (bm.pnl ?? -Infinity); break;
+        case "winRate": cmp = (am.winRate ?? -1) - (bm.winRate ?? -1); break;
+        case "drawdown": cmp = (am.maxDd ?? 0) - (bm.maxDd ?? 0); break;
+        case "trades": cmp = am.trades - bm.trades; break;
+      }
+      return sortAsc ? cmp : -cmp;
+    });
+  }, [tradeBots, botProfits, sortKey, sortAsc]);
+
+  const sortButtons: { key: SortKey; label: string }[] = [
+    { key: "pnl", label: "P&L" },
+    { key: "name", label: "Name" },
+    { key: "winRate", label: "Win%" },
+    { key: "drawdown", label: "DD" },
+    { key: "trades", label: "Trades" },
+  ];
 
   return (
     <div className="w-[400px] flex flex-col gap-5 min-w-[400px] shrink-0">
@@ -73,24 +129,32 @@ export default function FleetPanel({
         </Link>
       </div>
 
+      {/* Sort toolbar */}
+      <div className="flex items-center gap-1 px-4 py-2 l-b bg-black/20">
+        <ArrowUpDown className="w-3 h-3 text-muted mr-1" />
+        {sortButtons.map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => handleSort(key)}
+            className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded transition-colors cursor-pointer ${
+              sortKey === key
+                ? "bg-white/15 text-white"
+                : "text-muted hover:text-white hover:bg-white/[0.06]"
+            }`}
+          >
+            {label}
+            {sortKey === key && <span className="ml-0.5 text-[8px]">{sortAsc ? "↑" : "↓"}</span>}
+          </button>
+        ))}
+      </div>
+
       {/* Bot List */}
       <div className="flex-1 overflow-y-auto flex flex-col font-mono text-xs">
-        {tradeBots.length === 0 && (
+        {sortedBots.length === 0 && (
           <div className="p-8 text-center text-sm text-muted">No bots registered.</div>
         )}
-        {tradeBots.map((bot, idx) => {
-          const profit = botProfits[bot.id];
-          const pnl = profit?.profit_all_coin ?? null;
-          const pnlPct = profit?.profit_all_percent ?? null;
-          const trades = profit?.trade_count ?? 0;
-          const winRate = profit && profit.winning_trades != null && profit.losing_trades != null
-            ? ((profit.winning_trades / (profit.winning_trades + profit.losing_trades)) * 100)
-            : null;
-          const avgDur = profit?.avg_duration;
-          const avgDurStr = typeof avgDur === "number"
-            ? (avgDur >= 3600 ? `${(avgDur / 3600).toFixed(1)}h` : `${Math.round(avgDur / 60)}m`)
-            : typeof avgDur === "string" ? avgDur : "\u2014";
-          const maxDd = profit ? ((profit as Record<string, unknown>).max_drawdown as number | undefined) : undefined;
+        {sortedBots.map((bot, idx) => {
+          const { pnl, pnlPct, trades, winRate, avgDurStr, maxDd } = getBotMetrics(bot, botProfits[bot.id]);
 
           const isLive = bot.status === "running";
           const isPaused = bot.status === "draining";
@@ -164,7 +228,7 @@ export default function FleetPanel({
                 <div className="flex justify-between w-full pr-5">
                   <span className="text-muted">Drawdown:</span>
                   <span className={maxDd != null ? "text-down" : "text-white/70"}>
-                    {maxDd != null ? `${fmt(maxDd, 1)}%` : "\u2014"}
+                    {maxDd != null ? `-${fmt(maxDd * 100, 1)}%` : "\u2014"}
                   </span>
                 </div>
                 <div className="flex justify-between w-full">

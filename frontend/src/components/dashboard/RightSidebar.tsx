@@ -287,13 +287,13 @@ export default function RightSidebar({
   // ── Render ─────────────────────────────────────────────────────────
   return (
     <div
-      className={`flex flex-col gap-4 shrink-0 min-h-0 2xl:w-[320px] xl:w-[260px] xl:min-w-[260px] ${
+      className={`flex flex-col gap-4 min-h-0 ${
         isOpen
-          ? "w-[320px] min-w-[320px] opacity-100 overflow-y-auto overflow-x-hidden"
-          : "w-0 min-w-0 opacity-0 overflow-hidden p-0"
+          ? "shrink-0 w-[320px] min-w-[320px] 2xl:w-[320px] xl:w-[260px] xl:min-w-[260px] opacity-100 overflow-y-auto overflow-x-hidden"
+          : "w-0 min-w-0 max-w-0 opacity-0 overflow-hidden p-0 gap-0"
       }`}
       style={{
-        transition: "width 0.3s ease, min-width 0.3s ease, opacity 0.3s ease, padding 0.3s ease",
+        transition: "width 0.3s ease, min-width 0.3s ease, max-width 0.3s ease, opacity 0.3s ease, padding 0.3s ease, gap 0.3s ease",
         scrollbarWidth: "thin",
         scrollbarColor: "rgba(255,255,255,0.14) transparent",
         maxHeight: "100%",

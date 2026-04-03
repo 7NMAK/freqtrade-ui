@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "skills": {
+    "aicoin-freqtrade": {
+      "source": "aicoincom/coinos-skills",
+      "sourceType": "github",
+      "computedHash": "f869790632813922205198742e5ad3570c23d72718395364cc895293bb5c1bbd"
+    },
+    "backtest-expert": {
+      "source": "tradermonty/claude-trading-skills",
+      "sourceType": "github",
+      "computedHash": "4dc34b8c2828d826ed417b74cd63fe12349a30bab1064620d06c96e3e24a2e80"
+    },
+    "edge-strategy-reviewer": {
+      "source": "tradermonty/claude-trading-skills",
+      "sourceType": "github",
+      "computedHash": "6294b6cb45258531db06960b35127411ba30c871e3082789f6851ec9d3d21503"
+    },
+    "exposure-coach": {
+      "source": "tradermonty/claude-trading-skills",
+      "sourceType": "github",
+      "computedHash": "00303892e97ab199044949455834fe404312ef54ee208a3cd2fbd7219a767e3a"
+    },
+    "frontend-design": {
+      "source": "anthropics/claude-code",
+      "sourceType": "github",
+      "computedHash": "e8118284a6365753790d44bb2758a6032b3af27fa84696428d9233f2be0f4e78"
+    },
+    "mmt-trading-systems": {
+      "source": "emeraldls/mmt-agent-skills",
+      "sourceType": "github",
+      "computedHash": "1cfa198f3f5abc462cb9dc03ba4a3145666e5a47f2987e0632afe1165d9a4569"
+    },
+    "next-best-practices": {
+      "source": "vercel-labs/next-skills",
+      "sourceType": "github",
+      "computedHash": "515ba75178bd44875812d9a560bdf14651f86709f89cf1d4f209638e879807f3"
+    },
+    "next-cache-components": {
+      "source": "vercel-labs/next-skills",
+      "sourceType": "github",
+      "computedHash": "a94b83ddcd2ff1c30722577f693b1bfe32f2e1a83abdd6c08c2d6cc6753b53c8"
+    },
+    "next-upgrade": {
+      "source": "vercel-labs/next-skills",
+      "sourceType": "github",
+      "computedHash": "be6bbf6ab1dc2cc6f2505cea52d497920c04f5b532c0846ee201f6029b803fb0"
+    },
+    "nextjs-fastapi-conventions": {
+      "source": "wtsi-hgi/agentskills",
+      "sourceType": "github",
+      "computedHash": "d7b83b94a8f8b3c69a6d221fd286d03253bf126785d081e6b9f2c484c6309b03"
+    },
+    "strategy-pivot-designer": {
+      "source": "tradermonty/claude-trading-skills",
+      "sourceType": "github",
+      "computedHash": "9cc96a49b8a4386f4be966b6065e7dcc95f8d3728fe8dab4842cddc5346f6332"
+    },
+    "technical-analyst": {
+      "source": "tradermonty/claude-trading-skills",
+      "sourceType": "github",
+      "computedHash": "76950bd79b8b6f05f7d56d2e1a87ddfe868e7f12e1780d285482dfbbb0b60ddc"
+    },
+    "trade-hypothesis-ideator": {
+      "source": "tradermonty/claude-trading-skills",
+      "sourceType": "github",
+      "computedHash": "cb61c9609f0f4d0d2f84b91ac7f2c6a23fdbd0984ef5389a94d2d7459b67c591"
+    },
+    "vercel-react-best-practices": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "1be892a3ea68b74654326ef836a58dd528d99ae0ab8d879764e2519c39068e67"
+    }
+  }
+}

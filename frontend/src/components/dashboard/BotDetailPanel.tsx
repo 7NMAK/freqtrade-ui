@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { X, Play, Square, Pause, RefreshCw, PlusCircle, XSquare, PlusSquare, ShieldAlert, Zap } from "lucide-react";
 import { fmt, fmtMoney, profitColor } from "@/lib/format";
 import type {
@@ -189,6 +189,96 @@ export default function BotDetailPanel({
 }: BotDetailPanelProps) {
   const [detailTab, setDetailTab] = useState<DetailTab>("overview");
 
+  // ── Backtest / Hyperopt history state ───────────────────────────────
+  const [backtestHistory, setBacktestHistory] = useState<Array<{ filename: string; strategy: string; run_id: string; backtest_start_time: number; notes?: string; timeframe?: string }>>([]);
+  const [backtestLoading, setBacktestLoading] = useState(false);
+  const [hyperoptRuns, setHyperoptRuns] = useState<Array<{ filename: string; strategy: string; created_at: string; mtime: number; size_bytes: number; epochs: number }>>([]);
+  const [hyperoptLoading, setHyperoptLoading] = useState(false);
+  // Expanded hyperopt run details
+  const [hyperoptDetails, setHyperoptDetails] = useState<Record<string, Array<{ current_epoch: number; loss: number; trades: number; winRate: number; profitPct: number; profitAbs: number; maxDrawdown: number; sharpe: number; sortino: number; avgDuration: string; params?: Record<string, unknown> }>>>({});
+  // Expanded backtest result details
+  const [backtestDetails, setBacktestDetails] = useState<Record<string, Record<string, unknown>>>({});
+
+  // Fetch backtest history when tab becomes active
+  const fetchBacktestHistory = useCallback(async () => {
+    if (!bot) return;
+    setBacktestLoading(true);
+    try {
+      const { botBacktestHistory } = await import("@/lib/api");
+      const data = await botBacktestHistory(bot.id);
+      // Filter to bot's strategy
+      const stratName = configData?.strategy ?? bot.strategy_name;
+      const filtered = stratName ? data.results.filter(r => r.strategy === stratName) : data.results;
+      setBacktestHistory(filtered.sort((a, b) => b.backtest_start_time - a.backtest_start_time));
+    } catch { /* non-blocking */ }
+    setBacktestLoading(false);
+  }, [bot, configData?.strategy]);
+
+  // Fetch single backtest result detail
+  const fetchBacktestDetail = useCallback(async (filename: string, strategy: string) => {
+    if (!bot) return;
+    try {
+      const { botBacktestHistoryResult } = await import("@/lib/api");
+      const result = await botBacktestHistoryResult(bot.id, filename, strategy);
+      setBacktestDetails(prev => {
+        if (prev[filename]) return prev; // already fetched
+        return { ...prev, [filename]: result };
+      });
+    } catch { /* non-blocking */ }
+  }, [bot]);
+
+  // Fetch hyperopt runs when tab becomes active
+  const fetchHyperoptRuns = useCallback(async () => {
+    if (!bot) return;
+    setHyperoptLoading(true);
+    try {
+      const { botHyperoptRuns } = await import("@/lib/api");
+      const data = await botHyperoptRuns(bot.id);
+      setHyperoptRuns((data.runs ?? []).sort((a, b) => b.mtime - a.mtime));
+    } catch { /* non-blocking */ }
+    setHyperoptLoading(false);
+  }, [bot]);
+
+  // Fetch hyperopt detail for a specific run
+  const fetchHyperoptDetail = useCallback(async (filename: string) => {
+    if (!bot) return;
+    try {
+      const { botHyperoptHistoryResults } = await import("@/lib/api");
+      const data = await botHyperoptHistoryResults(bot.id, filename);
+      setHyperoptDetails(prev => {
+        if (prev[filename]) return prev; // already fetched
+        return { ...prev, [filename]: data.results ?? [] };
+      });
+    } catch { /* non-blocking */ }
+  }, [bot]);
+
+  // Reset history when bot changes
+  useEffect(() => {
+    setBacktestHistory([]);
+    setBacktestDetails({});
+    setHyperoptRuns([]);
+    setHyperoptDetails({});
+  }, [bot?.id]);
+
+  // Auto-fetch when tab changes
+  useEffect(() => {
+    if (detailTab === "backtest" && backtestHistory.length === 0 && !backtestLoading) fetchBacktestHistory();
+    if (detailTab === "hyperopt" && hyperoptRuns.length === 0 && !hyperoptLoading) fetchHyperoptRuns();
+  }, [detailTab, backtestHistory.length, backtestLoading, fetchBacktestHistory, hyperoptRuns.length, hyperoptLoading, fetchHyperoptRuns]);
+
+  // Auto-fetch detail for first backtest/hyperopt item when list loads
+  useEffect(() => {
+    if (backtestHistory.length > 0) {
+      const first = backtestHistory[0];
+      fetchBacktestDetail(first.filename, first.strategy);
+    }
+  }, [backtestHistory, fetchBacktestDetail]);
+  useEffect(() => {
+    if (hyperoptRuns.length > 0) {
+      fetchHyperoptDetail(hyperoptRuns[0].filename);
+    }
+  }, [hyperoptRuns, fetchHyperoptDetail]);
+
   if (!bot) return null;
 
   const isRunning = bot.status === "running";
@@ -312,6 +402,14 @@ export default function BotDetailPanel({
               locksData={locksData}
               balanceData={balanceData}
               healthData={healthData}
+              backtestHistory={backtestHistory}
+              backtestLoading={backtestLoading}
+              backtestDetails={backtestDetails}
+              fetchBacktestDetail={fetchBacktestDetail}
+              hyperoptRuns={hyperoptRuns}
+              hyperoptLoading={hyperoptLoading}
+              hyperoptDetails={hyperoptDetails}
+              fetchHyperoptDetail={fetchHyperoptDetail}
             />
             </div>
           )}
@@ -319,7 +417,7 @@ export default function BotDetailPanel({
 
         {/* Bottom actions — Edit, Duplicate, Delete, Close */}
         <div className="px-4 py-3 l-t flex gap-2 shrink-0">
-          <button type="button" onClick={onEdit} className="flex-1 py-2 rounded l-bd bg-surface text-muted text-[11px] font-medium text-center transition-all hover:bg-white/[0.04] cursor-pointer">Edit</button>
+          <button type="button" onClick={() => setDetailTab("config")} className="flex-1 py-2 rounded l-bd bg-surface text-muted text-[11px] font-medium text-center transition-all hover:bg-white/[0.04] cursor-pointer">Config</button>
           <button type="button" onClick={onDuplicate} className="flex-1 py-2 rounded l-bd bg-surface text-muted text-[11px] font-medium text-center transition-all hover:bg-white/[0.04] cursor-pointer">Duplicate</button>
           <button type="button" onClick={onDelete} className="py-2 px-4 rounded border border-down/20 bg-down/10 text-down text-[11px] font-medium text-center transition-all hover:bg-down/15 cursor-pointer">Delete</button>
           <button type="button" onClick={onClose} className="flex-1 py-2 rounded bg-white/10 text-white text-[11px] font-semibold text-center transition-all hover:bg-white/20 cursor-pointer">Close</button>
@@ -349,6 +447,14 @@ function DetailContent({
   locksData,
   balanceData,
   healthData,
+  backtestHistory,
+  backtestLoading,
+  backtestDetails,
+  fetchBacktestDetail,
+  hyperoptRuns,
+  hyperoptLoading,
+  hyperoptDetails,
+  fetchHyperoptDetail,
 }: {
   tab: DetailTab;
   bot: Bot;
@@ -365,6 +471,14 @@ function DetailContent({
   locksData: FTLocksResponse | null;
   balanceData: FTBalance | null;
   healthData: FTHealth | null;
+  backtestHistory: Array<{ filename: string; strategy: string; run_id: string; backtest_start_time: number; notes?: string; timeframe?: string }>;
+  backtestLoading: boolean;
+  backtestDetails: Record<string, Record<string, unknown>>;
+  fetchBacktestDetail: (filename: string, strategy: string) => void;
+  hyperoptRuns: Array<{ filename: string; strategy: string; created_at: string; mtime: number; size_bytes: number; epochs: number }>;
+  hyperoptLoading: boolean;
+  hyperoptDetails: Record<string, Array<{ current_epoch: number; loss: number; trades: number; winRate: number; profitPct: number; profitAbs: number; maxDrawdown: number; sharpe: number; sortino: number; avgDuration: string; params?: Record<string, unknown> }>>;
+  fetchHyperoptDetail: (filename: string) => void;
 }) {
   switch (tab) {
     /* ─── Overview ─── */
@@ -686,9 +800,9 @@ function DetailContent({
             <div className="text-center py-6 text-muted text-xs">No performance data</div>
           )}
 
-          {/* Entry / Exit Analysis side by side — 10 columns each matching HTML prototype line 679-699 */}
+          {/* Entry / Exit Analysis — stacked vertically for full-width tables */}
           {(entryData.length > 0 || exitData.length > 0) && (
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="flex flex-col gap-2.5">
               {entryData.length > 0 && (
                 <div className="bg-surface l-bd rounded p-3">
                   <h3 className="section-title mb-2">Entry Tags</h3>
@@ -931,113 +1045,132 @@ function DetailContent({
       );
     }
 
-    /* ─── Backtest — matching HTML line 757-843 ─── */
+    /* ─── Backtest — real API history matching HTML line 757-843 ─── */
     case "backtest": {
-      const totalTrades = profit?.trade_count ?? (statsData ? (statsData.wins ?? 0) + (statsData.losses ?? 0) + (statsData.draws ?? 0) : 0);
-      const totalProfit = profit?.profit_closed_coin ?? statsData?.profit_all_coin ?? 0;
-      const totalProfitPct = profit?.profit_closed_percent ?? 0;
-      const maxDD = statsData?.max_drawdown ?? 0;
-      const winRate = totalTrades > 0 && statsData ? (statsData.wins / totalTrades) * 100 : 0;
-      const hasData = statsData || profit;
-
       return (
         <div className="flex flex-col gap-4">
           <h3 className="section-title flex items-center gap-2">Backtest History <span className="text-white/30">({configData?.strategy ?? bot.name})</span></h3>
-          {hasData ? (
+          {backtestLoading ? (
+            <div className="text-center py-8 text-muted text-xs animate-pulse">Loading backtest history...</div>
+          ) : backtestHistory.length === 0 ? null : (
             <div className="space-y-3">
-              {/* Run card — expanded, matching HTML line 762-805 */}
-              <div className="bg-surface l-bd rounded p-3 hover:bg-white/[0.04] cursor-pointer transition-colors">
-                <div className="flex justify-between items-center mb-2.5">
-                  <span className="text-white font-mono text-[12px] font-bold">Latest · {configData?.strategy ?? "—"} · {configData?.timeframe ?? "—"}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted text-[10px] font-mono">{new Date().toISOString().split("T")[0]}</span>
-                    <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${totalProfit >= 0 ? "bg-up/12 text-up" : "bg-down/12 text-down"}`}>{totalProfit >= 0 ? "PROFITABLE" : "LOSS"}</span>
+              {backtestHistory.map((run, idx) => {
+                const detail = backtestDetails[run.filename];
+                const strat = (detail?.strategy_comparison as Array<Record<string, unknown>> | undefined)?.[0]
+                  ?? (detail?.strategy as Record<string, Record<string, unknown>> | undefined)?.[run.strategy]
+                  ?? null;
+                const isExpanded = idx === 0;
+                const totalProfitPct = (strat as Record<string, number> | null)?.profit_total_pct ?? (strat as Record<string, number> | null)?.profit_total ?? 0;
+                const totalProfit = (strat as Record<string, number> | null)?.profit_total_abs ?? 0;
+                const maxDD = (strat as Record<string, number> | null)?.max_drawdown ?? (strat as Record<string, number> | null)?.max_drawdown_account ?? 0;
+                const winRate = (strat as Record<string, number> | null)?.wins != null && (strat as Record<string, number> | null)?.trades != null
+                  ? ((strat as Record<string, number>).wins / Math.max(1, (strat as Record<string, number>).trades)) * 100 : 0;
+                const trades = (strat as Record<string, number> | null)?.trades ?? 0;
+                const wins = (strat as Record<string, number> | null)?.wins ?? 0;
+                const draws = (strat as Record<string, number> | null)?.draws ?? 0;
+                const losses = (strat as Record<string, number> | null)?.losses ?? 0;
+                const sharpe = (strat as Record<string, number> | null)?.sharpe ?? 0;
+                const sortino = (strat as Record<string, number> | null)?.sortino ?? 0;
+                const profitFactor = (strat as Record<string, number> | null)?.profit_factor ?? 0;
+                const date = run.backtest_start_time ? new Date(run.backtest_start_time * 1000).toISOString().split("T")[0] : "—";
+
+                return (
+                  <div key={run.run_id ?? run.filename} className="bg-surface l-bd rounded p-3 hover:bg-white/[0.04] cursor-pointer transition-colors" onClick={() => { if (!isExpanded) fetchBacktestDetail(run.filename, run.strategy); }}>
+                    <div className="flex justify-between items-center mb-2.5">
+                      <span className="text-white font-mono text-[12px] font-bold">Run #{backtestHistory.length - idx} · {run.strategy} · {run.timeframe ?? "—"}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted text-[10px] font-mono">{date}</span>
+                        <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${totalProfitPct >= 0 ? "bg-up/12 text-up" : "bg-down/12 text-down"}`}>{totalProfitPct >= 0 ? "PROFITABLE" : "LOSS"}</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-6 gap-2 text-[11px] font-mono mb-2">
+                      <div><span className="text-muted block text-[9px]">Total Profit</span><span className={`${profitColor(totalProfitPct)} font-bold`}>{totalProfitPct >= 0 ? "+" : ""}{fmt(totalProfitPct * 100, 1)}%</span></div>
+                      <div><span className="text-muted block text-[9px]">Profit Abs</span><span className={`${profitColor(totalProfit)} font-bold`}>{fmtMoney(totalProfit)}</span></div>
+                      <div><span className="text-muted block text-[9px]">Max DD</span><span className="text-down font-bold">{maxDD > 0 ? `-${fmt(maxDD * 100, 1)}%` : "—"}</span></div>
+                      <div><span className="text-muted block text-[9px]">Win Rate</span><span className="text-white">{fmt(winRate, 1)}%</span></div>
+                      <div><span className="text-muted block text-[9px]">Trades</span><span className="text-white">{trades}</span></div>
+                      <div><span className="text-muted block text-[9px]">W / D / L</span><span className="text-white">{wins} / {draws} / {losses}</span></div>
+                    </div>
+                    {isExpanded && detail && (
+                      <>
+                        <div className="grid grid-cols-6 gap-2 text-[11px] font-mono mb-2.5">
+                          <div><span className="text-muted block text-[9px]">Profit Factor</span><span className="text-white">{profitFactor ? fmt(profitFactor) : "—"}</span></div>
+                          <div><span className="text-muted block text-[9px]">Sharpe</span><span className="text-white">{sharpe ? fmt(sharpe) : "—"}</span></div>
+                          <div><span className="text-muted block text-[9px]">Sortino</span><span className="text-white">{sortino ? fmt(sortino) : "—"}</span></div>
+                          <div><span className="text-muted block text-[9px]">Max Consec W</span><span className="text-white">{(strat as Record<string, number> | null)?.max_consecutive_wins ?? "—"}</span></div>
+                          <div><span className="text-muted block text-[9px]">Avg Hold</span><span className="text-white">{(strat as Record<string, string> | null)?.holding_avg ?? "—"}</span></div>
+                          <div><span className="text-muted block text-[9px]">Trades/Day</span><span className="text-white">{(strat as Record<string, number> | null)?.trades_per_day ? fmt((strat as Record<string, number>).trades_per_day, 2) : "—"}</span></div>
+                        </div>
+                      </>
+                    )}
                   </div>
-                </div>
-                <div className="grid grid-cols-6 gap-2 text-[11px] font-mono mb-2">
-                  <div><span className="text-muted block text-[9px]">Total Profit</span><span className={`${profitColor(totalProfitPct)} font-bold`}>{totalProfitPct >= 0 ? "+" : ""}{fmt(totalProfitPct, 1)}%</span></div>
-                  <div><span className="text-muted block text-[9px]">Profit Abs</span><span className={`${profitColor(totalProfit)} font-bold`}>{fmtMoney(totalProfit)}</span></div>
-                  <div><span className="text-muted block text-[9px]">Max DD</span><span className="text-down font-bold">{maxDD > 0 ? `-${fmt(maxDD * 100, 1)}%` : "—"}</span></div>
-                  <div><span className="text-muted block text-[9px]">Win Rate</span><span className="text-white">{fmt(winRate, 1)}%</span></div>
-                  <div><span className="text-muted block text-[9px]">Trades</span><span className="text-white">{totalTrades}</span></div>
-                  <div><span className="text-muted block text-[9px]">W / D / L</span><span className="text-white">{statsData ? `${statsData.wins} / ${statsData.draws} / ${statsData.losses}` : "—"}</span></div>
-                </div>
-                <div className="grid grid-cols-6 gap-2 text-[11px] font-mono mb-2.5">
-                  <div><span className="text-muted block text-[9px]">Profit Factor</span><span className="text-white">{statsData?.profit_factor != null ? fmt(statsData.profit_factor) : "—"}</span></div>
-                  <div><span className="text-muted block text-[9px]">Sharpe</span><span className="text-white">{statsData?.sharpe_ratio != null ? fmt(statsData.sharpe_ratio) : "—"}</span></div>
-                  <div><span className="text-muted block text-[9px]">Sortino</span><span className="text-white">{statsData?.sortino_ratio != null ? fmt(statsData.sortino_ratio) : "—"}</span></div>
-                  <div><span className="text-muted block text-[9px]">Calmar</span><span className="text-white">{statsData?.calmar_ratio != null ? fmt(statsData.calmar_ratio) : "—"}</span></div>
-                  <div><span className="text-muted block text-[9px]">Avg Hold</span><span className="text-white">{statsData?.durations?.wins != null ? fmtDurSec(statsData.durations.wins) : "—"}</span></div>
-                  <div><span className="text-muted block text-[9px]">Max Consec W</span><span className="text-white">{statsData?.max_consecutive_wins ?? "—"}</span></div>
-                </div>
-                {/* Per-pair breakdown */}
-                {perfData.length > 0 && (
-                  <div className="border-t border-white/[0.06] pt-2">
-                    <table className="w-full text-[10px] font-mono"><thead className="text-muted text-[8px] uppercase tracking-wider"><tr><th className="text-left py-0.5">Pair</th><th className="text-right py-0.5">N</th><th className="text-right py-0.5">Profit%</th><th className="text-right py-0.5">Profit$</th></tr></thead>
-                    <tbody className="divide-y divide-white/[0.05]">
-                      {perfData.slice(0, 5).map(p => (
-                        <tr key={p.pair}><td className="py-0.5 text-white/80">{p.pair}</td><td className="py-0.5 text-right">{p.count ?? p.trades ?? 0}</td><td className={`py-0.5 text-right ${profitColor(p.profit_ratio)}`}>{p.profit_ratio >= 0 ? "+" : ""}{fmt(p.profit_ratio * 100, 1)}%</td><td className={`py-0.5 text-right font-bold ${profitColor(p.profit_abs)}`}>{fmtMoney(p.profit_abs)}</td></tr>
-                      ))}
-                    </tbody></table>
-                  </div>
-                )}
-              </div>
+                );
+              })}
             </div>
-          ) : (
-            <div className="text-center py-8 text-muted text-xs">No backtest history available for this bot.</div>
           )}
         </div>
       );
     }
 
-    /* ─── Hyperopt — matching HTML line 845-926 ─── */
+    /* ─── Hyperopt — real API history matching HTML line 845-926 ─── */
     case "hyperopt": {
       return (
         <div className="flex flex-col gap-4">
           <h3 className="section-title flex items-center gap-2">Hyperopt Runs <span className="text-white/30">({configData?.strategy ?? bot.name})</span></h3>
-          {statsData ? (
+          {hyperoptLoading ? (
+            <div className="text-center py-8 text-muted text-xs animate-pulse">Loading hyperopt history...</div>
+          ) : hyperoptRuns.length === 0 ? null : (
             <div className="space-y-3">
-              {/* Opt card — expanded, matching HTML line 850-888 */}
-              <div className="bg-surface l-bd rounded p-3 hover:bg-white/[0.04] cursor-pointer transition-colors">
-                <div className="flex justify-between items-center mb-2.5">
-                  <span className="text-white font-mono text-[12px] font-bold">Signal & Order Quality</span>
-                  <span className="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded">LIVE STATS</span>
-                </div>
-                <div className="grid grid-cols-6 gap-2 text-[11px] font-mono mb-2">
-                  <div><span className="text-muted block text-[9px]">Rejected Signals</span><span className={statsData.rejected_signals > 0 ? "text-amber-500 font-bold" : "text-white"}>{statsData.rejected_signals}</span></div>
-                  <div><span className="text-muted block text-[9px]">Timed Out Entry</span><span className="text-white">{statsData.timedout_entry_orders}</span></div>
-                  <div><span className="text-muted block text-[9px]">Timed Out Exit</span><span className="text-white">{statsData.timedout_exit_orders}</span></div>
-                  <div><span className="text-muted block text-[9px]">Cancelled Entry</span><span className="text-white">{statsData.canceled_trade_entries}</span></div>
-                  <div><span className="text-muted block text-[9px]">Replaced Entry</span><span className="text-white">{statsData.replaced_entry_orders}</span></div>
-                  <div><span className="text-muted block text-[9px]">Profit Factor</span><span className="text-white">{statsData.profit_factor != null ? fmt(statsData.profit_factor) : "—"}</span></div>
-                </div>
-                <div className="grid grid-cols-6 gap-2 text-[11px] font-mono mb-3">
-                  <div><span className="text-muted block text-[9px]">Win Rate</span><span className="text-white">{statsData.wins != null ? fmt((statsData.wins / Math.max(1, statsData.wins + statsData.losses)) * 100, 1) + "%" : "—"}</span></div>
-                  <div><span className="text-muted block text-[9px]">Avg Win Dur.</span><span className="text-white">{statsData.durations?.wins != null ? fmtDurSec(statsData.durations.wins) : "—"}</span></div>
-                  <div><span className="text-muted block text-[9px]">Avg Loss Dur.</span><span className="text-white">{statsData.durations?.losses != null ? fmtDurSec(statsData.durations.losses) : "—"}</span></div>
-                  <div><span className="text-muted block text-[9px]">Sharpe</span><span className="text-white">{statsData.sharpe_ratio != null ? fmt(statsData.sharpe_ratio) : "—"}</span></div>
-                  <div><span className="text-muted block text-[9px]">Sortino</span><span className="text-white">{statsData.sortino_ratio != null ? fmt(statsData.sortino_ratio) : "—"}</span></div>
-                  <div><span className="text-muted block text-[9px]">Calmar</span><span className="text-white">{statsData.calmar_ratio != null ? fmt(statsData.calmar_ratio) : "—"}</span></div>
-                </div>
-                {/* Stoploss / ROI params from config if available */}
-                {configData && (
-                  <div className="border-t border-white/[0.06] pt-2">
-                    <div className="text-[9px] text-muted uppercase tracking-wider mb-1.5 font-bold">Active Parameters</div>
-                    <div className="grid grid-cols-4 gap-2 text-[10px] font-mono">
-                      <div className="flex justify-between"><span className="text-muted">stoploss</span><span className="text-white">{configData.stoploss != null ? fmt(configData.stoploss * 100, 1) + "%" : "—"}</span></div>
-                      <div className="flex justify-between"><span className="text-muted">trailing</span><span className="text-white">{configData.trailing_stop ? "Yes" : "No"}</span></div>
-                      {configData.trailing_stop_positive != null && <div className="flex justify-between"><span className="text-muted">trail_pos</span><span className="text-white">{configData.trailing_stop_positive}</span></div>}
-                      {configData.trailing_stop_positive_offset != null && <div className="flex justify-between"><span className="text-muted">trail_off</span><span className="text-white">{configData.trailing_stop_positive_offset}</span></div>}
-                      {configData.minimal_roi && Object.entries(configData.minimal_roi).map(([k, v]) => (
-                        <div key={k} className="flex justify-between"><span className="text-muted">roi_{k}</span><span className="text-white">{String(v)}</span></div>
-                      ))}
+              {hyperoptRuns.map((run, idx) => {
+                const isExpanded = idx === 0;
+                const details = hyperoptDetails[run.filename];
+                const best = details?.length ? details.reduce((b, d) => d.loss < b.loss ? d : b, details[0]) : null;
+                const date = run.created_at ? run.created_at.split("T")[0] : new Date(run.mtime * 1000).toISOString().split("T")[0];
+
+                return (
+                  <div key={run.filename} className="bg-surface l-bd rounded p-3 hover:bg-white/[0.04] cursor-pointer transition-colors" onClick={() => { if (!isExpanded) fetchHyperoptDetail(run.filename); }}>
+                    <div className="flex justify-between items-center mb-2.5">
+                      <span className="text-white font-mono text-[12px] font-bold">Opt #{hyperoptRuns.length - idx} · {run.strategy}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted text-[10px] font-mono">{date}</span>
+                        {best && <span className="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded">BEST: {fmt(best.loss, 4)}</span>}
+                      </div>
                     </div>
+                    <div className="grid grid-cols-6 gap-2 text-[11px] font-mono mb-2">
+                      <div><span className="text-muted block text-[9px]">Epochs</span><span className="text-white">{run.epochs}</span></div>
+                      <div><span className="text-muted block text-[9px]">Best Epoch</span><span className="text-white font-bold">{best?.current_epoch ?? "—"}</span></div>
+                      <div><span className="text-muted block text-[9px]">Profit</span><span className={`${best && best.profitPct >= 0 ? "text-up" : "text-down"} font-bold`}>{best ? `${best.profitPct >= 0 ? "+" : ""}${fmt(best.profitPct, 1)}%` : "—"}</span></div>
+                      <div><span className="text-muted block text-[9px]">Max DD</span><span className="text-down font-bold">{best ? `-${fmt(best.maxDrawdown * 100, 1)}%` : "—"}</span></div>
+                      <div><span className="text-muted block text-[9px]">Win Rate</span><span className="text-white">{best ? `${fmt(best.winRate * 100, 1)}%` : "—"}</span></div>
+                      <div><span className="text-muted block text-[9px]">Trades</span><span className="text-white">{best?.trades ?? "—"}</span></div>
+                    </div>
+                    {isExpanded && best && (
+                      <>
+                        <div className="grid grid-cols-6 gap-2 text-[11px] font-mono mb-3">
+                          <div><span className="text-muted block text-[9px]">Profit Abs</span><span className={`${profitColor(best.profitAbs)} font-bold`}>{fmtMoney(best.profitAbs)}</span></div>
+                          <div><span className="text-muted block text-[9px]">Sharpe</span><span className="text-white">{fmt(best.sharpe)}</span></div>
+                          <div><span className="text-muted block text-[9px]">Sortino</span><span className="text-white">{fmt(best.sortino)}</span></div>
+                          <div><span className="text-muted block text-[9px]">Avg Duration</span><span className="text-white">{best.avgDuration}</span></div>
+                          <div><span className="text-muted block text-[9px]">Loss</span><span className="text-white font-bold">{fmt(best.loss, 4)}</span></div>
+                          <div><span className="text-muted block text-[9px]">Size</span><span className="text-white">{(run.size_bytes / 1024).toFixed(0)}KB</span></div>
+                        </div>
+                        {/* Best params */}
+                        {best.params && Object.keys(best.params).length > 0 && (
+                          <div className="border-t border-white/[0.06] pt-2">
+                            <div className="text-[9px] text-muted uppercase tracking-wider mb-1.5 font-bold">Best Parameters</div>
+                            <div className="grid grid-cols-4 gap-2 text-[10px] font-mono">
+                              {Object.entries(best.params).map(([k, v]) => (
+                                <div key={k} className="flex justify-between"><span className="text-muted">{k}</span><span className="text-white">{String(v)}</span></div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
-                )}
-              </div>
+                );
+              })}
             </div>
-          ) : (
-            <div className="text-center py-8 text-muted text-xs">No hyperopt history available for this bot.</div>
           )}
         </div>
       );

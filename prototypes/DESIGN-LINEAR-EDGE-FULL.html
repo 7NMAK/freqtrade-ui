@@ -4951,7 +4951,297 @@
       <!-- PAGE: FREQAI — ML Model Training, Monitoring & Deployment              -->
       <!-- ════════════════════════════════════════════════════════════════════════ -->
       <div id="page-freqai" class="page-view flex-1 overflow-hidden flex-col bg-black">
-          <!-- FREQAI_PLACEHOLDER -->
+
+          <!-- KPI BAR -->
+          <div class="grid grid-cols-6 gap-2.5 shrink-0 p-5 pb-0">
+              <div class="bg-surface p-3 l-bd rounded-lg"><div class="kpi-label">Active Models</div><div class="kpi-value font-mono text-white text-lg">3</div><div class="text-white/30 text-[10px] font-mono mt-0.5">across 5 bots</div></div>
+              <div class="bg-surface p-3 l-bd rounded-lg"><div class="kpi-label">Avg Accuracy</div><div class="kpi-value font-mono text-up text-lg">72.4%</div><div class="text-up/50 text-[10px] font-mono mt-0.5">↑ 2.1% vs last</div></div>
+              <div class="bg-surface p-3 l-bd rounded-lg"><div class="kpi-label">Total Predictions</div><div class="kpi-value font-mono text-white text-lg">3,550</div><div class="text-white/30 text-[10px] font-mono mt-0.5">last 30d</div></div>
+              <div class="bg-surface p-3 l-bd rounded-lg"><div class="kpi-label">Avg Pred. Time</div><div class="kpi-value font-mono text-white text-lg">12ms</div><div class="text-white/30 text-[10px] font-mono mt-0.5">p99: 28ms</div></div>
+              <div class="bg-surface p-3 l-bd rounded-lg"><div class="kpi-label">Next Retrain</div><div class="kpi-value font-mono text-yellow-400 text-lg">2h 14m</div><div class="text-white/30 text-[10px] font-mono mt-0.5">3 bots queued</div></div>
+              <div class="bg-surface p-3 l-bd rounded-lg"><div class="kpi-label">Model Archive</div><div class="kpi-value font-mono text-white text-lg">18</div><div class="text-white/30 text-[10px] font-mono mt-0.5">7 archived</div></div>
+          </div>
+
+          <!-- TAB BAR -->
+          <div class="flex items-center gap-1 px-5 pt-4 pb-0 shrink-0">
+              <button onclick="switchFaiTab('fai-tab-models',this)" class="fai-tab-btn h-9 px-4 text-[11px] font-bold uppercase tracking-wider rounded-t-md transition-colors border-b-2 text-white bg-white/[0.04]" style="border-bottom-color:#22c55e">📊 Models</button>
+              <button onclick="switchFaiTab('fai-tab-config',this)" class="fai-tab-btn h-9 px-4 text-[11px] font-bold uppercase tracking-wider rounded-t-md transition-colors border-b-2 border-transparent text-muted hover:text-white">⚙️ Configure</button>
+              <button onclick="switchFaiTab('fai-tab-matrix',this)" class="fai-tab-btn h-9 px-4 text-[11px] font-bold uppercase tracking-wider rounded-t-md transition-colors border-b-2 border-transparent text-muted hover:text-white">🧪 Matrix Runner</button>
+          </div>
+
+          <!-- ═══════════════════════════════════════════ -->
+          <!-- TAB 1: MODELS & MONITORING                 -->
+          <!-- ═══════════════════════════════════════════ -->
+          <div id="fai-tab-models" class="fai-tab flex-1 min-h-0 overflow-hidden flex gap-5 p-5">
+              <!-- Col 1: Active Models List -->
+              <div class="w-[380px] shrink-0 relative"><div class="absolute inset-0 overflow-y-auto pr-1"><div class="flex flex-col gap-5">
+                  <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                      <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title">Active Models</h3><span class="text-[10px] text-white/30 font-mono">3 active · 7 archived</span></div>
+                      <div class="p-4 l-b hover:bg-white/[0.04] transition-colors cursor-pointer bg-white/[0.04]">
+                          <div class="flex justify-between items-center mb-2"><span class="text-white font-mono text-[12px] font-bold">LightGBMRegressor — v3</span><div class="flex items-center gap-1.5"><span class="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded border border-up/25">ACTIVE</span><span class="px-1.5 py-0.5 text-[9px] font-bold bg-cyan-500/12 text-cyan-400 rounded border border-cyan-500/25 animate-pulse">TRAINING</span></div></div>
+                          <div class="grid grid-cols-4 gap-2 text-[11px] font-mono mb-2"><div><span class="text-muted block text-[9px]">Features</span><span class="text-white">42</span></div><div><span class="text-muted block text-[9px]">Accuracy</span><span class="text-up font-bold">72.4%</span></div><div><span class="text-muted block text-[9px]">Predictions</span><span class="text-white">1,240</span></div><div><span class="text-muted block text-[9px]">Retrain</span><span class="text-yellow-400">2h 14m</span></div></div>
+                          <div class="grid grid-cols-4 gap-2 text-[11px] font-mono"><div><span class="text-muted block text-[9px]">Train Samples</span><span class="text-white">48,000</span></div><div><span class="text-muted block text-[9px]">Test Acc.</span><span class="text-white">68.1%</span></div><div><span class="text-muted block text-[9px]">Trained</span><span class="text-white">2024-03-27</span></div><div><span class="text-muted block text-[9px]">Pred. Time</span><span class="text-white">12ms</span></div></div>
+                          <div class="mt-2.5 pt-2.5 border-t border-white/[0.06]"><div class="flex justify-between text-[10px] font-mono mb-1"><span class="text-cyan-400">Retraining in progress...</span><span class="text-white font-bold">67%</span></div><div class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 rounded-full" style="width:67%"></div></div></div>
+                      </div>
+                      <div class="p-4 l-b hover:bg-white/[0.04] transition-colors cursor-pointer">
+                          <div class="flex justify-between items-center mb-2"><span class="text-white font-mono text-[12px] font-bold">XGBoostRegressor — v2</span><span class="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded border border-up/25">ACTIVE</span></div>
+                          <div class="grid grid-cols-4 gap-2 text-[11px] font-mono"><div><span class="text-muted block text-[9px]">Features</span><span class="text-white">38</span></div><div><span class="text-muted block text-[9px]">Accuracy</span><span class="text-up font-bold">69.7%</span></div><div><span class="text-muted block text-[9px]">Predictions</span><span class="text-white">890</span></div><div><span class="text-muted block text-[9px]">Retrain</span><span class="text-muted">4h 30m</span></div></div>
+                      </div>
+                      <div class="p-4 l-b hover:bg-white/[0.04] transition-colors cursor-pointer">
+                          <div class="flex justify-between items-center mb-2"><span class="text-white font-mono text-[12px] font-bold">LightGBMClassifier — v1</span><span class="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded border border-up/25">ACTIVE</span></div>
+                          <div class="grid grid-cols-4 gap-2 text-[11px] font-mono"><div><span class="text-muted block text-[9px]">Features</span><span class="text-white">24</span></div><div><span class="text-muted block text-[9px]">Accuracy</span><span class="text-white">64.8%</span></div><div><span class="text-muted block text-[9px]">Predictions</span><span class="text-white">420</span></div><div><span class="text-muted block text-[9px]">Retrain</span><span class="text-muted">6h 10m</span></div></div>
+                      </div>
+                      <div class="p-4 l-b hover:bg-white/[0.04] transition-colors cursor-pointer opacity-50">
+                          <div class="flex justify-between items-center mb-2"><span class="text-white font-mono text-[12px]">CatBoostRegressor — v1</span><span class="px-1.5 py-0.5 text-[9px] font-bold bg-white/5 text-muted rounded">ARCHIVED</span></div>
+                          <div class="grid grid-cols-4 gap-2 text-[11px] font-mono"><div><span class="text-muted block text-[9px]">Features</span><span class="text-muted">30</span></div><div><span class="text-muted block text-[9px]">Accuracy</span><span class="text-muted">58.2%</span></div><div><span class="text-muted block text-[9px]">Predictions</span><span class="text-muted">310</span></div><div><span class="text-muted block text-[9px]">Archived</span><span class="text-muted">Mar 15</span></div></div>
+                      </div>
+                  </div>
+              </div></div></div>
+
+              <!-- Col 2: Feature Importance + Prediction History -->
+              <div class="flex-1 min-w-0 relative"><div class="absolute inset-0 overflow-y-auto pr-1"><div class="flex flex-col gap-5">
+                  <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                      <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title">Feature Importance</h3><span class="text-[10px] text-white/30 font-mono">LightGBMRegressor v3 · 42 features</span></div>
+                      <div class="p-4 space-y-2">
+                          <div class="flex items-center gap-2 text-[11px] font-mono"><span class="text-muted w-28 truncate">rsi_14</span><div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 rounded-full" style="width:82%"></div></div><span class="text-white w-10 text-right font-bold">0.82</span></div>
+                          <div class="flex items-center gap-2 text-[11px] font-mono"><span class="text-muted w-28 truncate">ema_diff_20</span><div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 rounded-full" style="width:71%"></div></div><span class="text-white w-10 text-right font-bold">0.71</span></div>
+                          <div class="flex items-center gap-2 text-[11px] font-mono"><span class="text-muted w-28 truncate">bb_width</span><div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 rounded-full" style="width:64%"></div></div><span class="text-white w-10 text-right font-bold">0.64</span></div>
+                          <div class="flex items-center gap-2 text-[11px] font-mono"><span class="text-muted w-28 truncate">volume_ratio</span><div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 rounded-full" style="width:58%"></div></div><span class="text-white w-10 text-right font-bold">0.58</span></div>
+                          <div class="flex items-center gap-2 text-[11px] font-mono"><span class="text-muted w-28 truncate">atr_14</span><div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 rounded-full" style="width:45%"></div></div><span class="text-white w-10 text-right font-bold">0.45</span></div>
+                          <div class="flex items-center gap-2 text-[11px] font-mono"><span class="text-muted w-28 truncate">macd_histogram</span><div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 rounded-full" style="width:42%"></div></div><span class="text-white w-10 text-right font-bold">0.42</span></div>
+                          <div class="flex items-center gap-2 text-[11px] font-mono"><span class="text-muted w-28 truncate">stoch_k</span><div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 rounded-full" style="width:38%"></div></div><span class="text-white w-10 text-right font-bold">0.38</span></div>
+                          <div class="flex items-center gap-2 text-[11px] font-mono"><span class="text-muted w-28 truncate">adx_14</span><div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 rounded-full" style="width:31%"></div></div><span class="text-white w-10 text-right font-bold">0.31</span></div>
+                          <div class="flex items-center gap-2 text-[11px] font-mono"><span class="text-muted w-28 truncate">btc_rsi_1h</span><div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 rounded-full" style="width:27%"></div></div><span class="text-white w-10 text-right font-bold">0.27</span></div>
+                          <div class="flex items-center gap-2 text-[11px] font-mono"><span class="text-muted w-28 truncate">eth_corr_5m</span><div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 rounded-full" style="width:22%"></div></div><span class="text-white w-10 text-right font-bold">0.22</span></div>
+                      </div>
+                  </div>
+                  <!-- Recent Predictions -->
+                  <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                      <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title">Recent Predictions</h3><span class="text-[10px] text-white/30 font-mono">last 20 candles</span></div>
+                      <div class="overflow-x-auto"><table class="w-full text-[13px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-surface z-10 font-mono text-[11px] uppercase tracking-widest text-muted l-b shadow-lg"><tr><th class="text-left px-3 py-2 font-semibold sortable sort-desc">Time</th><th class="text-left px-3 py-2 font-semibold sortable filterable">Pair</th><th class="text-right px-3 py-2 font-semibold sortable">Prediction</th><th class="text-right px-3 py-2 font-semibold sortable">Actual</th><th class="text-right px-3 py-2 font-semibold sortable">Error</th><th class="text-center px-3 py-2 font-semibold sortable">do_predict</th></tr></thead><tbody class="divide-y divide-white/[0.05]">
+                          <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2 text-white">14:05</td><td class="px-3 py-2 text-white/80">SOL/USDT</td><td class="px-3 py-2 text-right text-up font-bold">+0.82%</td><td class="px-3 py-2 text-right text-up">+0.91%</td><td class="px-3 py-2 text-right text-muted">0.09%</td><td class="px-3 py-2 text-center"><span class="text-[8px] text-up font-bold">✓</span></td></tr>
+                          <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2 text-white">14:00</td><td class="px-3 py-2 text-white/80">ETH/USDT</td><td class="px-3 py-2 text-right text-down font-bold">-0.34%</td><td class="px-3 py-2 text-right text-down">-0.41%</td><td class="px-3 py-2 text-right text-muted">0.07%</td><td class="px-3 py-2 text-center"><span class="text-[8px] text-up font-bold">✓</span></td></tr>
+                          <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2 text-white">13:55</td><td class="px-3 py-2 text-white/80">BTC/USDT</td><td class="px-3 py-2 text-right text-up font-bold">+0.15%</td><td class="px-3 py-2 text-right text-down">-0.22%</td><td class="px-3 py-2 text-right text-yellow-400">0.37%</td><td class="px-3 py-2 text-center"><span class="text-[8px] text-up font-bold">✓</span></td></tr>
+                          <tr class="hover:bg-white/[0.04] bg-down/[0.06]"><td class="px-3 py-2 text-white">13:50</td><td class="px-3 py-2 text-white/80">DOGE/USDT</td><td class="px-3 py-2 text-right text-up font-bold">+1.20%</td><td class="px-3 py-2 text-right text-down">-0.80%</td><td class="px-3 py-2 text-right text-down font-bold">2.00%</td><td class="px-3 py-2 text-center"><span class="text-[8px] text-down font-bold">✗</span></td></tr>
+                          <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2 text-white">13:45</td><td class="px-3 py-2 text-white/80">SOL/USDT</td><td class="px-3 py-2 text-right text-down font-bold">-0.55%</td><td class="px-3 py-2 text-right text-down">-0.62%</td><td class="px-3 py-2 text-right text-muted">0.07%</td><td class="px-3 py-2 text-center"><span class="text-[8px] text-up font-bold">✓</span></td></tr>
+                          <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2 text-white">13:40</td><td class="px-3 py-2 text-white/80">ETH/USDT</td><td class="px-3 py-2 text-right text-up font-bold">+0.44%</td><td class="px-3 py-2 text-right text-up">+0.38%</td><td class="px-3 py-2 text-right text-muted">0.06%</td><td class="px-3 py-2 text-center"><span class="text-[8px] text-up font-bold">✓</span></td></tr>
+                      </tbody></table></div>
+                  </div>
+              </div></div></div>
+
+              <!-- Col 3: Config Summary + Model Comparison + Training Log -->
+              <div class="w-[380px] shrink-0 relative"><div class="absolute inset-0 overflow-y-auto pr-1"><div class="flex flex-col gap-5">
+                  <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                      <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title">Current Config</h3><button onclick="switchFaiTab('fai-tab-config',document.querySelectorAll('.fai-tab-btn')[1])" class="text-[9px] text-cyan-400 hover:text-white l-bd px-1.5 py-0.5 rounded transition-colors">EDIT →</button></div>
+                      <div class="p-4 space-y-1.5 font-mono text-[12px]">
+                          <div class="flex justify-between"><span class="text-muted">Model</span><span class="text-white">LightGBMRegressor</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Identifier</span><span class="text-white">unique-freqai-model-1</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Train Period</span><span class="text-white">30 days</span></div>
+                          <div class="flex justify-between"><span class="text-muted">BT Period</span><span class="text-white">7 days</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Retrain</span><span class="text-white">8h</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Timeframes</span><span class="text-white">5m, 15m, 1h</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Corr Pairs</span><span class="text-white">BTC, ETH</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Outlier</span><span class="text-white">SVM (nu=0.1)</span></div>
+                          <div class="flex justify-between"><span class="text-muted">PCA</span><span class="text-muted">Off</span></div>
+                          <div class="flex justify-between"><span class="text-muted">DI Threshold</span><span class="text-white">1.0</span></div>
+                          <div class="flex justify-between"><span class="text-muted">Continual</span><span class="text-up font-bold">ON</span></div>
+                      </div>
+                  </div>
+                  <!-- Model Comparison -->
+                  <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                      <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title">Model Comparison</h3><span class="text-[10px] text-white/30 font-mono">3 active</span></div>
+                      <div class="overflow-x-auto"><table class="w-full text-[13px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-surface z-10 font-mono text-[11px] uppercase tracking-widest text-muted l-b shadow-lg"><tr><th class="text-left px-3 py-2 font-semibold sortable filterable">Model</th><th class="text-right px-3 py-2 font-semibold sortable sort-desc">Acc %</th><th class="text-right px-3 py-2 font-semibold sortable">MAE</th><th class="text-right px-3 py-2 font-semibold sortable">Pred/h</th></tr></thead><tbody class="divide-y divide-white/[0.05]">
+                          <tr class="hover:bg-white/[0.04] bg-up/[0.02]"><td class="px-3 py-2 text-white">LGBM-R v3</td><td class="px-3 py-2 text-right text-up font-bold">72.4%</td><td class="px-3 py-2 text-right text-white">0.0031</td><td class="px-3 py-2 text-right text-white">52</td></tr>
+                          <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2 text-white">XGB-R v2</td><td class="px-3 py-2 text-right text-up font-bold">69.7%</td><td class="px-3 py-2 text-right text-white">0.0038</td><td class="px-3 py-2 text-right text-white">37</td></tr>
+                          <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2 text-white">LGBM-C v1</td><td class="px-3 py-2 text-right text-white">64.8%</td><td class="px-3 py-2 text-right text-white">—</td><td class="px-3 py-2 text-right text-white">18</td></tr>
+                      </tbody></table></div>
+                  </div>
+                  <!-- Training History -->
+                  <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                      <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title">Training History</h3><span class="text-[10px] text-white/30 font-mono">last 5 runs</span></div>
+                      <div class="p-4 space-y-2">
+                          <div class="flex items-center justify-between text-[11px] font-mono"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-up"></span><span class="text-white">v3 · Mar 27 14:10</span></div><div class="flex gap-3"><span class="text-up font-bold">72.4%</span><span class="text-muted">3m 22s</span></div></div>
+                          <div class="flex items-center justify-between text-[11px] font-mono"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-up"></span><span class="text-white">v2 · Mar 27 06:10</span></div><div class="flex gap-3"><span class="text-up font-bold">70.1%</span><span class="text-muted">3m 18s</span></div></div>
+                          <div class="flex items-center justify-between text-[11px] font-mono"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-up"></span><span class="text-white">v1 · Mar 26 22:10</span></div><div class="flex gap-3"><span class="text-white">68.9%</span><span class="text-muted">3m 45s</span></div></div>
+                          <div class="flex items-center justify-between text-[11px] font-mono"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-down"></span><span class="text-muted">v0.9 · Mar 26 14:10</span></div><div class="flex gap-3"><span class="text-down">54.2%</span><span class="text-muted">4m 10s</span></div></div>
+                          <div class="flex items-center justify-between text-[11px] font-mono"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-up"></span><span class="text-muted">v0.8 · Mar 26 06:10</span></div><div class="flex gap-3"><span class="text-white">66.1%</span><span class="text-muted">3m 30s</span></div></div>
+                      </div>
+                  </div>
+              </div></div></div>
+          </div>
+
+          <!-- ═══════════════════════════════════════════ -->
+          <!-- TAB 2: CONFIGURE (full form)               -->
+          <!-- ═══════════════════════════════════════════ -->
+          <div id="fai-tab-config" class="fai-tab flex-1 min-h-0 overflow-hidden hidden" style="display:none">
+              <div class="h-full overflow-y-auto p-5 pt-3">
+                  <div class="grid grid-cols-3 gap-5">
+                      <!-- LEFT CONFIG COL -->
+                      <div class="flex flex-col gap-5">
+                          <!-- Core Configuration -->
+                          <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                              <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>⚙️</span>Core Configuration<span class="px-1.5 py-0.5 text-[8px] font-bold bg-cyan-500/10 text-cyan-400 rounded ml-1">§24</span></h3></div>
+                              <div class="p-4 space-y-3">
+                                  <div class="flex gap-2"><div class="flex-1"><label class="builder-label">Identifier</label><input type="text" class="builder-input w-full" value="unique-freqai-model-1"></div><div class="flex-1"><label class="builder-label">Model</label><select class="builder-select w-full"><option>LightGBMRegressor</option><option>LightGBMClassifier</option><option>XGBoostRegressor</option><option>XGBoostClassifier</option><option>PyTorchRegressor</option><option>PyTorchClassifier</option></select></div></div>
+                                  <div class="grid grid-cols-4 gap-2"><div><label class="builder-label">Train Period</label><input type="number" class="builder-input w-full" value="30"></div><div><label class="builder-label">BT Period</label><input type="number" class="builder-input w-full" value="7"></div><div><label class="builder-label">Retrain Hrs</label><input type="number" class="builder-input w-full" value="8"></div><div><label class="builder-label">Expired Hrs</label><input type="number" class="builder-input w-full" value="48"></div></div>
+                                  <div class="flex gap-2"><div class="flex-1"><label class="builder-label">Purge Old Models</label><input type="number" class="builder-input w-full" value="2"></div><div class="flex-1 flex items-end pb-1"><div class="flex items-center justify-between w-full"><span class="text-muted text-[11px]">Continual Learning</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div></div></div>
+                                  <div class="l-t pt-3 flex flex-col gap-2.5">
+                                      <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Activate TensorBoard</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                      <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Wait for Training on Reload</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                      <div class="flex items-center justify-between p-2 rounded border border-down/20 bg-down/[0.04]"><span class="text-muted text-[11px]">Override Exchange Check ⚠️</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  </div>
+                              </div>
+                          </div>
+                          <!-- Feature Parameters -->
+                          <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                              <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>📐</span>Feature Parameters<span class="px-1.5 py-0.5 text-[8px] font-bold bg-cyan-500/10 text-cyan-400 rounded ml-1">§24</span></h3></div>
+                              <div class="p-4 space-y-3">
+                                  <div><label class="builder-label">Include Timeframes</label><div class="flex flex-wrap gap-1.5"><button class="builder-pill">1m</button><button class="builder-pill selected">5m</button><button class="builder-pill selected">15m</button><button class="builder-pill">30m</button><button class="builder-pill selected">1h</button><button class="builder-pill">4h</button><button class="builder-pill">1d</button></div></div>
+                                  <div><label class="builder-label">Correlated Pairs</label><div class="flex flex-wrap gap-1.5"><button class="builder-pill selected">BTC/USDT</button><button class="builder-pill selected">ETH/USDT</button><button class="builder-pill">SOL/USDT</button><button class="builder-pill">BNB/USDT</button></div></div>
+                                  <div class="grid grid-cols-3 gap-2"><div><label class="builder-label">Shifted Candles</label><input type="number" class="builder-input w-full" value="2"></div><div><label class="builder-label">Label Period</label><input type="number" class="builder-input w-full" value="24"></div><div><label class="builder-label">Fit Live Pred.</label><input type="number" class="builder-input w-full" value="100"></div></div>
+                                  <div><label class="builder-label">Indicator Periods</label><div class="flex flex-wrap gap-1.5 p-2 rounded l-bd bg-black/20 min-h-[32px] items-center"><span class="flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-mono">10 <button class="text-muted hover:text-down text-[9px]">×</button></span><span class="flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-mono">20 <button class="text-muted hover:text-down text-[9px]">×</button></span><span class="flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-mono">50 <button class="text-muted hover:text-down text-[9px]">×</button></span><input type="text" class="bg-transparent border-none text-[10px] text-white outline-none flex-1 min-w-[50px] placeholder:text-muted" placeholder="Add..."></div></div>
+                                  <div><label class="builder-label">Test Size</label><div class="flex items-center gap-2"><input type="range" min="0" max="100" value="25" class="flex-1 accent-cyan-400 h-1"><span class="text-[11px] font-mono text-white font-bold w-10 text-right">0.25</span></div></div>
+                              </div>
+                          </div>
+                          <!-- Feature Engineering -->
+                          <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                              <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>🔧</span>Feature Engineering<span class="px-1.5 py-0.5 text-[8px] font-bold bg-cyan-500/10 text-cyan-400 rounded ml-1">§24</span></h3></div>
+                              <div class="p-4 space-y-3">
+                                  <div><label class="builder-label">Method</label><div class="flex flex-wrap gap-1.5"><button class="builder-pill selected">expand_all</button><button class="builder-pill">expand_basic</button><button class="builder-pill">standard</button><button class="builder-pill">set_targets</button></div></div>
+                                  <div class="p-3 rounded l-bd bg-cyan-500/[0.04] text-[10px] text-muted leading-relaxed"><strong class="text-white">Expansion:</strong> <code class="text-cyan-400">Periods</code> × <code class="text-cyan-400">Timeframes</code> × <code class="text-cyan-400">Shifted</code> × <code class="text-cyan-400">Corr Pairs</code><br><strong class="text-white">Naming:</strong> <code class="text-cyan-400">%</code>=feature · <code class="text-cyan-400">%%</code>=plot · <code class="text-cyan-400">&amp;</code>=target · <code class="text-cyan-400">do_predict</code>=outlier</div>
+                              </div>
+                          </div>
+                      </div>
+                      <!-- CENTER CONFIG COL (RL) -->
+                      <div class="flex flex-col gap-5">
+                          <!-- Reinforcement Learning -->
+                          <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                              <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>🎮</span>Reinforcement Learning<span class="px-1.5 py-0.5 text-[8px] font-bold bg-purple-500/10 text-purple-400 rounded ml-1">§25</span></h3></div>
+                              <div class="p-4 space-y-3">
+                                  <div class="grid grid-cols-3 gap-2"><div><label class="builder-label">Model Type</label><select class="builder-select w-full"><option>PPO</option><option>A2C</option><option>DQN</option></select></div><div><label class="builder-label">Policy</label><select class="builder-select w-full"><option>MlpPolicy</option><option>CnnPolicy</option></select></div><div><label class="builder-label">Environment</label><select class="builder-select w-full"><option>Base4ActionRLEnv</option><option>Base3ActionRLEnv</option></select></div></div>
+                                  <div class="grid grid-cols-3 gap-2"><div><label class="builder-label">Train Cycles</label><input type="number" class="builder-input w-full" value="25"></div><div><label class="builder-label">Max Trade Dur.</label><input type="number" class="builder-input w-full" value="300"></div><div><label class="builder-label">Max DD Pct</label><input type="number" class="builder-input w-full" value="0.8" step="0.01"></div></div>
+                                  <div class="flex gap-2"><div class="flex-1"><label class="builder-label">CPU Count</label><input type="number" class="builder-input w-full" value="1"></div><div class="flex-1"><label class="builder-label">Net Arch</label><div class="flex flex-wrap gap-1 p-1.5 rounded l-bd bg-black/20 min-h-[28px] items-center"><span class="px-1.5 py-0.5 rounded bg-white/10 text-white text-[10px] font-mono">128</span><span class="px-1.5 py-0.5 rounded bg-white/10 text-white text-[10px] font-mono">128</span></div></div></div>
+                                  <div class="grid grid-cols-2 gap-x-4 gap-y-2 l-t pt-3">
+                                      <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Add State Info</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                      <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Randomize Start</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                      <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Drop OHLC</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                      <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Progress Bar</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  </div>
+                                  <div class="l-t pt-3"><label class="builder-label">Reward Parameters</label><div class="space-y-1.5"><div class="flex gap-2 items-center"><input class="builder-input flex-1" value="rr"><input class="builder-input flex-1" value="1"><button class="px-1.5 py-1 l-bd rounded text-muted hover:text-down text-[10px]">×</button></div><div class="flex gap-2 items-center"><input class="builder-input flex-1" value="profit_aim"><input class="builder-input flex-1" value="0.025"><button class="px-1.5 py-1 l-bd rounded text-muted hover:text-down text-[10px]">×</button></div><div class="flex gap-2 items-center"><input class="builder-input flex-1" value="win_reward_factor"><input class="builder-input flex-1" value="10"><button class="px-1.5 py-1 l-bd rounded text-muted hover:text-down text-[10px]">×</button></div><button class="flex items-center gap-1 px-2.5 py-1 rounded l-bd border-dashed text-muted text-[10px] hover:text-cyan-400 mt-1">+ Add</button></div></div>
+                              </div>
+                          </div>
+                      </div>
+                      <!-- RIGHT CONFIG COL (Outliers + PyTorch) -->
+                      <div class="flex flex-col gap-5">
+                          <!-- Data Processing & Outlier -->
+                          <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                              <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>🔬</span>Data Processing &amp; Outliers<span class="px-1.5 py-0.5 text-[8px] font-bold bg-yellow-500/10 text-yellow-400 rounded ml-1">§26</span></h3></div>
+                              <div class="p-4 space-y-3">
+                                  <div class="grid grid-cols-3 gap-2"><div><label class="builder-label">DK Threads</label><input type="number" class="builder-input w-full" value="4"></div><div><label class="builder-label">Buffer</label><input type="number" class="builder-input w-full" value="0"></div><div><label class="builder-label">Noise Std</label><input type="number" class="builder-input w-full" value="0.05" step="0.01"></div></div>
+                                  <div><label class="builder-label">Weight Factor</label><div class="flex items-center gap-2"><input type="range" min="0" max="100" value="0" class="flex-1 accent-cyan-400 h-1"><span class="text-[11px] font-mono text-white font-bold w-8 text-right">0.0</span></div></div>
+                                  <div class="grid grid-cols-2 gap-x-4 gap-y-2 l-t pt-3">
+                                      <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Save BT Models</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                      <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Write Metrics</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                      <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Reduce DF</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                      <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Shuffle Split</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                      <div class="flex items-center justify-between"><span class="text-muted text-[11px]">Reverse Train/Test</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                      <div class="flex items-center justify-between"><span class="text-muted text-[11px]">PCA</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div>
+                                  </div>
+                                  <div class="l-t pt-3 space-y-2"><label class="builder-label">Outlier Methods</label>
+                                      <div class="p-3 rounded l-bd bg-black/20"><div class="flex items-center justify-between mb-2"><span class="text-muted text-[11px]">SVM Removal</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div><div class="w-28"><label class="builder-label">Nu</label><input type="number" class="builder-input w-full" value="0.1" step="0.01"></div></div>
+                                      <div class="p-3 rounded l-bd bg-black/20"><div class="flex items-center justify-between"><span class="text-muted text-[11px]">DBSCAN</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div></div>
+                                      <div class="p-3 rounded l-bd bg-black/20"><div class="flex gap-2"><div class="flex-1"><label class="builder-label">DI Threshold</label><input type="number" class="builder-input w-full" value="1.0" step="0.1"></div><div class="flex-1"><label class="builder-label">Protection %</label><input type="number" class="builder-input w-full" value="30"></div></div></div>
+                                  </div>
+                              </div>
+                          </div>
+                          <!-- PyTorch -->
+                          <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                              <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>🔥</span>PyTorch Config<span class="px-1.5 py-0.5 text-[8px] font-bold bg-orange-500/10 text-orange-400 rounded ml-1">§24</span></h3></div>
+                              <div class="p-4 space-y-3">
+                                  <div class="p-2.5 rounded l-bd bg-cyan-500/[0.04] text-[10px] text-muted">Applies to <code class="text-cyan-400">PyTorchRegressor</code> / <code class="text-cyan-400">PyTorchClassifier</code></div>
+                                  <div class="grid grid-cols-4 gap-2"><div><label class="builder-label">LR</label><input type="text" class="builder-input w-full" value="0.001"></div><div><label class="builder-label">Epochs</label><input type="number" class="builder-input w-full" value="10"></div><div><label class="builder-label">Batch</label><input type="number" class="builder-input w-full" value="64"></div><div><label class="builder-label">Conv W</label><input type="number" class="builder-input w-full" value="2"></div></div>
+                              </div>
+                          </div>
+                          <!-- Save Bar -->
+                          <div class="flex items-center gap-3">
+                              <button class="flex-1 py-2.5 text-[11px] font-bold uppercase tracking-wider bg-white text-black rounded-lg hover:bg-white/85 transition-colors">💾 Save FreqAI Config</button>
+                              <button class="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider l-bd rounded-lg text-muted hover:text-white transition-colors">↵ Reset</button>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <!-- ═══════════════════════════════════════════ -->
+          <!-- TAB 3: MATRIX RUNNER                       -->
+          <!-- ═══════════════════════════════════════════ -->
+          <div id="fai-tab-matrix" class="fai-tab flex-1 min-h-0 overflow-hidden hidden" style="display:none">
+              <div class="flex gap-5 p-5 pt-3 h-full overflow-hidden">
+                  <!-- Left: Config -->
+                  <div class="w-[380px] shrink-0 overflow-y-auto pr-1"><div class="flex flex-col gap-5">
+                      <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                          <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title flex items-center gap-2"><span>🧪</span>Matrix Runner</h3><span class="text-[10px] text-white/30 font-mono">Source: HO #147</span></div>
+                          <div class="p-4 flex flex-col gap-3.5">
+                              <div><label class="builder-label">Source HO Epoch</label><select class="builder-select w-full"><option>HO #147 — Sharpe — +42.12%</option><option>HO #92 — Sortino — +38.40%</option></select></div>
+                              <div class="flex gap-2"><div class="flex-1"><label class="builder-label">Train Start</label><input type="date" class="builder-input w-full" value="2022-01-01"></div><div class="flex-1"><label class="builder-label">Train End</label><input type="date" class="builder-input w-full" value="2023-06-30"></div></div>
+                              <div class="flex gap-2"><div class="flex-1"><label class="builder-label">BT Start</label><input type="date" class="builder-input w-full" value="2023-07-01"></div><div class="flex-1"><label class="builder-label">BT End</label><input type="date" class="builder-input w-full" value="2024-01-01"></div></div>
+                              <div class="flex gap-2"><div class="flex-1"><label class="builder-label">Feature Period</label><input type="number" class="builder-input w-full" value="20"></div><div class="flex-1"><label class="builder-label">Label Period</label><input type="number" class="builder-input w-full" value="24"></div></div>
+                              <div class="l-t pt-3"><label class="builder-label">ML Models</label><div class="flex flex-col gap-2.5"><div class="flex items-center justify-between"><span class="text-muted text-[11px]">LightGBM-Regressor</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div><div class="flex items-center justify-between"><span class="text-muted text-[11px]">XGBoost-Regressor</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div><div class="flex items-center justify-between"><span class="text-muted text-[11px]">CatBoost-Regressor</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div></div></div>
+                              <div class="l-t pt-3"><label class="builder-label">Outlier Detection</label><div class="flex gap-2 mb-2"><div class="flex-1"><select class="builder-select w-full"><option>DI</option><option>SVM</option><option>None</option></select></div><div class="flex-1"><input type="number" step="0.1" class="builder-input w-full" value="0.9" placeholder="threshold"></div></div><div class="flex flex-col gap-2.5"><div class="flex items-center justify-between"><span class="text-muted text-[11px]">Use PCA</span><div class="builder-toggle" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div><div class="flex items-center justify-between"><span class="text-muted text-[11px]">Add Noise</span><div class="builder-toggle on" onclick="this.classList.toggle('on')"><div class="dot"></div></div></div></div></div>
+                              <div class="l-t pt-3"><label class="builder-label">Matrix Calculation</label><div class="mt-1 builder-card space-y-1 text-[11px] font-mono"><div class="flex items-center gap-1.5 text-[#60a5fa]"><span class="text-white font-bold">2</span> models × <span class="text-white font-bold">2</span> outlier × <span class="text-white font-bold">2</span> PCA × <span class="text-white font-bold">2</span> noise = <span class="text-up font-bold">16</span> tests</div><div class="flex justify-between text-muted"><span>Est. Time</span><span>~5h 20m</span></div></div></div>
+                              <div class="flex gap-1.5 l-t pt-3"><button class="flex-1 py-2 text-[11px] font-bold uppercase tracking-wider bg-white text-black rounded hover:bg-white/85 transition-colors">▶ Run (16)</button><button class="px-3 py-2 text-[11px] font-bold uppercase l-bd rounded text-down hover:bg-down/10">⏹</button><button class="px-3 py-2 text-[11px] font-bold uppercase l-bd rounded text-muted hover:text-white">↺</button></div>
+                              <div class="l-t pt-3"><div class="flex justify-between text-[11px] font-mono mb-1"><span class="text-muted">Progress</span><span class="text-white font-bold">5/8 · ~1h 20m</span></div><div class="w-full h-1.5 bg-white/10 rounded-full"><div class="h-full bg-up rounded-full" style="width:62.5%"></div></div></div>
+                          </div>
+                      </div>
+                  </div></div>
+                  <!-- Right: Results + Terminal -->
+                  <div class="flex-1 overflow-y-auto"><div class="flex flex-col gap-5">
+                      <!-- Winner Banner -->
+                      <div class="bg-up/[0.04] l-bd rounded-lg p-4 shadow-xl border-l-2 border-l-up relative overflow-hidden">
+                          <div class="flex justify-between items-center mb-2.5"><span class="text-white font-mono text-[12px] font-bold">★ LightGBM-R · DI · No PCA · Noise</span><div class="flex items-center gap-2"><span class="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded border border-up/25">★ BEST</span><button class="h-7 px-3 rounded-md text-[10px] font-bold transition-colors" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#F5F5F5">Deploy</button></div></div>
+                          <div class="grid grid-cols-7 gap-2 text-[11px] font-mono"><div><span class="text-muted block text-[9px]">Profit</span><span class="text-up font-bold">+52.4%</span></div><div><span class="text-muted block text-[9px]">Profit $</span><span class="text-up font-bold">+$5,240</span></div><div><span class="text-muted block text-[9px]">Trades</span><span class="text-white">156</span></div><div><span class="text-muted block text-[9px]">Win Rate</span><span class="text-up">74.2%</span></div><div><span class="text-muted block text-[9px]">Sharpe</span><span class="text-white">4.10</span></div><div><span class="text-muted block text-[9px]">Max DD</span><span class="text-down font-bold">-1.8%</span></div><div><span class="text-muted block text-[9px]">Avg Dur.</span><span class="text-muted">3h 50m</span></div></div>
+                      </div>
+                      <!-- Results Table -->
+                      <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                          <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title">Matrix Results</h3><span class="text-[10px] text-white/30 font-mono">5/8 complete</span></div>
+                          <div class="overflow-x-auto"><table class="w-full text-[13px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-surface z-10 font-mono text-[11px] uppercase tracking-widest text-muted l-b shadow-lg"><tr><th class="text-left px-3 py-2 font-semibold">★</th><th class="text-left px-3 py-2 font-semibold sortable filterable">Model</th><th class="text-left px-3 py-2 font-semibold sortable filterable">Outlier</th><th class="text-left px-3 py-2 font-semibold sortable filterable">PCA</th><th class="text-right px-3 py-2 font-semibold sortable sort-desc">Profit %</th><th class="text-right px-3 py-2 font-semibold sortable">Sharpe</th><th class="text-right px-3 py-2 font-semibold sortable">Max DD</th><th class="text-right px-3 py-2 font-semibold sortable">Trades</th><th class="text-right px-3 py-2 font-semibold sortable">Win %</th><th class="text-center px-3 py-2 font-semibold">Action</th></tr></thead><tbody class="divide-y divide-white/[0.05]">
+                              <tr class="hover:bg-white/[0.04] bg-up/[0.02]"><td class="px-3 py-2.5 text-up font-bold">★1</td><td class="px-3 py-2.5">LightGBM-R</td><td class="px-3 py-2.5 text-muted">DI</td><td class="px-3 py-2.5 text-muted">Off</td><td class="px-3 py-2.5 text-right text-up font-bold">+52.4%</td><td class="px-3 py-2.5 text-right">4.10</td><td class="px-3 py-2.5 text-right text-down">-1.8%</td><td class="px-3 py-2.5 text-right">156</td><td class="px-3 py-2.5 text-right">74.2%</td><td class="px-3 py-2.5 text-center"><button class="px-2.5 py-1 text-[10px] font-bold bg-up/10 text-up rounded l-bd">Deploy</button></td></tr>
+                              <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2.5 text-muted">2</td><td class="px-3 py-2.5">XGBoost-R</td><td class="px-3 py-2.5 text-muted">None</td><td class="px-3 py-2.5 text-muted">Off</td><td class="px-3 py-2.5 text-right text-up font-bold">+44.1%</td><td class="px-3 py-2.5 text-right">3.22</td><td class="px-3 py-2.5 text-right text-down">-3.5%</td><td class="px-3 py-2.5 text-right">132</td><td class="px-3 py-2.5 text-right">69.7%</td><td class="px-3 py-2.5 text-center"><button class="px-2.5 py-1 text-[10px] font-bold text-muted l-bd rounded">Deploy</button></td></tr>
+                              <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2.5 text-muted">3</td><td class="px-3 py-2.5">LightGBM-R</td><td class="px-3 py-2.5 text-muted">SVM</td><td class="px-3 py-2.5 text-up">On</td><td class="px-3 py-2.5 text-right text-up font-bold">+38.9%</td><td class="px-3 py-2.5 text-right">2.95</td><td class="px-3 py-2.5 text-right text-down">-4.2%</td><td class="px-3 py-2.5 text-right">118</td><td class="px-3 py-2.5 text-right">66.1%</td><td class="px-3 py-2.5 text-center"><button class="px-2.5 py-1 text-[10px] font-bold text-muted l-bd rounded">Deploy</button></td></tr>
+                              <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2.5 text-muted">4</td><td class="px-3 py-2.5">CatBoost-R</td><td class="px-3 py-2.5 text-muted">None</td><td class="px-3 py-2.5 text-muted">Off</td><td class="px-3 py-2.5 text-right text-down font-bold">-4.2%</td><td class="px-3 py-2.5 text-right text-down">-0.18</td><td class="px-3 py-2.5 text-right text-down">-14.2%</td><td class="px-3 py-2.5 text-right">44</td><td class="px-3 py-2.5 text-right">45.5%</td><td class="px-3 py-2.5 text-center"><button class="px-2.5 py-1 text-[10px] font-bold text-muted l-bd rounded">Deploy</button></td></tr>
+                          </tbody></table></div>
+                      </div>
+                      <!-- Terminal -->
+                      <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                          <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title">Training Terminal</h3><div class="flex items-center gap-2"><button class="px-2 py-0.5 text-[9px] font-bold uppercase bg-white/10 text-white rounded">ALL</button><button class="px-2 py-0.5 text-[9px] font-bold uppercase text-muted rounded">INFO</button><button class="px-2 py-0.5 text-[9px] font-bold uppercase text-muted rounded">WARN</button><button class="px-2 py-0.5 text-[9px] font-bold uppercase text-muted rounded">ERR</button></div></div>
+                          <div class="bg-black p-4 font-mono text-[10px] text-muted leading-relaxed max-h-[240px] overflow-y-auto">
+                              <div>14:10:02 INFO  Loading FreqAI configuration...</div>
+                              <div>14:10:04 INFO  Models: LightGBM-R, XGBoost-R</div>
+                              <div>14:10:06 INFO  Matrix: 8 total runs</div>
+                              <div>14:10:08 INFO  [1/8] LightGBM-R · DI · NoPCA · Noise — training...</div>
+                              <div class="text-white">14:12:30 INFO  [1/8] Complete — profit: +52.4%, trades: 156</div>
+                              <div>14:12:31 INFO  [2/8] XGBoost-R · DI · NoPCA · Noise — training...</div>
+                              <div class="text-white">14:15:10 INFO  [2/8] Complete — profit: +44.1%, trades: 132</div>
+                              <div>14:15:11 INFO  [3/8] LightGBM-R · SVM · NoPCA — training...</div>
+                              <div class="text-white">14:18:22 INFO  [3/8] Complete — profit: +38.9%, trades: 118</div>
+                              <div class="text-cyan-400 animate-pulse">14:18:23 INFO  [4/8] XGBoost-R · SVM · NoPCA — training...</div>
+                          </div>
+                      </div>
+                      <!-- Run History -->
+                      <div class="bg-surface l-bd rounded-lg shadow-xl overflow-hidden">
+                          <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40"><h3 class="section-title">Run History</h3><span class="text-[10px] text-white/30 font-mono">last 5 matrix runs</span></div>
+                          <div class="overflow-x-auto"><table class="w-full text-[13px] font-mono whitespace-nowrap"><thead class="sticky top-0 bg-surface z-10 font-mono text-[11px] uppercase tracking-widest text-muted l-b shadow-lg"><tr><th class="text-left px-3 py-2 font-semibold sortable sort-desc">Date</th><th class="text-left px-3 py-2 font-semibold sortable">Source</th><th class="text-right px-3 py-2 font-semibold sortable">Tests</th><th class="text-right px-3 py-2 font-semibold sortable">Best Profit</th><th class="text-right px-3 py-2 font-semibold sortable">Best Sharpe</th><th class="text-left px-3 py-2 font-semibold sortable filterable">Winner</th><th class="text-center px-3 py-2 font-semibold">Status</th></tr></thead><tbody class="divide-y divide-white/[0.05]">
+                              <tr class="hover:bg-white/[0.04] bg-up/[0.02]"><td class="px-3 py-2 text-white">Mar 27 14:10</td><td class="px-3 py-2 text-muted">HO #147</td><td class="px-3 py-2 text-right">8</td><td class="px-3 py-2 text-right text-up font-bold">+52.4%</td><td class="px-3 py-2 text-right">4.10</td><td class="px-3 py-2">LightGBM-R</td><td class="px-3 py-2 text-center"><span class="px-1.5 py-0.5 text-[9px] font-bold bg-cyan-500/12 text-cyan-400 rounded border border-cyan-500/25 animate-pulse">RUNNING</span></td></tr>
+                              <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2 text-white">Mar 25 08:30</td><td class="px-3 py-2 text-muted">HO #92</td><td class="px-3 py-2 text-right">16</td><td class="px-3 py-2 text-right text-up font-bold">+38.4%</td><td class="px-3 py-2 text-right">3.15</td><td class="px-3 py-2">XGBoost-R</td><td class="px-3 py-2 text-center"><span class="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded border border-up/25">DONE</span></td></tr>
+                              <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2 text-white">Mar 22 19:00</td><td class="px-3 py-2 text-muted">HO #85</td><td class="px-3 py-2 text-right">8</td><td class="px-3 py-2 text-right text-up font-bold">+28.1%</td><td class="px-3 py-2 text-right">2.40</td><td class="px-3 py-2">LightGBM-R</td><td class="px-3 py-2 text-center"><span class="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded border border-up/25">DONE</span></td></tr>
+                              <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2 text-muted">Mar 20 10:15</td><td class="px-3 py-2 text-muted">HO #71</td><td class="px-3 py-2 text-right">12</td><td class="px-3 py-2 text-right text-down font-bold">-2.1%</td><td class="px-3 py-2 text-right text-down">-0.30</td><td class="px-3 py-2 text-muted">—</td><td class="px-3 py-2 text-center"><span class="px-1.5 py-0.5 text-[9px] font-bold bg-down/12 text-down rounded border border-down/25">FAILED</span></td></tr>
+                              <tr class="hover:bg-white/[0.04]"><td class="px-3 py-2 text-muted">Mar 18 14:00</td><td class="px-3 py-2 text-muted">HO #55</td><td class="px-3 py-2 text-right">8</td><td class="px-3 py-2 text-right text-up font-bold">+19.8%</td><td class="px-3 py-2 text-right">1.90</td><td class="px-3 py-2">CatBoost-R</td><td class="px-3 py-2 text-center"><span class="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded border border-up/25">DONE</span></td></tr>
+                          </tbody></table></div>
+                      </div>
+                  </div></div>
+              </div>
+          </div>
+
       </div><!-- /END FREQAI PAGE -->
 
 
@@ -4960,6 +5250,19 @@
 
   <script>
     lucide.createIcons();
+
+    /* FreqAI tab switcher */
+    function switchFaiTab(tabId, btn) {
+      document.querySelectorAll('.fai-tab').forEach(el => { el.style.display = 'none'; el.classList.add('hidden'); });
+      const target = document.getElementById(tabId);
+      if (target) {
+        // Config tab uses block scroll, others use flex layout
+        target.style.display = tabId === 'fai-tab-config' ? 'block' : 'flex';
+        target.classList.remove('hidden');
+      }
+      document.querySelectorAll('.fai-tab-btn').forEach(b => { b.classList.remove('text-white','bg-white/[0.04]'); b.classList.add('text-muted'); b.style.borderBottomColor = 'transparent'; });
+      if (btn) { btn.classList.add('text-white','bg-white/[0.04]'); btn.classList.remove('text-muted'); btn.style.borderBottomColor = '#22c55e'; }
+    }
 
     function switchPage(pageId) {
         document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active'));

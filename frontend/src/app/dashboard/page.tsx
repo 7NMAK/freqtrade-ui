@@ -280,6 +280,7 @@ export default function DashboardPage() {
       // ── STAGE 3: Per-bot calls — ALL bots fire simultaneously ────────
       // BUG 7 fix + botStatus + per-bot aggregation ALL in one wave
       const openTradesFromStatus: FTTrade[] = [];
+      const portfolioHadClosedTrades = allClosed.length > 0; // Flag BEFORE parallel loop
 
       // NOTE: setOpenTrades/setClosedTrades moved to AFTER the per-bot loop
       // to ensure openTradesFromStatus and BUG 7 allClosed data are populated first
@@ -335,8 +336,8 @@ export default function DashboardPage() {
               openTradesFromStatus.push(...statusResult.value);
             }
 
-            // BUG 7: If portfolio had no closed trades, fetch per-bot
-            if (allClosed.length === 0) {
+            // BUG 7: If portfolio had no closed trades, fetch per-bot (all bots)
+            if (!portfolioHadClosedTrades) {
               try {
                 const result = await botTrades(bot.id, 200);
                 const perBotClosed = result.trades
@@ -356,17 +357,16 @@ export default function DashboardPage() {
               if (stats.sharpe_ratio != null) {
                 aggSharpe = aggSharpe != null ? Math.min(aggSharpe, stats.sharpe_ratio) : stats.sharpe_ratio;
               }
-              // Max drawdown from stats
+              // Max drawdown from stats — max_drawdown is a ratio (e.g. 0.05 = 5%)
               if (stats.max_drawdown != null) {
                 aggMaxDD = aggMaxDD != null ? Math.min(aggMaxDD, stats.max_drawdown) : stats.max_drawdown;
               }
               if (stats.max_drawdown_abs != null) {
                 aggMaxDDAbs = aggMaxDDAbs != null ? Math.max(aggMaxDDAbs, stats.max_drawdown_abs) : stats.max_drawdown_abs;
               }
-              // Fallback: negtrade_account_drawdown
-              if (stats.negtrade_account_drawdown != null && stats.negtrade_account_drawdown < 0) {
-                aggMaxDD = aggMaxDD != null ? Math.min(aggMaxDD, stats.negtrade_account_drawdown) : stats.negtrade_account_drawdown;
-              }
+              // NOTE: negtrade_account_drawdown is NOT used for max drawdown display.
+              // It represents a different metric (worst negative trade as % of account)
+              // and mixing it with max_drawdown causes scale confusion.
               if (stats.trading_volume != null) aggVolume += stats.trading_volume;
               if (stats.durations.wins != null) { aggDurTotal += stats.durations.wins; aggDurCount++; }
             }
@@ -517,7 +517,22 @@ export default function DashboardPage() {
 
       if (m.current) {
         // NOW set open/closed trades — per-bot loop has populated openTradesFromStatus and allClosed
-        const effectiveOpen = openTradesFromStatus.length > 0 ? openTradesFromStatus : allOpen;
+        // DEDUP: botStatus trades are preferred (have current_profit), but may overlap with portfolioTrades
+        let effectiveOpen: FTTrade[];
+        if (openTradesFromStatus.length > 0) {
+          // Use botStatus trades (most reliable profit data), dedup by trade_id
+          const seen = new Set<string>();
+          effectiveOpen = [];
+          for (const t of openTradesFromStatus) {
+            const key = `${(t as unknown as Record<string, unknown>)._bot_id ?? 0}_${t.trade_id}`;
+            if (!seen.has(key)) {
+              seen.add(key);
+              effectiveOpen.push(t);
+            }
+          }
+        } else {
+          effectiveOpen = allOpen;
+        }
         setOpenTrades(effectiveOpen);
         setClosedTrades(allClosed);
 
@@ -860,8 +875,8 @@ export default function DashboardPage() {
   useEffect(() => {
     if (selectedBotId !== null) {
       loadBotDetails(selectedBotId);
-      // Auto-refresh bot details every 30s while panel is open (7+ API calls per refresh)
-      const interval = setInterval(() => loadBotDetails(selectedBotId), 30_000);
+      // Auto-refresh bot details every 60s while panel is open (7+ API calls per refresh)
+      const interval = setInterval(() => loadBotDetails(selectedBotId), 60_000);
       return () => clearInterval(interval);
     }
   }, [selectedBotId, loadBotDetails]);

@@ -66,32 +66,32 @@ interface BotDetailPanelProps {
   onHardKill?: () => void;
 }
 
-// Status Badge helper
+// Status Badge helper — matches ds_bot_drawer.md §30B Mode Badge Variants
 function StatusBadge({ status, isDryRun }: { status: string; isDryRun: boolean }) {
   if (status === "draining") {
     return (
-      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 uppercase tracking-wide border border-amber-500/20 animate-pulse">
-        Draining
+      <span className="px-1.5 py-[2px] bg-yellow-400/15 text-yellow-400 border border-yellow-500/25 text-[10px] font-bold rounded">
+        PAUSED
       </span>
     );
   }
   if (status !== "running") {
     return (
-      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-surface text-muted uppercase tracking-wide border l-bd-color">
-        Stopped
+      <span className="px-1.5 py-[2px] bg-down/15 text-down border border-down/25 text-[10px] font-bold rounded">
+        STOPPED
       </span>
     );
   }
   if (isDryRun) {
     return (
-      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 uppercase tracking-wide border border-amber-500/20">
-        Paper
+      <span className="px-1.5 py-[2px] bg-blue-500/15 text-blue-400 border border-blue-500/25 text-[10px] font-bold rounded">
+        DRY
       </span>
     );
   }
   return (
-    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-up/10 text-up uppercase tracking-wide border border-up/20">
-      Live
+    <span className="px-1.5 py-[2px] bg-up/15 text-up border border-up/25 text-[10px] font-bold rounded">
+      LIVE
     </span>
   );
 }
@@ -137,24 +137,31 @@ export default function BotDetailPanel({
 
   return (
     <>
-      {/* Overlay */}
+      {/* Backdrop — ds_bot_drawer.md §30N */}
       <div
         role="dialog"
         aria-modal="true"
-        className={`fixed inset-0 bg-black/50 z-[500] transition-opacity ${
+        className={`fixed inset-0 z-50 transition-opacity ${
           isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
+        style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(2px)", WebkitBackdropFilter: "blur(2px)" }}
         onClick={onClose}
       />
 
-      {/* Panel */}
+      {/* Drawer Panel — ds_bot_drawer.md §30A */}
       <div
-        className={`fixed top-0 h-screen w-[560px] max-w-[90vw] bg-surface border-l l-bd-color z-[501] transition-[right] duration-300 ease-out flex flex-col overflow-hidden ${
-          isOpen ? "right-0" : "-right-[560px]"
-        }`}
+        className="fixed top-0 bottom-0 right-0 z-[60] flex flex-col overflow-hidden"
+        style={{
+          width: "min(560px, 90vw)",
+          background: "#0C0C0C",
+          borderLeft: "1px solid rgba(255,255,255,0.10)",
+          boxShadow: "-10px 0 40px rgba(0,0,0,0.85)",
+          transform: isOpen ? "translateX(0)" : "translateX(100%)",
+          transition: "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
       >
-        {/* Header — matches prototype drawer */}
-        <div className="px-4 pb-3 border-b l-bd-color bg-black flex flex-col gap-3 flex-shrink-0 pt-4">
+        {/* Header — ds_bot_drawer.md §30B */}
+        <div className="p-4 pb-3 l-b bg-black flex flex-col gap-3 shrink-0">
           <div className="flex justify-between items-start">
             <div>
               <div className="flex items-center gap-2.5 mb-1">
@@ -174,23 +181,23 @@ export default function BotDetailPanel({
               <X className="w-5 h-5" />
             </button>
           </div>
-          {/* 9 Action Buttons — icon-only, matching prototype */}
+          {/* 9 Action Buttons — ds_bot_drawer.md §30B: .bot-ctrl class, icons w-3.5 h-3.5 */}
           <div className="flex items-center gap-1 flex-wrap">
-            <button type="button" onClick={onStart} className="w-7 h-7 rounded border l-bd-color bg-surface flex items-center justify-center text-up hover:bg-up/15 transition-colors cursor-pointer" title="Start Bot"><Play className="w-3.5 h-3.5" /></button>
-            <button type="button" onClick={onStop} className="w-7 h-7 rounded border l-bd-color bg-surface flex items-center justify-center text-down hover:bg-down/15 transition-colors cursor-pointer" title="Stop Bot"><Square className="w-3.5 h-3.5" /></button>
-            <button type="button" onClick={onPause ?? onDrain} className="w-7 h-7 rounded border l-bd-color bg-surface flex items-center justify-center text-muted hover:bg-white/10 hover:text-white transition-colors cursor-pointer" title="Pause (Stopbuy)"><Pause className="w-3.5 h-3.5" /></button>
-            <button type="button" onClick={onReload ?? onEdit} className="w-7 h-7 rounded border l-bd-color bg-surface flex items-center justify-center text-muted hover:bg-white/10 hover:text-white transition-colors cursor-pointer" title="Reload Config"><RefreshCw className="w-3.5 h-3.5" /></button>
-            <button type="button" onClick={onForceEnter ?? (() => {})} className="w-7 h-7 rounded border l-bd-color bg-surface flex items-center justify-center text-up hover:bg-up/15 transition-colors cursor-pointer" title="Force open a new trade"><PlusCircle className="w-3.5 h-3.5" /></button>
-            <button type="button" onClick={onForceExitAll ?? (() => {})} className="w-7 h-7 rounded border l-bd-color bg-surface flex items-center justify-center text-down hover:bg-down/15 transition-colors cursor-pointer" title="Force Exit All"><XSquare className="w-3.5 h-3.5" /></button>
-            <button type="button" onClick={onStopBuy ?? (() => {})} className="w-7 h-7 rounded border l-bd-color bg-surface flex items-center justify-center text-muted hover:bg-white/10 hover:text-white transition-colors cursor-pointer" title="Toggle Stopbuy"><PlusSquare className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onStart} className="bot-ctrl ctrl-start" title="▶ Start Bot"><Play className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onStop} className="bot-ctrl ctrl-stop" title="■ Stop Bot"><Square className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onPause ?? onDrain} className="bot-ctrl ctrl-pause" title="⏸ Pause"><Pause className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onReload ?? onEdit} className="bot-ctrl" title="↻ Reload Config"><RefreshCw className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onForceEnter ?? (() => {})} className="bot-ctrl ctrl-start" title="Force open trade"><PlusCircle className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onForceExitAll ?? (() => {})} className="bot-ctrl ctrl-stop" title="✕ Force Exit All"><XSquare className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onStopBuy ?? (() => {})} className="bot-ctrl" title="⊞ Toggle Stopbuy"><PlusSquare className="w-3.5 h-3.5" /></button>
             <span className="w-px h-4 bg-white/15 mx-1" />
-            <button type="button" onClick={onSoftKill ?? (() => {})} className="w-7 h-7 rounded border l-bd-color bg-surface flex items-center justify-center text-yellow-500 hover:bg-yellow-500/20 transition-colors cursor-pointer" title="Soft Kill"><ShieldAlert className="w-3.5 h-3.5" /></button>
-            <button type="button" onClick={onHardKill ?? (() => {})} className="w-7 h-7 rounded border l-bd-color bg-surface flex items-center justify-center text-down hover:bg-down/15 transition-colors cursor-pointer" title="Hard Kill"><Zap className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onSoftKill ?? (() => {})} className="bot-ctrl" style={{ color: "#facc15" }} title="🛡 Soft Kill"><ShieldAlert className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onHardKill ?? (() => {})} className="bot-ctrl ctrl-stop" title="⚡ Hard Kill"><Zap className="w-3.5 h-3.5" /></button>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="px-6 border-b l-bd-color flex gap-1 overflow-x-auto flex-shrink-0 pt-4 pb-0 items-end">
+        {/* Tabs — ds_bot_drawer.md §30C */}
+        <div className="l-b flex items-end px-1 bg-black/50 shrink-0 overflow-x-auto gap-0">
           {(
             [
               { key: "overview", label: "Overview" },
@@ -207,10 +214,10 @@ export default function BotDetailPanel({
               key={tab.key}
               type="button"
               onClick={() => setDetailTab(tab.key)}
-              className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer border-b-2 ${
+              className={`h-9 px-3.5 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap cursor-pointer transition-colors ${
                 detailTab === tab.key
-                  ? "border-primary text-white"
-                  : "border-transparent text-muted hover:text-white opacity-80 hover:opacity-100"
+                  ? "border-b-2 border-up text-white"
+                  : "text-muted hover:text-white"
               }`}
             >
               {tab.label}
@@ -218,13 +225,14 @@ export default function BotDetailPanel({
           ))}
         </div>
 
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        {/* Body — ds_bot_drawer.md §30D: p-4 flex flex-col gap-4 */}
+        <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center h-32 text-muted text-sm">
               Loading details...
             </div>
           ) : (
+            <div className="p-4 flex flex-col gap-4">
             <DetailContent
               tab={detailTab}
               bot={bot}
@@ -242,15 +250,16 @@ export default function BotDetailPanel({
               balanceData={balanceData}
               healthData={healthData}
             />
+            </div>
           )}
         </div>
 
         {/* Bottom actions — Edit, Duplicate, Delete, Close */}
-        <div className="px-6 py-4 border-t l-bd-color flex gap-2 flex-shrink-0">
-          <button type="button" onClick={onEdit} className="flex-1 py-2.5 rounded-md border l-bd-color bg-surface text-muted text-xs font-medium text-center transition-all hover:bg-surface cursor-pointer">Edit</button>
-          <button type="button" onClick={onDuplicate} className="flex-1 py-2.5 rounded-md border l-bd-color bg-surface text-muted text-xs font-medium text-center transition-all hover:bg-surface cursor-pointer">Duplicate</button>
-          <button type="button" onClick={onDelete} className="py-2.5 px-4 rounded-md border border-down/20 bg-down/10 text-down text-xs font-medium text-center transition-all hover:bg-down/15 cursor-pointer">Delete</button>
-          <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-md border-none bg-primary text-white text-xs font-semibold text-center transition-all hover:bg-white/20 cursor-pointer">Close</button>
+        <div className="px-4 py-3 l-t flex gap-2 shrink-0">
+          <button type="button" onClick={onEdit} className="flex-1 py-2 rounded l-bd bg-surface text-muted text-[11px] font-medium text-center transition-all hover:bg-white/[0.04] cursor-pointer">Edit</button>
+          <button type="button" onClick={onDuplicate} className="flex-1 py-2 rounded l-bd bg-surface text-muted text-[11px] font-medium text-center transition-all hover:bg-white/[0.04] cursor-pointer">Duplicate</button>
+          <button type="button" onClick={onDelete} className="py-2 px-4 rounded border border-down/20 bg-down/10 text-down text-[11px] font-medium text-center transition-all hover:bg-down/15 cursor-pointer">Delete</button>
+          <button type="button" onClick={onClose} className="flex-1 py-2 rounded bg-white/10 text-white text-[11px] font-semibold text-center transition-all hover:bg-white/20 cursor-pointer">Close</button>
         </div>
       </div>
     </>
@@ -294,10 +303,11 @@ function DetailContent({
   balanceData: FTBalance | null;
   healthData: FTHealth | null;
 }) {
-  const sectionTitle = "text-xs font-semibold text-muted uppercase tracking-wider mb-3";
-  const row = "flex justify-between py-2 border-b l-bd-color/40 last:border-b-0";
-  const key = "text-xs text-muted";
-  const val = "text-xs font-semibold text-white text-right";
+  // DS v1.4 §6 section-title + §30E/F stats row tokens
+  const sectionTitle = "kpi-label mb-2";
+  const row = "flex justify-between py-1.5";
+  const key = "text-[12px] font-mono text-muted";
+  const val = "text-[12px] font-mono font-bold text-white text-right";
 
   switch (tab) {
     /* ─── Overview ─── */
@@ -313,34 +323,36 @@ function DetailContent({
       return (
         <div className="space-y-4">
           {/* KPI Row — 4 columns matching prototype */}
+          {/* KPI Cards — ds_bot_drawer.md §30E */}
           <div className="grid grid-cols-4 gap-2.5">
-            <div className="bg-surface/10 border l-bd-color/50 rounded p-3">
-              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">Closed P&L</div>
+            <div className="bg-surface p-3 l-bd rounded">
+              <div className="kpi-label">Closed P&L</div>
               <div className={`font-mono font-bold text-lg ${profitColor(profit?.profit_closed_coin)}`}>{fmtMoney(profit?.profit_closed_coin)}</div>
               {profit?.profit_closed_percent != null && <div className={`text-[10px] font-mono mt-0.5 ${profitColor(profit.profit_closed_percent)}`}>{profit.profit_closed_percent >= 0 ? "+" : ""}{fmt(profit.profit_closed_percent, 1)}%</div>}
             </div>
-            <div className="bg-surface/10 border l-bd-color/50 rounded p-3">
-              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">Open P&L</div>
+            <div className="bg-surface p-3 l-bd rounded">
+              <div className="kpi-label">Open P&L</div>
               <div className={`font-mono font-bold text-lg ${profitColor(openPnl)}`}>{fmtMoney(openPnl)}</div>
-              <div className="text-muted/50 text-[10px] font-mono mt-0.5">{openTrades.length} position{openTrades.length !== 1 ? "s" : ""}</div>
+              <div className="text-white/35 text-[10px] font-mono mt-0.5">{openTrades.length} position{openTrades.length !== 1 ? "s" : ""}</div>
             </div>
-            <div className="bg-surface/10 border l-bd-color/50 rounded p-3">
-              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">Win Rate</div>
+            <div className="bg-surface p-3 l-bd rounded">
+              <div className="kpi-label">Win Rate</div>
               <div className="font-mono font-bold text-lg text-white">{winRate != null ? `${fmt(winRate, 1)}%` : "—"}</div>
-              <div className="text-muted/50 text-[10px] font-mono mt-0.5">{winCount}W / {lossCount}L</div>
+              <div className="text-white/35 text-[10px] font-mono mt-0.5">{winCount}W / {lossCount}L</div>
             </div>
-            <div className="bg-surface/10 border l-bd-color/50 rounded p-3">
-              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">Trades</div>
+            <div className="bg-surface p-3 l-bd rounded">
+              <div className="kpi-label">Trades</div>
               <div className="font-mono font-bold text-lg text-white">{profit?.trade_count ?? totalCount}</div>
-              {statsData?.durations?.wins != null && <div className="text-muted/50 text-[10px] font-mono mt-0.5">{fmtDurSec(statsData.durations.wins)} avg hold</div>}
+              {statsData?.durations?.wins != null && <div className="text-white/35 text-[10px] font-mono mt-0.5">{fmtDurSec(statsData.durations.wins)} avg hold</div>}
             </div>
           </div>
 
           {/* 2-column stats grid matching prototype */}
+          {/* Stats Grid — ds_bot_drawer.md §30F */}
           <div className="grid grid-cols-2 gap-2.5">
             {/* Risk Metrics */}
-            <div className="bg-surface/10 border l-bd-color/50 rounded p-3">
-              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-2">Risk Metrics</div>
+            <div className="bg-surface p-3 l-bd rounded">
+              <div className="kpi-label mb-2">Risk Metrics</div>
               <div className="space-y-1.5 font-mono text-[12px]">
                 <div className="flex justify-between"><span className="text-muted">Profit Factor</span><span className={`font-bold ${(statsData?.profit_factor ?? 0) > 1 ? "text-up" : "text-white"}`}>{statsData?.profit_factor != null ? fmt(statsData.profit_factor) : "—"}</span></div>
                 <div className="flex justify-between"><span className="text-muted">Max Drawdown</span><span className="text-down font-bold">{statsData?.max_drawdown != null ? fmt(statsData.max_drawdown * 100, 1) + "%" : "—"}</span></div>
@@ -350,8 +362,8 @@ function DetailContent({
               </div>
             </div>
             {/* Bot Info */}
-            <div className="bg-surface/10 border l-bd-color/50 rounded p-3">
-              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-2">Bot Info</div>
+            <div className="bg-surface p-3 l-bd rounded">
+              <div className="kpi-label mb-2">Bot Info</div>
               <div className="space-y-1.5 font-mono text-[12px]">
                 <div className="flex justify-between"><span className="text-muted">Exchange</span><span className="text-white">{bot.exchange_name ?? "—"}</span></div>
                 <div className="flex justify-between"><span className="text-muted">Mode</span><span className="text-white">{configData ? `${configData.trading_mode ?? "spot"} · ${configData.margin_mode ?? "—"}` : "—"}</span></div>
@@ -363,9 +375,10 @@ function DetailContent({
           </div>
 
           {/* Wallet Balance — matching prototype */}
+          {/* Wallet — ds_bot_drawer.md §30G */}
           {balanceData && (
-            <div className="bg-surface/10 border l-bd-color/50 rounded p-3">
-              <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-2">Wallet Balance</div>
+            <div className="bg-surface p-3 l-bd rounded">
+              <div className="kpi-label mb-2">Wallet Balance</div>
               {balanceData.currencies && balanceData.currencies.filter(c => c.balance > 0 || c.used > 0 || c.est_stake > 0 || c.free > 0).length > 0 ? (
                 <div className="grid grid-cols-3 gap-4 font-mono text-[12px]">
                   {balanceData.currencies.filter(c => c.balance > 0 || c.used > 0 || c.est_stake > 0 || c.free > 0).slice(0, 3).map((c) => (
@@ -521,22 +534,22 @@ function DetailContent({
         <div className="space-y-4">
           {/* KPI Summary — 4 columns matching prototype */}
           <div className="grid grid-cols-4 gap-2.5">
-            <div className="bg-surface/10 border l-bd-color/50 rounded p-3 text-center">
+            <div className="bg-surface l-bd rounded p-3 text-center">
               <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">Best Pair</div>
               <div className={`font-mono font-bold text-sm ${profitColor(bestPerf?.profit_abs)}`}>{bestPerf?.pair ?? "—"}</div>
               {bestPerf && <div className={`text-[10px] font-mono ${profitColor(bestPerf.profit_abs)}`}>{fmtMoney(bestPerf.profit_abs)}</div>}
             </div>
-            <div className="bg-surface/10 border l-bd-color/50 rounded p-3 text-center">
+            <div className="bg-surface l-bd rounded p-3 text-center">
               <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">Worst Pair</div>
               <div className={`font-mono font-bold text-sm ${profitColor(worstPerf?.profit_abs)}`}>{worstPerf?.pair ?? "—"}</div>
               {worstPerf && <div className={`text-[10px] font-mono ${profitColor(worstPerf.profit_abs)}`}>{fmtMoney(worstPerf.profit_abs)}</div>}
             </div>
-            <div className="bg-surface/10 border l-bd-color/50 rounded p-3 text-center">
+            <div className="bg-surface l-bd rounded p-3 text-center">
               <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">Best Tag</div>
               <div className={`font-mono font-bold text-sm ${profitColor(bestEntry?.profit_abs)}`}>{bestEntry?.enter_tag ?? "—"}</div>
               {bestEntry && <div className={`text-[10px] font-mono ${profitColor(bestEntry.profit_abs)}`}>{fmtMoney(bestEntry.profit_abs)}</div>}
             </div>
-            <div className="bg-surface/10 border l-bd-color/50 rounded p-3 text-center">
+            <div className="bg-surface l-bd rounded p-3 text-center">
               <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">Best Exit</div>
               <div className={`font-mono font-bold text-sm ${profitColor(bestExit?.profit_abs)}`}>{bestExit?.exit_reason ?? "—"}</div>
               {bestExit && <div className={`text-[10px] font-mono ${profitColor(bestExit.profit_abs)}`}>{fmtMoney(bestExit.profit_abs)}</div>}
@@ -545,7 +558,7 @@ function DetailContent({
 
           {/* Per-Pair Performance */}
           {enrichedPerf.length > 0 ? (
-            <div className="bg-surface/10 border l-bd-color/50 rounded p-3">
+            <div className="bg-surface l-bd rounded p-3">
               <h3 className={sectionTitle}>Per-Pair Performance</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-[13px] font-mono whitespace-nowrap">
@@ -578,7 +591,7 @@ function DetailContent({
           {(entryData.length > 0 || exitData.length > 0) && (
             <div className="grid grid-cols-2 gap-2.5">
               {entryData.length > 0 && (
-                <div className="bg-surface/10 border l-bd-color/50 rounded p-3">
+                <div className="bg-surface l-bd rounded p-3">
                   <h3 className={sectionTitle}>Entry Tags</h3>
                   <table className="w-full text-[13px] font-mono whitespace-nowrap">
                     <thead><tr className="text-muted text-[11px] uppercase tracking-widest">
@@ -601,7 +614,7 @@ function DetailContent({
                 </div>
               )}
               {exitData.length > 0 && (
-                <div className="bg-surface/10 border l-bd-color/50 rounded p-3">
+                <div className="bg-surface l-bd rounded p-3">
                   <h3 className={sectionTitle}>Exit Reasons</h3>
                   <table className="w-full text-[13px] font-mono whitespace-nowrap">
                     <thead><tr className="text-muted text-[11px] uppercase tracking-widest">
@@ -712,14 +725,14 @@ function DetailContent({
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="text-muted border-b l-bd-color">
+                        <tr className="text-muted l-b">
                           <th className="text-left py-2 font-medium">Pair</th>
                           <th className="text-left py-2 font-medium">Reason</th>
                         </tr>
                       </thead>
                       <tbody>
                         {locksData.locks.map((l) => (
-                          <tr key={l.pair} className="border-b l-bd-color/30">
+                          <tr key={l.pair} className="border-b border-white/[0.03]">
                             <td className="py-2 text-white font-medium">{l.pair}</td>
                             <td className="py-2 text-muted">{l.reason ?? "—"}</td>
                           </tr>
@@ -797,7 +810,7 @@ function DetailContent({
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="text-muted border-b l-bd-color">
+                    <tr className="text-muted l-b">
                       <th className="text-left py-2 font-medium">Pair</th>
                       <th className="text-left py-2 font-medium">Side</th>
                       <th className="text-left py-2 font-medium">Reason</th>
@@ -806,7 +819,7 @@ function DetailContent({
                   </thead>
                   <tbody>
                     {locksData.locks.filter(l => l.active).map((l) => (
-                      <tr key={l.id} className="border-b l-bd-color/30">
+                      <tr key={l.id} className="border-b border-white/[0.03]">
                         <td className="py-2 text-white font-medium">{l.pair}</td>
                         <td className="py-2 text-muted">{l.side || "—"}</td>
                         <td className="py-2 text-muted">{l.reason || "—"}</td>
@@ -824,7 +837,7 @@ function DetailContent({
           {logsData && logsData.logs && logsData.logs.length > 0 && (
             <div>
               <div className={sectionTitle}>Recent Logs ({logsData.log_count} total)</div>
-              <div className="bg-surface border l-bd-color rounded p-2 max-h-[300px] overflow-y-auto">
+              <div className="bg-surface l-bd rounded p-2 max-h-[300px] overflow-y-auto">
                 <div className="font-mono text-[10px] space-y-1">
                   {logsData.logs.slice(-30).map((log, idx) => {
                     // FT logs format: [id, timestamp, module, level, message]
@@ -869,7 +882,7 @@ function DetailContent({
             <div className={sectionTitle}>Backtest Summary</div>
             {hasStats ? (
               <>
-                <div className="bg-surface/10 border l-bd-color/50 rounded-xl p-4 space-y-1 mb-4">
+                <div className="bg-surface l-bd rounded p-4 space-y-1 mb-4">
                   <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-2">Latest Performance Snapshot</div>
                   <div className={row}>
                     <span className={key}>Total Trades</span>
@@ -924,7 +937,7 @@ function DetailContent({
             <div className={sectionTitle}>Hyperopt & Signal Quality</div>
             {statsData ? (
               <>
-                <div className="bg-surface/10 border l-bd-color/50 rounded-xl p-4 space-y-1 mb-4">
+                <div className="bg-surface l-bd rounded p-4 space-y-1 mb-4">
                   <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-2">Signal & Order Metrics</div>
                   <div className={row}>
                     <span className={key}>Rejected Signals</span>

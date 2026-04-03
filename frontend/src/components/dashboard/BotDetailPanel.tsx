@@ -366,11 +366,6 @@ function DetailContent({
   balanceData: FTBalance | null;
   healthData: FTHealth | null;
 }) {
-  // DS v1.4 §6 stats row tokens
-  const row = "flex justify-between py-1.5";
-  const key = "text-[12px] font-mono text-muted";
-  const val = "text-[12px] font-mono font-bold text-white text-right";
-
   switch (tab) {
     /* ─── Overview ─── */
     case "overview": {

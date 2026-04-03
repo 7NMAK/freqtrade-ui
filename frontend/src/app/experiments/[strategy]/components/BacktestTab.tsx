@@ -230,24 +230,31 @@ export default function BacktestTab({ strategy: propStrategy, backtestBotId = 2,
     } catch { /* no cache */ }
     (async () => {
       try {
+        addLog('INFO', `[mount] Fetching history for bot ${backtestBotId}...`);
         const res = await botBacktestHistory(backtestBotId);
         const entries = res.results || [];
         setHistory(entries);
+        addLog('INFO', `[mount] History: ${entries.length} total, ${entries.filter((e: HistoryEntry) => e.strategy === strategy).length} for ${strategy}`);
         if (!loadedFromCache && entries.length > 0) {
           const latest = entries.filter((e: HistoryEntry) => e.strategy === strategy).sort((a: HistoryEntry, b: HistoryEntry) => b.backtest_start_time - a.backtest_start_time)[0];
           if (latest) {
-            addLog('INFO', `Auto-loading latest: ${latest.filename}...`);
+            addLog('INFO', `[mount] Auto-loading: ${latest.filename} (${latest.strategy})...`);
             try {
               const data = await botBacktestHistoryResult(backtestBotId, latest.filename, latest.strategy);
+              addLog('INFO', `[mount] Got data: ${data ? 'yes' : 'no'}, keys: ${data ? Object.keys(data as object).join(',') : 'n/a'}`);
               if (data) {
                 const rawD = (data as Record<string, unknown>).backtest_result ?? data;
+                addLog('INFO', `[mount] rawD keys: ${Object.keys(rawD as object).join(',')}`);
                 const result = extractResult(rawD as Record<string, unknown>);
+                addLog('INFO', `[mount] extractResult: ${result ? `${result.strategy_name} ${result.total_trades} trades` : 'NULL'}`);
                 if (result) { setBtResult(result); try { sessionStorage.setItem(BT_CACHE_KEY, JSON.stringify(result)); } catch { /* */ } addLog('INFO', `Loaded: ${result.strategy_name} — ${result.total_trades} trades`); }
               }
-            } catch (err) { addLog('WARNING', `Auto-load failed: ${err instanceof Error ? err.message : String(err)}`); }
+            } catch (err) { addLog('WARNING', `[mount] Auto-load failed: ${err instanceof Error ? err.message : String(err)}`); }
+          } else {
+            addLog('INFO', `[mount] No history entries match strategy "${strategy}"`);
           }
         }
-      } catch { /* history fetch failed */ }
+      } catch (histErr) { addLog('ERROR', `[mount] History fetch failed: ${histErr instanceof Error ? histErr.message : String(histErr)}`); }
       try {
         const btStatus = await botBacktestResults(backtestBotId);
         const r = btStatus as unknown as Record<string, unknown>;

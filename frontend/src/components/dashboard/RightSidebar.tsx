@@ -198,10 +198,13 @@ export default function RightSidebar({
 }: RightSidebarProps) {
   const logEndRef = useRef<HTMLDivElement>(null);
 
-  // ── FT StdOut auto-scroll ──────────────────────────────────────────
+  // ── FT StdOut auto-scroll (contained — only scrolls the terminal panel, not the page) ──
   useEffect(() => {
     if (logEndRef.current) {
-      logEndRef.current.scrollIntoView({ behavior: "smooth" });
+      const container = logEndRef.current.parentElement;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
     }
   }, [logsData]);
 
@@ -286,13 +289,14 @@ export default function RightSidebar({
     <div
       className={`flex flex-col gap-4 shrink-0 min-h-0 2xl:w-[320px] xl:w-[260px] xl:min-w-[260px] ${
         isOpen
-          ? "w-[320px] min-w-[320px] opacity-100 overflow-y-auto"
+          ? "w-[320px] min-w-[320px] opacity-100 overflow-y-auto overflow-x-hidden"
           : "w-0 min-w-0 opacity-0 overflow-hidden p-0"
       }`}
       style={{
         transition: "width 0.3s ease, min-width 0.3s ease, opacity 0.3s ease, padding 0.3s ease",
         scrollbarWidth: "thin",
         scrollbarColor: "rgba(255,255,255,0.14) transparent",
+        maxHeight: "100%",
       }}
     >
       {/* ── Panel 1: Balance Breakdown ──────────────────────────────── */}
@@ -315,28 +319,38 @@ export default function RightSidebar({
                 .filter((c) => c.balance > 0 || c.used > 0 || c.est_stake > 0 || c.free > 0)
                 .slice(0, 8)
                 .map((c) => (
-                  <div key={c.currency} className="flex items-center">
-                    <span className="text-muted w-10">{c.currency}</span>
-                    <span className="text-white font-medium">
+                  <div key={c.currency} className="flex items-center gap-2">
+                    <span className="text-muted shrink-0 w-12 text-[11px] uppercase font-bold tracking-wide">{c.currency}</span>
+                    <span className="text-white font-medium flex-1 text-right">
                       {fmt(c.balance, c.balance < 1 ? 4 : 2)}
                     </span>
                     {c.est_stake > 0 && c.currency !== balanceData.stake && (
-                      <span className="text-white/30 text-[10px] ml-auto">
+                      <span className="text-white/30 text-[10px] shrink-0 w-16 text-right">
                         ≈ ${fmt(c.est_stake, 0)}
                       </span>
                     )}
                     {c.currency === balanceData.stake && (
-                      <span className="text-muted text-[10px] ml-auto">free</span>
+                      <span className="text-muted text-[10px] shrink-0 w-16 text-right">free: {fmt(c.free, 2)}</span>
                     )}
                   </div>
                 ))}
+              {balanceData.total != null && (
+                <div className="pt-2 mt-1 border-t border-white/10 flex justify-between">
+                  <span className="text-white/50 text-[11px] uppercase font-sans font-medium">
+                    Total
+                  </span>
+                  <span className="text-white font-bold">
+                    {fmt(balanceData.total, 2)} {balanceData.stake}
+                  </span>
+                </div>
+              )}
               {balanceData.starting_capital != null && (
-                <div className="pt-2 flex justify-between">
+                <div className="flex justify-between">
                   <span className="text-white/50 text-[11px] uppercase font-sans font-medium">
                     Starting Capital
                   </span>
                   <span className="text-white font-medium">
-                    ${fmt(balanceData.starting_capital, 2)}
+                    {fmt(balanceData.starting_capital, 2)} {balanceData.stake}
                   </span>
                 </div>
               )}

@@ -14,13 +14,13 @@ interface AppShellProps {
 }
 
 export default function AppShell({ title, children }: AppShellProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
-  // Restore collapsed state from localStorage on mount
+  // Restore collapsed state from localStorage on mount (default: collapsed per DS spec)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
-      if (saved === "true") setCollapsed(true);
+      if (saved === "false") setCollapsed(false);
     }
   }, []);
 

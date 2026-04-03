@@ -373,12 +373,12 @@ export default function RightSidebar({
           </div>
           <div className="flex justify-between items-center">
             <span className="text-muted">Entry Fees (avg)</span>
-            <span className="text-white/70">{feeOpenAvg != null ? `${feeOpenAvg}%` : "\u2014"}</span>
+            <span className="text-white/70">{feeOpenAvg != null ? `${fmt(feeOpenAvg, 4)}%` : "\u2014"}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-muted">Exit Fees (avg)</span>
             <span className="text-white/70">
-              {feeCloseAvg != null ? `${feeCloseAvg}%` : "\u2014"}
+              {feeCloseAvg != null ? `${fmt(feeCloseAvg, 4)}%` : "\u2014"}
             </span>
           </div>
           <div className="flex justify-between items-center">

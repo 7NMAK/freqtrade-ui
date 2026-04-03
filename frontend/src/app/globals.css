@@ -60,10 +60,10 @@
 
 @layer components {
   /* Borders */
-  .l-bd { border: 1px solid rgba(255,255,255,0.10); }
-  .l-b  { border-bottom: 1px solid rgba(255,255,255,0.10); }
-  .l-r  { border-right: 1px solid rgba(255,255,255,0.10); }
-  .l-t  { border-top: 1px solid rgba(255,255,255,0.10); }
+  .l-bd { border: 1px solid rgba(255,255,255,0.06); }
+  .l-b  { border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .l-r  { border-right: 1px solid rgba(255,255,255,0.06); }
+  .l-t  { border-top: 1px solid rgba(255,255,255,0.06); }
 
   /* Grid background for charts */
   .l-grid { background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px); background-size: 24px 24px; }

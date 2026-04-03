@@ -361,7 +361,7 @@ export const botDeleteLock = (id: number, lockId: number) =>
 export const botLockAdd = (id: number, data: { pair: string; until: string; reason: string }) =>
   request<import("@/types").FTLock>(`/api/bots/${id}/locks`, {
     method: "POST",
-    body: JSON.stringify(data),
+    body: JSON.stringify([data]),
   });
 
 export const botDeleteTrade = (id: number, tradeId: number) =>

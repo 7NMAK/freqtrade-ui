@@ -639,12 +639,12 @@ export default function DashboardPage() {
       }
 
       // FIX 4: Fetch real market data for whitelist pairs via botPairCandles
-      const wlData = whitelistData;
-      if (m.current && wlData && wlData.whitelist.length > 0 && effectiveTradeBots.length > 0) {
+      const wlPairs = Array.from(mergedWhitelistPairs.keys());
+      if (m.current && wlPairs.length > 0 && effectiveTradeBots.length > 0) {
         const firstBotForCandles = effectiveTradeBots[0].id;
         const marketResults: Record<string, { change24h: number; volume: number; volatility: number }> = {};
         await Promise.allSettled(
-          wlData.whitelist.map(async (pair: string) => {
+          wlPairs.map(async (pair: string) => {
             try {
               const candles = await botPairCandles(firstBotForCandles, pair, "1d", 2);
               if (candles && candles.data && candles.data.length >= 1) {

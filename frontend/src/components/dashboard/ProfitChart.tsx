@@ -99,21 +99,24 @@ export default function ProfitChart({
     const profits = dailyData.map((d) => d.abs_profit);
     const min = Math.min(...profits);
     const max = Math.max(...profits);
-    const range = max - min || 1;
+    if (min === max) return []; // All identical values — no distribution to show
     const bins = 11;
-    const binSize = range / bins;
+    const binSize = (max - min) / bins;
     const counts = new Array(bins).fill(0) as number[];
     for (const p of profits) {
       const idx = Math.min(Math.floor((p - min) / binSize), bins - 1);
       counts[idx]++;
     }
     const maxCount = Math.max(...counts, 1);
-    const midBin = Math.floor(bins / 2);
-    return counts.map((c, i) => ({
-      height: (c / maxCount) * 100,
-      isNeg: i < midBin,
-      isMid: i === midBin,
-    }));
+    return counts.map((c, i) => {
+      // Color by the midpoint value of each bin
+      const binMid = min + (i + 0.5) * binSize;
+      return {
+        height: (c / maxCount) * 100,
+        isNeg: binMid < 0,
+        isMid: binMid >= -binSize / 2 && binMid <= binSize / 2, // bin containing zero
+      };
+    });
   }, [dailyData]);
 
   if (loading) {

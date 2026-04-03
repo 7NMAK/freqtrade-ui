@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Play, Square, Pause, RefreshCw, PlusCircle, XSquare, PlusSquare, ShieldAlert, Zap } from "lucide-react";
 import { fmt, fmtMoney, profitColor } from "@/lib/format";
 import type {
@@ -96,6 +96,65 @@ function StatusBadge({ status, isDryRun }: { status: string; isDryRun: boolean }
   );
 }
 
+/**
+ * Dynamically calculates --drawer-left CSS variable matching HTML prototype JS (line 5403-5410):
+ * left = sidebarWidth + padding(20) + fleetColumnWidth + gap(20)
+ * Reacts to sidebar collapse/expand by observing DOM changes.
+ */
+function DrawerLeftStyle({ isOpen }: { isOpen: boolean }) {
+  const [drawerLeft, setDrawerLeft] = useState(680);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function calc() {
+      // Find the sidebar element — Sidebar component uses w-[56px] (collapsed) or w-[240px] (expanded)
+      const sidebarEl = (document.querySelector(".w-\\[56px\\]") ?? document.querySelector(".w-\\[240px\\]")) as HTMLElement | null;
+      const sidebarW = sidebarEl ? sidebarEl.offsetWidth : (window.innerWidth <= 1024 ? 0 : 56);
+      
+      // Find fleet column — FleetPanel has w-[400px]
+      const fleetEl = document.querySelector(".w-\\[400px\\]") as HTMLElement | null;
+      const fleetW = fleetEl ? fleetEl.offsetWidth : 400;
+      
+      const padding = 20;
+      const gap = 20;
+      let left = sidebarW + padding + fleetW + gap;
+      
+      // Clamp: on small screens, take full width
+      if (window.innerWidth <= 1024) left = 0;
+      // Don't let left be more than 60% of screen
+      if (left > window.innerWidth * 0.6) left = Math.max(0, window.innerWidth * 0.4);
+      
+      setDrawerLeft(left);
+    }
+
+    calc();
+
+    // React to sidebar toggle (class changes on the sidebar element)
+    const observer = new MutationObserver(() => { calc(); setTimeout(calc, 300); });
+    const observeEl = (document.querySelector(".w-\\[56px\\]") ?? document.querySelector(".w-\\[240px\\]")) as HTMLElement | null;
+    if (observeEl?.parentElement) {
+      // Observe parent so we catch when class changes from w-[56px] to w-[240px]
+      observer.observe(observeEl.parentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+    }
+
+    // Also react to window resize
+    window.addEventListener("resize", calc);
+    // Recalculate after sidebar animation completes
+    const timer = setTimeout(calc, 350);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", calc);
+      clearTimeout(timer);
+    };
+  }, [isOpen]);
+
+  return (
+    <style dangerouslySetInnerHTML={{ __html: `:root { --drawer-left: ${drawerLeft}px; }` }} />
+  );
+}
+
 export default function BotDetailPanel({
   bot,
   isOpen,
@@ -149,13 +208,8 @@ export default function BotDetailPanel({
       />
 
       {/* Drawer Panel — ds_bot_drawer.md §30A */}
-      {/* Responsive drawer-left CSS variable — matches HTML prototype breakpoints */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        :root { --drawer-left: 680px; }
-        @media (max-width: 1440px) { :root { --drawer-left: 600px; } }
-        @media (max-width: 1280px) { :root { --drawer-left: 500px; } }
-        @media (max-width: 1024px) { :root { --drawer-left: 0px; } }
-      `}} />
+      {/* Dynamic drawer-left: tracks sidebar + fleet column width, matching HTML prototype JS (line 5403-5410) */}
+      <DrawerLeftStyle isOpen={isOpen} />
       <div
         className="fixed top-0 bottom-0 z-[60] flex flex-col overflow-hidden"
         style={{
@@ -312,8 +366,7 @@ function DetailContent({
   balanceData: FTBalance | null;
   healthData: FTHealth | null;
 }) {
-  // DS v1.4 §6 section-title + §30E/F stats row tokens
-  const sectionTitle = "section-title mb-2";
+  // DS v1.4 §6 stats row tokens
   const row = "flex justify-between py-1.5";
   const key = "text-[12px] font-mono text-muted";
   const val = "text-[12px] font-mono font-bold text-white text-right";
@@ -812,121 +865,70 @@ function DetailContent({
       );
     }
 
-    /* ─── System ─── */
+    /* ─── System & Log — matching HTML line 988-1038 ─── */
     case "system": {
+      const cpuAvg = sysinfoData && sysinfoData.cpu_pct.length > 0 ? sysinfoData.cpu_pct.reduce((a, b) => a + b, 0) / sysinfoData.cpu_pct.length : 0;
+      const ramPct = sysinfoData?.ram_pct ?? 0;
+      const cpuColor = cpuAvg > 80 ? "bg-down" : cpuAvg > 60 ? "bg-yellow-400" : "bg-white/70";
+      const ramColor = ramPct > 80 ? "bg-yellow-400" : ramPct > 60 ? "bg-yellow-400" : "bg-white/70";
+      const cpuTextColor = cpuAvg > 80 ? "text-down" : cpuAvg > 60 ? "text-yellow-400" : "text-white";
+      const ramTextColor = ramPct > 80 ? "text-yellow-400" : ramPct > 60 ? "text-yellow-400" : "text-white";
+      const lastProcessAgo = healthData?.last_process ? (() => { const diff = (Date.now() - new Date(healthData.last_process).getTime()) / 1000; return isNaN(diff) ? healthData.last_process : `${diff.toFixed(1)}s ago`; })() : "—";
+
       return (
-        <div className="flex flex-col gap-4">
-          {sysinfoData && (
-            <div>
-              <div className={sectionTitle}>System Info</div>
-              <div className={row}>
-                <span className={key}>CPU % (avg)</span>
-                <span className={val}>
-                  {sysinfoData.cpu_pct.length > 0
-                    ? fmt(sysinfoData.cpu_pct.reduce((a, b) => a + b, 0) / sysinfoData.cpu_pct.length, 1) + "%"
-                    : "—"}
-                </span>
-              </div>
-              <div className={row}>
-                <span className={key}>CPU cores</span>
-                <span className={val}>{sysinfoData.cpu_pct.length || "—"}</span>
-              </div>
-              <div className={row}>
-                <span className={key}>Memory %</span>
-                <span className={val}>{fmt(sysinfoData.ram_pct, 1)}%</span>
-              </div>
-              {sysinfoData.ram_total != null && (
-                <div className={row}>
-                  <span className={key}>Memory Total</span>
-                  <span className={val}>{fmt((sysinfoData.ram_total ?? 0) / (1024 * 1024 * 1024), 1)} GB</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {healthData && (
-            <div>
-              <div className={sectionTitle}>Bot Health</div>
-              <div className={row}>
-                <span className={key}>Last Process</span>
-                <span className={val}>
-                  {healthData.last_process
-                    ? (() => {
-                        const diff = (Date.now() - new Date(healthData.last_process).getTime()) / 1000;
-                        return isNaN(diff) ? healthData.last_process : `${diff.toFixed(1)}s ago`;
-                      })()
-                    : "—"}
-                </span>
-              </div>
-              <div className={row}>
-                <span className={key}>Last Process (loc)</span>
-                <span className={val}>{healthData.last_process_loc ?? "—"}</span>
+        <div className="flex flex-col gap-3 flex-1 min-h-0">
+          {/* System Status — 2-col grid matching HTML line 991-1008 */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="bg-surface l-bd rounded p-3">
+              <div className="kpi-label mb-2">System Resources</div>
+              <div className="space-y-2.5">
+                {sysinfoData && (<>
+                  <div>
+                    <div className="flex justify-between text-[11px] font-mono mb-1"><span className="text-muted">CPU</span><span className={`${cpuTextColor} font-medium`}>{fmt(cpuAvg, 0)}%</span></div>
+                    <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden"><div className={`h-full ${cpuColor} rounded-full`} style={{ width: `${Math.min(cpuAvg, 100)}%` }} /></div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-[11px] font-mono mb-1"><span className="text-muted">RAM</span><span className={`${ramTextColor} font-medium`}>{fmt(ramPct, 0)}%</span></div>
+                    <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden"><div className={`h-full ${ramColor} rounded-full`} style={{ width: `${Math.min(ramPct, 100)}%` }} /></div>
+                  </div>
+                </>)}
               </div>
             </div>
-          )}
-
-          {/* Locks */}
-          {locksData && locksData.locks && locksData.locks.length > 0 && (
-            <div>
-              <div className={sectionTitle}>Active Locks ({locksData.lock_count})</div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-muted l-b">
-                      <th className="text-left py-2 font-medium">Pair</th>
-                      <th className="text-left py-2 font-medium">Side</th>
-                      <th className="text-left py-2 font-medium">Reason</th>
-                      <th className="text-right py-2 font-medium">Until</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {locksData.locks.filter(l => l.active).map((l) => (
-                      <tr key={l.id} className="border-b border-white/[0.03]">
-                        <td className="py-2 text-white font-medium">{l.pair}</td>
-                        <td className="py-2 text-muted">{l.side || "—"}</td>
-                        <td className="py-2 text-muted">{l.reason || "—"}</td>
-                        <td className="py-2 text-right text-muted">
-                          {l.lock_end_time ? new Date(l.lock_end_time).toLocaleString() : "—"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div className="bg-surface l-bd rounded p-3">
+              <div className="kpi-label mb-2">Bot Health</div>
+              <div className="space-y-1.5 font-mono text-[11px]">
+                <div className="flex justify-between"><span className="text-muted">Last Process</span><span className="text-white">{lastProcessAgo}</span></div>
+                {healthData?.last_process_loc && <div className="flex justify-between"><span className="text-muted">Location</span><span className="text-white">{healthData.last_process_loc}</span></div>}
+                {bot.status && <div className="flex justify-between"><span className="text-muted">State</span><span className="text-up font-bold">{bot.status}</span></div>}
+                {configData?.version && <div className="flex justify-between"><span className="text-muted">FT Version</span><span className="text-white">{configData.version}</span></div>}
               </div>
             </div>
-          )}
-
+          </div>
+          {/* Log Section — matching HTML line 1010-1037 */}
           {logsData && logsData.logs && logsData.logs.length > 0 && (
-            <div>
-              <div className={sectionTitle}>Recent Logs ({logsData.log_count} total)</div>
-              <div className="bg-surface l-bd rounded p-2 max-h-[300px] overflow-y-auto">
-                <div className="font-mono text-[10px] space-y-1">
-                  {logsData.logs.slice(-30).map((log, idx) => {
-                    // FT logs format: [id, timestamp, module, level, message]
-                    const arr = log as string[];
-                    let timestamp: string, level: string, message: string;
-                    if (arr.length >= 5) {
-                      [, timestamp, , level, message] = arr;
-                    } else if (arr.length === 4) {
-                      [timestamp, , level, message] = arr;
-                    } else {
-                      timestamp = ""; level = ""; message = arr.join(" ");
-                    }
-                    const timeStr = timestamp ? String(timestamp).split(" ").pop()?.slice(0, 8) ?? "" : "";
-                    const levelColor =
-                      level === "WARNING" || level === "WARN" ? "text-yellow-500" :
-                      level === "ERROR" || level === "CRITICAL" ? "text-down" :
-                      level === "INFO" ? "text-blue-400" :
-                      "text-muted";
-                    return (
-                      <div key={idx} className="flex gap-1">
-                        <span className="text-muted/50 shrink-0">{timeStr}</span>
-                        <span className={`shrink-0 font-semibold ${levelColor}`}>{level}</span>
-                        <span className="text-white/80 break-all">{message ?? ""}</span>
-                      </div>
-                    );
-                  })}
+            <div className="flex-1 bg-surface l-bd rounded flex flex-col min-h-0">
+              <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06] shrink-0">
+                <div className="flex gap-1">
+                  <button className="px-2 py-0.5 text-[9px] font-bold uppercase bg-white/10 text-white rounded">ALL</button>
+                  <button className="px-2 py-0.5 text-[9px] font-bold uppercase text-muted hover:text-white transition-colors rounded">INFO</button>
+                  <button className="px-2 py-0.5 text-[9px] font-bold uppercase text-muted hover:text-white transition-colors rounded">WARN</button>
+                  <button className="px-2 py-0.5 text-[9px] font-bold uppercase text-muted hover:text-white transition-colors rounded">ERROR</button>
                 </div>
+                <div className="ml-auto text-[10px] font-mono text-muted">{logsData.log_count} entries</div>
+              </div>
+              <div className="flex-1 overflow-y-auto font-mono text-[11px] text-muted bg-[#060606] p-3 leading-relaxed max-h-[400px]">
+                {logsData.logs.slice(-50).map((log, idx) => {
+                  const arr = log as string[];
+                  let timestamp: string, level: string, message: string;
+                  if (arr.length >= 5) { [, timestamp, , level, message] = arr; }
+                  else if (arr.length === 4) { [timestamp, , level, message] = arr; }
+                  else { timestamp = ""; level = ""; message = arr.join(" "); }
+                  const timeStr = timestamp ? String(timestamp).split(" ").pop()?.slice(0, 8) ?? "" : "";
+                  const levelColor = level === "WARNING" || level === "WARN" ? "text-yellow-500" : level === "ERROR" || level === "CRITICAL" ? "text-down" : level === "INFO" ? "text-blue-400" : "text-white/25";
+                  return (
+                    <div key={idx} className="mb-1"><span className="text-white/30 mr-2">{timeStr}</span><span className={levelColor}>{level}</span> {message ?? ""}</div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -934,180 +936,160 @@ function DetailContent({
       );
     }
 
-    /* --- Backtest --- */
+    /* ─── Backtest — matching HTML line 757-843 ─── */
     case "backtest": {
-      // Show stats from profit data as a proxy for latest run performance
-      const hasStats = statsData || profit;
+      const totalTrades = profit?.trade_count ?? (statsData ? (statsData.wins ?? 0) + (statsData.losses ?? 0) + (statsData.draws ?? 0) : 0);
+      const totalProfit = profit?.profit_closed_coin ?? statsData?.profit_all_coin ?? 0;
+      const totalProfitPct = profit?.profit_closed_percent ?? 0;
+      const maxDD = statsData?.max_drawdown ?? 0;
+      const winRate = totalTrades > 0 && statsData ? (statsData.wins / totalTrades) * 100 : 0;
+      const hasData = statsData || profit;
+
       return (
         <div className="flex flex-col gap-4">
-          <div>
-            <div className={sectionTitle}>Backtest Summary</div>
-            {hasStats ? (
-              <>
-                <div className="bg-surface l-bd rounded p-4 space-y-1 mb-4">
-                  <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-2">Latest Performance Snapshot</div>
-                  <div className={row}>
-                    <span className={key}>Total Trades</span>
-                    <span className={val}>{profit?.trade_count ?? statsData?.wins != null ? (statsData?.wins ?? 0) + (statsData?.losses ?? 0) + (statsData?.draws ?? 0) : "—"}</span>
+          <h3 className="section-title flex items-center gap-2">Backtest History <span className="text-white/30">({configData?.strategy ?? bot.name})</span></h3>
+          {hasData ? (
+            <div className="space-y-3">
+              {/* Run card — expanded, matching HTML line 762-805 */}
+              <div className="bg-surface l-bd rounded p-3 hover:bg-white/[0.04] cursor-pointer transition-colors">
+                <div className="flex justify-between items-center mb-2.5">
+                  <span className="text-white font-mono text-[12px] font-bold">Latest · {configData?.strategy ?? "—"} · {configData?.timeframe ?? "—"}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted text-[10px] font-mono">{new Date().toISOString().split("T")[0]}</span>
+                    <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${totalProfit >= 0 ? "bg-up/12 text-up" : "bg-down/12 text-down"}`}>{totalProfit >= 0 ? "PROFITABLE" : "LOSS"}</span>
                   </div>
-                  <div className={row}>
-                    <span className={key}>Wins / Losses / Draws</span>
-                    <span className={val}>{statsData ? `${statsData.wins} / ${statsData.losses} / ${statsData.draws}` : "—"}</span>
-                  </div>
-                  <div className={row}>
-                    <span className={key}>Profit Factor</span>
-                    <span className={val}>{statsData?.profit_factor != null ? fmt(statsData.profit_factor) : "—"}</span>
-                  </div>
-                  <div className={row}>
-                    <span className={key}>Max Drawdown</span>
-                    <span className={`${val} text-down`}>{statsData?.max_drawdown != null ? fmt(statsData.max_drawdown * 100, 2) + "%" : "—"}</span>
-                  </div>
-                  {statsData?.max_consecutive_wins != null && (
-                    <div className={row}>
-                      <span className={key}>Max Consecutive Wins</span>
-                      <span className={`${val} text-up`}>{statsData.max_consecutive_wins}</span>
-                    </div>
-                  )}
-                  {statsData?.max_consecutive_losses != null && (
-                    <div className={row}>
-                      <span className={key}>Max Consecutive Losses</span>
-                      <span className={`${val} text-down`}>{statsData.max_consecutive_losses}</span>
-                    </div>
-                  )}
                 </div>
-                <div className="text-[10px] text-muted/60 text-center">
-                  Run a full backtest from the Backtesting page for detailed timerange analysis.
+                <div className="grid grid-cols-6 gap-2 text-[11px] font-mono mb-2">
+                  <div><span className="text-muted block text-[9px]">Total Profit</span><span className={`${profitColor(totalProfitPct)} font-bold`}>{totalProfitPct >= 0 ? "+" : ""}{fmt(totalProfitPct, 1)}%</span></div>
+                  <div><span className="text-muted block text-[9px]">Profit Abs</span><span className={`${profitColor(totalProfit)} font-bold`}>{fmtMoney(totalProfit)}</span></div>
+                  <div><span className="text-muted block text-[9px]">Max DD</span><span className="text-down font-bold">{maxDD > 0 ? `-${fmt(maxDD * 100, 1)}%` : "—"}</span></div>
+                  <div><span className="text-muted block text-[9px]">Win Rate</span><span className="text-white">{fmt(winRate, 1)}%</span></div>
+                  <div><span className="text-muted block text-[9px]">Trades</span><span className="text-white">{totalTrades}</span></div>
+                  <div><span className="text-muted block text-[9px]">W / D / L</span><span className="text-white">{statsData ? `${statsData.wins} / ${statsData.draws} / ${statsData.losses}` : "—"}</span></div>
                 </div>
-              </>
-            ) : (
-              <div className="text-center py-8 text-muted text-xs space-y-2">
-                <p>No backtest history available for this bot.</p>
-                <p className="text-[10px] text-muted/60">Run a backtest from the Backtesting page to see results here.</p>
+                <div className="grid grid-cols-6 gap-2 text-[11px] font-mono mb-2.5">
+                  <div><span className="text-muted block text-[9px]">Profit Factor</span><span className="text-white">{statsData?.profit_factor != null ? fmt(statsData.profit_factor) : "—"}</span></div>
+                  <div><span className="text-muted block text-[9px]">Sharpe</span><span className="text-white">{statsData?.sharpe_ratio != null ? fmt(statsData.sharpe_ratio) : "—"}</span></div>
+                  <div><span className="text-muted block text-[9px]">Sortino</span><span className="text-white">{statsData?.sortino_ratio != null ? fmt(statsData.sortino_ratio) : "—"}</span></div>
+                  <div><span className="text-muted block text-[9px]">Calmar</span><span className="text-white">{statsData?.calmar_ratio != null ? fmt(statsData.calmar_ratio) : "—"}</span></div>
+                  <div><span className="text-muted block text-[9px]">Avg Hold</span><span className="text-white">{statsData?.durations?.wins != null ? fmtDurSec(statsData.durations.wins) : "—"}</span></div>
+                  <div><span className="text-muted block text-[9px]">Max Consec W</span><span className="text-white">{statsData?.max_consecutive_wins ?? "—"}</span></div>
+                </div>
+                {/* Per-pair breakdown */}
+                {perfData.length > 0 && (
+                  <div className="border-t border-white/[0.06] pt-2">
+                    <table className="w-full text-[10px] font-mono"><thead className="text-muted text-[8px] uppercase tracking-wider"><tr><th className="text-left py-0.5">Pair</th><th className="text-right py-0.5">N</th><th className="text-right py-0.5">Profit%</th><th className="text-right py-0.5">Profit$</th></tr></thead>
+                    <tbody className="divide-y divide-white/[0.05]">
+                      {perfData.slice(0, 5).map(p => (
+                        <tr key={p.pair}><td className="py-0.5 text-white/80">{p.pair}</td><td className="py-0.5 text-right">{p.count ?? p.trades ?? 0}</td><td className={`py-0.5 text-right ${profitColor(p.profit_ratio)}`}>{p.profit_ratio >= 0 ? "+" : ""}{fmt(p.profit_ratio * 100, 1)}%</td><td className={`py-0.5 text-right font-bold ${profitColor(p.profit_abs)}`}>{fmtMoney(p.profit_abs)}</td></tr>
+                      ))}
+                    </tbody></table>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted text-xs">No backtest history available for this bot.</div>
+          )}
         </div>
       );
     }
 
-    /* --- Hyperopt --- */
+    /* ─── Hyperopt — matching HTML line 845-926 ─── */
     case "hyperopt": {
-      // Show rejection/timeout stats from FTStats as hyperopt-relevant metrics
       return (
         <div className="flex flex-col gap-4">
-          <div>
-            <div className={sectionTitle}>Hyperopt & Signal Quality</div>
-            {statsData ? (
-              <>
-                <div className="bg-surface l-bd rounded p-4 space-y-1 mb-4">
-                  <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-2">Signal & Order Metrics</div>
-                  <div className={row}>
-                    <span className={key}>Rejected Signals</span>
-                    <span className={`${val} ${statsData.rejected_signals > 0 ? "text-amber-500" : ""}`}>{statsData.rejected_signals}</span>
-                  </div>
-                  <div className={row}>
-                    <span className={key}>Timed Out Entries</span>
-                    <span className={val}>{statsData.timedout_entry_orders}</span>
-                  </div>
-                  <div className={row}>
-                    <span className={key}>Timed Out Exits</span>
-                    <span className={val}>{statsData.timedout_exit_orders}</span>
-                  </div>
-                  <div className={row}>
-                    <span className={key}>Cancelled Entries</span>
-                    <span className={val}>{statsData.canceled_trade_entries}</span>
-                  </div>
-                  <div className={row}>
-                    <span className={key}>Replaced Entry Orders</span>
-                    <span className={val}>{statsData.replaced_entry_orders}</span>
-                  </div>
-                  <div className={row}>
-                    <span className={key}>Avg Win Duration</span>
-                    <span className={val}>{statsData.durations.wins != null ? fmtDurSec(statsData.durations.wins) : "—"}</span>
-                  </div>
-                  <div className={row}>
-                    <span className={key}>Avg Loss Duration</span>
-                    <span className={val}>{statsData.durations.losses != null ? fmtDurSec(statsData.durations.losses) : "—"}</span>
-                  </div>
-                  {statsData.sharpe_ratio != null && (
-                    <div className={row}>
-                      <span className={key}>Sharpe Ratio</span>
-                      <span className={val}>{fmt(statsData.sharpe_ratio)}</span>
-                    </div>
-                  )}
-                  {statsData.sortino_ratio != null && (
-                    <div className={row}>
-                      <span className={key}>Sortino Ratio</span>
-                      <span className={val}>{fmt(statsData.sortino_ratio)}</span>
-                    </div>
-                  )}
-                  {statsData.calmar_ratio != null && (
-                    <div className={row}>
-                      <span className={key}>Calmar Ratio</span>
-                      <span className={val}>{fmt(statsData.calmar_ratio)}</span>
-                    </div>
-                  )}
+          <h3 className="section-title flex items-center gap-2">Hyperopt Runs <span className="text-white/30">({configData?.strategy ?? bot.name})</span></h3>
+          {statsData ? (
+            <div className="space-y-3">
+              {/* Opt card — expanded, matching HTML line 850-888 */}
+              <div className="bg-surface l-bd rounded p-3 hover:bg-white/[0.04] cursor-pointer transition-colors">
+                <div className="flex justify-between items-center mb-2.5">
+                  <span className="text-white font-mono text-[12px] font-bold">Signal & Order Quality</span>
+                  <span className="px-1.5 py-0.5 text-[9px] font-bold bg-up/12 text-up rounded">LIVE STATS</span>
                 </div>
-                <div className="text-[10px] text-muted/60 text-center">
-                  Run hyperopt from the Backtesting page to optimize strategy parameters.
+                <div className="grid grid-cols-6 gap-2 text-[11px] font-mono mb-2">
+                  <div><span className="text-muted block text-[9px]">Rejected Signals</span><span className={statsData.rejected_signals > 0 ? "text-amber-500 font-bold" : "text-white"}>{statsData.rejected_signals}</span></div>
+                  <div><span className="text-muted block text-[9px]">Timed Out Entry</span><span className="text-white">{statsData.timedout_entry_orders}</span></div>
+                  <div><span className="text-muted block text-[9px]">Timed Out Exit</span><span className="text-white">{statsData.timedout_exit_orders}</span></div>
+                  <div><span className="text-muted block text-[9px]">Cancelled Entry</span><span className="text-white">{statsData.canceled_trade_entries}</span></div>
+                  <div><span className="text-muted block text-[9px]">Replaced Entry</span><span className="text-white">{statsData.replaced_entry_orders}</span></div>
+                  <div><span className="text-muted block text-[9px]">Profit Factor</span><span className="text-white">{statsData.profit_factor != null ? fmt(statsData.profit_factor) : "—"}</span></div>
                 </div>
-              </>
-            ) : (
-              <div className="text-center py-8 text-muted text-xs space-y-2">
-                <p>No hyperopt history available for this bot.</p>
-                <p className="text-[10px] text-muted/60">Run hyperopt from the Backtesting page to see optimization results here.</p>
+                <div className="grid grid-cols-6 gap-2 text-[11px] font-mono mb-3">
+                  <div><span className="text-muted block text-[9px]">Win Rate</span><span className="text-white">{statsData.wins != null ? fmt((statsData.wins / Math.max(1, statsData.wins + statsData.losses)) * 100, 1) + "%" : "—"}</span></div>
+                  <div><span className="text-muted block text-[9px]">Avg Win Dur.</span><span className="text-white">{statsData.durations?.wins != null ? fmtDurSec(statsData.durations.wins) : "—"}</span></div>
+                  <div><span className="text-muted block text-[9px]">Avg Loss Dur.</span><span className="text-white">{statsData.durations?.losses != null ? fmtDurSec(statsData.durations.losses) : "—"}</span></div>
+                  <div><span className="text-muted block text-[9px]">Sharpe</span><span className="text-white">{statsData.sharpe_ratio != null ? fmt(statsData.sharpe_ratio) : "—"}</span></div>
+                  <div><span className="text-muted block text-[9px]">Sortino</span><span className="text-white">{statsData.sortino_ratio != null ? fmt(statsData.sortino_ratio) : "—"}</span></div>
+                  <div><span className="text-muted block text-[9px]">Calmar</span><span className="text-white">{statsData.calmar_ratio != null ? fmt(statsData.calmar_ratio) : "—"}</span></div>
+                </div>
+                {/* Stoploss / ROI params from config if available */}
+                {configData && (
+                  <div className="border-t border-white/[0.06] pt-2">
+                    <div className="text-[9px] text-muted uppercase tracking-wider mb-1.5 font-bold">Active Parameters</div>
+                    <div className="grid grid-cols-4 gap-2 text-[10px] font-mono">
+                      <div className="flex justify-between"><span className="text-muted">stoploss</span><span className="text-white">{configData.stoploss != null ? fmt(configData.stoploss * 100, 1) + "%" : "—"}</span></div>
+                      <div className="flex justify-between"><span className="text-muted">trailing</span><span className="text-white">{configData.trailing_stop ? "Yes" : "No"}</span></div>
+                      {configData.trailing_stop_positive != null && <div className="flex justify-between"><span className="text-muted">trail_pos</span><span className="text-white">{configData.trailing_stop_positive}</span></div>}
+                      {configData.trailing_stop_positive_offset != null && <div className="flex justify-between"><span className="text-muted">trail_off</span><span className="text-white">{configData.trailing_stop_positive_offset}</span></div>}
+                      {configData.minimal_roi && Object.entries(configData.minimal_roi).map(([k, v]) => (
+                        <div key={k} className="flex justify-between"><span className="text-muted">roi_{k}</span><span className="text-white">{String(v)}</span></div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted text-xs">No hyperopt history available for this bot.</div>
+          )}
         </div>
       );
     }
 
-    /* --- FreqAI --- */
+    /* ─── FreqAI — matching HTML line 928-986 ─── */
     case "freqai": {
       const freqaiConfig = configData?.freqai;
       return (
         <div className="flex flex-col gap-4">
-          <div>
-            <div className={sectionTitle}>FreqAI Model Status</div>
-            {freqaiConfig ? (
-              <>
-                <div className={row}>
-                  <span className={key}>Enabled</span>
-                  <span className={val}>{freqaiConfig.enabled ? "Yes" : "No"}</span>
+          <h3 className="section-title flex items-center gap-2">FreqAI Models <span className="text-white/30">({configData?.strategy ?? bot.name})</span></h3>
+          {freqaiConfig ? (
+            <>
+              {/* Active Model — matching HTML line 932-960 */}
+              <div className="bg-surface l-bd rounded p-3">
+                <div className="flex justify-between items-center mb-2.5">
+                  <span className="text-white font-mono text-[12px] font-bold">{freqaiConfig.identifier ?? "FreqAI Model"}</span>
+                  <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${freqaiConfig.enabled ? "bg-up/12 text-up" : "text-muted l-bd"}`}>{freqaiConfig.enabled ? "ACTIVE" : "DISABLED"}</span>
                 </div>
-                <div className={row}>
-                  <span className={key}>Identifier</span>
-                  <span className={val}>{freqaiConfig.identifier ?? "\u2014"}</span>
+                <div className="grid grid-cols-4 gap-2 text-[11px] font-mono mb-2">
+                  <div><span className="text-muted block text-[9px]">Features</span><span className="text-white">{freqaiConfig.feature_parameters?.include_timeframes?.length ?? "—"}</span></div>
+                  <div><span className="text-muted block text-[9px]">Training Period</span><span className="text-white">{freqaiConfig.train_period_days != null ? `${freqaiConfig.train_period_days}d` : "—"}</span></div>
+                  <div><span className="text-muted block text-[9px]">Backtest Period</span><span className="text-white">{freqaiConfig.backtest_period_days != null ? `${freqaiConfig.backtest_period_days}d` : "—"}</span></div>
+                  <div><span className="text-muted block text-[9px]">Live Retrain</span><span className="text-white">{freqaiConfig.live_retrain_hours != null ? `${freqaiConfig.live_retrain_hours}h` : "—"}</span></div>
                 </div>
-                <div className={row}>
-                  <span className={key}>Training Period</span>
-                  <span className={val}>{freqaiConfig.train_period_days != null ? `${freqaiConfig.train_period_days} days` : "\u2014"}</span>
+                <div className="grid grid-cols-4 gap-2 text-[11px] font-mono mb-3">
+                  <div><span className="text-muted block text-[9px]">Continual Learning</span><span className="text-white">{freqaiConfig.continual_learning ? "Yes" : "No"}</span></div>
+                  {freqaiConfig.feature_parameters?.include_timeframes && (
+                    <div className="col-span-3"><span className="text-muted block text-[9px]">Timeframes</span><span className="text-white">{freqaiConfig.feature_parameters.include_timeframes.join(", ")}</span></div>
+                  )}
                 </div>
-                <div className={row}>
-                  <span className={key}>Backtest Period</span>
-                  <span className={val}>{freqaiConfig.backtest_period_days != null ? `${freqaiConfig.backtest_period_days} days` : "\u2014"}</span>
-                </div>
-                <div className={row}>
-                  <span className={key}>Live Retrain</span>
-                  <span className={val}>{freqaiConfig.live_retrain_hours != null ? `${freqaiConfig.live_retrain_hours}h` : "\u2014"}</span>
-                </div>
-                <div className={row}>
-                  <span className={key}>Feature Count</span>
-                  <span className={val}>{freqaiConfig.feature_parameters?.include_timeframes?.length ?? "\u2014"}</span>
-                </div>
-                <div className={row}>
-                  <span className={key}>Continual Learning</span>
-                  <span className={val}>{freqaiConfig.continual_learning ? "Yes" : "No"}</span>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-8 text-muted text-xs space-y-2">
-                <p>FreqAI is not configured for this bot.</p>
-                <p className="text-[10px] text-muted/60">Enable FreqAI in the bot config to see model information here.</p>
+                {/* Feature parameters as key-value grid */}
+                {freqaiConfig.feature_parameters && (
+                  <div className="border-t border-white/[0.06] pt-2">
+                    <div className="text-[9px] text-muted uppercase tracking-wider mb-1.5 font-bold">Feature Parameters</div>
+                    <div className="grid grid-cols-4 gap-2 text-[10px] font-mono">
+                      {freqaiConfig.feature_parameters.include_corr_pairlist && (
+                        <div className="col-span-4 flex justify-between"><span className="text-muted">corr_pairs</span><span className="text-white">{freqaiConfig.feature_parameters.include_corr_pairlist.join(", ")}</span></div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          ) : (
+            <div className="text-center py-8 text-muted text-xs">FreqAI is not configured for this bot.</div>
+          )}
         </div>
       );
     }

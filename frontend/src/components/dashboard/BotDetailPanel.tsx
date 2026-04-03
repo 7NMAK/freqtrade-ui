@@ -177,7 +177,9 @@ export default function BotDetailPanel({
   onStop,
   onDrain,
   onEdit,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onDelete,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onDuplicate,
   onPause,
   onReload,

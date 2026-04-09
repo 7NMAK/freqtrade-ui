@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import AppShell from "@/components/layout/AppShell";
+import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
 import Tooltip from "@/components/ui/Tooltip";
 import { TOOLTIPS } from "@/lib/tooltips";
@@ -583,25 +584,6 @@ export default function FreqAIPage() {
     <AppShell title="FreqAI Configuration">
       <div className="p-5">
 
-      {/* Bot selector */}
-      <div className="flex items-center gap-3 mb-4 p-3 px-4 bg-muted/50 border border-border rounded-card text-xs">
-        <span className="text-muted-foreground uppercase tracking-wide font-semibold shrink-0">Target Bot</span>
-        <select
-          value={selectedBotId}
-          onChange={(e) => setSelectedBotId(e.target.value)}
-          disabled={configLoading}
-          className="bg-card border border-border rounded-btn px-3 py-1.5 text-xs text-muted-foreground outline-none focus:border-primary cursor-pointer min-w-[200px] disabled:opacity-50"
-        >
-          <option value="">Select bot...</option>
-          {bots.map((b) => (
-            <option key={b.id} value={b.id}>{b.name} ({b.is_dry_run ? "PAPER" : "LIVE"})</option>
-          ))}
-        </select>
-        {configLoading && (
-          <span className="text-xs text-primary animate-pulse">Loading config...</span>
-        )}
-      </div>
-
       {/* No bots available */}
       {!botsLoading && bots.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -621,30 +603,61 @@ export default function FreqAIPage() {
         </div>
       )}
 
-      {/* Main content - hidden when no bots or loading */}
-      {!configLoading && bots.length > 0 && <>
-
-      {/* ═══ MASTER SWITCH ═══ */}
-      <div className="flex items-center gap-3.5 p-4 px-[18px] bg-gradient-to-r from-accent/[0.06] to-purple/[0.04] border border-primary/20 rounded-card mb-6">
-        <div className="text-2xl">&#129504;</div>
-        <div className="flex-1">
-          <div className="text-sm font-bold text-foreground mb-0.5">FreqAI Engine</div>
-          <div className="text-xs text-muted-foreground">freqai.enabled &mdash; Enable machine learning predictions for all configured bots</div>
+      {/* Main two-column layout */}
+      {!configLoading && bots.length > 0 && (
+      <div className="grid grid-cols-[380px_1fr] gap-5 items-start">
+        {/* LEFT: Bot + Engine + Nav */}
+        <div className="flex flex-col gap-4 sticky top-0">
+          <Card>
+            <CardHeader title="Target Bot" icon="🤖" />
+            <CardBody>
+              <select value={selectedBotId} onChange={(e) => setSelectedBotId(e.target.value)} disabled={configLoading}
+                className="w-full bg-card border border-border rounded-btn px-3 py-2 text-xs text-muted-foreground outline-none focus:border-primary cursor-pointer disabled:opacity-50">
+                <option value="">Select bot...</option>
+                {bots.map((b) => <option key={b.id} value={b.id}>{b.name} ({b.is_dry_run ? "PAPER" : "LIVE"})</option>)}
+              </select>
+            </CardBody>
+          </Card>
+          <Card>
+            <CardHeader title="FreqAI Engine" icon="🧠" />
+            <CardBody>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs font-semibold text-foreground mb-0.5">freqai.enabled</div>
+                  <div className="text-[10px] text-muted-foreground">Enable ML predictions for all bots</div>
+                </div>
+                <button type="button" onClick={() => setFreqaiEnabled(!freqaiEnabled)}
+                  className={`relative w-12 h-[26px] rounded-[13px] border cursor-pointer transition-all flex-shrink-0 ${freqaiEnabled ? "bg-emerald-500/10 border-emerald-500" : "bg-muted border-border"}`}>
+                  <span className={`absolute top-[2px] w-5 h-5 rounded-full transition-all ${freqaiEnabled ? "bg-green left-6" : "bg-text-3 left-[2px]"}`} />
+                </button>
+              </div>
+            </CardBody>
+          </Card>
+          <Card>
+            <CardHeader title="Configuration Sections" icon="📋" />
+            <CardBody className="p-0 py-1">
+              {[
+                { id: "core", icon: "⚙️", label: "Core Configuration", tag: "§24" },
+                { id: "features", icon: "📐", label: "Feature Parameters", tag: "§24" },
+                { id: "engineering", icon: "🔧", label: "Feature Engineering", tag: "§24" },
+                { id: "rl", icon: "🎮", label: "Reinforcement Learning", tag: "§25" },
+                { id: "outlier", icon: "🔬", label: "Data Processing", tag: "§26" },
+                { id: "pytorch", icon: "🔥", label: "PyTorch Config", tag: "§24" },
+              ].map((s) => (
+                <button key={s.id} type="button"
+                  onClick={() => { if (collapsed[s.id]) toggle(s.id); document.getElementById(s.id)?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-muted-foreground hover:bg-white/[0.03] hover:text-foreground transition-all border-b border-white/[0.05] last:border-0 cursor-pointer">
+                  <span className="text-sm">{s.icon}</span>
+                  <span className="flex-1 text-left font-medium">{s.label}</span>
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-primary/[.10] text-primary">{s.tag}</span>
+                </button>
+              ))}
+            </CardBody>
+          </Card>
         </div>
-        <button
-          type="button"
-          onClick={() => setFreqaiEnabled(!freqaiEnabled)}
-          className={`relative w-12 h-[26px] rounded-[13px] border cursor-pointer transition-all flex-shrink-0 ${
-            freqaiEnabled ? "bg-emerald-500/10 border-emerald-500" : "bg-muted border-border"
-          }`}
-        >
-          <span
-            className={`absolute top-[2px] w-5 h-5 rounded-full transition-all ${
-              freqaiEnabled ? "bg-green left-6" : "bg-text-3 left-[2px]"
-            }`}
-          />
-        </button>
-      </div>
+
+        {/* RIGHT: Section content */}
+        <div className="flex flex-col">
 
       {/* ═══ SECTION: Core Configuration (§24) ═══ */}
       <Section id="core" icon="&#9881;&#65039;" title="Core Configuration" tag="§24" collapsed={!!collapsed.core} onToggle={() => toggle("core")}>
@@ -1090,7 +1103,8 @@ export default function FreqAIPage() {
         </button>
       </div>
 
-      </>}
+        </div>{/* end RIGHT column */}
+      </div>)}{/* end grid / main content */}
 
       </div>
     </AppShell>

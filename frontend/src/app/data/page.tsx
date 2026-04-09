@@ -607,45 +607,30 @@ export default function DataManagementPage() {
     <AppShell title="Data Management">
       <div className="p-5">
 
-      {/* ── Bot Selector ── */}
-      <div className="mb-5 flex items-center gap-3">
-        <Tooltip content={"Select the bot instance to manage data for"} configKey="bot_id">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Bot</label>
-        </Tooltip>
-        <select
-          className="bg-card border border-border rounded-btn py-2 px-3 text-xs text-muted-foreground outline-none focus:border-primary transition-colors appearance-none min-w-[200px]"
-          value={selectedBotId}
-          onChange={(e) => setSelectedBotId(e.target.value)}
-        >
-          {bots.length === 0 && <option value="">No bots available</option>}
-          {bots.map((b) => (
-            <option key={b.id} value={String(b.id)}>
-              {b.name} (ID: {b.id})
-            </option>
-          ))}
-        </select>
-        {!botId && bots.length === 0 && (
-          <span className="text-xs text-amber-500">Register a bot in Settings to use data management</span>
-        )}
-      </div>
+      <div className="grid grid-cols-[380px_1fr] gap-5 items-start">
+        {/* LEFT: Download Configuration */}
+        <div className="flex flex-col gap-4">
+          <Card>
+            <CardHeader title="Select Bot" icon="🤖" />
+            <CardBody>
+              <Tooltip content={"Select the bot instance to manage data for"} configKey="bot_id">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Bot</label>
+              </Tooltip>
+              <select className="w-full bg-card border border-border rounded-btn py-2 px-3 text-xs text-muted-foreground outline-none focus:border-primary transition-colors appearance-none" value={selectedBotId} onChange={(e) => setSelectedBotId(e.target.value)}>
+                {bots.length === 0 && <option value="">No bots available</option>}
+                {bots.map((b) => <option key={b.id} value={String(b.id)}>{b.name} (ID: {b.id})</option>)}
+              </select>
+              {!botId && bots.length === 0 && <span className="text-xs text-amber-500 mt-1 block">Register a bot in Settings first</span>}
+            </CardBody>
+          </Card>
 
-      {/* ===============================================
-          SECTION 1: DATA DOWNLOAD (S12)
-          CLI: freqtrade download-data
-          =============================================== */}
-
-      <SectionTitle icon="📥">Data Download</SectionTitle>
-      <SectionRef>
-        &sect;12 -- freqtrade download-data -- Download OHLCV &amp; ticker data from exchanges
-      </SectionRef>
-
-      <Card className="mb-6">
-        <CardHeader
-          title="Download Configuration"
-          icon="⚙️"
-          action={<span className="text-xs text-muted-foreground">CLI: freqtrade download-data [args]</span>}
-        />
-        <CardBody>
+          <Card className="mb-0">
+            <CardHeader
+              title="Download Configuration"
+              icon="⚙️"
+              action={<span className="text-[10px] text-muted-foreground font-mono">freqtrade download-data</span>}
+            />
+            <CardBody>
           {/* Row 1: Pairs + Exchange */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
             <div className="flex flex-col gap-1.5">
@@ -958,22 +943,19 @@ export default function DataManagementPage() {
           <div className="mt-3">
             <LogArea lines={dlLog} />
           </div>
-        </CardBody>
-      </Card>
+            </CardBody>
+          </Card>
+        </div>{/* end LEFT column */}
 
-
-      {/* ===============================================
-          SECTION 2: UTILITY COMMANDS (S18)
-          =============================================== */}
-
-      <div className="mt-7">
-        <SectionTitle icon="🔧">Utility Commands</SectionTitle>
-        <SectionRef>
-          &sect;18 -- FreqTrade utility sub-commands -- list-strategies, list-exchanges, list-pairs, list-data, convert-data, etc.
-        </SectionRef>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
+        {/* RIGHT: Utility Commands */}
+        <div className="flex flex-col gap-4">
+          <div>
+            <SectionTitle icon="🔧">Utility Commands</SectionTitle>
+            <SectionRef>
+              &sect;18 -- FreqTrade utility sub-commands -- list-strategies, list-exchanges, list-pairs, list-data, convert-data, etc.
+            </SectionRef>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
         {/* ── LIST STRATEGIES ── */}
         <UtilCard
           icon="🎯"
@@ -1576,7 +1558,9 @@ export default function DataManagementPage() {
             </div>
           )}
         </UtilCard>
-      </div>
+          </div>{/* end utility grid */}
+        </div>{/* end RIGHT column */}
+      </div>{/* end main grid */}
       </div>
     </AppShell>
   );

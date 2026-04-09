@@ -45,6 +45,9 @@ import {
   botPairCandles,
   botLockAdd,
   botDeleteLock,
+  botBlacklist,
+  botBlacklistAdd,
+  botBlacklistDelete,
 } from "@/lib/api";
 import type {
   Bot,
@@ -119,6 +122,7 @@ export default function DashboardPage() {
   const [sparklines, setSparklines] = useState<Record<number, number[]>>({});
   const [botBalances, setBotBalances] = useState<Record<string, number>>({});
   const [dailyData, setDailyData] = useState<FTDailyItem[]>([]);
+  const [blacklistData, setBlacklistData] = useState<{ blacklist: string[]; blacklist_expanded: string[] } | null>(null);
 
   // Real-time WS spread data for Whitelist Matrix
   const tradeBotIdsRaw = useMemo(() => bots.filter(b => b.status === "running").map(b => b.id), [bots]);
@@ -562,6 +566,15 @@ export default function DashboardPage() {
         setWhitelistBotMap(mergedWhitelistPairs);
         // Build merged locks from all bots
         setLocksData(allLockEntries.length > 0 ? { lock_count: allLockEntries.length, locks: allLockEntries } : null);
+
+        // Load blacklist from first running bot
+        const firstRunning = botList.find((b) => b.status === "running");
+        if (firstRunning) {
+          try {
+            const bl = await botBlacklist(firstRunning.id);
+            setBlacklistData(bl);
+          } catch { /* non-critical */ }
+        }
 
         // Compute closed P&L % from per-bot profit data
         let closedPctSum = 0;
@@ -1101,6 +1114,36 @@ export default function DashboardPage() {
     }
   }
 
+  async function handleAddBlacklist(pair: string) {
+    const runningBot = bots.find((b) => b.status === "running");
+    if (!runningBot) { toast.error("No running bot to blacklist pair."); return; }
+    const loadId = toast.loading(`Blacklisting ${pair}...`);
+    try {
+      const result = await botBlacklistAdd(runningBot.id, [pair]);
+      toast.dismiss(loadId);
+      if (result.errors?.length) toast.error(result.errors.join(", "));
+      else { toast.success(`${pair} added to blacklist.`); setBlacklistData(result); }
+    } catch (err) {
+      toast.dismiss(loadId);
+      toast.error(err instanceof Error ? err.message : "Blacklist add failed.");
+    }
+  }
+
+  async function handleDeleteBlacklist(pair: string) {
+    const runningBot = bots.find((b) => b.status === "running");
+    if (!runningBot) { toast.error("No running bot to modify blacklist."); return; }
+    const loadId = toast.loading(`Removing ${pair} from blacklist...`);
+    try {
+      const result = await botBlacklistDelete(runningBot.id, pair);
+      toast.dismiss(loadId);
+      toast.success(`${pair} removed from blacklist.`);
+      setBlacklistData(result);
+    } catch (err) {
+      toast.dismiss(loadId);
+      toast.error(err instanceof Error ? err.message : "Blacklist remove failed.");
+    }
+  }
+
   // ── Computed values (CLOSED + OPEN combined for live KPI view) ───────
 
   const selectedBot = bots.find((b) => b.id === selectedBotId) ?? null;
@@ -1252,6 +1295,9 @@ export default function DashboardPage() {
                   handleForceEnter({ _bot_id: bot.id, pair, is_short: false } as FTTrade);
                 }
               }}
+              blacklistData={blacklistData}
+              onAddBlacklist={handleAddBlacklist}
+              onDeleteBlacklist={handleDeleteBlacklist}
             />
           </div>
 

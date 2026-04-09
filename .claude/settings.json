@@ -44,7 +44,8 @@
       "Bash(lsof -ti:3000)",
       "Bash(echo \"PID: $!\")",
       "Bash(ps -p 75350 -o pid,command=)",
-      "Bash(./deploy.sh --local-push \"feat: fleet grid cards, profit chart fixes, total equity fix\")"
+      "Bash(./deploy.sh --local-push \"feat: fleet grid cards, profit chart fixes, total equity fix\")",
+      "Bash(./deploy.sh --local-push \"fix\\(fleet\\): replace card grid with sortable horizontal table\")"
     ],
     "additionalDirectories": [
       "/tmp"

@@ -2456,9 +2456,9 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
     <AppShell title="Strategy Builder">
       <div className="flex h-full">
         {/* Left: Wizard */}
-        <div className="flex-1 flex flex-col overflow-hidden border-r border-border">
+        <div className="flex-1 flex flex-col overflow-hidden border-r border-white/5">
           {/* Steps bar */}
-          <div className="flex px-6 py-4 border-b border-border bg-card gap-1 flex-shrink-0 items-center overflow-x-auto">
+          <div className="flex px-6 py-4 border-b border-white/5 bg-card/60 backdrop-blur-md gap-1 flex-shrink-0 items-center overflow-x-auto">
             {steps.map((step, i) => (
               <div key={step.num} className="flex items-center gap-1">
                 {i > 0 && <div className="w-4 h-px bg-border flex-shrink-0" />}
@@ -2493,7 +2493,7 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
           <div className="flex-1 overflow-y-auto p-7">{stepPanels[currentStep]()}</div>
 
           {/* Wizard footer */}
-          <div className="px-6 py-3.5 border-t border-border bg-card flex-col flex-shrink-0">
+          <div className="px-6 py-3.5 border-t border-white/5 bg-card/60 backdrop-blur-md flex-col flex-shrink-0">
             {/* Version selector and changelog */}
             {savedStrategyId && versions.length > 0 && (
               <div className="mb-3 flex items-center gap-4 pb-3 border-b border-border">
@@ -2612,8 +2612,8 @@ ${leverageMethodBlock}${callbackBlocks.join("")}
         </div>
 
         {/* Right: Code Panel (Visual preview / Monaco editor) */}
-        <div className="w-[420px] flex flex-col bg-card flex-shrink-0">
-          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+        <div className="w-[380px] flex flex-col bg-card/60 backdrop-blur-md flex-shrink-0">
+          <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="flex bg-muted rounded p-0.5">
                 <button type="button"

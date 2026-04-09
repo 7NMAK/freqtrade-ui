@@ -390,73 +390,83 @@ export default function AnalyticsPage() {
         <div className="py-16 text-center text-sm text-muted-foreground animate-pulse">Loading bots...</div>
       )}
 
-      {/* Bot selector bar */}
       {bots.length > 0 && (
-        <div className="flex items-center gap-3 mb-4 p-3 px-4 bg-muted/50 border border-border rounded-card text-xs">
-          <span className="text-muted-foreground uppercase tracking-wide font-semibold shrink-0">Bot</span>
-          <select
-            value={selectedBotId}
-            onChange={(e) => setSelectedBotId(e.target.value)}
-            className="bg-card border border-border rounded-btn px-3 py-1.5 text-xs text-muted-foreground outline-none focus:border-primary cursor-pointer min-w-[200px]"
-          >
-            {bots.map((b) => (
-              <option key={b.id} value={b.id}>{b.name}</option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={loadCandles}
-            className="text-xs px-3 py-1.5 rounded-btn border border-border bg-muted text-muted-foreground hover:border-ring transition-colors cursor-pointer"
-          >
-            Refresh Candles
-          </button>
+      <div className="grid grid-cols-[380px_1fr] gap-5 items-start">
+        {/* LEFT: Controls */}
+        <div className="flex flex-col gap-4">
+          <Card>
+            <CardHeader title="Chart Controls" icon="📊" />
+            <CardBody className="flex flex-col gap-4">
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Bot</label>
+                <select value={selectedBotId} onChange={(e) => setSelectedBotId(e.target.value)} className="w-full bg-card border border-border rounded-btn px-3 py-2 text-xs text-muted-foreground outline-none focus:border-primary cursor-pointer">
+                  {bots.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                </select>
+                <button type="button" onClick={loadCandles} className="mt-2 w-full text-xs px-3 py-1.5 rounded-btn border border-border bg-muted text-muted-foreground hover:border-ring transition-colors cursor-pointer">Refresh Candles</button>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Pair</label>
+                <select value={selectedPair} onChange={(e) => setSelectedPair(e.target.value)} className="w-full bg-card border border-border rounded-btn px-3 py-2 text-xs text-muted-foreground outline-none focus:border-primary cursor-pointer">
+                  {availablePairs.map((p) => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Timeframe</label>
+                <div className="flex flex-wrap gap-1">
+                  {timeframes.map((tf) => (
+                    <button type="button" key={tf} onClick={() => setSelectedTf(tf)} className={`px-2.5 py-1 text-xs font-medium rounded-btn cursor-pointer border transition-all ${selectedTf === tf ? "bg-primary text-white border-primary" : "text-muted-foreground border-border hover:border-ring"}`}>{tf}</button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <Tooltip content={TOOLTIPS.plot_config_main_plot?.description || "Indicators displayed on the main chart"} configKey={TOOLTIPS.plot_config_main_plot?.configKey}>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Overlays</label>
+                </Tooltip>
+                <label className="flex items-center gap-1.5 cursor-pointer text-xs text-muted-foreground">
+                  <input type="checkbox" checked={showTema} onChange={() => setShowTema(!showTema)} className="accent-accent w-[13px] h-[13px] cursor-pointer" />
+                  <span className="inline-block w-2.5 h-[3px] rounded-sm bg-amber" /> TEMA(20)
+                </label>
+              </div>
+              <div>
+                <Tooltip content={TOOLTIPS.plot_config_subplots?.description || "Additional subcharts below the main chart"} configKey={TOOLTIPS.plot_config_subplots?.configKey}>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Subchart</label>
+                </Tooltip>
+                <div className="flex gap-1">
+                  {(["RSI", "MACD", "Volume"] as const).map((tab) => (
+                    <button type="button" key={tab} onClick={() => setActiveSubchart(tab)} className={`flex-1 px-2 py-1.5 text-xs font-semibold rounded-btn cursor-pointer border transition-all ${activeSubchart === tab ? "bg-primary/[.12] text-primary border-primary/30" : "text-muted-foreground border-border hover:border-ring"}`}>{tab}</button>
+                  ))}
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+          <Card>
+            <CardHeader title="Portfolio Stats" icon="📈" />
+            <CardBody>
+              <div className="grid grid-cols-2 gap-3">
+                {analysisStatsLive.map((s) => (
+                  <div key={s.label} className="bg-white/[0.03] border border-white/[0.06] rounded-lg p-3">
+                    <div className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1">{s.label}</div>
+                    <div className={`text-[13px] font-bold font-mono leading-none ${s.valueClass ?? "text-foreground"}`}>{s.value}</div>
+                    {s.sub && <div className={`text-[9px] mt-0.5 ${s.subClass}`}>{s.sub}</div>}
+                  </div>
+                ))}
+              </div>
+            </CardBody>
+          </Card>
         </div>
-      )}
-      {/* ════════════════════════════════════════════ */}
-      {/* SECTION: PLOTTING & VISUALIZATION (ss19)    */}
-      {/* ════════════════════════════════════════════ */}
-      <div className="flex items-center gap-3.5 mb-5 pb-2.5 border-b border-border">
-        <span className="text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest bg-primary/[.12] text-primary">
-          &sect;19
-        </span>
-        <span className="text-[15px] font-bold text-foreground">Plotting &amp; Visualization</span>
-      </div>
+
+        {/* RIGHT: Charts */}
+        <div className="flex flex-col gap-5">
+          <div className="flex items-center gap-3.5 pb-2.5 border-b border-border">
+            <span className="text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest bg-primary/[.12] text-primary">&sect;19</span>
+            <span className="text-[15px] font-bold text-foreground">Plotting &amp; Visualization</span>
+          </div>
 
       {/* Candlestick Chart Card */}
-      <Card className="mb-6">
+      <Card className="mb-0">
         <CardHeader
           title="Candlestick Chart"
           icon={"\uD83D\uDCC9"}
-          action={
-            <div className="flex items-center gap-2.5">
-              {/* ISSUE 8 fix: Dynamic pairs from whitelist */}
-              <select
-                value={selectedPair}
-                onChange={(e) => setSelectedPair(e.target.value)}
-                className="bg-card border border-border rounded-md px-3 py-1.5 text-xs text-muted-foreground outline-none focus:border-primary cursor-pointer"
-              >
-                {availablePairs.map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
-              <div className="flex gap-0.5 bg-card border border-border rounded-md p-0.5">
-                {timeframes.map((tf) => (
-                  <button
-                    type="button"
-                    key={tf}
-                    onClick={() => setSelectedTf(tf)}
-                    className={`px-2.5 py-1 text-xs font-medium rounded cursor-pointer transition-all ${
-                      selectedTf === tf
-                        ? "bg-primary text-white"
-                        : "text-muted-foreground hover:text-muted-foreground"
-                    }`}
-                  >
-                    {tf}
-                  </button>
-                ))}
-              </div>
-            </div>
-          }
         />
 
         {/* Candlestick Area */}
@@ -526,47 +536,6 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* ISSUE 2 fix: SAR removed — only real TEMA remains */}
-        <div className="px-[18px] py-2.5 border-t border-border flex items-center justify-between">
-          <Tooltip
-            content={TOOLTIPS.plot_config_main_plot?.description || "Indicators displayed on the main chart"}
-            configKey={TOOLTIPS.plot_config_main_plot?.configKey}
-          >
-            <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Overlays</span>
-          </Tooltip>
-          <div className="flex items-center gap-3.5">
-            <label className="flex items-center gap-1.5 cursor-pointer text-xs text-muted-foreground">
-              <input type="checkbox" checked={showTema} onChange={() => setShowTema(!showTema)} className="accent-accent w-[13px] h-[13px] cursor-pointer" />
-              <span className="inline-block w-2.5 h-[3px] rounded-sm bg-amber" /> TEMA(20)
-            </label>
-          </div>
-        </div>
-
-        {/* Subchart tabs */}
-        <div className="flex gap-0 border-b border-border items-center">
-          <Tooltip
-            content={TOOLTIPS.plot_config_subplots?.description || "Additional subcharts below the main chart"}
-            configKey={TOOLTIPS.plot_config_subplots?.configKey}
-          >
-            <span className="px-[18px] py-2.5 text-xs text-muted-foreground font-semibold uppercase tracking-wider">Subcharts</span>
-          </Tooltip>
-          <div className="flex gap-0 flex-1">
-            {(["RSI", "MACD", "Volume"] as const).map((tab) => (
-              <button
-                type="button"
-                key={tab}
-                onClick={() => setActiveSubchart(tab)}
-                className={`px-[18px] py-2.5 text-xs font-semibold cursor-pointer border-b-2 transition-all ${
-                  activeSubchart === tab
-                    ? "text-primary border-primary"
-                    : "text-muted-foreground border-transparent hover:text-muted-foreground"
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Subchart area */}
         <div className="h-[120px] relative pl-[40px] pr-[10px] pt-3 pb-2 flex items-end gap-0.5">
@@ -747,16 +716,6 @@ export default function AnalyticsPage() {
         <span className="text-[15px] font-bold text-foreground">Data Analysis</span>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-4 gap-3.5 mb-6">
-        {analysisStatsLive.map((s) => (
-          <div key={s.label} className="bg-card border border-border rounded-lg p-3.5 px-4">
-            <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1.5">{s.label}</div>
-            <div className={`text-lg font-bold text-foreground tracking-tight ${s.valueClass ?? ""}`}>{s.value}</div>
-            <div className={`text-xs mt-0.5 font-medium ${s.subClass}`}>{s.sub}</div>
-          </div>
-        ))}
-      </div>
 
       {/* ISSUE 7 fix: Renamed to "Daily Portfolio P&L" — honest labeling */}
       <Card className="mb-6">
@@ -799,6 +758,9 @@ export default function AnalyticsPage() {
       {/* ISSUE 5 + 6 fix: Orderflow and Notebooks sections removed — they were 100% stubs */}
       {/* Orderflow requires real exchange WebSocket integration (use_public_trades) */}
       {/* Notebooks require a Jupyter listing API that doesn't exist */}
+
+        </div>{/* end RIGHT column */}
+      </div>)}{/* end grid / bots > 0 */}
 
       </div>
     </AppShell>

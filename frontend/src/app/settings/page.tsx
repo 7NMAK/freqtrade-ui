@@ -2527,7 +2527,7 @@ export default function SettingsPage() {
 
       <div className="flex h-[calc(100vh-var(--header-h,56px)-120px)] -mx-8 -mt-2">
         {/* Vertical Tab Bar */}
-        <div className="w-[200px] bg-card border-r border-border flex-shrink-0 py-4 overflow-y-auto">
+        <div className="w-[380px] bg-card/60 backdrop-blur-md border-r border-white/5 flex-shrink-0 py-4 overflow-y-auto">
           {TABS.map((tab) => (
             <button
               type="button"
@@ -2535,8 +2535,8 @@ export default function SettingsPage() {
               onClick={() => setActiveTab(tab.id)}
               className={`w-full flex items-center gap-2.5 px-5 py-2.5 cursor-pointer transition-all text-xs font-medium border-l-[3px] ${
                 activeTab === tab.id
-                  ? "bg-primary/[.12] text-primary border-l-accent"
-                  : "text-muted-foreground border-l-transparent hover:bg-muted hover:text-muted-foreground"
+                  ? "bg-white/[0.06] text-primary border-l-accent"
+                  : "text-muted-foreground border-l-transparent hover:bg-white/[0.03] hover:text-foreground"
               }`}
             >
               <span className="text-sm w-[18px] text-center">{tab.icon}</span>

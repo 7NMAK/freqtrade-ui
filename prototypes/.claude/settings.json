@@ -4,10 +4,23 @@
       "Read(//Users/novakus/Documents/BOT/frontend/src/app/dashboard/**)",
       "Read(//Users/novakus/Documents/BOT/frontend/src/components/dashboard/**)",
       "Read(//Users/novakus/Documents/BOT/frontend/src/lib/**)",
-      "Read(//Users/novakus/Documents/BOT/frontend/src/types/**)"
+      "Read(//Users/novakus/Documents/BOT/frontend/src/types/**)",
+      "Read(//Users/novakus/Documents/BOT/frontend/src/app/backtesting/**)",
+      "Read(//Users/novakus/Documents/BOT/frontend/src/components/ui/**)",
+      "Read(//Users/novakus/Documents/BOT/frontend/src/app/**)",
+      "Read(//^export default function|^function.*Page.*\\\\\\(/{flag=1} flag{print; if\\(/^}$/**)",
+      "Read(//Users/novakus/Documents/BOT/frontend/src/**)",
+      "Read(//Users/novakus/Documents/BOT/frontend/**)",
+      "Bash(npx tsc:*)"
     ],
     "additionalDirectories": [
-      "/Users/novakus/Documents/BOT/frontend/src/components/dashboard"
+      "/Users/novakus/Documents/BOT/frontend/src/components/dashboard",
+      "/Users/novakus/Documents/BOT/frontend/src/app/dashboard",
+      "/Users/novakus/Documents/BOT/frontend/src/app/settings",
+      "/Users/novakus/Documents/BOT/frontend/src/app/builder",
+      "/Users/novakus/Documents/BOT/frontend/src/app/analytics",
+      "/Users/novakus/Documents/BOT/frontend/src/app/data",
+      "/Users/novakus/Documents/BOT/frontend/src/app/freqai"
     ]
   }
 }

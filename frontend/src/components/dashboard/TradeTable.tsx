@@ -313,16 +313,6 @@ function useSortable<T>(data: T[], defaultKey?: string) {
 
 // ── Fleet Cards ───────────────────────────────────────────────────────────────
 
-/** One small stat tile — matches the StatBox pattern from the Backtest page */
-function BotStat({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
-  return (
-    <div className="bg-white/[0.03] border border-white/[0.06] rounded p-2">
-      <div className="text-[9px] text-muted uppercase tracking-wider mb-1 truncate">{label}</div>
-      <div className={`text-[13px] font-bold font-mono leading-none ${color ?? "text-foreground"}`}>{value}</div>
-      {sub && <div className="text-[9px] text-muted mt-0.5 truncate">{sub}</div>}
-    </div>
-  );
-}
 
 type FleetSortKey = "name" | "pnl" | "pnlPct" | "openPnl" | "winRate" | "trades" | "closed" | "open" | "balance" | "maxDd" | "avgDur";
 

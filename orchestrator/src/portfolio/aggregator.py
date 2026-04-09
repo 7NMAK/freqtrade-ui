@@ -2,9 +2,10 @@
 Portfolio Aggregator — cross-bot balance and profit aggregation.
 
 KEY DESIGN PRINCIPLE:
-  - P&L, Win Rate, trade counts → ALL bots (running + stopped)
-  - Balance, Open Trades → RUNNING bots only (stopped bots have no API)
-  - Stopped bots use cached_profit snapshot from last time they were running
+  - P&L, Win Rate, trade counts → ALL bots (running + stopped via cached_profit)
+  - Balance → ALL bots (running: live API; stopped: cached_balance from DB)
+  - Open Trades → RUNNING bots only (stopped bots can't have open trades)
+  - Stopped bots use cached_profit / cached_balance snapshots from last time they ran
   - Cache is updated every poll cycle while bot is running
 """
 import asyncio
@@ -31,10 +32,16 @@ class PortfolioAggregator:
         self._bot_manager = bot_manager
 
     def _trading_bots(self, bots: list[BotInstance]) -> list[BotInstance]:
-        """Filter out utility bots and deleted bots."""
+        """Filter out utility bots, deleted bots, and webserver-mode bots.
+
+        Matches the same filter as GET /api/bots (Fleet Manager):
+          is_utility=false AND is_deleted=false AND ft_mode != 'webserver'
+        """
         return [
             b for b in bots
-            if not getattr(b, "is_utility", False) and not b.is_deleted
+            if not getattr(b, "is_utility", False)
+            and not b.is_deleted
+            and getattr(b, "ft_mode", "trade") != "webserver"
         ]
 
     async def _update_cache(self, db: AsyncSession, bot_id: int, profit: dict | None = None, balance: dict | None = None) -> None:
@@ -123,12 +130,15 @@ class PortfolioAggregator:
 
     async def get_combined_balance(self, db: AsyncSession) -> dict:
         """
-        Aggregate balance from RUNNING bots only.
-        (Stopped bots don't hold capital in FT.)
+        Aggregate balance across ALL trading bots (mirrors get_combined_profit).
+        Running bots: live FT API + cache update.
+        Stopped bots: cached_balance from DB (last known balance when they stopped).
+        This ensures Total Equity and P&L move together — both include stopped bots.
         """
         bots = await self._bot_manager.get_all_bots(db)
         trading = self._trading_bots(bots)
         running = [b for b in trading if b.status == BotStatus.RUNNING]
+        stopped = [b for b in trading if b.status != BotStatus.RUNNING]
 
         per_bot: dict[str, Any] = {}
         total_value = 0.0
@@ -145,8 +155,17 @@ class PortfolioAggregator:
             if balance is not None:
                 per_bot[bot.name] = balance
                 total_value += float(balance.get("total", 0))
-                # Cache it (inline await ensures cache is written before response)
                 await self._update_cache(db, bot.id, balance=balance)
+            elif bot.cached_balance:
+                # API failed but we have cache — use it as fallback
+                per_bot[bot.name] = {**bot.cached_balance, "_cached": True}
+                total_value += float(bot.cached_balance.get("total", 0))
+
+        # Include stopped bots via cached balance (same pattern as get_combined_profit)
+        for bot in stopped:
+            if bot.cached_balance:
+                per_bot[bot.name] = {**bot.cached_balance, "_cached": True, "_stopped": True}
+                total_value += float(bot.cached_balance.get("total", 0))
 
         return {
             "bots": per_bot,
@@ -187,29 +206,92 @@ class PortfolioAggregator:
             "bot_count": len(running),
         }
 
+    async def _aggregate_time_series(
+        self,
+        bots: list[BotInstance],
+        fetch_fn,
+    ) -> dict:
+        """
+        Generic aggregator for daily/weekly/monthly FT time-series endpoints.
+        Sums abs_profit and trade_count across all running bots per date bucket.
+        rel_profit is averaged (weighted equally — FT doesn't expose stake per period).
+        """
+        running = [b for b in bots if b.status == BotStatus.RUNNING]
+        results = await asyncio.gather(*[fetch_fn(b) for b in running], return_exceptions=True)
+
+        # Accumulate per date: abs_profit sum, rel_profit sum + count, trade_count sum
+        date_map: dict[str, dict] = {}
+        stake_currency = "USDT"
+
+        for result in results:
+            if isinstance(result, Exception):
+                continue
+            if not isinstance(result, dict) or "data" not in result:
+                continue
+            stake_currency = result.get("stake_currency", stake_currency)
+            for item in result["data"]:
+                d = item.get("date", "")
+                if not d:
+                    continue
+                cur = date_map.setdefault(d, {
+                    "date": d,
+                    "abs_profit": 0.0,
+                    "rel_profit_sum": 0.0,
+                    "rel_profit_count": 0,
+                    "trade_count": 0,
+                    "starting_balance": 0.0,
+                })
+                cur["abs_profit"] += float(item.get("abs_profit", 0))
+                rel = item.get("rel_profit")
+                if rel is not None:
+                    cur["rel_profit_sum"] += float(rel)
+                    cur["rel_profit_count"] += 1
+                cur["trade_count"] += int(item.get("trade_count", 0))
+                cur["starting_balance"] += float(item.get("starting_balance", 0))
+
+        data = sorted(
+            [
+                {
+                    "date": v["date"],
+                    "abs_profit": v["abs_profit"],
+                    "rel_profit": (
+                        v["rel_profit_sum"] / v["rel_profit_count"]
+                        if v["rel_profit_count"] > 0
+                        else 0.0
+                    ),
+                    "trade_count": v["trade_count"],
+                    "starting_balance": v["starting_balance"],
+                }
+                for v in date_map.values()
+            ],
+            key=lambda x: x["date"],
+        )
+
+        return {"data": data, "stake_currency": stake_currency, "bot_count": len(running)}
+
     async def get_combined_daily(self, db: AsyncSession, days: int = 30) -> dict:
-        """
-        Daily P&L from RUNNING bots.
-        Note: stopped bots' cached daily data is not merged yet — Phase 4 enhancement.
-        """
+        """Daily P&L aggregated across all running bots."""
         bots = await self._bot_manager.get_all_bots(db)
         trading = self._trading_bots(bots)
-        running = [b for b in trading if b.status == BotStatus.RUNNING]
+        return await self._aggregate_time_series(
+            trading,
+            lambda bot: self._bot_manager.get_bot_daily(bot, days=days),
+        )
 
-        per_bot: dict[str, Any] = {}
+    async def get_combined_weekly(self, db: AsyncSession, weeks: int = 12) -> dict:
+        """Weekly P&L aggregated across all running bots."""
+        bots = await self._bot_manager.get_all_bots(db)
+        trading = self._trading_bots(bots)
+        return await self._aggregate_time_series(
+            trading,
+            lambda bot: self._bot_manager.get_bot_weekly(bot, weeks=weeks),
+        )
 
-        async def fetch_daily(bot: BotInstance):
-            try:
-                return bot.name, await self._bot_manager.get_bot_daily(bot, days=days)
-            except FTClientError as e:
-                logger.warning("Daily fetch failed for bot %s: %s", bot.name, e)
-                return bot.name, {"error": str(e)}
-
-        results = await asyncio.gather(*(fetch_daily(b) for b in running))
-        for name, daily in results:
-            per_bot[name] = daily
-
-        return {
-            "bots": per_bot,
-            "bot_count": len(running),
-        }
+    async def get_combined_monthly(self, db: AsyncSession, months: int = 12) -> dict:
+        """Monthly P&L aggregated across all running bots."""
+        bots = await self._bot_manager.get_all_bots(db)
+        trading = self._trading_bots(bots)
+        return await self._aggregate_time_series(
+            trading,
+            lambda bot: self._bot_manager.get_bot_monthly(bot, months=months),
+        )

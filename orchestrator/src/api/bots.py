@@ -648,6 +648,7 @@ class LaunchPaperRequest(BaseModel):
     dry_run_wallet: float = 10000.0
     timeframe: str = "5m"
     trading_mode: str = "futures"
+    exchange_name: str = "binance"
 
 
 def _find_free_port(dk: Any, start: int = 8082, end: int = 8200) -> int:
@@ -763,7 +764,7 @@ async def launch_paper_bot(
         "dry_run": True,
         "dry_run_wallet": body.dry_run_wallet,
         "exchange": {
-            "name": "binance",
+            "name": body.exchange_name,
             "key": "",
             "secret": "",
             "pair_whitelist": body.pair_whitelist,

@@ -43,6 +43,28 @@ async def combined_daily(
     db: AsyncSession = Depends(get_db),
     days: int = Query(default=30, ge=1, le=365),
 ) -> dict[str, Any]:
-    """Daily profit per bot (from GET /api/v1/daily each)."""
+    """Daily profit aggregated across all running bots."""
     agg = PortfolioAggregator(request.app.state.bot_manager)
     return await agg.get_combined_daily(db, days=days)
+
+
+@router.get("/weekly")
+async def combined_weekly(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    weeks: int = Query(default=12, ge=1, le=52),
+) -> dict[str, Any]:
+    """Weekly profit aggregated across all running bots."""
+    agg = PortfolioAggregator(request.app.state.bot_manager)
+    return await agg.get_combined_weekly(db, weeks=weeks)
+
+
+@router.get("/monthly")
+async def combined_monthly(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    months: int = Query(default=12, ge=1, le=36),
+) -> dict[str, Any]:
+    """Monthly profit aggregated across all running bots."""
+    agg = PortfolioAggregator(request.app.state.bot_manager)
+    return await agg.get_combined_monthly(db, months=months)

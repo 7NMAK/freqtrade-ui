@@ -17,6 +17,8 @@ import {
   portfolioBalance,
   portfolioTrades,
   portfolioDaily,
+  portfolioWeekly,
+  portfolioMonthly,
   startBot,
   stopBot,
 
@@ -24,14 +26,12 @@ import {
   botReloadTrade,
   botCancelOpenOrder,
   botConfig,
-  botWeekly,
-  botMonthly,
   botPerformance,
   botEntries,
   botExits,
   botSysinfo,
   botLogs,
-  botWhitelist,
+
   botLocks,
   botTrades,
   botBalance,
@@ -68,7 +68,6 @@ import type {
 
 // Dashboard sub-components
 import KPIGrid from "@/components/dashboard/KPIGrid";
-import FleetPanel from "@/components/dashboard/FleetPanel";
 import ProfitChart from "@/components/dashboard/ProfitChart";
 import TradeTable from "@/components/dashboard/TradeTable";
 import RightSidebar from "@/components/dashboard/RightSidebar";
@@ -118,6 +117,7 @@ export default function DashboardPage() {
   const [closedTrades, setClosedTrades] = useState<FTTrade[]>([]);
   const [botProfits, setBotProfits] = useState<Record<number, Partial<FTProfit>>>({});
   const [sparklines, setSparklines] = useState<Record<number, number[]>>({});
+  const [botBalances, setBotBalances] = useState<Record<string, number>>({});
   const [dailyData, setDailyData] = useState<FTDailyItem[]>([]);
 
   // Real-time WS spread data for Whitelist Matrix
@@ -136,6 +136,7 @@ export default function DashboardPage() {
   const [totalWins, setTotalWins] = useState(0);
   const [totalLosses, setTotalLosses] = useState(0);
   const [totalTradeCount, setTotalTradeCount] = useState(0);
+  const [totalTradingDays, setTotalTradingDays] = useState<number | null>(null);
 
   // Aggregated stats (from per-bot stats calls)
   const [aggStats, setAggStats] = useState<{
@@ -249,6 +250,14 @@ export default function DashboardPage() {
       // Portfolio balance
       if (pbResult.status === "fulfilled" && m.current) {
         setTotalEquity(pbResult.value.total_value);
+        // Per-bot balances for the fleet table (bot name -> total)
+        const perBotBal: Record<string, number> = {};
+        for (const [name, bal] of Object.entries(pbResult.value.bots ?? {})) {
+          if (bal && typeof bal === "object" && "total" in bal) {
+            perBotBal[name] = (bal as { total: number }).total;
+          }
+        }
+        setBotBalances(perBotBal);
       }
 
       // Portfolio profit
@@ -272,8 +281,24 @@ export default function DashboardPage() {
       let allOpen: FTTrade[] = [];
       let allClosed: FTTrade[] = [];
       if (ptResult.status === "fulfilled" && m.current) {
-        allOpen = ptResult.value.trades.filter((t) => t.is_open);
-        allClosed = ptResult.value.trades.filter((t) => !t.is_open);
+        const trades = ptResult.value?.trades || [];
+        allOpen = trades.filter((t) => t.is_open);
+        allClosed = trades.filter((t) => !t.is_open);
+        
+        if (trades.length > 0) {
+          // Find earliest open_{timestamp|date}. FreqTrade returns open_date as string or open_timestamp as ms.
+          let earliestMs = Date.now();
+          for (const t of trades) {
+            const ms = (t as unknown as Record<string, unknown>).open_timestamp as number | undefined ?? (t.open_date ? new Date(t.open_date).getTime() : Date.now());
+            if (ms && ms < earliestMs) {
+              earliestMs = ms;
+            }
+          }
+          const days = Math.ceil((Date.now() - earliestMs) / (1000 * 60 * 60 * 24));
+          setTotalTradingDays(days);
+        } else {
+          setTotalTradingDays(null);
+        }
       }
 
       // Daily chart data (fetched in parallel, not sequentially)
@@ -293,18 +318,18 @@ export default function DashboardPage() {
       // Per-bot sparklines + profits + stats aggregation
       const profits: Record<number, Partial<FTProfit>> = {};
       const sparks: Record<number, number[]> = {};
-      let aggSharpe: number | null = null;
-      let aggMaxDD: number | null = null;
-      let aggMaxDDAbs: number | null = null;
-      let aggVolume = 0;
-      let aggDurTotal = 0;
-      let aggDurCount = 0;
+      const aggSharpe: number | null = null;
+      const aggMaxDD: number | null = null;
+      const aggMaxDDAbs: number | null = null;
+      const aggVolume = 0;
+      const aggDurTotal = 0;
+      const aggDurCount = 0;
       let bestPairName: string | null = null;
       let bestPairRate: number | null = null;
-      let aggMaxOpenTrades = 0;
+      const aggMaxOpenTrades = 0;
       // Accumulators for profit factor (sum winning / sum losing across all bots)
-      let aggWinningProfit = 0;
-      let aggLosingProfit = 0;
+      const aggWinningProfit = 0;
+      const aggLosingProfit = 0;
 
       // Collect all perf, entry, exit data across bots
       const allPerf: FTPerformance[] = [];
@@ -314,34 +339,40 @@ export default function DashboardPage() {
       const mergedWhitelistPairs = new Map<string, number>(); // pair → botId
       const allLockEntries: FTLocksResponse["locks"] = [];
 
-      await Promise.allSettled(
-        effectiveTradeBots.map(async (bot) => {
+      // Fetch only essential data per bot: profit + daily + status (3 calls × N bots)
+      // Heavy endpoints (stats, perf, entries, exits, config, etc.) load on-demand in detail panel
+      const BATCH_SIZE = 20;
+      for (let i = 0; i < effectiveTradeBots.length; i += BATCH_SIZE) {
+        const batch = effectiveTradeBots.slice(i, i + BATCH_SIZE);
+        await Promise.allSettled(
+          batch.map(async (bot) => {
           try {
-            const [p, d, statusResult, st, perf, ent, ex, wl, lk, cfg] = await Promise.allSettled([
+            const [p, d, statusResult] = await Promise.allSettled([
               botProfit(bot.id),
               botDaily(bot.id, 7),
               botStatus(bot.id),
-              botStats(bot.id),
-              botPerformance(bot.id),
-              botEntries(bot.id),
-              botExits(bot.id),
-              botWhitelist(bot.id),
-              botLocks(bot.id),
-              botConfig(bot.id),
             ]);
             if (p.status === "fulfilled") profits[bot.id] = p.value;
             if (d.status === "fulfilled") sparks[bot.id] = d.value.data.map((item) => item.abs_profit);
 
-            // Capture open trades from botStatus (most reliable current_profit data)
+            // Capture open trades from botStatus
             if (statusResult.status === "fulfilled") {
               for (const t of statusResult.value) {
                 (t as unknown as Record<string, unknown>)._bot_id = bot.id;
                 (t as unknown as Record<string, unknown>)._bot_name = bot.name;
+                // FT /status returns profit_ratio + profit_abs for open trades
+                // Normalize to current_profit + current_profit_abs for the UI
+                if (t.current_profit == null && t.profit_ratio != null) {
+                  t.current_profit = t.profit_ratio;
+                }
+                if (t.current_profit_abs == null && t.profit_abs != null) {
+                  t.current_profit_abs = t.profit_abs;
+                }
               }
               openTradesFromStatus.push(...statusResult.value);
             }
 
-            // BUG 7: If portfolio had no closed trades, fetch per-bot (all bots)
+            // If portfolio had no closed trades, fetch per-bot
             if (!portfolioHadClosedTrades) {
               try {
                 const result = await botTrades(bot.id, 200);
@@ -352,43 +383,6 @@ export default function DashboardPage() {
               } catch { /* non-blocking */ }
             }
 
-            // Stats aggregation
-            if (st.status === "fulfilled") {
-              const stats = st.value;
-              // Accumulate winning/losing profit for profit factor: PF = sum(wins) / sum(losses)
-              if (stats.winning_profit != null) aggWinningProfit += stats.winning_profit;
-              if (stats.losing_profit != null) aggLosingProfit += Math.abs(stats.losing_profit);
-              // Sharpe ratio: take the worst (most conservative) across bots
-              if (stats.sharpe_ratio != null) {
-                aggSharpe = aggSharpe != null ? Math.min(aggSharpe, stats.sharpe_ratio) : stats.sharpe_ratio;
-              }
-              // Max drawdown from stats — max_drawdown is a positive ratio (e.g. 0.05 = 5%)
-              // Use Math.max to get the WORST (largest) drawdown across bots
-              if (stats.max_drawdown != null) {
-                console.log(`[KPI DEBUG] MAX DD: bot=${bot.name} max_drawdown=${stats.max_drawdown} (=${(stats.max_drawdown * 100).toFixed(2)}%) max_drawdown_abs=${stats.max_drawdown_abs} negtrade=${stats.negtrade_account_drawdown}`);
-                aggMaxDD = aggMaxDD != null ? Math.max(aggMaxDD, stats.max_drawdown) : stats.max_drawdown;
-              }
-              if (stats.max_drawdown_abs != null) {
-                aggMaxDDAbs = aggMaxDDAbs != null ? Math.max(aggMaxDDAbs, stats.max_drawdown_abs) : stats.max_drawdown_abs;
-              }
-              // NOTE: negtrade_account_drawdown is NOT used for max drawdown display.
-              // It represents a different metric (worst negative trade as % of account)
-              // and mixing it with max_drawdown causes scale confusion.
-              if (stats.trading_volume != null) aggVolume += stats.trading_volume;
-              if (stats.durations.wins != null) { aggDurTotal += stats.durations.wins; aggDurCount++; }
-              // Store max_drawdown per-bot so FleetPanel can read it
-              if (stats.max_drawdown != null) {
-                if (!profits[bot.id]) profits[bot.id] = {};
-                (profits[bot.id] as Record<string, unknown>).max_drawdown = stats.max_drawdown;
-              }
-            }
-
-            // max_open_trades from config (NOT from /stats)
-            if (cfg.status === "fulfilled") {
-              const config = cfg.value;
-              if (config.max_open_trades != null) aggMaxOpenTrades += config.max_open_trades;
-            }
-
             // Best pair from profit response
             if (p.status === "fulfilled") {
               const prof = p.value;
@@ -397,24 +391,10 @@ export default function DashboardPage() {
                 bestPairRate = prof.best_pair_profit_ratio ?? prof.best_rate;
               }
             }
-
-            // Performance
-            if (perf.status === "fulfilled") allPerf.push(...perf.value);
-            if (ent.status === "fulfilled") allEntries.push(...ent.value);
-            if (ex.status === "fulfilled") allExits.push(...ex.value);
-            // Merge whitelists across all bots (union of pairs with source bot ID)
-            if (wl.status === "fulfilled") {
-              for (const pair of wl.value.whitelist) {
-                if (!mergedWhitelistPairs.has(pair)) mergedWhitelistPairs.set(pair, bot.id);
-              }
-            }
-            // Merge locks across all bots
-            if (lk.status === "fulfilled") {
-              allLockEntries.push(...lk.value.locks);
-            }
           } catch { /* per-bot isolated */ }
-        })
-      );
+          })
+        );
+      } // end batch loop
 
       // Populate stopped bots with cached profit
       if (portfolioProfitData) {
@@ -800,12 +780,12 @@ export default function DashboardPage() {
         if (m.current) setPairMarketData(marketResults);
       }
 
-      // Weekly + Monthly for chart toggles (from first running bot)
+      // Weekly + Monthly for chart toggles — portfolio-aggregated across ALL bots
       if (effectiveTradeBots.length > 0) {
         const firstBotId = effectiveTradeBots[0].id;
         Promise.allSettled([
-          botWeekly(firstBotId, 12),
-          botMonthly(firstBotId, 12),
+          portfolioWeekly(12),
+          portfolioMonthly(12),
           botBalance(firstBotId),
           botSysinfo(firstBotId),
           botLogs(firstBotId, 100),
@@ -870,6 +850,15 @@ export default function DashboardPage() {
       botConfig(botId),
     ]).then(([st, tr, perf, ent, ex, stats, sys, logs, lk, bal, health, cfg]) => {
       if (!m.current || stale()) return;
+
+      // Debug: log status of each API call
+      if (stats.status === "fulfilled") {
+        const sv = stats.value;
+        console.log("[DRAWER DEBUG] Bot", botId, "stats:", { PF: sv.profit_factor, DD: sv.max_drawdown, sharpe: sv.sharpe_ratio, wins: sv.wins, losses: sv.losses });
+      } else {
+        console.log("[DRAWER DEBUG] Bot", botId, "stats: REJECTED");
+      }
+
       if (st.status === "fulfilled") { setSingleBotOpenTrades(st.value.filter((t) => t.is_open)); }
       if (tr.status === "fulfilled") { setSingleBotClosedTrades(tr.value.trades.filter((t) => !t.is_open)); }
       if (perf.status === "fulfilled") setSinglePerfData(perf.value);
@@ -1178,6 +1167,7 @@ export default function DashboardPage() {
           todayPnlPct={todayPnlPct != null ? todayPnlPct * 100 : null}
           totalPnlClosed={totalPnlClosed}
           totalPnlClosedPct={totalPnlClosedPct}
+          totalTradingDays={totalTradingDays}
           openPnl={totalPnlOpen}
           openPnlPct={totalPnlOpenPct}
           openTradeCount={openTrades.length}
@@ -1196,26 +1186,10 @@ export default function DashboardPage() {
           loading={loading}
         />
 
-        {/* LAYER 2: 3-Column Layout */}
+        {/* LAYER 2: 2-Column Layout (chart+table | right sidebar) */}
         <div className="flex-1 flex gap-5 min-w-0 min-h-0 overflow-hidden">
 
-          {/* COL 1: Fleet Management */}
-          <FleetPanel
-            bots={bots}
-            botProfits={botProfits}
-            sparklines={sparklines}
-            onBotClick={(id) => setSelectedBotId(id)}
-            onStart={handleStartBot}
-            onStop={handleStopBot}
-            onPause={handlePauseBot}
-            onReload={handleReloadBot}
-            onForceExitAll={handleForceExitAllBot}
-            onStopBuy={handleStopBuyBot}
-            onSoftKill={handleSoftKillBot}
-            onHardKill={handleHardKillBot}
-          />
-
-          {/* COL 2: Center Workspace */}
+          {/* COL 1: Center Workspace */}
           <div className="flex-1 flex flex-col gap-5 min-w-0">
             {/* Chart area */}
             <ProfitChart
@@ -1250,6 +1224,26 @@ export default function DashboardPage() {
               onUnlockPair={handleUnlockPair}
               spreadData={spreadData}
               whitelistBotMap={whitelistBotMap}
+              bots={bots}
+              botProfits={botProfits}
+              botBalances={botBalances}
+              sparklines={sparklines}
+              onBotClick={(id) => setSelectedBotId(id)}
+              onStart={handleStartBot}
+              onStop={handleStopBot}
+              onPause={handlePauseBot}
+              onReload={handleReloadBot}
+              onForceExitAll={handleForceExitAllBot}
+              onStopBuy={handleStopBuyBot}
+              onSoftKill={handleSoftKillBot}
+              onHardKill={handleHardKillBot}
+              onFleetForceEntry={() => {
+                const pair = prompt("Force Entry — pair (e.g. BTC/USDT:USDT):");
+                if (pair && bots.find(b => b.status === "running")) {
+                  const bot = bots.find(b => b.status === "running")!;
+                  handleForceEnter({ _bot_id: bot.id, pair, is_short: false } as FTTrade);
+                }
+              }}
             />
           </div>
 

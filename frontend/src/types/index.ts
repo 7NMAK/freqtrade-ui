@@ -36,6 +36,7 @@ export interface Bot {
   pair_blacklist?: string[];
   trading_mode?: string;
   margin_mode?: string;
+  can_short?: boolean;
   strategy_version_id?: number;
   config_path?: string;
 }
@@ -126,6 +127,10 @@ export interface FTTrade {
   current_profit: number | null;
   /** Current profit absolute (open trades) */
   current_profit_abs: number | null;
+  /** FT /status API alias for current_profit (open trades) */
+  profit_ratio?: number | null;
+  /** FT /status API alias for current_profit_abs (open trades) */
+  profit_abs?: number | null;
   /** Entry fee percentage — NEVER use "entry_fee" */
   fee_open: number;
   /** Exit fee percentage — NEVER use "exit_fee" */

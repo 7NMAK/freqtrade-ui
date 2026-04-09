@@ -621,8 +621,55 @@ function DetailContent({
       const totalCount = winCount + lossCount;
       const winRate = totalCount > 0 ? (winCount / totalCount) * 100 : null;
       const openPnl = openTrades.reduce((s, t) => s + (t.current_profit_abs ?? 0), 0);
+
+      // ── Fallback calculations when FT /stats doesn't return these for live bots ──
+      // Profit Factor: statsData OR compute from closed trades
+      let profitFactor: number | null = statsData?.profit_factor ?? null;
+      if (profitFactor == null && closedTrades.length > 0) {
+        const winSum = closedTrades.reduce((s, t) => s + Math.max(0, t.close_profit_abs ?? 0), 0);
+        const lossSum = closedTrades.reduce((s, t) => s + Math.abs(Math.min(0, t.close_profit_abs ?? 0)), 0);
+        profitFactor = lossSum > 0 ? winSum / lossSum : (winSum > 0 ? winSum : null);
+      }
+
+      // Max Drawdown: statsData OR compute equity curve from closed trades
+      let maxDrawdown: number | null = statsData?.max_drawdown != null ? statsData.max_drawdown * 100 : null;
+      if (maxDrawdown == null && closedTrades.length > 0) {
+        const sorted = [...closedTrades].sort((a, b) => new Date(a.close_date ?? "").getTime() - new Date(b.close_date ?? "").getTime());
+        let equity = 0, peak = 0, maxDDPct = 0;
+        for (const t of sorted) {
+          equity += t.close_profit_abs ?? 0;
+          if (equity > peak) peak = equity;
+          if (peak > 0) {
+            const dd = ((peak - equity) / peak) * 100;
+            if (dd > maxDDPct) maxDDPct = dd;
+          }
+        }
+        maxDrawdown = maxDDPct > 0 ? maxDDPct : null;
+      }
+
+      // Sharpe Ratio: statsData OR compute from closed trade returns
+      let sharpeRatio: number | null = statsData?.sharpe_ratio ?? null;
+      if (sharpeRatio == null && closedTrades.length >= 2) {
+        const returns = closedTrades.map(t => (t.close_profit ?? 0) * 100);
+        const mean = returns.reduce((s, r) => s + r, 0) / returns.length;
+        const variance = returns.reduce((s, r) => s + (r - mean) ** 2, 0) / returns.length;
+        const std = Math.sqrt(variance);
+        sharpeRatio = std > 0 ? mean / std : null;
+      }
+
+      // Sortino Ratio: statsData OR compute from downside deviation
+      let sortinoRatio: number | null = statsData?.sortino_ratio ?? null;
+      if (sortinoRatio == null && closedTrades.length >= 2) {
+        const returns = closedTrades.map(t => (t.close_profit ?? 0) * 100);
+        const mean = returns.reduce((s, r) => s + r, 0) / returns.length;
+        const downsideReturns = returns.filter(r => r < 0);
+        const downsideVariance = downsideReturns.length > 0 ? downsideReturns.reduce((s, r) => s + r ** 2, 0) / downsideReturns.length : 0;
+        const downsideStd = Math.sqrt(downsideVariance);
+        sortinoRatio = downsideStd > 0 ? mean / downsideStd : null;
+      }
+
       // Expectancy
-      const expectancy = totalCount > 0 && statsData ? (statsData.profit_all_coin ?? 0) / totalCount : null;
+      const expectancy = totalCount > 0 ? (profit?.profit_closed_coin ?? closedTrades.reduce((s, t) => s + (t.close_profit_abs ?? 0), 0)) / totalCount : null;
 
       return (
         <>
@@ -658,10 +705,10 @@ function DetailContent({
             <div className="bg-surface p-3 l-bd rounded">
               <div className="kpi-label mb-2">Risk Metrics</div>
               <div className="space-y-1.5 font-mono text-[12px]">
-                <div className="flex justify-between"><span className="text-muted">Profit Factor</span><span className={`font-bold ${(statsData?.profit_factor ?? 0) > 1 ? "text-up" : "text-white"}`}>{statsData?.profit_factor != null ? fmt(statsData.profit_factor) : "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted">Max Drawdown</span><span className="text-down font-bold">{statsData?.max_drawdown != null ? "-" + fmt(statsData.max_drawdown * 100, 1) + "%" : "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted">Sharpe Ratio</span><span className="text-white">{statsData?.sharpe_ratio != null ? fmt(statsData.sharpe_ratio) : "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted">Sortino Ratio</span><span className="text-white">{statsData?.sortino_ratio != null ? fmt(statsData.sortino_ratio) : "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted">Profit Factor</span><span className={`font-bold ${(profitFactor ?? 0) > 1 ? "text-up" : "text-white"}`}>{profitFactor != null ? fmt(profitFactor) : "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted">Max Drawdown</span><span className="text-down font-bold">{maxDrawdown != null ? "-" + fmt(maxDrawdown, 1) + "%" : "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted">Sharpe Ratio</span><span className="text-white">{sharpeRatio != null ? fmt(sharpeRatio) : "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted">Sortino Ratio</span><span className="text-white">{sortinoRatio != null ? fmt(sortinoRatio) : "—"}</span></div>
                 <div className="flex justify-between"><span className="text-muted">Expectancy</span><span className={profitColor(expectancy)}>{expectancy != null ? fmtMoney(expectancy) : "—"}</span></div>
               </div>
             </div>
@@ -942,19 +989,19 @@ function DetailContent({
                   <div className="overflow-x-auto">
                   <table className="w-full text-[13px] font-mono whitespace-nowrap">
                     <thead><tr className="text-muted text-[11px] uppercase tracking-widest">
-                      <th className="text-left px-2 py-1.5 font-semibold">Tag</th>
-                      <th className="text-right px-2 py-1.5 font-semibold">Trades</th>
-                      <th className="text-right px-2 py-1.5 font-semibold">Wins</th>
-                      <th className="text-right px-2 py-1.5 font-semibold">Losses</th>
-                      <th className="text-right px-2 py-1.5 font-semibold">Win Rate</th>
-                      <th className="text-right px-2 py-1.5 font-semibold">Avg P&L %</th>
-                      <th className="text-right px-2 py-1.5 font-semibold">Total P&L</th>
+                      <SH label="Tag" tbl="entry" col="enter_tag" />
+                      <SH label="Trades" tbl="entry" col="entries" align="right" />
+                      <SH label="Wins" tbl="entry" col="wins" align="right" />
+                      <SH label="Losses" tbl="entry" col="losses" align="right" />
+                      <SH label="Win Rate" tbl="entry" col="winrate" align="right" />
+                      <SH label="Avg P&L %" tbl="entry" col="avg_profit" align="right" />
+                      <SH label="Total P&L" tbl="entry" col="profit_abs" align="right" />
                       <th className="text-right px-2 py-1.5 font-semibold">Avg Dur.</th>
                       <th className="text-left px-2 py-1.5 font-semibold">Best Pair</th>
                       <th className="text-right px-2 py-1.5 font-semibold">Expectancy</th>
                     </tr></thead>
                     <tbody className="divide-y divide-white/[0.05]">
-                      {entryData.map((e) => {
+                      {sortData(entryData, "entry").map((e) => {
                         const ex = enrichEntry(e);
                         return (
                           <tr key={e.enter_tag ?? "untagged"} className="hover:bg-white/[0.04]">
@@ -982,19 +1029,19 @@ function DetailContent({
                   <div className="overflow-x-auto">
                   <table className="w-full text-[13px] font-mono whitespace-nowrap">
                     <thead><tr className="text-muted text-[11px] uppercase tracking-widest">
-                      <th className="text-left px-2 py-1.5 font-semibold">Reason</th>
-                      <th className="text-right px-2 py-1.5 font-semibold">Exits</th>
-                      <th className="text-right px-2 py-1.5 font-semibold">Wins</th>
-                      <th className="text-right px-2 py-1.5 font-semibold">Losses</th>
-                      <th className="text-right px-2 py-1.5 font-semibold">Win Rate</th>
-                      <th className="text-right px-2 py-1.5 font-semibold">Avg P&L %</th>
-                      <th className="text-right px-2 py-1.5 font-semibold">Total P&L</th>
+                      <SH label="Reason" tbl="exit" col="exit_reason" />
+                      <SH label="Exits" tbl="exit" col="exits" align="right" />
+                      <SH label="Wins" tbl="exit" col="wins" align="right" />
+                      <SH label="Losses" tbl="exit" col="losses" align="right" />
+                      <SH label="Win Rate" tbl="exit" col="winrate" align="right" />
+                      <SH label="Avg P&L %" tbl="exit" col="avg_profit" align="right" />
+                      <SH label="Total P&L" tbl="exit" col="profit_abs" align="right" />
                       <th className="text-right px-2 py-1.5 font-semibold">Avg Dur.</th>
                       <th className="text-left px-2 py-1.5 font-semibold">Best Pair</th>
                       <th className="text-right px-2 py-1.5 font-semibold">Expectancy</th>
                     </tr></thead>
                     <tbody className="divide-y divide-white/[0.05]">
-                      {exitData.map((e) => {
+                      {sortData(exitData, "exit").map((e) => {
                         const ex = enrichExit(e);
                         return (
                           <tr key={e.exit_reason ?? "untagged"} className="hover:bg-white/[0.04]">

@@ -2,11 +2,11 @@
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Filter, ChevronDown, Download, LogOut, Zap, Scissors, PlusCircle, RefreshCw, Trash2, Ban } from "lucide-react";
+import { Filter, ChevronDown, Download, LogOut, Zap, Scissors, PlusCircle, RefreshCw, Trash2, Ban, Play, Square, XSquare, ShieldAlert } from "lucide-react";
 import { fmt, fmtMoney } from "@/lib/format";
-import type { FTTrade, FTPerformance, FTEntry, FTExit, FTWhitelist, FTLocksResponse } from "@/types";
+import type { FTTrade, FTPerformance, FTEntry, FTExit, FTWhitelist, FTLocksResponse, Bot, FTProfit } from "@/types";
 
-type TradeTab = "open" | "closed" | "whitelist" | "performance" | "entries" | "exits";
+type TradeTab = "fleet" | "open" | "closed" | "performance" | "entries" | "exits" | "whitelist" | "blacklist";
 type SortDir = "asc" | "desc" | null;
 type ColumnFilters = Record<string, Set<string>>;
 
@@ -30,6 +30,25 @@ interface TradeTableProps {
   onUnlockPair?: (lockId: number, botId: number) => void;
   spreadData?: Record<string, { spreadPct: number }>;
   whitelistBotMap?: Map<string, number>;
+  // Fleet props
+  bots?: Bot[];
+  botProfits?: Record<number, Partial<FTProfit>>;
+  botBalances?: Record<string, number>; // bot name -> total balance
+  sparklines?: Record<number, number[]>;
+  onBotClick?: (botId: number) => void;
+  onStart?: (botId: number) => void;
+  onStop?: (botId: number) => void;
+  onPause?: (botId: number) => void;
+  onReload?: (botId: number) => void;
+  onForceExitAll?: (botId: number) => void;
+  onStopBuy?: (botId: number) => void;
+  onSoftKill?: (botId: number) => void;
+  onHardKill?: (botId: number) => void;
+  onFleetForceEntry?: () => void;
+  // Blacklist props
+  blacklistData?: { blacklist: string[]; blacklist_expanded: string[] } | null;
+  onAddBlacklist?: (pair: string) => void;
+  onDeleteBlacklist?: (pair: string) => void;
 }
 
 function fmtDuration(openDate: string, closeDate?: string | null): string {
@@ -292,6 +311,226 @@ function useSortable<T>(data: T[], defaultKey?: string) {
   return { sorted, currentSort: sortKey, currentDir: sortDir, onSort };
 }
 
+// ── Fleet Grid (card layout matching original FleetPanel) ────────────────────
+
+type FleetSortKey = "name" | "pnl" | "winRate" | "drawdown" | "trades";
+
+function MiniSparkline({ data }: { data: number[] }) {
+  if (!data || data.length === 0) return null;
+  const max = Math.max(...data.map(Math.abs), 0.01);
+  return (
+    <div className="flex gap-[2px] h-4 items-end">
+      {data.slice(-5).map((v, i) => {
+        const pct = Math.max(10, (Math.abs(v) / max) * 100);
+        return (
+          <div
+            key={`sp-${i}`}
+            className={`w-1.5 rounded-sm ${v >= 0 ? "bg-up" : "bg-down"}`}
+            style={{ height: `${pct}%` }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function getFleetMetrics(profit: Partial<FTProfit> | undefined) {
+  const pnl = profit?.profit_closed_coin ?? null;
+  const pnlPct = profit?.profit_closed_percent ?? null;
+  const trades = profit?.trade_count ?? 0;
+  const winRate = profit && profit.winning_trades != null && profit.losing_trades != null
+    ? ((profit.winning_trades / (profit.winning_trades + profit.losing_trades)) * 100)
+    : null;
+  const avgDur = profit?.avg_duration;
+  const avgDurStr = typeof avgDur === "number"
+    ? (avgDur >= 3600 ? `${(avgDur / 3600).toFixed(1)}h` : `${Math.round(avgDur / 60)}m`)
+    : typeof avgDur === "string" ? avgDur : "\u2014";
+  const maxDd = profit ? ((profit as Record<string, unknown>).max_drawdown as number | undefined) : undefined;
+  return { pnl, pnlPct, trades, winRate, avgDurStr, maxDd };
+}
+
+interface FleetGridProps {
+  bots: Bot[];
+  botProfits: Record<number, Partial<FTProfit>>;
+  sparklines: Record<number, number[]>;
+  onBotClick?: (botId: number) => void;
+  onStart?: (botId: number) => void;
+  onStop?: (botId: number) => void;
+  onPause?: (botId: number) => void;
+  onReload?: (botId: number) => void;
+  onForceExitAll?: (botId: number) => void;
+  onStopBuy?: (botId: number) => void;
+  onSoftKill?: (botId: number) => void;
+  onHardKill?: (botId: number) => void;
+}
+
+function FleetGrid({
+  bots,
+  botProfits,
+  sparklines,
+  onBotClick,
+  onStart,
+  onStop,
+  onPause,
+  onReload,
+  onForceExitAll,
+  onStopBuy,
+  onSoftKill,
+  onHardKill,
+}: FleetGridProps) {
+  const [sortKey, setSortKey] = useState<FleetSortKey>("pnl");
+  const [sortAsc, setSortAsc] = useState(false);
+
+  const handleSort = (key: FleetSortKey) => {
+    if (sortKey === key) setSortAsc((v) => !v);
+    else { setSortKey(key); setSortAsc(false); }
+  };
+
+  const sortedBots = useMemo(() => {
+    return [...bots].sort((a, b) => {
+      const am = getFleetMetrics(botProfits[a.id]);
+      const bm = getFleetMetrics(botProfits[b.id]);
+      let cmp = 0;
+      switch (sortKey) {
+        case "name": cmp = a.name.localeCompare(b.name); break;
+        case "pnl": cmp = (am.pnl ?? -Infinity) - (bm.pnl ?? -Infinity); break;
+        case "winRate": cmp = (am.winRate ?? -1) - (bm.winRate ?? -1); break;
+        case "drawdown": cmp = (am.maxDd ?? 0) - (bm.maxDd ?? 0); break;
+        case "trades": cmp = am.trades - bm.trades; break;
+      }
+      return sortAsc ? cmp : -cmp;
+    });
+  }, [bots, botProfits, sortKey, sortAsc]);
+
+  const sortButtons: { key: FleetSortKey; label: string }[] = [
+    { key: "pnl", label: "P&L" },
+    { key: "name", label: "Name" },
+    { key: "winRate", label: "Win%" },
+    { key: "drawdown", label: "DD" },
+    { key: "trades", label: "Trades" },
+  ];
+
+  if (bots.length === 0) return (
+    <div className="flex items-center justify-center h-48 text-muted text-sm">No bots registered.</div>
+  );
+
+  return (
+    <div className="flex flex-col">
+      {/* Sort toolbar */}
+      <div className="flex items-center gap-1 px-4 py-2 l-b bg-black/20 sticky top-0 z-10">
+        <span className="text-[9px] text-muted mr-1 uppercase tracking-widest">Sort:</span>
+        {sortButtons.map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => handleSort(key)}
+            className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded transition-colors cursor-pointer ${
+              sortKey === key ? "bg-white/15 text-white" : "text-muted hover:text-white hover:bg-white/[0.06]"
+            }`}
+          >
+            {label}
+            {sortKey === key && <span className="ml-0.5 text-[8px]">{sortAsc ? "\u2191" : "\u2193"}</span>}
+          </button>
+        ))}
+      </div>
+
+      {/* Cards grid */}
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] font-mono text-xs divide-x divide-white/[0.06]">
+        {sortedBots.map((bot, idx) => {
+          const { pnl, pnlPct, trades, winRate, avgDurStr, maxDd } = getFleetMetrics(botProfits[bot.id]);
+          const isLive = bot.status === "running";
+          const isPaused = bot.status === "draining";
+          const isStopped = !isLive && !isPaused;
+
+          return (
+            <div
+              key={bot.id}
+              className={`p-4 border-b border-white/[0.05] hover:bg-white/[0.04] transition-colors group cursor-pointer ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}
+              onClick={() => onBotClick?.(bot.id)}
+            >
+              {/* Section 1 — Top: name + status + PnL */}
+              <div className="flex items-start justify-between mb-2.5">
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${
+                    isLive ? "bg-up shadow-[0_0_4px_#22c55e]" :
+                    isPaused ? "bg-yellow-400" : "bg-down"
+                  }`} />
+                  <span className={`font-bold uppercase text-[12px] tracking-wide ${
+                    isLive ? "text-white" : isPaused ? "text-white/60" : "text-white/40"
+                  }`}>
+                    {bot.name}
+                  </span>
+                  {isPaused ? (
+                    <span className="text-[10px] border border-yellow-500/30 px-1.5 py-[1px] rounded text-yellow-400 font-medium">DRAINING</span>
+                  ) : isStopped ? (
+                    <span className="text-[10px] border border-down/30 px-1.5 py-[1px] rounded text-down font-medium">STOPPED</span>
+                  ) : bot.is_dry_run ? (
+                    <span className="text-[10px] border border-yellow-500/30 px-1.5 py-[1px] rounded text-yellow-400 font-medium">PAPER</span>
+                  ) : (
+                    <span className="text-[10px] border border-white/20 px-1.5 py-[1px] rounded text-white/60 font-medium">LIVE</span>
+                  )}
+                </div>
+                <div className="text-right">
+                  <div className={`font-bold text-[13px] ${
+                    pnl != null && pnl > 0 ? "text-up" : pnl != null && pnl < 0 ? "text-down" : "text-muted"
+                  }`}>
+                    {pnl != null ? fmtMoney(pnl) : "\u2014"}
+                  </div>
+                  {pnlPct != null && (
+                    <span className="text-[10px]" style={{ color: pnlPct >= 0 ? "rgba(34,197,94,0.5)" : "rgba(239,68,68,0.5)" }}>
+                      {pnlPct >= 0 ? "+" : ""}{fmt(pnlPct, 1)}%
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Section 2 — Stats 2x2 grid */}
+              <div className="grid grid-cols-2 gap-y-1.5 text-[12px] mb-3">
+                <div className="flex justify-between w-full pr-5">
+                  <span className="text-muted">Trades:</span>
+                  <span className="text-white/70">{trades}</span>
+                </div>
+                <div className="flex justify-between w-full">
+                  <span className="text-muted">Win:</span>
+                  <span className={winRate != null && winRate < 50 ? "text-down" : "text-white/70"}>
+                    {winRate != null ? `${fmt(winRate, 0)}%` : "\u2014"}
+                  </span>
+                </div>
+                <div className="flex justify-between w-full pr-5">
+                  <span className="text-muted">Drawdown:</span>
+                  <span className={maxDd != null ? "text-down" : "text-white/70"}>
+                    {maxDd != null ? `-${fmt(maxDd * 100, 1)}%` : "\u2014"}
+                  </span>
+                </div>
+                <div className="flex justify-between w-full">
+                  <span className="text-muted">Avg. Dur:</span>
+                  <span className="text-white/70">{avgDurStr}</span>
+                </div>
+              </div>
+
+              {/* Section 3 — Sparkline + Controls */}
+              <div className="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
+                <MiniSparkline data={sparklines[bot.id] ?? []} />
+                <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                  <button className="bot-ctrl ctrl-start" title="&#9654; Start Bot" onClick={() => onStart?.(bot.id)}><Play className="w-3 h-3" /></button>
+                  <button className="bot-ctrl ctrl-stop" title="&#9632; Stop Bot" onClick={() => onStop?.(bot.id)}><Square className="w-3 h-3" /></button>
+                  <button className="bot-ctrl" title="&#9208; Pause" onClick={() => onPause?.(bot.id)}><span className="text-[10px] font-bold leading-none">II</span></button>
+                  <button className="bot-ctrl" title="&#8635; Reload Config" onClick={() => onReload?.(bot.id)}><RefreshCw className="w-3 h-3" /></button>
+                  <button className="bot-ctrl ctrl-stop" title="&#10005; Force Exit All" onClick={() => onForceExitAll?.(bot.id)}><XSquare className="w-3 h-3" /></button>
+                  <button className="bot-ctrl" title="Toggle Stopbuy" onClick={() => onStopBuy?.(bot.id)}><span className="text-[10px] font-bold leading-none">+&#9632;</span></button>
+                  <span className="w-px h-3 bg-white/15 mx-0.5 self-center" />
+                  <button className="bot-ctrl" style={{ color: "#facc15" }} title="Soft Kill" onClick={() => onSoftKill?.(bot.id)}><ShieldAlert className="w-3 h-3" /></button>
+                  <button className="bot-ctrl ctrl-stop" title="Hard Kill" onClick={() => onHardKill?.(bot.id)}><Zap className="w-3 h-3" /></button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+
 export default function TradeTable({
   openTrades,
   closedTrades,
@@ -312,8 +551,22 @@ export default function TradeTable({
   onUnlockPair,
   spreadData,
   whitelistBotMap,
+  bots = [],
+  botProfits = {},
+  sparklines = {},
+  onBotClick,
+  onStart,
+  onStop,
+  onPause,
+  onReload,
+  onForceExitAll,
+  onStopBuy,
+  onSoftKill,
+  onHardKill,
+  onFleetForceEntry,
+  blacklistData,
 }: TradeTableProps) {
-  const [activeTab, setActiveTab] = useState<TradeTab>("open");
+  const [activeTab, setActiveTab] = useState<TradeTab>("fleet");
   const [columnFilters, setColumnFilters] = useState<ColumnFilters>({});
   const [visibleRows, setVisibleRows] = useState(50);
 
@@ -449,13 +702,17 @@ export default function TradeTable({
     URL.revokeObjectURL(url);
   }, [activeTab, openTrades, closedTrades, perfData, entryData, exitData, whitelistData, lockMap]);
 
+  const tradeBots = useMemo(() => bots.filter((b) => !b.is_utility && b.ft_mode !== "webserver"), [bots]);
+
   const tabs: Array<{ key: TradeTab; label: string; count?: number; title: string }> = [
-    { key: "open", label: "Open Trades", count: openTrades.length, title: "Currently active trades" },
+    { key: "fleet", label: "Fleet", count: tradeBots.length, title: "Fleet management — all bots with controls" },
+    { key: "open", label: "Open", count: openTrades.length, title: "Currently active trades" },
     { key: "closed", label: "Closed", count: closedTrades.length, title: "Completed trade history" },
-    { key: "whitelist", label: "Whitelist Matrix", title: "Pair monitoring and lock management" },
     { key: "performance", label: "Performance", title: "Performance by trading pair" },
     { key: "entries", label: "Entry Tags", title: "Entry signal tag analysis" },
     { key: "exits", label: "Exit Reasons", title: "Exit reason analysis" },
+    { key: "whitelist", label: "Active Pairs", title: "Pair monitoring and lock management" },
+    { key: "blacklist", label: "Blacklist", count: blacklistData?.blacklist.length, title: "Blacklisted pairs (blocked from trading)" },
   ];
 
   return (
@@ -476,14 +733,25 @@ export default function TradeTable({
             {tab.label}{tab.count != null ? ` (${tab.count})` : ""}
           </button>
         ))}
-        <button
-          onClick={exportCSV}
-          className="ml-auto mr-5 px-2 py-1 rounded text-[10px] text-muted hover:text-white hover:bg-white/[0.06] transition-colors flex items-center gap-1 opacity-50 hover:opacity-100"
-          title="Export table data as CSV"
-        >
-          <Download className="w-3 h-3" />
-          CSV
-        </button>
+        <div className="ml-auto mr-3 flex items-center gap-2 shrink-0">
+          {activeTab === "fleet" && (
+            <button
+              onClick={onFleetForceEntry}
+              className="px-3 py-1 rounded text-[11px] font-bold text-black bg-up hover:bg-up/80 transition-colors flex items-center gap-1.5"
+            >
+              <PlusCircle className="w-3 h-3" />
+              Force Entry
+            </button>
+          )}
+          <button
+            onClick={exportCSV}
+            className="px-2 py-1 rounded text-[10px] text-muted hover:text-white hover:bg-white/[0.06] transition-colors flex items-center gap-1 opacity-50 hover:opacity-100"
+            title="Export table data as CSV"
+          >
+            <Download className="w-3 h-3" />
+            CSV
+          </button>
+        </div>
       </div>
 
       {/* Tab Content */}
@@ -494,6 +762,24 @@ export default function TradeTable({
           </div>
         ) : (
           <>
+            {/* FLEET MANAGEMENT */}
+            {activeTab === "fleet" && (
+              <FleetGrid
+                bots={tradeBots}
+                botProfits={botProfits}
+                sparklines={sparklines}
+                onBotClick={onBotClick}
+                onStart={onStart}
+                onStop={onStop}
+                onPause={onPause}
+                onReload={onReload}
+                onForceExitAll={onForceExitAll}
+                onStopBuy={onStopBuy}
+                onSoftKill={onSoftKill}
+                onHardKill={onHardKill}
+              />
+            )}
+
             {/* OPEN TRADES */}
             {activeTab === "open" && (() => {
               const rowsToShow = openSort.sorted.slice(0, visibleRows);
@@ -531,9 +817,10 @@ export default function TradeTable({
                     <tr><td colSpan={12} className="px-5 py-8 text-center text-muted">No open trades</td></tr>
                   ) : (
                     rowsToShow.map((trade, idx) => {
-                      // BUG 11 fix: fallback field names for profit
-                      const pct = trade.current_profit ?? trade.close_profit ?? null;
-                      const pnl = trade.current_profit_abs ?? trade.close_profit_abs ?? null;
+                      // FT /status returns profit_ratio + profit_abs for open trades
+                      // FT /trades returns current_profit + current_profit_abs for closed/detail
+                      const pct = trade.current_profit ?? trade.profit_ratio ?? trade.close_profit ?? null;
+                      const pnl = trade.current_profit_abs ?? trade.profit_abs ?? trade.close_profit_abs ?? null;
                       const isUp = pnl != null && pnl >= 0;
                       const color = pnl != null ? (isUp ? "text-up" : "text-down") : "text-muted";
                       const fee = (trade.fee_open + trade.fee_close) * trade.stake_amount;

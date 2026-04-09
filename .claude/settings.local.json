@@ -71,7 +71,23 @@
       "Bash(rm:*)",
       "Bash(ls:*)",
       "Bash(curl -s http://localhost:3000)",
-      "Bash(curl -s http://localhost:3001)"
+      "Bash(curl -s http://localhost:3001)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(grep -n \"botBacktest\\\\|setIsRunning\\\\|setBtResult\\\\|backtest_result\\\\|poll\\\\|setInterval\\\\|step.*finished\\\\|running.*false\\\\|extractResult\" /Users/novakus/Documents/BOT/frontend/src/app/experiments/[strategy]/components/BacktestTab.tsx)",
+      "Bash(/usr/local/bin/npx next:*)",
+      "Bash(PATH=$HOME/.nvm/versions/node/*/bin:$HOME/.volta/bin:/usr/local/bin:$PATH)",
+      "Read(//opt/homebrew/Cellar/node/25.9.0_1/bin/**)",
+      "Read(//usr/local/bin/**)",
+      "Bash(brew --prefix node)",
+      "Bash(/opt/homebrew/bin/npx next:*)",
+      "Bash(PATH=\"/opt/homebrew/bin:$PATH\" npx next build)",
+      "Bash(grep -v \"Welcome\\\\|Documentation\\\\|Management\\\\|Support\\\\|System\\\\|Usage\\\\|Memory\\\\|Swap\\\\|Process\\\\|Users\\\\|IPv\\\\|Strictly\\\\|raised\\\\|ubuntu\\\\|Expanded\\\\|updates\\\\|additional\\\\|Learn\\\\|^$\\\\|^\\\\*\\\\|=>\")",
+      "Bash(ssh -o ConnectTimeout=5 root@204.168.187.107 \"docker exec nginx cat /var/log/nginx/error.log 2>&1 | tail -10\")",
+      "Bash(ssh -o ConnectTimeout=10 -o ServerAliveInterval=5 root@204.168.187.107 'docker exec nginx tail -10 /var/log/nginx/error.log')",
+      "Bash(ssh -o ConnectTimeout=15 root@204.168.187.107 \"uptime && df -h / | tail -1 && docker ps --format ''{{.Names}} {{.Status}}'' | head -10\")",
+      "Bash(ssh -o ConnectTimeout=15 root@204.168.187.107 \"docker ps --format ''{{.Names}}'' | wc -l && free -m | head -2 && docker ps --format ''{{.Names}} {{.Status}}'' | grep -E ''frontend|nginx|orchestrator''\")",
+      "Bash(ssh -o ConnectTimeout=15 root@204.168.187.107 \"docker exec nginx tail -10 /var/log/nginx/error.log\")"
     ]
   }
 }

@@ -341,6 +341,16 @@ class BotManager:
         client = await self.get_client(bot)
         return await client.daily(days=days)
 
+    async def get_bot_weekly(self, bot: BotInstance, weeks: int = 12) -> dict:
+        """GET /api/v1/weekly — weekly profit for this bot."""
+        client = await self.get_client(bot)
+        return await client.weekly(weeks=weeks)
+
+    async def get_bot_monthly(self, bot: BotInstance, months: int = 12) -> dict:
+        """GET /api/v1/monthly — monthly profit for this bot."""
+        client = await self.get_client(bot)
+        return await client.monthly(months=months)
+
     async def get_bot_performance(self, bot: BotInstance) -> list:
         """GET /api/v1/performance — per-pair performance."""
         client = await self.get_client(bot)

@@ -1058,6 +1058,7 @@
           <button onclick="switchPage('page-freqai')" class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors nav-btn hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]" title="FreqAI — ML model training, monitoring & deployment"><i data-lucide="brain" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">FreqAI</span></button>
           <button onclick="switchPage('page-risk')" class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors nav-btn hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]" title="Risk — Kill switches, protections, pair locks"><i data-lucide="shield-alert" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">Risk</span></button>
           <button onclick="switchPage('page-strategies')" class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors nav-btn hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]" title="Strategies — Manage trading strategies"><i data-lucide="list" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">Strategies</span></button>
+          <button onclick="switchPage('page-data')" class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors nav-btn hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]" title="Data — Download, coverage & management"><i data-lucide="database" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">Data</span></button>
           <button class="text-left px-3 py-2.5 text-muted hover:text-white transition-colors hover:bg-white/5 rounded-md flex items-center gap-3 text-[13px]" title="System — Server health, configs, logs"><i data-lucide="settings" class="w-[18px] h-[18px] shrink-0"></i><span class="nav-label">System</span></button>
       </nav>
       <div class="p-4 l-b bg-surface flex flex-col gap-2 shrink-0">
@@ -1408,20 +1409,10 @@
                       <div class="flex justify-between text-[9px] font-mono text-white/25 px-5 pb-2">
                           <span>-0.02</span><span>0</span><span>+0.01</span>
                       </div>
-                      <div class="px-5 pb-4 grid grid-cols-2 gap-4">
-                           <div>
-                               <div class="kpi-label">Absolute DD</div>
-                               <div class="text-base font-bold font-mono text-down">-$5,210</div>
-                           </div>
-                           <div>
-                               <div class="kpi-label">Relative DD</div>
-                               <div class="text-base font-bold font-mono text-down">-4.12%</div>
-                           </div>
-                      </div>
                   </div>
               </div>
 
-              <!-- Master Tabular Engine -->
+                                 <!-- Master Tabular Engine -->
               <div class="flex-1 bg-surface l-bd rounded-md shadow-xl flex flex-col min-h-0 overflow-hidden">
                   <div class="h-12 l-b flex items-center bg-black/40 shrink-0 border-b-2 border-transparent overflow-x-auto whitespace-nowrap">
                       <button onclick="switchTradeTab('trades-open', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide border-b-2 border-up text-white trade-tab-btn shrink-0" title="Currently active trades">Open Trades (42)</button>
@@ -1436,6 +1427,7 @@
                       </div>
                   </div>
                   
+
                   <!-- TAB: OPEN TRADES -->
                   <div id="trades-open" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto flex flex-col">
                       <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
@@ -4950,6 +4942,306 @@
       <!-- ════════════════════════════════════════════════════════════════════════ -->
       <!-- PAGE: FREQAI — ML Model Training, Monitoring & Deployment              -->
       <!-- ════════════════════════════════════════════════════════════════════════ -->
+
+      <!-- ═══════════════════════════════════════════════════════════════════
+           PAGE: DATA MANAGEMENT
+           Route: /data
+      ════════════════════════════════════════════════════════════════════ -->
+      <div id="page-data" class="page-view flex-1 overflow-hidden flex-col bg-black">
+          <div class="flex-1 flex overflow-hidden p-5 gap-5">
+
+              <!-- ══════════════════════════════════════════════════════════
+                   LEFT ACTION PANEL — w-[320px], same as Analytics page
+              ══════════════════════════════════════════════════════════ -->
+              <div class="w-[320px] min-w-[320px] shrink-0 flex flex-col gap-0 bg-surface l-bd rounded-md shadow-xl overflow-hidden">
+
+                  <!-- Panel header (h-12, identical to Analytics bot list header) -->
+                  <div class="h-12 l-b flex items-center justify-between px-4 bg-black/40 shrink-0">
+                      <span class="section-title flex items-center gap-2">
+                          <i data-lucide="download" class="w-4 h-4 text-up"></i>Data Actions
+                      </span>
+                      <span class="text-[10px] font-mono text-muted">freqtrade</span>
+                  </div>
+
+                  <!-- Scrollable content -->
+                  <div class="flex-1 overflow-y-auto">
+
+                      <!-- ── Section: Download ── -->
+                      <div class="px-4 pt-4 pb-3 l-b">
+                          <div class="flex items-center justify-between mb-3">
+                              <h3 class="section-title flex items-center gap-1.5">
+                                  <i data-lucide="download" class="w-3.5 h-3.5"></i>Download Data
+                              </h3>
+                              <span class="text-[9px] font-mono text-muted">download-data</span>
+                          </div>
+
+                          <!-- Exchange + Mode -->
+                          <div class="grid grid-cols-2 gap-2 mb-3">
+                              <div>
+                                  <label class="builder-label">Exchange</label>
+                                  <select class="builder-select w-full text-[11px]">
+                                      <option>binance</option><option>bybit</option><option>okx</option>
+                                      <option>gate</option><option>kraken</option><option>bitget</option>
+                                  </select>
+                              </div>
+                              <div>
+                                  <label class="builder-label">Mode</label>
+                                  <select class="builder-select w-full text-[11px]">
+                                      <option>futures</option><option>spot</option>
+                                  </select>
+                              </div>
+                          </div>
+
+                          <!-- Timeframes -->
+                          <label class="builder-label">Timeframes</label>
+                          <div class="flex flex-wrap gap-1.5 mb-3">
+                              <button onclick="toggleDlTf(this,'1m')" class="dl-tf-btn px-2.5 py-1 rounded border border-white/12 text-[11px] text-muted hover:border-up/40 hover:text-up transition-all">1m</button>
+                              <button onclick="toggleDlTf(this,'5m')" class="dl-tf-btn px-2.5 py-1 rounded border border-white/12 text-[11px] text-muted hover:border-up/40 hover:text-up transition-all">5m</button>
+                              <button onclick="toggleDlTf(this,'15m')" class="dl-tf-btn px-2.5 py-1 rounded border border-white/12 text-[11px] text-muted hover:border-up/40 hover:text-up transition-all">15m</button>
+                              <button onclick="toggleDlTf(this,'30m')" class="dl-tf-btn px-2.5 py-1 rounded border border-white/12 text-[11px] text-muted hover:border-up/40 hover:text-up transition-all">30m</button>
+                              <button onclick="toggleDlTf(this,'1h')" class="dl-tf-btn active px-2.5 py-1 rounded border border-up/50 bg-up/10 text-up text-[11px] transition-all">1h</button>
+                              <button onclick="toggleDlTf(this,'4h')" class="dl-tf-btn active px-2.5 py-1 rounded border border-up/50 bg-up/10 text-up text-[11px] transition-all">4h</button>
+                              <button onclick="toggleDlTf(this,'1d')" class="dl-tf-btn active px-2.5 py-1 rounded border border-up/50 bg-up/10 text-up text-[11px] transition-all">1d</button>
+                              <button onclick="toggleDlTf(this,'1w')" class="dl-tf-btn px-2.5 py-1 rounded border border-white/12 text-[11px] text-muted hover:border-up/40 hover:text-up transition-all">1w</button>
+                          </div>
+
+                          <!-- Date Range -->
+                          <div class="grid grid-cols-2 gap-2 mb-3">
+                              <div>
+                                  <label class="builder-label">Start</label>
+                                  <input type="date" value="2022-01-01" class="builder-input text-[11px]">
+                              </div>
+                              <div>
+                                  <label class="builder-label">End</label>
+                                  <input type="date" value="2024-04-08" class="builder-input text-[11px]">
+                              </div>
+                          </div>
+
+                          <!-- Selected Pairs -->
+                          <label class="builder-label">Selected Pairs</label>
+                          <div class="h-8 bg-black/50 rounded border border-white/10 px-3 flex items-center mb-3 font-mono text-[10px] text-muted">
+                              Click matrix cells to select →
+                          </div>
+
+                          <!-- Flags -->
+                          <div class="space-y-2 mb-3">
+                              <label class="flex items-center gap-2.5 cursor-pointer">
+                                  <div class="w-8 h-4 bg-up rounded-full relative shrink-0">
+                                      <span class="absolute w-3 h-3 bg-white rounded-full top-0.5 right-0.5"></span>
+                                  </div>
+                                  <span class="text-[11px] text-muted">--prepend</span>
+                                  <span class="text-[9px] text-white/25 ml-auto">add older data</span>
+                              </label>
+                              <label class="flex items-center gap-2.5 cursor-pointer">
+                                  <div class="w-8 h-4 bg-white/10 rounded-full relative shrink-0">
+                                      <span class="absolute w-3 h-3 bg-white/40 rounded-full top-0.5 left-0.5"></span>
+                                  </div>
+                                  <span class="text-[11px] text-muted">--erase</span>
+                                  <span class="text-[9px] text-rose-500 ml-auto">destructive</span>
+                              </label>
+                              <label class="flex items-center gap-2.5 cursor-pointer">
+                                  <div class="w-8 h-4 bg-white/10 rounded-full relative shrink-0">
+                                      <span class="absolute w-3 h-3 bg-white/40 rounded-full top-0.5 left-0.5"></span>
+                                  </div>
+                                  <span class="text-[11px] text-muted">--dl-trades</span>
+                                  <span class="text-[9px] text-white/25 ml-auto">raw ticks</span>
+                              </label>
+                          </div>
+
+                          <!-- CLI Preview -->
+                          <div class="bg-black/60 rounded border border-white/8 px-3 py-2 font-mono text-[9px] text-white/30 leading-relaxed mb-3 break-all">
+                              freqtrade download-data --exchange binance --trading-mode futures --timeframes 1h 4h 1d --timerange 20220101-20240408
+                          </div>
+
+                          <button class="w-full h-9 rounded text-[11px] font-bold bg-up text-black hover:bg-up/80 transition-colors flex items-center justify-center gap-2">
+                              <i data-lucide="download" class="w-3.5 h-3.5"></i>Start Download
+                          </button>
+                      </div>
+
+                      <!-- ── Section: Convert Format ── -->
+                      <div class="px-4 pt-4 pb-3 l-b">
+                          <div class="flex items-center justify-between mb-3">
+                              <h3 class="section-title flex items-center gap-1.5">
+                                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>Convert Format
+                              </h3>
+                              <span class="text-[9px] font-mono text-muted">convert-data</span>
+                          </div>
+                          <div class="grid grid-cols-[1fr_18px_1fr] gap-2 items-end mb-3">
+                              <div>
+                                  <label class="builder-label">From</label>
+                                  <select class="builder-select w-full text-[11px]">
+                                      <option>json</option><option selected>feather</option><option>parquet</option>
+                                  </select>
+                              </div>
+                              <div class="text-muted text-center pb-1.5">→</div>
+                              <div>
+                                  <label class="builder-label">To</label>
+                                  <select class="builder-select w-full text-[11px]">
+                                      <option>json</option><option>feather</option><option selected>parquet</option>
+                                  </select>
+                              </div>
+                          </div>
+                          <button class="w-full h-8 rounded text-[11px] font-bold bg-white/5 text-foreground border border-white/12 hover:bg-white/10 transition-colors flex items-center justify-center gap-2">
+                              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>Convert Data
+                          </button>
+                      </div>
+
+                      <!-- ── Section: Trades → OHLCV ── -->
+                      <div class="px-4 pt-4 pb-3 l-b">
+                          <div class="flex items-center justify-between mb-3">
+                              <h3 class="section-title flex items-center gap-1.5">
+                                  <i data-lucide="git-merge" class="w-3.5 h-3.5"></i>Trades → OHLCV
+                              </h3>
+                              <span class="text-[9px] font-mono text-muted">trades-to-ohlcv</span>
+                          </div>
+                          <p class="text-[11px] text-muted leading-relaxed mb-3">Resample raw tick data into OHLCV candles for backtesting.</p>
+                          <div class="grid grid-cols-2 gap-2 mb-3">
+                              <div>
+                                  <label class="builder-label">Output TF</label>
+                                  <select class="builder-select w-full text-[11px]">
+                                      <option>1m</option><option>5m</option><option selected>1h</option><option>4h</option>
+                                  </select>
+                              </div>
+                              <div>
+                                  <label class="builder-label">Candle Type</label>
+                                  <select class="builder-select w-full text-[11px]">
+                                      <option selected>mark</option><option>index</option><option>funding_rate</option>
+                                  </select>
+                              </div>
+                          </div>
+                          <button class="w-full h-8 rounded text-[11px] font-bold bg-white/5 text-foreground border border-white/12 hover:bg-white/10 transition-colors flex items-center justify-center gap-2">
+                              <i data-lucide="git-merge" class="w-3.5 h-3.5"></i>Convert Trades
+                          </button>
+                      </div>
+
+                      <!-- ── Section: Available Pairs ── -->
+                      <div class="px-4 pt-4 pb-4">
+                          <div class="flex items-center justify-between mb-3">
+                              <h3 class="section-title flex items-center gap-1.5">
+                                  <i data-lucide="list" class="w-3.5 h-3.5"></i>Available Pairs
+                              </h3>
+                              <span class="text-[9px] font-mono text-muted">available-pairs</span>
+                          </div>
+                          <div class="flex gap-2 mb-2">
+                              <select class="builder-select flex-1 text-[11px]">
+                                  <option>1h</option><option>4h</option><option>1d</option>
+                              </select>
+                              <button class="builder-action border border-white/12 text-muted hover:text-white hover:border-white/22 transition-colors text-[10px]">Query</button>
+                          </div>
+                          <div class="text-[10px] text-muted font-mono leading-relaxed bg-black/30 rounded border border-white/8 px-3 py-2">
+                              BTC/USDT:USDT · ETH/USDT:USDT · SOL/USDT:USDT · BNB/USDT:USDT · XRP/USDT:USDT
+                              <span class="text-white/30"> · +148 more</span>
+                          </div>
+                      </div>
+
+                  </div><!-- /scrollable -->
+              </div><!-- /left panel -->
+
+              <!-- ══════════════════════════════════════════════════════════
+                   RIGHT: KPI bar + Coverage Matrix (full flex-1 width)
+              ══════════════════════════════════════════════════════════ -->
+              <div class="flex-1 overflow-y-auto flex flex-col gap-4 min-w-0">
+
+                  <!-- Toolbar (h-10, same as other pages) -->
+                  <div class="h-10 bg-surface l-bd rounded-md shrink-0 flex items-center gap-3 px-4">
+                      <span class="section-title flex items-center gap-2">
+                          <i data-lucide="database" class="w-4 h-4 text-up"></i>Data Management
+                      </span>
+                      <span class="text-white/20 text-[10px]">|</span>
+                      <span class="text-[10px] font-mono text-muted">GET /api/v1/list_data</span>
+                      <div class="ml-auto flex items-center gap-2">
+                          <button onclick="buildDataPageHeatmap()" class="builder-action border border-white/12 text-muted hover:text-white hover:border-white/22 text-[10px]">
+                              <i data-lucide="refresh-cw" class="w-3 h-3"></i>Refresh
+                          </button>
+                          <button onclick="fillDataGaps()" class="builder-action bg-up/15 text-up border border-up/30 hover:bg-up/25 text-[10px]">
+                              <i data-lucide="download" class="w-3 h-3"></i>Fill Gaps
+                          </button>
+                          <div class="flex gap-0 l-bd rounded overflow-hidden">
+                              <button class="px-2.5 py-1 text-[10px] font-medium bg-white/10 text-white">Matrix</button>
+                              <button class="px-2.5 py-1 text-[10px] font-medium text-muted hover:text-white transition-colors">List</button>
+                          </div>
+                          <button class="builder-action border border-white/12 text-muted hover:text-white hover:border-white/22 text-[10px]" title="Export CSV">
+                              <i data-lucide="download" class="w-3 h-3"></i>CSV
+                          </button>
+                      </div>
+                  </div>
+
+                  <!-- KPI Strip (6 cols, shrink-0) -->
+                  <div class="grid grid-cols-6 gap-3 shrink-0">
+                      <div class="bg-surface l-bd rounded p-3">
+                          <div class="kpi-label">Datasets</div>
+                          <div class="kpi-value text-lg">42</div>
+                          <div class="text-[10px] text-muted mt-0.5 font-mono">pair×tf loaded</div>
+                      </div>
+                      <div class="bg-surface l-bd rounded p-3">
+                          <div class="kpi-label">Coverage</div>
+                          <div class="kpi-value text-up text-lg">26%</div>
+                          <div class="text-[10px] text-muted mt-0.5 font-mono">42 / 160 combos</div>
+                      </div>
+                      <div class="bg-surface l-bd rounded p-3">
+                          <div class="kpi-label">Total Candles</div>
+                          <div class="kpi-value text-lg">2.4M</div>
+                          <div class="text-[10px] text-muted mt-0.5 font-mono">across all sets</div>
+                      </div>
+                      <div class="bg-surface l-bd rounded p-3">
+                          <div class="kpi-label">Date Range</div>
+                          <div class="text-[12px] font-bold text-foreground font-mono mt-1">2022-01-01 →</div>
+                          <div class="text-[10px] text-muted mt-0.5 font-mono">2024-04-08</div>
+                      </div>
+                      <div class="bg-surface l-bd rounded p-3">
+                          <div class="kpi-label">Stale (&gt;7d)</div>
+                          <div class="kpi-value text-lg" style="color:#f59e0b">3</div>
+                          <div class="text-[10px] text-muted mt-0.5 font-mono">need refresh</div>
+                      </div>
+                      <div class="bg-surface l-bd rounded p-3">
+                          <div class="kpi-label">Last Download</div>
+                          <div class="kpi-value text-lg">2h</div>
+                          <div class="text-[10px] text-muted mt-0.5 font-mono">ETH/USDT 1h ago</div>
+                      </div>
+                  </div>
+
+                  <!-- Coverage Matrix -->
+                  <div class="bg-surface l-bd rounded-md shadow-xl flex flex-col" style="flex: 1 1 0; min-height: 0;">
+                      <div class="h-10 l-b flex items-center justify-between px-4 bg-black/40 shrink-0">
+                          <span class="section-title flex items-center gap-2">
+                              <i data-lucide="grid-3x3" class="w-4 h-4"></i>Coverage Matrix
+                              <span class="font-mono text-muted font-normal text-[10px] ml-1 normal-case">Pair × Timeframe</span>
+                          </span>
+                          <div class="flex items-center gap-4">
+                              <span class="flex items-center gap-1.5 text-[10px] text-up"><span class="inline-block w-2.5 h-2.5 rounded-sm bg-up/20 border border-up/40"></span>Present</span>
+                              <span class="flex items-center gap-1.5 text-[10px]" style="color:#f59e0b"><span class="inline-block w-2.5 h-2.5 rounded-sm border" style="background:rgba(245,158,11,0.15);border-color:rgba(245,158,11,0.35)"></span>Stale</span>
+                              <span class="flex items-center gap-1.5 text-[10px] text-muted"><span class="inline-block w-2.5 h-2.5 rounded-sm bg-white/5 border border-white/10"></span>Missing</span>
+                          </div>
+                      </div>
+                      <div class="overflow-auto flex-1">
+                          <table class="border-collapse text-[11px] font-mono w-full">
+                              <thead class="sticky top-0 bg-surface z-10 shadow-sm">
+                                  <tr>
+                                      <th class="text-left px-4 py-2.5 kpi-label font-semibold min-w-[130px] sticky left-0 bg-surface z-20 border-b border-r border-white/8">Pair</th>
+                                      <th class="px-1 py-2.5 text-center kpi-label font-semibold border-b border-white/8 min-w-[72px]">1m</th>
+                                      <th class="px-1 py-2.5 text-center kpi-label font-semibold border-b border-white/8 min-w-[72px]">5m</th>
+                                      <th class="px-1 py-2.5 text-center kpi-label font-semibold border-b border-white/8 min-w-[72px]">15m</th>
+                                      <th class="px-1 py-2.5 text-center kpi-label font-semibold border-b border-white/8 min-w-[72px]">30m</th>
+                                      <th class="px-1 py-2.5 text-center kpi-label font-semibold border-b border-white/8 min-w-[72px]">1h</th>
+                                      <th class="px-1 py-2.5 text-center kpi-label font-semibold border-b border-white/8 min-w-[72px]">4h</th>
+                                      <th class="px-1 py-2.5 text-center kpi-label font-semibold border-b border-white/8 min-w-[72px]">1d</th>
+                                      <th class="px-1 py-2.5 text-center kpi-label font-semibold border-b border-white/8 min-w-[72px]">1w</th>
+                                      <th class="px-2 py-2.5 text-center kpi-label font-semibold border-b border-white/8 min-w-[52px]">Sets</th>
+                                      <th class="px-2 py-2.5 text-center kpi-label font-semibold border-b border-white/8 min-w-[80px]">Candles</th>
+                                      <th class="px-3 py-2.5 text-left kpi-label font-semibold border-b border-white/8 min-w-[130px]">Range</th>
+                                  </tr>
+                              </thead>
+                              <tbody class="divide-y divide-white/[0.04]" id="data-page-heatmap-body">
+                              </tbody>
+                          </table>
+                      </div>
+                  </div>
+
+              </div><!-- /right -->
+          </div><!-- /flex row -->
+      </div><!-- /page-data -->
+
+
       <div id="page-freqai" class="page-view flex-1 overflow-hidden flex-col bg-black">
 
           <!-- KPI BAR -->
@@ -5266,6 +5558,7 @@
     function switchPage(pageId) {
         document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active'));
         document.getElementById(pageId).classList.add('active');
+        if (pageId === 'page-data') { buildDataPageHeatmap(); if (window.lucide) lucide.createIcons(); }
         document.getElementById('top-title').innerText = {
             'page-dashboard': 'Control Room',
             'page-fleet': 'Fleet Management',
@@ -5354,12 +5647,217 @@
         document.querySelectorAll('.trade-tab-content').forEach(el => el.style.display = 'none');
         document.getElementById(tabId).style.display = '';
         document.querySelectorAll('.trade-tab-btn').forEach(b => {
-            b.classList.remove('border-white', 'text-white', 'border-b-2');
+            b.classList.remove('border-up', 'border-white', 'text-white', 'border-b-2');
             b.classList.add('text-muted');
         });
-        btn.classList.add('border-b-2', 'border-white', 'text-white');
+        btn.classList.add('border-b-2', 'border-up', 'text-white');
         btn.classList.remove('text-muted');
+
     }
+
+    // ── Data Coverage Heatmap ───────────────────────────────────────────────
+
+    const HEATMAP_PAIRS = [
+        'BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'XRP/USDT', 'BNB/USDT',
+        'ADA/USDT', 'DOGE/USDT', 'AVAX/USDT', 'DOT/USDT', 'LINK/USDT',
+        'MATIC/USDT', 'UNI/USDT', 'ATOM/USDT', 'LTC/USDT', 'APT/USDT',
+        'ARB/USDT', 'OP/USDT', 'NEAR/USDT', 'AAVE/USDT', 'FIL/USDT',
+    ];
+    const HEATMAP_TFS = ['1m', '5m', '15m', '30m', '1h', '4h', '1d', '1w'];
+
+    // Mock data — simulates botListData response
+    // Format: "PAIR/TF" => { candles, start, end, stale }
+    const MOCK_DATA_ENTRIES = {
+        'BTC/USDT/1m': { c: 525600, s: '2022-01-01', e: '2024-04-01', stale: false },
+        'BTC/USDT/5m': { c: 105120, s: '2022-01-01', e: '2024-04-08', stale: false },
+        'BTC/USDT/15m': { c: 35040, s: '2022-01-01', e: '2024-04-08', stale: false },
+        'BTC/USDT/1h': { c: 19752, s: '2022-01-01', e: '2024-04-05', stale: false },
+        'BTC/USDT/4h': { c: 4938, s: '2022-01-01', e: '2024-04-08', stale: false },
+        'BTC/USDT/1d': { c: 824, s: '2022-01-01', e: '2024-03-28', stale: true },
+        'ETH/USDT/5m': { c: 105120, s: '2022-06-01', e: '2024-04-08', stale: false },
+        'ETH/USDT/15m': { c: 35040, s: '2022-06-01', e: '2024-04-08', stale: false },
+        'ETH/USDT/1h': { c: 15768, s: '2022-06-01', e: '2024-04-08', stale: false },
+        'ETH/USDT/4h': { c: 3942, s: '2022-06-01', e: '2024-04-08', stale: false },
+        'ETH/USDT/1d': { c: 657, s: '2022-06-01', e: '2024-04-08', stale: false },
+        'SOL/USDT/5m': { c: 52560, s: '2023-01-01', e: '2024-04-08', stale: false },
+        'SOL/USDT/1h': { c: 10950, s: '2023-01-01', e: '2024-04-08', stale: false },
+        'SOL/USDT/4h': { c: 2737, s: '2023-01-01', e: '2024-04-08', stale: false },
+        'SOL/USDT/1d': { c: 456, s: '2023-01-01', e: '2024-03-20', stale: true },
+        'XRP/USDT/1h': { c: 19752, s: '2022-01-01', e: '2024-04-08', stale: false },
+        'XRP/USDT/4h': { c: 4938, s: '2022-01-01', e: '2024-04-08', stale: false },
+        'BNB/USDT/1h': { c: 10950, s: '2023-01-01', e: '2024-04-08', stale: false },
+        'BNB/USDT/4h': { c: 2737, s: '2023-01-01', e: '2024-04-08', stale: false },
+        'LINK/USDT/1d': { c: 457, s: '2023-01-01', e: '2024-03-15', stale: true },
+        'AVAX/USDT/1h': { c: 8760, s: '2023-01-01', e: '2024-04-08', stale: false },
+        'DOT/USDT/4h': { c: 2190, s: '2023-01-01', e: '2024-04-08', stale: false },
+        'ARB/USDT/1h': { c: 5840, s: '2023-06-01', e: '2024-04-08', stale: false },
+    };
+
+    function fmtCandles(n) {
+        if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+        if (n >= 1000) return (n/1000).toFixed(0) + 'K';
+        return String(n);
+    }
+
+    function buildDataHeatmap() {
+        const tbody = document.getElementById('data-heatmap-body');
+        if (!tbody) return;
+        let html = '';
+        let totalSets = 0;
+
+        HEATMAP_PAIRS.forEach(pair => {
+            let rowSets = 0;
+            let tds = '';
+            HEATMAP_TFS.forEach(tf => {
+                const key = `${pair}/${tf}`;
+                const entry = MOCK_DATA_ENTRIES[key];
+                if (entry) {
+                    rowSets++;
+                    totalSets++;
+                    if (entry.stale) {
+                        // Amber = stale
+                        tds += `<td class="px-1 py-1.5 text-center">
+                            <div class="mx-auto w-[58px] h-[30px] rounded flex flex-col items-center justify-center 
+                                 bg-amber-400/15 border border-amber-400/30 cursor-pointer hover:bg-amber-400/25 transition-colors"
+                                 title="${pair} · ${tf}&#10;${entry.s} → ${entry.e}&#10;${entry.c.toLocaleString()} candles&#10;⚠ Stale">
+                                <span class="text-[9px] font-bold text-amber-400 leading-none">${fmtCandles(entry.c)}</span>
+                                <span class="text-[8px] text-amber-400/60 leading-none mt-0.5">stale</span>
+                            </div>
+                        </td>`;
+                    } else {
+                        // Green = data present
+                        tds += `<td class="px-1 py-1.5 text-center">
+                            <div class="mx-auto w-[58px] h-[30px] rounded flex flex-col items-center justify-center 
+                                 bg-emerald-500/15 border border-emerald-500/30 cursor-pointer hover:bg-emerald-500/25 transition-colors"
+                                 title="${pair} · ${tf}&#10;${entry.s} → ${entry.e}&#10;${entry.c.toLocaleString()} candles">
+                                <span class="text-[9px] font-bold text-emerald-400 leading-none">${fmtCandles(entry.c)}</span>
+                                <span class="text-[8px] text-emerald-400/50 leading-none mt-0.5">${entry.s.slice(2,7)}</span>
+                            </div>
+                        </td>`;
+                    }
+                } else {
+                    // Empty = missing
+                    tds += `<td class="px-1 py-1.5 text-center">
+                        <div class="mx-auto w-[58px] h-[30px] rounded flex items-center justify-center 
+                             bg-white/[0.03] border border-white/8 cursor-pointer hover:bg-white/8 hover:border-white/15 transition-colors data-gap"
+                             data-pair="${pair}" data-tf="${tf}"
+                             title="${pair} · ${tf} — No data. Click Fill Gaps to download.">
+                            <span class="text-[9px] text-white/20">—</span>
+                        </div>
+                    </td>`;
+                }
+            });
+
+            const setsBadge = rowSets > 0
+                ? `<span class="text-[10px] font-bold ${rowSets >= 6 ? 'text-emerald-400' : rowSets >= 3 ? 'text-amber-400' : 'text-rose-400'}">${rowSets}/${HEATMAP_TFS.length}</span>`
+                : `<span class="text-[10px] text-white/20">0/${HEATMAP_TFS.length}</span>`;
+
+            html += `<tr class="hover:bg-white/[0.02] transition-colors">
+                <td class="px-3 py-1.5 sticky left-0 bg-[#0c0c0e] z-10 border-r border-white/[0.05]">
+                    <span class="text-[12px] font-semibold ${rowSets > 0 ? 'text-white' : 'text-white/35'}">${pair}</span>
+                </td>
+                ${tds}
+                <td class="px-2 py-1.5 text-center">${setsBadge}</td>
+            </tr>`;
+        });
+
+        tbody.innerHTML = html;
+    }
+
+    // Full Data Page heatmap — with Candles + Range extra columns
+    function buildDataPageHeatmap() {
+        const tbody = document.getElementById('data-page-heatmap-body');
+        if (!tbody) return;
+        let html = '';
+
+        HEATMAP_PAIRS.forEach(pair => {
+            let rowSets = 0;
+            let totalCandles = 0;
+            let minDate = null, maxDate = null;
+            let tds = '';
+
+            HEATMAP_TFS.forEach(tf => {
+                const key = `${pair}/${tf}`;
+                const entry = MOCK_DATA_ENTRIES[key];
+                if (entry) {
+                    rowSets++;
+                    totalCandles += entry.c;
+                    if (!minDate || entry.s < minDate) minDate = entry.s;
+                    if (!maxDate || entry.e > maxDate) maxDate = entry.e;
+
+                    if (entry.stale) {
+                        tds += `<td class="px-1 py-1.5 text-center"><div class="mx-auto w-[62px] h-[30px] rounded flex flex-col items-center justify-center bg-amber-400/15 border border-amber-400/30 cursor-pointer hover:bg-amber-400/25 transition-colors" title="${pair} · ${tf}&#10;${entry.s} → ${entry.e}&#10;${entry.c.toLocaleString()} candles&#10;⚠ Stale"><span class="text-[9px] font-bold text-amber-400 leading-none">${fmtCandles(entry.c)}</span><span class="text-[8px] text-amber-400/60 leading-none mt-0.5">stale</span></div></td>`;
+                    } else {
+                        tds += `<td class="px-1 py-1.5 text-center"><div class="mx-auto w-[62px] h-[30px] rounded flex flex-col items-center justify-center bg-emerald-500/15 border border-emerald-500/30 cursor-pointer hover:bg-emerald-500/25 transition-colors" title="${pair} · ${tf}&#10;${entry.s} → ${entry.e}&#10;${entry.c.toLocaleString()} candles"><span class="text-[9px] font-bold text-emerald-400 leading-none">${fmtCandles(entry.c)}</span><span class="text-[8px] text-emerald-400/50 leading-none mt-0.5">${entry.s.slice(2,7)}</span></div></td>`;
+                    }
+                } else {
+                    tds += `<td class="px-1 py-1.5 text-center"><div class="mx-auto w-[62px] h-[30px] rounded flex items-center justify-center bg-white/[0.03] border border-white/8 cursor-pointer hover:bg-white/8 hover:border-white/15 transition-colors data-gap" data-pair="${pair}" data-tf="${tf}" title="${pair} · ${tf} — No data. Click Fill Gaps."><span class="text-[9px] text-white/20">—</span></div></td>`;
+                }
+            });
+
+            const badge = rowSets > 0
+                ? `<span class="text-[10px] font-bold ${rowSets >= 6 ? 'text-emerald-400' : rowSets >= 3 ? 'text-amber-400' : 'text-rose-400'}">${rowSets}/${HEATMAP_TFS.length}</span>`
+                : `<span class="text-[10px] text-white/20">0/${HEATMAP_TFS.length}</span>`;
+
+            const candlesCell = rowSets > 0
+                ? `<span class="text-[11px] font-mono text-white/70">${fmtCandles(totalCandles)}</span>`
+                : `<span class="text-[10px] text-white/20">—</span>`;
+
+            const rangeCell = minDate
+                ? `<span class="text-[10px] font-mono text-white/50">${minDate.slice(2)} → ${maxDate.slice(2)}</span>`
+                : `<span class="text-[10px] text-white/20">—</span>`;
+
+            html += `<tr class="hover:bg-white/[0.02] transition-colors">
+                <td class="px-3 py-1.5 sticky left-0 bg-[#0c0c0e] z-10 border-r border-white/[0.05]">
+                    <span class="text-[12px] font-semibold ${rowSets > 0 ? 'text-white' : 'text-white/35'}">${pair}</span>
+                </td>
+                ${tds}
+                <td class="px-2 py-1.5 text-center">${badge}</td>
+                <td class="px-2 py-1.5 text-center">${candlesCell}</td>
+                <td class="px-3 py-1.5">${rangeCell}</td>
+            </tr>`;
+        });
+
+        tbody.innerHTML = html;
+    }
+
+
+    function toggleDlTf(btn, tf) {
+        btn.classList.toggle('active');
+        if (btn.classList.contains('active')) {
+            btn.classList.add('border-up/50', 'bg-up/10', 'text-up');
+            btn.classList.remove('border-white/12', 'text-muted');
+        } else {
+            btn.classList.remove('border-up/50', 'bg-up/10', 'text-up');
+            btn.classList.add('border-white/12', 'text-muted');
+        }
+    }
+
+    function fillDataGaps() {
+        const gaps = document.querySelectorAll('.data-gap');
+        const missing = [];
+        gaps.forEach(el => {
+            missing.push({ pair: el.dataset.pair, tf: el.dataset.tf });
+            el.classList.add('!bg-primary/15', '!border-primary/40');
+            el.querySelector('span').textContent = '▶';
+            el.querySelector('span').classList.remove('text-white/20');
+            el.querySelector('span').classList.add('text-primary');
+        });
+        if (missing.length > 0) {
+            // Flash the action bar and show count
+            const btn = document.querySelector('[onclick="fillDataGaps()"]');
+            if (btn) {
+                btn.innerHTML = `<i data-lucide="download" class="w-3.5 h-3.5"></i>${missing.length} gaps queued — open Data Page`;
+                btn.classList.add('!bg-primary/25', '!border-primary/50', '!text-white');
+                if (window.lucide) lucide.createIcons();
+            }
+        }
+    }
+
+    // Build heatmap when Data page is activated
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.lucide) lucide.createIcons();
+    });
 
     function closeBotDrawer() {
         document.getElementById('bot-drawer').classList.remove('open');

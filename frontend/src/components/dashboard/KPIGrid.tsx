@@ -12,6 +12,7 @@ interface KPIGridProps {
   totalPnlClosedPct: number | null;
   openPnl: number | null;
   openPnlPct: number | null;
+  totalTradingDays: number | null;
   openTradeCount: number;
   maxOpenTrades: number | null;
   maxDrawdown: number | null;
@@ -58,6 +59,7 @@ export default function KPIGrid({
   totalPnlClosedPct,
   openPnl,
   openPnlPct,
+  totalTradingDays,
   openTradeCount,
   maxOpenTrades,
   maxDrawdown,
@@ -115,7 +117,14 @@ export default function KPIGrid({
         </div>
         {/* Total P&L (Closed) */}
         <div className="bg-black p-4 flex flex-col hover:bg-white/[0.04] transition-colors">
-          <span className="kpi-label">Total P&amp;L (Closed)</span>
+          <span className="kpi-label items-center flex gap-1.5">
+            Total P&amp;L (Closed)
+            {totalTradingDays != null && totalTradingDays > 0 && (
+              <span className="text-[9px] text-muted/70 font-normal lowercase bg-white/5 px-1.5 py-[2px] rounded uppercase tracking-widest whitespace-nowrap">
+                {totalTradingDays} {totalTradingDays === 1 ? "day" : "days"}
+              </span>
+            )}
+          </span>
           <span className={`kpi-value text-xl ${totalPnlClosed != null && totalPnlClosed >= 0 ? "text-up" : totalPnlClosed != null && totalPnlClosed < 0 ? "text-down" : ""}`}>
             {totalPnlClosed != null ? fmtMoney(totalPnlClosed) : "\u2014"}
             {totalPnlClosedPct != null && <span className="text-[11px] font-sans font-normal ml-1">{totalPnlClosedPct >= 0 ? "+" : ""}{fmt(totalPnlClosedPct, 2)}%</span>}

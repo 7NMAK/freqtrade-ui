@@ -1,0 +1,57 @@
+version: '3'
+
+services:
+  nk-cc_ema21-btc:
+    image: freqtradeorg/freqtrade:stable_freqai
+    restart: unless-stopped
+    container_name: nk-cc_ema21-btc
+    volumes:
+      - "/opt/freqtrade/user_data:/freqtrade/user_data"
+    ports:
+      - "8201:8201"
+    networks:
+      - ft_network
+    command: >
+      trade
+      --logfile /freqtrade/user_data/logs/nk-cc_ema21-btc.log
+      --db-url sqlite:////freqtrade/user_data/dbs/nk-cc_ema21-btc.sqlite
+      --config /freqtrade/user_data/configs/nk-cc_ema21-btc.json
+      --strategy CC_EMA21_v5l_v9
+
+  nk-cc_ema21-eth:
+    image: freqtradeorg/freqtrade:stable_freqai
+    restart: unless-stopped
+    container_name: nk-cc_ema21-eth
+    volumes:
+      - "/opt/freqtrade/user_data:/freqtrade/user_data"
+    ports:
+      - "8202:8202"
+    networks:
+      - ft_network
+    command: >
+      trade
+      --logfile /freqtrade/user_data/logs/nk-cc_ema21-eth.log
+      --db-url sqlite:////freqtrade/user_data/dbs/nk-cc_ema21-eth.sqlite
+      --config /freqtrade/user_data/configs/nk-cc_ema21-eth.json
+      --strategy CC_EMA21_v5l_v9
+
+  nk-cc_ema21-sol:
+    image: freqtradeorg/freqtrade:stable_freqai
+    restart: unless-stopped
+    container_name: nk-cc_ema21-sol
+    volumes:
+      - "/opt/freqtrade/user_data:/freqtrade/user_data"
+    ports:
+      - "8203:8203"
+    networks:
+      - ft_network
+    command: >
+      trade
+      --logfile /freqtrade/user_data/logs/nk-cc_ema21-sol.log
+      --db-url sqlite:////freqtrade/user_data/dbs/nk-cc_ema21-sol.sqlite
+      --config /freqtrade/user_data/configs/nk-cc_ema21-sol.json
+      --strategy CC_EMA21_v5l_v9
+
+networks:
+  ft_network:
+    external: true

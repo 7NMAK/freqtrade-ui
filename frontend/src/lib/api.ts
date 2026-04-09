@@ -276,14 +276,13 @@ export const applyBotConfig = (id: number) =>
 export const botLogs = (id: number, limit = 50) =>
   request<import("@/types").FTLogsResponse>(`/api/bots/${id}/logs?limit=${limit}`);
 
-// ── Currently unused — available for Dashboard bot detail panel ──
-// UNUSED — available for future use
-// export const botCount = (id: number) =>
-//   request<import("@/types").FTCount>(`/api/bots/${id}/count`);
+// ── Bot Info ─────────────────────────────────────────────────────────────
 
-// UNUSED — available for future use
-// export const botVersion = (id: number) =>
-//   request<import("@/types").FTVersion>(`/api/bots/${id}/version`);
+export const botCount = (id: number) =>
+  request<{ current: number; max: number }>(`/api/bots/${id}/count`);
+
+export const botVersion = (id: number) =>
+  request<{ version: string }>(`/api/bots/${id}/version`);
 
 export const botHealth = (id: number) =>
   request<import("@/types").FTHealth>(`/api/bots/${id}/health`);
@@ -307,17 +306,29 @@ export const botStats = (id: number) =>
 export const botWhitelist = (id: number) =>
   request<import("@/types").FTWhitelist>(`/api/bots/${id}/whitelist`);
 
-// ── Currently unused — available for Settings blacklist management ──
-// UNUSED — available for future use
-// export const botBlacklist = (id: number) =>
-//   request<{ blacklist: string[]; blacklist_expanded: string[]; length: number }>(
-//     `/api/bots/${id}/blacklist`
-//   );
+// ── Blacklist ─────────────────────────────────────────────────────────────
 
-// ── Currently unused — available for Analytics chart overlay config ──
-// UNUSED — available for future use
-// export const botPlotConfig = (id: number) =>
-//   request(`/api/bots/${id}/plot-config`);
+export const botBlacklist = (id: number) =>
+  request<{ blacklist: string[]; blacklist_expanded: string[]; length: number }>(
+    `/api/bots/${id}/blacklist`
+  );
+
+export const botBlacklistAdd = (id: number, pairs: string[]) =>
+  request<{ blacklist: string[]; blacklist_expanded: string[]; length: number; errors: string[] }>(
+    `/api/bots/${id}/blacklist`,
+    { method: "POST", body: JSON.stringify({ blacklist: pairs }) }
+  );
+
+export const botBlacklistDelete = (id: number, pair: string) =>
+  request<{ blacklist: string[]; blacklist_expanded: string[]; length: number }>(
+    `/api/bots/${id}/blacklist?pair=${encodeURIComponent(pair)}`,
+    { method: "DELETE" }
+  );
+
+// ── Plot Config ───────────────────────────────────────────────────────────
+
+export const botPlotConfig = (id: number) =>
+  request<Record<string, unknown>>(`/api/bots/${id}/plot-config`);
 
 export const botPairCandles = (
   id: number,
@@ -528,6 +539,46 @@ export const botAvailablePairs = (id: number, timeframe?: string) =>
     `/api/bots/${id}/available-pairs${timeframe ? `?timeframe=${timeframe}` : ""}`
   );
 
+// ── Single Trade / Pair History / Pairlists / Custom Data ─────────────────
+
+/** GET /trade/<id> — fetch a single trade by ID */
+export const botTrade = (id: number, tradeId: number) =>
+  request<import("@/types").FTTrade>(`/api/bots/${id}/trades/${tradeId}`);
+
+/**
+ * GET /pair_history — historic analyzed dataframe for a pair+timeframe+strategy
+ * @param strategy - Strategy class name
+ * @param timerange - Optional timerange string e.g. "20220101-20240101"
+ */
+export const botPairHistory = (
+  id: number,
+  pair: string,
+  timeframe: string,
+  strategy: string,
+  timerange?: string
+) =>
+  request<import("@/types").FTPairCandlesResponse>(
+    `/api/bots/${id}/pair-history?pair=${encodeURIComponent(pair)}&timeframe=${timeframe}&strategy=${encodeURIComponent(strategy)}${timerange ? `&timerange=${timerange}` : ""}`
+  );
+
+/** GET /pairlists_available — list all available pairlist providers */
+export const botPairlistsAvailable = (id: number) =>
+  request<{ pairlists: Array<{ name: string; description: string }> }>(
+    `/api/bots/${id}/pairlists-available`
+  );
+
+/** GET /list_custom_data/<trade_id> — list custom data for a specific trade */
+export const botListCustomData = (id: number, tradeId: number, key?: string) =>
+  request<{ custom_data: Array<{ key: string; value: unknown; created_at: string }> }>(
+    `/api/bots/${id}/trades/${tradeId}/custom-data${key ? `?key=${encodeURIComponent(key)}` : ""}`
+  );
+
+/** GET /list_open_trades_custom_data — list custom data across all open trades */
+export const botListOpenTradesCustomData = (id: number, key?: string, limit = 50, offset = 0) =>
+  request<{ custom_data: Array<{ trade_id: number; key: string; value: unknown; created_at: string }> }>(
+    `/api/bots/${id}/custom-data/open?limit=${limit}&offset=${offset}${key ? `&key=${encodeURIComponent(key)}` : ""}`
+  );
+
 // ── Kill Switch ───────────────────────────────────────────────────────────
 
 export const softKill = (botId: number, reason = "") =>
@@ -571,7 +622,11 @@ export const portfolioTrades = () =>
 export const portfolioDaily = () =>
   request<import("@/types").FTDailyResponse>("/api/portfolio/daily");
 
+export const portfolioWeekly = (weeks = 12) =>
+  request<import("@/types").FTWeeklyResponse>(`/api/portfolio/weekly?weeks=${weeks}`);
 
+export const portfolioMonthly = (months = 12) =>
+  request<import("@/types").FTMonthlyResponse>(`/api/portfolio/monthly?months=${months}`);
 
 // ── Strategies (Orchestrator DB) ──────────────────────────────────────────
 

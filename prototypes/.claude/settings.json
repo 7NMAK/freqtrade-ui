@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/novakus/Documents/BOT/frontend/src/app/dashboard/**)",
+      "Read(//Users/novakus/Documents/BOT/frontend/src/components/dashboard/**)",
+      "Read(//Users/novakus/Documents/BOT/frontend/src/lib/**)",
+      "Read(//Users/novakus/Documents/BOT/frontend/src/types/**)"
+    ],
+    "additionalDirectories": [
+      "/Users/novakus/Documents/BOT/frontend/src/components/dashboard"
+    ]
+  }
+}

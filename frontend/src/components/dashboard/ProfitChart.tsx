@@ -93,13 +93,25 @@ export default function ProfitChart({
     });
   }, [dailyData, weeklyData, monthlyData, timePeriod, valueMode]);
 
+  // Calculate where zero sits as a fraction from top (0) to bottom (1) of the chart.
+  // Used for the SVG linearGradient that splits line color at zero.
+  const zeroOffset = useMemo(() => {
+    if (chartData.length === 0) return 0;
+    const profits = chartData.map((d) => d.profit);
+    const max = Math.max(...profits);
+    const min = Math.min(...profits);
+    if (min >= 0) return 0;   // all positive — all green
+    if (max <= 0) return 1;   // all negative — all red
+    return max / (max - min); // zero crossing as fraction from top
+  }, [chartData]);
+
   // Distribution histogram from daily P&L data
   const distribution = useMemo(() => {
     if (dailyData.length === 0) return [];
     const profits = dailyData.map((d) => d.abs_profit);
     const min = Math.min(...profits);
     const max = Math.max(...profits);
-    if (min === max) return []; // All identical values — no distribution to show
+    if (min === max) return [];
     const bins = 11;
     const binSize = (max - min) / bins;
     const counts = new Array(bins).fill(0) as number[];
@@ -109,12 +121,11 @@ export default function ProfitChart({
     }
     const maxCount = Math.max(...counts, 1);
     return counts.map((c, i) => {
-      // Color by the midpoint value of each bin
       const binMid = min + (i + 0.5) * binSize;
       return {
         height: (c / maxCount) * 100,
         isNeg: binMid < 0,
-        isMid: binMid >= -binSize / 2 && binMid <= binSize / 2, // bin containing zero
+        isMid: binMid >= -binSize / 2 && binMid <= binSize / 2,
       };
     });
   }, [dailyData]);
@@ -137,7 +148,6 @@ export default function ProfitChart({
         <div className="flex items-center justify-between px-5 py-3 shrink-0 gap-3">
           <h3 className="section-title text-white/50 whitespace-nowrap">Profit Over Time</h3>
           <div className="flex gap-0 shrink-0">
-            {/* Time range button group */}
             {timePeriods.map((p, i) => (
               <button
                 key={p.key}
@@ -153,7 +163,6 @@ export default function ProfitChart({
               </button>
             ))}
             <div className="w-3" />
-            {/* Value mode group */}
             {valueModes.map((m, i) => (
               <button
                 key={m.key}
@@ -169,7 +178,6 @@ export default function ProfitChart({
               </button>
             ))}
             <div className="w-2" />
-            {/* Sidebar toggle */}
             <button
               onClick={onToggleSidebar}
               className="sidebar-toggle px-2 py-1 rounded text-muted hover:text-white hover:bg-white/[0.08] transition-all opacity-40 hover:opacity-100 cursor-pointer"
@@ -182,7 +190,6 @@ export default function ProfitChart({
 
         {/* Chart area */}
         <div className="flex-1 px-5 pb-4 relative">
-          {/* Grid overlay */}
           <div className="absolute inset-0 l-grid opacity-20" />
 
           {chartData.length === 0 ? (
@@ -197,11 +204,19 @@ export default function ProfitChart({
                   <span className="w-3 h-[2px] bg-[#22c55e] rounded inline-block" />Profit
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-2.5 bg-white/15 rounded-sm inline-block" />Trade Count
+                  <span className="w-3 h-2.5 bg-white/15 rounded-sm inline-block" />Trades
                 </span>
               </div>
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: -10 }}>
+                  {/* SVG gradient: green above zero, red below — split exactly at zero */}
+                  <defs>
+                    <linearGradient id="lineColorGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset={zeroOffset} stopColor="#22c55e" />
+                      <stop offset={zeroOffset} stopColor="#ef4444" />
+                    </linearGradient>
+                  </defs>
+
                   <XAxis
                     dataKey="date"
                     tick={{ fontSize: 9, fill: "rgba(255,255,255,0.25)" }}
@@ -245,7 +260,15 @@ export default function ProfitChart({
                       ];
                     }}
                   />
-                  <ReferenceLine yAxisId="profit" y={0} stroke="rgba(255,255,255,0.08)" strokeWidth={0.5} strokeDasharray="3 3" />
+
+                  {/* Zero axis — solid, visible */}
+                  <ReferenceLine
+                    yAxisId="profit"
+                    y={0}
+                    stroke="rgba(255,255,255,0.30)"
+                    strokeWidth={1}
+                  />
+
                   <Bar
                     yAxisId="trades"
                     dataKey="tradeCount"
@@ -257,10 +280,10 @@ export default function ProfitChart({
                     yAxisId="profit"
                     type="monotone"
                     dataKey="profit"
-                    stroke="#22c55e"
+                    stroke="url(#lineColorGradient)"
                     strokeWidth={1.5}
-                    dot={{ r: 2, fill: "#22c55e", stroke: "none" }}
-                    activeDot={{ r: 3 }}
+                    dot={false}
+                    activeDot={{ r: 3, fill: "#fff", stroke: "none" }}
                   />
                 </ComposedChart>
               </ResponsiveContainer>
@@ -277,7 +300,6 @@ export default function ProfitChart({
         <div className="flex-1 px-5 pb-4 flex items-end gap-[3px]">
           {distribution.length > 0 ? (
             distribution.map((bin, i) => {
-              // Graduated opacity: larger bars = more opaque (20% to 80%)
               const opacityPct = Math.round(20 + (bin.height / 100) * 60);
               const bgColor = bin.isNeg
                 ? `rgba(239,68,68,${opacityPct / 100})`

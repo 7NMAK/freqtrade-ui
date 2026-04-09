@@ -205,6 +205,8 @@ export interface FTProfit {
   losing_trades: number;
   wins?: number;
   losses?: number;
+  max_drawdown?: number;
+  max_drawdown_abs?: number;
 }
 
 /** GET /api/v1/balance */

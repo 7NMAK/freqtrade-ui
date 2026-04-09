@@ -320,7 +320,7 @@ export default function DashboardPage() {
       const sparks: Record<number, number[]> = {};
       const aggSharpe: number | null = null;
       const aggMaxDD: number | null = null;
-      const aggMaxDDAbs: number | null = null;
+      let aggMaxDDAbs: number | null = null;
       const aggVolume = 0;
       const aggDurTotal = 0;
       const aggDurCount = 0;
@@ -395,6 +395,14 @@ export default function DashboardPage() {
           })
         );
       } // end batch loop
+
+      // Aggregate max_drawdown_abs across all bots (sum absolute drawdowns)
+      for (const prof of Object.values(profits)) {
+        const ddAbs = prof.max_drawdown_abs;
+        if (ddAbs != null && ddAbs > 0) {
+          aggMaxDDAbs = (aggMaxDDAbs ?? 0) + ddAbs;
+        }
+      }
 
       // Populate stopped bots with cached profit
       if (portfolioProfitData) {

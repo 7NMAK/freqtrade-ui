@@ -311,222 +311,231 @@ function useSortable<T>(data: T[], defaultKey?: string) {
   return { sorted, currentSort: sortKey, currentDir: sortDir, onSort };
 }
 
-// ── Fleet Grid (card layout matching original FleetPanel) ────────────────────
+// ── Fleet Table ───────────────────────────────────────────────────────────────
 
-type FleetSortKey = "name" | "pnl" | "winRate" | "drawdown" | "trades";
+type FleetSortKey = "name" | "pnl" | "pnlPct" | "openPnl" | "winRate" | "trades" | "closed" | "open" | "balance" | "maxDd" | "avgDur";
 
-function MiniSparkline({ data }: { data: number[] }) {
-  if (!data || data.length === 0) return null;
-  const max = Math.max(...data.map(Math.abs), 0.01);
-  return (
-    <div className="flex gap-[2px] h-4 items-end">
-      {data.slice(-5).map((v, i) => {
-        const pct = Math.max(10, (Math.abs(v) / max) * 100);
-        return (
-          <div
-            key={`sp-${i}`}
-            className={`w-1.5 rounded-sm ${v >= 0 ? "bg-up" : "bg-down"}`}
-            style={{ height: `${pct}%` }}
-          />
-        );
-      })}
-    </div>
-  );
-}
-
-function getFleetMetrics(profit: Partial<FTProfit> | undefined) {
-  const pnl = profit?.profit_closed_coin ?? null;
-  const pnlPct = profit?.profit_closed_percent ?? null;
-  const trades = profit?.trade_count ?? 0;
-  const winRate = profit && profit.winning_trades != null && profit.losing_trades != null
-    ? ((profit.winning_trades / (profit.winning_trades + profit.losing_trades)) * 100)
-    : null;
-  const avgDur = profit?.avg_duration;
-  const avgDurStr = typeof avgDur === "number"
-    ? (avgDur >= 3600 ? `${(avgDur / 3600).toFixed(1)}h` : `${Math.round(avgDur / 60)}m`)
-    : typeof avgDur === "string" ? avgDur : "\u2014";
-  const maxDd = profit ? ((profit as Record<string, unknown>).max_drawdown as number | undefined) : undefined;
-  return { pnl, pnlPct, trades, winRate, avgDurStr, maxDd };
-}
-
-interface FleetGridProps {
+interface FleetTableProps {
   bots: Bot[];
   botProfits: Record<number, Partial<FTProfit>>;
-  sparklines: Record<number, number[]>;
+  botBalances: Record<string, number>;
+  openTrades: FTTrade[];
   onBotClick?: (botId: number) => void;
   onStart?: (botId: number) => void;
   onStop?: (botId: number) => void;
-  onPause?: (botId: number) => void;
   onReload?: (botId: number) => void;
   onForceExitAll?: (botId: number) => void;
-  onStopBuy?: (botId: number) => void;
   onSoftKill?: (botId: number) => void;
   onHardKill?: (botId: number) => void;
 }
 
-function FleetGrid({
+function FleetTable({
   bots,
   botProfits,
-  sparklines,
+  botBalances,
+  openTrades,
   onBotClick,
   onStart,
   onStop,
-  onPause,
   onReload,
   onForceExitAll,
-  onStopBuy,
   onSoftKill,
   onHardKill,
-}: FleetGridProps) {
+}: FleetTableProps) {
   const [sortKey, setSortKey] = useState<FleetSortKey>("pnl");
   const [sortAsc, setSortAsc] = useState(false);
+
+  const openPnlByBot = useMemo(() => {
+    const m: Record<number, number> = {};
+    for (const t of openTrades) {
+      const id = (t as unknown as Record<string, unknown>)._bot_id as number | undefined;
+      if (id != null) m[id] = (m[id] ?? 0) + (t.current_profit_abs ?? 0);
+    }
+    return m;
+  }, [openTrades]);
+
+  const openCountByBot = useMemo(() => {
+    const m: Record<number, number> = {};
+    for (const t of openTrades) {
+      const id = (t as unknown as Record<string, unknown>)._bot_id as number | undefined;
+      if (id != null) m[id] = (m[id] ?? 0) + 1;
+    }
+    return m;
+  }, [openTrades]);
+
+  type BotRow = {
+    bot: Bot; pnl: number | null; pnlPct: number | null; openPnl: number;
+    winRate: number | null; trades: number; closedCount: number; openCount: number;
+    maxOT: number | null; balance: number | null; maxDd: number | null;
+    avgDurSecs: number | null; avgDurStr: string;
+  };
+
+  const rows: BotRow[] = useMemo(() => bots.map((bot) => {
+    const p = botProfits[bot.id];
+    const pnl = p?.profit_closed_coin ?? null;
+    const pnlPct = p?.profit_closed_percent ?? null;
+    const openPnl = openPnlByBot[bot.id] ?? 0;
+    const wins = p?.winning_trades ?? 0;
+    const losses = p?.losing_trades ?? 0;
+    const winRate = (wins + losses) > 0 ? (wins / (wins + losses)) * 100 : null;
+    const trades = p?.trade_count ?? 0;
+    const closedCount = p?.closed_trade_count ?? 0;
+    const openCount = openCountByBot[bot.id] ?? 0;
+    const maxOT = bot.max_open_trades ?? null;
+    const balance = botBalances[bot.name] ?? null;
+    const maxDdRaw = (p as Record<string, unknown>)?.max_drawdown as number | undefined;
+    const maxDd = maxDdRaw != null ? maxDdRaw * 100 : null;
+    const avgDur = p?.avg_duration;
+    let avgDurSecs: number | null = null;
+    let avgDurStr = "\u2014";
+    if (typeof avgDur === "number" && avgDur > 0) {
+      avgDurSecs = avgDur;
+      const d = Math.floor(avgDur / 86400);
+      const h = Math.floor((avgDur % 86400) / 3600);
+      const m = Math.floor((avgDur % 3600) / 60);
+      const s = Math.floor(avgDur % 60);
+      if (d > 0) avgDurStr = `${d} days, ${h.toString().padStart(2,"0")}:${m.toString().padStart(2,"0")}:${s.toString().padStart(2,"0")}`;
+      else avgDurStr = `${h.toString().padStart(2,"0")}:${m.toString().padStart(2,"0")}:${s.toString().padStart(2,"0")}`;
+    } else if (typeof avgDur === "string" && avgDur) {
+      avgDurStr = avgDur;
+    }
+    return { bot, pnl, pnlPct, openPnl, winRate, trades, closedCount, openCount, maxOT, balance, maxDd, avgDurSecs, avgDurStr };
+  }), [bots, botProfits, botBalances, openPnlByBot, openCountByBot]);
+
+  const sorted = useMemo(() => [...rows].sort((a, b) => {
+    let cmp = 0;
+    if (sortKey === "name") cmp = a.bot.name.localeCompare(b.bot.name);
+    else if (sortKey === "pnl") cmp = (a.pnl ?? -Infinity) - (b.pnl ?? -Infinity);
+    else if (sortKey === "pnlPct") cmp = (a.pnlPct ?? -Infinity) - (b.pnlPct ?? -Infinity);
+    else if (sortKey === "openPnl") cmp = a.openPnl - b.openPnl;
+    else if (sortKey === "winRate") cmp = (a.winRate ?? -1) - (b.winRate ?? -1);
+    else if (sortKey === "trades") cmp = a.trades - b.trades;
+    else if (sortKey === "closed") cmp = a.closedCount - b.closedCount;
+    else if (sortKey === "open") cmp = a.openCount - b.openCount;
+    else if (sortKey === "balance") cmp = (a.balance ?? -Infinity) - (b.balance ?? -Infinity);
+    else if (sortKey === "maxDd") cmp = (a.maxDd ?? 0) - (b.maxDd ?? 0);
+    else if (sortKey === "avgDur") cmp = (a.avgDurSecs ?? 0) - (b.avgDurSecs ?? 0);
+    return sortAsc ? cmp : -cmp;
+  }), [rows, sortKey, sortAsc]);
 
   const handleSort = (key: FleetSortKey) => {
     if (sortKey === key) setSortAsc((v) => !v);
     else { setSortKey(key); setSortAsc(false); }
   };
 
-  const sortedBots = useMemo(() => {
-    return [...bots].sort((a, b) => {
-      const am = getFleetMetrics(botProfits[a.id]);
-      const bm = getFleetMetrics(botProfits[b.id]);
-      let cmp = 0;
-      switch (sortKey) {
-        case "name": cmp = a.name.localeCompare(b.name); break;
-        case "pnl": cmp = (am.pnl ?? -Infinity) - (bm.pnl ?? -Infinity); break;
-        case "winRate": cmp = (am.winRate ?? -1) - (bm.winRate ?? -1); break;
-        case "drawdown": cmp = (am.maxDd ?? 0) - (bm.maxDd ?? 0); break;
-        case "trades": cmp = am.trades - bm.trades; break;
-      }
-      return sortAsc ? cmp : -cmp;
-    });
-  }, [bots, botProfits, sortKey, sortAsc]);
+  const sortIcon = (key: FleetSortKey) => (
+    <span className="ml-0.5 text-[9px] opacity-30">
+      {sortKey === key ? (sortAsc ? "\u2191" : "\u2193") : "\u21C5"}
+    </span>
+  );
 
-  const sortButtons: { key: FleetSortKey; label: string }[] = [
-    { key: "pnl", label: "P&L" },
-    { key: "name", label: "Name" },
-    { key: "winRate", label: "Win%" },
-    { key: "drawdown", label: "DD" },
-    { key: "trades", label: "Trades" },
-  ];
+  const colH = (key: FleetSortKey, label: string, cls = "") => (
+    <th className={`${TH_SORT} ${cls} ${sortKey === key ? "text-white bg-white/[0.04]" : ""}`} onClick={() => handleSort(key)}>
+      {label}{sortIcon(key)}
+    </th>
+  );
 
   if (bots.length === 0) return (
     <div className="flex items-center justify-center h-48 text-muted text-sm">No bots registered.</div>
   );
 
   return (
-    <div className="flex flex-col">
-      {/* Sort toolbar */}
-      <div className="flex items-center gap-1 px-4 py-2 l-b bg-black/20 sticky top-0 z-10">
-        <span className="text-[9px] text-muted mr-1 uppercase tracking-widest">Sort:</span>
-        {sortButtons.map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => handleSort(key)}
-            className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded transition-colors cursor-pointer ${
-              sortKey === key ? "bg-white/15 text-white" : "text-muted hover:text-white hover:bg-white/[0.06]"
-            }`}
-          >
-            {label}
-            {sortKey === key && <span className="ml-0.5 text-[8px]">{sortAsc ? "\u2191" : "\u2193"}</span>}
-          </button>
-        ))}
-      </div>
-
-      {/* Cards grid */}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] font-mono text-xs divide-x divide-white/[0.06]">
-        {sortedBots.map((bot, idx) => {
-          const { pnl, pnlPct, trades, winRate, avgDurStr, maxDd } = getFleetMetrics(botProfits[bot.id]);
-          const isLive = bot.status === "running";
-          const isPaused = bot.status === "draining";
-          const isStopped = !isLive && !isPaused;
+    <table className={TABLE}>
+      <thead className={THEAD}>
+        <tr>
+          <th className={`${TH_BASE} text-left w-[90px]`}>STATUS</th>
+          {colH("name", "BOT \u21C5", "text-left")}
+          <th className={`${TH_BASE} text-left`}>MODE</th>
+          {colH("pnl", "CLOSED P&L \u21C5", "text-right")}
+          {colH("pnlPct", "% \u21C5", "text-right")}
+          {colH("openPnl", "OPEN P&L \u21C5", "text-right")}
+          {colH("winRate", "WIN% \u21C5", "text-right")}
+          {colH("trades", "TRADES \u21C5", "text-right")}
+          {colH("closed", "CLOSED \u21C5", "text-right")}
+          {colH("open", "OPEN \u21C5", "text-right")}
+          {colH("balance", "BALANCE \u21C5", "text-right")}
+          {colH("maxDd", "MAX DD \u21C5", "text-right")}
+          {colH("avgDur", "AVG DUR \u21C5", "text-left")}
+          <th className={`${TH_BASE} text-right border-l border-white/[0.06]`}>ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody className={TBODY}>
+        {sorted.map((row, idx) => {
+          const { bot, pnl, pnlPct, openPnl, winRate, trades, closedCount, openCount, maxOT, balance, maxDd, avgDurStr } = row;
+          const isRunning = bot.status === "running";
+          const isDraining = bot.status === "draining";
+          const isStopped = !isRunning && !isDraining;
 
           return (
-            <div
+            <tr
               key={bot.id}
-              className={`p-4 border-b border-white/[0.05] hover:bg-white/[0.04] transition-colors group cursor-pointer ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}
+              className={`hover:bg-white/[0.04] transition-colors cursor-pointer group ${idx % 2 === 1 ? "bg-white/[0.012]" : ""}`}
               onClick={() => onBotClick?.(bot.id)}
             >
-              {/* Section 1 — Top: name + status + PnL */}
-              <div className="flex items-start justify-between mb-2.5">
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${
-                    isLive ? "bg-up shadow-[0_0_4px_#22c55e]" :
-                    isPaused ? "bg-yellow-400" : "bg-down"
-                  }`} />
-                  <span className={`font-bold uppercase text-[12px] tracking-wide ${
-                    isLive ? "text-white" : isPaused ? "text-white/60" : "text-white/40"
-                  }`}>
-                    {bot.name}
-                  </span>
-                  {isPaused ? (
-                    <span className="text-[10px] border border-yellow-500/30 px-1.5 py-[1px] rounded text-yellow-400 font-medium">DRAINING</span>
-                  ) : isStopped ? (
-                    <span className="text-[10px] border border-down/30 px-1.5 py-[1px] rounded text-down font-medium">STOPPED</span>
-                  ) : bot.is_dry_run ? (
-                    <span className="text-[10px] border border-yellow-500/30 px-1.5 py-[1px] rounded text-yellow-400 font-medium">PAPER</span>
-                  ) : (
-                    <span className="text-[10px] border border-white/20 px-1.5 py-[1px] rounded text-white/60 font-medium">LIVE</span>
-                  )}
-                </div>
-                <div className="text-right">
-                  <div className={`font-bold text-[13px] ${
-                    pnl != null && pnl > 0 ? "text-up" : pnl != null && pnl < 0 ? "text-down" : "text-muted"
-                  }`}>
-                    {pnl != null ? fmtMoney(pnl) : "\u2014"}
-                  </div>
-                  {pnlPct != null && (
-                    <span className="text-[10px]" style={{ color: pnlPct >= 0 ? "rgba(34,197,94,0.5)" : "rgba(239,68,68,0.5)" }}>
-                      {pnlPct >= 0 ? "+" : ""}{fmt(pnlPct, 1)}%
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Section 2 — Stats 2x2 grid */}
-              <div className="grid grid-cols-2 gap-y-1.5 text-[12px] mb-3">
-                <div className="flex justify-between w-full pr-5">
-                  <span className="text-muted">Trades:</span>
-                  <span className="text-white/70">{trades}</span>
-                </div>
-                <div className="flex justify-between w-full">
-                  <span className="text-muted">Win:</span>
-                  <span className={winRate != null && winRate < 50 ? "text-down" : "text-white/70"}>
-                    {winRate != null ? `${fmt(winRate, 0)}%` : "\u2014"}
+              <td className={TD}>
+                <div className="flex items-center gap-1.5">
+                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isRunning ? "bg-up shadow-[0_0_4px_#22c55e]" : isDraining ? "bg-yellow-400" : "bg-white/20"}`} />
+                  <span className={`text-[11px] font-bold tracking-wide ${isRunning ? "text-up" : isDraining ? "text-yellow-400" : "text-white/30"}`}>
+                    {isRunning ? "RUNNING" : isDraining ? "DRAINING" : "STOPPED"}
                   </span>
                 </div>
-                <div className="flex justify-between w-full pr-5">
-                  <span className="text-muted">Drawdown:</span>
-                  <span className={maxDd != null ? "text-down" : "text-white/70"}>
-                    {maxDd != null ? `-${fmt(maxDd * 100, 1)}%` : "\u2014"}
-                  </span>
+              </td>
+              <td className={`${TD} font-bold text-white max-w-[200px] truncate`} title={bot.name}>{bot.name}</td>
+              <td className={TD}>
+                <div className="flex items-center gap-1">
+                  {isStopped
+                    ? <span className="text-[9px] border border-down/30 px-1.5 py-[1px] rounded text-down/70 font-bold">STOPPED</span>
+                    : isDraining
+                      ? <span className="text-[9px] border border-yellow-500/30 px-1.5 py-[1px] rounded text-yellow-400 font-bold">DRAINING</span>
+                      : bot.is_dry_run
+                        ? <span className="text-[9px] border border-yellow-500/40 px-1.5 py-[1px] rounded text-yellow-400 font-bold">PAPER</span>
+                        : <span className="text-[9px] border border-white/20 px-1.5 py-[1px] rounded text-white/60 font-bold">LIVE</span>
+                  }
+                  {bot.trading_mode === "futures"
+                    ? <span className="text-[9px] border border-blue-500/40 px-1.5 py-[1px] rounded text-blue-400 font-bold">FUT</span>
+                    : <span className="text-[9px] border border-white/10 px-1.5 py-[1px] rounded text-white/25 font-bold">SPOT</span>
+                  }
                 </div>
-                <div className="flex justify-between w-full">
-                  <span className="text-muted">Avg. Dur:</span>
-                  <span className="text-white/70">{avgDurStr}</span>
-                </div>
-              </div>
-
-              {/* Section 3 — Sparkline + Controls */}
-              <div className="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
-                <MiniSparkline data={sparklines[bot.id] ?? []} />
-                <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                  <button className="bot-ctrl ctrl-start" title="&#9654; Start Bot" onClick={() => onStart?.(bot.id)}><Play className="w-3 h-3" /></button>
-                  <button className="bot-ctrl ctrl-stop" title="&#9632; Stop Bot" onClick={() => onStop?.(bot.id)}><Square className="w-3 h-3" /></button>
-                  <button className="bot-ctrl" title="&#9208; Pause" onClick={() => onPause?.(bot.id)}><span className="text-[10px] font-bold leading-none">II</span></button>
-                  <button className="bot-ctrl" title="&#8635; Reload Config" onClick={() => onReload?.(bot.id)}><RefreshCw className="w-3 h-3" /></button>
-                  <button className="bot-ctrl ctrl-stop" title="&#10005; Force Exit All" onClick={() => onForceExitAll?.(bot.id)}><XSquare className="w-3 h-3" /></button>
-                  <button className="bot-ctrl" title="Toggle Stopbuy" onClick={() => onStopBuy?.(bot.id)}><span className="text-[10px] font-bold leading-none">+&#9632;</span></button>
-                  <span className="w-px h-3 bg-white/15 mx-0.5 self-center" />
+              </td>
+              <td className={`${TD} text-right font-bold font-mono ${pnl == null ? "text-muted" : pnl >= 0 ? "text-up" : "text-down"}`}>
+                {pnl != null ? `${pnl >= 0 ? "+" : ""}${fmt(pnl, 4)}` : "\u2014"}
+              </td>
+              <td className={`${TD} text-right font-bold font-mono ${pnlPct == null ? "text-muted" : pnlPct >= 0 ? "text-up" : "text-down"}`}>
+                {pnlPct != null ? `${pnlPct >= 0 ? "+" : ""}${fmt(pnlPct, 2)}%` : "\u2014"}
+              </td>
+              <td className={`${TD} text-right font-mono ${openPnl === 0 ? "text-muted" : openPnl > 0 ? "text-up" : "text-down"}`}>
+                {openPnl !== 0 ? `${openPnl >= 0 ? "+" : ""}${fmt(openPnl, 4)}` : "+0.0000"}
+              </td>
+              <td className={`${TD} text-right font-mono ${winRate == null ? "text-muted" : winRate < 50 ? "text-down" : "text-white/80"}`}>
+                {winRate != null ? `${fmt(winRate, 0)}%` : "\u2014"}
+              </td>
+              <td className={`${TD} text-right font-mono text-white/70`}>{trades}</td>
+              <td className={`${TD} text-right font-mono text-white/70`}>{closedCount}</td>
+              <td className={`${TD} text-right font-mono text-white/70`}>
+                {openCount}{maxOT != null && <span className="text-muted text-[10px]">/{maxOT}</span>}
+              </td>
+              <td className={`${TD} text-right font-mono text-white/70`}>
+                {balance != null ? fmt(balance, 2) : "\u2014"}
+              </td>
+              <td className={`${TD} text-right font-mono ${maxDd != null && maxDd > 0.01 ? "text-down" : "text-muted"}`}>
+                {maxDd != null ? `-${fmt(maxDd, 1)}%` : "\u2014"}
+              </td>
+              <td className={`${TD} text-muted font-mono text-[12px]`}>{avgDurStr}</td>
+              <td className={`${TD} border-l border-white/[0.06] text-right`} onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-end gap-0.5 opacity-30 group-hover:opacity-100 transition-opacity">
+                  <button className="bot-ctrl ctrl-start" title="Start" onClick={() => onStart?.(bot.id)}><Play className="w-3 h-3" /></button>
+                  <button className="bot-ctrl ctrl-stop" title="Stop" onClick={() => onStop?.(bot.id)}><Square className="w-3 h-3" /></button>
+                  <button className="bot-ctrl ctrl-stop" title="Force Exit All" onClick={() => onForceExitAll?.(bot.id)}><XSquare className="w-3 h-3" /></button>
+                  <button className="bot-ctrl" title="Reload Config" onClick={() => onReload?.(bot.id)}><RefreshCw className="w-3 h-3" /></button>
                   <button className="bot-ctrl" style={{ color: "#facc15" }} title="Soft Kill" onClick={() => onSoftKill?.(bot.id)}><ShieldAlert className="w-3 h-3" /></button>
                   <button className="bot-ctrl ctrl-stop" title="Hard Kill" onClick={() => onHardKill?.(bot.id)}><Zap className="w-3 h-3" /></button>
                 </div>
-              </div>
-            </div>
+              </td>
+            </tr>
           );
         })}
-      </div>
-    </div>
+      </tbody>
+    </table>
   );
 }
 
@@ -553,14 +562,12 @@ export default function TradeTable({
   whitelistBotMap,
   bots = [],
   botProfits = {},
-  sparklines = {},
+  botBalances = {},
   onBotClick,
   onStart,
   onStop,
-  onPause,
   onReload,
   onForceExitAll,
-  onStopBuy,
   onSoftKill,
   onHardKill,
   onFleetForceEntry,
@@ -764,17 +771,16 @@ export default function TradeTable({
           <>
             {/* FLEET MANAGEMENT */}
             {activeTab === "fleet" && (
-              <FleetGrid
+              <FleetTable
                 bots={tradeBots}
                 botProfits={botProfits}
-                sparklines={sparklines}
+                botBalances={botBalances}
+                openTrades={openTrades}
                 onBotClick={onBotClick}
                 onStart={onStart}
                 onStop={onStop}
-                onPause={onPause}
                 onReload={onReload}
                 onForceExitAll={onForceExitAll}
-                onStopBuy={onStopBuy}
                 onSoftKill={onSoftKill}
                 onHardKill={onHardKill}
               />

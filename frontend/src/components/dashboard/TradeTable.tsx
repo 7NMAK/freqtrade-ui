@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Filter, ChevronDown, Download, LogOut, Zap, Scissors, PlusCircle, RefreshCw, Trash2, Ban, Play, Square, XSquare, ShieldAlert } from "lucide-react";
+import { Filter, ChevronDown, Download, LogOut, Zap, Scissors, PlusCircle, RefreshCw, Trash2, Ban, Play, Square, XSquare, ShieldAlert, Pause, PlusSquare } from "lucide-react";
 import { fmt, fmtMoney } from "@/lib/format";
 import type { FTTrade, FTPerformance, FTEntry, FTExit, FTWhitelist, FTLocksResponse, Bot, FTProfit } from "@/types";
 
@@ -311,11 +311,22 @@ function useSortable<T>(data: T[], defaultKey?: string) {
   return { sorted, currentSort: sortKey, currentDir: sortDir, onSort };
 }
 
-// ── Fleet Table ───────────────────────────────────────────────────────────────
+// ── Fleet Cards ───────────────────────────────────────────────────────────────
+
+/** One small stat tile — matches the StatBox pattern from the Backtest page */
+function BotStat({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
+  return (
+    <div className="bg-white/[0.03] border border-white/[0.06] rounded p-2">
+      <div className="text-[9px] text-muted uppercase tracking-wider mb-1 truncate">{label}</div>
+      <div className={`text-[13px] font-bold font-mono leading-none ${color ?? "text-foreground"}`}>{value}</div>
+      {sub && <div className="text-[9px] text-muted mt-0.5 truncate">{sub}</div>}
+    </div>
+  );
+}
 
 type FleetSortKey = "name" | "pnl" | "pnlPct" | "openPnl" | "winRate" | "trades" | "closed" | "open" | "balance" | "maxDd" | "avgDur";
 
-interface FleetTableProps {
+interface FleetCardsProps {
   bots: Bot[];
   botProfits: Record<number, Partial<FTProfit>>;
   botBalances: Record<string, number>;
@@ -323,13 +334,15 @@ interface FleetTableProps {
   onBotClick?: (botId: number) => void;
   onStart?: (botId: number) => void;
   onStop?: (botId: number) => void;
+  onPause?: (botId: number) => void;
   onReload?: (botId: number) => void;
   onForceExitAll?: (botId: number) => void;
+  onStopBuy?: (botId: number) => void;
   onSoftKill?: (botId: number) => void;
   onHardKill?: (botId: number) => void;
 }
 
-function FleetTable({
+function FleetCards({
   bots,
   botProfits,
   botBalances,
@@ -337,11 +350,13 @@ function FleetTable({
   onBotClick,
   onStart,
   onStop,
+  onPause,
   onReload,
   onForceExitAll,
+  onStopBuy,
   onSoftKill,
   onHardKill,
-}: FleetTableProps) {
+}: FleetCardsProps) {
   const [sortKey, setSortKey] = useState<FleetSortKey>("pnl");
   const [sortAsc, setSortAsc] = useState(false);
 
@@ -392,10 +407,10 @@ function FleetTable({
       avgDurSecs = avgDur;
       const d = Math.floor(avgDur / 86400);
       const h = Math.floor((avgDur % 86400) / 3600);
-      const m = Math.floor((avgDur % 3600) / 60);
-      const s = Math.floor(avgDur % 60);
-      if (d > 0) avgDurStr = `${d} days, ${h.toString().padStart(2,"0")}:${m.toString().padStart(2,"0")}:${s.toString().padStart(2,"0")}`;
-      else avgDurStr = `${h.toString().padStart(2,"0")}:${m.toString().padStart(2,"0")}:${s.toString().padStart(2,"0")}`;
+      const m2 = Math.floor((avgDur % 3600) / 60);
+      if (d > 0) avgDurStr = `${d}d ${h}h`;
+      else if (h > 0) avgDurStr = `${h}h ${m2}m`;
+      else avgDurStr = `${m2}m`;
     } else if (typeof avgDur === "string" && avgDur) {
       avgDurStr = avgDur;
     }
@@ -423,119 +438,124 @@ function FleetTable({
     else { setSortKey(key); setSortAsc(false); }
   };
 
-  const sortIcon = (key: FleetSortKey) => (
-    <span className="ml-0.5 text-[9px] opacity-30">
-      {sortKey === key ? (sortAsc ? "\u2191" : "\u2193") : "\u21C5"}
-    </span>
-  );
-
-  const colH = (key: FleetSortKey, label: string, cls = "") => (
-    <th className={`${TH_SORT} ${cls} ${sortKey === key ? "text-white bg-white/[0.04]" : ""}`} onClick={() => handleSort(key)}>
-      {label}{sortIcon(key)}
-    </th>
-  );
+  const sortBtns: { key: FleetSortKey; label: string }[] = [
+    { key: "pnl", label: "P&L" }, { key: "name", label: "Name" },
+    { key: "winRate", label: "Win%" }, { key: "maxDd", label: "DD" },
+    { key: "trades", label: "Trades" }, { key: "balance", label: "Balance" },
+  ];
 
   if (bots.length === 0) return (
     <div className="flex items-center justify-center h-48 text-muted text-sm">No bots registered.</div>
   );
 
   return (
-    <table className={TABLE}>
-      <thead className={THEAD}>
-        <tr>
-          <th className={`${TH_BASE} text-left w-[90px]`}>STATUS</th>
-          {colH("name", "BOT \u21C5", "text-left")}
-          <th className={`${TH_BASE} text-left`}>MODE</th>
-          {colH("pnl", "CLOSED P&L \u21C5", "text-right")}
-          {colH("pnlPct", "% \u21C5", "text-right")}
-          {colH("openPnl", "OPEN P&L \u21C5", "text-right")}
-          {colH("winRate", "WIN% \u21C5", "text-right")}
-          {colH("trades", "TRADES \u21C5", "text-right")}
-          {colH("closed", "CLOSED \u21C5", "text-right")}
-          {colH("open", "OPEN \u21C5", "text-right")}
-          {colH("balance", "BALANCE \u21C5", "text-right")}
-          {colH("maxDd", "MAX DD \u21C5", "text-right")}
-          {colH("avgDur", "AVG DUR \u21C5", "text-left")}
-          <th className={`${TH_BASE} text-right border-l border-white/[0.06]`}>ACTIONS</th>
-        </tr>
-      </thead>
-      <tbody className={TBODY}>
-        {sorted.map((row, idx) => {
-          const { bot, pnl, pnlPct, openPnl, winRate, trades, closedCount, openCount, maxOT, balance, maxDd, avgDurStr } = row;
-          const isRunning = bot.status === "running";
-          const isDraining = bot.status === "draining";
-          const isStopped = !isRunning && !isDraining;
+    <div className="flex flex-col h-full">
+      {/* Sort toolbar */}
+      <div className="flex items-center gap-1 px-4 py-2 border-b border-white/[0.06] bg-black/20 shrink-0">
+        <span className="text-[9px] text-muted uppercase tracking-wider mr-1">Sort:</span>
+        {sortBtns.map(({ key, label }) => (
+          <button key={key} onClick={() => handleSort(key)}
+            className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded transition-colors cursor-pointer ${
+              sortKey === key ? "bg-white/15 text-white" : "text-muted hover:text-white hover:bg-white/[0.06]"
+            }`}>
+            {label}{sortKey === key && <span className="ml-0.5 text-[8px]">{sortAsc ? "↑" : "↓"}</span>}
+          </button>
+        ))}
+        <span className="ml-auto text-[10px] text-muted font-mono">{bots.length} bots</span>
+      </div>
 
-          return (
-            <tr
-              key={bot.id}
-              className={`hover:bg-white/[0.04] transition-colors cursor-pointer group ${idx % 2 === 1 ? "bg-white/[0.012]" : ""}`}
-              onClick={() => onBotClick?.(bot.id)}
-            >
-              <td className={TD}>
-                <div className="flex items-center gap-1.5">
-                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isRunning ? "bg-up shadow-[0_0_4px_#22c55e]" : isDraining ? "bg-yellow-400" : "bg-white/20"}`} />
-                  <span className={`text-[11px] font-bold tracking-wide ${isRunning ? "text-up" : isDraining ? "text-yellow-400" : "text-white/30"}`}>
-                    {isRunning ? "RUNNING" : isDraining ? "DRAINING" : "STOPPED"}
-                  </span>
-                </div>
-              </td>
-              <td className={`${TD} font-bold text-white max-w-[200px] truncate`} title={bot.name}>{bot.name}</td>
-              <td className={TD}>
-                <div className="flex items-center gap-1">
-                  {isStopped
-                    ? <span className="text-[9px] border border-down/30 px-1.5 py-[1px] rounded text-down/70 font-bold">STOPPED</span>
-                    : isDraining
+      {/* Card grid */}
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
+          {sorted.map((row) => {
+            const { bot, pnl, pnlPct, openPnl, winRate, trades, closedCount, openCount, maxOT, balance, maxDd, avgDurStr } = row;
+            const isRunning = bot.status === "running";
+            const isDraining = bot.status === "draining";
+            const isStopped = !isRunning && !isDraining;
+
+            return (
+              <div
+                key={bot.id}
+                className="group/card flex flex-col overflow-hidden rounded-md bg-card/60 backdrop-blur-md shadow-sm border border-white/5 cursor-pointer hover:border-white/10 transition-colors"
+                onClick={() => onBotClick?.(bot.id)}
+              >
+                {/* Card Header */}
+                <div className="flex items-center justify-between px-3 py-2 bg-white/[0.02] border-b border-white/[0.05]">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isRunning ? "bg-up shadow-[0_0_4px_#22c55e]" : isDraining ? "bg-yellow-400" : "bg-white/20"}`} />
+                    <span className="text-[11px] font-bold text-foreground truncate font-mono" title={bot.name}>
+                      {bot.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {isStopped
+                      ? <span className="text-[9px] border border-down/30 px-1.5 py-[1px] rounded text-down/70 font-bold">STOPPED</span>
+                      : isDraining
                       ? <span className="text-[9px] border border-yellow-500/30 px-1.5 py-[1px] rounded text-yellow-400 font-bold">DRAINING</span>
                       : bot.is_dry_run
-                        ? <span className="text-[9px] border border-yellow-500/40 px-1.5 py-[1px] rounded text-yellow-400 font-bold">PAPER</span>
-                        : <span className="text-[9px] border border-white/20 px-1.5 py-[1px] rounded text-white/60 font-bold">LIVE</span>
-                  }
-                  {bot.trading_mode === "futures"
-                    ? <span className="text-[9px] border border-blue-500/40 px-1.5 py-[1px] rounded text-blue-400 font-bold">FUT</span>
-                    : <span className="text-[9px] border border-white/10 px-1.5 py-[1px] rounded text-white/25 font-bold">SPOT</span>
-                  }
+                      ? <span className="text-[9px] border border-yellow-500/40 px-1.5 py-[1px] rounded text-yellow-400 font-bold">PAPER</span>
+                      : <span className="text-[9px] border border-white/20 px-1.5 py-[1px] rounded text-white/60 font-bold">LIVE</span>}
+                    {bot.trading_mode === "futures"
+                      ? <span className="text-[9px] border border-blue-500/40 px-1.5 py-[1px] rounded text-blue-400 font-bold">FUT</span>
+                      : <span className="text-[9px] border border-white/10 px-1.5 py-[1px] rounded text-white/25 font-bold">SPOT</span>}
+                  </div>
                 </div>
-              </td>
-              <td className={`${TD} text-right font-bold font-mono ${pnl == null ? "text-muted" : pnl >= 0 ? "text-up" : "text-down"}`}>
-                {pnl != null ? `${pnl >= 0 ? "+" : ""}${fmt(pnl, 4)}` : "\u2014"}
-              </td>
-              <td className={`${TD} text-right font-bold font-mono ${pnlPct == null ? "text-muted" : pnlPct >= 0 ? "text-up" : "text-down"}`}>
-                {pnlPct != null ? `${pnlPct >= 0 ? "+" : ""}${fmt(pnlPct, 2)}%` : "\u2014"}
-              </td>
-              <td className={`${TD} text-right font-mono ${openPnl === 0 ? "text-muted" : openPnl > 0 ? "text-up" : "text-down"}`}>
-                {openPnl !== 0 ? `${openPnl >= 0 ? "+" : ""}${fmt(openPnl, 4)}` : "+0.0000"}
-              </td>
-              <td className={`${TD} text-right font-mono ${winRate == null ? "text-muted" : winRate < 50 ? "text-down" : "text-white/80"}`}>
-                {winRate != null ? `${fmt(winRate, 0)}%` : "\u2014"}
-              </td>
-              <td className={`${TD} text-right font-mono text-white/70`}>{trades}</td>
-              <td className={`${TD} text-right font-mono text-white/70`}>{closedCount}</td>
-              <td className={`${TD} text-right font-mono text-white/70`}>
-                {openCount}{maxOT != null && <span className="text-muted text-[10px]">/{maxOT}</span>}
-              </td>
-              <td className={`${TD} text-right font-mono text-white/70`}>
-                {balance != null ? fmt(balance, 2) : "\u2014"}
-              </td>
-              <td className={`${TD} text-right font-mono ${maxDd != null && maxDd > 0.01 ? "text-down" : "text-muted"}`}>
-                {maxDd != null ? `-${fmt(maxDd, 1)}%` : "\u2014"}
-              </td>
-              <td className={`${TD} text-muted font-mono text-[12px]`}>{avgDurStr}</td>
-              <td className={`${TD} border-l border-white/[0.06] text-right`} onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center justify-end gap-0.5 opacity-30 group-hover:opacity-100 transition-opacity">
-                  <button className="bot-ctrl ctrl-start" title="Start" onClick={() => onStart?.(bot.id)}><Play className="w-3 h-3" /></button>
-                  <button className="bot-ctrl ctrl-stop" title="Stop" onClick={() => onStop?.(bot.id)}><Square className="w-3 h-3" /></button>
-                  <button className="bot-ctrl ctrl-stop" title="Force Exit All" onClick={() => onForceExitAll?.(bot.id)}><XSquare className="w-3 h-3" /></button>
-                  <button className="bot-ctrl" title="Reload Config" onClick={() => onReload?.(bot.id)}><RefreshCw className="w-3 h-3" /></button>
-                  <button className="bot-ctrl" style={{ color: "#facc15" }} title="Soft Kill" onClick={() => onSoftKill?.(bot.id)}><ShieldAlert className="w-3 h-3" /></button>
-                  <button className="bot-ctrl ctrl-stop" title="Hard Kill" onClick={() => onHardKill?.(bot.id)}><Zap className="w-3 h-3" /></button>
+
+                {/* Stat grid — matches StatBox pattern from Backtest page */}
+                <div className="px-3 pb-3 pt-2.5 flex-1">
+                  <div className="grid grid-cols-3 gap-2 mb-2">
+                    <BotStat
+                      label="Closed P&L"
+                      value={pnl != null ? `${pnl >= 0 ? "+" : ""}${fmt(pnl, 2)}` : "—"}
+                      sub={pnlPct != null ? `${pnlPct >= 0 ? "+" : ""}${fmt(pnlPct, 2)}%` : undefined}
+                      color={pnl == null ? "text-muted" : pnl >= 0 ? "text-up" : "text-down"}
+                    />
+                    <BotStat
+                      label="Open P&L"
+                      value={openPnl !== 0 ? `${openPnl >= 0 ? "+" : ""}${fmt(openPnl, 2)}` : "—"}
+                      color={openPnl === 0 ? "text-muted" : openPnl > 0 ? "text-up" : "text-down"}
+                    />
+                    <BotStat
+                      label="Win Rate"
+                      value={winRate != null ? `${fmt(winRate, 0)}%` : "—"}
+                      color={winRate == null ? "text-muted" : winRate < 50 ? "text-down" : "text-foreground"}
+                    />
+                    <BotStat
+                      label="Trades"
+                      value={String(trades)}
+                      sub={`${closedCount}cl / ${openCount}${maxOT != null ? `/${maxOT}` : ""}op`}
+                    />
+                    <BotStat
+                      label="Max DD"
+                      value={maxDd != null ? `-${fmt(maxDd, 1)}%` : "—"}
+                      color={maxDd != null && maxDd > 0.01 ? "text-down" : "text-muted"}
+                    />
+                    <BotStat
+                      label="Balance"
+                      value={balance != null ? fmt(balance, 2) : "—"}
+                      sub={avgDurStr !== "—" ? `avg ${avgDurStr}` : undefined}
+                    />
+                  </div>
+
+                  {/* Controls */}
+                  <div className="flex items-center justify-end gap-0.5 pt-1 opacity-30 group-hover/card:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                    <button className="bot-ctrl ctrl-start" title="▶ Start" onClick={() => onStart?.(bot.id)}><Play className="w-3 h-3" /></button>
+                    <button className="bot-ctrl ctrl-stop" title="■ Stop" onClick={() => onStop?.(bot.id)}><Square className="w-3 h-3" /></button>
+                    <button className="bot-ctrl" title="⏸ Pause (stop new entries)" onClick={() => onPause?.(bot.id)}><Pause className="w-3 h-3" /></button>
+                    <button className="bot-ctrl ctrl-stop" title="✕ Force Exit All" onClick={() => onForceExitAll?.(bot.id)}><XSquare className="w-3 h-3" /></button>
+                    <button className="bot-ctrl" title="⊞ Toggle Stopbuy" onClick={() => onStopBuy?.(bot.id)}><PlusSquare className="w-3 h-3" /></button>
+                    <button className="bot-ctrl" title="↻ Reload Config" onClick={() => onReload?.(bot.id)}><RefreshCw className="w-3 h-3" /></button>
+                    <span className="w-px h-3 bg-white/15 mx-0.5 self-center" />
+                    <button className="bot-ctrl" style={{ color: "#facc15" }} title="🛡 Soft Kill" onClick={() => onSoftKill?.(bot.id)}><ShieldAlert className="w-3 h-3" /></button>
+                    <button className="bot-ctrl ctrl-stop" title="⚡ Hard Kill" onClick={() => onHardKill?.(bot.id)}><Zap className="w-3 h-3" /></button>
+                  </div>
                 </div>
-              </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -566,16 +586,21 @@ export default function TradeTable({
   onBotClick,
   onStart,
   onStop,
+  onPause,
   onReload,
   onForceExitAll,
+  onStopBuy,
   onSoftKill,
   onHardKill,
   onFleetForceEntry,
   blacklistData,
+  onAddBlacklist,
+  onDeleteBlacklist,
 }: TradeTableProps) {
   const [activeTab, setActiveTab] = useState<TradeTab>("fleet");
   const [columnFilters, setColumnFilters] = useState<ColumnFilters>({});
   const [visibleRows, setVisibleRows] = useState(50);
+  const [blacklistInput, setBlacklistInput] = useState("");
 
   // Reset visible rows when tab changes
   useEffect(() => { setVisibleRows(50); }, [activeTab]);
@@ -771,7 +796,7 @@ export default function TradeTable({
           <>
             {/* FLEET MANAGEMENT */}
             {activeTab === "fleet" && (
-              <FleetTable
+              <FleetCards
                 bots={tradeBots}
                 botProfits={botProfits}
                 botBalances={botBalances}
@@ -779,8 +804,10 @@ export default function TradeTable({
                 onBotClick={onBotClick}
                 onStart={onStart}
                 onStop={onStop}
+                onPause={onPause}
                 onReload={onReload}
                 onForceExitAll={onForceExitAll}
+                onStopBuy={onStopBuy}
                 onSoftKill={onSoftKill}
                 onHardKill={onHardKill}
               />
@@ -1261,6 +1288,60 @@ export default function TradeTable({
                   )}
                 </tbody>
               </table>
+            )}
+            {/* BLACKLIST */}
+            {activeTab === "blacklist" && (
+              <div className="p-4 flex flex-col gap-4 max-w-2xl">
+                {/* Add form */}
+                <div className="flex gap-2">
+                  <input
+                    className="builder-input flex-1"
+                    placeholder="BTC/USDT:USDT or pattern..."
+                    value={blacklistInput}
+                    onChange={(e) => setBlacklistInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && blacklistInput.trim()) {
+                        onAddBlacklist?.(blacklistInput.trim());
+                        setBlacklistInput("");
+                      }
+                    }}
+                  />
+                  <button
+                    className="builder-action border border-white/10 bg-white/[0.06] text-white hover:bg-white/[0.1] px-4"
+                    onClick={() => {
+                      if (blacklistInput.trim()) {
+                        onAddBlacklist?.(blacklistInput.trim());
+                        setBlacklistInput("");
+                      }
+                    }}
+                  >
+                    Add
+                  </button>
+                </div>
+
+                {/* Blacklist entries */}
+                {!blacklistData || blacklistData.blacklist.length === 0 ? (
+                  <div className="text-center py-8 text-muted text-sm">No pairs blacklisted</div>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    {blacklistData.blacklist.map((pair) => (
+                      <div
+                        key={pair}
+                        className="group/row flex items-center justify-between px-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded hover:border-white/10 transition-colors"
+                      >
+                        <span className="font-mono text-[13px] text-foreground">{pair}</span>
+                        <button
+                          className="text-[11px] text-muted hover:text-down opacity-0 group-hover/row:opacity-100 transition-all"
+                          title="Remove from blacklist"
+                          onClick={() => onDeleteBlacklist?.(pair)}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </>
         )}

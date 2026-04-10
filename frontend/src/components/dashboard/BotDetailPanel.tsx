@@ -68,11 +68,11 @@ interface BotDetailPanelProps {
 }
 
 // Status Badge helper — matches ds_bot_drawer.md §30B Mode Badge Variants
-function StatusBadge({ status, isDryRun }: { status: string; isDryRun: boolean }) {
+function StatusBadge({ status }: { status: string; isDryRun: boolean }) {
   if (status === "draining") {
     return (
       <span className="px-1.5 py-[2px] bg-yellow-400/15 text-yellow-400 border border-yellow-500/25 text-[10px] font-bold rounded">
-        PAUSED
+        DRAINING
       </span>
     );
   }
@@ -83,16 +83,9 @@ function StatusBadge({ status, isDryRun }: { status: string; isDryRun: boolean }
       </span>
     );
   }
-  if (isDryRun) {
-    return (
-      <span className="px-1.5 py-[2px] bg-blue-500/15 text-blue-400 border border-blue-500/25 text-[10px] font-bold rounded">
-        DRY
-      </span>
-    );
-  }
   return (
     <span className="px-1.5 py-[2px] bg-up/15 text-up border border-up/25 text-[10px] font-bold rounded">
-      LIVE
+      RUNNING
     </span>
   );
 }

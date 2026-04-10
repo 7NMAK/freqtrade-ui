@@ -63,7 +63,8 @@
       "Bash(launchctl load:*)",
       "Bash(./deploy.sh --local-push \"fix\\(layout\\): fleet and right sidebar scroll independently, page no longer scrolls\")",
       "Bash(./deploy.sh --local-push \"fix\\(layout\\): constrain main height so fleet/sidebar scroll independently\")",
-      "Bash(./deploy.sh --local-push \"feat\\(drawer\\): add live/paper/futures/spot badges to header, fix force entry per-bot\")"
+      "Bash(./deploy.sh --local-push \"feat\\(drawer\\): add live/paper/futures/spot badges to header, fix force entry per-bot\")",
+      "Bash(./deploy.sh --local-push \"fix\\(drawer\\): remove duplicate DRY badge from StatusBadge\")"
     ],
     "additionalDirectories": [
       "/tmp",

@@ -1,0 +1,28 @@
+{
+  "strategy_name": "CC_EMA21_v5l_v12_50pct",
+  "_epoch": 35,
+  "_note": "EP35 — IS +18.3% DD 11.4% WR 58.8% | OOS +22.4% DD 2.82% WR 65.8% — visi P&L, visi DD",
+  "params": {
+    "roi": { "0": 999 },
+    "stoploss": { "stoploss": -0.15 },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "max_open_trades": { "max_open_trades": 1 },
+    "buy": {
+      "atr_sl_mult": 0.5,
+      "buy_pull_tol": 1.002,
+      "buy_rsi_high": 56,
+      "buy_rsi_low": 39
+    },
+    "sell": {
+      "sell_pull_tol": 0.999,
+      "sell_rsi_high": 55,
+      "sell_rsi_low": 45
+    }
+  },
+  "ft_stratparam_v": 1
+}

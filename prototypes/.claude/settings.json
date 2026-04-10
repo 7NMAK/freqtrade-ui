@@ -11,7 +11,12 @@
       "Read(//^export default function|^function.*Page.*\\\\\\(/{flag=1} flag{print; if\\(/^}$/**)",
       "Read(//Users/novakus/Documents/BOT/frontend/src/**)",
       "Read(//Users/novakus/Documents/BOT/frontend/**)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Read(//Users/novakus/Documents/BOT/**)",
+      "Bash(ssh -o ConnectTimeout=10 root@204.168.187.107 'curl -s -u novakus:$FT_API_PASSWORD http://localhost:8080/api/v1/profit')",
+      "Bash(ssh -o ConnectTimeout=10 root@204.168.187.107 \"cat /opt/freqtrade/user_data/config.json | python3 -c \\\\\"import json,sys; c=json.load\\(sys.stdin\\); print\\(c.get\\('api_server',{}\\).get\\('password',''\\)\\)\\\\\"\")",
+      "Bash(ssh -o ConnectTimeout=10 root@204.168.187.107 \"grep -A5 'api_server' /opt/freqtrade/user_data/config.json | grep -E 'password|username'\")",
+      "Bash(ssh -o ConnectTimeout=10 root@204.168.187.107 ':*)"
     ],
     "additionalDirectories": [
       "/Users/novakus/Documents/BOT/frontend/src/components/dashboard",

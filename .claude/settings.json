@@ -45,10 +45,27 @@
       "Bash(echo \"PID: $!\")",
       "Bash(ps -p 75350 -o pid,command=)",
       "Bash(./deploy.sh --local-push \"feat: fleet grid cards, profit chart fixes, total equity fix\")",
-      "Bash(./deploy.sh --local-push \"fix\\(fleet\\): replace card grid with sortable horizontal table\")"
+      "Bash(./deploy.sh --local-push \"fix\\(fleet\\): replace card grid with sortable horizontal table\")",
+      "Bash(kill 36285)",
+      "Bash(autossh -M 20000 -N -f -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -L 8000:127.0.0.1:80 -L 8080:127.0.0.1:8080 -L 8888:127.0.0.1:8888 root@204.168.187.107)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/api/health)",
+      "Bash(nc -zv localhost 8000)",
+      "Bash(ssh -o ConnectTimeout=5 root@204.168.187.107 \"echo ok\")",
+      "Bash(curl -s http://localhost:8888/api/bots/ -H \"Authorization: Bearer test\")",
+      "Bash(curl -s http://localhost:8000/api/bots/)",
+      "Bash(curl -sv http://localhost:8000/api/bots/)",
+      "Bash(curl -so /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:8000/)",
+      "Read(//Users/novakus/Library/LaunchAgents/**)",
+      "Read(//Users/novakus/.ssh/**)",
+      "Bash(launchctl unload:*)",
+      "Bash(pkill -f autossh)",
+      "Bash(launchctl load:*)",
+      "Bash(./deploy.sh --local-push \"fix\\(layout\\): fleet and right sidebar scroll independently, page no longer scrolls\")"
     ],
     "additionalDirectories": [
-      "/tmp"
+      "/tmp",
+      "/Users/novakus/Library/LaunchAgents"
     ]
   }
 }

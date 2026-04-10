@@ -287,7 +287,7 @@ export default function RightSidebar({
   // ── Render ─────────────────────────────────────────────────────────
   return (
     <div
-      className={`flex flex-col gap-4 min-h-0 ${
+      className={`flex flex-col gap-4 min-h-0 self-stretch ${
         isOpen
           ? "shrink-0 w-[320px] min-w-[320px] 2xl:w-[320px] xl:w-[260px] xl:min-w-[260px] opacity-100 overflow-y-auto overflow-x-hidden"
           : "w-0 min-w-0 max-w-0 opacity-0 overflow-hidden p-0 gap-0"

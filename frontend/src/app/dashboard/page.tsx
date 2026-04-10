@@ -1197,19 +1197,22 @@ export default function DashboardPage() {
 
   return (
     <AppShell title="Dashboard">
+      <div className="flex-1 flex flex-col overflow-hidden h-full">
       {/* Stale data banner */}
       {staleWarning && (
-        <div className="mb-4 px-4 py-3 bg-amber-500/10 border border-amber-500/20 rounded-md flex items-center justify-between">
-          <span className="text-xs text-amber-500 font-medium">
-            Data may be stale -- last refresh failed {staleCount} times.
-          </span>
-          <button type="button" onClick={() => loadPortfolioData(true)}
-            className="text-xs text-amber-500 underline cursor-pointer hover:no-underline">Retry now</button>
+        <div className="px-5 pt-4 shrink-0">
+          <div className="px-4 py-3 bg-amber-500/10 border border-amber-500/20 rounded-md flex items-center justify-between">
+            <span className="text-xs text-amber-500 font-medium">
+              Data may be stale -- last refresh failed {staleCount} times.
+            </span>
+            <button type="button" onClick={() => loadPortfolioData(true)}
+              className="text-xs text-amber-500 underline cursor-pointer hover:no-underline">Retry now</button>
+          </div>
         </div>
       )}
 
       {/* LINEAR EDGE LAYOUT */}
-      <div className="flex flex-1 overflow-hidden l-grid p-5 flex-col gap-5">
+      <div className="flex flex-1 overflow-hidden l-grid p-5 flex-col gap-5 min-h-0">
         {/* LAYER 1: KPI Grid (14 KPIs in 7+7) — LIVE: closed + open combined */}
         <KPIGrid
           totalEquity={totalEquity}
@@ -1373,6 +1376,7 @@ export default function DashboardPage() {
         onSuccess={async () => { if (deleteBot) await handleDeleteBotConfirm(deleteBot); }}
       />
       <ConfirmDialog {...confirmProps} />
+      </div>
     </AppShell>
   );
 }

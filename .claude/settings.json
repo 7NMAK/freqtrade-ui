@@ -61,7 +61,8 @@
       "Bash(launchctl unload:*)",
       "Bash(pkill -f autossh)",
       "Bash(launchctl load:*)",
-      "Bash(./deploy.sh --local-push \"fix\\(layout\\): fleet and right sidebar scroll independently, page no longer scrolls\")"
+      "Bash(./deploy.sh --local-push \"fix\\(layout\\): fleet and right sidebar scroll independently, page no longer scrolls\")",
+      "Bash(./deploy.sh --local-push \"fix\\(layout\\): constrain main height so fleet/sidebar scroll independently\")"
     ],
     "additionalDirectories": [
       "/tmp",

@@ -48,7 +48,7 @@ export default function AppShell({ title, children }: AppShellProps) {
         <Sidebar collapsed={collapsed} onToggle={handleToggle} />
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header title={title} />
-          <main className="flex-1 overflow-y-auto p-0 bg-background">
+          <main className="flex-1 overflow-hidden flex flex-col p-0 bg-background">
             <ErrorBoundary>{children}</ErrorBoundary>
           </main>
         </div>

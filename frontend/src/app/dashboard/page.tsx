@@ -1353,8 +1353,8 @@ export default function DashboardPage() {
         onForceExitAll={() => selectedBot && handleForceExitAllBot(selectedBot.id)}
         onForceEnter={() => {
           if (!selectedBot) return;
-          const pair = singleBotOpenTrades[0]?.pair;
-          if (pair) handleForceEnter({ _bot_id: selectedBot.id, pair, is_short: false } as FTTrade);
+          const pair = prompt(`Force Entry on ${selectedBot.name}\nPair (e.g. BTC/USDT:USDT):`);
+          if (pair?.trim()) handleForceEnter({ _bot_id: selectedBot.id, pair: pair.trim(), is_short: false } as FTTrade);
         }}
         onStopBuy={() => selectedBot && handleStopBuyBot(selectedBot.id)}
         onSoftKill={() => selectedBot && handleSoftKillBot(selectedBot.id)}

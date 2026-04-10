@@ -408,9 +408,17 @@ export default function BotDetailPanel({
         <div className="p-4 pb-3 l-b bg-black flex flex-col gap-3 shrink-0">
           <div className="flex justify-between items-start">
             <div>
-              <div className="flex items-center gap-2.5 mb-1">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <h2 className="text-base font-bold tracking-tight text-white font-mono">{bot.name}</h2>
                 <StatusBadge status={bot.status} isDryRun={bot.is_dry_run} />
+                {bot.is_dry_run
+                  ? <span className="px-1.5 py-[2px] bg-yellow-500/15 text-yellow-400 border border-yellow-500/25 text-[10px] font-bold rounded">PAPER</span>
+                  : <span className="px-1.5 py-[2px] bg-up/10 text-up border border-up/20 text-[10px] font-bold rounded">LIVE</span>
+                }
+                {bot.trading_mode === "futures"
+                  ? <span className="px-1.5 py-[2px] bg-blue-500/15 text-blue-400 border border-blue-500/25 text-[10px] font-bold rounded">FUTURES</span>
+                  : <span className="px-1.5 py-[2px] bg-white/5 text-white/40 border border-white/10 text-[10px] font-bold rounded">SPOT</span>
+                }
               </div>
               <p className="text-[11px] text-muted font-mono uppercase tracking-wide">
                 Strategy: {bot.strategy_name ?? "N/A"} &middot; {bot.exchange_name ?? "Exchange"} &middot; {isRunning ? "Running" : isDraining ? "Draining" : "Stopped"}
@@ -431,7 +439,10 @@ export default function BotDetailPanel({
             <button type="button" onClick={onStop} className="bot-ctrl ctrl-stop" title="■ Stop Bot"><Square className="w-3.5 h-3.5" /></button>
             <button type="button" onClick={onPause ?? onDrain} className="bot-ctrl ctrl-pause" title="⏸ Pause"><Pause className="w-3.5 h-3.5" /></button>
             <button type="button" onClick={onReload ?? onEdit} className="bot-ctrl" title="↻ Reload Config"><RefreshCw className="w-3.5 h-3.5" /></button>
-            <button type="button" onClick={onForceEnter ?? (() => {})} className="bot-ctrl ctrl-start" title="Force open trade"><PlusCircle className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={onForceEnter ?? (() => {})} className="bot-ctrl ctrl-start flex items-center gap-1 px-2" title="Force Entry — open a trade on this bot">
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span className="text-[10px] font-bold">Force Entry</span>
+            </button>
             <button type="button" onClick={onForceExitAll ?? (() => {})} className="bot-ctrl ctrl-stop" title="✕ Force Exit All"><XSquare className="w-3.5 h-3.5" /></button>
             <button type="button" onClick={onStopBuy ?? (() => {})} className="bot-ctrl" title="⊞ Toggle Stopbuy"><PlusSquare className="w-3.5 h-3.5" /></button>
             <span className="w-px h-4 bg-white/15 mx-1" />

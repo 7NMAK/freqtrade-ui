@@ -98,11 +98,11 @@ class HeartbeatMonitor:
             await db.commit()
 
     async def _check_all_bots(self):
-        """Ping all RUNNING bots, handle failures."""
+        """Ping all RUNNING and DRAINING bots, handle failures."""
         async with async_session() as db:
             result = await db.execute(
                 select(BotInstance).where(
-                    BotInstance.status == BotStatus.RUNNING,
+                    BotInstance.status.in_([BotStatus.RUNNING, BotStatus.DRAINING]),
                     BotInstance.is_deleted.is_(False),
                 )
             )

@@ -65,8 +65,8 @@ class PortfolioAggregator:
         """
         bots = await self._bot_manager.get_all_bots(db)
         trading = self._trading_bots(bots)
-        running = [b for b in trading if b.status == BotStatus.RUNNING]
-        stopped = [b for b in trading if b.status != BotStatus.RUNNING]
+        active = [b for b in trading if b.status in (BotStatus.RUNNING, BotStatus.DRAINING)]
+        stopped = [b for b in trading if b.status not in (BotStatus.RUNNING, BotStatus.DRAINING)]
 
         per_bot: dict[str, Any] = {}
         combined = {
@@ -80,7 +80,8 @@ class PortfolioAggregator:
             "losing_trades": 0,
         }
 
-        # Fetch live from running bots
+        running = active  # alias for clarity below
+        # Fetch live from running/draining bots
         async def fetch_profit(bot: BotInstance):
             try:
                 return bot, await self._bot_manager.get_bot_profit(bot)
@@ -137,8 +138,8 @@ class PortfolioAggregator:
         """
         bots = await self._bot_manager.get_all_bots(db)
         trading = self._trading_bots(bots)
-        running = [b for b in trading if b.status == BotStatus.RUNNING]
-        stopped = [b for b in trading if b.status != BotStatus.RUNNING]
+        running = [b for b in trading if b.status in (BotStatus.RUNNING, BotStatus.DRAINING)]
+        stopped = [b for b in trading if b.status not in (BotStatus.RUNNING, BotStatus.DRAINING)]
 
         per_bot: dict[str, Any] = {}
         total_value = 0.0
@@ -181,7 +182,7 @@ class PortfolioAggregator:
         """
         bots = await self._bot_manager.get_all_bots(db)
         trading = self._trading_bots(bots)
-        running = [b for b in trading if b.status == BotStatus.RUNNING]
+        running = [b for b in trading if b.status in (BotStatus.RUNNING, BotStatus.DRAINING)]
 
         all_trades: list[dict] = []
 
@@ -216,7 +217,7 @@ class PortfolioAggregator:
         Sums abs_profit and trade_count across all running bots per date bucket.
         rel_profit is averaged (weighted equally — FT doesn't expose stake per period).
         """
-        running = [b for b in bots if b.status == BotStatus.RUNNING]
+        running = [b for b in bots if b.status in (BotStatus.RUNNING, BotStatus.DRAINING)]
         results = await asyncio.gather(*[fetch_fn(b) for b in running], return_exceptions=True)
 
         # Accumulate per date: abs_profit sum, rel_profit sum + count, trade_count sum

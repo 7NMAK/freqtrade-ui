@@ -1638,10 +1638,16 @@ async def bot_forceexit(
 
 @router.post("/{bot_id}/stopbuy")
 async def bot_stopbuy(bot_id: int, request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
-    """POST /api/v1/stopbuy — stop new entries only."""
-    client = await _get_bot_client(bot_id, request, db)
+    """POST /api/v1/stopbuy — stop new entries only, set status to DRAINING."""
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    client = await manager.get_client(bot)
     try:
-        return await client.stopbuy()
+        result = await client.stopbuy()
+        bot.status = BotStatus.DRAINING
+        return result
     except FTClientError as e:
         detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
         raise HTTPException(502, detail=detail)
@@ -1649,10 +1655,16 @@ async def bot_stopbuy(bot_id: int, request: Request, db: AsyncSession = Depends(
 
 @router.post("/{bot_id}/pause")
 async def bot_pause(bot_id: int, request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
-    """POST /api/v1/pause — pause trading."""
-    client = await _get_bot_client(bot_id, request, db)
+    """POST /api/v1/pause — pause trading, set status to DRAINING."""
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+    client = await manager.get_client(bot)
     try:
-        return await client.pause()
+        result = await client.pause()
+        bot.status = BotStatus.DRAINING
+        return result
     except FTClientError as e:
         detail = {"error": str(e), "diagnosis": e.diagnosis} if hasattr(e, "diagnosis") and e.diagnosis else str(e)
         raise HTTPException(502, detail=detail)

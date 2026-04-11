@@ -50,10 +50,7 @@ export function useWebSocket(
     }
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const token = document.cookie
-      .split("; ")
-      .find((c) => c.startsWith("access_token="))
-      ?.split("=")[1] ?? "";
+    const token = localStorage.getItem("orch_token") ?? "";
 
     const url = `${protocol}//${window.location.host}/api/bots/${botId}/ws?token=${token}`;
 

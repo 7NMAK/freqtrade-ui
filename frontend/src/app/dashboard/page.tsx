@@ -7,6 +7,8 @@ import { useToast } from "@/components/ui/Toast";
 import ConfirmDialog, { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import {
   getBots,
+  getDashboardSnapshot,
+  type DashboardSnapshot,
   botStatus,
   botProfit,
   botDaily,
@@ -224,11 +226,20 @@ export default function DashboardPage() {
     const m = mountedRef;
 
     try {
-      const botList = await getBots();
+      // ── STAGE 1: Bot list + snapshot in parallel ──────────────────────
+      const [botListResult, snapshotResult] = await Promise.allSettled([
+        getBots(),
+        getDashboardSnapshot(),
+      ]);
       if (!m.current) return;
+
+      const botList = botListResult.status === "fulfilled" ? botListResult.value : [];
       setBots(botList);
 
-      const runningBots = botList.filter((b) => b.status === "running");
+      const snap: DashboardSnapshot | null =
+        snapshotResult.status === "fulfilled" ? snapshotResult.value : null;
+
+      const runningBots = botList.filter((b) => b.status === "running" || b.status === "draining");
       const tradeBots = runningBots.filter((b) => {
         if (b.ft_mode === "webserver") return false;
         if (b.is_utility === true) return false;
@@ -237,19 +248,22 @@ export default function DashboardPage() {
       // If no trade bots found but we have running bots, use ALL running bots as fallback
       const effectiveTradeBots = tradeBots.length > 0 ? tradeBots : runningBots;
 
-      console.log(`[KPI DEBUG] BOT INVENTORY:
-  Total bots: ${botList.length} → ${botList.map(b => `${b.name}(id=${b.id},status=${b.status},mode=${b.ft_mode},utility=${b.is_utility})`).join(', ')}
-  Running bots: ${runningBots.length} → ${runningBots.map(b => b.name).join(', ')}
-  Trade bots: ${tradeBots.length} → ${tradeBots.map(b => b.name).join(', ')}
-  Effective trade bots (used for KPIs): ${effectiveTradeBots.length} → ${effectiveTradeBots.map(b => b.name).join(', ')}`);
-      // ── STAGE 2: Fire ALL portfolio + per-bot calls in PARALLEL ──────
-      // This eliminates the sequential waterfall that was adding 4-5 round-trips
-      const [pbResult, ppResult, ptResult, pdResult] = await Promise.allSettled([
-        portfolioBalance(),
-        portfolioProfit(),
-        portfolioTrades(),
-        portfolioDaily(),
-      ]);
+      // ── STAGE 2: Portfolio data from snapshot (or live fallback) ─────
+      // Snapshot is pre-computed by DashboardWorker every 30s → Redis.
+      // First load after orchestrator restart may fall back to live calls (~30s warm-up).
+      const [pbResult, ppResult, ptResult, pdResult] = snap?.portfolio?.balance && snap?.portfolio?.profit
+        ? [
+            { status: "fulfilled" as const, value: snap.portfolio.balance },
+            { status: "fulfilled" as const, value: snap.portfolio.profit },
+            { status: "fulfilled" as const, value: snap.portfolio.trades ?? { trades: [], trade_count: 0, bot_count: 0 } },
+            { status: "fulfilled" as const, value: snap.portfolio.daily ?? { data: [], stake_currency: "USDT", bot_count: 0 } },
+          ]
+        : await Promise.allSettled([
+            portfolioBalance(),
+            portfolioProfit(),
+            portfolioTrades(),
+            portfolioDaily(),
+          ]);
 
       // Portfolio balance
       if (pbResult.status === "fulfilled" && m.current) {
@@ -343,41 +357,38 @@ export default function DashboardPage() {
       const mergedWhitelistPairs = new Map<string, number>(); // pair → botId
       const allLockEntries: FTLocksResponse["locks"] = [];
 
-      // Fetch only essential data per bot: profit + daily + status (3 calls × N bots)
-      // Heavy endpoints (stats, perf, entries, exits, config, etc.) load on-demand in detail panel
-      const BATCH_SIZE = 20;
-      for (let i = 0; i < effectiveTradeBots.length; i += BATCH_SIZE) {
-        const batch = effectiveTradeBots.slice(i, i + BATCH_SIZE);
-        await Promise.allSettled(
-          batch.map(async (bot) => {
-          try {
-            const [p, d, statusResult] = await Promise.allSettled([
-              botProfit(bot.id),
-              botDaily(bot.id, 7),
-              botStatus(bot.id),
-            ]);
-            if (p.status === "fulfilled") profits[bot.id] = p.value;
-            if (d.status === "fulfilled") sparks[bot.id] = d.value.data.map((item) => item.abs_profit);
-
-            // Capture open trades from botStatus
-            if (statusResult.status === "fulfilled") {
-              for (const t of statusResult.value) {
-                (t as unknown as Record<string, unknown>)._bot_id = bot.id;
-                (t as unknown as Record<string, unknown>)._bot_name = bot.name;
-                // FT /status returns profit_ratio + profit_abs for open trades
-                // Normalize to current_profit + current_profit_abs for the UI
-                if (t.current_profit == null && t.profit_ratio != null) {
-                  t.current_profit = t.profit_ratio;
-                }
-                if (t.current_profit_abs == null && t.profit_abs != null) {
-                  t.current_profit_abs = t.profit_abs;
-                }
-              }
-              openTradesFromStatus.push(...statusResult.value);
+      // ── STAGE 3: Per-bot profit + sparklines + open trades ───────────
+      // From snapshot if available (pre-computed), otherwise live batched calls.
+      if (snap) {
+        // Snapshot: read pre-computed per-bot profit + sparklines
+        for (const bot of effectiveTradeBots) {
+          const p = snap.per_bot_profit[String(bot.id)] as Partial<FTProfit> | undefined;
+          if (p) {
+            profits[bot.id] = p;
+            if (p.best_pair && (bestPairRate == null || (p.best_pair_profit_ratio ?? p.best_rate ?? 0) > (bestPairRate ?? 0))) {
+              bestPairName = p.best_pair;
+              bestPairRate = p.best_pair_profit_ratio ?? p.best_rate ?? null;
             }
+          }
+          const s = snap.sparklines[String(bot.id)];
+          if (s) sparks[bot.id] = s;
+        }
+        // Open trades from snapshot (same source as botStatus — already annotated with _bot_id/_bot_name)
+        for (const t of (ptResult.status === "fulfilled" ? ptResult.value?.trades ?? [] : [])) {
+          if (!t.is_open) continue;
+          if (t.current_profit == null && (t as unknown as Record<string, unknown>).profit_ratio != null) {
+            t.current_profit = (t as unknown as Record<string, unknown>).profit_ratio as number;
+          }
+          if (t.current_profit_abs == null && (t as unknown as Record<string, unknown>).profit_abs != null) {
+            t.current_profit_abs = (t as unknown as Record<string, unknown>).profit_abs as number;
+          }
+          openTradesFromStatus.push(t);
+        }
 
-            // If portfolio had no closed trades, fetch per-bot
-            if (!portfolioHadClosedTrades) {
+        // Closed trades: fetch all bots in full parallel (snapshot doesn't include closed trades yet)
+        if (!portfolioHadClosedTrades) {
+          await Promise.allSettled(
+            effectiveTradeBots.map(async (bot) => {
               try {
                 const result = await botTrades(bot.id, 200);
                 const perBotClosed = result.trades
@@ -385,20 +396,57 @@ export default function DashboardPage() {
                   .map((t) => ({ ...t, _bot_id: bot.id, _bot_name: bot.name }));
                 allClosed.push(...perBotClosed);
               } catch { /* non-blocking */ }
-            }
+            })
+          );
+        }
+      } else {
+        // Fallback: live per-bot calls in batches of 20 (snapshot not yet ready)
+        const BATCH_SIZE = 20;
+        for (let i = 0; i < effectiveTradeBots.length; i += BATCH_SIZE) {
+          const batch = effectiveTradeBots.slice(i, i + BATCH_SIZE);
+          await Promise.allSettled(
+            batch.map(async (bot) => {
+            try {
+              const [p, d, statusResult] = await Promise.allSettled([
+                botProfit(bot.id),
+                botDaily(bot.id, 7),
+                botStatus(bot.id),
+              ]);
+              if (p.status === "fulfilled") profits[bot.id] = p.value;
+              if (d.status === "fulfilled") sparks[bot.id] = d.value.data.map((item) => item.abs_profit);
 
-            // Best pair from profit response
-            if (p.status === "fulfilled") {
-              const prof = p.value;
-              if (prof.best_pair && (bestPairRate == null || (prof.best_pair_profit_ratio ?? prof.best_rate) > bestPairRate)) {
-                bestPairName = prof.best_pair;
-                bestPairRate = prof.best_pair_profit_ratio ?? prof.best_rate;
+              if (statusResult.status === "fulfilled") {
+                for (const t of statusResult.value) {
+                  (t as unknown as Record<string, unknown>)._bot_id = bot.id;
+                  (t as unknown as Record<string, unknown>)._bot_name = bot.name;
+                  if (t.current_profit == null && t.profit_ratio != null) t.current_profit = t.profit_ratio;
+                  if (t.current_profit_abs == null && t.profit_abs != null) t.current_profit_abs = t.profit_abs;
+                }
+                openTradesFromStatus.push(...statusResult.value);
               }
-            }
-          } catch { /* per-bot isolated */ }
-          })
-        );
-      } // end batch loop
+
+              if (!portfolioHadClosedTrades) {
+                try {
+                  const result = await botTrades(bot.id, 200);
+                  const perBotClosed = result.trades
+                    .filter((t) => !t.is_open)
+                    .map((t) => ({ ...t, _bot_id: bot.id, _bot_name: bot.name }));
+                  allClosed.push(...perBotClosed);
+                } catch { /* non-blocking */ }
+              }
+
+              if (p.status === "fulfilled") {
+                const prof = p.value;
+                if (prof.best_pair && (bestPairRate == null || (prof.best_pair_profit_ratio ?? prof.best_rate) > (bestPairRate ?? 0))) {
+                  bestPairName = prof.best_pair;
+                  bestPairRate = prof.best_pair_profit_ratio ?? prof.best_rate ?? null;
+                }
+              }
+            } catch { /* per-bot isolated */ }
+            })
+          );
+        } // end batch loop
+      } // end snapshot else
 
       // Aggregate max_drawdown_abs across all bots (sum absolute drawdowns)
       for (const prof of Object.values(profits)) {
@@ -801,20 +849,25 @@ export default function DashboardPage() {
         if (m.current) setPairMarketData(marketResults);
       }
 
-      // Weekly + Monthly for chart toggles — portfolio-aggregated across ALL bots
+      // Weekly + Monthly for chart toggles — from snapshot if available, otherwise live
+      if (snap?.portfolio?.weekly) setWeeklyData(snap.portfolio.weekly);
+      if (snap?.portfolio?.monthly) setMonthlyData(snap.portfolio.monthly);
+
       if (effectiveTradeBots.length > 0) {
         const firstBotId = effectiveTradeBots[0].id;
+        const liveWeekly = snap?.portfolio?.weekly ? null : portfolioWeekly(12);
+        const liveMonthly = snap?.portfolio?.monthly ? null : portfolioMonthly(12);
         Promise.allSettled([
-          portfolioWeekly(12),
-          portfolioMonthly(12),
+          liveWeekly ?? Promise.resolve(null),
+          liveMonthly ?? Promise.resolve(null),
           botBalance(firstBotId),
           botSysinfo(firstBotId),
           botLogs(firstBotId, 100),
           botHealth(firstBotId),
         ]).then(([w, mo, bal, sys, logs, health]) => {
           if (!m.current) return;
-          if (w.status === "fulfilled") setWeeklyData(w.value);
-          if (mo.status === "fulfilled") setMonthlyData(mo.value);
+          if (w.status === "fulfilled" && w.value) setWeeklyData(w.value);
+          if (mo.status === "fulfilled" && mo.value) setMonthlyData(mo.value);
           if (bal.status === "fulfilled") setBalanceData(bal.value);
           if (sys.status === "fulfilled") setSysinfoData(sys.value);
           if (logs.status === "fulfilled") setLogsData(logs.value);

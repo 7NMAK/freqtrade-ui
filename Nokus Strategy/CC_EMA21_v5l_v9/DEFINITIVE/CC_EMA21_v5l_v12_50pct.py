@@ -70,6 +70,19 @@ class CC_EMA21_v5l_v12_50pct(IStrategy):
     trailing_stop = False
     process_only_new_candles = True
 
+    # ── Hyperopt best params (ep1: IS +16.6% DD 6.5% WR 61.5% | OOS +20.2% DD 1.93% WR 68.6%) ──
+    buy_params = {
+        "atr_sl_mult": 0.77,
+        "buy_pull_tol": 1.011,
+        "buy_rsi_high": 58,
+        "buy_rsi_low": 39,
+    }
+    sell_params = {
+        "sell_pull_tol": 0.997,
+        "sell_rsi_high": 58,
+        "sell_rsi_low": 44,
+    }
+
     # ── Hyperopt parameters ────────────────────────────────────────────────
     # RSI zones
     buy_rsi_low  = IntParameter(25, 45, default=35, space="buy",  optimize=True)

@@ -23,6 +23,7 @@ from .models.base import Base
 from .heartbeat.monitor import HeartbeatMonitor
 from .bot_manager.manager import BotManager
 from .kill_switch.kill_switch import KillSwitch
+from .polling.worker import DashboardWorker
 
 # Import AI validator models so they are registered with Base.metadata
 from .ai_validator.models import AIValidation, AIAccuracy, AIHyperoptAnalysis, AIHyperoptOutcome  # noqa: F401
@@ -52,6 +53,10 @@ async def lifespan(app: FastAPI):
 
     set_activity_log_callback(_ft_activity_callback)
 
+    # Redis client (shared across all requests and background workers)
+    import redis.asyncio as aioredis
+    app.state.redis = aioredis.from_url(settings.redis_url, decode_responses=True)
+
     # Initialize bot manager
     app.state.bot_manager = BotManager()
 
@@ -62,6 +67,11 @@ async def lifespan(app: FastAPI):
     app.state.heartbeat = HeartbeatMonitor(app.state.bot_manager)
     app.state.heartbeat.set_kill_switch(app.state.kill_switch)
     heartbeat_task = asyncio.create_task(app.state.heartbeat.run())
+
+    # Start Dashboard Polling Worker (pre-computes snapshot every 30s → Redis)
+    app.state.dashboard_worker = DashboardWorker(app.state.bot_manager)
+    app.state.dashboard_worker._redis = app.state.redis  # share connection
+    dashboard_worker_task = asyncio.create_task(app.state.dashboard_worker.run())
 
     # Start JobRunner (background test job worker)
     from .services.job_runner import JobRunner
@@ -124,6 +134,14 @@ async def lifespan(app: FastAPI):
         except asyncio.CancelledError:
             pass
 
+    # Shutdown Dashboard Worker
+    app.state.dashboard_worker.stop()
+    dashboard_worker_task.cancel()
+    try:
+        await dashboard_worker_task
+    except asyncio.CancelledError:
+        pass
+
     # Shutdown heartbeat
     app.state.heartbeat.stop()
     heartbeat_task.cancel()
@@ -139,6 +157,9 @@ async def lifespan(app: FastAPI):
         await job_runner_task
     except asyncio.CancelledError:
         pass
+
+    # Close Redis connection
+    await app.state.redis.aclose()
 
     await engine.dispose()
 
@@ -163,6 +184,7 @@ app.add_middleware(
 from .api.bots import router as bots_router
 from .api.kill_switch import router as kill_switch_router
 from .api.portfolio import router as portfolio_router
+from .api.snapshot import router as snapshot_router
 from .api.strategies import router as strategies_router
 from .api.logs import router as logs_router
 from .api.exchange_profiles import router as exchange_profiles_router
@@ -174,6 +196,7 @@ from .auth import require_auth as _auth_dep
 app.include_router(bots_router, prefix="/api/bots", tags=["bots"], dependencies=[Depends(_auth_dep)])
 app.include_router(kill_switch_router, prefix="/api/kill-switch", tags=["kill-switch"], dependencies=[Depends(_auth_dep)])
 app.include_router(portfolio_router, prefix="/api/portfolio", tags=["portfolio"], dependencies=[Depends(_auth_dep)])
+app.include_router(snapshot_router, prefix="/api/dashboard/snapshot", tags=["snapshot"], dependencies=[Depends(_auth_dep)])
 app.include_router(strategies_router, prefix="/api/strategies", tags=["strategies"], dependencies=[Depends(_auth_dep)])
 app.include_router(logs_router, prefix="/api/logs", tags=["logs"], dependencies=[Depends(_auth_dep)])
 app.include_router(exchange_profiles_router, prefix="/api/exchange-profiles", tags=["exchange-profiles"], dependencies=[Depends(_auth_dep)])

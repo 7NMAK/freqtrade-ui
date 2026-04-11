@@ -628,6 +628,27 @@ export const portfolioWeekly = (weeks = 12) =>
 export const portfolioMonthly = (months = 12) =>
   request<import("@/types").FTMonthlyResponse>(`/api/portfolio/monthly?months=${months}`);
 
+// ── Dashboard Snapshot (pre-computed by background worker) ────────────────
+
+export interface DashboardSnapshot {
+  cached_at: number;
+  portfolio: {
+    balance:  import("@/types").PortfolioBalance  | null;
+    profit:   import("@/types").PortfolioProfit   | null;
+    trades:   import("@/types").PortfolioTrades   | null;
+    daily:    import("@/types").FTDailyResponse   | null;
+    weekly:   import("@/types").FTWeeklyResponse  | null;
+    monthly:  import("@/types").FTMonthlyResponse | null;
+  };
+  /** FT profit object keyed by bot_id (string) */
+  per_bot_profit: Record<string, import("@/types").FTProfit>;
+  /** 7-day abs_profit array keyed by bot_id (string) */
+  sparklines: Record<string, number[]>;
+}
+
+export const getDashboardSnapshot = () =>
+  request<DashboardSnapshot>("/api/dashboard/snapshot");
+
 // ── Strategies (Orchestrator DB) ──────────────────────────────────────────
 
 export const getStrategies = async (): Promise<import("@/types").Strategy[]> => {

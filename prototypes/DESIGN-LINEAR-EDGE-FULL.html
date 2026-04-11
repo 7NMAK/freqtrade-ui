@@ -705,12 +705,21 @@
 
                       <div class="flex flex-col gap-2 border-t border-white/[0.07] pt-2.5">
                           <div class="text-[10px] uppercase tracking-widest text-dim/20 mb-0.5">Risk-Adjusted Returns</div>
-                          <div class="grid grid-cols-2 gap-x-3 gap-y-2.5">
-                              <div><div class="text-[10px] text-dim/30 font-mono">Sharpe</div><div class="text-up font-mono font-bold text-[14px]">21.45</div></div>
-                              <div><div class="text-[10px] text-dim/30 font-mono">Sortino</div><div class="text-up font-mono font-bold text-[14px]">16.80</div></div>
-                              <div><div class="text-[10px] text-dim/30 font-mono">SQN</div><div class="text-up font-mono font-bold text-[14px]">3.53</div></div>
-                              <div><div class="text-[10px] text-dim/30 font-mono">Calmar</div><div class="text-up font-mono font-bold text-[14px]">788.78</div></div>
-                              <div><div class="text-[10px] text-dim/30 font-mono">CAGR</div><div class="text-up font-mono font-bold text-[14px]">2.13x</div></div>
+                          <div class="flex justify-between items-baseline">
+                              <span class="text-[11px] text-dim/40 font-mono">Sharpe</span>
+                              <span class="text-up font-mono font-bold text-[14px]">21.45</span>
+                          </div>
+                          <div class="flex justify-between items-baseline">
+                              <span class="text-[11px] text-dim/40 font-mono">Sortino</span>
+                              <span class="text-up font-mono font-bold text-[14px]">16.80</span>
+                          </div>
+                          <div class="flex justify-between items-baseline">
+                              <span class="text-[11px] text-dim/40 font-mono">SQN</span>
+                              <span class="text-up font-mono font-bold text-[14px]">3.53</span>
+                          </div>
+                          <div class="flex justify-between items-baseline">
+                              <span class="text-[11px] text-dim/40 font-mono">Calmar</span>
+                              <span class="text-up font-mono font-bold text-[14px]">788.78</span>
                           </div>
                       </div>
 
@@ -824,15 +833,43 @@
                   <!-- Bot Setup -->
                   <div class="bg-surface p-3 l-bd rounded flex flex-col gap-3">
                       <div class="text-[10px] font-bold uppercase tracking-widest text-dim/30">Bot Setup</div>
-                      <div class="grid grid-cols-2 gap-x-4 gap-y-3">
-                          <div><div class="text-[10px] text-dim/30 font-mono">Exchange</div><div class="text-dim font-mono font-bold text-[14px]">Binance</div></div>
-                          <div><div class="text-[10px] text-dim/30 font-mono">Timeframe</div><div class="text-dim font-mono font-bold text-[14px]">1h</div></div>
-                          <div><div class="text-[10px] text-dim/30 font-mono">Mode</div><div class="text-dim font-mono font-bold text-[14px]">Futures / Isolated</div></div>
-                          <div><div class="text-[10px] text-dim/30 font-mono">Paper mode</div><div class="text-up font-mono font-bold text-[14px]">Yes</div></div>
-                          <div><div class="text-[10px] text-dim/30 font-mono">Stake per trade</div><div class="text-dim font-mono font-bold text-[14px]">100 USDT</div></div>
-                          <div><div class="text-[10px] text-dim/30 font-mono">Stop Loss</div><div class="text-down font-mono font-bold text-[14px]">-10%</div></div>
-                          <div><div class="text-[10px] text-dim/30 font-mono">Max open trades</div><div class="text-dim font-mono font-bold text-[14px]">3</div></div>
-                          <div><div class="text-[10px] text-dim/30 font-mono">Open positions</div><div class="text-dim font-mono font-bold text-[14px]">2 / 3</div></div>
+                      <div class="flex flex-col gap-2">
+                          <div class="text-[10px] uppercase tracking-widest text-dim/20 mb-0.5">Trading</div>
+                          <div class="flex justify-between items-baseline">
+                              <span class="text-[11px] text-dim/40 font-mono">Exchange</span>
+                              <span class="text-dim font-mono font-bold text-[14px]">Binance</span>
+                          </div>
+                          <div class="flex justify-between items-baseline">
+                              <span class="text-[11px] text-dim/40 font-mono">Timeframe</span>
+                              <span class="text-dim font-mono font-bold text-[14px]">1h</span>
+                          </div>
+                          <div class="flex justify-between items-baseline">
+                              <span class="text-[11px] text-dim/40 font-mono">Mode</span>
+                              <span class="text-dim font-mono font-bold text-[14px]">Futures / Isolated</span>
+                          </div>
+                          <div class="flex justify-between items-baseline">
+                              <span class="text-[11px] text-dim/40 font-mono">Paper trading</span>
+                              <span class="text-up font-mono font-bold text-[14px]">Yes</span>
+                          </div>
+                      </div>
+                      <div class="flex flex-col gap-2 border-t border-white/[0.07] pt-2.5">
+                          <div class="text-[10px] uppercase tracking-widest text-dim/20 mb-0.5">Risk</div>
+                          <div class="flex justify-between items-baseline">
+                              <span class="text-[11px] text-dim/40 font-mono">Stake per trade</span>
+                              <span class="text-dim font-mono font-bold text-[14px]">100 USDT</span>
+                          </div>
+                          <div class="flex justify-between items-baseline">
+                              <span class="text-[11px] text-dim/40 font-mono">Stop Loss</span>
+                              <span class="text-down font-mono font-bold text-[14px]">−10%</span>
+                          </div>
+                          <div class="flex justify-between items-baseline">
+                              <span class="text-[11px] text-dim/40 font-mono">Max open trades</span>
+                              <span class="text-dim font-mono font-bold text-[14px]">3</span>
+                          </div>
+                          <div class="flex justify-between items-baseline">
+                              <span class="text-[11px] text-dim/40 font-mono">Open positions</span>
+                              <span class="text-dim font-mono font-bold text-[14px]">2 / 3</span>
+                          </div>
                       </div>
                       <div class="flex justify-between items-baseline border-t border-white/[0.07] pt-2.5">
                           <span class="text-[11px] text-dim/40 font-mono">Total committed</span>
@@ -1373,161 +1410,6 @@
       <!-- LAYER 2: MASTER 3-COLUMN LAYOUT -->
       <div class="flex-1 flex gap-5 min-w-0 min-h-0 overflow-hidden">
           
-          <!-- COL 1: BOT FLEET ARCHITECTURE -->
-          <div id="dash-col-fleet" class="w-[400px] flex flex-col gap-5 min-w-[400px] shrink-0">
-              <div class="flex-1 bg-surface l-bd rounded-md flex flex-col shadow-xl overflow-hidden">
-                  <div class="h-12 l-b flex items-center justify-between px-5 bg-black/40 shrink-0">
-                      <span class="section-title flex items-center gap-2.5">
-                          <i data-lucide="layers" class="w-4 h-4 text-muted"></i> Fleet Management (312)
-                      </span>
-                      <div class="flex gap-2">
-                      <button onclick="switchPage('page-fleet')" class="bg-white/10 px-3 py-1 rounded text-[11px] hover:bg-white/20 transition-colors font-medium flex items-center gap-1.5" title="Open Fleet Management — Compare all bots side by side"><i data-lucide="git-compare" class="w-3 h-3"></i>Compare View</button>
-                      </div>
-                  </div>
-                  
-                  <div class="flex-1 overflow-y-auto flex flex-col font-mono text-xs">
-                       <!-- Bot Row Expanded Format -->
-                       <div class="p-4 l-b hover:bg-white/[0.04] transition-colors group cursor-pointer" onclick="openBotDrawer('TrendFollowerV3_BTC', 'LIVE')">
-                           <div class="flex items-start justify-between mb-2.5">
-                               <div class="flex items-center gap-2">
-                                   <div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div>
-                                   <span class="font-bold text-dim uppercase text-[12px] tracking-wide">TrendFollowerV3_BTC</span>
-                                   <span class="text-[10px] border border-white/20 px-1.5 py-[1px] rounded text-dim/60 font-medium">LIVE</span>
-                               </div>
-                                <span class="text-up font-bold text-[13px]">+$48.20</span>
-                                <span class="text-[10px] ml-1" style="color:rgba(34,197,94,0.5)">+2.4%</span>
-                           </div>
-                           <div class="grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3">
-                               <div class="flex justify-between w-full pr-5"><span>Trades:</span> <span class="text-dim/70">412</span></div>
-                               <div class="flex justify-between w-full"><span>Win:</span> <span class="text-dim/70">72%</span></div>
-                               <div class="flex justify-between w-full pr-5"><span>Drawdown:</span> <span class="text-down">-1.2%</span></div>
-                               <div class="flex justify-between w-full"><span>Avg. Dur:</span> <span class="text-dim/70">1.5h</span></div>
-                           </div>
-                           <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
-                               <div class="flex gap-[2px] h-4 items-end">
-                                  <div class="w-1.5 bg-up h-[40%] rounded-sm"></div><div class="w-1.5 bg-up h-[60%] rounded-sm"></div><div class="w-1.5 bg-down h-[20%] rounded-sm"></div><div class="w-1.5 bg-up h-[100%] rounded-sm"></div><div class="w-1.5 bg-up h-[80%] rounded-sm"></div>
-                               </div>
-                               <div class="flex gap-1">
-                                   <button class="bot-ctrl ctrl-start" title="▶ Start Bot — Resume trading engine" onclick="event.stopPropagation()"><i data-lucide="play" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl ctrl-stop" title="■ Stop Bot — Gracefully stop trading" onclick="event.stopPropagation()"><i data-lucide="square" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl ctrl-pause" title="⏸ Pause — Stop opening new trades" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl" title="↻ Reload Config — Hot-reload strategy config" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl ctrl-stop" title="✕ Force Exit All — Close all open positions" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl" title="⊞ Toggle Stopbuy — Prevent new buy orders" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-3 h-3"></i></button>
-                                   <span class="w-px h-3 bg-white/15 mx-0.5"></span>
-                                   <button class="bot-ctrl" style="color:#facc15" title="Soft Kill — exits all trades, keeps bot" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl ctrl-stop" title="Hard Kill — force stop bot + container" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-3 h-3"></i></button>
-                               </div>
-                           </div>
-                       </div>
-
-                       <!-- Bot Row 2 -->
-                       <div class="p-4 l-b hover:bg-white/[0.04] transition-colors group cursor-pointer bg-white/[0.015]" onclick="openBotDrawer('TrendFollowerV3_ETH', 'LIVE')">
-                           <div class="flex items-start justify-between mb-2.5">
-                               <div class="flex items-center gap-2">
-                                   <div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div>
-                                   <span class="font-bold text-dim uppercase text-[12px] tracking-wide">TrendFollowerV3_ETH</span>
-                                   <span class="text-[10px] border border-white/20 px-1.5 py-[1px] rounded text-dim/60 font-medium">LIVE</span>
-                               </div>
-                                <span class="text-down font-bold text-[13px]">-$12.40</span>
-                                <span class="text-[10px] ml-1" style="color:rgba(239,68,68,0.5)">-0.7%</span>
-                           </div>
-                           <div class="grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3">
-                               <div class="flex justify-between w-full pr-5"><span>Trades:</span> <span class="text-dim/70">188</span></div>
-                               <div class="flex justify-between w-full"><span>Win:</span> <span class="text-dim/70">41%</span></div>
-                               <div class="flex justify-between w-full pr-5"><span>Drawdown:</span> <span class="text-down">-4.2%</span></div>
-                               <div class="flex justify-between w-full"><span>Avg. Dur:</span> <span class="text-dim/70">3.2h</span></div>
-                           </div>
-                           <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
-                               <div class="flex gap-[2px] h-4 items-end">
-                                  <div class="w-1.5 bg-down h-[60%] rounded-sm"></div><div class="w-1.5 bg-up h-[20%] rounded-sm"></div><div class="w-1.5 bg-down h-[100%] rounded-sm"></div><div class="w-1.5 bg-down h-[80%] rounded-sm"></div><div class="w-1.5 bg-up h-[30%] rounded-sm"></div>
-                               </div>
-                               <div class="flex gap-1">
-                                   <button class="bot-ctrl ctrl-start" title="▶ Start Bot — Resume trading engine" onclick="event.stopPropagation()"><i data-lucide="play" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl ctrl-stop" title="■ Stop Bot — Gracefully stop trading" onclick="event.stopPropagation()"><i data-lucide="square" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl ctrl-pause" title="⏸ Pause — Stop opening new trades" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl" title="↻ Reload Config — Hot-reload strategy config" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl ctrl-stop" title="✕ Force Exit All — Close all open positions" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl" title="⊞ Toggle Stopbuy — Prevent new buy orders" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-3 h-3"></i></button>
-                                   <span class="w-px h-3 bg-white/15 mx-0.5"></span>
-                                   <button class="bot-ctrl" style="color:#facc15" title="Soft Kill — exits all trades, keeps bot" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-3 h-3"></i></button>
-                                   <button class="bot-ctrl ctrl-stop" title="Hard Kill — force stop bot + container" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-3 h-3"></i></button>
-                               </div>
-                           </div>
-                       </div>
-                       
-                                 <!-- Bot 3 -->
-                        <div class="p-4 l-b hover:bg-white/[0.04] transition-colors group cursor-pointer" onclick="openBotDrawer('ScalpBot_XRP', 'LIVE')">
-                            <div class="flex items-start justify-between mb-2.5">
-                                <div class="flex items-center gap-2"><div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="font-bold text-dim uppercase text-[12px] tracking-wide">ScalpBot_XRP</span><span class="text-[10px] border border-white/20 px-1.5 py-[1px] rounded text-dim/60 font-medium">LIVE</span></div>
-                                <div class="text-right"><span class="text-up font-bold text-[13px]">+$92.10</span> <span class="text-[10px]" style="color:rgba(34,197,94,0.5)">+3.1%</span></div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3">
-                                <div class="flex justify-between w-full pr-5"><span>Trades:</span> <span class="text-dim/70">620</span></div>
-                                <div class="flex justify-between w-full"><span>Win:</span> <span class="text-dim/70">71%</span></div>
-                                <div class="flex justify-between w-full pr-5"><span>Drawdown:</span> <span class="text-down">-2.1%</span></div>
-                                <div class="flex justify-between w-full"><span>Avg. Dur:</span> <span class="text-dim/70">0.4h</span></div>
-                            </div>
-                            <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
-                                <div class="flex gap-[2px] h-4 items-end"><div class="w-1.5 bg-up h-[80%] rounded-sm"></div><div class="w-1.5 bg-up h-[100%] rounded-sm"></div><div class="w-1.5 bg-up h-[40%] rounded-sm"></div><div class="w-1.5 bg-down h-[20%] rounded-sm"></div><div class="w-1.5 bg-up h-[60%] rounded-sm"></div></div>
-                                <div class="flex gap-1"><button class="bot-ctrl ctrl-start" title="▶ Start Bot — Resume trading engine" onclick="event.stopPropagation()"><i data-lucide="play" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="■ Stop Bot — Gracefully stop trading" onclick="event.stopPropagation()"><i data-lucide="square" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-pause" title="⏸ Pause — Stop opening new trades" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-3 h-3"></i></button><button class="bot-ctrl" title="↻ Reload Config — Hot-reload strategy config" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="✕ Force Exit All — Close all open positions" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-3 h-3"></i></button><button class="bot-ctrl" title="⊞ Toggle Stopbuy — Prevent new buy orders" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-3 h-3"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="color:#facc15" title="🛡 Soft Kill — Exit all trades, keep bot alive" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="⚡ Hard Kill — Force stop bot + container" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-3 h-3"></i></button></div>
-                            </div>
-                        </div>
-
-                        <!-- Bot 4: PAUSED -->
-                        <div class="p-4 l-b hover:bg-white/[0.04] transition-colors group cursor-pointer bg-white/[0.015]">
-                            <div class="flex items-start justify-between mb-2.5">
-                                <div class="flex items-center gap-2"><div class="w-2 h-2 bg-yellow-400 rounded-full"></div><span class="font-bold text-dim/60 uppercase text-[12px] tracking-wide">MomentumRider_SOL</span><span class="text-[10px] border border-yellow-500/30 px-1.5 py-[1px] rounded text-yellow-400 font-medium">PAUSED</span></div>
-                                <span class="text-muted font-bold text-[13px]">$0.00</span>
-                            </div>
-                            <div class="grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3">
-                                <div class="flex justify-between w-full pr-5"><span>Trades:</span> <span class="text-dim/70">156</span></div>
-                                <div class="flex justify-between w-full"><span>Win:</span> <span class="text-dim/70">62%</span></div>
-                                <div class="flex justify-between w-full pr-5"><span>Drawdown:</span> <span class="text-down">-5.2%</span></div>
-                                <div class="flex justify-between w-full"><span>Avg. Dur:</span> <span class="text-dim/70">3.2h</span></div>
-                            </div>
-                            <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
-                                <div class="flex gap-[2px] h-4 items-end"><div class="w-1.5 bg-up h-[30%] rounded-sm"></div><div class="w-1.5 bg-down h-[50%] rounded-sm"></div><div class="w-1.5 bg-up h-[40%] rounded-sm"></div><div class="w-1.5 bg-down h-[70%] rounded-sm"></div><div class="w-1.5 bg-down h-[20%] rounded-sm"></div></div>
-                                <div class="flex gap-1"><button class="bot-ctrl ctrl-start" title="▶ Start Bot — Resume trading engine" onclick="event.stopPropagation()"><i data-lucide="play" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="■ Stop Bot — Gracefully stop trading" onclick="event.stopPropagation()"><i data-lucide="square" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-pause" title="⏸ Pause — Stop opening new trades" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-3 h-3"></i></button><button class="bot-ctrl" title="↻ Reload Config — Hot-reload strategy config" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="✕ Force Exit All — Close all open positions" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-3 h-3"></i></button><button class="bot-ctrl" title="⊞ Toggle Stopbuy — Prevent new buy orders" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-3 h-3"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="color:#facc15" title="🛡 Soft Kill — Exit all trades, keep bot alive" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="⚡ Hard Kill — Force stop bot + container" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-3 h-3"></i></button></div>
-                            </div>
-                        </div>
-
-                        <!-- Bot 5: STOPPED -->
-                        <div class="p-4 l-b hover:bg-white/[0.04] transition-colors group cursor-pointer">
-                            <div class="flex items-start justify-between mb-2.5">
-                                <div class="flex items-center gap-2"><div class="w-2 h-2 bg-down rounded-full"></div><span class="font-bold text-dim/40 uppercase text-[12px] tracking-wide">MemeScalper_DOGE</span><span class="text-[10px] border border-down/30 px-1.5 py-[1px] rounded text-down font-medium">STOPPED</span></div>
-                                <div class="text-right"><span class="text-down font-bold text-[13px]">-$420</span> <span class="text-[10px]" style="color:rgba(239,68,68,0.5)">-17.5%</span></div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3">
-                                <div class="flex justify-between w-full pr-5"><span>Trades:</span> <span class="text-dim/70">18</span></div>
-                                <div class="flex justify-between w-full"><span>Win:</span> <span class="text-down">28%</span></div>
-                                <div class="flex justify-between w-full pr-5"><span>Drawdown:</span> <span class="text-down">-12.4%</span></div>
-                                <div class="flex justify-between w-full"><span>Avg. Dur:</span> <span class="text-dim/70">0.8h</span></div>
-                            </div>
-                            <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
-                                <div class="flex gap-[2px] h-4 items-end"><div class="w-1.5 bg-down h-[90%] rounded-sm"></div><div class="w-1.5 bg-down h-[100%] rounded-sm"></div><div class="w-1.5 bg-up h-[10%] rounded-sm"></div><div class="w-1.5 bg-down h-[80%] rounded-sm"></div><div class="w-1.5 bg-down h-[60%] rounded-sm"></div></div>
-                                <div class="flex gap-1"><button class="bot-ctrl ctrl-start" title="▶ Start Bot — Resume trading engine" onclick="event.stopPropagation()"><i data-lucide="play" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="■ Stop Bot — Gracefully stop trading" onclick="event.stopPropagation()"><i data-lucide="square" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-pause" title="⏸ Pause — Stop opening new trades" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-3 h-3"></i></button><button class="bot-ctrl" title="↻ Reload Config — Hot-reload strategy config" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="✕ Force Exit All — Close all open positions" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-3 h-3"></i></button><button class="bot-ctrl" title="⊞ Toggle Stopbuy — Prevent new buy orders" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-3 h-3"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="color:#facc15" title="🛡 Soft Kill — Exit all trades, keep bot alive" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="⚡ Hard Kill — Force stop bot + container" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-3 h-3"></i></button></div>
-                            </div>
-                        </div>
-
-                        <!-- Bot 6 -->
-                        <div class="p-4 l-b hover:bg-white/[0.04] transition-colors group cursor-pointer bg-white/[0.015]">
-                            <div class="flex items-start justify-between mb-2.5">
-                                <div class="flex items-center gap-2"><div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="font-bold text-dim uppercase text-[12px] tracking-wide">BreakoutHunter_AVAX</span><span class="text-[10px] border border-white/20 px-1.5 py-[1px] rounded text-dim/60 font-medium">LIVE</span></div>
-                                <div class="text-right"><span class="text-up font-bold text-[13px]">+$220.40</span> <span class="text-[10px]" style="color:rgba(34,197,94,0.5)">+8.2%</span></div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-y-1.5 text-muted text-[12px] mb-3">
-                                <div class="flex justify-between w-full pr-5"><span>Trades:</span> <span class="text-dim/70">210</span></div>
-                                <div class="flex justify-between w-full"><span>Win:</span> <span class="text-dim/70">68%</span></div>
-                                <div class="flex justify-between w-full pr-5"><span>Drawdown:</span> <span class="text-down">-3.4%</span></div>
-                                <div class="flex justify-between w-full"><span>Avg. Dur:</span> <span class="text-dim/70">1.8h</span></div>
-                            </div>
-                            <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
-                                <div class="flex gap-[2px] h-4 items-end"><div class="w-1.5 bg-up h-[60%] rounded-sm"></div><div class="w-1.5 bg-up h-[80%] rounded-sm"></div><div class="w-1.5 bg-up h-[100%] rounded-sm"></div><div class="w-1.5 bg-down h-[30%] rounded-sm"></div><div class="w-1.5 bg-up h-[70%] rounded-sm"></div></div>
-                                <div class="flex gap-1"><button class="bot-ctrl ctrl-start" title="▶ Start Bot — Resume trading engine" onclick="event.stopPropagation()"><i data-lucide="play" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="■ Stop Bot — Gracefully stop trading" onclick="event.stopPropagation()"><i data-lucide="square" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-pause" title="⏸ Pause — Stop opening new trades" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-3 h-3"></i></button><button class="bot-ctrl" title="↻ Reload Config — Hot-reload strategy config" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="✕ Force Exit All — Close all open positions" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-3 h-3"></i></button><button class="bot-ctrl" title="⊞ Toggle Stopbuy — Prevent new buy orders" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-3 h-3"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="color:#facc15" title="🛡 Soft Kill — Exit all trades, keep bot alive" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-3 h-3"></i></button><button class="bot-ctrl ctrl-stop" title="⚡ Hard Kill — Force stop bot + container" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-3 h-3"></i></button></div>
-                            </div>
-                        </div>               </div>
-               </div>
           </div>
 
           <!-- COL 2: MAIN WORKSPACE -->
@@ -1633,6 +1515,7 @@
                                  <!-- Master Tabular Engine -->
               <div class="flex-1 bg-surface l-bd rounded-md shadow-xl flex flex-col min-h-0 overflow-hidden">
                   <div class="h-12 l-b flex items-center bg-black/40 shrink-0 border-b-2 border-transparent overflow-x-auto whitespace-nowrap">
+                      <button onclick="switchTradeTab('trades-fleet', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-dim transition-colors trade-tab-btn shrink-0" title="All bots — status, P&L, controls">Fleet (312)</button>
                       <button onclick="switchTradeTab('trades-open', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide border-b-2 border-up text-dim trade-tab-btn shrink-0" title="Currently active trades">Open Trades (42)</button>
                       <button onclick="switchTradeTab('trades-closed', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-dim transition-colors trade-tab-btn shrink-0" title="Completed trade history">Closed (1284)</button>
                       <button onclick="switchTradeTab('trades-whitelist', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-dim transition-colors trade-tab-btn shrink-0" title="Pair monitoring and lock management">Whitelist Matrix</button>
@@ -1640,11 +1523,256 @@
                       <button onclick="switchTradeTab('trades-entry', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-dim transition-colors trade-tab-btn shrink-0" title="Entry signal tag analysis">Entry Tags</button>
                       <button onclick="switchTradeTab('trades-exit', this)" class="h-full px-5 font-bold text-[12px] uppercase tracking-wide text-muted hover:text-dim transition-colors trade-tab-btn shrink-0" title="Exit reason analysis">Exit Reasons</button>
                       
-                      <div class="ml-auto mr-5 flex items-center gap-2">
-                           <button class="px-2 py-1 rounded text-[10px] text-muted hover:text-dim hover:bg-white/6 transition-colors flex items-center gap-1 opacity-50 hover:opacity-100" title="Export table data as CSV"><i data-lucide="download" class="w-3 h-3 inline"></i>CSV</button>
+                      <div class="ml-auto mr-4 flex items-center gap-2 shrink-0">
+                           <button class="px-3 py-1 rounded text-[10px] font-bold border border-up/40 text-up hover:bg-up/10 transition-colors flex items-center gap-1.5" title="Force Entry — manually open a trade"><i data-lucide="circle-plus" class="w-3 h-3"></i>Force Entry</button>
+                           <button class="px-2 py-1 rounded text-[10px] text-muted hover:text-dim hover:bg-white/6 transition-colors flex items-center gap-1" title="Export table data as CSV"><i data-lucide="download" class="w-3 h-3 inline"></i>CSV</button>
                       </div>
                   </div>
                   
+
+                  <!-- TAB: FLEET -->
+                  <div id="trades-fleet" class="trade-tab-content flex-1 overflow-hidden flex flex-col" style="display:none">
+                      <div class="flex-1 overflow-x-auto overflow-y-auto">
+                          <table class="w-full text-left border-collapse whitespace-nowrap text-[12px] font-mono">
+                              <thead class="sticky top-0 bg-black/90 backdrop-blur z-10 border-b border-white/[0.07]">
+                                  <tr class="text-[10px] uppercase tracking-widest text-muted">
+                                      <th class="px-3 py-2.5 font-medium text-left">Status</th>
+                                      <th class="px-3 py-2.5 font-medium text-left">Bot</th>
+                                      <th class="px-3 py-2.5 font-medium text-left">Mode</th>
+                                      <th class="px-3 py-2.5 font-medium text-right">Closed P&amp;L</th>
+                                      <th class="px-2 py-2.5 font-medium text-right">%</th>
+                                      <th class="px-3 py-2.5 font-medium text-right">Open P&amp;L</th>
+                                      <th class="px-3 py-2.5 font-medium text-right">Win%</th>
+                                      <th class="px-3 py-2.5 font-medium text-right">Trades</th>
+                                      <th class="px-3 py-2.5 font-medium text-right">Closed</th>
+                                      <th class="px-3 py-2.5 font-medium text-right">Open</th>
+                                      <th class="px-3 py-2.5 font-medium text-right">Balance</th>
+                                      <th class="px-3 py-2.5 font-medium text-right">Max DD</th>
+                                      <th class="px-3 py-2.5 font-medium text-right">Avg Dur</th>
+                                      <th class="px-4 py-2.5 font-medium text-center">P&amp;L / day</th>
+                                      <th class="px-3 py-2.5 font-medium text-center">Actions</th>
+                                  </tr>
+                              </thead>
+                              <tbody class="divide-y divide-white/[0.04]">
+                                  <!-- RUNNING bots -->
+                                  <tr class="hover:bg-white/[0.03] cursor-pointer transition-colors" onclick="openBotDrawer('ft-fixedriskrewardl', 'PAPER')">
+                                      <td class="px-3 py-2"><span class="flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUNNING</span></span></td>
+                                      <td class="px-3 py-2 font-bold text-dim" style="max-width:180px"><span class="block truncate" title="ft-fixedriskrewardl...">ft-fixedriskrewardl...</span></td>
+                                      <td class="px-3 py-2"><span class="flex gap-1"><span class="px-1 py-[1px] text-[9px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded">PAPER</span><span class="px-1 py-[1px] text-[9px] font-bold bg-white/5 text-dim/50 border border-white/10 rounded">SPOT</span></span></td>
+                                      <td class="px-3 py-2 text-right text-up font-bold">+769.8538</td>
+                                      <td class="px-2 py-2 text-right text-up">+7.78%</td>
+                                      <td class="px-3 py-2 text-right text-down">−66.4661</td>
+                                      <td class="px-3 py-2 text-right text-up">100%</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">6</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">3</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">3/3</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">10735.85</td>
+                                      <td class="px-3 py-2 text-right text-down">−0.0%</td>
+                                      <td class="px-3 py-2 text-right text-dim/50 text-[11px]">6d 18:16:11</td>
+                                      <td class="px-4 py-2"><div class="flex items-end gap-[2px] h-5 w-14 mx-auto"><div class="flex-1 rounded-sm bg-up/50" style="height:30%"></div><div class="flex-1 rounded-sm bg-up/60" style="height:55%"></div><div class="flex-1 rounded-sm bg-up/70" style="height:80%"></div><div class="flex-1 rounded-sm bg-down/60" style="height:25%"></div><div class="flex-1 rounded-sm bg-up/60" style="height:65%"></div><div class="flex-1 rounded-sm bg-up/70" style="height:90%"></div><div class="flex-1 rounded-sm bg-up/80" style="height:100%"></div></div></td>
+                                      <td class="px-3 py-2" onclick="event.stopPropagation()"><div class="flex gap-[2px] justify-center"><button class="bot-ctrl ctrl-start" style="width:20px;height:20px" title="Start"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Stop"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:20px;height:20px" title="Pause"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Reload Config"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Force Exit All"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Toggle Stopbuy"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5 self-center"></span><button class="bot-ctrl" style="width:20px;height:20px;color:#facc15" title="Soft Kill"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Hard Kill"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
+                                  </tr>
+                                  <tr class="hover:bg-white/[0.03] cursor-pointer transition-colors bg-white/[0.012]" onclick="openBotDrawer('ft-customstoplossw', 'PAPER')">
+                                      <td class="px-3 py-2"><span class="flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUNNING</span></span></td>
+                                      <td class="px-3 py-2 font-bold text-dim" style="max-width:180px"><span class="block truncate" title="ft-customstoplossw...">ft-customstoplossw...</span></td>
+                                      <td class="px-3 py-2"><span class="flex gap-1"><span class="px-1 py-[1px] text-[9px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded">PAPER</span><span class="px-1 py-[1px] text-[9px] font-bold bg-white/5 text-dim/50 border border-white/10 rounded">SPOT</span></span></td>
+                                      <td class="px-3 py-2 text-right text-up font-bold">+768.2470</td>
+                                      <td class="px-2 py-2 text-right text-up">+7.76%</td>
+                                      <td class="px-3 py-2 text-right text-down">−69.3624</td>
+                                      <td class="px-3 py-2 text-right text-up">100%</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">6</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">3</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">3/3</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">10731.34</td>
+                                      <td class="px-3 py-2 text-right text-down">−0.0%</td>
+                                      <td class="px-3 py-2 text-right text-dim/50 text-[11px]">6d 18:08:09</td>
+                                      <td class="px-4 py-2"><div class="flex items-end gap-[2px] h-5 w-14 mx-auto"><div class="flex-1 rounded-sm bg-up/40" style="height:40%"></div><div class="flex-1 rounded-sm bg-up/60" style="height:70%"></div><div class="flex-1 rounded-sm bg-up/50" style="height:50%"></div><div class="flex-1 rounded-sm bg-up/70" style="height:85%"></div><div class="flex-1 rounded-sm bg-down/50" style="height:20%"></div><div class="flex-1 rounded-sm bg-up/60" style="height:60%"></div><div class="flex-1 rounded-sm bg-up/80" style="height:100%"></div></div></td>
+                                      <td class="px-3 py-2" onclick="event.stopPropagation()"><div class="flex gap-[2px] justify-center"><button class="bot-ctrl ctrl-start" style="width:20px;height:20px" title="Start"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Stop"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:20px;height:20px" title="Pause"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Reload Config"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Force Exit All"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Toggle Stopbuy"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5 self-center"></span><button class="bot-ctrl" style="width:20px;height:20px;color:#facc15" title="Soft Kill"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Hard Kill"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
+                                  </tr>
+                                  <tr class="hover:bg-white/[0.03] cursor-pointer transition-colors" onclick="openBotDrawer('ft-fsamplestrategy', 'PAPER')">
+                                      <td class="px-3 py-2"><span class="flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUNNING</span></span></td>
+                                      <td class="px-3 py-2 font-bold text-dim" style="max-width:180px"><span class="block truncate" title="ft-fsamplestrategy-...">ft-fsamplestrategy-...</span></td>
+                                      <td class="px-3 py-2"><span class="flex gap-1"><span class="px-1 py-[1px] text-[9px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded">PAPER</span><span class="px-1 py-[1px] text-[9px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded">FUT</span></span></td>
+                                      <td class="px-3 py-2 text-right text-up font-bold">+757.5021</td>
+                                      <td class="px-2 py-2 text-right text-up">+7.65%</td>
+                                      <td class="px-3 py-2 text-right text-up">+6.9190</td>
+                                      <td class="px-3 py-2 text-right text-up">100%</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">4</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">3</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">1/3</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">10773.83</td>
+                                      <td class="px-3 py-2 text-right text-down">−0.0%</td>
+                                      <td class="px-3 py-2 text-right text-dim/50 text-[11px]">5d 20:59:54</td>
+                                      <td class="px-4 py-2"><div class="flex items-end gap-[2px] h-5 w-14 mx-auto"><div class="flex-1 rounded-sm bg-up/60" style="height:60%"></div><div class="flex-1 rounded-sm bg-up/70" style="height:80%"></div><div class="flex-1 rounded-sm bg-up/80" style="height:100%"></div><div class="flex-1 rounded-sm bg-up/50" style="height:40%"></div><div class="flex-1 rounded-sm bg-up/60" style="height:70%"></div><div class="flex-1 rounded-sm bg-down/40" style="height:15%"></div><div class="flex-1 rounded-sm bg-up/70" style="height:90%"></div></div></td>
+                                      <td class="px-3 py-2" onclick="event.stopPropagation()"><div class="flex gap-[2px] justify-center"><button class="bot-ctrl ctrl-start" style="width:20px;height:20px" title="Start"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Stop"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:20px;height:20px" title="Pause"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Reload Config"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Force Exit All"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Toggle Stopbuy"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5 self-center"></span><button class="bot-ctrl" style="width:20px;height:20px;color:#facc15" title="Soft Kill"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Hard Kill"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
+                                  </tr>
+                                  <tr class="hover:bg-white/[0.03] cursor-pointer transition-colors bg-white/[0.012]" onclick="openBotDrawer('ft-informativesamp', 'PAPER')">
+                                      <td class="px-3 py-2"><span class="flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUNNING</span></span></td>
+                                      <td class="px-3 py-2 font-bold text-dim" style="max-width:180px"><span class="block truncate" title="ft-informativesamp...">ft-informativesamp...</span></td>
+                                      <td class="px-3 py-2"><span class="flex gap-1"><span class="px-1 py-[1px] text-[9px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded">PAPER</span><span class="px-1 py-[1px] text-[9px] font-bold bg-white/5 text-dim/50 border border-white/10 rounded">SPOT</span></span></td>
+                                      <td class="px-3 py-2 text-right text-up font-bold">+727.2978</td>
+                                      <td class="px-2 py-2 text-right text-up">+7.35%</td>
+                                      <td class="px-3 py-2 text-right text-down">−120.1008</td>
+                                      <td class="px-3 py-2 text-right text-up">100%</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">21</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">18</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">3/3</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">10639.11</td>
+                                      <td class="px-3 py-2 text-right text-down">−0.0%</td>
+                                      <td class="px-3 py-2 text-right text-dim/50 text-[11px]">19:53:22</td>
+                                      <td class="px-4 py-2"><div class="flex items-end gap-[2px] h-5 w-14 mx-auto"><div class="flex-1 rounded-sm bg-up/50" style="height:45%"></div><div class="flex-1 rounded-sm bg-down/40" style="height:20%"></div><div class="flex-1 rounded-sm bg-up/60" style="height:65%"></div><div class="flex-1 rounded-sm bg-up/70" style="height:85%"></div><div class="flex-1 rounded-sm bg-up/50" style="height:50%"></div><div class="flex-1 rounded-sm bg-down/30" style="height:10%"></div><div class="flex-1 rounded-sm bg-up/80" style="height:100%"></div></div></td>
+                                      <td class="px-3 py-2" onclick="event.stopPropagation()"><div class="flex gap-[2px] justify-center"><button class="bot-ctrl ctrl-start" style="width:20px;height:20px" title="Start"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Stop"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:20px;height:20px" title="Pause"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Reload Config"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Force Exit All"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Toggle Stopbuy"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5 self-center"></span><button class="bot-ctrl" style="width:20px;height:20px;color:#facc15" title="Soft Kill"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Hard Kill"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
+                                  </tr>
+                                  <tr class="hover:bg-white/[0.03] cursor-pointer transition-colors" onclick="openBotDrawer('ft-macdstrategy', 'PAPER')">
+                                      <td class="px-3 py-2"><span class="flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUNNING</span></span></td>
+                                      <td class="px-3 py-2 font-bold text-dim" style="max-width:180px"><span class="block truncate" title="ft-macdstrategy-def...">ft-macdstrategy-def...</span></td>
+                                      <td class="px-3 py-2"><span class="flex gap-1"><span class="px-1 py-[1px] text-[9px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded">PAPER</span><span class="px-1 py-[1px] text-[9px] font-bold bg-white/5 text-dim/50 border border-white/10 rounded">SPOT</span></span></td>
+                                      <td class="px-3 py-2 text-right text-up font-bold">+685.7544</td>
+                                      <td class="px-2 py-2 text-right text-up">+6.93%</td>
+                                      <td class="px-3 py-2 text-right text-down">−62.9023</td>
+                                      <td class="px-3 py-2 text-right text-up">100%</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">21</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">18</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">3/3</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">10655.07</td>
+                                      <td class="px-3 py-2 text-right text-down">−0.0%</td>
+                                      <td class="px-3 py-2 text-right text-dim/50 text-[11px]">17:13:02</td>
+                                      <td class="px-4 py-2"><div class="flex items-end gap-[2px] h-5 w-14 mx-auto"><div class="flex-1 rounded-sm bg-up/60" style="height:55%"></div><div class="flex-1 rounded-sm bg-up/70" style="height:75%"></div><div class="flex-1 rounded-sm bg-down/50" style="height:25%"></div><div class="flex-1 rounded-sm bg-up/60" style="height:60%"></div><div class="flex-1 rounded-sm bg-up/70" style="height:90%"></div><div class="flex-1 rounded-sm bg-up/50" style="height:45%"></div><div class="flex-1 rounded-sm bg-up/80" style="height:100%"></div></div></td>
+                                      <td class="px-3 py-2" onclick="event.stopPropagation()"><div class="flex gap-[2px] justify-center"><button class="bot-ctrl ctrl-start" style="width:20px;height:20px" title="Start"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Stop"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:20px;height:20px" title="Pause"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Reload Config"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Force Exit All"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Toggle Stopbuy"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5 self-center"></span><button class="bot-ctrl" style="width:20px;height:20px;color:#facc15" title="Soft Kill"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Hard Kill"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
+                                  </tr>
+                                  <tr class="hover:bg-white/[0.03] cursor-pointer transition-colors bg-white/[0.012]" onclick="openBotDrawer('ft-trendfollowingst', 'PAPER')">
+                                      <td class="px-3 py-2"><span class="flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUNNING</span></span></td>
+                                      <td class="px-3 py-2 font-bold text-dim" style="max-width:180px"><span class="block truncate" title="ft-trendfollowingst...">ft-trendfollowingst...</span></td>
+                                      <td class="px-3 py-2"><span class="flex gap-1"><span class="px-1 py-[1px] text-[9px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded">PAPER</span><span class="px-1 py-[1px] text-[9px] font-bold bg-white/5 text-dim/50 border border-white/10 rounded">SPOT</span></span></td>
+                                      <td class="px-3 py-2 text-right text-up font-bold">+680.0162</td>
+                                      <td class="px-2 py-2 text-right text-up">+6.87%</td>
+                                      <td class="px-3 py-2 text-right text-down">−10.9280</td>
+                                      <td class="px-3 py-2 text-right text-up">100%</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">7</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">4</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">3/3</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">10701.39</td>
+                                      <td class="px-3 py-2 text-right text-down">−0.0%</td>
+                                      <td class="px-3 py-2 text-right text-dim/50 text-[11px]">2d 22:20:24</td>
+                                      <td class="px-4 py-2"><div class="flex items-end gap-[2px] h-5 w-14 mx-auto"><div class="flex-1 rounded-sm bg-up/40" style="height:35%"></div><div class="flex-1 rounded-sm bg-up/60" style="height:65%"></div><div class="flex-1 rounded-sm bg-up/70" style="height:85%"></div><div class="flex-1 rounded-sm bg-down/40" style="height:18%"></div><div class="flex-1 rounded-sm bg-up/50" style="height:50%"></div><div class="flex-1 rounded-sm bg-up/70" style="height:80%"></div><div class="flex-1 rounded-sm bg-up/80" style="height:100%"></div></div></td>
+                                      <td class="px-3 py-2" onclick="event.stopPropagation()"><div class="flex gap-[2px] justify-center"><button class="bot-ctrl ctrl-start" style="width:20px;height:20px" title="Start"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Stop"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:20px;height:20px" title="Pause"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Reload Config"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Force Exit All"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Toggle Stopbuy"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5 self-center"></span><button class="bot-ctrl" style="width:20px;height:20px;color:#facc15" title="Soft Kill"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Hard Kill"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
+                                  </tr>
+                                  <tr class="hover:bg-white/[0.03] cursor-pointer transition-colors" onclick="openBotDrawer('ft-multima-v50', 'PAPER')">
+                                      <td class="px-3 py-2"><span class="flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUNNING</span></span></td>
+                                      <td class="px-3 py-2 font-bold text-dim" style="max-width:180px"><span class="block truncate" title="ft-multima-v50">ft-multima-v50</span></td>
+                                      <td class="px-3 py-2"><span class="flex gap-1"><span class="px-1 py-[1px] text-[9px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded">PAPER</span><span class="px-1 py-[1px] text-[9px] font-bold bg-white/5 text-dim/50 border border-white/10 rounded">SPOT</span></span></td>
+                                      <td class="px-3 py-2 text-right text-up font-bold">+675.6556</td>
+                                      <td class="px-2 py-2 text-right text-up">+6.82%</td>
+                                      <td class="px-3 py-2 text-right text-dim/40">+0.0000</td>
+                                      <td class="px-3 py-2 text-right">58%</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">19</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">19</td>
+                                      <td class="px-3 py-2 text-right text-dim/40">0/3</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">10675.66</td>
+                                      <td class="px-3 py-2 text-right text-down">−0.9%</td>
+                                      <td class="px-3 py-2 text-right text-dim/50 text-[11px]">5:44:21</td>
+                                      <td class="px-4 py-2"><div class="flex items-end gap-[2px] h-5 w-14 mx-auto"><div class="flex-1 rounded-sm bg-up/50" style="height:50%"></div><div class="flex-1 rounded-sm bg-down/50" style="height:30%"></div><div class="flex-1 rounded-sm bg-up/60" style="height:70%"></div><div class="flex-1 rounded-sm bg-up/40" style="height:40%"></div><div class="flex-1 rounded-sm bg-down/40" style="height:20%"></div><div class="flex-1 rounded-sm bg-up/70" style="height:90%"></div><div class="flex-1 rounded-sm bg-up/80" style="height:100%"></div></div></td>
+                                      <td class="px-3 py-2" onclick="event.stopPropagation()"><div class="flex gap-[2px] justify-center"><button class="bot-ctrl ctrl-start" style="width:20px;height:20px" title="Start"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Stop"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:20px;height:20px" title="Pause"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Reload Config"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Force Exit All"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Toggle Stopbuy"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5 self-center"></span><button class="bot-ctrl" style="width:20px;height:20px;color:#facc15" title="Soft Kill"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Hard Kill"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
+                                  </tr>
+                                  <tr class="hover:bg-white/[0.03] cursor-pointer transition-colors bg-white/[0.012]" onclick="openBotDrawer('ft-patternrecogniti', 'PAPER')">
+                                      <td class="px-3 py-2"><span class="flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUNNING</span></span></td>
+                                      <td class="px-3 py-2 font-bold text-dim" style="max-width:180px"><span class="block truncate" title="ft-patternrecogniti...">ft-patternrecogniti...</span></td>
+                                      <td class="px-3 py-2"><span class="flex gap-1"><span class="px-1 py-[1px] text-[9px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded">PAPER</span><span class="px-1 py-[1px] text-[9px] font-bold bg-white/5 text-dim/50 border border-white/10 rounded">SPOT</span></span></td>
+                                      <td class="px-3 py-2 text-right text-up font-bold">+653.1736</td>
+                                      <td class="px-2 py-2 text-right text-up">+6.60%</td>
+                                      <td class="px-3 py-2 text-right text-dim/40">+0.0000</td>
+                                      <td class="px-3 py-2 text-right text-up">75%</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">4</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">4</td>
+                                      <td class="px-3 py-2 text-right text-dim/40">0/3</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">10653.17</td>
+                                      <td class="px-3 py-2 text-right text-down">−0.0%</td>
+                                      <td class="px-3 py-2 text-right text-dim/50 text-[11px]">5d 8:22:05</td>
+                                      <td class="px-4 py-2"><div class="flex items-end gap-[2px] h-5 w-14 mx-auto"><div class="flex-1 rounded-sm bg-up/60" style="height:60%"></div><div class="flex-1 rounded-sm bg-up/70" style="height:80%"></div><div class="flex-1 rounded-sm bg-down/40" style="height:15%"></div><div class="flex-1 rounded-sm bg-up/50" style="height:45%"></div><div class="flex-1 rounded-sm bg-up/60" style="height:70%"></div><div class="flex-1 rounded-sm bg-up/70" style="height:95%"></div><div class="flex-1 rounded-sm bg-up/80" style="height:100%"></div></div></td>
+                                      <td class="px-3 py-2" onclick="event.stopPropagation()"><div class="flex gap-[2px] justify-center"><button class="bot-ctrl ctrl-start" style="width:20px;height:20px" title="Start"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Stop"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:20px;height:20px" title="Pause"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Reload Config"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Force Exit All"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Toggle Stopbuy"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5 self-center"></span><button class="bot-ctrl" style="width:20px;height:20px;color:#facc15" title="Soft Kill"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Hard Kill"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
+                                  </tr>
+                                  <tr class="hover:bg-white/[0.03] cursor-pointer transition-colors" onclick="openBotDrawer('ft-hourbasedstrateg', 'PAPER')">
+                                      <td class="px-3 py-2"><span class="flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUNNING</span></span></td>
+                                      <td class="px-3 py-2 font-bold text-dim" style="max-width:180px"><span class="block truncate" title="ft-hourbasedstrateg...">ft-hourbasedstrateg...</span></td>
+                                      <td class="px-3 py-2"><span class="flex gap-1"><span class="px-1 py-[1px] text-[9px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded">PAPER</span><span class="px-1 py-[1px] text-[9px] font-bold bg-white/5 text-dim/50 border border-white/10 rounded">SPOT</span></span></td>
+                                      <td class="px-3 py-2 text-right text-up font-bold">+647.9952</td>
+                                      <td class="px-2 py-2 text-right text-up">+6.55%</td>
+                                      <td class="px-3 py-2 text-right text-down">−27.0320</td>
+                                      <td class="px-3 py-2 text-right text-up">100%</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">17</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">14</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">3/3</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">10652.96</td>
+                                      <td class="px-3 py-2 text-right text-down">−0.0%</td>
+                                      <td class="px-3 py-2 text-right text-dim/50 text-[11px]">1d 9:56:35</td>
+                                      <td class="px-4 py-2"><div class="flex items-end gap-[2px] h-5 w-14 mx-auto"><div class="flex-1 rounded-sm bg-up/50" style="height:55%"></div><div class="flex-1 rounded-sm bg-up/60" style="height:70%"></div><div class="flex-1 rounded-sm bg-down/40" style="height:20%"></div><div class="flex-1 rounded-sm bg-up/70" style="height:85%"></div><div class="flex-1 rounded-sm bg-up/60" style="height:65%"></div><div class="flex-1 rounded-sm bg-down/30" style="height:12%"></div><div class="flex-1 rounded-sm bg-up/80" style="height:100%"></div></div></td>
+                                      <td class="px-3 py-2" onclick="event.stopPropagation()"><div class="flex gap-[2px] justify-center"><button class="bot-ctrl ctrl-start" style="width:20px;height:20px" title="Start"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Stop"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:20px;height:20px" title="Pause"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Reload Config"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Force Exit All"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Toggle Stopbuy"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5 self-center"></span><button class="bot-ctrl" style="width:20px;height:20px;color:#facc15" title="Soft Kill"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Hard Kill"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
+                                  </tr>
+                                  <tr class="hover:bg-white/[0.03] cursor-pointer transition-colors bg-white/[0.012]" onclick="openBotDrawer('nk-cc_ema21-eth', 'PAPER')">
+                                      <td class="px-3 py-2"><span class="flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUNNING</span></span></td>
+                                      <td class="px-3 py-2 font-bold text-dim" style="max-width:180px"><span class="block truncate" title="nk-cc_ema21-eth">nk-cc_ema21-eth</span></td>
+                                      <td class="px-3 py-2"><span class="flex gap-1"><span class="px-1 py-[1px] text-[9px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded">PAPER</span><span class="px-1 py-[1px] text-[9px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded">FUT</span></span></td>
+                                      <td class="px-3 py-2 text-right text-up font-bold">+611.3945</td>
+                                      <td class="px-2 py-2 text-right text-up">+6.11%</td>
+                                      <td class="px-3 py-2 text-right text-dim/40">+0.0000</td>
+                                      <td class="px-3 py-2 text-right text-up">100%</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">1</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">1</td>
+                                      <td class="px-3 py-2 text-right text-dim/40">0/3</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">10611.39</td>
+                                      <td class="px-3 py-2 text-right text-down">−0.0%</td>
+                                      <td class="px-3 py-2 text-right text-dim/50 text-[11px]">19:57:05</td>
+                                      <td class="px-4 py-2"><div class="flex items-end gap-[2px] h-5 w-14 mx-auto"><div class="flex-1 rounded-sm bg-dim/20" style="height:10%"></div><div class="flex-1 rounded-sm bg-dim/20" style="height:10%"></div><div class="flex-1 rounded-sm bg-dim/20" style="height:10%"></div><div class="flex-1 rounded-sm bg-dim/20" style="height:10%"></div><div class="flex-1 rounded-sm bg-dim/20" style="height:10%"></div><div class="flex-1 rounded-sm bg-dim/20" style="height:10%"></div><div class="flex-1 rounded-sm bg-up/60" style="height:100%"></div></div></td>
+                                      <td class="px-3 py-2" onclick="event.stopPropagation()"><div class="flex gap-[2px] justify-center"><button class="bot-ctrl ctrl-start" style="width:20px;height:20px" title="Start"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Stop"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:20px;height:20px" title="Pause"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Reload Config"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Force Exit All"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Toggle Stopbuy"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5 self-center"></span><button class="bot-ctrl" style="width:20px;height:20px;color:#facc15" title="Soft Kill"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Hard Kill"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
+                                  </tr>
+                                  <!-- PAUSED bot -->
+                                  <tr class="hover:bg-white/[0.03] cursor-pointer transition-colors" onclick="openBotDrawer('MomentumRider_SOL', 'PAUSED')">
+                                      <td class="px-3 py-2"><span class="flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div><span class="text-yellow-400 text-[10px] font-bold">PAUSED</span></span></td>
+                                      <td class="px-3 py-2 font-bold text-dim/60" style="max-width:180px"><span class="block truncate">MomentumRider_SOL</span></td>
+                                      <td class="px-3 py-2"><span class="flex gap-1"><span class="px-1 py-[1px] text-[9px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded">PAPER</span><span class="px-1 py-[1px] text-[9px] font-bold bg-white/5 text-dim/50 border border-white/10 rounded">SPOT</span></span></td>
+                                      <td class="px-3 py-2 text-right text-up font-bold">+890.0000</td>
+                                      <td class="px-2 py-2 text-right text-up">+7.4%</td>
+                                      <td class="px-3 py-2 text-right text-dim/30">—</td>
+                                      <td class="px-3 py-2 text-right">62%</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">156</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">156</td>
+                                      <td class="px-3 py-2 text-right text-dim/40">0/3</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">12100.00</td>
+                                      <td class="px-3 py-2 text-right text-down">−5.2%</td>
+                                      <td class="px-3 py-2 text-right text-dim/50 text-[11px]">3:12:00</td>
+                                      <td class="px-4 py-2"><div class="flex items-end gap-[2px] h-5 w-14 mx-auto"><div class="flex-1 rounded-sm bg-up/40" style="height:40%"></div><div class="flex-1 rounded-sm bg-down/40" style="height:30%"></div><div class="flex-1 rounded-sm bg-up/50" style="height:55%"></div><div class="flex-1 rounded-sm bg-down/40" style="height:25%"></div><div class="flex-1 rounded-sm bg-dim/20" style="height:8%"></div><div class="flex-1 rounded-sm bg-dim/20" style="height:8%"></div><div class="flex-1 rounded-sm bg-dim/20" style="height:8%"></div></div></td>
+                                      <td class="px-3 py-2" onclick="event.stopPropagation()"><div class="flex gap-[2px] justify-center"><button class="bot-ctrl ctrl-start" style="width:20px;height:20px" title="Start"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Stop"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:20px;height:20px" title="Pause"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Reload Config"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Force Exit All"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Toggle Stopbuy"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5 self-center"></span><button class="bot-ctrl" style="width:20px;height:20px;color:#facc15" title="Soft Kill"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Hard Kill"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
+                                  </tr>
+                                  <!-- STOPPED bot -->
+                                  <tr class="hover:bg-white/[0.03] cursor-pointer transition-colors bg-white/[0.012]" onclick="openBotDrawer('MemeScalper_DOGE', 'STOPPED')">
+                                      <td class="px-3 py-2"><span class="flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-down rounded-full"></div><span class="text-down text-[10px] font-bold">STOPPED</span></span></td>
+                                      <td class="px-3 py-2 font-bold text-dim/40" style="max-width:180px"><span class="block truncate">MemeScalper_DOGE</span></td>
+                                      <td class="px-3 py-2"><span class="flex gap-1"><span class="px-1 py-[1px] text-[9px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded">PAPER</span><span class="px-1 py-[1px] text-[9px] font-bold bg-white/5 text-dim/50 border border-white/10 rounded">SPOT</span></span></td>
+                                      <td class="px-3 py-2 text-right text-down font-bold">−420.0000</td>
+                                      <td class="px-2 py-2 text-right text-down">−17.5%</td>
+                                      <td class="px-3 py-2 text-right text-dim/30">—</td>
+                                      <td class="px-3 py-2 text-right text-down">28%</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">18</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">18</td>
+                                      <td class="px-3 py-2 text-right text-dim/40">0/3</td>
+                                      <td class="px-3 py-2 text-right text-dim/70">2400.00</td>
+                                      <td class="px-3 py-2 text-right text-down">−12.4%</td>
+                                      <td class="px-3 py-2 text-right text-dim/50 text-[11px]">0:48:00</td>
+                                      <td class="px-4 py-2"><div class="flex items-end gap-[2px] h-5 w-14 mx-auto"><div class="flex-1 rounded-sm bg-down/70" style="height:80%"></div><div class="flex-1 rounded-sm bg-down/80" style="height:100%"></div><div class="flex-1 rounded-sm bg-up/30" style="height:15%"></div><div class="flex-1 rounded-sm bg-down/60" style="height:70%"></div><div class="flex-1 rounded-sm bg-down/50" style="height:55%"></div><div class="flex-1 rounded-sm bg-dim/20" style="height:8%"></div><div class="flex-1 rounded-sm bg-dim/20" style="height:8%"></div></div></td>
+                                      <td class="px-3 py-2" onclick="event.stopPropagation()"><div class="flex gap-[2px] justify-center"><button class="bot-ctrl ctrl-start" style="width:20px;height:20px" title="Start"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Stop"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:20px;height:20px" title="Pause"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Reload Config"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Force Exit All"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:20px;height:20px" title="Toggle Stopbuy"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5 self-center"></span><button class="bot-ctrl" style="width:20px;height:20px;color:#facc15" title="Soft Kill"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:20px;height:20px" title="Hard Kill"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
+                                  </tr>
+                              </tbody>
+                          </table>
+                      </div>
+                      <!-- Table footer -->
+                      <div class="h-9 border-t border-white/[0.06] bg-black/40 flex items-center justify-between px-4 shrink-0 font-mono text-[10px] text-muted">
+                          <span>Showing 12 of 55 bots</span>
+                          <div class="flex items-center gap-4">
+                              <span>Sort: Closed P&amp;L ▼</span>
+                              <span class="text-dim/40">Page 1 / 5</span>
+                          </div>
+                      </div>
+                  </div>
 
                   <!-- TAB: OPEN TRADES -->
                   <div id="trades-open" class="trade-tab-content flex-1 overflow-x-auto overflow-y-auto flex flex-col">
@@ -4102,201 +4230,6 @@
 
       </div>
 
-      <!-- PAGE: FLEET MANAGEMENT -->
-      <div id="page-fleet" class="page-view flex-1 overflow-y-auto flex-col p-5 gap-5">
-          
-          <!-- Fleet Header -->
-          <div class="flex items-center justify-between mb-5 shrink-0">
-              <div class="flex items-center gap-4">
-                  <button onclick="switchPage('page-dashboard')" class="text-muted hover:text-dim transition-colors flex items-center gap-1.5 text-[12px] font-medium" title="Back to Dashboard"><i data-lucide="arrow-left" class="w-4 h-4"></i>Dashboard</button>
-                  <span class="text-dim/15">|</span>
-                  <h2 class="text-[16px] font-bold uppercase tracking-widest text-dim/80">Fleet Management</h2>
-                  <span class="bg-white/10 px-2.5 py-1 rounded text-[11px] font-mono text-muted">312 bots</span>
-                  <span class="flex items-center gap-1.5 text-up text-[11px] font-mono"><div class="w-2 h-2 bg-up rounded-full animate-pulse"></div>284 running</span>
-                  <span class="flex items-center gap-1.5 text-yellow-400 text-[11px] font-mono">16 paused</span>
-                  <span class="flex items-center gap-1.5 text-down text-[11px] font-mono">12 stopped</span>
-              </div>
-              <div class="flex items-center gap-2">
-                  <button class="px-3 py-1.5 border border-white/12 rounded text-[11px] hover:bg-white/10 font-medium transition-colors flex items-center gap-1.5" title="Compare selected bots side by side"><i data-lucide="git-compare" class="w-3.5 h-3.5"></i>Compare Selected</button>
-                  <button class="px-3 py-1.5 border border-white/12 rounded text-[11px] hover:bg-white/10 font-medium transition-colors flex items-center gap-1.5" title="Export fleet data as CSV"><i data-lucide="download" class="w-3.5 h-3.5"></i>Export CSV</button>
-              </div>
-          </div>
-
-          <!-- Fleet Table -->
-          <div class="flex-1 bg-surface l-bd rounded-md shadow-xl overflow-hidden flex flex-col">
-              <div class="flex-1 overflow-x-auto overflow-y-auto">
-                  <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
-                      <thead class="sticky top-0 bg-surface l-b font-mono text-[11px] uppercase tracking-widest text-muted z-10 shadow-lg">
-                          <tr>
-                              <th class="px-3 py-3 font-medium w-8"><input type="checkbox" class="rounded" title="Select all"></th>
-                              <th class="px-3 py-3 font-medium sortable filterable">Status</th>
-                              <th class="px-4 py-3 font-medium">Bot Name</th>
-                              <th class="px-3 py-3 font-medium sortable">Strategy</th>
-                              <th class="px-3 py-3 font-medium sortable filterable">Exchange</th>
-                              <th class="px-3 py-3 font-medium text-right sortable">Balance</th>
-                              <th class="px-3 py-3 font-medium text-right bg-black/20 sortable">Today P&L</th>
-                              <th class="px-3 py-3 font-medium text-right bg-black/20 sortable">Total P&L</th>
-                              <th class="px-3 py-3 font-medium text-right bg-black/20 sortable">P&L %</th>
-                              <th class="px-3 py-3 font-medium text-right sortable">Win Rate</th>
-                              <th class="px-3 py-3 font-medium text-right sortable">Trades</th>
-                              <th class="px-3 py-3 font-medium text-right sortable">Open</th>
-                              <th class="px-3 py-3 font-medium text-right sortable">Drawdown</th>
-                              <th class="px-3 py-3 font-medium text-right sortable">Avg Dur</th>
-                              <th class="px-3 py-3 font-medium text-center sortable">Actions</th>
-                          </tr>
-                      </thead>
-                      <tbody class="font-mono text-dim/85 divide-y divide-white/[0.05]">
-                          <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer" onclick="openBotDrawer('TrendFollowerV3_BTC', 'LIVE')">
-                              <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
-                              <td class="px-3 py-2.5"><span class="flex items-center gap-1.5"><div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUN</span></span></td>
-                              <td class="px-4 py-2.5 font-bold text-dim">TrendFollowerV3_BTC</td>
-                              <td class="px-3 py-2.5 text-muted font-sans text-[11px]">TrendFollowerV3</td>
-                              <td class="px-3 py-2.5 text-muted">Binance</td>
-                              <td class="px-3 py-2.5 text-right">$24,500</td>
-                              <td class="px-3 py-2.5 text-right bg-up/5 text-up font-bold">+$48.20</td>
-                              <td class="px-3 py-2.5 text-right bg-up/5 text-up">+$4,210</td>
-                              <td class="px-3 py-2.5 text-right bg-up/5 text-up text-[11px]">+17.2%</td>
-                              <td class="px-3 py-2.5 text-right text-up">72%</td>
-                              <td class="px-3 py-2.5 text-right">412</td>
-                              <td class="px-3 py-2.5 text-right">6</td>
-                              <td class="px-3 py-2.5 text-right text-down">-1.2%</td>
-                              <td class="px-3 py-2.5 text-right">1.5h</td>
-                              <td class="px-3 py-2.5 text-center"><div class="flex gap-0.5 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" title="▶ Start Bot — Resume trading engine" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="■ Stop Bot — Gracefully stop trading" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:22px;height:22px" title="⏸ Pause — Stop opening new trades" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" title="↻ Reload Config — Hot-reload strategy config" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="✕ Force Exit All — Close all open positions" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" title="⊞ Toggle Stopbuy — Prevent new buy orders" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" title="🛡 Soft Kill — Exit all trades, keep bot alive" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="⚡ Hard Kill — Force stop bot + container" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
-                          </tr>
-                          <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer bg-white/[0.015]" onclick="openBotDrawer('TrendFollowerV3_ETH', 'LIVE')">
-                              <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
-                              <td class="px-3 py-2.5"><span class="flex items-center gap-1.5"><div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUN</span></span></td>
-                              <td class="px-4 py-2.5 font-bold text-dim">TrendFollowerV3_ETH</td>
-                              <td class="px-3 py-2.5 text-muted font-sans text-[11px]">TrendFollowerV3</td>
-                              <td class="px-3 py-2.5 text-muted">Binance</td>
-                              <td class="px-3 py-2.5 text-right">$18,200</td>
-                              <td class="px-3 py-2.5 text-right bg-down/5 text-down font-bold">-$12.40</td>
-                              <td class="px-3 py-2.5 text-right bg-down/5 text-down">-$320</td>
-                              <td class="px-3 py-2.5 text-right bg-down/5 text-down text-[11px]">-1.8%</td>
-                              <td class="px-3 py-2.5 text-right text-down">48%</td>
-                              <td class="px-3 py-2.5 text-right">84</td>
-                              <td class="px-3 py-2.5 text-right">3</td>
-                              <td class="px-3 py-2.5 text-right text-down">-3.8%</td>
-                              <td class="px-3 py-2.5 text-right">2.1h</td>
-                              <td class="px-3 py-2.5 text-center"><div class="flex gap-0.5 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" title="▶ Start Bot — Resume trading engine" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="■ Stop Bot — Gracefully stop trading" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:22px;height:22px" title="⏸ Pause — Stop opening new trades" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" title="↻ Reload Config — Hot-reload strategy config" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="✕ Force Exit All — Close all open positions" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" title="⊞ Toggle Stopbuy — Prevent new buy orders" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" title="🛡 Soft Kill — Exit all trades, keep bot alive" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="⚡ Hard Kill — Force stop bot + container" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
-                          </tr>
-                          <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer">
-                              <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
-                              <td class="px-3 py-2.5"><span class="flex items-center gap-1.5"><div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUN</span></span></td>
-                              <td class="px-4 py-2.5 font-bold text-dim">ScalpBot_XRP_Fast</td>
-                              <td class="px-3 py-2.5 text-muted font-sans text-[11px]">ScalperV2</td>
-                              <td class="px-3 py-2.5 text-muted">Binance</td>
-                              <td class="px-3 py-2.5 text-right">$8,400</td>
-                              <td class="px-3 py-2.5 text-right bg-up/5 text-up font-bold">+$92.10</td>
-                              <td class="px-3 py-2.5 text-right bg-up/5 text-up">+$1,840</td>
-                              <td class="px-3 py-2.5 text-right bg-up/5 text-up text-[11px]">+21.9%</td>
-                              <td class="px-3 py-2.5 text-right text-up">71%</td>
-                              <td class="px-3 py-2.5 text-right">620</td>
-                              <td class="px-3 py-2.5 text-right">4</td>
-                              <td class="px-3 py-2.5 text-right text-down">-2.1%</td>
-                              <td class="px-3 py-2.5 text-right">0.4h</td>
-                              <td class="px-3 py-2.5 text-center"><div class="flex gap-0.5 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" title="▶ Start Bot — Resume trading engine" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="■ Stop Bot — Gracefully stop trading" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:22px;height:22px" title="⏸ Pause — Stop opening new trades" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" title="↻ Reload Config — Hot-reload strategy config" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="✕ Force Exit All — Close all open positions" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" title="⊞ Toggle Stopbuy — Prevent new buy orders" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" title="🛡 Soft Kill — Exit all trades, keep bot alive" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="⚡ Hard Kill — Force stop bot + container" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
-                          </tr>
-                          <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer bg-white/[0.015]">
-                              <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
-                              <td class="px-3 py-2.5"><span class="flex items-center gap-1.5"><div class="w-2 h-2 bg-yellow-400 rounded-full"></div><span class="text-yellow-400 text-[10px] font-bold">PAUSE</span></span></td>
-                              <td class="px-4 py-2.5 font-bold text-dim/60">MomentumRider_SOL</td>
-                              <td class="px-3 py-2.5 text-muted font-sans text-[11px]">MomentumV1</td>
-                              <td class="px-3 py-2.5 text-muted">Kraken</td>
-                              <td class="px-3 py-2.5 text-right">$12,100</td>
-                              <td class="px-3 py-2.5 text-right text-muted">$0.00</td>
-                              <td class="px-3 py-2.5 text-right bg-up/5 text-up">+$890</td>
-                              <td class="px-3 py-2.5 text-right bg-up/5 text-up text-[11px]">+7.4%</td>
-                              <td class="px-3 py-2.5 text-right">62%</td>
-                              <td class="px-3 py-2.5 text-right">156</td>
-                              <td class="px-3 py-2.5 text-right text-muted">0</td>
-                              <td class="px-3 py-2.5 text-right text-down">-5.2%</td>
-                              <td class="px-3 py-2.5 text-right">3.2h</td>
-                              <td class="px-3 py-2.5 text-center"><div class="flex gap-0.5 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" title="▶ Start Bot — Resume trading engine" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="■ Stop Bot — Gracefully stop trading" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:22px;height:22px" title="⏸ Pause — Stop opening new trades" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" title="↻ Reload Config — Hot-reload strategy config" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="✕ Force Exit All — Close all open positions" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" title="⊞ Toggle Stopbuy — Prevent new buy orders" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" title="🛡 Soft Kill — Exit all trades, keep bot alive" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="⚡ Hard Kill — Force stop bot + container" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
-                          </tr>
-                          <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer">
-                              <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
-                              <td class="px-3 py-2.5"><span class="flex items-center gap-1.5"><div class="w-2 h-2 bg-down rounded-full"></div><span class="text-down text-[10px] font-bold">STOP</span></span></td>
-                              <td class="px-4 py-2.5 font-bold text-dim/40">MemeScalper_DOGE</td>
-                              <td class="px-3 py-2.5 text-muted font-sans text-[11px]">MemeScalperV1</td>
-                              <td class="px-3 py-2.5 text-muted">Binance</td>
-                              <td class="px-3 py-2.5 text-right">$2,400</td>
-                              <td class="px-3 py-2.5 text-right text-muted">—</td>
-                              <td class="px-3 py-2.5 text-right bg-down/5 text-down">-$420</td>
-                              <td class="px-3 py-2.5 text-right bg-down/5 text-down text-[11px]">-17.5%</td>
-                              <td class="px-3 py-2.5 text-right text-down">28%</td>
-                              <td class="px-3 py-2.5 text-right">18</td>
-                              <td class="px-3 py-2.5 text-right text-muted">0</td>
-                              <td class="px-3 py-2.5 text-right text-down">-12.4%</td>
-                              <td class="px-3 py-2.5 text-right">0.8h</td>
-                              <td class="px-3 py-2.5 text-center"><div class="flex gap-0.5 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" title="▶ Start Bot — Resume trading engine" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="■ Stop Bot — Gracefully stop trading" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:22px;height:22px" title="⏸ Pause — Stop opening new trades" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" title="↻ Reload Config — Hot-reload strategy config" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="✕ Force Exit All — Close all open positions" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" title="⊞ Toggle Stopbuy — Prevent new buy orders" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" title="🛡 Soft Kill — Exit all trades, keep bot alive" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="⚡ Hard Kill — Force stop bot + container" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
-                          </tr>
-                          <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer bg-white/[0.015]">
-                              <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
-                              <td class="px-3 py-2.5"><span class="flex items-center gap-1.5"><div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUN</span></span></td>
-                              <td class="px-4 py-2.5 font-bold text-dim">GridBot_BNB_DCA</td>
-                              <td class="px-3 py-2.5 text-muted font-sans text-[11px]">GridDCA_V2</td>
-                              <td class="px-3 py-2.5 text-muted">Binance</td>
-                              <td class="px-3 py-2.5 text-right">$5,800</td>
-                              <td class="px-3 py-2.5 text-right bg-up/5 text-up font-bold">+$14.80</td>
-                              <td class="px-3 py-2.5 text-right bg-up/5 text-up">+$640</td>
-                              <td class="px-3 py-2.5 text-right bg-up/5 text-up text-[11px]">+11.0%</td>
-                              <td class="px-3 py-2.5 text-right text-up">81%</td>
-                              <td class="px-3 py-2.5 text-right">340</td>
-                              <td class="px-3 py-2.5 text-right">8</td>
-                              <td class="px-3 py-2.5 text-right text-down">-0.8%</td>
-                              <td class="px-3 py-2.5 text-right">4.2h</td>
-                              <td class="px-3 py-2.5 text-center"><div class="flex gap-0.5 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" title="▶ Start Bot — Resume trading engine" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="■ Stop Bot — Gracefully stop trading" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:22px;height:22px" title="⏸ Pause — Stop opening new trades" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" title="↻ Reload Config — Hot-reload strategy config" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="✕ Force Exit All — Close all open positions" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" title="⊞ Toggle Stopbuy — Prevent new buy orders" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" title="🛡 Soft Kill — Exit all trades, keep bot alive" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="⚡ Hard Kill — Force stop bot + container" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
-                          </tr>
-                          <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer">
-                              <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
-                              <td class="px-3 py-2.5"><span class="flex items-center gap-1.5"><div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUN</span></span></td>
-                              <td class="px-4 py-2.5 font-bold text-dim">BreakoutHunter_AVAX</td>
-                              <td class="px-3 py-2.5 text-muted font-sans text-[11px]">BreakoutV3</td>
-                              <td class="px-3 py-2.5 text-muted">Kraken</td>
-                              <td class="px-3 py-2.5 text-right">$6,200</td>
-                              <td class="px-3 py-2.5 text-right bg-up/5 text-up font-bold">+$220.40</td>
-                              <td class="px-3 py-2.5 text-right bg-up/5 text-up">+$3,120</td>
-                              <td class="px-3 py-2.5 text-right bg-up/5 text-up text-[11px]">+50.3%</td>
-                              <td class="px-3 py-2.5 text-right text-up">68%</td>
-                              <td class="px-3 py-2.5 text-right">210</td>
-                              <td class="px-3 py-2.5 text-right">2</td>
-                              <td class="px-3 py-2.5 text-right text-down">-3.4%</td>
-                              <td class="px-3 py-2.5 text-right">1.8h</td>
-                              <td class="px-3 py-2.5 text-center"><div class="flex gap-0.5 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" title="▶ Start Bot — Resume trading engine" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="■ Stop Bot — Gracefully stop trading" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:22px;height:22px" title="⏸ Pause — Stop opening new trades" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" title="↻ Reload Config — Hot-reload strategy config" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="✕ Force Exit All — Close all open positions" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" title="⊞ Toggle Stopbuy — Prevent new buy orders" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" title="🛡 Soft Kill — Exit all trades, keep bot alive" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="⚡ Hard Kill — Force stop bot + container" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
-                          </tr>
-                          <tr class="hover:bg-white/[0.04] transition-colors cursor-pointer bg-white/[0.015]">
-                              <td class="px-3 py-2.5"><input type="checkbox" onclick="event.stopPropagation()"></td>
-                              <td class="px-3 py-2.5"><span class="flex items-center gap-1.5"><div class="w-2 h-2 bg-up rounded-full shadow-[0_0_4px_#22c55e]"></div><span class="text-up text-[10px] font-bold">RUN</span></span></td>
-                              <td class="px-4 py-2.5 font-bold text-dim">MeanRevert_LINK</td>
-                              <td class="px-3 py-2.5 text-muted font-sans text-[11px]">MeanRevertV1</td>
-                              <td class="px-3 py-2.5 text-muted">Binance</td>
-                              <td class="px-3 py-2.5 text-right">$4,100</td>
-                              <td class="px-3 py-2.5 text-right bg-down/5 text-down font-bold">-$8.50</td>
-                              <td class="px-3 py-2.5 text-right bg-up/5 text-up">+$280</td>
-                              <td class="px-3 py-2.5 text-right bg-up/5 text-up text-[11px]">+6.8%</td>
-                              <td class="px-3 py-2.5 text-right">55%</td>
-                              <td class="px-3 py-2.5 text-right">92</td>
-                              <td class="px-3 py-2.5 text-right">1</td>
-                              <td class="px-3 py-2.5 text-right text-down">-6.1%</td>
-                              <td class="px-3 py-2.5 text-right">5.4h</td>
-                              <td class="px-3 py-2.5 text-center"><div class="flex gap-0.5 justify-center"><button class="bot-ctrl ctrl-start" style="width:22px;height:22px" title="▶ Start Bot — Resume trading engine" onclick="event.stopPropagation()"><i data-lucide="play" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="■ Stop Bot — Gracefully stop trading" onclick="event.stopPropagation()"><i data-lucide="square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-pause" style="width:22px;height:22px" title="⏸ Pause — Stop opening new trades" onclick="event.stopPropagation()"><i data-lucide="pause" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" title="↻ Reload Config — Hot-reload strategy config" onclick="event.stopPropagation()"><i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="✕ Force Exit All — Close all open positions" onclick="event.stopPropagation()"><i data-lucide="x-square" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl" style="width:22px;height:22px" title="⊞ Toggle Stopbuy — Prevent new buy orders" onclick="event.stopPropagation()"><i data-lucide="plus-square" class="w-2.5 h-2.5"></i></button><span class="w-px h-3 bg-white/15 mx-0.5"></span><button class="bot-ctrl" style="width:22px;height:22px;color:#facc15" title="🛡 Soft Kill — Exit all trades, keep bot alive" onclick="event.stopPropagation()"><i data-lucide="shield-alert" class="w-2.5 h-2.5"></i></button><button class="bot-ctrl ctrl-stop" style="width:22px;height:22px" title="⚡ Hard Kill — Force stop bot + container" onclick="event.stopPropagation()"><i data-lucide="zap" class="w-2.5 h-2.5"></i></button></div></td>
-                          </tr>
-                      </tbody>
-                  </table>
-              </div>
-              <!-- Fleet Footer -->
-              <div class="h-10 l-b bg-black/40 flex items-center justify-between px-5 shrink-0 font-mono text-[11px] text-muted">
-                  <span>Showing 8 of 312 bots</span>
-                  <div class="flex items-center gap-3">
-                      <span>Sort: P&L ▼</span>
-                      <span>Filter: All</span>
-                      <span class="text-dim/50">Page 1 / 39</span>
-                  </div>
-              </div>
-          </div>
-
-      </div><!-- /END FLEET -->
 
       <!-- ═══════════════════════════════════════════════════════════════════════ -->
       <!-- PAGE: STRATEGIES                                                       -->
@@ -5779,7 +5712,6 @@
         if (pageId === 'page-data') { buildDataPageHeatmap(); if (window.lucide) lucide.createIcons(); }
         document.getElementById('top-title').innerText = {
             'page-dashboard': 'Control Room',
-            'page-fleet': 'Fleet Management',
             'page-experiments': 'Experiments',
             'page-experiment-detail': 'Experiments Matrix',
             'page-strategies': 'Strategy Management',

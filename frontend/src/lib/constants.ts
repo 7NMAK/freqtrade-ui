@@ -1,7 +1,7 @@
 /** Refresh intervals (ms) — centralized for easy tuning */
 export const REFRESH_INTERVALS = {
-  /** Dashboard data refresh (open trades, profit, etc.) */
-  DASHBOARD: 300_000,
+  /** Dashboard data refresh — reads cached snapshot (~100ms), safe to run often */
+  DASHBOARD: 30_000,
   /** Header bot status + heartbeat check */
   HEADER_BOTS: 120_000,
   /** Header notifications refresh */

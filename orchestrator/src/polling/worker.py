@@ -34,8 +34,8 @@ from ..models.bot_instance import BotStatus
 logger = logging.getLogger(__name__)
 
 REDIS_KEY = "dashboard:snapshot"
-CACHE_TTL = 90   # seconds — 3× poll interval
-POLL_INTERVAL = 30  # seconds
+CACHE_TTL = 30   # seconds — 3× poll interval
+POLL_INTERVAL = 10  # seconds
 
 
 class DashboardWorker:

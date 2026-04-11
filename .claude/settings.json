@@ -110,7 +110,8 @@
       "Bash(python3 -m py_compile /Users/novakus/Documents/BOT/orchestrator/src/api/snapshot.py)",
       "Bash(python3 -m py_compile /Users/novakus/Documents/BOT/orchestrator/src/main.py)",
       "Bash(./deploy.sh --local-push \"feat: dashboard snapshot cache — Redis background worker for instant load\")",
-      "Bash(./deploy.sh --local-push \"feat: closed trades in snapshot + lazy load — dashboard fully instant\")"
+      "Bash(./deploy.sh --local-push \"feat: closed trades in snapshot + lazy load — dashboard fully instant\")",
+      "Bash(./deploy.sh --local-push \"perf: worker 10s interval, dashboard refresh 30s — max data age ~40s\")"
     ],
     "additionalDirectories": [
       "/tmp",

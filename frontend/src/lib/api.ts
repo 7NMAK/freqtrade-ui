@@ -644,6 +644,8 @@ export interface DashboardSnapshot {
   per_bot_profit: Record<string, import("@/types").FTProfit>;
   /** 7-day abs_profit array keyed by bot_id (string) */
   sparklines: Record<string, number[]>;
+  /** Last 100 closed trades per bot, keyed by bot_id (string) */
+  closed_trades: Record<string, import("@/types").FTTrade[]>;
 }
 
 export const getDashboardSnapshot = () =>

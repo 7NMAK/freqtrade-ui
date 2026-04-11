@@ -385,19 +385,10 @@ export default function DashboardPage() {
           openTradesFromStatus.push(t);
         }
 
-        // Closed trades: fetch all bots in full parallel (snapshot doesn't include closed trades yet)
-        if (!portfolioHadClosedTrades) {
-          await Promise.allSettled(
-            effectiveTradeBots.map(async (bot) => {
-              try {
-                const result = await botTrades(bot.id, 200);
-                const perBotClosed = result.trades
-                  .filter((t) => !t.is_open)
-                  .map((t) => ({ ...t, _bot_id: bot.id, _bot_name: bot.name }));
-                allClosed.push(...perBotClosed);
-              } catch { /* non-blocking */ }
-            })
-          );
+        // Closed trades from snapshot (no API calls needed)
+        for (const bot of effectiveTradeBots) {
+          const botClosed = snap.closed_trades?.[String(bot.id)];
+          if (botClosed) allClosed.push(...botClosed);
         }
       } else {
         // Fallback: live per-bot calls in batches of 20 (snapshot not yet ready)

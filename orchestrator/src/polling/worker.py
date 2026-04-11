@@ -135,7 +135,7 @@ class DashboardWorker:
                 if bot_id is not None:
                     per_bot_profit[str(bot_id)] = pdata
 
-        # ── 4. Per-bot sparklines (botDaily 7 days) ──────────────────────
+        # ── 4. Per-bot: sparklines + closed trades (parallel) ────────────
         async def _sparkline(bot):
             try:
                 result = await self._bot_manager.get_bot_daily(bot, days=7)
@@ -143,16 +143,40 @@ class DashboardWorker:
             except Exception:
                 return str(bot.id), []
 
-        sparkline_results = await asyncio.gather(
+        async def _closed_trades(bot):
+            try:
+                result = await self._bot_manager.get_bot_trades(bot, limit=100)
+                closed = [t for t in result.get("trades", []) if not t.get("is_open")]
+                # Annotate with bot info for the frontend trade table
+                for t in closed:
+                    t["_bot_id"] = bot.id
+                    t["_bot_name"] = bot.name
+                return str(bot.id), closed
+            except Exception:
+                return str(bot.id), []
+
+        per_bot_results = await asyncio.gather(
             *[_sparkline(b) for b in running],
+            *[_closed_trades(b) for b in running],
             return_exceptions=True,
         )
+
+        n = len(running)
         sparklines: dict = {}
-        for r in sparkline_results:
+        closed_trades: dict = {}
+
+        for r in per_bot_results[:n]:  # first half = sparklines
             if isinstance(r, Exception):
                 continue
             bot_id_str, data = r
             sparklines[bot_id_str] = data
+
+        for r in per_bot_results[n:]:  # second half = closed trades
+            if isinstance(r, Exception):
+                continue
+            bot_id_str, trades_list = r
+            if trades_list:
+                closed_trades[bot_id_str] = trades_list
 
         # ── 5. Assemble snapshot ─────────────────────────────────────────
         snapshot = {
@@ -167,13 +191,15 @@ class DashboardWorker:
             },
             "per_bot_profit": per_bot_profit,
             "sparklines": sparklines,
+            "closed_trades": closed_trades,  # keyed by bot_id (str), last 100 per bot
         }
 
         r = await self._get_redis()
         await r.setex(REDIS_KEY, CACHE_TTL, json.dumps(snapshot))
 
+        total_closed = sum(len(v) for v in closed_trades.values())
         elapsed = time.monotonic() - t0
         logger.info(
-            "Dashboard snapshot cached in %.1fs (%d running bots, %d sparklines)",
-            elapsed, len(running), len(sparklines),
+            "Dashboard snapshot cached in %.1fs (%d running bots, %d closed trades)",
+            elapsed, len(running), total_closed,
         )

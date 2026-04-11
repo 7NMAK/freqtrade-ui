@@ -303,20 +303,8 @@ export default function DashboardPage() {
         allOpen = trades.filter((t) => t.is_open);
         allClosed = trades.filter((t) => !t.is_open);
         
-        if (trades.length > 0) {
-          // Find earliest open_{timestamp|date}. FreqTrade returns open_date as string or open_timestamp as ms.
-          let earliestMs = Date.now();
-          for (const t of trades) {
-            const ms = (t as unknown as Record<string, unknown>).open_timestamp as number | undefined ?? (t.open_date ? new Date(t.open_date).getTime() : Date.now());
-            if (ms && ms < earliestMs) {
-              earliestMs = ms;
-            }
-          }
-          const days = Math.ceil((Date.now() - earliestMs) / (1000 * 60 * 60 * 24));
-          setTotalTradingDays(days);
-        } else {
-          setTotalTradingDays(null);
-        }
+        // totalTradingDays is computed after Stage 3 from first_trade_date_ts (per-bot profit)
+        // — do not set it here from open trades (open trades only go back to current positions)
       }
 
       // Daily chart data (fetched in parallel, not sequentially)
@@ -461,6 +449,56 @@ export default function DashboardPage() {
             profits[bot.id] = partial;
           }
         }
+      }
+
+      // Compute totalTradingDays — take the EARLIEST timestamp across all sources:
+      //   1. first_trade_date_ts from per-bot FT profit (seconds → ms)
+      //   2. Earliest date in daily chart data with any activity
+      //   3. Earliest open_date / open_timestamp across all closed trades
+      // This handles cases where individual FT DBs were reset but aggregated data is older.
+      {
+        let earliestMs: number | null = null;
+
+        // Source 1: first_trade_date_ts / first_trade_date from per-bot profit
+        for (const prof of Object.values(profits)) {
+          const ts = (prof as Record<string, unknown>).first_trade_date_ts as number | undefined;
+          if (ts && ts > 0) {
+            const ms = ts * 1000; // FT returns seconds
+            if (earliestMs === null || ms < earliestMs) earliestMs = ms;
+          } else if (prof.first_trade_date) {
+            const ms = new Date(prof.first_trade_date).getTime();
+            if (!isNaN(ms) && (earliestMs === null || ms < earliestMs)) earliestMs = ms;
+          }
+        }
+
+        // Source 2: earliest date in daily chart with any activity
+        // fetchedDaily is sorted ascending by date
+        for (const d of fetchedDaily) {
+          if ((d.trade_count ?? 0) > 0 || (d.abs_profit ?? 0) !== 0) {
+            const ms = new Date(d.date).getTime();
+            if (!isNaN(ms) && (earliestMs === null || ms < earliestMs)) earliestMs = ms;
+            break; // sorted asc — first match is oldest
+          }
+        }
+
+        // Source 3: earliest open_date across all closed trades in snapshot
+        for (const t of allClosed) {
+          const raw = t as unknown as Record<string, unknown>;
+          const ms: number =
+            (raw.open_timestamp as number | undefined) ??
+            (t.open_date ? new Date(t.open_date).getTime() : 0);
+          if (ms > 0 && (earliestMs === null || ms < earliestMs)) earliestMs = ms;
+        }
+
+        const days = earliestMs !== null ? Math.ceil((Date.now() - earliestMs) / (1000 * 60 * 60 * 24)) : null;
+        console.log("[totalTradingDays] earliestMs=%o days=%o profits=%o fetchedDaily=%o allClosed=%o",
+          earliestMs ? new Date(earliestMs).toISOString() : null,
+          days,
+          Object.values(profits).map(p => ({ first_trade_date: (p as Record<string,unknown>).first_trade_date, first_trade_date_ts: (p as Record<string,unknown>).first_trade_date_ts })),
+          fetchedDaily.filter(d => d.trade_count > 0 || d.abs_profit !== 0).slice(0, 3),
+          allClosed.length
+        );
+        setTotalTradingDays(days);
       }
 
       // FALLBACK: compute performance stats from closed trades if API returned empty

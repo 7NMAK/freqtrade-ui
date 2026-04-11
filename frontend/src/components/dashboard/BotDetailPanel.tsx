@@ -620,164 +620,352 @@ function DetailContent({
   switch (tab) {
     /* ─── Overview ─── */
     case "overview": {
+      // ── Data derivations ────────────────────────────────────────────────
       const winCount = profit?.winning_trades ?? statsData?.wins ?? 0;
       const lossCount = profit?.losing_trades ?? statsData?.losses ?? 0;
       const totalCount = winCount + lossCount;
       const winRate = totalCount > 0 ? (winCount / totalCount) * 100 : null;
       const openPnl = openTrades.reduce((s, t) => s + (t.current_profit_abs ?? 0), 0);
+      const openStake = openTrades.reduce((s, t) => s + (t.stake_amount ?? 0), 0);
+      const closedCount = profit?.closed_trade_count ?? closedTrades.length;
 
-      // ── Fallback calculations when FT /stats doesn't return these for live bots ──
-      // Profit Factor: statsData OR compute from closed trades
+      // Profit Factor
       let profitFactor: number | null = statsData?.profit_factor ?? null;
       if (profitFactor == null && closedTrades.length > 0) {
         const winSum = closedTrades.reduce((s, t) => s + Math.max(0, t.close_profit_abs ?? 0), 0);
         const lossSum = closedTrades.reduce((s, t) => s + Math.abs(Math.min(0, t.close_profit_abs ?? 0)), 0);
-        profitFactor = lossSum > 0 ? winSum / lossSum : (winSum > 0 ? winSum : null);
+        profitFactor = lossSum > 0 ? winSum / lossSum : winSum > 0 ? winSum : null;
       }
 
-      // Max Drawdown: statsData OR compute equity curve from closed trades
-      let maxDrawdown: number | null = statsData?.max_drawdown != null ? statsData.max_drawdown * 100 : null;
-      if (maxDrawdown == null && closedTrades.length > 0) {
-        const sorted = [...closedTrades].sort((a, b) => new Date(a.close_date ?? "").getTime() - new Date(b.close_date ?? "").getTime());
-        let equity = 0, peak = 0, maxDDPct = 0;
+      // Max Drawdown
+      let maxDdPct: number | null =
+        statsData?.max_drawdown != null ? statsData.max_drawdown * 100 :
+        profit?.max_drawdown != null ? profit.max_drawdown * 100 : null;
+      let maxDdAbs: number | null = statsData?.max_drawdown_abs ?? profit?.max_drawdown_abs ?? null;
+      if (maxDdPct == null && closedTrades.length > 0) {
+        const sorted = [...closedTrades].sort((a, b) =>
+          new Date(a.close_date ?? "").getTime() - new Date(b.close_date ?? "").getTime()
+        );
+        let equity = 0, peak = 0, ddPct = 0, ddAbs = 0;
         for (const t of sorted) {
           equity += t.close_profit_abs ?? 0;
           if (equity > peak) peak = equity;
           if (peak > 0) {
             const dd = ((peak - equity) / peak) * 100;
-            if (dd > maxDDPct) maxDDPct = dd;
+            const dda = peak - equity;
+            if (dd > ddPct) { ddPct = dd; ddAbs = dda; }
           }
         }
-        maxDrawdown = maxDDPct > 0 ? maxDDPct : null;
+        maxDdPct = ddPct > 0 ? ddPct : null;
+        maxDdAbs = ddAbs > 0 ? ddAbs : null;
       }
+      const currentDdPct = statsData?.drawdown != null ? statsData.drawdown * 100 : 0;
 
-      // Sharpe Ratio: statsData OR compute from closed trade returns
+      // Sharpe / Sortino / Calmar
       let sharpeRatio: number | null = statsData?.sharpe_ratio ?? null;
+      let sortinoRatio: number | null = statsData?.sortino_ratio ?? null;
+      const calmarRatio: number | null = statsData?.calmar_ratio ?? null;
       if (sharpeRatio == null && closedTrades.length >= 2) {
-        const returns = closedTrades.map(t => (t.close_profit ?? 0) * 100);
-        const mean = returns.reduce((s, r) => s + r, 0) / returns.length;
-        const variance = returns.reduce((s, r) => s + (r - mean) ** 2, 0) / returns.length;
-        const std = Math.sqrt(variance);
+        const rets = closedTrades.map(t => (t.close_profit ?? 0) * 100);
+        const mean = rets.reduce((s, r) => s + r, 0) / rets.length;
+        const std = Math.sqrt(rets.reduce((s, r) => s + (r - mean) ** 2, 0) / rets.length);
         sharpeRatio = std > 0 ? mean / std : null;
       }
-
-      // Sortino Ratio: statsData OR compute from downside deviation
-      let sortinoRatio: number | null = statsData?.sortino_ratio ?? null;
       if (sortinoRatio == null && closedTrades.length >= 2) {
-        const returns = closedTrades.map(t => (t.close_profit ?? 0) * 100);
-        const mean = returns.reduce((s, r) => s + r, 0) / returns.length;
-        const downsideReturns = returns.filter(r => r < 0);
-        const downsideVariance = downsideReturns.length > 0 ? downsideReturns.reduce((s, r) => s + r ** 2, 0) / downsideReturns.length : 0;
-        const downsideStd = Math.sqrt(downsideVariance);
-        sortinoRatio = downsideStd > 0 ? mean / downsideStd : null;
+        const rets = closedTrades.map(t => (t.close_profit ?? 0) * 100);
+        const mean = rets.reduce((s, r) => s + r, 0) / rets.length;
+        const down = rets.filter(r => r < 0);
+        const dStd = down.length > 0 ? Math.sqrt(down.reduce((s, r) => s + r ** 2, 0) / down.length) : 0;
+        sortinoRatio = dStd > 0 ? mean / dStd : null;
       }
 
-      // Expectancy
-      const expectancy = totalCount > 0 ? (profit?.profit_closed_coin ?? closedTrades.reduce((s, t) => s + (t.close_profit_abs ?? 0), 0)) / totalCount : null;
+      // SQN — System Quality Number
+      let sqn: number | null = null;
+      if (closedTrades.length >= 5) {
+        const rets = closedTrades.map(t => t.close_profit_abs ?? 0);
+        const mean = rets.reduce((s, r) => s + r, 0) / rets.length;
+        const std = Math.sqrt(rets.reduce((s, r) => s + (r - mean) ** 2, 0) / rets.length);
+        sqn = std > 0 ? (mean / std) * Math.sqrt(rets.length) : null;
+      }
+
+      // Expectancy & Expectancy Ratio
+      const expectancy = closedCount > 0 ? (profit?.profit_closed_coin ?? 0) / closedCount : null;
+      const profitRaw = profit as Record<string, unknown> | null;
+      const expectancyRatio = (profitRaw?.expectancy_ratio as number | undefined) ?? null;
+
+      // CAGR
+      let cagr: number | null = null;
+      if (profit?.first_trade_date) {
+        const days = (Date.now() - new Date(profit.first_trade_date).getTime()) / 86400000;
+        if (days > 1) cagr = Math.pow(1 + (profit.profit_closed_percent ?? 0) / 100, 365 / days) - 1;
+      }
+
+      // Trading Volume
+      const tradingVolume = statsData?.trading_volume ?? closedTrades.reduce((s, t) => s + (t.stake_amount ?? 0), 0);
+      const fmtVol = (v: number) =>
+        v >= 1_000_000 ? `$${fmt(v / 1_000_000, 1)}M` : v >= 1_000 ? `$${fmt(v / 1_000, 0)}K` : `$${fmt(v, 0)}`;
+
+      // Avg hold — parse "H:MM:SS" string or number (seconds)
+      const avgHoldSec = (() => {
+        const d = profit?.avg_duration;
+        if (d == null) return null;
+        if (typeof d === "number") return d;
+        const parts = String(d).split(":");
+        return parts.length === 3
+          ? (parseInt(parts[0]) || 0) * 3600 + (parseInt(parts[1]) || 0) * 60 + (parseInt(parts[2]) || 0)
+          : null;
+      })();
+
+      // Best pair from perf data (highest absolute profit)
+      const bestPerfPair = perfData.length > 0
+        ? [...perfData].sort((a, b) => b.profit_abs - a.profit_abs)[0]
+        : null;
+
+      // Balance helpers
+      const stakeCurrency = configData?.stake_currency ?? balanceData?.stake ?? "USDT";
+      const stakeBalance = balanceData?.currencies?.find(c => c.currency === stakeCurrency);
+      const otherCurrencies = (balanceData?.currencies ?? []).filter(
+        c => c.currency !== stakeCurrency && (c.balance > 0 || c.est_stake > 0)
+      );
+
+      // Exit reasons breakdown
+      const roiEntry = exitData.find(e => e.exit_reason === "roi");
+      const forceExitEntry = exitData.find(e => e.exit_reason === "force_exit" || e.exit_reason === "force_sell");
+
+      // Inline label/sub-title helpers (functions, not components — avoids React remount)
+      const lbl = (text: string) => <span className="text-[11px] text-white/40 font-mono">{text}</span>;
+      const secTitle = (text: string) => <div className="text-[10px] uppercase tracking-widest text-white/20 mb-0.5">{text}</div>;
 
       return (
         <>
-          {/* KPI Row — 4 columns matching prototype */}
-          {/* KPI Cards — ds_bot_drawer.md §30E */}
-          <div className="grid grid-cols-4 gap-2.5">
-            <div className="bg-surface p-3 l-bd rounded">
-              <div className="kpi-label">Closed P&L</div>
-              <div className={`font-mono font-bold text-lg ${profitColor(profit?.profit_closed_coin)}`}>{fmtMoney(profit?.profit_closed_coin)}</div>
-              {profit?.profit_closed_percent != null && <div className={`text-[10px] font-mono mt-0.5 ${profitColor(profit.profit_closed_percent)}`}>{profit.profit_closed_percent >= 0 ? "+" : ""}{fmt(profit.profit_closed_percent, 1)}%</div>}
-            </div>
-            <div className="bg-surface p-3 l-bd rounded">
-              <div className="kpi-label">Open P&L</div>
-              <div className={`font-mono font-bold text-lg ${profitColor(openPnl)}`}>{fmtMoney(openPnl)}</div>
-              <div className="text-white/35 text-[10px] font-mono mt-0.5">{openTrades.length} position{openTrades.length !== 1 ? "s" : ""}</div>
-            </div>
-            <div className="bg-surface p-3 l-bd rounded">
-              <div className="kpi-label">Win Rate</div>
-              <div className="font-mono font-bold text-lg text-white">{winRate != null ? `${fmt(winRate, 1)}%` : "—"}</div>
-              <div className="text-white/35 text-[10px] font-mono mt-0.5">{winCount}W / {lossCount}L</div>
-            </div>
-            <div className="bg-surface p-3 l-bd rounded">
-              <div className="kpi-label">Trades</div>
-              <div className="font-mono font-bold text-lg text-white">{profit?.trade_count ?? totalCount}</div>
-              {statsData?.durations?.wins != null && <div className="text-white/35 text-[10px] font-mono mt-0.5">{fmtDurSec(statsData.durations.wins)} avg hold</div>}
-            </div>
-          </div>
-
-          {/* 2-column stats grid matching prototype */}
-          {/* Stats Grid — ds_bot_drawer.md §30F */}
-          <div className="grid grid-cols-2 gap-2.5">
-            {/* Risk Metrics */}
-            <div className="bg-surface p-3 l-bd rounded">
-              <div className="kpi-label mb-2">Risk Metrics</div>
-              <div className="space-y-1.5 font-mono text-[12px]">
-                <div className="flex justify-between"><span className="text-muted">Profit Factor</span><span className={`font-bold ${(profitFactor ?? 0) > 1 ? "text-up" : "text-white"}`}>{profitFactor != null ? fmt(profitFactor) : "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted">Max Drawdown</span><span className="text-down font-bold">{maxDrawdown != null ? "-" + fmt(maxDrawdown, 1) + "%" : "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted">Sharpe Ratio</span><span className="text-white">{sharpeRatio != null ? fmt(sharpeRatio) : "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted">Sortino Ratio</span><span className="text-white">{sortinoRatio != null ? fmt(sortinoRatio) : "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted">Expectancy</span><span className={profitColor(expectancy)}>{expectancy != null ? fmtMoney(expectancy) : "—"}</span></div>
-              </div>
-            </div>
-            {/* Bot Info */}
-            <div className="bg-surface p-3 l-bd rounded">
-              <div className="kpi-label mb-2">Bot Info</div>
-              <div className="space-y-1.5 font-mono text-[12px]">
-                <div className="flex justify-between"><span className="text-muted">Exchange</span><span className="text-white">{bot.exchange_name ?? "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted">Mode</span><span className="text-white">{configData ? `${configData.trading_mode ?? "spot"} · ${configData.margin_mode ?? "—"}` : "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted">Timeframe</span><span className="text-white">{configData?.timeframe ?? "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted">Stake</span><span className="text-white">{configData ? `${fmt(typeof configData.stake_amount === "number" ? configData.stake_amount : 0, 0)} ${configData.stake_currency ?? ""}` : "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted">Max Trades</span><span className="text-white">{configData?.max_open_trades ?? "—"}</span></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Wallet Balance — matching prototype */}
-          {/* Wallet — ds_bot_drawer.md §30G */}
-          {balanceData && (
-            <div className="bg-surface p-3 l-bd rounded">
-              <div className="kpi-label mb-2">Wallet Balance</div>
-              {balanceData.currencies && balanceData.currencies.filter(c => c.balance > 0 || c.used > 0 || c.est_stake > 0 || c.free > 0).length > 0 ? (
-                <div className="grid grid-cols-3 gap-4 font-mono text-[12px]">
-                  {balanceData.currencies.filter(c => c.balance > 0 || c.used > 0 || c.est_stake > 0 || c.free > 0).slice(0, 3).map((c) => (
-                    <div key={c.currency}>
-                      <span className="text-muted block text-[10px] mb-0.5">{c.currency}</span>
-                      <span className="text-white font-bold">{fmt(c.balance, c.balance < 1 ? 4 : 2)}</span>
-                    </div>
-                  ))}
-                  {balanceData.total > 0 && (
-                    <div>
-                      <span className="text-muted block text-[10px] mb-0.5">Total Est.</span>
-                      <span className="text-white font-bold">${fmt(balanceData.total, 0)}</span>
+          {/* ── KPI SECTION ─────────────────────────────────────────────── */}
+          <div>
+            <div className="text-[9px] font-bold uppercase tracking-widest text-white/20 mb-1.5 px-0.5">Key Metrics</div>
+            <div className="flex flex-col gap-2">
+              {/* Row 1: Closed P&L · Open P&L · Total Equity · Profit Factor · CAGR · Win Rate */}
+              <div className="grid grid-cols-6 gap-2">
+                <div className="bg-surface p-2.5 l-bd rounded">
+                  <div className="kpi-label">Closed P&L</div>
+                  <div className={`font-mono font-bold text-base ${profitColor(profit?.profit_closed_coin)}`}>{fmtMoney(profit?.profit_closed_coin)}</div>
+                  {profit?.profit_closed_percent != null && <div className={`text-[10px] font-mono mt-0.5 ${profitColor(profit.profit_closed_percent)}`}>{profit.profit_closed_percent >= 0 ? "+" : ""}{fmt(profit.profit_closed_percent, 2)}%</div>}
+                </div>
+                <div className="bg-surface p-2.5 l-bd rounded">
+                  <div className="kpi-label">Open P&L</div>
+                  <div className={`font-mono font-bold text-base ${profitColor(openPnl)}`}>{fmtMoney(openPnl)}</div>
+                  <div className="text-white/35 text-[10px] font-mono mt-0.5">{openTrades.length} position{openTrades.length !== 1 ? "s" : ""}</div>
+                </div>
+                <div className="bg-surface p-2.5 l-bd rounded">
+                  <div className="kpi-label">Total Equity</div>
+                  <div className="text-white font-mono font-bold text-base">{balanceData?.total ? `$${fmt(balanceData.total, 0)}` : "—"}</div>
+                  {balanceData?.starting_capital_ratio != null && (
+                    <div className={`text-[10px] font-mono mt-0.5 ${profitColor(balanceData.starting_capital_ratio)}`}>
+                      {balanceData.starting_capital_ratio >= 0 ? "+" : ""}{fmt(balanceData.starting_capital_ratio * 100, 2)}% vs start
                     </div>
                   )}
                 </div>
-              ) : (
-                <div className="text-center py-4 text-muted text-xs">No balance data</div>
-              )}
-            </div>
-          )}
-          {/* Day/Week/Month Summary — matching HTML prototype line 612-625 */}
-          {(() => {
-            const now = Date.now();
-            const dayMs = 86400000;
-            const todayProfit = closedTrades.filter(t => t.close_date && (now - new Date(t.close_date).getTime()) < dayMs).reduce((s, t) => s + (t.close_profit_abs ?? 0), 0);
-            const weekProfit = closedTrades.filter(t => t.close_date && (now - new Date(t.close_date).getTime()) < 7 * dayMs).reduce((s, t) => s + (t.close_profit_abs ?? 0), 0);
-            const monthProfit = closedTrades.filter(t => t.close_date && (now - new Date(t.close_date).getTime()) < 30 * dayMs).reduce((s, t) => s + (t.close_profit_abs ?? 0), 0);
-            return (
-              <div className="grid grid-cols-3 gap-2.5">
-                <div className="bg-surface p-3 l-bd rounded text-center">
-                  <div className="kpi-label">Today</div>
-                  <div className={`font-mono font-bold text-sm ${profitColor(todayProfit)}`}>{fmtMoney(todayProfit)}</div>
+                <div className="bg-surface p-2.5 l-bd rounded">
+                  <div className="kpi-label">Profit Factor</div>
+                  <div className={`font-mono font-bold text-base ${(profitFactor ?? 0) > 1 ? "text-up" : "text-white"}`}>{profitFactor != null ? fmt(profitFactor, 2) : "—"}</div>
+                  <div className="text-white/25 text-[10px] font-mono mt-0.5">quality</div>
                 </div>
-                <div className="bg-surface p-3 l-bd rounded text-center">
-                  <div className="kpi-label">This Week</div>
-                  <div className={`font-mono font-bold text-sm ${profitColor(weekProfit)}`}>{fmtMoney(weekProfit)}</div>
+                <div className="bg-surface p-2.5 l-bd rounded">
+                  <div className="kpi-label">CAGR</div>
+                  <div className={`font-mono font-bold text-base ${cagr != null ? profitColor(cagr) : "text-white"}`}>{cagr != null ? `${cagr >= 0 ? "+" : ""}${fmt(cagr * 100, 1)}%` : "—"}</div>
+                  <div className="text-white/25 text-[10px] font-mono mt-0.5">annualized</div>
                 </div>
-                <div className="bg-surface p-3 l-bd rounded text-center">
-                  <div className="kpi-label">This Month</div>
-                  <div className={`font-mono font-bold text-sm ${profitColor(monthProfit)}`}>{fmtMoney(monthProfit)}</div>
+                <div className="bg-surface p-2.5 l-bd rounded">
+                  <div className="kpi-label">Win Rate</div>
+                  <div className={`font-mono font-bold text-base ${winRate != null && winRate >= 50 ? "text-up" : "text-white"}`}>{winRate != null ? `${fmt(winRate, 1)}%` : "—"}</div>
+                  {totalCount > 0 && <div className={`text-[10px] font-mono mt-0.5 ${winRate != null && winRate >= 50 ? "text-up/50" : "text-white/35"}`}>{winCount}W · {lossCount}L</div>}
                 </div>
               </div>
-            );
-          })()}
+              {/* Row 2: Max DD · Volume · Avg Hold · Positions · Stake · Total Trades */}
+              <div className="grid grid-cols-6 gap-2">
+                <div className="bg-surface p-2.5 l-bd rounded">
+                  <div className="kpi-label">Max Drawdown</div>
+                  <div className={`font-mono font-bold text-base ${maxDdPct != null ? "text-down" : "text-white"}`}>{maxDdPct != null ? `-${fmt(maxDdPct, 2)}%` : "—"}</div>
+                  {maxDdAbs != null && <div className="text-down/50 text-[10px] font-mono mt-0.5">-${fmt(maxDdAbs, 2)}</div>}
+                </div>
+                <div className="bg-surface p-2.5 l-bd rounded">
+                  <div className="kpi-label">Trading Volume</div>
+                  <div className="text-white font-mono font-bold text-base">{tradingVolume > 0 ? fmtVol(tradingVolume) : "—"}</div>
+                  <div className="text-white/25 text-[10px] font-mono mt-0.5">total</div>
+                </div>
+                <div className="bg-surface p-2.5 l-bd rounded">
+                  <div className="kpi-label">Avg Hold</div>
+                  <div className="text-white font-mono font-bold text-base">{avgHoldSec != null ? fmtDurSec(avgHoldSec) : "—"}</div>
+                  <div className="text-white/25 text-[10px] font-mono mt-0.5">per trade</div>
+                </div>
+                <div className="bg-surface p-2.5 l-bd rounded">
+                  <div className="kpi-label">Positions</div>
+                  <div className="text-white font-mono font-bold text-base">{openTrades.length} / {configData?.max_open_trades ?? "∞"}</div>
+                  {openStake > 0 && <div className="text-white/25 text-[10px] font-mono mt-0.5">${fmt(openStake, 0)} committed</div>}
+                </div>
+                <div className="bg-surface p-2.5 l-bd rounded">
+                  <div className="kpi-label">Stake</div>
+                  <div className="text-white font-mono font-bold text-base">{configData ? `${fmt(typeof configData.stake_amount === "number" ? configData.stake_amount : 0, 0)} ${stakeCurrency}` : "—"}</div>
+                  <div className="text-white/25 text-[10px] font-mono mt-0.5">per trade</div>
+                </div>
+                <div className="bg-surface p-2.5 l-bd rounded">
+                  <div className="kpi-label">Total Trades</div>
+                  <div className="text-white font-mono font-bold text-base">{profit?.trade_count ?? totalCount}</div>
+                  <div className="text-white/25 text-[10px] font-mono mt-0.5">{closedCount} closed</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── ROW A: P&L · Strategy Quality · Trading Activity ─────── */}
+          <div className="flex gap-2.5">
+            {/* P&L */}
+            <div className="bg-surface p-3 l-bd rounded flex flex-col gap-3 flex-1 min-w-0">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-white/30">P&L</div>
+              <div className="flex flex-col gap-2">
+                {secTitle("Profit")}
+                <div className="flex justify-between items-baseline">{lbl("Closed")}<span className={`font-mono font-bold text-[15px] ${profitColor(profit?.profit_closed_coin)}`}>{fmtMoney(profit?.profit_closed_coin)}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Closed %")}<span className={`font-mono text-[14px] ${profitColor(profit?.profit_closed_percent)}`}>{profit?.profit_closed_percent != null ? `${profit.profit_closed_percent >= 0 ? "+" : ""}${fmt(profit.profit_closed_percent, 2)}%` : "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Incl. open")}<span className={`font-mono text-[14px] ${profitColor((profit?.profit_closed_coin ?? 0) + openPnl)}`}>{fmtMoney((profit?.profit_closed_coin ?? 0) + openPnl)}</span></div>
+              </div>
+              <div className="flex flex-col gap-2 border-t border-white/[0.07] pt-2.5">
+                {secTitle("Best Performer")}
+                <div className="flex justify-between items-baseline">{lbl("Pair")}<span className="text-white font-mono font-bold text-[15px]">{bestPerfPair?.pair ?? profit?.best_pair ?? "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Profit")}<span className={`font-mono text-[14px] ${profitColor(bestPerfPair?.profit_abs ?? (profit?.best_rate ?? 0))}`}>{bestPerfPair != null ? fmtMoney(bestPerfPair.profit_abs) : (profit?.best_rate != null ? `+${fmt(profit.best_rate * 100, 2)}%` : "—")}</span></div>
+              </div>
+              <div className="flex flex-col gap-2 border-t border-white/[0.07] pt-2.5">
+                {secTitle("Activity")}
+                <div className="flex justify-between items-baseline">{lbl("Volume")}<span className="text-white/60 font-mono text-[14px]">{tradingVolume > 0 ? fmtVol(tradingVolume) : "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Avg hold")}<span className="text-white/60 font-mono text-[14px]">{avgHoldSec != null ? fmtDurSec(avgHoldSec) : "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Active since")}<span className="text-white/50 font-mono text-[12px]">{profit?.first_trade_date ? profit.first_trade_date.slice(0, 10) : "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Latest trade")}<span className="text-white/50 font-mono text-[12px]">{profit?.latest_trade_date ? profit.latest_trade_date.slice(0, 10) : "—"}</span></div>
+              </div>
+            </div>
+
+            {/* Strategy Quality */}
+            <div className="bg-surface p-3 l-bd rounded flex flex-col gap-3 flex-1 min-w-0">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-white/30">Strategy Quality</div>
+              <div className="flex flex-col gap-2">
+                {secTitle("Edge")}
+                <div className="flex justify-between items-baseline">{lbl("Profit Factor")}<span className={`font-mono font-bold text-[15px] ${(profitFactor ?? 0) > 1 ? "text-up" : "text-white"}`}>{profitFactor != null ? fmt(profitFactor, 2) : "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Expectancy")}<span className={`font-mono text-[14px] ${profitColor(expectancy)}`}>{expectancy != null ? fmtMoney(expectancy) : "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Expectancy Ratio")}<span className={`font-mono text-[14px] ${profitColor(expectancyRatio)}`}>{expectancyRatio != null ? fmt(expectancyRatio, 2) : "—"}</span></div>
+              </div>
+              <div className="flex flex-col gap-2 border-t border-white/[0.07] pt-2.5">
+                {secTitle("Risk-Adjusted Returns")}
+                <div className="flex justify-between items-baseline">{lbl("Sharpe")}<span className={`font-mono font-bold text-[14px] ${(sharpeRatio ?? 0) > 0 ? "text-up" : "text-down"}`}>{sharpeRatio != null ? fmt(sharpeRatio, 2) : "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Sortino")}<span className={`font-mono font-bold text-[14px] ${(sortinoRatio ?? 0) > 0 ? "text-up" : "text-down"}`}>{sortinoRatio != null ? fmt(sortinoRatio, 2) : "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("SQN")}<span className={`font-mono font-bold text-[14px] ${(sqn ?? 0) > 1.6 ? "text-up" : "text-white"}`}>{sqn != null ? fmt(sqn, 2) : "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Calmar")}<span className={`font-mono font-bold text-[14px] ${(calmarRatio ?? 0) > 0 ? "text-up" : "text-white"}`}>{calmarRatio != null ? fmt(calmarRatio, 2) : "—"}</span></div>
+              </div>
+              <div className="flex flex-col gap-2 border-t border-white/[0.07] pt-2.5">
+                {secTitle("Drawdown")}
+                <div className="flex justify-between items-baseline">{lbl("Max %")}<span className={`font-mono font-bold text-[15px] ${maxDdPct != null && maxDdPct > 0 ? "text-down" : "text-white"}`}>{maxDdPct != null ? `-${fmt(maxDdPct, 2)}%` : "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Max Abs")}<span className={`font-mono text-[14px] ${maxDdAbs != null && maxDdAbs > 0 ? "text-down" : "text-white"}`}>{maxDdAbs != null ? `-$${fmt(maxDdAbs, 2)}` : "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Current")}<span className={`font-mono text-[14px] ${currentDdPct > 0 ? "text-down" : "text-up"}`}>{fmt(currentDdPct, 1)}%</span></div>
+              </div>
+            </div>
+
+            {/* Trading Activity */}
+            <div className="bg-surface p-3 l-bd rounded flex flex-col gap-3 flex-1 min-w-0">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-white/30">Trading Activity</div>
+              <div className="flex flex-col gap-2">
+                {secTitle("Counts")}
+                <div className="flex justify-between items-baseline">{lbl("Total")}<span className="text-white/60 font-mono font-bold text-[15px]">{profit?.trade_count ?? totalCount}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Closed")}<span className="text-white/60 font-mono text-[14px]">{closedCount}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Open")}<span className="text-white/60 font-mono text-[14px]">{openTrades.length}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Winners")}<span className="text-up font-mono font-bold text-[14px]">{winCount}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Losers")}<span className="text-down font-mono font-bold text-[14px]">{lossCount}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Win Rate")}<span className={`font-mono font-bold text-[15px] ${winRate != null && winRate >= 50 ? "text-up" : "text-white"}`}>{winRate != null ? `${fmt(winRate, 1)}%` : "—"}</span></div>
+              </div>
+              <div className="flex flex-col gap-2 border-t border-white/[0.07] pt-2.5">
+                {secTitle("Exit Reasons")}
+                {exitData.length > 0 ? exitData.slice(0, 5).map(e => (
+                  <div key={e.exit_reason} className="flex justify-between items-baseline">
+                    {lbl(e.exit_reason)}
+                    <span className="font-mono text-[14px]">
+                      <span className="text-up font-bold">{e.wins}W</span>
+                      <span className="text-white/20 mx-1">·</span>
+                      <span className={e.losses > 0 ? "text-down font-bold" : "text-white/35"}>{e.losses}L</span>
+                    </span>
+                  </div>
+                )) : (
+                  <>
+                    <div className="flex justify-between items-baseline">{lbl("ROI")}<span className="font-mono text-[14px]"><span className="text-up font-bold">{roiEntry?.wins ?? 0}W</span><span className="text-white/20 mx-1">·</span><span className={(roiEntry?.losses ?? 0) > 0 ? "text-down font-bold" : "text-white/35"}>{roiEntry?.losses ?? 0}L</span></span></div>
+                    <div className="flex justify-between items-baseline">{lbl("Force Exit")}<span className="font-mono text-[14px]"><span className="text-white/35">{forceExitEntry?.wins ?? 0}W</span><span className="text-white/20 mx-1">·</span><span className={(forceExitEntry?.losses ?? 0) > 0 ? "text-down font-bold" : "text-white/35"}>{forceExitEntry?.losses ?? 0}L</span></span></div>
+                  </>
+                )}
+              </div>
+              <div className="flex flex-col gap-2 border-t border-white/[0.07] pt-2.5">
+                {secTitle("Durations")}
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                  <div>
+                    <div className="text-[10px] text-white/30 font-mono">Avg win</div>
+                    <div className={`font-mono font-bold text-[14px] ${statsData?.durations?.wins != null ? "text-up" : "text-white/40"}`}>{statsData?.durations?.wins != null ? fmtDurSec(statsData.durations.wins) : "—"}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-white/30 font-mono">Avg loss</div>
+                    <div className={`font-mono font-bold text-[14px] ${statsData?.durations?.losses != null ? "text-down" : "text-white/40"}`}>{statsData?.durations?.losses != null ? fmtDurSec(statsData.durations.losses) : "—"}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── ROW B: Account Balance · Bot Setup ──────────────────── */}
+          <div className="flex gap-2.5">
+            {/* Account Balance */}
+            <div className="bg-surface p-3 l-bd rounded flex flex-col gap-3 flex-1 min-w-0">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-white/30">Account Balance</div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                <div className="flex flex-col gap-2">
+                  {secTitle(stakeCurrency)}
+                  <div><div className="text-[10px] text-white/30 font-mono">Available</div><div className="text-white/60 font-mono font-bold text-[14px]">{stakeBalance != null ? fmt(stakeBalance.free, 2) : "—"}</div></div>
+                  <div><div className="text-[10px] text-white/30 font-mono">In open trades</div><div className="text-white/60 font-mono text-[14px]">{fmt(openStake, 2)}</div></div>
+                  <div><div className="text-[10px] text-white/30 font-mono">Total</div><div className="text-white/60 font-mono font-bold text-[16px]">{stakeBalance != null ? fmt(stakeBalance.balance, 2) : "—"}</div></div>
+                </div>
+                {otherCurrencies.slice(0, 1).map(c => (
+                  <div key={c.currency} className="flex flex-col gap-2">
+                    {secTitle(c.currency)}
+                    <div><div className="text-[10px] text-white/30 font-mono">Holdings</div><div className="text-white/60 font-mono font-bold text-[14px]">{fmt(c.balance, c.balance < 1 ? 4 : 2)}</div></div>
+                    {c.est_stake > 0 && <div><div className="text-[10px] text-white/30 font-mono">Est. value</div><div className="text-white/60 font-mono text-[14px]">{fmt(c.est_stake, 2)} {stakeCurrency}</div></div>}
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-col gap-2 border-t border-white/[0.07] pt-2.5">
+                {secTitle("Summary")}
+                <div className="flex justify-between items-baseline">{lbl("Bot total")}<span className="text-white/60 font-mono font-bold text-[15px]">{balanceData?.total != null ? `$${fmt(balanceData.total, 2)}` : "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Starting capital")}<span className="text-white/50 font-mono text-[14px]">{balanceData?.starting_capital != null ? `$${fmt(balanceData.starting_capital, 0)}` : "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Growth vs start")}
+                  {balanceData?.starting_capital_ratio != null
+                    ? <span className={`font-mono font-bold text-[15px] ${profitColor(balanceData.starting_capital_ratio)}`}>{balanceData.starting_capital_ratio >= 0 ? "+" : ""}{fmt(balanceData.starting_capital_ratio * 100, 2)}%</span>
+                    : <span className="text-white/40 font-mono text-[14px]">—</span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            {/* Bot Setup */}
+            <div className="bg-surface p-3 l-bd rounded flex flex-col gap-3 flex-1 min-w-0">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-white/30">Bot Setup</div>
+              <div className="flex flex-col gap-2">
+                {secTitle("Trading")}
+                <div className="flex justify-between items-baseline">{lbl("Exchange")}<span className="text-white/60 font-mono font-bold text-[14px]">{bot.exchange_name ?? (configData?.exchange != null ? (typeof configData.exchange === "string" ? configData.exchange : configData.exchange.name) : null) ?? "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Timeframe")}<span className="text-white/60 font-mono font-bold text-[14px]">{configData?.timeframe ?? "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Mode")}<span className="text-white/60 font-mono font-bold text-[14px]">{configData ? `${configData.trading_mode ?? "spot"} / ${configData.margin_mode ?? "—"}` : "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Paper trading")}<span className={`font-mono font-bold text-[14px] ${configData?.dry_run ? "text-up" : "text-down"}`}>{configData != null ? (configData.dry_run ? "Yes" : "No") : "—"}</span></div>
+              </div>
+              <div className="flex flex-col gap-2 border-t border-white/[0.07] pt-2.5">
+                {secTitle("Risk")}
+                <div className="flex justify-between items-baseline">{lbl("Stake per trade")}<span className="text-white/60 font-mono font-bold text-[14px]">{configData ? `${fmt(typeof configData.stake_amount === "number" ? configData.stake_amount : 0, 0)} ${stakeCurrency}` : "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Stop Loss")}<span className="text-down font-mono font-bold text-[14px]">{configData?.stoploss != null ? `${fmt(configData.stoploss * 100, 0)}%` : "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Max open trades")}<span className="text-white/60 font-mono font-bold text-[14px]">{configData?.max_open_trades ?? "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Open positions")}<span className="text-white/60 font-mono font-bold text-[14px]">{openTrades.length} / {configData?.max_open_trades ?? "∞"}</span></div>
+              </div>
+              <div className="flex justify-between items-baseline border-t border-white/[0.07] pt-2.5">
+                {lbl("Total committed")}
+                <span className="text-white/60 font-mono font-bold text-[15px]">${fmt(openStake, 2)}</span>
+              </div>
+            </div>
+          </div>
         </>
       );
     }

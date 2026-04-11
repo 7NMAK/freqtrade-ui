@@ -260,7 +260,7 @@ function MiniSparkline7({ data }: { data: number[] }) {
   );
 }
 
-type FleetSortKey = "name" | "pnl" | "pnlPct" | "openPnl" | "winRate" | "trades" | "closed" | "open" | "balance" | "maxDd" | "avgDur";
+type FleetSortKey = "name" | "pnl" | "pnlPct" | "openPnl" | "winRate" | "trades" | "closed" | "open" | "balance" | "staked" | "maxDd" | "avgDur";
 
 interface FleetCardsProps {
   bots: Bot[];
@@ -316,10 +316,20 @@ function FleetCards({
     return m;
   }, [openTrades]);
 
+  // Sum of stake_amount across all open trades per bot = capital locked in positions
+  const stakedByBot = useMemo(() => {
+    const m: Record<number, number> = {};
+    for (const t of openTrades) {
+      const id = (t as unknown as Record<string, unknown>)._bot_id as number | undefined;
+      if (id != null) m[id] = (m[id] ?? 0) + (t.stake_amount ?? 0);
+    }
+    return m;
+  }, [openTrades]);
+
   type BotRow = {
     bot: Bot; pnl: number | null; pnlPct: number | null; openPnl: number;
     winRate: number | null; trades: number; closedCount: number; openCount: number;
-    maxOT: number | null; balance: number | null; maxDd: number | null;
+    maxOT: number | null; balance: number | null; staked: number; maxDd: number | null;
     avgDurSecs: number | null; avgDurStr: string;
   };
 
@@ -336,6 +346,7 @@ function FleetCards({
     const openCount = openCountByBot[bot.id] ?? 0;
     const maxOT = bot.max_open_trades ?? null;
     const balance = botBalances[bot.name] ?? null;
+    const staked = stakedByBot[bot.id] ?? 0;
     const maxDdRaw = (p as Record<string, unknown>)?.max_drawdown as number | undefined;
     const maxDd = maxDdRaw != null ? maxDdRaw * 100 : null;
     const avgDur = p?.avg_duration;
@@ -352,8 +363,8 @@ function FleetCards({
     } else if (typeof avgDur === "string" && avgDur) {
       avgDurStr = avgDur;
     }
-    return { bot, pnl, pnlPct, openPnl, winRate, trades, closedCount, openCount, maxOT, balance, maxDd, avgDurSecs, avgDurStr };
-  }), [bots, botProfits, botBalances, openPnlByBot, openCountByBot]);
+    return { bot, pnl, pnlPct, openPnl, winRate, trades, closedCount, openCount, maxOT, balance, staked, maxDd, avgDurSecs, avgDurStr };
+  }), [bots, botProfits, botBalances, openPnlByBot, openCountByBot, stakedByBot]);
 
   const sorted = useMemo(() => [...rows].sort((a, b) => {
     let cmp = 0;
@@ -366,6 +377,7 @@ function FleetCards({
     else if (sortKey === "closed") cmp = a.closedCount - b.closedCount;
     else if (sortKey === "open") cmp = a.openCount - b.openCount;
     else if (sortKey === "balance") cmp = (a.balance ?? -Infinity) - (b.balance ?? -Infinity);
+    else if (sortKey === "staked") cmp = a.staked - b.staked;
     else if (sortKey === "maxDd") cmp = (a.maxDd ?? 0) - (b.maxDd ?? 0);
     else if (sortKey === "avgDur") cmp = (a.avgDurSecs ?? 0) - (b.avgDurSecs ?? 0);
     return sortAsc ? cmp : -cmp;
@@ -411,6 +423,7 @@ function FleetCards({
           {colH("closed", "CLOSED \u21C5", "text-right")}
           {colH("open", "OPEN \u21C5", "text-right")}
           {colH("balance", "BALANCE \u21C5", "text-right")}
+          {colH("staked", "STAKED \u21C5", "text-right")}
           {colH("maxDd", "MAX DD \u21C5", "text-right")}
           {colH("avgDur", "AVG DUR \u21C5", "text-left")}
           <th className={`${TH_BASE} text-right border-l border-white/[0.06]`}>ACTIONS</th>
@@ -418,7 +431,7 @@ function FleetCards({
       </thead>
       <tbody className={TBODY}>
         {sorted.map((row, idx) => {
-          const { bot, pnl, pnlPct, openPnl, winRate, trades, closedCount, openCount, maxOT, balance, maxDd, avgDurStr } = row;
+          const { bot, pnl, pnlPct, openPnl, winRate, trades, closedCount, openCount, maxOT, balance, staked, maxDd, avgDurStr } = row;
           const isRunning = bot.status === "running";
           const isDraining = bot.status === "draining";
           const isStopped = !isRunning && !isDraining;
@@ -476,6 +489,9 @@ function FleetCards({
               </td>
               <td className={`${TD} text-right font-mono text-white/70`}>
                 {balance != null ? fmt(balance, 2) : "\u2014"}
+              </td>
+              <td className={`${TD} text-right font-mono ${staked > 0 ? "text-white/70" : "text-muted"}`}>
+                {staked > 0 ? `$${fmt(staked, 2)}` : "\u2014"}
               </td>
               <td className={`${TD} text-right font-mono ${maxDd != null && maxDd > 0.01 ? "text-down" : "text-muted"}`}>
                 {maxDd != null ? `-${fmt(maxDd, 1)}%` : "\u2014"}

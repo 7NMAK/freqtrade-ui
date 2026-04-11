@@ -620,92 +620,34 @@ function DetailContent({
   switch (tab) {
     /* ─── Overview ─── */
     case "overview": {
-      // ── Data derivations ────────────────────────────────────────────────
-      const winCount = profit?.winning_trades ?? statsData?.wins ?? 0;
-      const lossCount = profit?.losing_trades ?? statsData?.losses ?? 0;
+      // ── All stats from FT /profit endpoint (2026.x) ─────────────────────
+      const winCount = profit?.winning_trades ?? 0;
+      const lossCount = profit?.losing_trades ?? 0;
       const totalCount = winCount + lossCount;
-      const winRate = totalCount > 0 ? (winCount / totalCount) * 100 : null;
-      const openPnl = openTrades.reduce((s, t) => s + (t.current_profit_abs ?? 0), 0);
+      const winRate = profit?.winrate != null ? profit.winrate * 100 : (totalCount > 0 ? (winCount / totalCount) * 100 : null);
+      // FT /status uses profit_abs, not current_profit_abs
+      const openPnl = openTrades.reduce((s, t) => s + (t.current_profit_abs ?? t.profit_abs ?? 0), 0);
       const openStake = openTrades.reduce((s, t) => s + (t.stake_amount ?? 0), 0);
       const closedCount = profit?.closed_trade_count ?? closedTrades.length;
 
-      // Profit Factor
-      let profitFactor: number | null = statsData?.profit_factor ?? null;
-      if (profitFactor == null && closedTrades.length > 0) {
-        const winSum = closedTrades.reduce((s, t) => s + Math.max(0, t.close_profit_abs ?? 0), 0);
-        const lossSum = closedTrades.reduce((s, t) => s + Math.abs(Math.min(0, t.close_profit_abs ?? 0)), 0);
-        profitFactor = lossSum > 0 ? winSum / lossSum : winSum > 0 ? winSum : null;
-      }
+      // All risk metrics directly from /profit endpoint
+      const profitFactor: number | null = profit?.profit_factor ?? null;
+      const maxDdPct: number | null = profit?.max_drawdown != null ? profit.max_drawdown * 100 : null;
+      const maxDdAbs: number | null = profit?.max_drawdown_abs ?? null;
+      const currentDdPct = profit?.current_drawdown != null ? profit.current_drawdown * 100 : 0;
+      const sharpeRatio: number | null = profit?.sharpe ?? null;
+      const sortinoRatio: number | null = profit?.sortino ?? null;
+      const calmarRatio: number | null = profit?.calmar ?? null;
+      const sqn: number | null = profit?.sqn ?? null;
+      const expectancy: number | null = profit?.expectancy ?? null;
+      const expectancyRatio: number | null = profit?.expectancy_ratio ?? null;
+      // cagr: FT returns as multiplier (e.g. 2.44 = 2.44× annual)
+      const cagr: number | null = profit?.cagr ?? null;
 
-      // Max Drawdown
-      let maxDdPct: number | null =
-        statsData?.max_drawdown != null ? statsData.max_drawdown * 100 :
-        profit?.max_drawdown != null ? profit.max_drawdown * 100 : null;
-      let maxDdAbs: number | null = statsData?.max_drawdown_abs ?? profit?.max_drawdown_abs ?? null;
-      if (maxDdPct == null && closedTrades.length > 0) {
-        const sorted = [...closedTrades].sort((a, b) =>
-          new Date(a.close_date ?? "").getTime() - new Date(b.close_date ?? "").getTime()
-        );
-        let equity = 0, peak = 0, ddPct = 0, ddAbs = 0;
-        for (const t of sorted) {
-          equity += t.close_profit_abs ?? 0;
-          if (equity > peak) peak = equity;
-          if (peak > 0) {
-            const dd = ((peak - equity) / peak) * 100;
-            const dda = peak - equity;
-            if (dd > ddPct) { ddPct = dd; ddAbs = dda; }
-          }
-        }
-        maxDdPct = ddPct > 0 ? ddPct : null;
-        maxDdAbs = ddAbs > 0 ? ddAbs : null;
-      }
-      const currentDdPct = statsData?.drawdown != null ? statsData.drawdown * 100 : 0;
-
-      // Sharpe / Sortino / Calmar
-      let sharpeRatio: number | null = statsData?.sharpe_ratio ?? null;
-      let sortinoRatio: number | null = statsData?.sortino_ratio ?? null;
-      const calmarRatio: number | null = statsData?.calmar_ratio ?? null;
-      if (sharpeRatio == null && closedTrades.length >= 2) {
-        const rets = closedTrades.map(t => (t.close_profit ?? 0) * 100);
-        const mean = rets.reduce((s, r) => s + r, 0) / rets.length;
-        const std = Math.sqrt(rets.reduce((s, r) => s + (r - mean) ** 2, 0) / rets.length);
-        sharpeRatio = std > 0 ? mean / std : null;
-      }
-      if (sortinoRatio == null && closedTrades.length >= 2) {
-        const rets = closedTrades.map(t => (t.close_profit ?? 0) * 100);
-        const mean = rets.reduce((s, r) => s + r, 0) / rets.length;
-        const down = rets.filter(r => r < 0);
-        const dStd = down.length > 0 ? Math.sqrt(down.reduce((s, r) => s + r ** 2, 0) / down.length) : 0;
-        sortinoRatio = dStd > 0 ? mean / dStd : null;
-      }
-
-      // SQN — System Quality Number
-      let sqn: number | null = null;
-      if (closedTrades.length >= 5) {
-        const rets = closedTrades.map(t => t.close_profit_abs ?? 0);
-        const mean = rets.reduce((s, r) => s + r, 0) / rets.length;
-        const std = Math.sqrt(rets.reduce((s, r) => s + (r - mean) ** 2, 0) / rets.length);
-        sqn = std > 0 ? (mean / std) * Math.sqrt(rets.length) : null;
-      }
-
-      // Expectancy & Expectancy Ratio
-      const expectancy = closedCount > 0 ? (profit?.profit_closed_coin ?? 0) / closedCount : null;
-      const profitRaw = profit as Record<string, unknown> | null;
-      const expectancyRatio = (profitRaw?.expectancy_ratio as number | undefined) ?? null;
-
-      // CAGR
-      let cagr: number | null = null;
-      if (profit?.first_trade_date) {
-        const days = (Date.now() - new Date(profit.first_trade_date).getTime()) / 86400000;
-        if (days > 1) cagr = Math.pow(1 + (profit.profit_closed_percent ?? 0) / 100, 365 / days) - 1;
-      }
-
-      // Trading Volume
-      const tradingVolume = statsData?.trading_volume ?? closedTrades.reduce((s, t) => s + (t.stake_amount ?? 0), 0);
+      // Trading Volume & Avg hold
+      const tradingVolume = profit?.trading_volume ?? 0;
       const fmtVol = (v: number) =>
         v >= 1_000_000 ? `$${fmt(v / 1_000_000, 1)}M` : v >= 1_000 ? `$${fmt(v / 1_000, 0)}K` : `$${fmt(v, 0)}`;
-
-      // Avg hold — parse "H:MM:SS" string or number (seconds)
       const avgHoldSec = (() => {
         const d = profit?.avg_duration;
         if (d == null) return null;
@@ -716,7 +658,7 @@ function DetailContent({
           : null;
       })();
 
-      // Best pair from perf data (highest absolute profit)
+      // Best pair — prefer profit.best_pair_profit_abs, fallback to perf data
       const bestPerfPair = perfData.length > 0
         ? [...perfData].sort((a, b) => b.profit_abs - a.profit_abs)[0]
         : null;
@@ -728,9 +670,15 @@ function DetailContent({
         c => c.currency !== stakeCurrency && (c.balance > 0 || c.est_stake > 0)
       );
 
-      // Exit reasons breakdown
-      const roiEntry = exitData.find(e => e.exit_reason === "roi");
-      const forceExitEntry = exitData.find(e => e.exit_reason === "force_exit" || e.exit_reason === "force_sell");
+      // Stake display — handle "unlimited" string
+      const stakeAmountDisplay = configData
+        ? (typeof configData.stake_amount === "number"
+            ? `${fmt(configData.stake_amount, 0)} ${stakeCurrency}`
+            : String(configData.stake_amount))
+        : "—";
+
+      // Exit reasons — /stats returns wins/losses per reason
+      const exitReasons = statsData?.exit_reasons ?? {};
 
       // Inline label/sub-title helpers (functions, not components — avoids React remount)
       const lbl = (text: string) => <span className="text-[11px] text-white/40 font-mono">{text}</span>;
@@ -770,7 +718,7 @@ function DetailContent({
                 </div>
                 <div className="bg-surface p-2.5 l-bd rounded">
                   <div className="kpi-label">CAGR</div>
-                  <div className={`font-mono font-bold text-base ${cagr != null ? profitColor(cagr) : "text-white"}`}>{cagr != null ? `${cagr >= 0 ? "+" : ""}${fmt(cagr * 100, 1)}%` : "—"}</div>
+                  <div className={`font-mono font-bold text-base ${cagr != null ? (cagr >= 1 ? "text-up" : "text-down") : "text-white"}`}>{cagr != null ? `${fmt(cagr, 2)}x` : "—"}</div>
                   <div className="text-white/25 text-[10px] font-mono mt-0.5">annualized</div>
                 </div>
                 <div className="bg-surface p-2.5 l-bd rounded">
@@ -803,7 +751,7 @@ function DetailContent({
                 </div>
                 <div className="bg-surface p-2.5 l-bd rounded">
                   <div className="kpi-label">Stake</div>
-                  <div className="text-white font-mono font-bold text-base">{configData ? `${fmt(typeof configData.stake_amount === "number" ? configData.stake_amount : 0, 0)} ${stakeCurrency}` : "—"}</div>
+                  <div className="text-white font-mono font-bold text-base">{stakeAmountDisplay}</div>
                   <div className="text-white/25 text-[10px] font-mono mt-0.5">per trade</div>
                 </div>
                 <div className="bg-surface p-2.5 l-bd rounded">
@@ -828,8 +776,8 @@ function DetailContent({
               </div>
               <div className="flex flex-col gap-2 border-t border-white/[0.07] pt-2.5">
                 {secTitle("Best Performer")}
-                <div className="flex justify-between items-baseline">{lbl("Pair")}<span className="text-white font-mono font-bold text-[15px]">{bestPerfPair?.pair ?? profit?.best_pair ?? "—"}</span></div>
-                <div className="flex justify-between items-baseline">{lbl("Profit")}<span className={`font-mono text-[14px] ${profitColor(bestPerfPair?.profit_abs ?? (profit?.best_rate ?? 0))}`}>{bestPerfPair != null ? fmtMoney(bestPerfPair.profit_abs) : (profit?.best_rate != null ? `+${fmt(profit.best_rate * 100, 2)}%` : "—")}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Pair")}<span className="text-white font-mono font-bold text-[15px]">{profit?.best_pair ?? bestPerfPair?.pair ?? "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Profit")}<span className={`font-mono text-[14px] text-up`}>{profit?.best_pair_profit_abs != null ? fmtMoney(profit.best_pair_profit_abs) : (bestPerfPair != null ? fmtMoney(bestPerfPair.profit_abs) : (profit?.best_rate != null ? `+${fmt(profit.best_rate * 100, 2)}%` : "—"))}</span></div>
               </div>
               <div className="flex flex-col gap-2 border-t border-white/[0.07] pt-2.5">
                 {secTitle("Activity")}
@@ -878,21 +826,19 @@ function DetailContent({
               </div>
               <div className="flex flex-col gap-2 border-t border-white/[0.07] pt-2.5">
                 {secTitle("Exit Reasons")}
-                {exitData.length > 0 ? exitData.slice(0, 5).map(e => (
-                  <div key={e.exit_reason} className="flex justify-between items-baseline">
-                    {lbl(e.exit_reason)}
-                    <span className="font-mono text-[14px]">
-                      <span className="text-up font-bold">{e.wins}W</span>
-                      <span className="text-white/20 mx-1">·</span>
-                      <span className={e.losses > 0 ? "text-down font-bold" : "text-white/35"}>{e.losses}L</span>
-                    </span>
-                  </div>
-                )) : (
-                  <>
-                    <div className="flex justify-between items-baseline">{lbl("ROI")}<span className="font-mono text-[14px]"><span className="text-up font-bold">{roiEntry?.wins ?? 0}W</span><span className="text-white/20 mx-1">·</span><span className={(roiEntry?.losses ?? 0) > 0 ? "text-down font-bold" : "text-white/35"}>{roiEntry?.losses ?? 0}L</span></span></div>
-                    <div className="flex justify-between items-baseline">{lbl("Force Exit")}<span className="font-mono text-[14px]"><span className="text-white/35">{forceExitEntry?.wins ?? 0}W</span><span className="text-white/20 mx-1">·</span><span className={(forceExitEntry?.losses ?? 0) > 0 ? "text-down font-bold" : "text-white/35"}>{forceExitEntry?.losses ?? 0}L</span></span></div>
-                  </>
-                )}
+                {Object.keys(exitReasons).length > 0
+                  ? Object.entries(exitReasons).map(([reason, data]) => (
+                    <div key={reason} className="flex justify-between items-baseline">
+                      {lbl(reason)}
+                      <span className="font-mono text-[14px]">
+                        <span className="text-up font-bold">{data.wins}W</span>
+                        <span className="text-white/20 mx-1">·</span>
+                        <span className={data.losses > 0 ? "text-down font-bold" : "text-white/35"}>{data.losses}L</span>
+                      </span>
+                    </div>
+                  ))
+                  : <span className="text-white/25 text-[11px]">—</span>
+                }
               </div>
               <div className="flex flex-col gap-2 border-t border-white/[0.07] pt-2.5">
                 {secTitle("Durations")}
@@ -955,7 +901,7 @@ function DetailContent({
               </div>
               <div className="flex flex-col gap-2 border-t border-white/[0.07] pt-2.5">
                 {secTitle("Risk")}
-                <div className="flex justify-between items-baseline">{lbl("Stake per trade")}<span className="text-white/60 font-mono font-bold text-[14px]">{configData ? `${fmt(typeof configData.stake_amount === "number" ? configData.stake_amount : 0, 0)} ${stakeCurrency}` : "—"}</span></div>
+                <div className="flex justify-between items-baseline">{lbl("Stake per trade")}<span className="text-white/60 font-mono font-bold text-[14px]">{stakeAmountDisplay}</span></div>
                 <div className="flex justify-between items-baseline">{lbl("Stop Loss")}<span className="text-down font-mono font-bold text-[14px]">{configData?.stoploss != null ? `${fmt(configData.stoploss * 100, 0)}%` : "—"}</span></div>
                 <div className="flex justify-between items-baseline">{lbl("Max open trades")}<span className="text-white/60 font-mono font-bold text-[14px]">{configData?.max_open_trades ?? "—"}</span></div>
                 <div className="flex justify-between items-baseline">{lbl("Open positions")}<span className="text-white/60 font-mono font-bold text-[14px]">{openTrades.length} / {configData?.max_open_trades ?? "∞"}</span></div>

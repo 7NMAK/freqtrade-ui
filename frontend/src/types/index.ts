@@ -201,12 +201,29 @@ export interface FTProfit {
   best_pair: string;
   best_rate: number;
   best_pair_profit_ratio?: number;
+  best_pair_profit_abs?: number;
   winning_trades: number;
   losing_trades: number;
+  winrate?: number;
   wins?: number;
   losses?: number;
   max_drawdown?: number;
   max_drawdown_abs?: number;
+  current_drawdown?: number;
+  current_drawdown_abs?: number;
+  /** FT 2026.x /profit extended stats */
+  profit_factor?: number;
+  expectancy?: number;
+  expectancy_ratio?: number;
+  /** Sharpe ratio — FT field name is 'sharpe' (not 'sharpe_ratio') */
+  sharpe?: number;
+  /** Sortino ratio — FT field name is 'sortino' (not 'sortino_ratio') */
+  sortino?: number;
+  sqn?: number;
+  /** CAGR as multiplier (e.g. 2.44 = 2.44× annual) */
+  cagr?: number;
+  calmar?: number;
+  trading_volume?: number;
 }
 
 /** GET /api/v1/balance */
@@ -330,31 +347,24 @@ export interface FTMixTag {
   avg_profit: number;
 }
 
-/** GET /api/v1/stats */
+/** GET /api/v1/stats — actual FT 2026.x response only returns exit_reasons + durations */
 export interface FTStats {
-  profit_factor: number;
-  trading_volume: number;
-  negtrade_account_drawdown: number;
-  max_consecutive_wins: number;
-  max_consecutive_losses: number;
-  winning_profit: number;
-  losing_profit: number;
-  profit_all_coin: number;
-  wins: number;
-  losses: number;
-  draws: number;
-  rejected_signals: number;
-  timedout_entry_orders: number;
-  timedout_exit_orders: number;
-  canceled_trade_entries: number;
-  canceled_entry_orders: number;
-  replaced_entry_orders: number;
+  /** Win/loss/draw counts per exit reason */
+  exit_reasons?: Record<string, { wins: number; losses: number; draws: number }>;
   durations: {
     wins: number | null;
     draws: number | null;
     losses: number | null;
   };
-  return_multiples: Record<string, unknown>;
+  /** Fields below may not be returned in all FT versions */
+  profit_factor?: number;
+  trading_volume?: number;
+  wins?: number;
+  losses?: number;
+  draws?: number;
+  max_consecutive_wins?: number;
+  max_consecutive_losses?: number;
+  rejected_signals?: number;
   max_drawdown?: number;
   max_drawdown_abs?: number;
   drawdown?: number;

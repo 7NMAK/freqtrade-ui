@@ -43,7 +43,6 @@ interface TradeTableProps {
   onStopBuy?: (botId: number) => void;
   onSoftKill?: (botId: number) => void;
   onHardKill?: (botId: number) => void;
-  onFleetForceEntry?: () => void;
   // Blacklist props
   blacklistData?: { blacklist: string[]; blacklist_expanded: string[] } | null;
   onAddBlacklist?: (pair: string) => void;
@@ -537,7 +536,6 @@ export default function TradeTable({
   onStopBuy,
   onSoftKill,
   onHardKill,
-  onFleetForceEntry,
   blacklistData,
   onAddBlacklist,
   onDeleteBlacklist,
@@ -711,15 +709,6 @@ export default function TradeTable({
           </button>
         ))}
         <div className="ml-auto mr-3 flex items-center gap-2 shrink-0">
-          {activeTab === "fleet" && (
-            <button
-              onClick={onFleetForceEntry}
-              className="px-3 py-1 rounded text-[11px] font-bold border border-up/40 text-up hover:bg-up/10 transition-colors flex items-center gap-1.5"
-            >
-              <PlusCircle className="w-3 h-3" />
-              Force Entry
-            </button>
-          )}
           <button
             onClick={exportCSV}
             className="px-2 py-1 rounded text-[10px] text-muted hover:text-white hover:bg-white/[0.06] transition-colors flex items-center gap-1 opacity-50 hover:opacity-100"

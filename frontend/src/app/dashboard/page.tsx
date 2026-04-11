@@ -1373,13 +1373,6 @@ export default function DashboardPage() {
               onStopBuy={handleStopBuyBot}
               onSoftKill={handleSoftKillBot}
               onHardKill={handleHardKillBot}
-              onFleetForceEntry={() => {
-                const pair = prompt("Force Entry — pair (e.g. BTC/USDT:USDT):");
-                if (pair && bots.find(b => b.status === "running")) {
-                  const bot = bots.find(b => b.status === "running")!;
-                  handleForceEnter({ _bot_id: bot.id, pair, is_short: false } as FTTrade);
-                }
-              }}
               blacklistData={blacklistData}
               onAddBlacklist={handleAddBlacklist}
               onDeleteBlacklist={handleDeleteBlacklist}

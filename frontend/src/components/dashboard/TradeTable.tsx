@@ -527,6 +527,7 @@ export default function TradeTable({
   bots = [],
   botProfits = {},
   botBalances = {},
+  sparklines = {},
   onBotClick,
   onStart,
   onStop,

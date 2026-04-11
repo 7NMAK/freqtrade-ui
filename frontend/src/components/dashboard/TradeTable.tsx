@@ -247,6 +247,19 @@ function useSortable<T>(data: T[], defaultKey?: string) {
 
 // ── Fleet Cards ───────────────────────────────────────────────────────────────
 
+function MiniSparkline7({ data }: { data: number[] }) {
+  const bars = data.length >= 7 ? data.slice(-7) : [...Array(7 - data.length).fill(0), ...data];
+  const max = Math.max(...bars.map(Math.abs), 0.01);
+  return (
+    <div className="flex items-end gap-[2px] h-5 w-14 mx-auto">
+      {bars.map((v, i) => {
+        const pct = Math.max(8, (Math.abs(v) / max) * 100);
+        if (v === 0) return <div key={i} className="flex-1 rounded-sm bg-white/10" style={{ height: "8%" }} />;
+        return <div key={i} className={`flex-1 rounded-sm ${v > 0 ? "bg-up/70" : "bg-down/60"}`} style={{ height: `${pct}%` }} />;
+      })}
+    </div>
+  );
+}
 
 type FleetSortKey = "name" | "pnl" | "pnlPct" | "openPnl" | "winRate" | "trades" | "closed" | "open" | "balance" | "maxDd" | "avgDur";
 
@@ -254,6 +267,7 @@ interface FleetCardsProps {
   bots: Bot[];
   botProfits: Record<number, Partial<FTProfit>>;
   botBalances: Record<string, number>;
+  sparklines: Record<number, number[]>;
   openTrades: FTTrade[];
   onBotClick?: (botId: number) => void;
   onStart?: (botId: number) => void;
@@ -270,6 +284,7 @@ function FleetCards({
   bots,
   botProfits,
   botBalances,
+  sparklines,
   openTrades,
   onBotClick,
   onStart,
@@ -388,6 +403,7 @@ function FleetCards({
           <th className={`${TH_BASE} text-left w-[90px]`}>STATUS</th>
           {colH("name", "BOT \u21C5", "text-left")}
           <th className={`${TH_BASE} text-left`}>MODE</th>
+          <th className={`${TH_BASE} text-center`}>P&amp;L / DAY</th>
           {colH("pnl", "CLOSED P&L \u21C5", "text-right")}
           {colH("pnlPct", "% \u21C5", "text-right")}
           {colH("openPnl", "OPEN P&L \u21C5", "text-right")}
@@ -422,22 +438,25 @@ function FleetCards({
                   </span>
                 </div>
               </td>
-              <td className={`${TD} font-bold text-white max-w-[200px] truncate`} title={bot.name}>{bot.name}</td>
+              <td className={`${TD} font-bold text-white max-w-[180px] truncate`} title={bot.name}>{bot.name}</td>
               <td className={TD}>
                 <div className="flex items-center gap-1">
                   {isStopped
-                    ? <span className="text-[9px] border border-down/30 px-1.5 py-[1px] rounded text-down/70 font-bold">STOPPED</span>
+                    ? <span className="text-[9px] border border-down/30 px-1 py-[1px] rounded text-down/70 font-bold">STOPPED</span>
                     : isDraining
-                      ? <span className="text-[9px] border border-yellow-500/30 px-1.5 py-[1px] rounded text-yellow-400 font-bold">DRAINING</span>
+                      ? <span className="text-[9px] border border-yellow-500/30 px-1 py-[1px] rounded text-yellow-400 font-bold">DRAINING</span>
                       : bot.is_dry_run
-                        ? <span className="text-[9px] border border-yellow-500/40 px-1.5 py-[1px] rounded text-yellow-400 font-bold">PAPER</span>
-                        : <span className="text-[9px] border border-white/20 px-1.5 py-[1px] rounded text-white/60 font-bold">LIVE</span>
+                        ? <span className="text-[9px] border border-yellow-500/20 px-1 py-[1px] rounded text-yellow-400 font-bold bg-yellow-500/10">PAPER</span>
+                        : <span className="text-[9px] border border-white/20 px-1 py-[1px] rounded text-white/60 font-bold">LIVE</span>
                   }
                   {bot.trading_mode === "futures"
-                    ? <span className="text-[9px] border border-blue-500/40 px-1.5 py-[1px] rounded text-blue-400 font-bold">FUT</span>
-                    : <span className="text-[9px] border border-white/10 px-1.5 py-[1px] rounded text-white/25 font-bold">SPOT</span>
+                    ? <span className="text-[9px] border border-blue-500/40 px-1 py-[1px] rounded text-blue-400 font-bold bg-blue-500/10">FUT</span>
+                    : <span className="text-[9px] border border-white/10 px-1 py-[1px] rounded text-white/25 font-bold bg-white/5">SPOT</span>
                   }
                 </div>
+              </td>
+              <td className={TD}>
+                <MiniSparkline7 data={sparklines[bot.id] ?? []} />
               </td>
               <td className={`${TD} text-right font-bold font-mono ${pnl == null ? "text-muted" : pnl >= 0 ? "text-up" : "text-down"}`}>
                 {pnl != null ? `${pnl >= 0 ? "+" : ""}${fmt(pnl, 4)}` : "\u2014"}
@@ -464,16 +483,16 @@ function FleetCards({
               </td>
               <td className={`${TD} text-muted font-mono text-[12px]`}>{avgDurStr}</td>
               <td className={`${TD} border-l border-white/[0.06] text-right`} onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center justify-end gap-0.5 opacity-30 group-hover:opacity-100 transition-opacity">
-                  <button className="bot-ctrl ctrl-start" title="▶ Start" onClick={() => onStart?.(bot.id)}><Play className="w-3 h-3" /></button>
-                  <button className="bot-ctrl ctrl-stop" title="■ Stop" onClick={() => onStop?.(bot.id)}><Square className="w-3 h-3" /></button>
-                  <button className="bot-ctrl" title="⏸ Pause" onClick={() => onPause?.(bot.id)}><Pause className="w-3 h-3" /></button>
-                  <button className="bot-ctrl ctrl-stop" title="✕ Force Exit All" onClick={() => onForceExitAll?.(bot.id)}><XSquare className="w-3 h-3" /></button>
-                  <button className="bot-ctrl" title="⊞ Stopbuy" onClick={() => onStopBuy?.(bot.id)}><PlusSquare className="w-3 h-3" /></button>
-                  <button className="bot-ctrl" title="↻ Reload Config" onClick={() => onReload?.(bot.id)}><RefreshCw className="w-3 h-3" /></button>
+                <div className="flex items-center justify-end gap-[2px] opacity-30 group-hover:opacity-100 transition-opacity">
+                  <button className="bot-ctrl ctrl-start" title="▶ Start" onClick={() => onStart?.(bot.id)}><Play className="w-2.5 h-2.5" /></button>
+                  <button className="bot-ctrl ctrl-stop" title="■ Stop" onClick={() => onStop?.(bot.id)}><Square className="w-2.5 h-2.5" /></button>
+                  <button className="bot-ctrl ctrl-pause" title="⏸ Pause" onClick={() => onPause?.(bot.id)}><Pause className="w-2.5 h-2.5" /></button>
+                  <button className="bot-ctrl" title="↻ Reload Config" onClick={() => onReload?.(bot.id)}><RefreshCw className="w-2.5 h-2.5" /></button>
+                  <button className="bot-ctrl ctrl-stop" title="✕ Force Exit All" onClick={() => onForceExitAll?.(bot.id)}><XSquare className="w-2.5 h-2.5" /></button>
+                  <button className="bot-ctrl" title="⊞ Stopbuy" onClick={() => onStopBuy?.(bot.id)}><PlusSquare className="w-2.5 h-2.5" /></button>
                   <span className="w-px h-3 bg-white/15 mx-0.5 self-center" />
-                  <button className="bot-ctrl" style={{ color: "#facc15" }} title="🛡 Soft Kill" onClick={() => onSoftKill?.(bot.id)}><ShieldAlert className="w-3 h-3" /></button>
-                  <button className="bot-ctrl ctrl-stop" title="⚡ Hard Kill" onClick={() => onHardKill?.(bot.id)}><Zap className="w-3 h-3" /></button>
+                  <button className="bot-ctrl" style={{ color: "#facc15" }} title="🛡 Soft Kill" onClick={() => onSoftKill?.(bot.id)}><ShieldAlert className="w-2.5 h-2.5" /></button>
+                  <button className="bot-ctrl ctrl-stop" title="⚡ Hard Kill" onClick={() => onHardKill?.(bot.id)}><Zap className="w-2.5 h-2.5" /></button>
                 </div>
               </td>
             </tr>
@@ -694,7 +713,7 @@ export default function TradeTable({
           {activeTab === "fleet" && (
             <button
               onClick={onFleetForceEntry}
-              className="px-3 py-1 rounded text-[11px] font-bold text-black bg-up hover:bg-up/80 transition-colors flex items-center gap-1.5"
+              className="px-3 py-1 rounded text-[11px] font-bold border border-up/40 text-up hover:bg-up/10 transition-colors flex items-center gap-1.5"
             >
               <PlusCircle className="w-3 h-3" />
               Force Entry
@@ -725,6 +744,7 @@ export default function TradeTable({
                 bots={tradeBots}
                 botProfits={botProfits}
                 botBalances={botBalances}
+                sparklines={sparklines ?? {}}
                 openTrades={openTrades}
                 onBotClick={onBotClick}
                 onStart={onStart}

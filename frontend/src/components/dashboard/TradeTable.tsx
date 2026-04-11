@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
-import { Filter, ChevronDown, Download, LogOut, Zap, Scissors, PlusCircle, RefreshCw, Trash2, Ban, Play, Square, XSquare, ShieldAlert, Pause, PlusSquare } from "lucide-react";
+import { Filter, Download, LogOut, Zap, Scissors, PlusCircle, RefreshCw, Trash2, Ban, Play, Square, XSquare, ShieldAlert, Pause, PlusSquare } from "lucide-react";
 import { fmt, fmtMoney } from "@/lib/format";
 import type { FTTrade, FTPerformance, FTEntry, FTExit, FTWhitelist, FTLocksResponse, Bot, FTProfit } from "@/types";
 
@@ -156,7 +155,7 @@ function FilterDropdown({
   );
 }
 
-function ActionDropdown({
+function TradeActions({
   trade,
   onForceExit,
   onForceEnter,
@@ -173,106 +172,41 @@ function ActionDropdown({
   onCancelOrder: (trade: FTTrade) => void;
   exiting: boolean;
 }) {
-  const [open, setOpen] = useState(false);
-  const btnRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
   const hasOpenOrder = trade.orders?.some((o) => o.status === "open") ?? false;
-
-  // Position the portal-based dropdown relative to the button
-  const [menuPos, setMenuPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
-
-  useEffect(() => {
-    if (open && btnRef.current) {
-      const rect = btnRef.current.getBoundingClientRect();
-      // Place menu above button, right-aligned
-      setMenuPos({
-        top: rect.top - 4,
-        left: rect.right - 200,
-      });
-    }
-  }, [open]);
-
-  // Close on outside click
-  useEffect(() => {
-    if (!open) return;
-    function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node) &&
-          btnRef.current && !btnRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
+  const btn = "p-1.5 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
 
   return (
-    <div className="action-menu" onClick={(e) => e.stopPropagation()}>
-      <button
-        ref={btnRef}
-        className="action-menu-btn"
-        onClick={() => setOpen(!open)}
-        disabled={exiting}
-      >
-        {exiting ? "..." : "Actions"} <ChevronDown className="w-3 h-3" />
+    <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+      <button title="Force Exit (Market)" disabled={exiting} onClick={() => onForceExit(trade, "market")}
+        className={`${btn} text-down hover:bg-down/15`}>
+        <Zap className="w-3.5 h-3.5" />
       </button>
-      {open && typeof document !== "undefined" && createPortal(
-        <>
-          <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)} />
-          <div
-            ref={menuRef}
-            className="fixed min-w-[200px] bg-[#151515] border border-white/[0.12] rounded-lg p-1 z-[9999] shadow-[0_-8px_30px_rgba(0,0,0,0.6)]"
-            style={{ top: menuPos.top, left: menuPos.left, transform: "translateY(-100%)" }}
-          >
-            <button
-              className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-[#d4d4d8] rounded-[5px] hover:bg-white/[0.06] hover:text-white transition-colors text-left"
-              onClick={() => { onForceExit(trade, "limit"); setOpen(false); }}
-            >
-              <LogOut className="w-3.5 h-3.5 text-muted" /> Force Exit (Limit)
-            </button>
-            <button
-              className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-[#d4d4d8] rounded-[5px] hover:bg-white/[0.06] hover:text-white transition-colors text-left"
-              onClick={() => { onForceExit(trade, "market"); setOpen(false); }}
-            >
-              <Zap className="w-3.5 h-3.5 text-muted" /> Force Exit (Market)
-            </button>
-            <button
-              className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-[#d4d4d8] rounded-[5px] hover:bg-white/[0.06] hover:text-white transition-colors text-left"
-              onClick={() => { onForceExit(trade, "partial"); setOpen(false); }}
-            >
-              <Scissors className="w-3.5 h-3.5 text-muted" /> Force Exit (Partial)
-            </button>
-            <div className="h-px bg-white/[0.06] mx-2 my-1" />
-            <button
-              className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-[#d4d4d8] rounded-[5px] hover:bg-white/[0.06] hover:text-white transition-colors text-left"
-              onClick={() => { onForceEnter(trade); setOpen(false); }}
-            >
-              <PlusCircle className="w-3.5 h-3.5 text-muted" /> Increase Position
-            </button>
-            <button
-              className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-[#d4d4d8] rounded-[5px] hover:bg-white/[0.06] hover:text-white transition-colors text-left"
-              onClick={() => { onReloadTrade(trade); setOpen(false); }}
-            >
-              <RefreshCw className="w-3.5 h-3.5 text-muted" /> Reload
-            </button>
-            {hasOpenOrder && (
-              <button
-                className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-[#d4d4d8] rounded-[5px] hover:bg-white/[0.06] hover:text-white transition-colors text-left"
-                onClick={() => { onCancelOrder(trade); setOpen(false); }}
-              >
-                <Ban className="w-3.5 h-3.5 text-muted" /> Cancel open order
-              </button>
-            )}
-            <div className="h-px bg-white/[0.06] mx-2 my-1" />
-            <button
-              className="flex items-center gap-2.5 w-full px-3 py-2 text-[12px] text-down rounded-[5px] hover:bg-down/10 transition-colors text-left"
-              onClick={() => { onDeleteTrade(trade); setOpen(false); }}
-            >
-              <Trash2 className="w-3.5 h-3.5" /> Delete trade
-            </button>
-          </div>
-        </>,
-        document.body
+      <button title="Force Exit (Limit)" disabled={exiting} onClick={() => onForceExit(trade, "limit")}
+        className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}>
+        <LogOut className="w-3.5 h-3.5" />
+      </button>
+      <button title="Force Exit (Partial)" disabled={exiting} onClick={() => onForceExit(trade, "partial")}
+        className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}>
+        <Scissors className="w-3.5 h-3.5" />
+      </button>
+      <button title="Increase Position" disabled={exiting} onClick={() => onForceEnter(trade)}
+        className={`${btn} text-muted hover:text-up hover:bg-up/10`}>
+        <PlusCircle className="w-3.5 h-3.5" />
+      </button>
+      <button title="Reload Trade" disabled={exiting} onClick={() => onReloadTrade(trade)}
+        className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}>
+        <RefreshCw className="w-3.5 h-3.5" />
+      </button>
+      {hasOpenOrder && (
+        <button title="Cancel Open Order" disabled={exiting} onClick={() => onCancelOrder(trade)}
+          className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}>
+          <Ban className="w-3.5 h-3.5" />
+        </button>
       )}
+      <button title="Delete Trade" disabled={exiting} onClick={() => onDeleteTrade(trade)}
+        className={`${btn} text-down/50 hover:text-down hover:bg-down/10`}>
+        <Trash2 className="w-3.5 h-3.5" />
+      </button>
     </div>
   );
 }
@@ -878,7 +812,7 @@ export default function TradeTable({
                           <td className={`${TD} text-right text-muted text-[11px]`}>${fmt(fee, 2)}</td>
                           <td className={`${TD} text-muted`}>{fmtDuration(trade.open_date)}</td>
                           <td className={`${TD} border-l border-white/[0.08] text-center opacity-40 group-hover:opacity-100 transition-opacity`}>
-                            <ActionDropdown
+                            <TradeActions
                               trade={trade}
                               onForceExit={onForceExit}
                               onForceEnter={onForceEnter}

@@ -485,7 +485,7 @@ function FleetCards({
               <td className={`${TD} text-right font-mono text-white/70`}>{trades}</td>
               <td className={`${TD} text-right font-mono text-white/70`}>{closedCount}</td>
               <td className={`${TD} text-right font-mono text-white/70`}>
-                {openCount}{maxOT != null && <span className="text-muted text-[10px]">/{maxOT}</span>}
+                {openCount}{maxOT != null && <span className="text-muted text-[10px]">/{maxOT === -1 ? "∞" : maxOT}</span>}
               </td>
               <td className={`${TD} text-right font-mono text-white/70`}>
                 {balance != null ? fmt(balance, 2) : "\u2014"}
@@ -494,7 +494,7 @@ function FleetCards({
                 {staked > 0 ? `$${fmt(staked, 2)}` : "\u2014"}
               </td>
               <td className={`${TD} text-right font-mono ${maxDd != null && maxDd > 0.01 ? "text-down" : "text-muted"}`}>
-                {maxDd != null ? `-${fmt(maxDd, 1)}%` : "\u2014"}
+                {maxDd != null && maxDd > 0.001 ? `-${fmt(maxDd, 1)}%` : "\u2014"}
               </td>
               <td className={`${TD} text-muted font-mono text-[12px]`}>{avgDurStr}</td>
               <td className={`${TD} border-l border-white/[0.06] text-right`} onClick={(e) => e.stopPropagation()}>

@@ -143,7 +143,7 @@ export default function KPIGrid({
           <span className="kpi-label">Open Trades</span>
           <span className="kpi-value text-xl">
             {openTradeCount}
-            {maxOpenTrades != null && <span className="text-[11px] text-muted font-sans font-normal ml-1">/ {maxOpenTrades} max</span>}
+            {maxOpenTrades != null && <span className="text-[11px] text-muted font-sans font-normal ml-1">/ {maxOpenTrades === -1 ? "∞" : maxOpenTrades}</span>}
           </span>
         </div>
         {/* Max Drawdown */}

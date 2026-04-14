@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8888
     secret_key: str
-    access_token_expire_minutes: int = 60
+    access_token_expire_minutes: int = 10080  # 7 days
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
     # Heartbeat settings

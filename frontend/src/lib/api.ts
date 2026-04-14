@@ -87,11 +87,17 @@ async function request<T>(path: string, options?: ApiFetchOptions): Promise<T> {
   });
 
   if (res.status === 401 || res.status === 403) {
-    setToken(null);
-    if (typeof window !== "undefined") {
-      window.location.href = "/login";
+    // Only hard-logout on the login/auth endpoints — transient 401s from
+    // bot proxy calls (bot offline, restart) must not log the user out.
+    const isAuthEndpoint = path.startsWith("/api/auth");
+    if (isAuthEndpoint) {
+      setToken(null);
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
+      return undefined as T;
     }
-    return undefined as T; // suppress error — redirect handles it
+    throw new ApiError(res.status, "Unauthorized");
   }
 
   if (!res.ok) {
@@ -132,8 +138,6 @@ async function requestMultipart<T>(path: string, formData: FormData): Promise<T>
   });
 
   if (res.status === 401 || res.status === 403) {
-    setToken(null);
-    if (typeof window !== "undefined") window.location.href = "/login";
     throw new ApiError(res.status, "Authentication required");
   }
 

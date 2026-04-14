@@ -108,6 +108,37 @@ class HeartbeatMonitor:
             )
             bots = list(result.scalars().all())
 
+            # Also recover any KILLED bots that are responding again
+            killed_result = await db.execute(
+                select(BotInstance).where(
+                    BotInstance.status.in_([BotStatus.KILLED, BotStatus.ERROR]),
+                    BotInstance.is_deleted.is_(False),
+                )
+            )
+            killed_bots = list(killed_result.scalars().all())
+            for bot in killed_bots:
+                if getattr(bot, "is_utility", False) or getattr(bot, "ft_mode", "trade") == "webserver":
+                    continue
+                alive = await self._bot_manager.ping_bot(bot)
+                if alive:
+                    prev_status = bot.status.value
+                    bot.status = BotStatus.RUNNING
+                    bot.consecutive_failures = 0
+                    bot.is_healthy = True
+                    logger.info(
+                        "Bot %s auto-recovered (was %s) — status → RUNNING",
+                        bot.name, prev_status,
+                    )
+                    await log_activity(
+                        db,
+                        action="heartbeat.auto_recovered",
+                        level="info",
+                        bot_id=bot.id,
+                        bot_name=bot.name,
+                        details=f"Bot responded to ping after being {prev_status}",
+                        diagnosis=f"Bot {bot.name} was {prev_status} but is now responding. "
+                                  f"Docker likely auto-restarted the container. Status restored to RUNNING.",
+                    )
             for bot in bots:
                 # Skip utility bots (backtest workers) and webserver-mode bots (backtesting only)
                 if getattr(bot, "is_utility", False) or getattr(bot, "ft_mode", "trade") == "webserver":

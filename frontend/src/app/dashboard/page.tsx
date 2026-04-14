@@ -332,7 +332,10 @@ export default function DashboardPage() {
       const aggDurCount = 0;
       let bestPairName: string | null = null;
       let bestPairRate: number | null = null;
-      const aggMaxOpenTrades = 0;
+      // Sum max_open_trades across all trade bots; -1 means unlimited (any -1 → total = -1)
+      const aggMaxOpenTrades: number = effectiveTradeBots.some(b => (b.max_open_trades ?? 0) === -1)
+        ? -1
+        : effectiveTradeBots.reduce((s, b) => s + (b.max_open_trades ?? 0), 0);
       // Accumulators for profit factor (sum winning / sum losing across all bots)
       const aggWinningProfit = 0;
       const aggLosingProfit = 0;
@@ -773,7 +776,7 @@ export default function DashboardPage() {
           fundingFees: Math.abs(fundingFeesSum) > 0 ? fundingFeesSum : null,
           feeOpenAvg: tradeCount > 0 ? (feeOpenSum / tradeCount) * 100 : null,
           feeCloseAvg: tradeCount > 0 ? (feeCloseSum / tradeCount) * 100 : null,
-          maxOpenTrades: aggMaxOpenTrades > 0 ? aggMaxOpenTrades : null,
+          maxOpenTrades: aggMaxOpenTrades !== 0 ? aggMaxOpenTrades : null,
         });
       }
 
@@ -804,32 +807,38 @@ export default function DashboardPage() {
           computedSharpe = std > 0 ? (mean / std) * Math.sqrt(252) : null;
         }
 
-        // FIX E: Compute Max Drawdown from daily equity curve
+        // FIX E: Compute Max Drawdown from actual Total EQUITY curve
         let computedMaxDD: number | null = null;
+        let computedMaxDDAbs: number | null = null;
         if (fetchedDaily.length >= 1) {
-          let peak = 0;
-          let maxDd = 0;
-          let cumulative = 0;
+          // Anchor to real starting balance so DD is relative to actual equity, not cumulative P&L from 0
+          const startBalance = fetchedDaily[0].starting_balance > 0
+            ? fetchedDaily[0].starting_balance
+            : (totalEquity || 10000);
+          let equity = startBalance;
+          let equityPeak = startBalance;
+          let maxDdPct = 0;
+          let maxDdAbs = 0;
           for (const d of fetchedDaily) {
-            cumulative += d.abs_profit;
-            if (cumulative > peak) peak = cumulative;
-            const dd = peak > 0 ? (peak - cumulative) / peak : 0;
-            if (dd > maxDd) maxDd = dd;
+            equity += d.abs_profit;
+            if (equity > equityPeak) equityPeak = equity;
+            const ddAbs = equityPeak - equity;
+            const ddPct = equityPeak > 0 ? ddAbs / equityPeak : 0;
+            if (ddPct > maxDdPct) {
+              maxDdPct = ddPct;
+              maxDdAbs = ddAbs;
+            }
           }
-          // If only 1 day and it's negative, max drawdown = that day's loss pct
-          if (fetchedDaily.length === 1 && fetchedDaily[0].abs_profit < 0) {
-            const base = fetchedDaily[0].starting_balance !== 0 ? Math.abs(fetchedDaily[0].starting_balance) : (totalEquity || 10000);
-            computedMaxDD = (fetchedDaily[0].abs_profit / base) * 100; // already negative
-          } else {
-            computedMaxDD = maxDd > 0 ? -maxDd * 100 : null;
-          }
+          computedMaxDD = maxDdPct > 0 ? -maxDdPct * 100 : null;
+          computedMaxDDAbs = maxDdAbs > 0 ? maxDdAbs : null;
         }
 
-        // Update aggStats with computed values as fallbacks
+        // Equity-based DD overrides the trade-by-trade fallback (more accurate)
         setAggStats(prev => ({
           ...prev,
           sharpeRatio: prev.sharpeRatio ?? computedSharpe,
-          maxDrawdown: prev.maxDrawdown ?? computedMaxDD,
+          maxDrawdown: computedMaxDD ?? prev.maxDrawdown,
+          maxDrawdownAbs: computedMaxDDAbs ?? prev.maxDrawdownAbs,
         }));
       }
 
@@ -981,9 +990,6 @@ export default function DashboardPage() {
   useEffect(() => {
     if (selectedBotId !== null) {
       loadBotDetails(selectedBotId);
-      // Auto-refresh bot details every 60s while panel is open (7+ API calls per refresh)
-      const interval = setInterval(() => loadBotDetails(selectedBotId), 60_000);
-      return () => clearInterval(interval);
     }
   }, [selectedBotId, loadBotDetails]);
 

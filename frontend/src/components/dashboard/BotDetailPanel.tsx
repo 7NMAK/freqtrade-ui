@@ -977,7 +977,7 @@ function DetailContent({
               <div className="text-center py-6 text-muted text-xs">No open trades</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-[13px] font-mono"><thead className="text-muted text-[13px] uppercase tracking-widest">
+                <table className="text-[13px] font-mono"><thead className="text-muted text-[13px] uppercase tracking-widest">
                     <tr>
                       <SH label="Pair" tbl="open" col="pair" />
                       <SH label="Side" tbl="open" col="is_short" align="center" />
@@ -987,7 +987,7 @@ function DetailContent({
                       <SH label="P&L" tbl="open" col="profit_abs" align="right" />
                       <SH label="P&L %" tbl="open" col="profit_ratio" align="right" />
                       <SH label="Dur" tbl="open" col="open_date" align="right" />
-                      <th className="py-1.5 px-1 border-l border-white/[0.06]" />
+                      <th className="py-1.5 px-1" />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/[0.05]">
@@ -1011,7 +1011,7 @@ function DetailContent({
                           <td className={`py-1.5 px-1 text-right font-bold ${profitColor(pnl)}`}>{pnl != null ? fmtMoney(pnl) : "—"}</td>
                           <td className={`py-1.5 px-1 text-right ${profitColor(pct)}`}>{pct != null ? `${pct >= 0 ? "+" : ""}${fmt(pct, 2)}%` : "—"}</td>
                           <td className="py-1.5 px-1 text-right text-muted">{durStr}</td>
-                          <td className="py-1.5 px-1 border-l border-white/[0.06] text-right" onClick={(e) => e.stopPropagation()}>
+                          <td className="py-1.5 px-1 text-right" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-end gap-0.5">
                               <button title="Force Exit (Market)" disabled={exiting} onClick={() => onTradeForceExit(t, "market")} className={`${btn} text-down hover:bg-down/15`}><Zap className="w-3.5 h-3.5" /></button>
                               <button title="Force Exit (Limit)" disabled={exiting} onClick={() => onTradeForceExit(t, "limit")} className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}><LogOut className="w-3.5 h-3.5" /></button>
@@ -1038,7 +1038,7 @@ function DetailContent({
               <div className="text-center py-6 text-muted text-xs">No closed trades</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-[13px] font-mono"><thead className="text-muted text-[13px] uppercase tracking-widest">
+                <table className="text-[13px] font-mono"><thead className="text-muted text-[13px] uppercase tracking-widest">
                     <tr>
                       <SH label="Pair" tbl="closed" col="pair" />
                       <SH label="Side" tbl="closed" col="is_short" align="center" />

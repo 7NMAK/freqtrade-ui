@@ -978,7 +978,6 @@ function DetailContent({
                       <SH label="Duration" tbl="open" col="open_date" align="right" />
                       <SH label="Enter Tag" tbl="open" col="enter_tag" />
                       <SH label="SL" tbl="open" col="stop_loss_pct" align="right" />
-                      <th className="py-1.5 px-1" />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/[0.05]">
@@ -992,9 +991,9 @@ function DetailContent({
                       const slPct = t.stop_loss_pct != null ? t.stop_loss_pct : null;
                       const exiting = exitingIds.has(t.trade_id);
                       const hasOpenOrder = t.orders?.some((o) => o.status === "open") ?? false;
-                      const btn = "p-1.5 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
+                      const btn = "p-1 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
                       return (
-                        <tr key={t.trade_id} className="hover:bg-white/[0.04]">
+                        <tr key={t.trade_id} className="hover:bg-white/[0.04] group relative">
                           <td className="py-1.5 px-1 text-white font-medium">{t.pair}</td>
                           <td className="py-1.5 px-1"><span className={`${t.is_short ? "bg-down/12 text-down" : "bg-up/12 text-up"} px-1 py-0.5 rounded text-[9px] font-bold`}>{t.is_short ? "SHORT" : "LONG"}</span></td>
                           <td className="py-1.5 px-1 text-right">{t.leverage > 1 ? `${t.leverage}x` : "1x"}</td>
@@ -1006,8 +1005,13 @@ function DetailContent({
                           <td className="py-1.5 px-1 text-right text-muted">{durStr}</td>
                           <td className="py-1.5 px-1 text-muted">{t.enter_tag ?? "—"}</td>
                           <td className="py-1.5 px-1 text-right text-down">{slPct != null ? `${fmt(slPct, 0)}%` : "—"}</td>
-                          <td className="py-1.5 px-1" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center gap-0.5">
+                          {/* Hover action overlay — floats over row right edge, no table-width impact */}
+                          <td className="w-0 p-0 relative">
+                            <div
+                              className="absolute right-0 top-0 bottom-0 z-10 hidden group-hover:flex items-center gap-0.5 pr-2 pl-8"
+                              style={{ background: "linear-gradient(to right, transparent, #0C0C0C 28px)" }}
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <button title="Force Exit (Market)" disabled={exiting} onClick={() => handleForceExit(t, "market")} className={`${btn} text-down hover:bg-down/15`}><Zap className="w-3.5 h-3.5" /></button>
                               <button title="Force Exit (Limit)" disabled={exiting} onClick={() => handleForceExit(t, "limit")} className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}><LogOut className="w-3.5 h-3.5" /></button>
                               <button title="Force Exit (Partial)" disabled={exiting} onClick={() => handleForceExit(t, "partial")} className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}><Scissors className="w-3.5 h-3.5" /></button>

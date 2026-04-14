@@ -977,7 +977,7 @@ function DetailContent({
               <div className="text-center py-6 text-muted text-xs">No open trades</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="text-[13px] font-mono"><thead className="text-muted text-[13px] uppercase tracking-widest">
+                <table className="w-full text-[13px] font-mono"><thead className="text-muted text-[11px] uppercase tracking-wider">
                     <tr>
                       <SH label="Pair" tbl="open" col="pair" />
                       <SH label="Side" tbl="open" col="is_short" align="center" />
@@ -1038,7 +1038,7 @@ function DetailContent({
               <div className="text-center py-6 text-muted text-xs">No closed trades</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="text-[13px] font-mono"><thead className="text-muted text-[13px] uppercase tracking-widest">
+                <table className="w-full text-[13px] font-mono"><thead className="text-muted text-[11px] uppercase tracking-wider">
                     <tr>
                       <SH label="Pair" tbl="closed" col="pair" />
                       <SH label="Side" tbl="closed" col="is_short" align="center" />

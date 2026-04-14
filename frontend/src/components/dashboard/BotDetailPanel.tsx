@@ -987,7 +987,7 @@ function DetailContent({
                       <SH label="P&L" tbl="open" col="profit_abs" align="right" />
                       <SH label="P&L %" tbl="open" col="profit_ratio" align="right" />
                       <SH label="Dur" tbl="open" col="open_date" align="right" />
-                      <th className="py-1.5 px-1 text-left font-semibold text-muted uppercase tracking-widest text-[13px]">Actions</th>
+                      <th className="py-1.5 px-1 border-l border-white/[0.06]" />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/[0.05]">
@@ -1011,8 +1011,8 @@ function DetailContent({
                           <td className={`py-1.5 px-1 text-right font-bold ${profitColor(pnl)}`}>{pnl != null ? fmtMoney(pnl) : "—"}</td>
                           <td className={`py-1.5 px-1 text-right ${profitColor(pct)}`}>{pct != null ? `${pct >= 0 ? "+" : ""}${fmt(pct, 2)}%` : "—"}</td>
                           <td className="py-1.5 px-1 text-right text-muted">{durStr}</td>
-                          <td className="py-1.5 px-1" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center gap-0.5">
+                          <td className="py-1.5 px-1 border-l border-white/[0.06] text-right" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-0.5">
                               <button title="Force Exit (Market)" disabled={exiting} onClick={() => onTradeForceExit(t, "market")} className={`${btn} text-down hover:bg-down/15`}><Zap className="w-3.5 h-3.5" /></button>
                               <button title="Force Exit (Limit)" disabled={exiting} onClick={() => onTradeForceExit(t, "limit")} className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}><LogOut className="w-3.5 h-3.5" /></button>
                               <button title="Force Exit (Partial)" disabled={exiting} onClick={() => onTradeForceExit(t, "partial")} className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}><Scissors className="w-3.5 h-3.5" /></button>

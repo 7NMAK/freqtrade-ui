@@ -266,6 +266,7 @@ export default function DashboardPage() {
           ]);
 
       // Portfolio balance
+      const fetchedTotalEquity: number = pbResult.status === "fulfilled" ? (pbResult.value.total_value ?? 0) : 0;
       if (pbResult.status === "fulfilled" && m.current) {
         setTotalEquity(pbResult.value.total_value);
         // Per-bot balances for the fleet table (bot name -> total)
@@ -325,7 +326,6 @@ export default function DashboardPage() {
       const profits: Record<number, Partial<FTProfit>> = {};
       const sparks: Record<number, number[]> = {};
       const aggSharpe: number | null = null;
-      let aggMaxDD: number | null = null;
       let aggMaxDDAbs: number | null = null;
       const aggVolume = 0;
       const aggDurTotal = 0;
@@ -433,10 +433,6 @@ export default function DashboardPage() {
       // Aggregate max_drawdown + max_drawdown_abs across all bots
       // max_drawdown is a ratio from FT's own equity-based calculation → take worst (max)
       for (const prof of Object.values(profits)) {
-        const ddRel = prof.max_drawdown;
-        if (ddRel != null && ddRel > 0) {
-          aggMaxDD = Math.max(aggMaxDD ?? 0, ddRel);
-        }
         const ddAbs = prof.max_drawdown_abs;
         if (ddAbs != null && ddAbs > 0) {
           aggMaxDDAbs = (aggMaxDDAbs ?? 0) + ddAbs;
@@ -691,28 +687,14 @@ export default function DashboardPage() {
           finalPF = lossSum > 0 ? winSum / lossSum : (winSum > 0 ? winSum : null);
         }
 
-        // Max drawdown: always display as negative percentage
-        let finalMaxDD: number | null = aggMaxDD != null ? -(aggMaxDD * 100) : null;
-        if (finalMaxDD == null && allClosed.length > 0) {
-          const sorted = [...allClosed].sort((a, b) => new Date(a.close_date ?? "").getTime() - new Date(b.close_date ?? "").getTime());
-          let equity = 0, peak = 0, maxDDPct = 0;
-          for (const t of sorted) {
-            equity += t.close_profit_abs ?? 0;
-            if (equity > peak) peak = equity;
-            if (peak > 0) {
-              const dd = ((peak - equity) / peak) * 100;
-              if (dd > maxDDPct) maxDDPct = dd;
-            }
-          }
-          // Include open unrealized in final equity for current drawdown
-          const openUnrealized = openTradesFromStatus.reduce((s, t) => s + (t.current_profit_abs ?? 0), 0);
-          const currentEquity = equity + openUnrealized;
-          if (currentEquity < peak && peak > 0) {
-            const currentDD = ((peak - currentEquity) / peak) * 100;
-            if (currentDD > maxDDPct) maxDDPct = currentDD;
-          }
-          finalMaxDD = maxDDPct > 0 ? -maxDDPct : null;
-        }
+        // Max drawdown as % of total portfolio equity:
+        // aggMaxDDAbs = sum of absolute dollar drawdowns from FT's profit API
+        // fetchedTotalEquity = total portfolio balance ($700k etc)
+        // Result: how much of total equity was lost at worst point
+        let finalMaxDD: number | null =
+          aggMaxDDAbs != null && aggMaxDDAbs > 0 && fetchedTotalEquity > 0
+            ? -(aggMaxDDAbs / fetchedTotalEquity * 100)
+            : null;
 
         // FALLBACK: Sharpe ratio from ALL trade returns (closed + open)
         let finalSharpe: number | null = aggSharpe;

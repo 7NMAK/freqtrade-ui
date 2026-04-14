@@ -412,16 +412,16 @@ function FleetCards({
       <thead className={THEAD}>
         <tr>
           <th className={`${TH_BASE} text-left w-[90px]`}>STATUS</th>
-          {colH("name", "BOT \u21C5", "text-left")}
+          {colH("name", "BOT \u21C5", "text-left w-[220px]")}
           <th className={`${TH_BASE} text-left`}>MODE</th>
           <th className={`${TH_BASE} text-center`}>P&amp;L / DAY</th>
           {colH("pnl", "CLOSED P&L \u21C5", "text-right")}
           {colH("pnlPct", "% \u21C5", "text-right")}
           {colH("openPnl", "OPEN P&L \u21C5", "text-right")}
           {colH("winRate", "WIN% \u21C5", "text-right")}
-          {colH("trades", "TRADES \u21C5", "text-right")}
-          {colH("closed", "CLOSED \u21C5", "text-right")}
-          {colH("open", "OPEN \u21C5", "text-right")}
+          {colH("trades", "TRADES \u21C5", "text-right w-[58px]")}
+          {colH("closed", "CLOSED \u21C5", "text-right w-[58px]")}
+          {colH("open", "OPEN \u21C5", "text-right w-[50px]")}
           {colH("balance", "BALANCE \u21C5", "text-right")}
           {colH("staked", "STAKED \u21C5", "text-right")}
           {colH("maxDd", "MAX DD \u21C5", "text-right")}

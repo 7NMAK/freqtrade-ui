@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { X, Play, Square, Pause, RefreshCw, PlusCircle, XSquare, PlusSquare, ShieldAlert, Zap } from "lucide-react";
+import { X, Play, Square, Pause, RefreshCw, PlusCircle, XSquare, PlusSquare, ShieldAlert, Zap, LogOut, Scissors, Ban, Trash2 } from "lucide-react";
+import { botForceExit, botForceEnter, botDeleteTrade, botReloadTrade, botCancelOpenOrder } from "@/lib/api";
 import { fmt, fmtMoney, profitColor } from "@/lib/format";
 import type {
   Bot,
@@ -617,6 +618,43 @@ function DetailContent({
     );
   };
 
+  /* ─── Per-trade action handlers (trades tab) ─── */
+  const [exitingIds, setExitingIds] = useState<Set<number>>(new Set());
+
+  const markExiting = (id: number) => setExitingIds((p) => new Set(p).add(id));
+  const unmarkExiting = (id: number) => setExitingIds((p) => { const n = new Set(p); n.delete(id); return n; });
+
+  const handleForceExit = async (trade: FTTrade, ordertype: string) => {
+    markExiting(trade.trade_id);
+    try { await botForceExit(bot.id, String(trade.trade_id), ordertype); }
+    finally { unmarkExiting(trade.trade_id); }
+  };
+
+  const handleForceEnter = async (trade: FTTrade) => {
+    markExiting(trade.trade_id);
+    try { await botForceEnter(bot.id, trade.pair, trade.is_short ? "short" : "long"); }
+    finally { unmarkExiting(trade.trade_id); }
+  };
+
+  const handleReloadTrade = async (trade: FTTrade) => {
+    markExiting(trade.trade_id);
+    try { await botReloadTrade(bot.id, trade.trade_id); }
+    finally { unmarkExiting(trade.trade_id); }
+  };
+
+  const handleCancelOrder = async (trade: FTTrade) => {
+    markExiting(trade.trade_id);
+    try { await botCancelOpenOrder(bot.id, trade.trade_id); }
+    finally { unmarkExiting(trade.trade_id); }
+  };
+
+  const handleDeleteTrade = async (trade: FTTrade) => {
+    if (!confirm(`Delete trade #${trade.trade_id} (${trade.pair})? This cannot be undone.`)) return;
+    markExiting(trade.trade_id);
+    try { await botDeleteTrade(bot.id, trade.trade_id); }
+    finally { unmarkExiting(trade.trade_id); }
+  };
+
   switch (tab) {
     /* ─── Overview ─── */
     case "overview": {
@@ -935,22 +973,26 @@ function DetailContent({
                       <SH label="Entry" tbl="open" col="open_rate" align="right" />
                       <SH label="Current" tbl="open" col="current_rate" align="right" />
                       <SH label="Stake" tbl="open" col="stake_amount" align="right" />
-                      <SH label="P&L" tbl="open" col="current_profit_abs" align="right" />
-                      <SH label="P&L %" tbl="open" col="current_profit" align="right" />
+                      <SH label="P&L" tbl="open" col="profit_abs" align="right" />
+                      <SH label="P&L %" tbl="open" col="profit_ratio" align="right" />
                       <SH label="Duration" tbl="open" col="open_date" align="right" />
                       <SH label="Enter Tag" tbl="open" col="enter_tag" />
                       <SH label="SL" tbl="open" col="stop_loss_pct" align="right" />
+                      <th className="py-1.5 px-1" />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/[0.05]">
                     {sortData(openTrades, "open").map((t) => {
-                      const pnl = t.current_profit_abs ?? 0;
-                      const pct = t.current_profit != null ? t.current_profit * 100 : null;
+                      const pnl = t.current_profit_abs ?? t.profit_abs ?? null;
+                      const pct = (t.current_profit ?? t.profit_ratio) != null ? (t.current_profit ?? t.profit_ratio)! * 100 : null;
                       const ms = Date.now() - new Date(t.open_date).getTime();
                       const durH = Math.floor(ms / 3600000);
                       const durM = Math.floor((ms % 3600000) / 60000);
                       const durStr = durH > 0 ? `${durH}h${durM.toString().padStart(2, "0")}m` : `${durM}m`;
                       const slPct = t.stop_loss_pct != null ? t.stop_loss_pct : null;
+                      const exiting = exitingIds.has(t.trade_id);
+                      const hasOpenOrder = t.orders?.some((o) => o.status === "open") ?? false;
+                      const btn = "p-1.5 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
                       return (
                         <tr key={t.trade_id} className="hover:bg-white/[0.04]">
                           <td className="py-1.5 px-1 text-white font-medium">{t.pair}</td>
@@ -959,11 +1001,22 @@ function DetailContent({
                           <td className="py-1.5 px-1 text-right">{fmt(t.open_rate, t.open_rate < 1 ? 4 : 0)}</td>
                           <td className="py-1.5 px-1 text-right font-medium">{fmt(t.current_rate, t.current_rate < 1 ? 4 : 0)}</td>
                           <td className="py-1.5 px-1 text-right">{fmt(t.stake_amount, 0)}</td>
-                          <td className={`py-1.5 px-1 text-right font-bold ${profitColor(pnl)}`}>{fmtMoney(pnl)}</td>
+                          <td className={`py-1.5 px-1 text-right font-bold ${profitColor(pnl)}`}>{pnl != null ? fmtMoney(pnl) : "—"}</td>
                           <td className={`py-1.5 px-1 text-right ${profitColor(pct)}`}>{pct != null ? `${pct >= 0 ? "+" : ""}${fmt(pct, 2)}%` : "—"}</td>
                           <td className="py-1.5 px-1 text-right text-muted">{durStr}</td>
                           <td className="py-1.5 px-1 text-muted">{t.enter_tag ?? "—"}</td>
                           <td className="py-1.5 px-1 text-right text-down">{slPct != null ? `${fmt(slPct, 0)}%` : "—"}</td>
+                          <td className="py-1.5 px-1" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center gap-0.5">
+                              <button title="Force Exit (Market)" disabled={exiting} onClick={() => handleForceExit(t, "market")} className={`${btn} text-down hover:bg-down/15`}><Zap className="w-3.5 h-3.5" /></button>
+                              <button title="Force Exit (Limit)" disabled={exiting} onClick={() => handleForceExit(t, "limit")} className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}><LogOut className="w-3.5 h-3.5" /></button>
+                              <button title="Force Exit (Partial)" disabled={exiting} onClick={() => handleForceExit(t, "partial")} className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}><Scissors className="w-3.5 h-3.5" /></button>
+                              <button title="Increase Position" disabled={exiting} onClick={() => handleForceEnter(t)} className={`${btn} text-muted hover:text-up hover:bg-up/10`}><PlusCircle className="w-3.5 h-3.5" /></button>
+                              <button title="Reload Trade" disabled={exiting} onClick={() => handleReloadTrade(t)} className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}><RefreshCw className="w-3.5 h-3.5" /></button>
+                              {hasOpenOrder && <button title="Cancel Open Order" disabled={exiting} onClick={() => handleCancelOrder(t)} className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}><Ban className="w-3.5 h-3.5" /></button>}
+                              <button title="Delete Trade" disabled={exiting} onClick={() => handleDeleteTrade(t)} className={`${btn} text-down/50 hover:text-down hover:bg-down/10`}><Trash2 className="w-3.5 h-3.5" /></button>
+                            </div>
+                          </td>
                         </tr>
                       );
                     })}

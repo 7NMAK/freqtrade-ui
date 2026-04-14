@@ -325,7 +325,7 @@ export default function DashboardPage() {
       const profits: Record<number, Partial<FTProfit>> = {};
       const sparks: Record<number, number[]> = {};
       const aggSharpe: number | null = null;
-      const aggMaxDD: number | null = null;
+      let aggMaxDD: number | null = null;
       let aggMaxDDAbs: number | null = null;
       const aggVolume = 0;
       const aggDurTotal = 0;
@@ -430,8 +430,13 @@ export default function DashboardPage() {
         } // end batch loop
       } // end snapshot else
 
-      // Aggregate max_drawdown_abs across all bots (sum absolute drawdowns)
+      // Aggregate max_drawdown + max_drawdown_abs across all bots
+      // max_drawdown is a ratio from FT's own equity-based calculation → take worst (max)
       for (const prof of Object.values(profits)) {
+        const ddRel = prof.max_drawdown;
+        if (ddRel != null && ddRel > 0) {
+          aggMaxDD = Math.max(aggMaxDD ?? 0, ddRel);
+        }
         const ddAbs = prof.max_drawdown_abs;
         if (ddAbs != null && ddAbs > 0) {
           aggMaxDDAbs = (aggMaxDDAbs ?? 0) + ddAbs;
@@ -807,38 +812,10 @@ export default function DashboardPage() {
           computedSharpe = std > 0 ? (mean / std) * Math.sqrt(252) : null;
         }
 
-        // FIX E: Compute Max Drawdown from actual Total EQUITY curve
-        let computedMaxDD: number | null = null;
-        let computedMaxDDAbs: number | null = null;
-        if (fetchedDaily.length >= 1) {
-          // Anchor to real starting balance so DD is relative to actual equity, not cumulative P&L from 0
-          const startBalance = fetchedDaily[0].starting_balance > 0
-            ? fetchedDaily[0].starting_balance
-            : (totalEquity || 10000);
-          let equity = startBalance;
-          let equityPeak = startBalance;
-          let maxDdPct = 0;
-          let maxDdAbs = 0;
-          for (const d of fetchedDaily) {
-            equity += d.abs_profit;
-            if (equity > equityPeak) equityPeak = equity;
-            const ddAbs = equityPeak - equity;
-            const ddPct = equityPeak > 0 ? ddAbs / equityPeak : 0;
-            if (ddPct > maxDdPct) {
-              maxDdPct = ddPct;
-              maxDdAbs = ddAbs;
-            }
-          }
-          computedMaxDD = maxDdPct > 0 ? -maxDdPct * 100 : null;
-          computedMaxDDAbs = maxDdAbs > 0 ? maxDdAbs : null;
-        }
-
-        // Equity-based DD overrides the trade-by-trade fallback (more accurate)
+        // Update aggStats with computed Sharpe as fallback
         setAggStats(prev => ({
           ...prev,
           sharpeRatio: prev.sharpeRatio ?? computedSharpe,
-          maxDrawdown: computedMaxDD ?? prev.maxDrawdown,
-          maxDrawdownAbs: computedMaxDDAbs ?? prev.maxDrawdownAbs,
         }));
       }
 

@@ -187,6 +187,37 @@ export default function BotDetailPanel({
 }: BotDetailPanelProps) {
   const [detailTab, setDetailTab] = useState<DetailTab>("overview");
 
+  // ── Per-trade action state ───────────────────────────────────────────
+  const [exitingIds, setExitingIds] = useState<Set<number>>(new Set());
+  const markExiting = useCallback((id: number) => setExitingIds((p) => new Set(p).add(id)), []);
+  const unmarkExiting = useCallback((id: number) => setExitingIds((p) => { const n = new Set(p); n.delete(id); return n; }), []);
+  const handleTradeForceExit = useCallback(async (trade: FTTrade, ordertype: string) => {
+    if (!bot) return;
+    markExiting(trade.trade_id);
+    try { await botForceExit(bot.id, String(trade.trade_id), ordertype); } finally { unmarkExiting(trade.trade_id); }
+  }, [bot, markExiting, unmarkExiting]);
+  const handleTradeForceEnter = useCallback(async (trade: FTTrade) => {
+    if (!bot) return;
+    markExiting(trade.trade_id);
+    try { await botForceEnter(bot.id, trade.pair, trade.is_short ? "short" : "long"); } finally { unmarkExiting(trade.trade_id); }
+  }, [bot, markExiting, unmarkExiting]);
+  const handleTradeReload = useCallback(async (trade: FTTrade) => {
+    if (!bot) return;
+    markExiting(trade.trade_id);
+    try { await botReloadTrade(bot.id, trade.trade_id); } finally { unmarkExiting(trade.trade_id); }
+  }, [bot, markExiting, unmarkExiting]);
+  const handleTradeCancelOrder = useCallback(async (trade: FTTrade) => {
+    if (!bot) return;
+    markExiting(trade.trade_id);
+    try { await botCancelOpenOrder(bot.id, trade.trade_id); } finally { unmarkExiting(trade.trade_id); }
+  }, [bot, markExiting, unmarkExiting]);
+  const handleTradeDelete = useCallback(async (trade: FTTrade) => {
+    if (!bot) return;
+    if (!confirm(`Delete trade #${trade.trade_id} (${trade.pair})? This cannot be undone.`)) return;
+    markExiting(trade.trade_id);
+    try { await botDeleteTrade(bot.id, trade.trade_id); } finally { unmarkExiting(trade.trade_id); }
+  }, [bot, markExiting, unmarkExiting]);
+
   // ── Drawer sort state ────────────────────────────────────────────────
   type SortDir = "asc" | "desc" | null;
   const [drawerSortKey, setDrawerSortKey] = useState<string | null>(null);
@@ -518,6 +549,12 @@ export default function BotDetailPanel({
               sortKey={drawerSortKey}
               sortDir={drawerSortDir}
               sortTable={drawerSortTable}
+              exitingIds={exitingIds}
+              onTradeForceExit={handleTradeForceExit}
+              onTradeForceEnter={handleTradeForceEnter}
+              onTradeReload={handleTradeReload}
+              onTradeCancelOrder={handleTradeCancelOrder}
+              onTradeDelete={handleTradeDelete}
             />
             </div>
           )}
@@ -567,6 +604,12 @@ function DetailContent({
   sortKey,
   sortDir,
   sortTable,
+  exitingIds,
+  onTradeForceExit,
+  onTradeForceEnter,
+  onTradeReload,
+  onTradeCancelOrder,
+  onTradeDelete,
 }: {
   tab: DetailTab;
   bot: Bot;
@@ -603,6 +646,12 @@ function DetailContent({
   sortKey: string | null;
   sortDir: "asc" | "desc" | null;
   sortTable: string | null;
+  exitingIds: Set<number>;
+  onTradeForceExit: (trade: FTTrade, ordertype: string) => void;
+  onTradeForceEnter: (trade: FTTrade) => void;
+  onTradeReload: (trade: FTTrade) => void;
+  onTradeCancelOrder: (trade: FTTrade) => void;
+  onTradeDelete: (trade: FTTrade) => void;
 }) {
   // Sortable header helper for drawer tables
   const SH = ({ label, tbl, col, align }: { label: string; tbl: string; col: string; align?: "right" | "left" | "center" }) => {
@@ -616,43 +665,6 @@ function DetailContent({
         <span className="ml-0.5 text-[9px] opacity-30">{active ? (sortDir === "asc" ? "↑" : "↓") : "⇅"}</span>
       </th>
     );
-  };
-
-  /* ─── Per-trade action handlers (trades tab) ─── */
-  const [exitingIds, setExitingIds] = useState<Set<number>>(new Set());
-
-  const markExiting = (id: number) => setExitingIds((p) => new Set(p).add(id));
-  const unmarkExiting = (id: number) => setExitingIds((p) => { const n = new Set(p); n.delete(id); return n; });
-
-  const handleForceExit = async (trade: FTTrade, ordertype: string) => {
-    markExiting(trade.trade_id);
-    try { await botForceExit(bot.id, String(trade.trade_id), ordertype); }
-    finally { unmarkExiting(trade.trade_id); }
-  };
-
-  const handleForceEnter = async (trade: FTTrade) => {
-    markExiting(trade.trade_id);
-    try { await botForceEnter(bot.id, trade.pair, trade.is_short ? "short" : "long"); }
-    finally { unmarkExiting(trade.trade_id); }
-  };
-
-  const handleReloadTrade = async (trade: FTTrade) => {
-    markExiting(trade.trade_id);
-    try { await botReloadTrade(bot.id, trade.trade_id); }
-    finally { unmarkExiting(trade.trade_id); }
-  };
-
-  const handleCancelOrder = async (trade: FTTrade) => {
-    markExiting(trade.trade_id);
-    try { await botCancelOpenOrder(bot.id, trade.trade_id); }
-    finally { unmarkExiting(trade.trade_id); }
-  };
-
-  const handleDeleteTrade = async (trade: FTTrade) => {
-    if (!confirm(`Delete trade #${trade.trade_id} (${trade.pair})? This cannot be undone.`)) return;
-    markExiting(trade.trade_id);
-    try { await botDeleteTrade(bot.id, trade.trade_id); }
-    finally { unmarkExiting(trade.trade_id); }
   };
 
   switch (tab) {
@@ -1001,13 +1013,13 @@ function DetailContent({
                           <td className="py-1.5 px-1 text-right text-muted">{durStr}</td>
                           <td className="py-1.5 px-1" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center gap-0.5">
-                              <button title="Force Exit (Market)" disabled={exiting} onClick={() => handleForceExit(t, "market")} className={`${btn} text-down hover:bg-down/15`}><Zap className="w-3.5 h-3.5" /></button>
-                              <button title="Force Exit (Limit)" disabled={exiting} onClick={() => handleForceExit(t, "limit")} className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}><LogOut className="w-3.5 h-3.5" /></button>
-                              <button title="Force Exit (Partial)" disabled={exiting} onClick={() => handleForceExit(t, "partial")} className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}><Scissors className="w-3.5 h-3.5" /></button>
-                              <button title="Increase Position" disabled={exiting} onClick={() => handleForceEnter(t)} className={`${btn} text-muted hover:text-up hover:bg-up/10`}><PlusCircle className="w-3.5 h-3.5" /></button>
-                              <button title="Reload Trade" disabled={exiting} onClick={() => handleReloadTrade(t)} className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}><RefreshCw className="w-3.5 h-3.5" /></button>
-                              {hasOpenOrder && <button title="Cancel Open Order" disabled={exiting} onClick={() => handleCancelOrder(t)} className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}><Ban className="w-3.5 h-3.5" /></button>}
-                              <button title="Delete Trade" disabled={exiting} onClick={() => handleDeleteTrade(t)} className={`${btn} text-down/50 hover:text-down hover:bg-down/10`}><Trash2 className="w-3.5 h-3.5" /></button>
+                              <button title="Force Exit (Market)" disabled={exiting} onClick={() => onTradeForceExit(t, "market")} className={`${btn} text-down hover:bg-down/15`}><Zap className="w-3.5 h-3.5" /></button>
+                              <button title="Force Exit (Limit)" disabled={exiting} onClick={() => onTradeForceExit(t, "limit")} className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}><LogOut className="w-3.5 h-3.5" /></button>
+                              <button title="Force Exit (Partial)" disabled={exiting} onClick={() => onTradeForceExit(t, "partial")} className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}><Scissors className="w-3.5 h-3.5" /></button>
+                              <button title="Increase Position" disabled={exiting} onClick={() => onTradeForceEnter(t)} className={`${btn} text-muted hover:text-up hover:bg-up/10`}><PlusCircle className="w-3.5 h-3.5" /></button>
+                              <button title="Reload Trade" disabled={exiting} onClick={() => onTradeReload(t)} className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}><RefreshCw className="w-3.5 h-3.5" /></button>
+                              {hasOpenOrder && <button title="Cancel Open Order" disabled={exiting} onClick={() => onTradeCancelOrder(t)} className={`${btn} text-muted hover:text-white hover:bg-white/[0.08]`}><Ban className="w-3.5 h-3.5" /></button>}
+                              <button title="Delete Trade" disabled={exiting} onClick={() => onTradeDelete(t)} className={`${btn} text-down/50 hover:text-down hover:bg-down/10`}><Trash2 className="w-3.5 h-3.5" /></button>
                             </div>
                           </td>
                         </tr>

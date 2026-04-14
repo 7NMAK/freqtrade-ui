@@ -691,7 +691,7 @@ export default function DashboardPage() {
         // aggMaxDDAbs = sum of absolute dollar drawdowns from FT's profit API
         // fetchedTotalEquity = total portfolio balance ($700k etc)
         // Result: how much of total equity was lost at worst point
-        let finalMaxDD: number | null =
+        const finalMaxDD: number | null =
           aggMaxDDAbs != null && aggMaxDDAbs > 0 && fetchedTotalEquity > 0
             ? -(aggMaxDDAbs / fetchedTotalEquity * 100)
             : null;

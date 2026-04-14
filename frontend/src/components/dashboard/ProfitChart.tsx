@@ -100,8 +100,8 @@ export default function ProfitChart({
     const profits = chartData.map((d) => d.profit);
     const max = Math.max(...profits);
     const min = Math.min(...profits);
-    if (min >= 0) return 0;   // all positive — all green
-    if (max <= 0) return 1;   // all negative — all red
+    if (min >= 0) return 1;   // all positive — green covers 100%
+    if (max <= 0) return 0;   // all negative — red starts at 0%
     return max / (max - min); // zero crossing as fraction from top
   }, [chartData]);
 

@@ -426,6 +426,7 @@ function FleetCards({
           {colH("staked", "STAKED \u21C5", "text-right")}
           {colH("maxDd", "MAX DD \u21C5", "text-right")}
           {colH("avgDur", "AVG DUR \u21C5", "text-left")}
+          <th className={`${TH_BASE} text-center`}>TF</th>
           <th className={`${TH_BASE} text-right border-l border-white/[0.06]`}>ACTIONS</th>
         </tr>
       </thead>
@@ -497,6 +498,7 @@ function FleetCards({
                 {maxDd != null && maxDd > 0.001 ? `-${fmt(maxDd, 1)}%` : "\u2014"}
               </td>
               <td className={`${TD} text-muted font-mono text-[12px]`}>{avgDurStr}</td>
+              <td className={`${TD} text-center font-mono text-[11px] text-white/50`}>{bot.timeframe ?? "—"}</td>
               <td className={`${TD} border-l border-white/[0.06] text-right`} onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-end gap-[2px] opacity-30 group-hover:opacity-100 transition-opacity">
                   <button className="bot-ctrl ctrl-start" title="▶ Start" onClick={() => onStart?.(bot.id)}><Play className="w-2.5 h-2.5" /></button>

@@ -15,7 +15,7 @@ export function setToken(token: string | null) {
   if (typeof window !== "undefined") {
     if (token) {
       localStorage.setItem("orch_token", token);
-      document.cookie = `orch_token=${token}; path=/; SameSite=Strict; max-age=${60 * 60 * 24}`;
+      document.cookie = `orch_token=${token}; path=/; SameSite=Strict; max-age=${60 * 60 * 24 * 7}`;
     } else {
       localStorage.removeItem("orch_token");
       document.cookie = "orch_token=; path=/; max-age=0";

@@ -260,7 +260,7 @@ function MiniSparkline7({ data }: { data: number[] }) {
   );
 }
 
-type FleetSortKey = "name" | "pnl" | "pnlPct" | "openPnl" | "netPnl" | "winRate" | "trades" | "closed" | "open" | "balance" | "staked" | "maxDd" | "avgDur";
+type FleetSortKey = "name" | "pnl" | "pnlPct" | "openPnl" | "winRate" | "trades" | "closed" | "open" | "balance" | "staked" | "maxDd" | "avgDur";
 
 interface FleetCardsProps {
   bots: Bot[];
@@ -327,7 +327,7 @@ function FleetCards({
   }, [openTrades]);
 
   type BotRow = {
-    bot: Bot; pnl: number | null; pnlPct: number | null; openPnl: number; netPnl: number | null;
+    bot: Bot; pnl: number | null; pnlPct: number | null; openPnl: number;
     winRate: number | null; trades: number; closedCount: number; openCount: number;
     maxOT: number | null; balance: number | null; staked: number; maxDd: number | null;
     avgDurSecs: number | null; avgDurStr: string;
@@ -363,8 +363,7 @@ function FleetCards({
     } else if (typeof avgDur === "string" && avgDur) {
       avgDurStr = avgDur;
     }
-    const netPnl = pnl != null ? pnl + openPnl : openPnl !== 0 ? openPnl : null;
-    return { bot, pnl, pnlPct, openPnl, netPnl, winRate, trades, closedCount, openCount, maxOT, balance, staked, maxDd, avgDurSecs, avgDurStr };
+    return { bot, pnl, pnlPct, openPnl, winRate, trades, closedCount, openCount, maxOT, balance, staked, maxDd, avgDurSecs, avgDurStr };
   }), [bots, botProfits, botBalances, openPnlByBot, openCountByBot, stakedByBot]);
 
   const sorted = useMemo(() => [...rows].sort((a, b) => {
@@ -373,7 +372,6 @@ function FleetCards({
     else if (sortKey === "pnl") cmp = (a.pnl ?? -Infinity) - (b.pnl ?? -Infinity);
     else if (sortKey === "pnlPct") cmp = (a.pnlPct ?? -Infinity) - (b.pnlPct ?? -Infinity);
     else if (sortKey === "openPnl") cmp = a.openPnl - b.openPnl;
-    else if (sortKey === "netPnl") cmp = (a.netPnl ?? -Infinity) - (b.netPnl ?? -Infinity);
     else if (sortKey === "winRate") cmp = (a.winRate ?? -1) - (b.winRate ?? -1);
     else if (sortKey === "trades") cmp = a.trades - b.trades;
     else if (sortKey === "closed") cmp = a.closedCount - b.closedCount;
@@ -420,7 +418,6 @@ function FleetCards({
           {colH("pnl", "CLOSED P&L \u21C5", "text-right")}
           {colH("pnlPct", "% \u21C5", "text-right")}
           {colH("openPnl", "OPEN P&L \u21C5", "text-right")}
-          {colH("netPnl", "NET P&L \u21C5", "text-right")}
           {colH("winRate", "WIN% \u21C5", "text-right")}
           {colH("trades", "TRADES \u21C5", "text-right w-[58px]")}
           {colH("closed", "CLOSED \u21C5", "text-right w-[58px]")}
@@ -435,7 +432,7 @@ function FleetCards({
       </thead>
       <tbody className={TBODY}>
         {sorted.map((row, idx) => {
-          const { bot, pnl, pnlPct, openPnl, netPnl, winRate, trades, closedCount, openCount, maxOT, balance, staked, maxDd, avgDurStr } = row;
+          const { bot, pnl, pnlPct, openPnl, winRate, trades, closedCount, openCount, maxOT, balance, staked, maxDd, avgDurStr } = row;
           const isRunning = bot.status === "running";
           const isDraining = bot.status === "draining";
           const isStopped = !isRunning && !isDraining;
@@ -482,9 +479,6 @@ function FleetCards({
               </td>
               <td className={`${TD} text-right font-mono ${openPnl === 0 ? "text-muted" : openPnl > 0 ? "text-up" : "text-down"}`}>
                 {openPnl !== 0 ? `${openPnl >= 0 ? "+" : ""}${fmt(openPnl, 4)}` : "+0.0000"}
-              </td>
-              <td className={`${TD} text-right font-bold font-mono ${netPnl == null ? "text-muted" : netPnl > 0 ? "text-up" : netPnl < 0 ? "text-down" : "text-muted"}`}>
-                {netPnl != null ? `${netPnl >= 0 ? "+" : ""}${fmt(netPnl, 4)}` : "\u2014"}
               </td>
               <td className={`${TD} text-right font-mono ${winRate == null ? "text-muted" : winRate < 50 ? "text-down" : "text-white/80"}`}>
                 {winRate != null ? `${fmt(winRate, 0)}%` : "\u2014"}

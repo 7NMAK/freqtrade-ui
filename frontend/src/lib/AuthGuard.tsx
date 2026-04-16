@@ -2,11 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { isAuthenticated, isTokenExpiringSoon, setToken } from "./api";
+import { isAuthenticated } from "./api";
 
 /**
  * Wraps pages that require authentication.
- * Redirects to /login if no token is found.
+ * Redirects to /login if no token is found in localStorage.
+ * Token expiry is handled server-side: when the JWT expires, the orchestrator
+ * returns 401 on API calls and the request() function in api.ts redirects to /login.
+ * We intentionally do NOT do client-side expiry checks here because they cause
+ * false logouts when the client's system clock differs from the server's clock.
  */
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -17,21 +21,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       router.replace("/login");
       return;
     }
-    if (isTokenExpiringSoon()) {
-      setToken(null);
-      router.replace("/login?expired=1");
-      return;
-    }
     setReady(true);
-
-    // Periodic check: redirect if token expires while page is open
-    const interval = setInterval(() => {
-      if (isTokenExpiringSoon()) {
-        setToken(null);
-        router.replace("/login?expired=1");
-      }
-    }, 60_000);
-    return () => clearInterval(interval);
   }, [router]);
 
   if (!ready) {

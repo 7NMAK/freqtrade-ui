@@ -278,7 +278,9 @@ export default function RightSidebar({
     : null;
   const ramPct = sysinfoData ? Math.round(sysinfoData.ram_pct) : null;
 
-  const grossProfit = aggregatedProfit?.profit_closed_coin ?? null;
+  // profit_closed_coin is NET (after fees) per FT docs — gross = net + fees
+  const netProfit = aggregatedProfit?.profit_closed_coin ?? null;
+  const grossProfit = netProfit != null && totalFees != null ? netProfit + Math.abs(totalFees) : netProfit;
   const feeRatio =
     totalFees != null && grossProfit != null && grossProfit !== 0
       ? Math.abs(totalFees / grossProfit) * 100
@@ -396,8 +398,8 @@ export default function RightSidebar({
           <div className="flex justify-between items-center">
             <span className="text-muted">Net vs Gross</span>
             <span className="text-white/70">
-              {grossProfit != null && totalFees != null
-                ? `${fmtMoney(grossProfit - Math.abs(totalFees))} / ${fmtMoney(grossProfit)}`
+              {netProfit != null && grossProfit != null
+                ? `${fmtMoney(netProfit)} / ${fmtMoney(grossProfit)}`
                 : "\u2014"}
             </span>
           </div>

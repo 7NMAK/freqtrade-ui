@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { login, ApiError } from "@/lib/api";
+import { login, isAuthenticated, ApiError } from "@/lib/api";
 
 // ── Validation ──────────────────────────────────────────────────────────
 
@@ -24,6 +24,18 @@ function validatePassword(v: string): string {
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // If the user already has a valid token in localStorage (e.g. the SameSite cookie
+  // was not sent on a cross-site navigation but the token is still good), redirect
+  // them back immediately without requiring a new login.
+  useEffect(() => {
+    if (isAuthenticated()) {
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get("redirect") || "/dashboard";
+      router.replace(redirect);
+    }
+  }, [router]);
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");

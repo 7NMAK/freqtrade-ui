@@ -5,7 +5,6 @@ import { fmt, fmtMoney } from "@/lib/format";
 import { getSystemLogs, getBotActivityLogs, getErrorLogs } from "@/lib/api";
 import { REFRESH_INTERVALS } from "@/lib/constants";
 import type {
-  FTBalance,
   FTSysinfo,
   FTLogsResponse,
   FTProfit,
@@ -154,7 +153,6 @@ function LogEntry({ log }: { log: string[] }) {
 
 interface RightSidebarProps {
   isOpen: boolean;
-  balanceData: FTBalance | null;
   sysinfoData: FTSysinfo | null;
   logsData: FTLogsResponse | null;
   /** Aggregated profit from all bots to compute fees */
@@ -182,7 +180,6 @@ interface RightSidebarProps {
 
 export default function RightSidebar({
   isOpen,
-  balanceData,
   sysinfoData,
   logsData,
   aggregatedProfit,
@@ -301,67 +298,7 @@ export default function RightSidebar({
         maxHeight: "100%",
       }}
     >
-      {/* ── Panel 1: Balance Breakdown ──────────────────────────────── */}
-      <div className="bg-surface l-bd rounded-md shadow-xl overflow-hidden shrink-0">
-        <div className="h-10 l-b flex items-center px-4 bg-black/40 shrink-0">
-          <span className="section-title">Balance</span>
-        </div>
-        <div className="p-4 font-mono text-[12px] space-y-2.5">
-          {loading ? (
-            <div className="animate-pulse space-y-2">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={`bs-${i}`} className="h-4 bg-white/10 rounded w-full" />
-              ))}
-            </div>
-          ) : !balanceData || balanceData.currencies.length === 0 ? (
-            <div className="text-muted text-center py-4">No balance data</div>
-          ) : (
-            <>
-              {balanceData.currencies
-                .filter((c) => c.balance > 0 || c.used > 0 || c.est_stake > 0 || c.free > 0)
-                .slice(0, 8)
-                .map((c) => (
-                  <div key={c.currency} className="flex items-center gap-2">
-                    <span className="text-muted shrink-0 w-12 text-[11px] uppercase font-bold tracking-wide">{c.currency}</span>
-                    <span className="text-white font-medium flex-1 text-right">
-                      {fmt(c.balance, c.balance < 1 ? 4 : 2)}
-                    </span>
-                    {c.est_stake > 0 && c.currency !== balanceData.stake && (
-                      <span className="text-white/30 text-[10px] shrink-0 w-16 text-right">
-                        ≈ ${fmt(c.est_stake, 0)}
-                      </span>
-                    )}
-                    {c.currency === balanceData.stake && (
-                      <span className="text-muted text-[10px] shrink-0 w-16 text-right">free: {fmt(c.free, 2)}</span>
-                    )}
-                  </div>
-                ))}
-              {balanceData.total != null && (
-                <div className="pt-2 mt-1 border-t border-white/10 flex justify-between">
-                  <span className="text-white/50 text-[11px] uppercase font-sans font-medium">
-                    Total
-                  </span>
-                  <span className="text-white font-bold">
-                    {fmt(balanceData.total, 2)} {balanceData.stake}
-                  </span>
-                </div>
-              )}
-              {balanceData.starting_capital != null && (
-                <div className="flex justify-between">
-                  <span className="text-white/50 text-[11px] uppercase font-sans font-medium">
-                    Starting Capital
-                  </span>
-                  <span className="text-white font-medium">
-                    {fmt(balanceData.starting_capital, 2)} {balanceData.stake}
-                  </span>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* ── Panel 2: Fees & Costs ───────────────────────────────────── */}
+      {/* ── Panel 1: Fees & Costs ───────────────────────────────────── */}
       <div className="bg-surface l-bd rounded-md shadow-xl overflow-hidden shrink-0">
         <div className="h-10 l-b flex items-center px-4 bg-black/40 shrink-0">
           <span className="section-title">Fees &amp; Costs</span>

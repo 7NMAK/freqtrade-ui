@@ -189,7 +189,6 @@ export default function DashboardPage() {
   const [pairMarketData, setPairMarketData] = useState<Record<string, { change24h: number; volume: number; volatility: number }>>({});
 
   // Right sidebar data (aggregated from first running bot)
-  const [balanceData, setBalanceData] = useState<FTBalance | null>(null);
   const [sysinfoData, setSysinfoData] = useState<FTSysinfo | null>(null);
   const [logsData, setLogsData] = useState<FTLogsResponse | null>(null);
   const [aggregatedProfit, setAggregatedProfit] = useState<Partial<FTProfit> | null>(null);
@@ -857,15 +856,13 @@ export default function DashboardPage() {
         Promise.allSettled([
           liveWeekly ?? Promise.resolve(null),
           liveMonthly ?? Promise.resolve(null),
-          botBalance(firstBotId),
           botSysinfo(firstBotId),
           botLogs(firstBotId, 100),
           botHealth(firstBotId),
-        ]).then(([w, mo, bal, sys, logs, health]) => {
+        ]).then(([w, mo, sys, logs, health]) => {
           if (!m.current) return;
           if (w.status === "fulfilled" && w.value) setWeeklyData(w.value);
           if (mo.status === "fulfilled" && mo.value) setMonthlyData(mo.value);
-          if (bal.status === "fulfilled") setBalanceData(bal.value);
           if (sys.status === "fulfilled") setSysinfoData(sys.value);
           if (logs.status === "fulfilled") setLogsData(logs.value);
           if (health.status === "fulfilled") setMainHealthData(health.value);
@@ -1347,7 +1344,6 @@ export default function DashboardPage() {
           {/* COL 3: Right Sidebar (collapsible) */}
           <RightSidebar
             isOpen={rightSidebarOpen}
-            balanceData={balanceData}
             sysinfoData={sysinfoData}
             logsData={logsData}
             aggregatedProfit={aggregatedProfit}

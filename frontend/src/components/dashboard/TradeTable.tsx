@@ -822,7 +822,7 @@ export default function TradeTable({
                       const timeStr = `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
 
                       return (
-                        <tr key={trade.trade_id} className={`hover:bg-white/[0.04] transition-colors group ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}>
+                        <tr key={`${trade._bot_id}-${trade.trade_id}`} className={`hover:bg-white/[0.04] transition-colors group ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}>
                           <td className={TD}>{dateStr} <span className="text-white/35 ml-1">{timeStr}</span></td>
                           <td className={`${TD} font-bold text-white`}>{trade.pair}</td>
                           <td className={`${TD} text-muted font-sans text-[12px]`}>{trade._bot_name ?? `Bot ${trade._bot_id}`}</td>
@@ -924,7 +924,7 @@ export default function TradeTable({
                       const timeStr = d ? `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}` : "";
 
                       return (
-                        <tr key={trade.trade_id} className={`hover:bg-white/[0.04] transition-colors ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}>
+                        <tr key={`${trade._bot_id}-${trade.trade_id}`} className={`hover:bg-white/[0.04] transition-colors ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}>
                           <td className={TD}>{dateStr} <span className="text-white/35 ml-1">{timeStr}</span></td>
                           <td className={`${TD} font-bold text-white`}>{trade.pair}</td>
                           <td className={`${TD} text-muted font-sans text-[12px]`}>{trade._bot_name ?? `Bot ${trade._bot_id}`}</td>

@@ -179,7 +179,11 @@ class FTClient:
         self.password = password
         self._token: str | None = None
         self._token_lock = asyncio.Lock()
-        self._client = httpx.AsyncClient(timeout=10.0)
+        # keepalive_expiry=0 prevents reuse of stale connections (RemoteProtocolError)
+        self._client = httpx.AsyncClient(
+            timeout=10.0,
+            limits=httpx.Limits(max_keepalive_connections=5, keepalive_expiry=30),
+        )
 
     async def _login(self) -> str:
         """POST /api/v1/token/login — get JWT token."""
@@ -259,6 +263,16 @@ class FTClient:
 
         try:
             resp = await self._client.request(method, full_url, headers=headers, **kwargs)
+        except httpx.RemoteProtocolError:
+            # Stale keep-alive connection — retry once with a fresh attempt
+            logger.warning("FT stale connection on %s %s, retrying once", method, full_url)
+            try:
+                resp = await self._client.request(method, full_url, headers=headers, **kwargs)
+            except (httpx.HTTPError, OSError) as e:
+                diag = _diagnose_connection_error(e, self.api_url)
+                logger.error("FT request failed after retry: %s %s — %s", method, full_url, diag)
+                await _log_ft_event("ft.connection_failed", "error", f"{method} {path} to {self.api_url}", diag)
+                raise FTClientError(f"FT connection failed: {diag}", diagnosis=diag) from e
         except (httpx.HTTPError, OSError) as e:
             diag = _diagnose_connection_error(e, self.api_url)
             logger.error("FT request failed: %s %s — DIAGNOSIS: %s", method, full_url, diag)

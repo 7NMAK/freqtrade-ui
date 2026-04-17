@@ -11,7 +11,7 @@ import {
   ReferenceLine,
   ResponsiveContainer,
 } from "recharts";
-import { PanelRightClose, PanelRightOpen } from "lucide-react";
+import { PanelRightClose, PanelRightOpen, PanelTopClose, PanelTopOpen } from "lucide-react";
 import { fmt, fmtMoney } from "@/lib/format";
 import type { FTDailyItem, FTWeeklyResponse, FTMonthlyResponse } from "@/types";
 
@@ -26,6 +26,8 @@ interface ProfitChartProps {
   maxDrawdownRel: number | null;
   onToggleSidebar: () => void;
   sidebarOpen: boolean;
+  onToggleChart: () => void;
+  chartOpen: boolean;
   loading: boolean;
 }
 
@@ -48,6 +50,8 @@ export default function ProfitChart({
   maxDrawdownRel,
   onToggleSidebar,
   sidebarOpen,
+  onToggleChart,
+  chartOpen,
   loading,
 }: ProfitChartProps) {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("days");
@@ -140,8 +144,23 @@ export default function ProfitChart({
     );
   }
 
+  if (!chartOpen) {
+    return (
+      <div className="h-10 bg-surface l-bd rounded-md flex items-center px-4 shadow-xl shrink-0 overflow-hidden">
+        <span className="section-title text-white/30 flex-1">Profit Over Time</span>
+        <button
+          onClick={onToggleChart}
+          className="px-2 py-1 rounded text-muted hover:text-white hover:bg-white/[0.08] transition-all opacity-40 hover:opacity-100 cursor-pointer"
+          title="Show chart"
+        >
+          <PanelTopOpen className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="h-[280px] bg-surface l-bd rounded-md flex shadow-xl shrink-0 overflow-hidden relative">
+    <div className={`${chartOpen ? "h-[280px]" : "h-10"} bg-surface l-bd rounded-md flex shadow-xl shrink-0 overflow-hidden relative transition-all duration-300`}>
       {/* LEFT: Profit Over Time */}
       <div className="flex-1 flex flex-col relative">
         {/* Header */}
@@ -179,9 +198,17 @@ export default function ProfitChart({
             ))}
             <div className="w-2" />
             <button
+              onClick={onToggleChart}
+              className="px-2 py-1 rounded text-muted hover:text-white hover:bg-white/[0.08] transition-all opacity-40 hover:opacity-100 cursor-pointer"
+              title={chartOpen ? "Hide chart" : "Show chart"}
+            >
+              {chartOpen ? <PanelTopClose className="w-3.5 h-3.5" /> : <PanelTopOpen className="w-3.5 h-3.5" />}
+            </button>
+            <div className="w-1" />
+            <button
               onClick={onToggleSidebar}
               className="sidebar-toggle px-2 py-1 rounded text-muted hover:text-white hover:bg-white/[0.08] transition-all opacity-40 hover:opacity-100 cursor-pointer"
-              title="Toggle right sidebar (Balance, Fees, Telemetry)"
+              title="Toggle right sidebar (Fees, Telemetry)"
             >
               {sidebarOpen ? <PanelRightClose className="w-3.5 h-3.5" /> : <PanelRightOpen className="w-3.5 h-3.5" />}
             </button>

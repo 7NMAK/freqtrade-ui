@@ -196,6 +196,7 @@ export default function DashboardPage() {
 
   // UI state
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
+  const [chartOpen, setChartOpen] = useState(true);
   const [exitingTradeId, setExitingTradeId] = useState<string | null>(null);
   const [selectedBotId, setSelectedBotId] = useState<number | null>(null);
 
@@ -1298,6 +1299,8 @@ export default function DashboardPage() {
               maxDrawdownRel={aggStats.maxDrawdown}
               onToggleSidebar={() => setRightSidebarOpen(!rightSidebarOpen)}
               sidebarOpen={rightSidebarOpen}
+              onToggleChart={() => setChartOpen(!chartOpen)}
+              chartOpen={chartOpen}
               loading={loading}
             />
 

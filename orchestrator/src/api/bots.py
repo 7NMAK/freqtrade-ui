@@ -837,12 +837,19 @@ async def launch_paper_bot(
     db_path = f"sqlite:////freqtrade/user_data/dbs/{container_name}.sqlite"
 
     # ── 7. Create Docker container ──
+    # Memory cap = 800 MB. Fresh FT baseline is 250-500 MB; 800 MB allows
+    # ~300-550 MB growth for Python heap accumulation before OOM kill.
+    # restart_policy=unless-stopped means Docker restarts on OOM forever
+    # (not limited to 5 retries). FT is crash-safe — open positions live
+    # on the exchange and SQLite persists trade state across restarts.
     try:
         container = dk.containers.run(
             image="freqtradeorg/freqtrade:stable_freqai",
             name=container_name,
             detach=True,
-            restart_policy={"Name": "on-failure", "MaximumRetryCount": 5},
+            restart_policy={"Name": "unless-stopped"},
+            mem_limit="800m",
+            memswap_limit="800m",
             volumes={
                 "/opt/freqtrade/user_data": {
                     "bind": "/freqtrade/user_data",

@@ -179,6 +179,27 @@ class BotManager:
         )
         return result.scalar_one_or_none()
 
+    async def get_bot_locked(self, db: AsyncSession, bot_id: int) -> BotInstance | None:
+        """
+        Get bot by ID with a row-level lock (SELECT FOR UPDATE).
+
+        Use this for any lifecycle mutation (start/stop/restart/delete).
+        Concurrent requests will serialize — the second one waits until the
+        first commits or rolls back. Prevents the classic race where two
+        requests read status=STOPPED, both call start/stop, and the final
+        DB value depends on commit ordering while the actual FT process
+        state diverges.
+        """
+        result = await db.execute(
+            select(BotInstance)
+            .where(
+                BotInstance.id == bot_id,
+                BotInstance.is_deleted.is_(False),
+            )
+            .with_for_update()
+        )
+        return result.scalar_one_or_none()
+
     async def get_all_bots(
         self, db: AsyncSession, *, include_utility: bool = True
     ) -> list[BotInstance]:
@@ -199,7 +220,7 @@ class BotManager:
 
     async def delete_bot(self, db: AsyncSession, bot_id: int) -> BotInstance | None:
         """Soft-delete a bot (safety rule #7 — never hard delete)."""
-        bot = await self.get_bot(db, bot_id)
+        bot = await self.get_bot_locked(db, bot_id)
         if not bot:
             return None
 
@@ -237,9 +258,13 @@ class BotManager:
         POST /api/v1/start on the FT bot.
         Does NOT create a container — the container must already be running.
         """
-        bot = await self.get_bot(db, bot_id)
+        bot = await self.get_bot_locked(db, bot_id)
         if not bot:
             raise ValueError(f"Bot {bot_id} not found")
+        if bot.status == BotStatus.RUNNING:
+            # Idempotent no-op — do not re-issue start() which could reset counters
+            # mid-trade or interfere with an in-flight operation.
+            return {"status": "already_running", "message": f"Bot {bot.name} already RUNNING"}
 
         client = await self.get_client(bot)
         result = await client.start()
@@ -267,9 +292,11 @@ class BotManager:
         POST /api/v1/stop on the FT bot (Soft Kill for single bot).
         Stops trading but keeps positions open.
         """
-        bot = await self.get_bot(db, bot_id)
+        bot = await self.get_bot_locked(db, bot_id)
         if not bot:
             raise ValueError(f"Bot {bot_id} not found")
+        if bot.status == BotStatus.STOPPED:
+            return {"status": "already_stopped", "message": f"Bot {bot.name} already STOPPED"}
 
         client = await self.get_client(bot)
         result = await client.stop()

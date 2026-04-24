@@ -6,8 +6,11 @@ Read-only FT API data is proxied through here (status, trades, profit, etc.)
 so the frontend only talks to the orchestrator.
 """
 import json
+import logging
 import re
 from typing import Any, Literal
+
+logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -871,83 +874,127 @@ async def launch_paper_bot(
         raise HTTPException(502, f"Failed to create container: {e}")
 
     # ── 8. Connect to ft_network ──
+    # CRITICAL: if the network doesn't exist, the bot cannot reach the orchestrator.
+    # This used to be `except Exception: pass` — silent fallback left bots
+    # invisible to heartbeat/kill switch. Now we treat missing network as fatal.
+    network_connected = False
     try:
         network = dk.networks.get("ft_network")
         network.connect(container)
-    except Exception:
-        pass  # Network might not exist or already connected
+        network_connected = True
+    except docker.errors.NotFound:
+        logger.error("ft_network does not exist — bot %s will be unreachable", container_name)
+    except docker.errors.APIError as e:
+        # APIError with "already exists" message = already connected (OK)
+        if "already exists" in str(e).lower():
+            network_connected = True
+        else:
+            logger.error("Failed to connect %s to ft_network: %s", container_name, e)
+
+    if not network_connected:
+        # Roll back: stop + remove container, delete config
+        try:
+            container.stop(timeout=5)
+            container.remove(force=True)
+        except Exception as cleanup_err:
+            logger.error("Cleanup after network failure failed: %s", cleanup_err)
+        config_path.unlink(missing_ok=True)
+        raise HTTPException(502, f"Bot {container_name} could not join ft_network — container rolled back")
 
     # ── 9. Register in orchestrator DB (revive if soft-deleted) ──
-    existing_row = (await db.execute(
-        select(BotInstance).where(BotInstance.name == container_name)
-    )).scalar_one_or_none()
+    # All code below runs in a try/except that rolls back the Docker container
+    # if anything fails. Previously a DB error (unique constraint, connection
+    # lost) would leave a running container with no orchestrator record —
+    # invisible to heartbeat and kill switch, silently trading.
+    try:
+        existing_row = (await db.execute(
+            select(BotInstance).where(BotInstance.name == container_name)
+        )).scalar_one_or_none()
 
-    if existing_row:
-        # Revive soft-deleted or update existing
-        existing_row.is_deleted = False
-        existing_row.container_id = container_name
-        existing_row.api_url = f"http://{container_name}"
-        existing_row.api_port = 8080
-        existing_row.api_password = encrypt(os.environ.get("ORCH_ADMIN_PASSWORD", "freqtrader")) or ""
-        existing_row.strategy_name = strategy_name
-        existing_row.strategy_version_id = version_id
-        existing_row.is_dry_run = True
-        existing_row.status = BotStatus.RUNNING
-        existing_row.ft_mode = "trade"
-        existing_row.config_path = str(config_path)
-        existing_row.description = body.description or f"Paper trading {strategy_name} (v{version_id or 'default'})"
-        existing_row.pair_whitelist = body.pair_whitelist
-        existing_row.trading_mode = body.trading_mode
-        existing_row.timeframe = body.timeframe
-        existing_row.max_open_trades = body.max_open_trades
-        existing_row.stake_amount = body.stake_amount
-        existing_row.is_healthy = True
-        existing_row.consecutive_failures = 0
-        bot = existing_row
-    else:
-        bot = BotInstance(
-            name=container_name,
-            container_id=container_name,
-            docker_image="freqtradeorg/freqtrade:stable_freqai",
-            api_url=f"http://{container_name}",
-            api_port=8080,
-            api_username=os.environ.get("ORCH_ADMIN_USERNAME", "freqtrader"),
-            api_password=encrypt(os.environ.get("ORCH_ADMIN_PASSWORD", "freqtrader")) or "",
-            strategy_name=strategy_name,
-            strategy_version_id=version_id,
-            is_dry_run=True,
-            status=BotStatus.RUNNING,
-            ft_mode="trade",
-            config_path=str(config_path),
-            description=body.description or f"Paper trading {strategy_name} (v{version_id or 'default'})",
-            stake_currency="USDT",
-            stake_amount=body.stake_amount,
-            max_open_trades=body.max_open_trades,
-            timeframe=body.timeframe,
-            pair_whitelist=body.pair_whitelist,
-            pair_blacklist=[],
-            trading_mode=body.trading_mode,
-            margin_mode="isolated",
+        if existing_row:
+            # Revive soft-deleted or update existing
+            existing_row.is_deleted = False
+            existing_row.container_id = container_name
+            existing_row.api_url = f"http://{container_name}"
+            existing_row.api_port = 8080
+            existing_row.api_password = encrypt(os.environ.get("ORCH_ADMIN_PASSWORD", "freqtrader")) or ""
+            existing_row.strategy_name = strategy_name
+            existing_row.strategy_version_id = version_id
+            existing_row.is_dry_run = True
+            existing_row.status = BotStatus.RUNNING
+            existing_row.ft_mode = "trade"
+            existing_row.config_path = str(config_path)
+            existing_row.description = body.description or f"Paper trading {strategy_name} (v{version_id or 'default'})"
+            existing_row.pair_whitelist = body.pair_whitelist
+            existing_row.trading_mode = body.trading_mode
+            existing_row.timeframe = body.timeframe
+            existing_row.max_open_trades = body.max_open_trades
+            existing_row.stake_amount = body.stake_amount
+            existing_row.is_healthy = True
+            existing_row.consecutive_failures = 0
+            bot = existing_row
+        else:
+            bot = BotInstance(
+                name=container_name,
+                container_id=container_name,
+                docker_image="freqtradeorg/freqtrade:stable_freqai",
+                api_url=f"http://{container_name}",
+                api_port=8080,
+                api_username=os.environ.get("ORCH_ADMIN_USERNAME", "freqtrader"),
+                api_password=encrypt(os.environ.get("ORCH_ADMIN_PASSWORD", "freqtrader")) or "",
+                strategy_name=strategy_name,
+                strategy_version_id=version_id,
+                is_dry_run=True,
+                status=BotStatus.RUNNING,
+                ft_mode="trade",
+                config_path=str(config_path),
+                description=body.description or f"Paper trading {strategy_name} (v{version_id or 'default'})",
+                stake_currency="USDT",
+                stake_amount=body.stake_amount,
+                max_open_trades=body.max_open_trades,
+                timeframe=body.timeframe,
+                pair_whitelist=body.pair_whitelist,
+                pair_blacklist=[],
+                trading_mode=body.trading_mode,
+                margin_mode="isolated",
+            )
+            db.add(bot)
+        await db.flush()
+
+        # Audit log
+        actor = auth_payload.get("sub", "user")
+        db.add(AuditLog(
+            action="bot.launch_paper",
+            actor=actor,
+            target_type="bot",
+            target_id=bot.id,
+            target_name=bot.name,
+            details=_json.dumps({
+                "strategy": strategy_name,
+                "version_id": version_id,
+                "port": free_port,
+                "container": container_name,
+            }),
+        ))
+        await db.commit()
+    except Exception as db_err:
+        # DB write failed — roll back the Docker container so we don't leak
+        # a live-trading container with no orchestrator record.
+        logger.critical(
+            "DB write failed for bot %s after container creation — rolling back container. Error: %s",
+            container_name, db_err,
         )
-        db.add(bot)
-    await db.flush()
-
-    # Audit log
-    actor = auth_payload.get("sub", "user")
-    db.add(AuditLog(
-        action="bot.launch_paper",
-        actor=actor,
-        target_type="bot",
-        target_id=bot.id,
-        target_name=bot.name,
-        details=_json.dumps({
-            "strategy": strategy_name,
-            "version_id": version_id,
-            "port": free_port,
-            "container": container_name,
-        }),
-    ))
-    await db.commit()
+        try:
+            await db.rollback()
+        except Exception:
+            pass
+        try:
+            container.stop(timeout=5)
+            container.remove(force=True)
+        except Exception as cleanup_err:
+            logger.error("Container cleanup after DB failure failed: %s", cleanup_err)
+        config_path.unlink(missing_ok=True)
+        raise HTTPException(500, f"Bot creation rolled back after DB error: {db_err}")
 
     return {
         "bot_id": bot.id,

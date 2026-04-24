@@ -245,6 +245,7 @@ BOTS_TOTAL = Gauge("orch_bots_total", "Total registered bots")
 BOTS_RUNNING = Gauge("orch_bots_running", "Bots in RUNNING state")
 KILL_EVENTS_TOTAL = Counter("orch_kill_events_total", "Kill switch activations", ["type", "trigger"])
 HEARTBEAT_FAILURES = Counter("orch_heartbeat_failures_total", "Heartbeat ping failures")
+HEARTBEAT_CYCLE_ERRORS = Counter("orch_heartbeat_cycle_errors_total", "Heartbeat full-cycle failures (monitoring may be silent)")
 API_REQUEST_DURATION = Histogram("orch_api_request_duration_seconds", "API request duration", ["method", "endpoint"])
 
 

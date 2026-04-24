@@ -133,23 +133,63 @@ class KillSwitch:
 
         client = await self._bot_manager.get_client(bot)
         forceexit_failed = False
+        positions_remaining = -1  # -1 = unknown (verification failed too)
+        exit_attempts = 0
 
-        # Step 1: Force exit ALL positions (MUST succeed — safety rule #5)
-        try:
-            exit_result = await client.forceexit("all")
-        except FTClientError as e:
-            logger.error("Force exit failed for bot %s: %s", bot.name, e)
-            exit_result = {"error": str(e)}
-            forceexit_failed = True
+        # Step 1: Force-exit ALL positions with retry + verification.
+        # FT's /forceexit is fire-and-forget — it queues orders, does not wait
+        # for fills. We retry up to 5× with exponential backoff, polling /status
+        # between attempts, until open trades drop to 0.
+        exit_result: dict = {}
+        for attempt in range(5):
+            exit_attempts = attempt + 1
+            try:
+                exit_result = await client.forceexit("all")
+            except FTClientError as e:
+                logger.error("Force exit attempt %d failed for bot %s: %s", exit_attempts, bot.name, e)
+                exit_result = {"error": str(e)}
+                forceexit_failed = True
+                # Don't abort — retry after backoff
 
-        # Step 2: Stop trading (always attempt, even if forceexit failed)
-        try:
-            stop_result = await client.stop()
-        except FTClientError as e:
-            logger.error("Stop failed for bot %s: %s", bot.name, e)
-            stop_result = {"error": str(e)}
+            # Poll /status to see if positions actually closed
+            await asyncio.sleep(2 ** attempt)  # 1, 2, 4, 8, 16 seconds
+            try:
+                status = await client.status()
+                open_trades = status if isinstance(status, list) else status.get("trades", [])
+                positions_remaining = len(open_trades)
+                if positions_remaining == 0:
+                    forceexit_failed = False
+                    break
+                logger.warning(
+                    "Hard kill attempt %d: bot=%s still has %d open positions, retrying",
+                    exit_attempts, bot.name, positions_remaining,
+                )
+            except FTClientError as e:
+                logger.error("Status poll failed during hard kill for bot %s: %s", bot.name, e)
+                positions_remaining = -1
+                forceexit_failed = True
 
-        bot.status = BotStatus.KILLED
+        # Step 2: Stop trading — only if all positions confirmed closed.
+        # If positions remain, keep bot RUNNING so stoploss-on-exchange (if set)
+        # can still trigger, and operator can manually intervene.
+        stop_result: dict = {}
+        if positions_remaining == 0:
+            try:
+                stop_result = await client.stop()
+            except FTClientError as e:
+                logger.error("Stop failed for bot %s: %s", bot.name, e)
+                stop_result = {"error": str(e)}
+            bot.status = BotStatus.KILLED
+        else:
+            # Critical state: do NOT mark KILLED. Set ERROR and keep heartbeat
+            # pinging so operator is alerted continuously.
+            bot.status = BotStatus.ERROR
+            stop_result = {"skipped": "positions still open"}
+            logger.critical(
+                "HARD KILL INCOMPLETE: bot=%s has %d positions still open after %d attempts. "
+                "Bot left in ERROR state. MANUAL INTERVENTION REQUIRED.",
+                bot.name, positions_remaining, exit_attempts,
+            )
 
         # Immutable risk event
         db.add(RiskEvent(
@@ -161,6 +201,12 @@ class KillSwitch:
         ))
 
         # Audit log
+        diagnosis = None
+        if positions_remaining > 0:
+            diagnosis = f"{positions_remaining} POSITIONS STILL OPEN after {exit_attempts} attempts — MANUAL INTERVENTION"
+        elif positions_remaining < 0:
+            diagnosis = "CANNOT VERIFY position state (status poll failed) — check exchange manually"
+
         await log_activity(
             db,
             action="kill_switch.hard",
@@ -175,20 +221,25 @@ class KillSwitch:
                 "trigger": trigger,
                 "reason": reason,
                 "forceexit_failed": forceexit_failed,
+                "exit_attempts": exit_attempts,
+                "positions_remaining": positions_remaining,
             }),
-            diagnosis="POSITIONS MAY STILL BE OPEN — forceexit failed" if forceexit_failed else None,
+            diagnosis=diagnosis,
         )
 
         _inc_kill_counter("hard", trigger)
-        logger.critical("HARD KILL: bot=%s trigger=%s reason=%s forceexit_failed=%s",
-                        bot.name, trigger, reason, forceexit_failed)
+        logger.critical(
+            "HARD KILL: bot=%s trigger=%s reason=%s positions_remaining=%d attempts=%d",
+            bot.name, trigger, reason, positions_remaining, exit_attempts,
+        )
 
-        result = {"forceexit": exit_result, "stop": stop_result, "success": not forceexit_failed}
-
-        if forceexit_failed:
-            logger.critical("POSITIONS MAY STILL BE OPEN for bot %s — forceexit failed", bot.name)
-
-        return result
+        return {
+            "forceexit": exit_result,
+            "stop": stop_result,
+            "success": positions_remaining == 0,
+            "positions_remaining": positions_remaining,
+            "exit_attempts": exit_attempts,
+        }
 
     async def hard_kill_all(
         self,
@@ -203,26 +254,34 @@ class KillSwitch:
         """
         bots = await self._bot_manager.get_all_bots(db)
         running_bots = [b for b in bots if b.status == BotStatus.RUNNING]
+        running_ids_names = [(b.id, b.name) for b in running_bots]
 
-        # L6: concurrent kill via asyncio.gather
-        async def _kill_one(bot: BotInstance) -> tuple[str, dict]:
+        # Each task opens its own DB session — SQLAlchemy AsyncSession is NOT
+        # safe for concurrent use. Sharing a session across gather() tasks
+        # causes interleaved writes, lost RiskEvent rows, and InterfaceErrors
+        # exactly on the "nuclear option" path where we need audit trail most.
+        from ..database import async_session
+
+        async def _kill_one(bot_id: int, bot_name: str) -> tuple[str, dict]:
             try:
-                result = await self.hard_kill_bot(
-                    db=db,
-                    bot_id=bot.id,
-                    trigger=trigger,
-                    reason=reason,
-                    actor=actor,
-                )
-                return (bot.name, result)
+                async with async_session() as task_db:
+                    result = await self.hard_kill_bot(
+                        db=task_db,
+                        bot_id=bot_id,
+                        trigger=trigger,
+                        reason=reason,
+                        actor=actor,
+                    )
+                    await task_db.commit()
+                    return (bot_name, result)
             except Exception as e:
-                logger.error("Hard kill all — failed for bot %s: %s", bot.name, e)
-                return (bot.name, {"error": str(e)})
+                logger.error("Hard kill all — failed for bot %s: %s", bot_name, e)
+                return (bot_name, {"error": str(e), "success": False})
 
-        kill_results = await asyncio.gather(*[_kill_one(b) for b in running_bots])
+        kill_results = await asyncio.gather(*[_kill_one(bid, bn) for bid, bn in running_ids_names])
         results = dict(kill_results)
 
-        # Additional audit for the "all" action
+        # Additional audit for the "all" action — uses the caller's session
         await log_activity(
             db,
             action="kill_switch.hard_all",
@@ -256,23 +315,28 @@ class KillSwitch:
         """
         bots = await self._bot_manager.get_all_bots(db)
         running_bots = [b for b in bots if b.status == BotStatus.RUNNING]
+        running_ids_names = [(b.id, b.name) for b in running_bots]
 
-        # L6: concurrent kill via asyncio.gather
-        async def _kill_one(bot: BotInstance) -> tuple[str, dict]:
+        # Per-task DB sessions (see hard_kill_all comment for rationale).
+        from ..database import async_session
+
+        async def _kill_one(bot_id: int, bot_name: str) -> tuple[str, dict]:
             try:
-                result = await self.soft_kill_bot(
-                    db=db,
-                    bot_id=bot.id,
-                    trigger=trigger,
-                    reason=reason,
-                    actor=actor,
-                )
-                return (bot.name, result)
+                async with async_session() as task_db:
+                    result = await self.soft_kill_bot(
+                        db=task_db,
+                        bot_id=bot_id,
+                        trigger=trigger,
+                        reason=reason,
+                        actor=actor,
+                    )
+                    await task_db.commit()
+                    return (bot_name, result)
             except Exception as e:
-                logger.error("Soft kill all — failed for bot %s: %s", bot.name, e)
-                return (bot.name, {"error": str(e)})
+                logger.error("Soft kill all — failed for bot %s: %s", bot_name, e)
+                return (bot_name, {"error": str(e)})
 
-        kill_results = await asyncio.gather(*[_kill_one(b) for b in running_bots])
+        kill_results = await asyncio.gather(*[_kill_one(bid, bn) for bid, bn in running_ids_names])
         results = dict(kill_results)
 
         await log_activity(

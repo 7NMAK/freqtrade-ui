@@ -11,8 +11,9 @@ Trade data is NOT here. Read from FT API:
 - GET /api/v1/balance (account balance)
 """
 import enum
+from datetime import datetime
 
-from sqlalchemy import Boolean, Enum, Integer, JSON, String, Text, ForeignKey
+from sqlalchemy import Boolean, DateTime, Enum, Integer, JSON, String, Text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base, TimestampMixin
@@ -135,9 +136,13 @@ class BotInstance(Base, TimestampMixin):
     # Notes
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    # Cached profit snapshot (updated while bot runs, preserved after stop)
+    # Cached profit/balance snapshot (updated while bot runs, preserved after stop).
+    # cached_at records when the snapshot was taken. All read paths MUST check
+    # staleness before serving as "live" data — otherwise users see old P&L as
+    # current. Staleness threshold is enforced in the portfolio aggregator.
     cached_profit: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     cached_balance: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    cached_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Utility flag (backtest workers etc. — hidden from dashboard)
     is_utility: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

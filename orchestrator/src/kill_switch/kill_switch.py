@@ -23,7 +23,7 @@ from ..ft_client import FTClient, FTClientError
 from ..models.bot_instance import BotInstance, BotStatus
 from ..models.risk_event import RiskEvent, KillType, KillTrigger
 from ..models.audit_log import AuditLog
-from ..activity_logger import log_activity
+from ..activity_logger import log_activity, log_activity_independent
 
 logger = logging.getLogger(__name__)
 
@@ -281,9 +281,9 @@ class KillSwitch:
         kill_results = await asyncio.gather(*[_kill_one(bid, bn) for bid, bn in running_ids_names])
         results = dict(kill_results)
 
-        # Additional audit for the "all" action — uses the caller's session
-        await log_activity(
-            db,
+        # Overall audit for "all" action written via INDEPENDENT session
+        # so it survives any rollback of the caller's transaction.
+        await log_activity_independent(
             action="kill_switch.hard_all",
             level="critical",
             actor=actor,
@@ -339,8 +339,7 @@ class KillSwitch:
         kill_results = await asyncio.gather(*[_kill_one(bid, bn) for bid, bn in running_ids_names])
         results = dict(kill_results)
 
-        await log_activity(
-            db,
+        await log_activity_independent(
             action="kill_switch.soft_all",
             level="warning",
             actor=actor,

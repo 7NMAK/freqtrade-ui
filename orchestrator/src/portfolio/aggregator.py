@@ -20,6 +20,33 @@ from ..models.bot_instance import BotInstance, BotStatus
 
 logger = logging.getLogger(__name__)
 
+# Cached data older than this is flagged as stale in the response. At
+# POLL_INTERVAL=10s + dashboard refresh=30s, 120s gives ~4 poll cycles of
+# grace before screaming "stale" at the user.
+CACHE_STALENESS_THRESHOLD_SECONDS = 120
+
+
+def _is_stale(cached_at) -> bool:
+    """True if the cache timestamp is older than the staleness threshold."""
+    if cached_at is None:
+        return True
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc)
+    if cached_at.tzinfo is None:
+        # Legacy rows without tzinfo — treat as UTC
+        cached_at = cached_at.replace(tzinfo=timezone.utc)
+    return (now - cached_at).total_seconds() > CACHE_STALENESS_THRESHOLD_SECONDS
+
+
+def _cache_age(cached_at) -> float | None:
+    if cached_at is None:
+        return None
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc)
+    if cached_at.tzinfo is None:
+        cached_at = cached_at.replace(tzinfo=timezone.utc)
+    return (now - cached_at).total_seconds()
+
 
 class PortfolioAggregator:
     """
@@ -45,13 +72,15 @@ class PortfolioAggregator:
         ]
 
     async def _update_cache(self, db: AsyncSession, bot_id: int, profit: dict | None = None, balance: dict | None = None) -> None:
-        """Persist latest profit/balance snapshot to DB."""
+        """Persist latest profit/balance snapshot to DB with timestamp."""
+        from datetime import datetime, timezone
         values: dict[str, Any] = {}
         if profit is not None:
             values["cached_profit"] = profit
         if balance is not None:
             values["cached_balance"] = balance
         if values:
+            values["cached_at"] = datetime.now(timezone.utc)
             await db.execute(
                 update(BotInstance).where(BotInstance.id == bot_id).values(**values)
             )
@@ -89,6 +118,10 @@ class PortfolioAggregator:
                 logger.warning("Profit fetch failed for bot %s: %s", bot.name, e)
                 return bot, None
 
+        failed_bots: list[str] = []
+        stale_bots: list[dict[str, Any]] = []
+        oldest_cache_age: float | None = None
+
         results = await asyncio.gather(*(fetch_profit(b) for b in running))
         for bot, profit in results:
             if profit is not None:
@@ -97,14 +130,34 @@ class PortfolioAggregator:
                 await self._update_cache(db, bot.id, profit=profit)
                 self._accumulate_profit(combined, profit)
             elif bot.cached_profit:
-                # API failed but we have cache
-                per_bot[bot.name] = {**bot.cached_profit, "_cached": True}
+                # API failed but we have cache — but flag it loudly
+                stale = _is_stale(bot.cached_at)
+                age = _cache_age(bot.cached_at)
+                if age is not None and (oldest_cache_age is None or age > oldest_cache_age):
+                    oldest_cache_age = age
+                per_bot[bot.name] = {
+                    **bot.cached_profit,
+                    "_cached": True,
+                    "_stale": stale,
+                    "_cache_age_seconds": age,
+                }
+                if stale:
+                    stale_bots.append({"bot": bot.name, "age_seconds": age})
                 self._accumulate_profit(combined, bot.cached_profit)
+                failed_bots.append(bot.name)
+            else:
+                # API failed AND no cache — this bot is effectively invisible
+                failed_bots.append(bot.name)
 
-        # Add stopped bots from cache
+        # Add stopped bots from cache (expected to be "stopped" not "stale")
         for bot in stopped:
             if bot.cached_profit:
-                per_bot[bot.name] = {**bot.cached_profit, "_cached": True, "_stopped": True}
+                per_bot[bot.name] = {
+                    **bot.cached_profit,
+                    "_cached": True,
+                    "_stopped": True,
+                    "_cache_age_seconds": _cache_age(bot.cached_at),
+                }
                 self._accumulate_profit(combined, bot.cached_profit)
 
         total_bots = len(trading)
@@ -116,6 +169,11 @@ class PortfolioAggregator:
             "bot_count": total_bots,
             "running_count": running_count,
             "stopped_count": total_bots - running_count,
+            # Surface failures so frontend can render a warning banner instead
+            # of silently including stale data in the combined totals.
+            "failed_bots": failed_bots,
+            "stale_bots": stale_bots,
+            "oldest_cache_age_seconds": oldest_cache_age,
         }
 
     def _accumulate_profit(self, combined: dict, profit: dict) -> None:
@@ -151,6 +209,10 @@ class PortfolioAggregator:
                 logger.warning("Balance fetch failed for bot %s: %s", bot.name, e)
                 return bot, None
 
+        failed_bots: list[str] = []
+        stale_bots: list[dict[str, Any]] = []
+        oldest_cache_age: float | None = None
+
         results = await asyncio.gather(*(fetch_balance(b) for b in running))
         for bot, balance in results:
             if balance is not None:
@@ -158,14 +220,32 @@ class PortfolioAggregator:
                 total_value += float(balance.get("total", 0))
                 await self._update_cache(db, bot.id, balance=balance)
             elif bot.cached_balance:
-                # API failed but we have cache — use it as fallback
-                per_bot[bot.name] = {**bot.cached_balance, "_cached": True}
+                stale = _is_stale(bot.cached_at)
+                age = _cache_age(bot.cached_at)
+                if age is not None and (oldest_cache_age is None or age > oldest_cache_age):
+                    oldest_cache_age = age
+                per_bot[bot.name] = {
+                    **bot.cached_balance,
+                    "_cached": True,
+                    "_stale": stale,
+                    "_cache_age_seconds": age,
+                }
                 total_value += float(bot.cached_balance.get("total", 0))
+                if stale:
+                    stale_bots.append({"bot": bot.name, "age_seconds": age})
+                failed_bots.append(bot.name)
+            else:
+                failed_bots.append(bot.name)
 
         # Include stopped bots via cached balance (same pattern as get_combined_profit)
         for bot in stopped:
             if bot.cached_balance:
-                per_bot[bot.name] = {**bot.cached_balance, "_cached": True, "_stopped": True}
+                per_bot[bot.name] = {
+                    **bot.cached_balance,
+                    "_cached": True,
+                    "_stopped": True,
+                    "_cache_age_seconds": _cache_age(bot.cached_at),
+                }
                 total_value += float(bot.cached_balance.get("total", 0))
 
         return {
@@ -173,6 +253,9 @@ class PortfolioAggregator:
             "total_value": total_value,
             "bot_count": len(running),
             "total_bots": len(trading),
+            "failed_bots": failed_bots,
+            "stale_bots": stale_bots,
+            "oldest_cache_age_seconds": oldest_cache_age,
         }
 
     async def get_all_open_trades(self, db: AsyncSession) -> dict:

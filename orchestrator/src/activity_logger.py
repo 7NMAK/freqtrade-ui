@@ -115,3 +115,54 @@ async def log_activity(
     db.add(row)
 
     return row
+
+
+async def log_activity_independent(
+    action: str,
+    level: str = "critical",
+    actor: str = "system",
+    bot_id: int | None = None,
+    bot_name: str | None = None,
+    target_type: str | None = None,
+    target_id: int | None = None,
+    target_name: str | None = None,
+    details: str | None = None,
+    diagnosis: str | None = None,
+) -> None:
+    """
+    Write audit log in an INDEPENDENT DB session that commits immediately.
+
+    Use this for events that MUST survive even if the caller's transaction
+    rolls back — kill switch activations, heartbeat auto-kills, RiskEvents.
+    Safety rule #9 requires an immutable audit trail, which means the audit
+    row must exist on disk before any possibility of rollback.
+
+    Callers using the regular log_activity() risk losing the audit row if
+    any code after the call raises and triggers a session rollback.
+    """
+    from .database import async_session
+    try:
+        async with async_session() as audit_db:
+            await log_activity(
+                audit_db,
+                action=action,
+                level=level,
+                actor=actor,
+                bot_id=bot_id,
+                bot_name=bot_name,
+                target_type=target_type,
+                target_id=target_id,
+                target_name=target_name,
+                details=details,
+                diagnosis=diagnosis,
+            )
+            await audit_db.commit()
+    except Exception as e:
+        # If even the independent audit write fails, at least the Python
+        # logger above captured the event. Emit a loud CRITICAL so operators
+        # see that audit persistence has failed.
+        logger.critical(
+            "AUDIT PERSISTENCE FAILED for action=%s bot=%s: %s. "
+            "Python log has the event but DB row is missing.",
+            action, bot_name or bot_id, e,
+        )

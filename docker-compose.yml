@@ -2,22 +2,29 @@
 ## Docker Compose — FreqTrade Trading System (Full Stack)
 ##
 ## Services:
-##   postgres      — Orchestrator metadata DB (NOT trade data)
-##   redis         — Pub/sub for heartbeat events + cache
-##   orchestrator  — FastAPI app (multi-bot mgmt, kill switch, heartbeat)
-##   frontend      — Next.js 14 UI
-##   nginx         — Reverse proxy (SSL termination, routing)
-##   prometheus    — Metrics collection
-##   grafana       — Monitoring dashboards
-##   pg-backup     — Automated PostgreSQL backups
+##   postgres        — Orchestrator metadata DB (NOT trade data)
+##   redis           — Pub/sub for heartbeat events + cache
+##   orchestrator    — FastAPI app (multi-bot mgmt, kill switch, heartbeat)
+##   frontend        — Next.js 14 UI
+##   nginx           — Reverse proxy (SSL termination, routing)
+##   prometheus      — Metrics collection
+##   alertmanager    — Fires Telegram/email alerts from Prometheus rules
+##   node-exporter   — Host-level metrics (disk/CPU/RAM)
+##   grafana         — Monitoring dashboards
+##   pg-backup       — Automated PostgreSQL backups (local + optional off-site)
 ##
 ## FreqTrade bot containers are managed DYNAMICALLY by the orchestrator
 ## via Docker API — they are NOT defined here.
-## Each bot = 1 FT container = 1 strategy.
 ##
-## Trade data lives in FT (SQLite inside each bot container).
-## We NEVER duplicate it — always read via FT REST API.
-##
+
+# YAML anchor for logging config — prevents any single service from filling
+# the host disk. json-file driver rotates automatically. Any service without
+# explicit logging config inherits this via the <<: *default-logging pattern.
+x-default-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "50m"
+    max-file: "5"
 
 services:
   # ── Database ──────────────────────────────────────────────
@@ -25,6 +32,7 @@ services:
     image: postgres:16-alpine
     container_name: orch_postgres
     restart: unless-stopped
+    stop_grace_period: 30s
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-orchestrator}
       POSTGRES_USER: ${POSTGRES_USER:-orchestrator}
@@ -38,6 +46,11 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+    logging: *default-logging
     networks:
       - ft_network
 
@@ -50,12 +63,17 @@ services:
       - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    logging: *default-logging
     networks:
       - ft_network
 
@@ -66,6 +84,9 @@ services:
       dockerfile: Dockerfile
     container_name: orchestrator
     restart: unless-stopped
+    # Give in-flight requests (forceexit, start, kill) a chance to finish
+    # before SIGKILL. Orchestrator signal handler sets a 'draining' flag.
+    stop_grace_period: 30s
     depends_on:
       postgres:
         condition: service_healthy
@@ -77,13 +98,20 @@ services:
       ORCH_DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-orchestrator}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}@postgres:5432/${POSTGRES_DB:-orchestrator}"
       ORCH_REDIS_URL: "redis://redis:6379/0"
       ORCH_SECRET_KEY: "${ORCH_SECRET_KEY:?ORCH_SECRET_KEY must be set in .env}"
-      ORCH_ACCESS_TOKEN_EXPIRE_MINUTES: "${ORCH_ACCESS_TOKEN_EXPIRE_MINUTES:-60}"
+      ORCH_ENCRYPTION_KEY: "${ORCH_ENCRYPTION_KEY:-}"
+      ORCH_ACCESS_TOKEN_EXPIRE_MINUTES: "${ORCH_ACCESS_TOKEN_EXPIRE_MINUTES:-120}"
+      ORCH_REFRESH_TOKEN_EXPIRE_MINUTES: "${ORCH_REFRESH_TOKEN_EXPIRE_MINUTES:-1440}"
       ORCH_HEARTBEAT_INTERVAL_SECONDS: "${ORCH_HEARTBEAT_INTERVAL_SECONDS:-3}"
       ORCH_HEARTBEAT_MAX_FAILURES: "${ORCH_HEARTBEAT_MAX_FAILURES:-3}"
-      ORCH_FT_DOCKER_IMAGE: "${ORCH_FT_DOCKER_IMAGE:-freqtradeorg/freqtrade:stable_freqai}"
+      ORCH_FT_DOCKER_IMAGE: "${ORCH_FT_DOCKER_IMAGE:-freqtradeorg/freqtrade@sha256:e4c7d501d9bb03cb885b4b5ee4b2a15c8e15da0b8c602a7f8c0aded7e1f77fe1}"
       ORCH_FT_BASE_PORT: "${ORCH_FT_BASE_PORT:-8080}"
       ORCH_ADMIN_USERNAME: "${ORCH_ADMIN_USERNAME:-admin}"
       ORCH_ADMIN_PASSWORD: "${ORCH_ADMIN_PASSWORD:?ORCH_ADMIN_PASSWORD must be set in .env}"
+      # Off-site backup credentials (pg-backup reads these)
+      S3_BACKUP_BUCKET: "${S3_BACKUP_BUCKET:-}"
+      S3_BACKUP_ENDPOINT: "${S3_BACKUP_ENDPOINT:-}"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID:-}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY:-}"
     # group_add gives docker socket access to the non-root user inside container
     group_add:
       - "${DOCKER_GID:-988}"
@@ -95,7 +123,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-      start_period: 15s
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    logging: *default-logging
     networks:
       - ft_network
 
@@ -108,6 +141,7 @@ services:
         NEXT_PUBLIC_API_URL: ""
     container_name: frontend
     restart: unless-stopped
+    stop_grace_period: 15s
     depends_on:
       orchestrator:
         condition: service_healthy
@@ -121,6 +155,11 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    logging: *default-logging
     networks:
       - ft_network
 
@@ -148,6 +187,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+    logging: *default-logging
     networks:
       - ft_network
 
@@ -160,6 +204,7 @@ services:
       - "9090"
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/rules:/etc/prometheus/rules:ro
       - prometheus_data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
@@ -172,6 +217,59 @@ services:
       interval: 15s
       timeout: 5s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    logging: *default-logging
+    networks:
+      - ft_network
+
+  # ── Alertmanager (fires alerts from Prometheus rules) ───
+  # Requires ALERT_TELEGRAM_BOT_TOKEN and ALERT_TELEGRAM_CHAT_ID in .env to send alerts.
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: alertmanager
+    restart: unless-stopped
+    expose:
+      - "9093"
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    environment:
+      ALERT_TELEGRAM_BOT_TOKEN: "${ALERT_TELEGRAM_BOT_TOKEN:-}"
+      ALERT_TELEGRAM_CHAT_ID: "${ALERT_TELEGRAM_CHAT_ID:-}"
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
+      - "--web.external-url=/alertmanager/"
+      - "--web.route-prefix=/alertmanager/"
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+    logging: *default-logging
+    networks:
+      - ft_network
+
+  # ── Node Exporter (host-level metrics) ────────────────────
+  node-exporter:
+    image: prom/node-exporter:v1.8.1
+    container_name: node_exporter
+    restart: unless-stopped
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+    command:
+      - "--path.rootfs=/host"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+    expose:
+      - "9100"
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+    logging: *default-logging
     networks:
       - ft_network
 
@@ -199,10 +297,15 @@ services:
       interval: 15s
       timeout: 5s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    logging: *default-logging
     networks:
       - ft_network
 
-  # ── PostgreSQL Backup (cron-based) ────────────────────────
+  # ── PostgreSQL Backup (cron-based + off-site push) ────────
   pg-backup:
     image: postgres:16-alpine
     container_name: pg_backup
@@ -215,18 +318,27 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-orchestrator}
       PGPASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+      # Off-site (optional): set in .env to enable rclone push
+      S3_BACKUP_BUCKET: "${S3_BACKUP_BUCKET:-}"
+      S3_BACKUP_ENDPOINT: "${S3_BACKUP_ENDPOINT:-}"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID:-}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY:-}"
     volumes:
       - ./scripts/backup.sh:/scripts/backup.sh:ro
       - pg_backups:/backups
+      # Mount FT user_data so SQLite per-bot DBs can be backed up too
+      - /opt/freqtrade/user_data:/freqtrade_user_data:ro
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
+        apk add --no-cache rclone > /dev/null 2>&1 || true
         cp /scripts/backup.sh /usr/local/bin/backup.sh
         chmod +x /usr/local/bin/backup.sh
         echo "0 2 * * * /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1" > /etc/crontabs/root
         echo "Backup cron installed — daily at 02:00 UTC"
         /usr/local/bin/backup.sh
         crond -f -l 2
+    logging: *default-logging
     networks:
       - ft_network
 
@@ -239,6 +351,7 @@ volumes:
   postgres_data:
   redis_data:
   prometheus_data:
+  alertmanager_data:
   grafana_data:
   pg_backups:
   certbot_webroot:

@@ -139,7 +139,24 @@ async def lifespan(app: FastAPI):
     else:
         app.state.ai_scheduler = None
 
+    # Graceful shutdown flag — set by SIGTERM handler. Middleware checks it
+    # and returns 503 to new requests so the LB can route away cleanly.
+    app.state.draining = False
+
     yield
+
+    # Signal draining. In-flight requests have up to stop_grace_period to
+    # finish before SIGKILL. Critical tasks below release their resources.
+    app.state.draining = True
+    logger.info("Orchestrator draining — rejecting new requests, finishing in-flight")
+    # Stop the daily loss breaker
+    if hasattr(app.state, "daily_loss_breaker"):
+        app.state.daily_loss_breaker.stop()
+        try:
+            daily_loss_task.cancel()
+            await daily_loss_task
+        except (asyncio.CancelledError, NameError):
+            pass
 
     # Shutdown AI scheduler
     if app.state.ai_scheduler is not None:

@@ -1,0 +1,26 @@
+##
+## Alertmanager config — routes alerts to Telegram webhook.
+##
+## Telegram bot needs:
+##   ALERT_TELEGRAM_BOT_TOKEN  — from @BotFather
+##   ALERT_TELEGRAM_CHAT_ID    — /start the bot then get chat_id from getUpdates
+##
+## Without those env vars set, alerts are dropped (still visible in
+## /alertmanager web UI, just not forwarded).
+##
+
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ["alertname", "bot"]
+  group_wait: 10s
+  group_interval: 1m
+  repeat_interval: 30m
+  receiver: telegram
+
+receivers:
+  - name: telegram
+    webhook_configs:
+      - url: "https://api.telegram.org/bot${ALERT_TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${ALERT_TELEGRAM_CHAT_ID}&parse_mode=Markdown"
+        send_resolved: true

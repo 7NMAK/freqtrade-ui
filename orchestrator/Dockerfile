@@ -20,6 +20,10 @@ RUN useradd -r -u 1000 -d /app orchestrator && \
 
 USER orchestrator
 
-# Run DB migrations (if any exist) then start server
-# Tables are also created by app lifespan (create_all) as dev fallback
-CMD ["sh", "-c", "alembic upgrade head 2>/dev/null || echo 'No migrations yet — app will create tables'; uvicorn src.main:app --host 0.0.0.0 --port 8888"]
+# Run Alembic migrations (must succeed in production).
+# Single worker: heartbeat + kill switch + daily-loss-breaker are stateful
+# singletons in the lifespan; multi-workers would double-fire each of them.
+# DB-query slowness is mitigated via per-bot sessions in heartbeat.
+# --timeout-graceful-shutdown matches docker-compose stop_grace_period so
+# in-flight kill/forceexit requests get to complete before SIGKILL.
+CMD ["sh", "-c", "alembic upgrade head && uvicorn src.main:app --host 0.0.0.0 --port 8888 --timeout-graceful-shutdown 25 --timeout-keep-alive 30"]

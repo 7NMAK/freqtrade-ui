@@ -1,0 +1,70 @@
+##
+## Prometheus alert rules — fire Telegram alerts for critical conditions.
+##
+## Rules wired through Alertmanager (see docker-compose + alertmanager.yml).
+## Metrics come from the orchestrator /api/metrics endpoint.
+##
+
+groups:
+  - name: trading-critical
+    rules:
+      # ── Kill switch activated ────────────────────────────
+      - alert: KillSwitchActivated
+        expr: increase(orch_kill_events_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Kill switch fired ({{ $labels.type }})"
+          description: "{{ $value }} kill event(s) in last 5m. Trigger={{ $labels.trigger }}"
+
+      # ── Heartbeat silent failure ─────────────────────────
+      # Cycle errors indicate heartbeat loop itself is broken — the
+      # auto-kill on 3-fails safety net is not firing.
+      - alert: HeartbeatLoopFailing
+        expr: increase(orch_heartbeat_cycle_errors_total[5m]) > 2
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Heartbeat loop is erroring out"
+          description: "{{ $value }} full-cycle failures in 5m — auto-kill safety net may not fire"
+
+      # ── Individual bot heartbeat failures ────────────────
+      - alert: HeartbeatFailuresRising
+        expr: increase(orch_heartbeat_failures_total[5m]) > 10
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Heartbeat failures rising"
+          description: "{{ $value }} heartbeat ping failures in last 5m"
+
+      # ── No running bots (unexpected) ─────────────────────
+      - alert: NoBotsRunning
+        expr: orch_bots_running == 0 and orch_bots_total > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "No bots running"
+          description: "{{ $value }} bots registered but none RUNNING for 5+ minutes"
+
+      # ── Host resources (requires node-exporter) ──────────
+      - alert: HostMemoryCritical
+        expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) < 0.10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Host memory <10% free"
+          description: "Available memory dropped below 10% — OOM killer may trigger"
+
+      - alert: HostDiskCritical
+        expr: (node_filesystem_avail_bytes{mountpoint="/host"} / node_filesystem_size_bytes{mountpoint="/host"}) < 0.10
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Host disk <10% free"
+          description: "Disk fill would kill Postgres WAL and crash orchestrator"

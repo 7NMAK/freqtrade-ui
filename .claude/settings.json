@@ -196,7 +196,8 @@
       "Bash(python3 -c \"import ast; [ast.parse\\(open\\(f\\).read\\(\\)\\) for f in ['orchestrator/src/main.py','orchestrator/src/auth.py']]; print\\('OK'\\)\")",
       "Bash(python3 -c \"import ast; [ast.parse\\(open\\(f\\).read\\(\\)\\) for f in ['orchestrator/src/config.py','orchestrator/src/crypto.py','orchestrator/src/auth.py','orchestrator/src/main.py','orchestrator/src/api/bots.py','orchestrator/alembic/env.py']]; print\\('OK'\\)\")",
       "Bash(python3 -c ' *)",
-      "Bash(python3 -c \"import ast; [ast.parse\\(open\\(f\\).read\\(\\)\\) for f in ['orchestrator/src/api/bots.py','orchestrator/src/api/safety_settings.py','orchestrator/src/models/orch_settings.py','orchestrator/src/main.py']]; print\\('OK'\\)\")"
+      "Bash(python3 -c \"import ast; [ast.parse\\(open\\(f\\).read\\(\\)\\) for f in ['orchestrator/src/api/bots.py','orchestrator/src/api/safety_settings.py','orchestrator/src/models/orch_settings.py','orchestrator/src/main.py']]; print\\('OK'\\)\")",
+      "Bash(python3 -c \"import ast; ast.parse\\(open\\('/Users/novakus/Documents/BOT/orchestrator/src/main.py'\\).read\\(\\)\\); print\\('OK'\\)\")"
     ],
     "additionalDirectories": [
       "/tmp",

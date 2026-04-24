@@ -263,16 +263,33 @@ class FTClient:
 
         try:
             resp = await self._client.request(method, full_url, headers=headers, **kwargs)
-        except httpx.RemoteProtocolError:
-            # Stale keep-alive connection — retry once with a fresh attempt
-            logger.warning("FT stale connection on %s %s, retrying once", method, full_url)
+        except httpx.RemoteProtocolError as e:
+            # Stale keep-alive connection — retry ONLY for idempotent GET requests.
+            # Non-idempotent verbs (POST/PUT/DELETE) could create duplicate orders
+            # if the first request reached FT and FT committed state before the
+            # response was truncated. We surface the error so the caller can
+            # reconcile via /status before any manual retry.
+            if method.upper() != "GET":
+                diag = _diagnose_connection_error(e, self.api_url)
+                logger.error(
+                    "FT %s %s hit stale connection — NOT retrying (non-idempotent). "
+                    "Caller must verify via /status whether the request committed. DIAGNOSIS: %s",
+                    method, full_url, diag,
+                )
+                await _log_ft_event(
+                    "ft.connection_failed", "error",
+                    f"{method} {path} to {self.api_url} (non-idempotent, not retried)",
+                    diag,
+                )
+                raise FTClientError(f"FT connection failed: {diag}", diagnosis=diag) from e
+            logger.warning("FT stale connection on GET %s, retrying once", full_url)
             try:
                 resp = await self._client.request(method, full_url, headers=headers, **kwargs)
-            except (httpx.HTTPError, OSError) as e:
-                diag = _diagnose_connection_error(e, self.api_url)
+            except (httpx.HTTPError, OSError) as e2:
+                diag = _diagnose_connection_error(e2, self.api_url)
                 logger.error("FT request failed after retry: %s %s — %s", method, full_url, diag)
                 await _log_ft_event("ft.connection_failed", "error", f"{method} {path} to {self.api_url}", diag)
-                raise FTClientError(f"FT connection failed: {diag}", diagnosis=diag) from e
+                raise FTClientError(f"FT connection failed: {diag}", diagnosis=diag) from e2
         except (httpx.HTTPError, OSError) as e:
             diag = _diagnose_connection_error(e, self.api_url)
             logger.error("FT request failed: %s %s — DIAGNOSIS: %s", method, full_url, diag)

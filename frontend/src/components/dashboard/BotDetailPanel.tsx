@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { X, Play, Square, Pause, RefreshCw, PlusCircle, XSquare, PlusSquare, ShieldAlert, Zap, LogOut, Scissors, Ban, Trash2 } from "lucide-react";
+import ConfirmDialog, { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { botForceExit, botForceEnter, botDeleteTrade, botReloadTrade, botCancelOpenOrder } from "@/lib/api";
 import { fmt, fmtMoney, profitColor } from "@/lib/format";
 import type {
@@ -186,6 +187,7 @@ export default function BotDetailPanel({
   onConfigRefresh,
 }: BotDetailPanelProps) {
   const [detailTab, setDetailTab] = useState<DetailTab>("overview");
+  const [confirmProps, confirmDlg] = useConfirmDialog();
 
   // ── Per-trade action state ───────────────────────────────────────────
   const [exitingIds, setExitingIds] = useState<Set<number>>(new Set());
@@ -193,9 +195,16 @@ export default function BotDetailPanel({
   const unmarkExiting = useCallback((id: number) => setExitingIds((p) => { const n = new Set(p); n.delete(id); return n; }), []);
   const handleTradeForceExit = useCallback(async (trade: FTTrade, ordertype: string) => {
     if (!bot) return;
+    const ok = await confirmDlg({
+      title: `Force Exit ${trade.pair}`,
+      message: `Close ${trade.pair} at ${ordertype.toUpperCase()} price? This cannot be undone.`,
+      confirmLabel: `Force Exit (${ordertype})`,
+      variant: "danger",
+    });
+    if (!ok) return;
     markExiting(trade.trade_id);
     try { await botForceExit(bot.id, String(trade.trade_id), ordertype); } finally { unmarkExiting(trade.trade_id); }
-  }, [bot, markExiting, unmarkExiting]);
+  }, [bot, markExiting, unmarkExiting, confirmDlg]);
   const handleTradeForceEnter = useCallback(async (trade: FTTrade) => {
     if (!bot) return;
     markExiting(trade.trade_id);
@@ -213,10 +222,16 @@ export default function BotDetailPanel({
   }, [bot, markExiting, unmarkExiting]);
   const handleTradeDelete = useCallback(async (trade: FTTrade) => {
     if (!bot) return;
-    if (!confirm(`Delete trade #${trade.trade_id} (${trade.pair})? This cannot be undone.`)) return;
+    const ok = await confirmDlg({
+      title: `Delete trade #${trade.trade_id}`,
+      message: `Permanently delete trade #${trade.trade_id} (${trade.pair})? This cannot be undone.`,
+      confirmLabel: "Delete",
+      variant: "danger",
+    });
+    if (!ok) return;
     markExiting(trade.trade_id);
     try { await botDeleteTrade(bot.id, trade.trade_id); } finally { unmarkExiting(trade.trade_id); }
-  }, [bot, markExiting, unmarkExiting]);
+  }, [bot, markExiting, unmarkExiting, confirmDlg]);
 
   // ── Drawer sort state ────────────────────────────────────────────────
   type SortDir = "asc" | "desc" | null;
@@ -402,6 +417,7 @@ export default function BotDetailPanel({
 
   return (
     <>
+      <ConfirmDialog {...confirmProps} />
       {/* Backdrop — ds_bot_drawer.md §30N */}
       <div
         role="dialog"

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { startBot, stopBot, botPause, drainBot } from "@/lib/api";
+import { startBot, stopBot, botPause, drainBot, deleteBot as deleteBotApi } from "@/lib/api";
 import { useToast } from "@/components/ui/Toast";
 import ConfirmDialog, { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { profitColor, fmt } from "@/lib/format";
@@ -175,7 +175,17 @@ export default function BotManagementTable({ bots, botProfits, onRefresh }: BotM
 
       <BotRegisterModal open={registerOpen} onClose={() => setRegisterOpen(false)} onSuccess={onRefresh} />
       <BotEditModal open={!!editBot} bot={editBot} onClose={() => setEditBot(null)} onSuccess={onRefresh} />
-      <BotDeleteDialog open={!!deleteBot} bot={deleteBot} onClose={() => setDeleteBot(null)} onSuccess={onRefresh} />
+      <BotDeleteDialog
+        open={!!deleteBot}
+        bot={deleteBot}
+        onClose={() => setDeleteBot(null)}
+        onConfirmed={async () => {
+          if (!deleteBot) return;
+          await deleteBotApi(deleteBot.id);
+          setDeleteBot(null);
+          onRefresh();
+        }}
+      />
       <ConfirmDialog {...confirmProps} />
     </>
   );

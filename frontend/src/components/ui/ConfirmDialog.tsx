@@ -27,11 +27,14 @@ export default function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
-  const confirmBtnRef = useRef<HTMLButtonElement>(null);
+  const cancelBtnRef = useRef<HTMLButtonElement>(null);
 
-  // Focus confirm button when opening
+  // Focus the CANCEL button when opening. Previously we focused confirm —
+  // with the Enter key still held from the action that opened the dialog,
+  // the destructive action would fire a second time instantly. Focusing
+  // Cancel means Enter defaults to the safe choice.
   useEffect(() => {
-    if (open) confirmBtnRef.current?.focus();
+    if (open) cancelBtnRef.current?.focus();
   }, [open]);
 
   // Close on Escape
@@ -70,6 +73,7 @@ export default function ConfirmDialog({
         <p className="text-xs text-[#9CA3AF] leading-relaxed mb-5">{message}</p>
         <div className="flex gap-2">
           <button
+            ref={cancelBtnRef}
             type="button"
             onClick={onCancel}
             className="flex-1 py-2 text-xs font-semibold rounded border border-white/[0.10] text-[#9CA3AF] hover:bg-white/[0.06] cursor-pointer transition-all"
@@ -77,7 +81,6 @@ export default function ConfirmDialog({
             {cancelLabel}
           </button>
           <button
-            ref={confirmBtnRef}
             type="button"
             onClick={onConfirm}
             className={`flex-1 py-2 text-xs font-semibold rounded cursor-pointer transition-all ${btnColor}`}

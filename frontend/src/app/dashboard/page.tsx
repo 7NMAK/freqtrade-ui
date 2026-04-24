@@ -973,6 +973,13 @@ export default function DashboardPage() {
   }
 
   async function handlePauseBot(botId: number) {
+    const ok = await confirmDlg({
+      title: "Pause Bot (Stopbuy)",
+      message: "Bot will stop accepting new entries but continue managing open positions. Continue?",
+      confirmLabel: "Pause",
+      variant: "warning",
+    });
+    if (!ok) return;
     await handleBotAction("Pause (Stopbuy)", botId, () => botPause(botId));
   }
 
@@ -987,6 +994,13 @@ export default function DashboardPage() {
   }
 
   async function handleStopBuyBot(botId: number) {
+    const ok = await confirmDlg({
+      title: "Toggle Stopbuy",
+      message: "Toggle 'stop buying' — the bot will finish/manage open positions but not take new entries. Continue?",
+      confirmLabel: "Toggle",
+      variant: "warning",
+    });
+    if (!ok) return;
     await handleBotAction("Toggle Stopbuy", botId, () => botStopBuy(botId));
   }
 
@@ -1043,6 +1057,17 @@ export default function DashboardPage() {
       toast.error("Cannot determine which bot owns this trade.");
       return;
     }
+    // Confirm before firing — a misclick at €1M scale is real money.
+    const pnlStr = trade.current_profit_abs != null
+      ? `Current P&L: ${trade.current_profit_abs.toFixed(2)}`
+      : "";
+    const ok = await confirmDlg({
+      title: `Force Exit ${trade.pair}`,
+      message: `Close ${trade.pair} at ${ordertype.toUpperCase()} price? ${pnlStr} This cannot be undone.`,
+      confirmLabel: `Force Exit (${ordertype})`,
+      variant: "danger",
+    });
+    if (!ok) return;
     const tradeIdStr = String(trade.trade_id);
     setExitingTradeId(tradeIdStr);
     const loadId = toast.loading(`Force exiting ${trade.pair}...`);
@@ -1234,7 +1259,9 @@ export default function DashboardPage() {
   // Locked in trades = sum of open trade stake amounts
   const lockedInTrades = openStakeTotal;
 
-  const staleWarning = staleCount >= 3;
+  // Warn on the FIRST failed poll — at €1M scale, 30s of stale P&L is already
+  // too long. Previously this required 3 failures (90s+) which is too lenient.
+  const staleWarning = staleCount >= 1;
 
   // ════════════════════════════════════════════════════════════════════════
   // RENDER
@@ -1408,11 +1435,17 @@ export default function DashboardPage() {
         onClose={() => setEditBot(null)}
         onSuccess={async () => { setEditBot(null); await loadPortfolioData(false); }}
       />
+      {/* BotDeleteDialog calls onConfirmed once user types the name — parent owns the API call */}
       <BotDeleteDialog
         open={deleteBot !== null}
         bot={deleteBot}
         onClose={() => setDeleteBot(null)}
-        onSuccess={async () => { if (deleteBot) await handleDeleteBotConfirm(deleteBot); }}
+        onConfirmed={async () => {
+          if (deleteBot) {
+            await handleDeleteBotConfirm(deleteBot);
+            setDeleteBot(null);
+          }
+        }}
       />
       <ConfirmDialog {...confirmProps} />
       </div>

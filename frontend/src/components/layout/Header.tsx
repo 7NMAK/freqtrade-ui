@@ -136,8 +136,9 @@ export default function Header({ title }: HeaderProps) {
           {/* Soft Kill All */}
           <button
             type="button"
-            onClick={() => { setKillType("soft"); setShowKillConfirm(true); }}
-            className="border border-yellow-500/30 text-yellow-400 text-[11px] font-bold uppercase rounded-md px-3 py-1.5 flex items-center gap-1.5 hover:bg-yellow-500/10 transition-all cursor-pointer tracking-wide"
+            disabled={killing}
+            onClick={() => { if (killing) return; setKillType("soft"); setShowKillConfirm(true); }}
+            className="border border-yellow-500/30 text-yellow-400 text-[11px] font-bold uppercase rounded-md px-3 py-1.5 flex items-center gap-1.5 hover:bg-yellow-500/10 transition-all cursor-pointer tracking-wide disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <ShieldAlert className="w-3.5 h-3.5" />
             Soft Kill All
@@ -146,8 +147,9 @@ export default function Header({ title }: HeaderProps) {
           {/* Hard Kill All */}
           <button
             type="button"
-            onClick={() => { setKillType("hard"); setShowKillConfirm(true); }}
-            className="bg-[#ef4444]/10 border border-[#ef4444]/30 text-[#ef4444] text-[11px] font-bold uppercase rounded-md px-3 py-1.5 flex items-center gap-1.5 hover:bg-[#ef4444]/20 transition-all cursor-pointer tracking-wide"
+            disabled={killing}
+            onClick={() => { if (killing) return; setKillType("hard"); setShowKillConfirm(true); }}
+            className="bg-[#ef4444]/10 border border-[#ef4444]/30 text-[#ef4444] text-[11px] font-bold uppercase rounded-md px-3 py-1.5 flex items-center gap-1.5 hover:bg-[#ef4444]/20 transition-all cursor-pointer tracking-wide disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Zap className="w-3.5 h-3.5" />
             Hard Kill All
@@ -239,6 +241,9 @@ export default function Header({ title }: HeaderProps) {
           aria-modal="true"
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center"
           onClick={(e) => {
+            // Block backdrop-close while a kill is in flight — otherwise the
+            // operator could dismiss the modal mid-flight and re-trigger it.
+            if (killing) return;
             if (e.target === e.currentTarget) setShowKillConfirm(false);
           }}
         >

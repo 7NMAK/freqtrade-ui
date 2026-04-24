@@ -1,19 +1,22 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { deleteBot } from "@/lib/api";
-import { useToast } from "@/components/ui/Toast";
 import type { Bot } from "@/types";
 
 interface BotDeleteDialogProps {
   open: boolean;
   bot: Bot | null;
   onClose: () => void;
-  onSuccess: () => void;
+  /**
+   * Called only after the user types the bot name and confirms. Parent owns
+   * the actual API call — this dialog is a pure confirmation gate. Previously
+   * both this dialog and the parent called deleteBot, resulting in duplicate
+   * DELETE requests (second one returning 404 and surfacing as a bogus toast).
+   */
+  onConfirmed: () => Promise<void> | void;
 }
 
-export default function BotDeleteDialog({ open, bot, onClose, onSuccess }: BotDeleteDialogProps) {
-  const toast = useToast();
+export default function BotDeleteDialog({ open, bot, onClose, onConfirmed }: BotDeleteDialogProps) {
   const [confirmName, setConfirmName] = useState("");
   const [deleting, setDeleting] = useState(false);
 
@@ -26,16 +29,11 @@ export default function BotDeleteDialog({ open, bot, onClose, onSuccess }: BotDe
   const canDelete = confirmName === bot.name;
 
   async function handleDelete() {
-    if (!bot || !canDelete) return;
+    if (!bot || !canDelete || deleting) return;
     setDeleting(true);
     try {
-      await deleteBot(bot.id);
-      toast.success(`Bot "${bot.name}" deleted.`);
+      await onConfirmed();
       setConfirmName("");
-      onSuccess();
-      onClose();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete bot.");
     } finally {
       setDeleting(false);
     }

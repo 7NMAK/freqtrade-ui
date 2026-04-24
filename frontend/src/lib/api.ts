@@ -87,9 +87,17 @@ async function request<T>(path: string, options?: ApiFetchOptions): Promise<T> {
   });
 
   if (res.status === 401 || res.status === 403) {
-    // Any 401/403 from the orchestrator means the JWT is invalid or expired.
-    // The orchestrator handles its own bot-level auth internally (refreshing FT tokens),
-    // so a 401 reaching the frontend always indicates our session is invalid.
+    // 401 during a destructive action (force-exit, kill, delete, start/stop,
+    // go-live) is dangerous: silently redirecting to /login hides whether
+    // the action actually committed. Throw ApiError(401) so the caller can
+    // show a "verify position state" modal. Read-only GETs still redirect.
+    const method = (options?.method ?? "GET").toUpperCase();
+    if (method !== "GET") {
+      throw new ApiError(
+        res.status,
+        "Session expired during an in-flight action. Check exchange / FT state before re-logging in — the request may or may not have committed.",
+      );
+    }
     setToken(null);
     if (typeof window !== "undefined") {
       window.location.href = "/login";

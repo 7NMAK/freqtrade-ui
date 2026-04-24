@@ -65,26 +65,37 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const toast = useToast();
   const [botCount, setBotCount] = useState<number>(0);
-  const [anyRunning, setAnyRunning] = useState(false);
+  const [anyRunning, setAnyRunning] = useState<boolean | null>(false);
   const [liveFmt, setLiveFmt] = useState("0 live");
 
+  const [sidebarError, setSidebarError] = useState<string | null>(null);
+
   useEffect(() => {
+    let isMounted = true;
     async function loadSidebarData() {
       try {
         const [bots, strategies] = await Promise.all([
-          getBots().catch((): import("@/types").Bot[] => []),
-          getStrategies().catch((): import("@/types").Strategy[] => []),
+          getBots(),
+          getStrategies(),
         ]);
+        if (!isMounted) return;
         const running = bots.some((b) => b.status === "running");
         setAnyRunning(running);
         setBotCount(bots.length);
         const liveCount = strategies.filter((s) => s.lifecycle === "live").length;
         setLiveFmt(`${liveCount} live`);
-      } catch { /* non-blocking */ }
+        setSidebarError(null);
+      } catch (err) {
+        if (!isMounted) return;
+        // Do NOT fall back to [] — "0 bots" would be visually identical to
+        // "no bots registered" and mislead the operator. Surface the error.
+        setSidebarError(err instanceof Error ? err.message : "Load failed");
+        setAnyRunning(null);
+      }
     }
     loadSidebarData();
     const interval = setInterval(loadSidebarData, REFRESH_INTERVALS.SIDEBAR);
-    return () => clearInterval(interval);
+    return () => { isMounted = false; clearInterval(interval); };
   }, [toast]);
 
   return (
@@ -146,7 +157,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   : undefined;
 
               const showDot: boolean =
-                item.dotKey === "anyRunning" ? anyRunning : false;
+                item.dotKey === "anyRunning" ? anyRunning === true : false;
 
               const Icon = item.icon;
 
@@ -201,17 +212,23 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             title={`${botCount} bot${botCount !== 1 ? "s" : ""}`}
           />
         ) : (
-          <div className="flex items-center gap-1.5 font-mono text-[11px]">
+          <div className="flex items-center gap-1.5 font-mono text-[11px]" title={sidebarError ?? undefined}>
             <div
               className={clsx(
                 "w-[7px] h-[7px] rounded-full shrink-0",
-                anyRunning
-                  ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e]"
-                  : "bg-[#ef4444]"
+                sidebarError
+                  ? "bg-amber-500 shadow-[0_0_6px_#f59e0b]"
+                  : anyRunning
+                    ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e]"
+                    : "bg-[#ef4444]"
               )}
             />
             FreqTrade 2026.2 —{" "}
-            {botCount > 0 ? `${botCount} bot${botCount !== 1 ? "s" : ""}` : "no bots"}
+            {sidebarError
+              ? <span className="text-amber-400">load error</span>
+              : botCount > 0
+                ? `${botCount} bot${botCount !== 1 ? "s" : ""}`
+                : "no bots"}
           </div>
         )}
       </div>

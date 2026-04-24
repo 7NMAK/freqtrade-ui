@@ -291,6 +291,22 @@ export default function BotDetailPanel({
 
   const handleSaveApply = useCallback(async () => {
     if (!bot || !editingSection) return;
+
+    // Extra confirmation if the bot is live — wrong stoploss on a live bot
+    // costs real money. Show the changes about to be applied.
+    if (!bot.is_dry_run) {
+      const patchPreview = editingSection === "core"
+        ? `stake=${editValues.stake_amount}, max_open=${editValues.max_open_trades}, tf=${editValues.timeframe}`
+        : `stoploss=${editValues.stoploss}%, trailing=${editValues.trailing_stop ? "on" : "off"}`;
+      const ok = await confirmDlg({
+        title: `Apply to LIVE bot ${bot.name}?`,
+        message: `This bot is LIVE (real money). Applying: ${patchPreview}. Continue?`,
+        confirmLabel: "Apply to LIVE",
+        variant: "danger",
+      });
+      if (!ok) return;
+    }
+
     setSavingConfig(true);
     try {
       const { saveBotConfig, applyBotConfig, botConfig } = await import("@/lib/api");
@@ -305,18 +321,36 @@ export default function BotDetailPanel({
         patch.trailing_stop_positive = Number(editValues.trailing_stop_positive);
         patch.trailing_stop_positive_offset = Number(editValues.trailing_stop_positive_offset);
       }
-      await saveBotConfig(bot.id, patch);
-      await applyBotConfig(bot.id);
+      // Two-step save+apply — if applyBotConfig fails, the save succeeded
+      // but FT has not reloaded. Surface that clearly instead of
+      // silently swallowing and showing a success toast.
+      let saved = false;
+      let applied = false;
+      try {
+        await saveBotConfig(bot.id, patch);
+        saved = true;
+        await applyBotConfig(bot.id);
+        applied = true;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Save/apply failed";
+        if (saved && !applied) {
+          // Config saved but not applied — FT still running old config
+          alert(`Config SAVED but APPLY failed — FT bot is still using old config.\n\nError: ${msg}\n\nRetry apply from bot detail panel.`);
+        } else {
+          alert(`Config save failed — no changes applied.\n\nError: ${msg}`);
+        }
+        return;
+      }
       // Re-fetch config to refresh the display immediately
       try {
         const freshConfig = await botConfig(bot.id);
         if (onConfigRefresh) onConfigRefresh(freshConfig);
       } catch { /* config refresh non-critical */ }
       setEditingSection(null);
-    } catch { /* TODO: show error toast */ } finally {
+    } finally {
       setSavingConfig(false);
     }
-  }, [bot, editingSection, editValues, onConfigRefresh]);
+  }, [bot, editingSection, editValues, onConfigRefresh, confirmDlg]);
 
   // ── Backtest / Hyperopt history state ───────────────────────────────
   const [backtestHistory, setBacktestHistory] = useState<Array<{ filename: string; strategy: string; run_id: string; backtest_start_time: number; notes?: string; timeframe?: string }>>([]);

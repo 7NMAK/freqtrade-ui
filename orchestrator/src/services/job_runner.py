@@ -362,11 +362,13 @@ class JobRunner:
                     "noise": item.get("noise", False),
                 })
 
-                # Clean up for next run
+                # Clean up for next run. Failure to abort leaves lingering
+                # backtest state on the FT bot that can break the next item —
+                # log + verify instead of swallowing silently.
                 try:
                     await client.backtest_abort()
-                except Exception:
-                    pass
+                except Exception as abort_err:
+                    logger.warning("Job #%d abort failed (state may linger): %s", job["id"], abort_err)
                 await asyncio.sleep(1)  # Cool-down
 
             except FTClientError as e:
@@ -374,8 +376,8 @@ class JobRunner:
                 matrix_results.append({"label": label, "status": "failed", "error": str(e)})
                 try:
                     await client.backtest_abort()
-                except Exception:
-                    pass
+                except Exception as abort_err:
+                    logger.warning("Job #%d abort-after-fail also failed: %s", job["id"], abort_err)
                 await asyncio.sleep(2)
 
         # Find best result
@@ -419,6 +421,8 @@ class JobRunner:
         """Poll FT backtest status until done. Returns result dict or None if cancelled."""
         poll_count = 0
         last_db_update = 0.0
+        consecutive_errors = 0
+        MAX_CONSECUTIVE_ERRORS = 5  # ~15s of continuous failure → fail fast
 
         for _ in range(max_polls):
             if await self._is_cancelled(job_id):
@@ -429,8 +433,19 @@ class JobRunner:
 
             try:
                 raw = await client.backtest_status()
+                consecutive_errors = 0
             except FTClientError as e:
-                logger.warning("Job #%d poll error: %s", job_id, e)
+                consecutive_errors += 1
+                logger.warning("Job #%d poll error (%d/%d): %s",
+                               job_id, consecutive_errors, MAX_CONSECUTIVE_ERRORS, e)
+                if consecutive_errors >= MAX_CONSECUTIVE_ERRORS:
+                    logger.error(
+                        "Job #%d: FT bot unreachable for %d consecutive polls — aborting",
+                        job_id, consecutive_errors,
+                    )
+                    raise FTClientError(
+                        f"FT bot unreachable for {consecutive_errors} consecutive polls"
+                    ) from e
                 continue
 
             running = raw.get("running", True)

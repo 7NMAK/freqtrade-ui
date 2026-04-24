@@ -18,6 +18,9 @@ from src.models.exchange_profile import ExchangeProfile
 from src.models.backtest_result import BacktestResult
 from src.models.risk_event import RiskEvent
 from src.models.audit_log import AuditLog
+from src.models.experiment import Experiment
+from src.models.experiment_run import ExperimentRun
+from src.models.test_job import TestJob
 
 config = context.config
 if config.config_file_name is not None:

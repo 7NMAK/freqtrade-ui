@@ -422,18 +422,67 @@ async def update_bot(
 
 
 @router.delete("/{bot_id}", response_model=BotResponse)
-async def delete_bot(bot_id: int, request: Request, db: AsyncSession = Depends(get_db)) -> BotResponse:
-    """Soft-delete a bot (never hard delete)."""
+async def delete_bot(
+    bot_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    auth_payload: dict[str, Any] = Depends(require_auth),
+) -> BotResponse:
+    """Soft-delete a bot (never hard delete). Requires auth; actor recorded."""
     manager = request.app.state.bot_manager
+    actor = auth_payload.get("sub", "unknown")
     bot = await manager.delete_bot(db, bot_id)
     if not bot:
         raise HTTPException(404, "Bot not found")
+    db.add(AuditLog(
+        action="bot.delete",
+        actor=actor,
+        target_type="bot",
+        target_id=bot.id,
+        target_name=bot.name,
+    ))
+    await db.flush()
     return bot
 
 
 # ── NEW: Config Generation (V2) ──────────────────────────────
 
+def _redact_config_secrets(config: dict[str, Any]) -> dict[str, Any]:
+    """Return a copy of the config with exchange credentials masked.
+
+    Used for HTTP responses so the plaintext API key / secret / password never
+    leaves the orchestrator. Internal callers (launch_paper_bot, apply-config)
+    use the un-redacted config via the direct function call — the plaintext
+    only travels: DB (encrypted) → memory → config.json (bind-mounted).
+    """
+    safe = {**config}
+    if "exchange" in safe and isinstance(safe["exchange"], dict):
+        exch = {**safe["exchange"]}
+        for field in ("key", "secret", "password"):
+            if field in exch and exch[field]:
+                exch[field] = "***REDACTED***"
+        safe["exchange"] = exch
+    if "api_server" in safe and isinstance(safe["api_server"], dict):
+        apis = {**safe["api_server"]}
+        for field in ("password", "jwt_secret_key", "ws_token"):
+            if field in apis and apis[field]:
+                apis[field] = "***REDACTED***"
+        safe["api_server"] = apis
+    return safe
+
+
 @router.post("/{bot_id}/generate-config")
+async def generate_config_endpoint(
+    bot_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """HTTP endpoint: returns generated config WITH SECRETS REDACTED.
+    Internal callers (launch_paper_bot, apply-config) use generate_config() directly."""
+    config = await generate_config(bot_id, request, db)
+    return _redact_config_secrets(config)
+
+
 async def generate_config(
     bot_id: int,
     request: Request,
@@ -441,8 +490,9 @@ async def generate_config(
 ) -> dict[str, Any]:
     """
     Generate FreqTrade config.json from bot settings + strategy version.
-    
-    Returns the config dict for preview before deployment.
+
+    Returns FULL config including decrypted secrets. HTTP callers must use
+    /generate-config endpoint which redacts before sending to the wire.
     """
     from sqlalchemy import select
     from ..models.strategy_version import StrategyVersion
@@ -476,7 +526,7 @@ async def generate_config(
             "listen_port": bot.api_port,
             "username": bot.api_username,
             "password": decrypt(bot.api_password) or "",
-            "CORS_origins": ["*"],
+            "CORS_origins": ["http://orchestrator:8888", "http://localhost:8888"],
         },
         "entry_pricing": {
             "price_side": "same",
@@ -780,7 +830,7 @@ async def launch_paper_bot(
             "listen_port": 8080,  # internal port (mapped to free_port externally)
             "username": os.environ.get("ORCH_ADMIN_USERNAME", "freqtrader"),
             "password": os.environ.get("ORCH_ADMIN_PASSWORD", "freqtrader"),
-            "CORS_origins": ["*"],
+            "CORS_origins": ["http://orchestrator:8888", "http://localhost:8888"],
         },
         "entry_pricing": {
             "price_side": "same",

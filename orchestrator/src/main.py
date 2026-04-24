@@ -34,9 +34,15 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup/shutdown lifecycle."""
-    # Create tables (dev convenience — production uses Alembic)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Production uses Alembic migrations — only run create_all if explicitly
+    # requested (e.g. local dev with a fresh DB). Running it in production
+    # bypasses the migration history and creates drift between declared
+    # schema and Alembic's revision log.
+    import os
+    if os.environ.get("ORCH_RUN_CREATE_ALL") == "1":
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.warning("Ran create_all (ORCH_RUN_CREATE_ALL=1) — NOT safe for production")
 
     # Wire up ft_client activity logging callback (logs FT connection errors to DB)
     from .ft_client import set_activity_log_callback
@@ -217,18 +223,47 @@ app.include_router(ai_hyperopt_router, prefix="/api/ai/hyperopt", tags=["ai-hype
 
 # ── Auth endpoints (public — no token needed) ────────────────
 from .auth import (
-    LoginRequest, TokenResponse, create_access_token,
+    LoginRequest, RefreshRequest, TokenResponse, create_access_token, create_refresh_token,
     ADMIN_USERNAME, ADMIN_PASSWORD_HASH, pwd_context, require_auth, verify_token,
+    blocklist_jti, is_jti_blocklisted,
 )
+from datetime import datetime, timezone
 
 
 @app.post("/api/auth/login", response_model=TokenResponse)
 async def login(body: LoginRequest):
-    """Login and get JWT token."""
+    """Issue access + refresh tokens."""
     if body.username != ADMIN_USERNAME or not pwd_context.verify(body.password, ADMIN_PASSWORD_HASH):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    token = create_access_token({"sub": body.username})
-    return TokenResponse(access_token=token)
+    access = create_access_token({"sub": body.username})
+    refresh = create_refresh_token({"sub": body.username})
+    return TokenResponse(access_token=access, refresh_token=refresh)
+
+
+@app.post("/api/auth/refresh", response_model=TokenResponse)
+async def refresh_token(body: RefreshRequest):
+    """Exchange a valid refresh token for a new access token."""
+    payload = verify_token(body.refresh_token, expected_type="refresh")
+    jti = payload.get("jti")
+    if jti and await is_jti_blocklisted(jti):
+        raise HTTPException(401, "Refresh token has been revoked")
+    sub = payload.get("sub")
+    if not sub:
+        raise HTTPException(401, "Malformed refresh token")
+    new_access = create_access_token({"sub": sub})
+    return TokenResponse(access_token=new_access)
+
+
+@app.post("/api/auth/logout")
+async def logout(auth_payload: dict = Depends(require_auth)):
+    """Blocklist the current access token's JTI until it naturally expires."""
+    jti = auth_payload.get("jti")
+    exp = auth_payload.get("exp")
+    if jti and exp:
+        remaining = int(exp - datetime.now(timezone.utc).timestamp())
+        if remaining > 0:
+            await blocklist_jti(jti, remaining)
+    return {"status": "logged_out"}
 
 
 @app.get("/api/health")
@@ -250,8 +285,9 @@ API_REQUEST_DURATION = Histogram("orch_api_request_duration_seconds", "API reque
 
 
 @app.get("/api/metrics")
-async def metrics():
-    """Prometheus metrics endpoint."""
+async def metrics(auth_payload: dict = Depends(require_auth)):
+    """Prometheus metrics endpoint (auth-gated). Prometheus scraper must use
+    a bearer token — configure bearer_token_file in prometheus.yml."""
     # Update gauges from DB
     from .database import async_session
     from .models.bot_instance import BotInstance, BotStatus

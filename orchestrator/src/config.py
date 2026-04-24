@@ -15,8 +15,13 @@ class Settings(BaseSettings):
     # Orchestrator API
     api_host: str = "0.0.0.0"
     api_port: int = 8888
-    secret_key: str
-    access_token_expire_minutes: int = 10080  # 7 days
+    secret_key: str  # JWT signing secret (separate from encryption_key)
+    # Encryption key for exchange credentials at rest. MUST be separate from
+    # secret_key so rotating one does not invalidate the other. If unset,
+    # derived from secret_key for backward-compatibility with existing DBs.
+    encryption_key: str = ""
+    access_token_expire_minutes: int = 120  # 2 hours — short window reduces blast radius if JWT leaks
+    refresh_token_expire_minutes: int = 1440  # 24 hours — refresh flow re-issues access tokens
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
     # Heartbeat settings
@@ -25,8 +30,24 @@ class Settings(BaseSettings):
 
     # Docker settings (for multi-bot management)
     docker_socket: str = "unix:///var/run/docker.sock"
-    ft_docker_image: str = "freqtradeorg/freqtrade:stable_freqai"
+    # FT image pinned by digest — prevents auto-update on OOM restart from
+    # breaking live bots. Override via ORCH_FT_DOCKER_IMAGE to upgrade
+    # deliberately (requires manual validation of each FT release).
+    ft_docker_image: str = "freqtradeorg/freqtrade@sha256:e4c7d501d9bb03cb885b4b5ee4b2a15c8e15da0b8c602a7f8c0aded7e1f77fe1"
     ft_base_port: int = 8080  # First bot gets 8080, second 8081, etc.
+
+    # ── Safety thresholds (managed via Settings page, DB-backed) ─────
+    # These are FALLBACK defaults. Runtime values come from OrchSettings
+    # DB table, editable via /settings UI. Code reads via get_safety_settings().
+    safety_max_leverage_default: int = 10
+    safety_portfolio_exposure_pct_default: int = 70       # max % of total balance
+    safety_daily_loss_threshold_pct_default: int = 7      # hard stop if cumulative daily loss crosses this
+    safety_daily_loss_action_default: str = "soft_kill_all"  # soft_kill_all | hard_kill_all
+    safety_require_typed_go_live_default: bool = True
+    safety_forbid_unlimited_stake_live_default: bool = True
+
+    # Resource limits
+    ft_bot_memory_limit_mb: int = 800
 
     # FreqTrade default credentials (per bot, overridable)
     ft_default_username: str = "freqtrade"

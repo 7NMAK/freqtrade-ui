@@ -657,11 +657,68 @@ export default function TradeTable({
     });
   }, [whitelistData, lockMap, openTrades, pairMarketData, spreadData]);
 
+  // Augmented rows with derived fields — needed so sort can access computed values
+  // (wins, losses, winrate, etc. don't come from FT API, we derive them from closedTrades)
+  const perfRows = useMemo(() => perfData.map((p) => {
+    const pairClosed = closedTrades.filter((t) => t.pair === p.pair);
+    const _wins = pairClosed.filter((t) => (t.close_profit_abs ?? 0) >= 0).length;
+    const _losses = pairClosed.filter((t) => (t.close_profit_abs ?? 0) < 0).length;
+    const _winrate = pairClosed.length > 0 ? _wins / pairClosed.length : 0;
+    const tradeCount = p.count ?? p.trades ?? 0;
+    const _avg_profit = tradeCount > 0 ? (p.profit_ratio * 100) / tradeCount : 0;
+    const _total_fees = pairClosed.reduce((acc, t) => acc + (t.fee_open + t.fee_close) * t.stake_amount, 0);
+    return { ...p, _wins, _losses, _winrate, _avg_profit, _total_fees };
+  }), [perfData, closedTrades]);
+
+  const entryRows = useMemo(() => entryData.map((e) => {
+    const tagTrades = closedTrades.filter((t) => t.enter_tag === e.enter_tag);
+    const _avg_duration = tagTrades.length > 0
+      ? tagTrades.reduce((acc, t) => {
+          const end = t.close_date ? new Date(t.close_date).getTime() : Date.now();
+          return acc + (end - new Date(t.open_date).getTime());
+        }, 0) / tagTrades.length
+      : 0;
+    const pairProfits = new Map<string, number>();
+    for (const t of tagTrades) {
+      pairProfits.set(t.pair, (pairProfits.get(t.pair) ?? 0) + (t.close_profit_abs ?? 0));
+    }
+    let _best_pair = "\u2014";
+    let bestProfit = -Infinity;
+    for (const [pair, profit] of Array.from(pairProfits.entries())) {
+      if (profit > bestProfit) { _best_pair = pair; bestProfit = profit; }
+    }
+    const entries = e.entries ?? 0;
+    const _expectancy = entries > 0 ? (e.profit_abs ?? 0) / entries : 0;
+    return { ...e, _avg_duration, _best_pair, _expectancy };
+  }), [entryData, closedTrades]);
+
+  const exitRows = useMemo(() => exitData.map((e) => {
+    const reasonTrades = closedTrades.filter((t) => t.exit_reason === e.exit_reason);
+    const _avg_duration = reasonTrades.length > 0
+      ? reasonTrades.reduce((acc, t) => {
+          const end = t.close_date ? new Date(t.close_date).getTime() : Date.now();
+          return acc + (end - new Date(t.open_date).getTime());
+        }, 0) / reasonTrades.length
+      : 0;
+    const pairProfits = new Map<string, number>();
+    for (const t of reasonTrades) {
+      pairProfits.set(t.pair, (pairProfits.get(t.pair) ?? 0) + (t.close_profit_abs ?? 0));
+    }
+    let _best_pair = "\u2014";
+    let bestProfit = -Infinity;
+    for (const [pair, profit] of Array.from(pairProfits.entries())) {
+      if (profit > bestProfit) { _best_pair = pair; bestProfit = profit; }
+    }
+    const exits = e.exits ?? 0;
+    const _expectancy = exits > 0 ? (e.profit_abs ?? 0) / exits : 0;
+    return { ...e, _avg_duration, _best_pair, _expectancy };
+  }), [exitData, closedTrades]);
+
   const openSort = useSortable(filteredOpenTrades, "open_date");
   const closedSort = useSortable(filteredClosedTrades, "close_date");
-  const perfSort = useSortable(perfData, "profit_abs");
-  const entrySort = useSortable(entryData, "entries");
-  const exitSort = useSortable(exitData, "exits");
+  const perfSort = useSortable(perfRows, "profit_abs");
+  const entrySort = useSortable(entryRows, "entries");
+  const exitSort = useSortable(exitRows, "exits");
   const whitelistSort = useSortable(whitelistRows, "pair");
 
   const exportCSV = useCallback(() => {
@@ -1078,14 +1135,11 @@ export default function TradeTable({
                     perfSort.sorted.map((p, idx) => {
                       const isUp = p.profit_abs >= 0;
                       const color = isUp ? "text-up" : "text-down";
-                      // Derive wins/losses from closed trades for this pair
-                      const pairClosed = closedTrades.filter((t) => t.pair === p.pair);
-                      const wins = pairClosed.filter((t) => (t.close_profit_abs ?? 0) >= 0).length;
-                      const losses = pairClosed.filter((t) => (t.close_profit_abs ?? 0) < 0).length;
-                      const winrate = pairClosed.length > 0 ? wins / pairClosed.length : 0;
-                      const tradeCount = p.count ?? p.trades ?? 0;
-                      const avgProfit = tradeCount > 0 ? (p.profit_ratio * 100) / tradeCount : 0;
-                      const totalFees = pairClosed.reduce((acc, t) => acc + (t.fee_open + t.fee_close) * t.stake_amount, 0);
+                      const wins = p._wins;
+                      const losses = p._losses;
+                      const winrate = p._winrate;
+                      const avgProfit = p._avg_profit;
+                      const totalFees = p._total_fees;
                       const wrColor = winrate >= 0.65 ? "text-up" : winrate < 0.50 ? "text-down" : "";
                       return (
                         <tr key={p.pair} className={`hover:bg-white/[0.04] transition-colors ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}>
@@ -1137,29 +1191,11 @@ export default function TradeTable({
                       const wr = e.winrate ?? 0;
                       const wrColor = wr >= 0.65 ? "text-up" : wr < 0.50 ? "text-down" : "";
                       const pnlColor = (e.profit_abs ?? 0) >= 0 ? "text-up" : "text-down";
-                      // Derive avg duration & best pair from closed trades with this enter_tag
-                      const tagTrades = closedTrades.filter((t) => t.enter_tag === e.enter_tag);
-                      const avgDurationMs = tagTrades.length > 0
-                        ? tagTrades.reduce((acc, t) => {
-                            const end = t.close_date ? new Date(t.close_date).getTime() : Date.now();
-                            return acc + (end - new Date(t.open_date).getTime());
-                          }, 0) / tagTrades.length
-                        : 0;
-                      const avgDurStr = tagTrades.length > 0 ? fmtDuration(new Date(Date.now() - avgDurationMs).toISOString()) : "\u2014";
-                      // Best pair = pair with highest total profit for this tag
-                      const pairProfits = new Map<string, number>();
-                      for (const t of tagTrades) {
-                        const prev = pairProfits.get(t.pair) ?? 0;
-                        pairProfits.set(t.pair, prev + (t.close_profit_abs ?? 0));
-                      }
-                      let bestPair = "\u2014";
-                      let bestProfit = -Infinity;
-                      for (const [pair, profit] of Array.from(pairProfits.entries())) {
-                        if (profit > bestProfit) { bestPair = pair; bestProfit = profit; }
-                      }
-                      // Expectancy = profit_abs / entries (avg profit per trade in $)
+                      const avgDurationMs = e._avg_duration;
+                      const avgDurStr = avgDurationMs > 0 ? fmtDuration(new Date(Date.now() - avgDurationMs).toISOString()) : "\u2014";
+                      const bestPair = e._best_pair;
                       const entries = e.entries ?? 0;
-                      const expectancy = entries > 0 ? (e.profit_abs ?? 0) / entries : 0;
+                      const expectancy = e._expectancy;
                       const expColor = expectancy >= 0 ? "text-up" : "text-down";
                       return (
                         <tr key={e.enter_tag} className={`hover:bg-white/[0.04] ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}>
@@ -1206,29 +1242,11 @@ export default function TradeTable({
                       const wr = e.winrate ?? 0;
                       const wrColor = wr >= 0.65 ? "text-up" : wr < 0.50 ? "text-down" : "";
                       const pnlColor = (e.profit_abs ?? 0) >= 0 ? "text-up" : "text-down";
-                      // Derive avg duration & best pair from closed trades with this exit_reason
-                      const reasonTrades = closedTrades.filter((t) => t.exit_reason === e.exit_reason);
-                      const avgDurationMs = reasonTrades.length > 0
-                        ? reasonTrades.reduce((acc, t) => {
-                            const end = t.close_date ? new Date(t.close_date).getTime() : Date.now();
-                            return acc + (end - new Date(t.open_date).getTime());
-                          }, 0) / reasonTrades.length
-                        : 0;
-                      const avgDurStr = reasonTrades.length > 0 ? fmtDuration(new Date(Date.now() - avgDurationMs).toISOString()) : "\u2014";
-                      // Best pair = pair with highest total profit for this exit reason
-                      const pairProfits = new Map<string, number>();
-                      for (const t of reasonTrades) {
-                        const prev = pairProfits.get(t.pair) ?? 0;
-                        pairProfits.set(t.pair, prev + (t.close_profit_abs ?? 0));
-                      }
-                      let bestPair = "\u2014";
-                      let bestProfit = -Infinity;
-                      for (const [pair, profit] of Array.from(pairProfits.entries())) {
-                        if (profit > bestProfit) { bestPair = pair; bestProfit = profit; }
-                      }
-                      // Expectancy = profit_abs / exits (avg profit per trade in $)
+                      const avgDurationMs = e._avg_duration;
+                      const avgDurStr = avgDurationMs > 0 ? fmtDuration(new Date(Date.now() - avgDurationMs).toISOString()) : "\u2014";
+                      const bestPair = e._best_pair;
                       const exits = e.exits ?? 0;
-                      const expectancy = exits > 0 ? (e.profit_abs ?? 0) / exits : 0;
+                      const expectancy = e._expectancy;
                       const expColor = expectancy >= 0 ? "text-up" : "text-down";
                       return (
                         <tr key={e.exit_reason} className={`hover:bg-white/[0.04] ${idx % 2 === 1 ? "bg-white/[0.015]" : ""}`}>

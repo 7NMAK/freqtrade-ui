@@ -6,12 +6,13 @@ import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
 import Tooltip from "@/components/ui/Tooltip";
 import SystemSettingsTab from "@/components/settings/SystemSettingsTab";
+import SafetySettingsTab from "@/components/settings/SafetySettingsTab";
 import { getBots, botConfig, saveBotConfig, reloadBotConfig, botWhitelist } from "@/lib/api";
 import { TOOLTIPS } from "@/lib/tooltips";
 import type { Bot, FTShowConfig } from "@/types";
 
 /* ── Types ── */
-type TabId = "system" | "core" | "pairlists" | "exchange" | "telegram" | "webhooks" | "producer" | "advanced";
+type TabId = "system" | "safety" | "core" | "pairlists" | "exchange" | "telegram" | "webhooks" | "producer" | "advanced";
 
 interface SettingsTab {
   id: TabId;
@@ -229,6 +230,7 @@ interface ConfigState {
 /* ── Constants ── */
 const TABS: SettingsTab[] = [
   { id: "system", label: "System", icon: "\uD83D\uDC27", ref: "System" },
+  { id: "safety", label: "Safety & Risk", icon: "\uD83D\uDEE1\uFE0F", ref: "Safety" },
   { id: "core", label: "Core Trading", icon: "\u2699\uFE0F", ref: "\u00A71" },
   { id: "pairlists", label: "Pairlists", icon: "\uD83D\uDCCB", ref: "\u00A77" },
   { id: "exchange", label: "Exchange", icon: "\uD83C\uDFE6", ref: "\u00A79" },
@@ -2483,6 +2485,7 @@ export default function SettingsPage() {
 
   const tabContent: Record<TabId, React.ReactNode> = {
     system: <SystemSettingsTab />,
+    safety: <SafetySettingsTab />,
     core: <CoreTab config={config} update={updateConfig} />,
     pairlists: <PairlistsTab config={config} update={updateConfig} botId={selectedBotId ? parseInt(selectedBotId, 10) : undefined} />,
     exchange: <ExchangeTab config={config} update={updateConfig} />,
@@ -2495,8 +2498,8 @@ export default function SettingsPage() {
   return (
     <AppShell title="Settings">
       <div className="p-5">
-      {/* Bot selector bar — hidden on System tab */}
-      {activeTab !== "system" && (
+      {/* Bot selector bar — hidden on System + Safety tabs (orchestrator-level) */}
+      {activeTab !== "system" && activeTab !== "safety" && (
         <div className="flex items-center gap-3 mb-4 p-4 bg-muted/50 border border-border rounded-card">
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide shrink-0">Target Bot</span>
           <select

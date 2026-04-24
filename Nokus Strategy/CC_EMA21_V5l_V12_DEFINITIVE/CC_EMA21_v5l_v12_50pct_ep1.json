@@ -1,0 +1,34 @@
+{
+  "strategy_name": "CC_EMA21_v5l_v12_50pct_ep1",
+  "_epoch": 1,
+  "_note": "BEST \u2014 IS +16.6% DD 6.5% WR 61.5% | OOS +20.2% DD 1.93% WR 68.6%",
+  "params": {
+    "roi": {
+      "0": 999
+    },
+    "stoploss": {
+      "stoploss": -0.15
+    },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "max_open_trades": {
+      "max_open_trades": 1
+    },
+    "buy": {
+      "atr_sl_mult": 0.77,
+      "buy_pull_tol": 1.011,
+      "buy_rsi_high": 58,
+      "buy_rsi_low": 39
+    },
+    "sell": {
+      "sell_pull_tol": 0.997,
+      "sell_rsi_high": 58,
+      "sell_rsi_low": 44
+    }
+  },
+  "ft_stratparam_v": 1
+}

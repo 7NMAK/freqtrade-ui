@@ -930,6 +930,17 @@ export const importStrategyFromSource = (data: {
     body: JSON.stringify(data),
   });
 
+// ── Safety Settings (orchestrator-level risk controls) ───────────────────
+
+export const getSafetySettings = () =>
+  request<import("@/types").SafetySettings>("/api/settings/safety");
+
+export const updateSafetySettings = (body: import("@/types").SafetySettingsUpdate) =>
+  request<import("@/types").SafetySettings>("/api/settings/safety", {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+
 // ── Exchange Profiles ────────────────────────────────────────────────────
 
 export const getExchangeProfiles = () =>

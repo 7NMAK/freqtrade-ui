@@ -306,6 +306,16 @@ async def update_bot(
 
     # Config fields (trigger restart flag)
     if body.is_dry_run is not None:
+        # Block the dry_run → live transition via PATCH — it must go through
+        # the dedicated /go-live endpoint which enforces the typed confirmation
+        # defined in Safety Settings. PATCH can only flip live → dry_run
+        # (a safer direction).
+        if bot.is_dry_run and not body.is_dry_run:
+            raise HTTPException(
+                400,
+                "Use POST /api/bots/{bot_id}/go-live to transition a bot to live trading. "
+                "PATCH cannot flip dry_run to False.",
+            )
         changes["is_dry_run"] = {"old": bot.is_dry_run, "new": body.is_dry_run}
         bot.is_dry_run = body.is_dry_run
         config_changed = True
@@ -1193,11 +1203,84 @@ async def import_bot(
 
 # ── Bot Control ──────────────────────────────────────────────
 
+
+class GoLiveRequest(BaseModel):
+    """Explicit confirmation for dry_run → live transition."""
+    confirmation: str = Field(description='Must match "GO LIVE" if require_typed_go_live is on')
+
+
+@router.post("/{bot_id}/go-live")
+async def go_live(
+    bot_id: int,
+    body: GoLiveRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    auth_payload: dict[str, Any] = Depends(require_auth),
+) -> dict[str, Any]:
+    """Transition bot from dry_run to live. Enforces typed confirmation and
+    rejects stake_amount='unlimited' if Safety Settings require it."""
+    from .safety_settings import get_safety_settings
+    from sqlalchemy import select
+    from ..models.strategy import Strategy, StrategyLifecycle
+
+    safety = await get_safety_settings(db)
+
+    if safety.require_typed_go_live and body.confirmation != "GO LIVE":
+        raise HTTPException(400, 'Confirmation mismatch — type exactly "GO LIVE" to proceed.')
+
+    manager = request.app.state.bot_manager
+    bot = await manager.get_bot_locked(db, bot_id)
+    if not bot:
+        raise HTTPException(404, "Bot not found")
+
+    if not bot.is_dry_run:
+        raise HTTPException(400, "Bot is already live")
+
+    # Require strategy lifecycle ≥ BACKTEST (rule #8)
+    result_strat = await db.execute(
+        select(Strategy).where(Strategy.bot_instance_id == bot_id, Strategy.is_deleted.is_(False))
+    )
+    strategy = result_strat.scalar_one_or_none()
+    if strategy and strategy.lifecycle == StrategyLifecycle.DRAFT:
+        raise HTTPException(400, "Cannot go live — strategy is DRAFT. Run backtest first.")
+
+    # Enforce stake_amount guardrail
+    if safety.forbid_unlimited_stake_live and str(bot.stake_amount).lower() == "unlimited":
+        raise HTTPException(
+            400,
+            'stake_amount="unlimited" is forbidden on live bots by current Safety Settings. '
+            "Edit bot config to a numeric stake amount before going live.",
+        )
+
+    bot.is_dry_run = False
+
+    actor = auth_payload.get("sub", "unknown")
+    db.add(AuditLog(
+        action="bot.go_live",
+        actor=actor,
+        target_type="bot",
+        target_id=bot.id,
+        target_name=bot.name,
+        details=json.dumps({"strategy_lifecycle": strategy.lifecycle.value if strategy else None}),
+    ))
+    await db.commit()
+
+    return {
+        "bot_id": bot.id,
+        "name": bot.name,
+        "is_dry_run": False,
+        "requires_restart": True,
+        "message": "Bot is now LIVE. Apply config and restart to activate.",
+    }
+
+
 @router.post("/{bot_id}/start")
 async def start_bot(bot_id: int, request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
     """POST /api/v1/start on the FT bot. Blocked if strategy is DRAFT (safety rule #8)."""
     from sqlalchemy import select
     from ..models.strategy import Strategy, StrategyLifecycle
+    from .safety_settings import get_safety_settings
+    from ..models.strategy_version import StrategyVersion
 
     # M12: Enforce strategy lifecycle — block start if DRAFT
     result_strat = await db.execute(
@@ -1209,6 +1292,30 @@ async def start_bot(bot_id: int, request: Request, db: AsyncSession = Depends(ge
             400,
             "Cannot start bot — strategy is in DRAFT. Promote to BACKTEST or higher first.",
         )
+
+    # Safety enforcement: leverage cap + unlimited-stake guard (runtime-editable)
+    safety = await get_safety_settings(db)
+    bot_preview = await db.get(BotInstance, bot_id)
+    if bot_preview and not bot_preview.is_deleted:
+        # Leverage cap — check bot's strategy version risk_config
+        if bot_preview.strategy_version_id:
+            version = await db.get(StrategyVersion, bot_preview.strategy_version_id)
+            if version and version.risk_config:
+                lev = int(version.risk_config.get("leverage", 1) or 1)
+                if lev > safety.max_leverage:
+                    raise HTTPException(
+                        400,
+                        f"Cannot start bot — strategy leverage {lev}× exceeds safety cap {safety.max_leverage}×. "
+                        "Lower leverage in strategy risk_config or raise the cap in Safety Settings.",
+                    )
+        # Unlimited stake on live bots
+        if (not bot_preview.is_dry_run
+            and safety.forbid_unlimited_stake_live
+            and str(bot_preview.stake_amount).lower() == "unlimited"):
+            raise HTTPException(
+                400,
+                'stake_amount="unlimited" is forbidden on live bots by current Safety Settings.',
+            )
 
     manager = request.app.state.bot_manager
 

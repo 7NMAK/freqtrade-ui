@@ -16,7 +16,11 @@
       "Bash(ssh -o ConnectTimeout=10 root@204.168.187.107 'curl -s -u novakus:$FT_API_PASSWORD http://localhost:8080/api/v1/profit')",
       "Bash(ssh -o ConnectTimeout=10 root@204.168.187.107 \"cat /opt/freqtrade/user_data/config.json | python3 -c \\\\\"import json,sys; c=json.load\\(sys.stdin\\); print\\(c.get\\('api_server',{}\\).get\\('password',''\\)\\)\\\\\"\")",
       "Bash(ssh -o ConnectTimeout=10 root@204.168.187.107 \"grep -A5 'api_server' /opt/freqtrade/user_data/config.json | grep -E 'password|username'\")",
-      "Bash(ssh -o ConnectTimeout=10 root@204.168.187.107 ':*)"
+      "Bash(ssh -o ConnectTimeout=10 root@204.168.187.107 ':*)",
+      "Bash(python3 -c ':*)",
+      "Bash(python3)",
+      "Bash(ssh root@204.168.187.107 \"ls /opt/freqtrade/user_data/data/binance/futures/ 2>/dev/null | sed 's/_[0-9].*//' | sort -u | head -40\")",
+      "Bash(ssh root@204.168.187.107 \"ls /opt/freqtrade/user_data/data/binance/futures/ 2>/dev/null | sed 's/_[0-9].*//' | sort -u | tail -30\")"
     ],
     "additionalDirectories": [
       "/Users/novakus/Documents/BOT/frontend/src/components/dashboard",

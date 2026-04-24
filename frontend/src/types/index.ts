@@ -1240,6 +1240,20 @@ export interface ExchangeProfileListResponse {
   items: ExchangeProfile[];
 }
 
+/** Safety settings (orchestrator-level risk controls, edited in Settings UI). */
+export interface SafetySettings {
+  max_leverage: number;
+  portfolio_exposure_pct: number;
+  daily_loss_threshold_pct: number;
+  daily_loss_action: "soft_kill_all" | "hard_kill_all";
+  require_typed_go_live: boolean;
+  forbid_unlimited_stake_live: boolean;
+  updated_at?: string | null;
+  updated_by?: string | null;
+}
+
+export type SafetySettingsUpdate = Omit<SafetySettings, "updated_at" | "updated_by">;
+
 /** Backtest Result — result from a single backtest run */
 export interface BacktestResult {
   id: number;

@@ -1,0 +1,33 @@
+{
+  "strategy_name": "CC_EMA21_v5l_v12_trail05",
+  "params": {
+    "roi": {
+      "0": 999
+    },
+    "stoploss": {
+      "stoploss": -0.15
+    },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "max_open_trades": {
+      "max_open_trades": 1
+    },
+    "buy": {
+      "atr_sl_mult": 0.8,
+      "buy_pull_tol": 1.008,
+      "buy_rsi_high": 57,
+      "buy_rsi_low": 42
+    },
+    "sell": {
+      "sell_pull_tol": 0.991,
+      "sell_rsi_high": 73,
+      "sell_rsi_low": 48
+    }
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2026-04-10 16:14:17.824073+00:00"
+}
